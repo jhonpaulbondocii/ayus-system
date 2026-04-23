@@ -1,0 +1,190 @@
+"use client";
+
+// src/components/ui/AdminLoginPage.tsx
+
+import { useState, useEffect, Suspense } from "react";
+import { signIn } from "next-auth/react";
+import { useRouter, useSearchParams } from "next/navigation";
+import Image from "next/image";
+import Link from "next/link";
+
+const ERROR_MESSAGES: Record<string, string> = {
+  PENDING_APPROVAL:  "This account is not an admin account.",
+  REJECTED:          "Access denied. Contact the system administrator.",
+  ACCESS_DENIED:     "Access denied. Admins only.",
+  CredentialsSignin: "Invalid email or password.",
+  default:           "Something went wrong. Please try again.",
+};
+
+function AdminLoginForm() {
+  const router       = useRouter();
+  const searchParams = useSearchParams();
+
+  const [email,    setEmail]    = useState("");
+  const [password, setPassword] = useState("");
+  const [loading,  setLoading]  = useState(false);
+  const [error,    setError]    = useState("");
+
+  useEffect(() => {
+    const err = searchParams.get("error");
+    if (err) setError(ERROR_MESSAGES[err] ?? ERROR_MESSAGES.default);
+  }, [searchParams]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+
+    if (!email || !password) {
+      setError("Please fill in all fields.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        setError(ERROR_MESSAGES[result.error] ?? ERROR_MESSAGES.default);
+        return;
+      }
+
+      const res  = await fetch("/api/auth/session");
+      const data = await res.json();
+      const role = data?.user?.role;
+
+      if (role === "ADMIN") {
+        router.push("/admin/dashboard");
+      } else {
+        setError("Access denied. This login is for administrators only.");
+      }
+
+    } catch {
+      setError("Network error. Please check your connection.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="relative min-h-screen w-full flex flex-col items-center justify-center">
+
+      {/* Background */}
+      <div
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: "url('/bg-login.jpg')" }}
+      />
+      <div className="absolute inset-0 bg-black/20" />
+
+      {/* Card */}
+      <div className="relative z-10 bg-white rounded-lg shadow-2xl px-10 py-10 w-full max-w-sm mx-4">
+
+        {/* Logo */}
+        <div className="flex justify-center mb-4">
+          <Image
+            src="/psu-logo.png"
+            alt="PSU Logo"
+            width={64}
+            height={64}
+            className="rounded-full"
+          />
+        </div>
+
+        {/* Title */}
+        <div className="text-center mb-6">
+          <h1 className="text-2xl font-bold text-gray-800 mb-1">
+            Welcome to AYUS
+          </h1>
+          <p className="text-sm text-gray-500">
+            Administrator Access Only
+          </p>
+        </div>
+
+        {/* Error */}
+        {error && (
+          <div className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">
+            {error}
+          </div>
+        )}
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Email
+            </label>
+            <input
+              suppressHydrationWarning
+              type="email"
+              placeholder="Enter admin email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              className="w-full border border-gray-300 rounded px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#7b1113]/30 transition-colors"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Password
+            </label>
+            <input
+              suppressHydrationWarning
+              type="password"
+              placeholder="Enter your password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              className="w-full border border-gray-300 rounded px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#7b1113]/30 transition-colors"
+            />
+          </div>
+
+          <button
+            suppressHydrationWarning
+            type="submit"
+            disabled={loading}
+            className="w-full bg-[#7b1113] hover:bg-[#5a0d0f] disabled:opacity-70 text-white font-bold py-3 rounded transition-colors text-sm"
+          >
+            {loading ? "Logging in..." : "Log In"}
+          </button>
+        </form>
+
+        {/* Divider */}
+        <div className="flex items-center gap-3 my-4">
+          <div className="flex-1 h-px bg-gray-200" />
+          <span className="text-xs text-gray-400">or</span>
+          <div className="flex-1 h-px bg-gray-200" />
+        </div>
+
+        {/* Back to user login */}
+        <Link
+          href="/login"
+          className="w-full flex items-center justify-center gap-2 border border-gray-300 hover:border-[#7b1113] hover:bg-[#7b1113]/5 text-gray-600 hover:text-[#7b1113] font-medium py-2.5 rounded transition-colors text-sm"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M19 12H5M12 5l-7 7 7 7"/>
+          </svg>
+          Back to User Login
+        </Link>
+      </div>
+
+      {/* Footer */}
+      <div className="relative z-10 flex items-center justify-center gap-3 mt-4 text-xs text-white/80">
+        <Link href="/help"    className="hover:text-white">Help</Link>
+        <span className="text-white/50">|</span>
+        <Link href="/privacy" className="hover:text-white">Privacy Policy</Link>
+        <span className="text-white/50">|</span>
+        <Link href="/terms"   className="hover:text-white">Terms</Link>
+      </div>
+    </div>
+  );
+}
+
+export default function AdminLoginPage() {
+  return (
+    <Suspense>
+      <AdminLoginForm />
+    </Suspense>
+  );
+}
