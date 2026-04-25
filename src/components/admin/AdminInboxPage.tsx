@@ -5,6 +5,7 @@ import {
   Pencil, Reply, ReplyAll, Download, Trash2,
   MoreVertical, Search, ChevronDown, X, Send,
   Inbox, MailOpen, Clock, ArrowUpRight, Bell, Archive, UserRound,
+  ArrowLeft, Menu,
 } from "lucide-react";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -89,11 +90,9 @@ const MAROON_MID  = "#f0e4e4";
 
 const API_BASE = "/api/inbox/conversations";
 
-// ── Shared API endpoints (work for BOTH admin and staff) ───────────────────────
-const API_USERS        = "/api/users";                          // was /api/admin/users
-const API_COURSES      = "/api/courses";                        // was /api/admin/courses
-const API_COURSE_PEOPLE = (courseId: string) =>
-  `/api/courses/${courseId}/people`;                            // was /api/admin/courses/:id/people
+const API_USERS         = "/api/users";
+const API_COURSES       = "/api/courses";
+const API_COURSE_PEOPLE = (courseId: string) => `/api/courses/${courseId}/people`;
 
 const MAILBOX_FILTERS = [
   { key: "inbox",    label: "Inbox",            Icon: Inbox        },
@@ -104,6 +103,85 @@ const MAILBOX_FILTERS = [
   { key: "recent",   label: "Submission Cmts",  Icon: Clock        },
   { key: "forward",  label: "Filter Redir.",    Icon: ArrowUpRight },
 ];
+
+// ── Responsive CSS ─────────────────────────────────────────────────────────────
+const RESPONSIVE_CSS = `
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* ── Mobile toolbar: wrap onto 2 rows ── */
+@media (max-width: 768px) {
+  .ibx-toolbar {
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+    padding: 8px 10px !important;
+  }
+  .ibx-toolbar-row1 {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    flex-wrap: nowrap;
+  }
+  .ibx-toolbar-row2 {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    width: 100%;
+    justify-content: flex-end;
+  }
+  .ibx-course-filter { flex: 1; min-width: 0; }
+  .ibx-mailbox-filter { flex: 1; min-width: 0; }
+  .ibx-addr-book { display: none !important; }
+
+  /* List takes full width on mobile when no thread open */
+  .ibx-list { width: 100% !important; border-right: none !important; }
+
+  /* Thread overlays list on mobile */
+  .ibx-thread {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 200 !important;
+    background: #fff !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  /* Compose modal full-screen on mobile */
+  .ibx-compose-modal {
+    max-width: 100% !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    border-radius: 0 !important;
+  }
+  .ibx-compose-overlay {
+    padding: 0 !important;
+    align-items: stretch !important;
+  }
+
+  /* Reply box textarea */
+  .ibx-reply-box textarea {
+    font-size: 16px !important; /* prevents iOS zoom */
+  }
+
+  /* Thread header back button bigger tap target */
+  .ibx-thread-back {
+    padding: 6px 10px !important;
+    font-size: 14px !important;
+  }
+
+  /* Action buttons — hide labels, keep icons */
+  .ibx-action-label { display: none !important; }
+}
+
+@media (max-width: 480px) {
+  .ibx-convo-row { padding: 10px 10px !important; }
+  .ibx-convo-row .ibx-preview { font-size: 11px !important; }
+  .ibx-thread-messages { padding: 12px 12px !important; }
+  .ibx-reply-area { padding: 10px 12px !important; }
+  .ibx-message-bubble { max-width: 88% !important; }
+}
+`;
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 function timeAgo(dateStr: string) {
@@ -195,7 +273,6 @@ function AddressBookPicker({
     if (open) setTimeout(() => inputRef.current?.focus(), 40);
   }, [open, view]);
 
-  // ── fetch users with debounce ──────────────────────────────────────────────
   const fetchUsers = useCallback((q: string) => {
     setLoading(true);
     const url = q.trim()
@@ -214,7 +291,6 @@ function AddressBookPicker({
     return () => { if (timer.current) clearTimeout(timer.current); };
   }, [query, open, view, fetchUsers]);
 
-  // ── fetch course people ────────────────────────────────────────────────────
   const fetchCoursePeople = useCallback((courseId: string, role: string | null) => {
     setLoading(true);
     fetch(API_COURSE_PEOPLE(courseId))
@@ -231,7 +307,6 @@ function AddressBookPicker({
       .catch(() => setLoading(false));
   }, []);
 
-  // Client-side filter when query changes inside course-people view
   useEffect(() => {
     if (view !== "course-people" || allPeople.length === 0) return;
     const filtered = query.trim()
@@ -295,7 +370,7 @@ function AddressBookPicker({
   );
 
   return (
-    <div ref={ref} style={{ position: "relative", flex: 1, minWidth: 200 }}>
+    <div ref={ref} className="ibx-addr-book" style={{ position: "relative", flex: 1, minWidth: 200 }}>
       <div style={{ display: "flex", alignItems: "center", height: 36, border: `1px solid ${open ? MAROON : "#d1d5db"}`, borderRadius: open ? "6px 6px 0 0" : 6, background: "#fff", overflow: "hidden" }}>
         <div
           style={{ display: "flex", alignItems: "center", gap: 6, flex: 1, padding: "0 10px", cursor: "text" }}
@@ -414,7 +489,7 @@ function CourseFilter({
   const groups  = options.filter(o => o.type === "group"  && o.name.toLowerCase().includes(query.toLowerCase()));
 
   return (
-    <div ref={ref} style={{ position: "relative", minWidth: 200 }}>
+    <div ref={ref} className="ibx-course-filter" style={{ position: "relative", minWidth: 160 }}>
       <div onClick={() => setOpen(v => !v)} style={{ display: "flex", alignItems: "center", gap: 6, height: 36, padding: "0 10px", border: `1px solid ${open ? MAROON : "#d1d5db"}`, borderRadius: open ? "6px 6px 0 0" : 6, background: open ? MAROON_BG : "#fff", cursor: "pointer", userSelect: "none", fontFamily: FONT, fontSize: 13, fontWeight: 600, color: selected ? MAROON : "#374151" }}>
         <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{selected ? selected.name : "All Courses"}</span>
         {selected
@@ -471,9 +546,10 @@ function MailboxFilter({ value, onChange }: { value: string; onChange: (v: strin
   const current  = MAILBOX_FILTERS.find(f => f.key === value) ?? MAILBOX_FILTERS[0];
   const CurrIcon = current.Icon;
   return (
-    <div ref={ref} style={{ position: "relative", minWidth: 180 }}>
+    <div ref={ref} className="ibx-mailbox-filter" style={{ position: "relative", minWidth: 140 }}>
       <div onClick={() => setOpen(v => !v)} style={{ display: "flex", alignItems: "center", gap: 6, height: 36, padding: "0 10px", border: `1px solid ${open ? MAROON : "#d1d5db"}`, borderRadius: open ? "6px 6px 0 0" : 6, background: open ? MAROON_BG : "#fff", cursor: "pointer", userSelect: "none", fontFamily: FONT, fontSize: 13, fontWeight: 600, color: "#374151" }}>
-        <CurrIcon size={13} style={{ color: MAROON }} /><span style={{ flex: 1 }}>{current.label}</span>
+        <CurrIcon size={13} style={{ color: MAROON }} />
+        <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{current.label}</span>
         <ChevronDown size={13} style={{ color: "#9ca3af", transform: open ? "rotate(180deg)" : "none", transition: "transform 0.15s" }} />
       </div>
       {open && (
@@ -531,6 +607,7 @@ function ConvoRow({
   const displayName = convo.participants.map(p => p.name ?? "Unknown").join(", ") || "No participants";
   return (
     <div
+      className="ibx-convo-row"
       onClick={onSelect}
       onMouseEnter={() => setHov(true)}
       onMouseLeave={() => setHov(false)}
@@ -544,7 +621,7 @@ function ConvoRow({
           <span style={{ fontSize: 11, color: "#9ca3af", flexShrink: 0, fontFamily: FONT }}>{timeAgo(convo.date)}</span>
         </div>
         <p style={{ fontSize: 13, fontWeight: convo.unread ? 600 : 400, color: "#374151", margin: "0 0 1px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontFamily: FONT }}>{convo.subject}</p>
-        <p style={{ fontSize: 12, color: "#9ca3af", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontFamily: FONT }}>{convo.preview}</p>
+        <p className="ibx-preview" style={{ fontSize: 12, color: "#9ca3af", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontFamily: FONT }}>{convo.preview}</p>
       </div>
     </div>
   );
@@ -634,13 +711,13 @@ function ThreadViewer({
   };
 
   if (loading) return (
-    <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: "#9ca3af", fontFamily: FONT, fontSize: 13 }}>
+    <div className="ibx-thread" style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: "#9ca3af", fontFamily: FONT, fontSize: 13 }}>
       Loading…
     </div>
   );
 
   if (error || !convo) return (
-    <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10 }}>
+    <div className="ibx-thread" style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10 }}>
       <p style={{ color: "#ef4444", fontFamily: FONT, fontSize: 13 }}>{error ?? "Conversation not found."}</p>
       <button onClick={onBack} style={{ fontSize: 13, color: MAROON, background: "none", border: "none", cursor: "pointer", fontFamily: FONT }}>← Back</button>
     </div>
@@ -649,17 +726,23 @@ function ThreadViewer({
   const participants = convo.participants.filter(p => p.user.id !== currentUserId);
 
   return (
-    <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+    <div className="ibx-thread" style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
       {/* Thread header */}
-      <div style={{ padding: "14px 24px", borderBottom: `1px solid ${MAROON_MID}`, flexShrink: 0, background: "#fff" }}>
-        <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
-          <button onClick={onBack} style={{ background: "none", border: "none", cursor: "pointer", color: MAROON, fontSize: 13, fontWeight: 600, fontFamily: FONT, padding: 0, marginTop: 2, flexShrink: 0 }}>←</button>
+      <div style={{ padding: "12px 16px", borderBottom: `1px solid ${MAROON_MID}`, flexShrink: 0, background: "#fff" }}>
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+          <button
+            className="ibx-thread-back"
+            onClick={onBack}
+            style={{ background: "none", border: "none", cursor: "pointer", color: MAROON, fontSize: 13, fontWeight: 600, fontFamily: FONT, padding: "4px 0", marginTop: 2, flexShrink: 0, display: "flex", alignItems: "center", gap: 4 }}
+          >
+            <ArrowLeft size={15} />
+          </button>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <h2 style={{ fontSize: 16, fontWeight: 800, color: "#111827", margin: "0 0 4px", fontFamily: FONT, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{convo.subject}</h2>
+            <h2 style={{ fontSize: 15, fontWeight: 800, color: "#111827", margin: "0 0 4px", fontFamily: FONT, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{convo.subject}</h2>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
               {participants.map(p => (
                 <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                  <Avatar name={p.user.name} image={p.user.image} size={20} />
+                  <Avatar name={p.user.name} image={p.user.image} size={18} />
                   <span style={{ fontSize: 12, color: "#6b7280", fontFamily: FONT }}>{p.user.name ?? "Unknown"}</span>
                   <span style={{ fontSize: 10, background: MAROON_MID, color: MAROON, borderRadius: 10, padding: "1px 6px", fontWeight: 700, fontFamily: FONT }}>{p.user.role}</span>
                 </div>
@@ -676,13 +759,13 @@ function ThreadViewer({
       </div>
 
       {/* Messages */}
-      <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px", display: "flex", flexDirection: "column", gap: 16 }}>
+      <div className="ibx-thread-messages" style={{ flex: 1, overflowY: "auto", padding: "16px 16px", display: "flex", flexDirection: "column", gap: 14 }}>
         {convo.messages.map((msg) => {
           const isMine = msg.sender.id === currentUserId;
           return (
-            <div key={msg.id} style={{ display: "flex", flexDirection: isMine ? "row-reverse" : "row", gap: 10, alignItems: "flex-start" }}>
-              <Avatar name={msg.sender.name} image={msg.sender.image} size={32} />
-              <div style={{ maxWidth: "70%", display: "flex", flexDirection: "column", gap: 4, alignItems: isMine ? "flex-end" : "flex-start" }}>
+            <div key={msg.id} style={{ display: "flex", flexDirection: isMine ? "row-reverse" : "row", gap: 8, alignItems: "flex-start" }}>
+              <Avatar name={msg.sender.name} image={msg.sender.image} size={30} />
+              <div className="ibx-message-bubble" style={{ maxWidth: "72%", display: "flex", flexDirection: "column", gap: 4, alignItems: isMine ? "flex-end" : "flex-start" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                   <span style={{ fontSize: 12, fontWeight: 700, color: "#374151", fontFamily: FONT }}>{isMine ? "You" : (msg.sender.name ?? "Unknown")}</span>
                   <span style={{ fontSize: 10, color: "#9ca3af", fontFamily: FONT }}>{timeAgo(msg.createdAt)}</span>
@@ -708,9 +791,9 @@ function ThreadViewer({
       </div>
 
       {/* Reply box */}
-      <div style={{ padding: "12px 24px", borderTop: `1px solid ${MAROON_MID}`, background: "#fafafa", flexShrink: 0 }}>
+      <div className="ibx-reply-area" style={{ padding: "10px 16px", borderTop: `1px solid ${MAROON_MID}`, background: "#fafafa", flexShrink: 0 }}>
         {error && <p style={{ fontSize: 12, color: "#ef4444", fontFamily: FONT, margin: "0 0 8px" }}>{error}</p>}
-        <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
+        <div className="ibx-reply-box" style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
           <textarea
             value={reply}
             onChange={e => setReply(e.target.value)}
@@ -722,8 +805,8 @@ function ThreadViewer({
             onBlur={e  => (e.currentTarget.style.borderColor = "#e5e7eb")}
           />
           <button onClick={sendReply} disabled={sending || !reply.trim()}
-            style={{ height: 38, padding: "0 16px", fontSize: 13, fontWeight: 700, color: "#fff", background: sending || !reply.trim() ? "#d1d5db" : MAROON, border: "none", borderRadius: 8, cursor: sending || !reply.trim() ? "default" : "pointer", fontFamily: FONT, display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
-            <Send size={13} />{sending ? "…" : "Send"}
+            style={{ height: 38, padding: "0 14px", fontSize: 13, fontWeight: 700, color: "#fff", background: sending || !reply.trim() ? "#d1d5db" : MAROON, border: "none", borderRadius: 8, cursor: sending || !reply.trim() ? "default" : "pointer", fontFamily: FONT, display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+            <Send size={13} /><span className="ibx-action-label">{sending ? "…" : "Send"}</span>
           </button>
         </div>
       </div>
@@ -756,7 +839,6 @@ function ComposeModal({
   const courseRef = useRef<HTMLDivElement>(null);
   const toRef     = useRef<HTMLDivElement>(null);
 
-  // ── to-picker state ────────────────────────────────────────────────────────
   const [toView,      setToView]      = useState<PickView>("root");
   const [toQuery,     setToQuery]     = useState("");
   const [toUsers,     setToUsers]     = useState<UserResult[]>([]);
@@ -792,7 +874,6 @@ function ComposeModal({
     setToRole(null); setToAllPeople([]);
   };
 
-  // ── Fetch users (debounced) — single effect handles both initial + search ──
   useEffect(() => {
     if (!toPickerOpen || toView !== "users") return;
     if (toTimer.current) clearTimeout(toTimer.current);
@@ -805,10 +886,9 @@ function ComposeModal({
         .then(r => r.json())
         .then(d => { setToUsers(d.users ?? []); setToLoading(false); })
         .catch(() => setToLoading(false));
-    }, toQuery.trim() ? 300 : 0); // immediate on first open, debounced on search
+    }, toQuery.trim() ? 300 : 0);
   }, [toQuery, toPickerOpen, toView]);
 
-  // ── Fetch course people ────────────────────────────────────────────────────
   useEffect(() => {
     if (!toPickerOpen || toView !== "course-people" || !toCourse) return;
     setToLoading(true);
@@ -826,7 +906,6 @@ function ComposeModal({
       .catch(() => setToLoading(false));
   }, [toPickerOpen, toView, toCourse, toRole]);
 
-  // ── Client-side filter for course people ──────────────────────────────────
   useEffect(() => {
     if (toView !== "course-people" || toAllPeople.length === 0) return;
     setToPeople(
@@ -887,7 +966,6 @@ function ComposeModal({
     color: "#374151", marginBottom: 6, fontFamily: FONT,
   };
 
-  // ── Inline To-picker list ──────────────────────────────────────────────────
   const ToPickerList = () => {
     const PersonRow = ({ u }: { u: UserResult }) => (
       <button
@@ -958,16 +1036,16 @@ function ComposeModal({
   };
 
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.35)", backdropFilter: "blur(2px)" }}>
-      <div style={{ background: "#fff", borderRadius: 12, width: "100%", maxWidth: 520, maxHeight: "90vh", display: "flex", flexDirection: "column", boxShadow: "0 12px 48px rgba(0,0,0,0.18)", fontFamily: FONT, overflow: "hidden" }}>
+    <div className="ibx-compose-overlay" style={{ position: "fixed", inset: 0, zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.35)", backdropFilter: "blur(2px)", padding: 12 }}>
+      <div className="ibx-compose-modal" style={{ background: "#fff", borderRadius: 12, width: "100%", maxWidth: 520, maxHeight: "90vh", display: "flex", flexDirection: "column", boxShadow: "0 12px 48px rgba(0,0,0,0.18)", fontFamily: FONT, overflow: "hidden" }}>
 
         {/* Header */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", borderBottom: `1px solid ${MAROON_MID}`, flexShrink: 0 }}>
-          <span style={{ fontSize: 16, fontWeight: 800, color: "#111827" }}>Compose Message</span>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", borderBottom: `1px solid ${MAROON_MID}`, flexShrink: 0 }}>
+          <span style={{ fontSize: 15, fontWeight: 800, color: "#111827" }}>Compose Message</span>
           <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "#6b7280", fontSize: 20, padding: 0, lineHeight: 1 }}>×</button>
         </div>
 
-        <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px", display: "flex", flexDirection: "column", gap: 14 }}>
+        <div style={{ flex: 1, overflowY: "auto", padding: "14px 16px", display: "flex", flexDirection: "column", gap: 12 }}>
 
           {/* Course selector */}
           <div ref={courseRef} style={{ position: "relative" }}>
@@ -1009,7 +1087,7 @@ function ComposeModal({
               <input
                 value="" readOnly
                 placeholder={recipients.length === 0 ? "Click to select recipients…" : ""}
-                style={{ flex: 1, minWidth: 120, border: "none", outline: "none", fontSize: 13, fontFamily: FONT, color: "#374151", background: "transparent", cursor: "pointer" }}
+                style={{ flex: 1, minWidth: 100, border: "none", outline: "none", fontSize: 13, fontFamily: FONT, color: "#374151", background: "transparent", cursor: "pointer" }}
               />
               <button
                 onClick={e => { e.stopPropagation(); setToPickerOpen(v => !v); setToView("root"); }}
@@ -1020,7 +1098,7 @@ function ComposeModal({
             </div>
 
             {toPickerOpen && (
-              <div style={{ position: "absolute", top: "100%", left: 0, right: 0, zIndex: 9999, background: "#fff", border: `1px solid ${MAROON}`, borderTop: "none", borderRadius: "0 0 8px 8px", boxShadow: "0 8px 32px rgba(0,0,0,0.10)", maxHeight: 300, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+              <div style={{ position: "absolute", top: "100%", left: 0, right: 0, zIndex: 9999, background: "#fff", border: `1px solid ${MAROON}`, borderTop: "none", borderRadius: "0 0 8px 8px", boxShadow: "0 8px 32px rgba(0,0,0,0.10)", maxHeight: 280, overflow: "hidden", display: "flex", flexDirection: "column" }}>
                 {toView !== "root" && (
                   <button onClick={goToBack} style={{ display: "flex", alignItems: "center", gap: 6, width: "100%", padding: "9px 12px", border: "none", background: MAROON, cursor: "pointer", fontFamily: FONT, fontSize: 13, fontWeight: 700, color: "#fff", flexShrink: 0 }}>
                     <span style={{ fontSize: 16 }}>‹</span>{toBackLabel}
@@ -1076,7 +1154,7 @@ function ComposeModal({
         </div>
 
         {/* Footer */}
-        <div style={{ display: "flex", alignItems: "center", padding: "10px 20px", borderTop: `1px solid ${MAROON_MID}`, background: "#fafafa", flexShrink: 0, gap: 6 }}>
+        <div style={{ display: "flex", alignItems: "center", padding: "10px 16px", borderTop: `1px solid ${MAROON_MID}`, background: "#fafafa", flexShrink: 0, gap: 6 }}>
           <button title="Add attachment" onClick={() => fileRef.current?.click()}
             style={{ width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", background: "none", border: "1px solid #e5e7eb", borderRadius: 6, cursor: "pointer", color: "#6b7280" }}
             onMouseEnter={e => { e.currentTarget.style.borderColor = MAROON; e.currentTarget.style.color = MAROON; e.currentTarget.style.background = MAROON_BG; }}
@@ -1085,9 +1163,9 @@ function ComposeModal({
           </button>
           <input ref={fileRef} type="file" multiple style={{ display: "none" }} onChange={e => { if (e.target.files) setAttachments(prev => [...prev, ...Array.from(e.target.files!)]); }} />
           <div style={{ flex: 1 }} />
-          <button onClick={onClose} style={{ padding: "7px 16px", fontSize: 12, fontWeight: 700, color: "#374151", border: "1px solid #e5e7eb", borderRadius: 8, background: "#fff", cursor: "pointer", fontFamily: FONT }} onMouseEnter={e => { e.currentTarget.style.borderColor = MAROON; e.currentTarget.style.color = MAROON; }} onMouseLeave={e => { e.currentTarget.style.borderColor = "#e5e7eb"; e.currentTarget.style.color = "#374151"; }}>Cancel</button>
+          <button onClick={onClose} style={{ padding: "7px 14px", fontSize: 12, fontWeight: 700, color: "#374151", border: "1px solid #e5e7eb", borderRadius: 8, background: "#fff", cursor: "pointer", fontFamily: FONT }} onMouseEnter={e => { e.currentTarget.style.borderColor = MAROON; e.currentTarget.style.color = MAROON; }} onMouseLeave={e => { e.currentTarget.style.borderColor = "#e5e7eb"; e.currentTarget.style.color = "#374151"; }}>Cancel</button>
           <button onClick={handleSend} disabled={sending || recipients.length === 0 || !body.trim()}
-            style={{ padding: "7px 20px", fontSize: 12, fontWeight: 700, color: "#fff", background: sending || recipients.length === 0 || !body.trim() ? "#d1d5db" : MAROON, border: "none", borderRadius: 8, cursor: sending || recipients.length === 0 || !body.trim() ? "default" : "pointer", fontFamily: FONT, display: "flex", alignItems: "center", gap: 6 }}>
+            style={{ padding: "7px 18px", fontSize: 12, fontWeight: 700, color: "#fff", background: sending || recipients.length === 0 || !body.trim() ? "#d1d5db" : MAROON, border: "none", borderRadius: 8, cursor: sending || recipients.length === 0 || !body.trim() ? "default" : "pointer", fontFamily: FONT, display: "flex", alignItems: "center", gap: 6 }}>
             <Send size={12} />{sending ? "Sending…" : "Send"}
           </button>
         </div>
@@ -1112,6 +1190,57 @@ function ActionBtn({
   );
 }
 
+// ── Mobile Filter Sheet ────────────────────────────────────────────────────────
+function MobileFilterSheet({
+  open, onClose,
+  courses, selectedCtx, onSelectCtx,
+  mailbox, onMailbox,
+}: {
+  open: boolean; onClose: () => void;
+  courses: CourseOption[]; selectedCtx: CourseOption | null; onSelectCtx: (o: CourseOption | null) => void;
+  mailbox: string; onMailbox: (v: string) => void;
+}) {
+  if (!open) return null;
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 300, display: "flex", flexDirection: "column", justifyContent: "flex-end", background: "rgba(0,0,0,0.35)", backdropFilter: "blur(2px)" }} onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div style={{ background: "#fff", borderRadius: "16px 16px 0 0", padding: "20px 16px 32px", display: "flex", flexDirection: "column", gap: 16, maxHeight: "80vh", overflowY: "auto" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+          <span style={{ fontSize: 15, fontWeight: 800, color: "#111827", fontFamily: FONT }}>Filters</span>
+          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "#9ca3af", fontSize: 20, padding: 0 }}>×</button>
+        </div>
+
+        <div>
+          <p style={{ fontSize: 11, fontWeight: 800, color: MAROON, textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 8px", fontFamily: FONT }}>Mailbox</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            {MAILBOX_FILTERS.map(({ key, label, Icon: FIcon }) => (
+              <button key={key} onClick={() => { onMailbox(key); onClose(); }}
+                style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 8, border: "none", background: mailbox === key ? MAROON_BG : "none", color: mailbox === key ? MAROON : "#374151", fontWeight: mailbox === key ? 700 : 400, fontSize: 14, fontFamily: FONT, cursor: "pointer", textAlign: "left" }}>
+                <FIcon size={16} style={{ color: mailbox === key ? MAROON : "#9ca3af" }} />{label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <p style={{ fontSize: 11, fontWeight: 800, color: MAROON, textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 8px", fontFamily: FONT }}>Course</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <button onClick={() => { onSelectCtx(null); onClose(); }}
+              style={{ display: "flex", alignItems: "center", padding: "10px 12px", borderRadius: 8, border: "none", background: !selectedCtx ? MAROON_BG : "none", color: !selectedCtx ? MAROON : "#374151", fontWeight: !selectedCtx ? 700 : 400, fontSize: 14, fontFamily: FONT, cursor: "pointer", textAlign: "left" }}>
+              All Courses
+            </button>
+            {courses.filter(o => o.type === "course").map(o => (
+              <button key={o.id} onClick={() => { onSelectCtx(o); onClose(); }}
+                style={{ display: "flex", alignItems: "center", padding: "10px 12px", borderRadius: 8, border: "none", background: selectedCtx?.id === o.id ? MAROON_BG : "none", color: selectedCtx?.id === o.id ? MAROON : "#374151", fontWeight: selectedCtx?.id === o.id ? 700 : 400, fontSize: 14, fontFamily: FONT, cursor: "pointer", textAlign: "left", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {o.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Main Page ──────────────────────────────────────────────────────────────────
 export default function InboxPage({ currentUserId: propUserId }: { currentUserId?: string }) {
   const [currentUserId, setCurrentUserId] = useState(propUserId ?? "");
@@ -1123,8 +1252,8 @@ export default function InboxPage({ currentUserId: propUserId }: { currentUserId
   const [composing,     setComposing]     = useState(false);
   const [composeFor,    setComposeFor]    = useState<UserResult | undefined>(undefined);
   const [loading,       setLoading]       = useState(true);
+  const [filterSheet,   setFilterSheet]   = useState(false);
 
-  // Resolve currentUserId from session if not passed as prop
   useEffect(() => {
     if (currentUserId) return;
     fetch("/api/auth/session")
@@ -1133,7 +1262,6 @@ export default function InboxPage({ currentUserId: propUserId }: { currentUserId
       .catch(() => {});
   }, [currentUserId]);
 
-  // Load courses + groups for pickers — use shared endpoints
   useEffect(() => {
     Promise.all([
       fetch(API_COURSES).then(r => r.json()).catch(() => ({ courses: [] })),
@@ -1145,7 +1273,6 @@ export default function InboxPage({ currentUserId: propUserId }: { currentUserId
     });
   }, []);
 
-  // ── Fetch conversations ──────────────────────────────────────────────────────
   const fetchConvos = useCallback(async () => {
     setLoading(true);
     try {
@@ -1163,7 +1290,6 @@ export default function InboxPage({ currentUserId: propUserId }: { currentUserId
 
   useEffect(() => { fetchConvos(); }, [fetchConvos]);
 
-  // Poll every 30s for new messages
   useEffect(() => {
     const id = setInterval(fetchConvos, 30_000);
     return () => clearInterval(id);
@@ -1191,14 +1317,30 @@ export default function InboxPage({ currentUserId: propUserId }: { currentUserId
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", fontFamily: FONT, background: "#fff" }}>
-      <style>{`@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}`}</style>
+      <style>{RESPONSIVE_CSS}</style>
 
-      {/* Toolbar */}
-      <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderBottom: `1px solid ${MAROON_MID}`, background: "#fff", flexShrink: 0 }}>
+      {/* ── Toolbar ─────────────────────────────────────────────────────────── */}
+      <div className="ibx-toolbar" style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderBottom: `1px solid ${MAROON_MID}`, background: "#fff", flexShrink: 0 }}>
+
+        {/* Desktop: all controls inline */}
         <CourseFilter options={courses} selected={selectedCtx} onSelect={setSelectedCtx} />
         <MailboxFilter value={mailbox} onChange={v => { setMailbox(v); setActiveConvoId(null); }} />
         <AddressBookPicker courseOptions={courses} onSelectUser={handleSelectUser} />
-        <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
+
+        {/* Mobile: filter button (replaces CourseFilter+MailboxFilter pickers) */}
+        <button
+          className="ibx-mobile-filter-btn"
+          onClick={() => setFilterSheet(true)}
+          style={{ display: "none", alignItems: "center", gap: 6, height: 36, padding: "0 12px", border: `1px solid #d1d5db`, borderRadius: 6, background: "#fff", cursor: "pointer", fontFamily: FONT, fontSize: 13, fontWeight: 600, color: "#374151" }}
+        >
+          <Menu size={15} style={{ color: MAROON }} />
+          <span style={{ maxWidth: 100, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {selectedCtx ? selectedCtx.name : MAILBOX_FILTERS.find(f => f.key === mailbox)?.label ?? "Inbox"}
+          </span>
+          {unreadCount > 0 && <span style={{ background: MAROON, color: "#fff", fontSize: 10, fontWeight: 800, borderRadius: 10, padding: "1px 6px" }}>{unreadCount}</span>}
+        </button>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0, marginLeft: "auto" }}>
           <div style={{ position: "relative" }}>
             <button
               onClick={() => { setComposeFor(undefined); setComposing(true); }} title="Compose"
@@ -1221,10 +1363,20 @@ export default function InboxPage({ currentUserId: propUserId }: { currentUserId
         </div>
       </div>
 
-      {/* Body */}
+      {/* ── Body ──────────────────────────────────────────────────────────────── */}
       <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
         {/* Conversation list */}
-        <div style={{ width: hasActive ? 320 : "100%", borderRight: hasActive ? `1px solid ${MAROON_MID}` : "none", overflowY: "auto", flexShrink: 0, display: "flex", flexDirection: "column" }}>
+        <div
+          className="ibx-list"
+          style={{
+            width: hasActive ? 320 : "100%",
+            borderRight: hasActive ? `1px solid ${MAROON_MID}` : "none",
+            overflowY: "auto",
+            flexShrink: 0,
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
           {loading ? (
             <ListSkeleton />
           ) : convos.length === 0 ? (
@@ -1248,6 +1400,17 @@ export default function InboxPage({ currentUserId: propUserId }: { currentUserId
         )}
       </div>
 
+      {/* Mobile filter bottom sheet */}
+      <MobileFilterSheet
+        open={filterSheet}
+        onClose={() => setFilterSheet(false)}
+        courses={courses}
+        selectedCtx={selectedCtx}
+        onSelectCtx={v => { setSelectedCtx(v); setActiveConvoId(null); }}
+        mailbox={mailbox}
+        onMailbox={v => { setMailbox(v); setActiveConvoId(null); }}
+      />
+
       {/* Compose modal */}
       {composing && (
         <ComposeModal
@@ -1257,6 +1420,15 @@ export default function InboxPage({ currentUserId: propUserId }: { currentUserId
           onSent={fetchConvos}
         />
       )}
+
+      {/* Show mobile filter button via CSS injection */}
+      <style>{`
+        @media (max-width: 768px) {
+          .ibx-course-filter { display: none !important; }
+          .ibx-mailbox-filter { display: none !important; }
+          .ibx-mobile-filter-btn { display: flex !important; }
+        }
+      `}</style>
     </div>
   );
 }

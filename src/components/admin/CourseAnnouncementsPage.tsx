@@ -17,6 +17,8 @@ interface Announcement {
   assignTo?: string[];
   locked?: boolean;
   allowComments?: boolean;
+  availableFrom?: string | null;
+  availableUntil?: string | null;
 }
 
 interface AttachedFile {
@@ -25,11 +27,6 @@ interface AttachedFile {
   size: number;
   type: string;
   url: string;
-}
-
-interface Section {
-  id: string;
-  name: string;
 }
 
 interface Staff {
@@ -46,7 +43,7 @@ interface CurrentUser {
 type FilterType = "All" | "Unread" | "Recent Activity";
 type Mode = "list" | "create" | "detail";
 
-// ─── Build time options ───────────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 function buildTimes() {
   const list: string[] = [];
   for (let h = 0; h < 24; h++)
@@ -58,16 +55,13 @@ function buildTimes() {
 }
 const TIME_OPTIONS = buildTimes();
 
-// ─── useOnClickOutside ────────────────────────────────────────────────────────
 function useOnClickOutside<T extends HTMLElement>(
   ref: React.RefObject<T | null>,
   handler: () => void
 ) {
   useEffect(() => {
     function listener(e: MouseEvent) {
-      const el = ref.current;
-      if (!el) return;
-      if (el.contains(e.target as Node)) return;
+      if (!ref.current || ref.current.contains(e.target as Node)) return;
       handler();
     }
     document.addEventListener("mousedown", listener);
@@ -77,68 +71,38 @@ function useOnClickOutside<T extends HTMLElement>(
 
 // ─── DateTimeRow ──────────────────────────────────────────────────────────────
 function DateTimeRow({
-  label,
-  date,
-  time,
-  onDateChange,
-  onTimeChange,
-  onClear,
-  error,
+  label, date, time, onDateChange, onTimeChange, onClear, error,
 }: {
-  label: string;
-  date: string;
-  time: string;
-  onDateChange: (v: string) => void;
-  onTimeChange: (v: string) => void;
-  onClear: () => void;
-  error?: string;
+  label: string; date: string; time: string;
+  onDateChange: (v: string) => void; onTimeChange: (v: string) => void;
+  onClear: () => void; error?: string;
 }) {
   return (
     <div>
       <p className="text-xs font-medium text-gray-700 mb-1">{label}</p>
-      <div
-        className={`flex gap-0 border rounded-sm overflow-hidden ${
-          error ? "border-red-500" : "border-gray-300"
-        }`}
-      >
-        <input
-          type="date"
-          value={date}
-          onChange={(e) => onDateChange(e.target.value)}
-          className="flex-1 h-7 border-0 px-2 text-xs outline-none bg-white"
-        />
+      <div className={`flex border rounded-sm overflow-hidden ${error ? "border-red-500" : "border-gray-300"}`}>
+        <input type="date" value={date} onChange={(e) => onDateChange(e.target.value)}
+          className="flex-1 h-8 border-0 px-2 text-xs outline-none bg-white min-w-0" />
         <div className="w-px bg-gray-200 self-stretch" />
-        <select
-          value={time}
-          onChange={(e) => onTimeChange(e.target.value)}
-          className="h-7 border-0 px-2 text-xs bg-white outline-none w-28"
-        >
+        <select value={time} onChange={(e) => onTimeChange(e.target.value)}
+          className="h-8 border-0 px-2 text-xs bg-white outline-none w-28 shrink-0">
           <option value="">Time</option>
-          {TIME_OPTIONS.map((t) => (
-            <option key={t}>{t}</option>
-          ))}
+          {TIME_OPTIONS.map((t) => <option key={t}>{t}</option>)}
         </select>
       </div>
       {error && <p className="text-xs text-red-500 mt-0.5">{error}</p>}
-      <button
-        type="button"
-        onClick={onClear}
-        className="text-xs hover:underline mt-0.5"
-        style={{ color: MAROON }}
-      >
-        Clear
-      </button>
+      <button type="button" onClick={onClear} className="text-xs hover:underline mt-0.5" style={{ color: MAROON }}>Clear</button>
     </div>
   );
 }
 
-// ─── Rich Text Editor Modals (copied from Forms) ──────────────────────────────
+// ─── Rich Text Modals ─────────────────────────────────────────────────────────
 function WordCountModal({ text, chars, charsNoSpace, paragraphs, onClose }: {
   text: string; chars: number; charsNoSpace: number; paragraphs: number; onClose: () => void;
 }) {
   const words = text ? text.split(/\s+/).filter(Boolean).length : 0;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
       <div className="bg-white rounded shadow-xl w-72 border border-gray-200" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
           <span className="text-sm font-semibold text-gray-800">Word Count</span>
@@ -159,13 +123,8 @@ function WordCountModal({ text, chars, charsNoSpace, paragraphs, onClose }: {
   );
 }
 
-function FindReplaceModal({ html, onUpdate, onClose }: {
-  html: string; onUpdate: (html: string) => void; onClose: () => void;
-}) {
-  const [find, setFind] = useState("");
-  const [replace, setReplace] = useState("");
-  const [msg, setMsg] = useState("");
-
+function FindReplaceModal({ html, onUpdate, onClose }: { html: string; onUpdate: (html: string) => void; onClose: () => void; }) {
+  const [find, setFind] = useState(""); const [replace, setReplace] = useState(""); const [msg, setMsg] = useState("");
   const doReplace = (all: boolean) => {
     if (!find) return;
     const escaped = find.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -175,25 +134,18 @@ function FindReplaceModal({ html, onUpdate, onClose }: {
     onUpdate(html.replace(new RegExp(escaped, flags), replace));
     setMsg(all ? `Replaced ${count} occurrence(s).` : "Replaced first occurrence.");
   };
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
-      <div className="bg-white rounded shadow-xl w-80 border border-gray-200" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
+      <div className="bg-white rounded shadow-xl w-80 max-w-full border border-gray-200" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
           <span className="text-sm font-semibold text-gray-800">Find and Replace</span>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-700 text-xl leading-none">×</button>
         </div>
         <div className="px-4 py-4 space-y-3">
-          <div>
-            <label className="text-xs text-gray-500 block mb-1">Find</label>
-            <input autoFocus value={find} onChange={(e) => setFind(e.target.value)}
-              className="w-full h-8 border border-gray-300 rounded px-2 text-xs outline-none focus:border-[#7b1113]" placeholder="Search text..." />
-          </div>
-          <div>
-            <label className="text-xs text-gray-500 block mb-1">Replace with</label>
-            <input value={replace} onChange={(e) => setReplace(e.target.value)}
-              className="w-full h-8 border border-gray-300 rounded px-2 text-xs outline-none focus:border-[#7b1113]" placeholder="Replacement..." />
-          </div>
+          <div><label className="text-xs text-gray-500 block mb-1">Find</label>
+            <input autoFocus value={find} onChange={(e) => setFind(e.target.value)} className="w-full h-8 border border-gray-300 rounded px-2 text-xs outline-none focus:border-[#7b1113]" placeholder="Search text..." /></div>
+          <div><label className="text-xs text-gray-500 block mb-1">Replace with</label>
+            <input value={replace} onChange={(e) => setReplace(e.target.value)} className="w-full h-8 border border-gray-300 rounded px-2 text-xs outline-none focus:border-[#7b1113]" placeholder="Replacement..." /></div>
           {msg && <p className="text-xs" style={{ color: MAROON }}>{msg}</p>}
         </div>
         <div className="px-4 py-3 border-t border-gray-200 flex justify-end gap-2">
@@ -206,20 +158,17 @@ function FindReplaceModal({ html, onUpdate, onClose }: {
   );
 }
 
-function HTMLEditorModal({ html: initialHtml, onUpdate, onClose }: {
-  html: string; onUpdate: (html: string) => void; onClose: () => void;
-}) {
+function HTMLEditorModal({ html: initialHtml, onUpdate, onClose }: { html: string; onUpdate: (html: string) => void; onClose: () => void; }) {
   const [html, setHtml] = useState(initialHtml);
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
-      <div className="bg-white rounded shadow-xl w-[42rem] max-w-[95vw] border border-gray-200" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
+      <div className="bg-white rounded shadow-xl w-full max-w-xl border border-gray-200" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
           <span className="text-sm font-semibold text-gray-800">HTML Editor</span>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-700 text-xl leading-none">×</button>
         </div>
         <div className="px-4 py-4">
-          <textarea value={html} onChange={(e) => setHtml(e.target.value)}
-            className="w-full h-64 border border-gray-300 rounded px-3 py-2 text-xs font-mono outline-none focus:border-[#7b1113] resize-none" />
+          <textarea value={html} onChange={(e) => setHtml(e.target.value)} className="w-full h-56 border border-gray-300 rounded px-3 py-2 text-xs font-mono outline-none focus:border-[#7b1113] resize-none" />
         </div>
         <div className="px-4 py-3 border-t border-gray-200 flex justify-end gap-2">
           <button onClick={onClose} className="h-7 px-3 border border-gray-300 text-xs text-gray-700 rounded hover:bg-gray-50">Cancel</button>
@@ -230,12 +179,12 @@ function HTMLEditorModal({ html: initialHtml, onUpdate, onClose }: {
   );
 }
 
-function ColorPickerModal({ type, onClose }: { type: "foreColor" | "backColor"; onClose: () => void }) {
+function ColorPickerModal({ type, onClose }: { type: "foreColor" | "backColor"; onClose: () => void; }) {
   const colors = type === "foreColor"
     ? ["#000000", "#374151", "#ef4444", "#f97316", "#eab308", "#22c55e", "#3b82f6", "#8b5cf6", "#ec4899", "#ffffff"]
     : ["transparent", "#fef9c3", "#fce7f3", "#e0f2fe", "#dcfce7", "#ede9fe", "#ffedd5", "#fee2e2", "#d1fae5", "#f1f5f9"];
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
       <div className="bg-white rounded shadow-xl border border-gray-200" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
           <span className="text-sm font-semibold text-gray-800">{type === "foreColor" ? "Text Color" : "Background Color"}</span>
@@ -246,8 +195,7 @@ function ColorPickerModal({ type, onClose }: { type: "foreColor" | "backColor"; 
             <div key={c} title={c}
               style={{ background: c === "transparent" ? "linear-gradient(45deg,#ccc 25%,#fff 25%,#fff 75%,#ccc 75%)" : c }}
               className="w-8 h-8 rounded border border-gray-200 cursor-pointer hover:scale-110 transition-transform"
-              onClick={() => { document.execCommand(type, false, c === "transparent" ? undefined : c); onClose(); }}
-            />
+              onClick={() => { document.execCommand(type, false, c === "transparent" ? undefined : c); onClose(); }} />
           ))}
         </div>
       </div>
@@ -255,61 +203,49 @@ function ColorPickerModal({ type, onClose }: { type: "foreColor" | "backColor"; 
   );
 }
 
-// ─── Table Picker ─────────────────────────────────────────────────────────────
-function TablePicker({ onPick }: { onPick: (r: number, c: number) => void }) {
+function TablePicker({ onPick }: { onPick: (r: number, c: number) => void; }) {
   const [hover, setHover] = useState({ r: 0, c: 0 });
   const MAX = 8;
   return (
     <div className="p-2 min-w-40">
-      <p className="text-[10px] text-gray-500 text-center mb-1.5 h-3">
-        {hover.r > 0 ? `${hover.r} × ${hover.c} table` : "Select table size"}
-      </p>
+      <p className="text-[10px] text-gray-500 text-center mb-1.5 h-3">{hover.r > 0 ? `${hover.r} × ${hover.c} table` : "Select table size"}</p>
       <div style={{ display: "grid", gridTemplateColumns: `repeat(${MAX},18px)`, gap: 2 }}>
         {Array.from({ length: MAX * MAX }, (_, i) => {
           const r = Math.floor(i / MAX) + 1, c = (i % MAX) + 1;
-          return (
-            <div key={i} onMouseEnter={() => setHover({ r, c })} onClick={() => onPick(r, c)}
-              className={`w-4 h-4 border rounded-sm cursor-pointer transition-colors ${r <= hover.r && c <= hover.c ? "bg-blue-200 border-blue-400" : "bg-gray-50 border-gray-300"}`} />
-          );
+          return <div key={i} onMouseEnter={() => setHover({ r, c })} onClick={() => onPick(r, c)}
+            className={`w-4 h-4 border rounded-sm cursor-pointer transition-colors ${r <= hover.r && c <= hover.c ? "bg-blue-200 border-blue-400" : "bg-gray-50 border-gray-300"}`} />;
         })}
       </div>
     </div>
   );
 }
 
-// ─── Menu types & components (copied from Forms) ──────────────────────────────
-const ChevronRight = () => (
-  <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-    <polyline points="9 18 15 12 9 6" />
-  </svg>
-);
+const ChevronRight = () => (<svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="9 18 15 12 9 6" /></svg>);
 
 type MAction = { type: "action"; icon?: string; label: string; shortcut?: string; action: () => void; disabled?: boolean };
 type MSep = { type: "sep" };
 type MSub = { type: "sub"; icon?: string; label: string; children: (MAction | MSep | MSub)[]; picker?: boolean; onPick?: (r: number, c: number) => void };
 type MItem = MAction | MSep | MSub;
 
-function MenuItems({ items, onClose }: { items: MItem[]; onClose: () => void }) {
+function MenuItems({ items, onClose }: { items: MItem[]; onClose: () => void; }) {
   return (
-    <>
-      {items.map((item, i) => {
-        if (item.type === "sep") return <div key={i} className="my-1 border-t border-gray-100" />;
-        if (item.type === "sub") return <SubMenuItem key={i} item={item} onClose={onClose} />;
-        return (
-          <button key={i} type="button" disabled={item.disabled}
-            onMouseDown={e => { e.preventDefault(); if (!item.disabled) { item.action(); onClose(); } }}
-            className={`w-full text-left px-3 py-1 text-xs flex items-center gap-2 ${item.disabled ? "text-gray-300" : "text-gray-700 hover:bg-blue-600 hover:text-white"}`}>
-            <span className="w-4 text-center text-sm shrink-0">{item.icon ?? ""}</span>
-            <span className="flex-1">{item.label}</span>
-            {item.shortcut && <span className="font-mono text-[10px] opacity-60 shrink-0">{item.shortcut}</span>}
-          </button>
-        );
-      })}
-    </>
+    <>{items.map((item, i) => {
+      if (item.type === "sep") return <div key={i} className="my-1 border-t border-gray-100" />;
+      if (item.type === "sub") return <SubMenuItem key={i} item={item} onClose={onClose} />;
+      return (
+        <button key={i} type="button" disabled={item.disabled}
+          onMouseDown={e => { e.preventDefault(); if (!item.disabled) { item.action(); onClose(); } }}
+          className={`w-full text-left px-3 py-1 text-xs flex items-center gap-2 ${item.disabled ? "text-gray-300" : "text-gray-700 hover:bg-blue-600 hover:text-white"}`}>
+          <span className="w-4 text-center text-sm shrink-0">{item.icon ?? ""}</span>
+          <span className="flex-1">{item.label}</span>
+          {item.shortcut && <span className="font-mono text-[10px] opacity-60 shrink-0">{item.shortcut}</span>}
+        </button>
+      );
+    })}</>
   );
 }
 
-function SubMenuItem({ item, onClose }: { item: MSub; onClose: () => void }) {
+function SubMenuItem({ item, onClose }: { item: MSub; onClose: () => void; }) {
   const [open, setOpen] = useState(false);
   return (
     <div className="relative" onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
@@ -320,27 +256,16 @@ function SubMenuItem({ item, onClose }: { item: MSub; onClose: () => void }) {
       </button>
       {open && (
         <div className="absolute left-full top-0 bg-white border border-gray-200 shadow-lg rounded-sm min-w-44 py-1 z-[200]">
-          {item.picker
-            ? <TablePicker onPick={(r, c) => { item.onPick?.(r, c); onClose(); }} />
-            : <MenuItems items={item.children} onClose={onClose} />
-          }
+          {item.picker ? <TablePicker onPick={(r, c) => { item.onPick?.(r, c); onClose(); }} /> : <MenuItems items={item.children} onClose={onClose} />}
         </div>
       )}
     </div>
   );
 }
 
-// ─── RichTextEditor (copied exactly from Forms/Quizzes) ───────────────────────
-function RichTextEditor({
-  valueHtml,
-  onChangeHtml,
-  onChangeText,
-  placeholder = "Announcement content...",
-}: {
-  valueHtml: string;
-  onChangeHtml: (html: string) => void;
-  onChangeText: (text: string) => void;
-  placeholder?: string;
+// ─── RichTextEditor ───────────────────────────────────────────────────────────
+function RichTextEditor({ valueHtml, onChangeHtml, onChangeText, placeholder = "Announcement content..." }: {
+  valueHtml: string; onChangeHtml: (html: string) => void; onChangeText: (text: string) => void; placeholder?: string;
 }) {
   const editorRef = useRef<HTMLDivElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -382,13 +307,16 @@ function RichTextEditor({
   }, [insertHTML]);
 
   const updateWC = useCallback(() => {
-    const text = editorRef.current?.innerText.trim() ?? "";
+    const el = editorRef.current;
+    if (!el) return;
+    const text = el.innerText.trim() ?? "";
     setWordCount(text ? text.split(/\s+/).filter(Boolean).length : 0);
-    onChangeHtml(editorRef.current?.innerHTML ?? "");
+    onChangeHtml(el.innerHTML ?? "");
     onChangeText(text);
   }, [onChangeHtml, onChangeText]);
 
   const closeMenus = useCallback(() => setOpenMenu(null), []);
+
   const getEditorHtml = useCallback(() => editorRef.current?.innerHTML ?? "", []);
 
   const toggleFS = useCallback(() => {
@@ -422,12 +350,14 @@ function RichTextEditor({
   }, []);
 
   const openWordCount = useCallback(() => {
-    const t = editorRef.current?.innerText.trim() ?? "";
+    const el = editorRef.current;
+    if (!el) return;
+    const t = el.innerText.trim() ?? "";
     setWcData({
       text: t,
-      chars: editorRef.current?.innerText.length ?? 0,
+      chars: el.innerText.length ?? 0,
       charsNoSpace: t.replace(/\s/g, "").length,
-      paragraphs: editorRef.current?.querySelectorAll("p").length ?? 0,
+      paragraphs: el.querySelectorAll("p").length ?? 0,
     });
     setShowWC(true);
   }, []);
@@ -471,7 +401,7 @@ function RichTextEditor({
   }, [insertHTML]);
 
   const insertEquation = useCallback(() => {
-    const eq = prompt("Equation (LaTeX or plain):");
+    const eq = prompt("Equation:");
     if (!eq) return;
     insertHTML(`<code style="font-family:monospace;background:#f4f4f4;padding:2px 6px;border-radius:3px;">${eq}</code>`);
   }, [insertHTML]);
@@ -488,7 +418,8 @@ function RichTextEditor({
     if (n && (n as Element).nodeName === "TABLE") (n as Element).remove();
   }, []);
 
-  const menus = useMemo((): { label: string; items: MItem[] }[] => [
+  // Build menus as a stable value — no refs accessed here
+  const menus: { label: string; items: MItem[] }[] = useMemo(() => [
     {
       label: "Edit", items: [
         { type: "action", icon: "↩", label: "Undo", shortcut: "Ctrl+Z", action: () => exec("undo") },
@@ -499,34 +430,24 @@ function RichTextEditor({
         { type: "action", icon: "📋", label: "Paste", shortcut: "Ctrl+V", action: () => exec("paste") },
         { type: "sep" },
         { type: "action", icon: "⊞", label: "Select all", shortcut: "Ctrl+A", action: () => exec("selectAll") },
-      ]
+      ],
     },
     {
       label: "View", items: [
         { type: "action", icon: "⛶", label: "Fullscreen", action: toggleFS },
         { type: "action", icon: "⊠", label: "Exit Fullscreen", action: toggleFS, disabled: !isFS },
         { type: "action", icon: "</>", label: "HTML Editor", action: openHtmlEditor },
-      ]
+      ],
     },
     {
       label: "Insert", items: [
-        {
-          type: "sub", icon: "🔗", label: "Link", children: [
-            { type: "action", label: "Insert/Edit Link", action: insertLink },
-            { type: "action", label: "Remove Link", action: () => exec("unlink") },
-          ]
-        },
-        {
-          type: "sub", icon: "🖼", label: "Image", children: [
-            { type: "action", label: "Insert from URL", action: insertImageFromUrl },
-            { type: "action", label: "Upload image", action: uploadImage },
-          ]
-        },
+        { type: "sub", icon: "🔗", label: "Link", children: [{ type: "action", label: "Insert/Edit Link", action: insertLink }, { type: "action", label: "Remove Link", action: () => exec("unlink") }] },
+        { type: "sub", icon: "🖼", label: "Image", children: [{ type: "action", label: "Insert from URL", action: insertImageFromUrl }, { type: "action", label: "Upload image", action: uploadImage }] },
         { type: "sep" },
         { type: "action", icon: "∑", label: "Equation", action: insertEquation },
         { type: "sub", icon: "⊞", label: "Table", picker: true, children: [], onPick: (r: number, c: number) => insertTable(r, c) },
         { type: "action", icon: "—", label: "Horizontal line", action: insertHR },
-      ]
+      ],
     },
     {
       label: "Format", items: [
@@ -535,89 +456,45 @@ function RichTextEditor({
         { type: "action", icon: "U", label: "Underline", shortcut: "Ctrl+U", action: () => exec("underline") },
         { type: "action", icon: "S", label: "Strikethrough", action: () => exec("strikeThrough") },
         { type: "sep" },
-        {
-          type: "sub", icon: "¶", label: "Formats", children: [
-            { type: "action", label: "Heading 1", action: () => fmt("h1") },
-            { type: "action", label: "Heading 2", action: () => fmt("h2") },
-            { type: "action", label: "Heading 3", action: () => fmt("h3") },
-            { type: "action", label: "Paragraph", action: () => fmt("p") },
-          ]
-        },
-        {
-          type: "sub", icon: "≡", label: "Align", children: [
-            { type: "action", label: "Left", action: () => exec("justifyLeft") },
-            { type: "action", label: "Center", action: () => exec("justifyCenter") },
-            { type: "action", label: "Right", action: () => exec("justifyRight") },
-            { type: "action", label: "Justify", action: () => exec("justifyFull") },
-          ]
-        },
+        { type: "sub", icon: "¶", label: "Formats", children: [{ type: "action", label: "Heading 1", action: () => fmt("h1") }, { type: "action", label: "Heading 2", action: () => fmt("h2") }, { type: "action", label: "Heading 3", action: () => fmt("h3") }, { type: "action", label: "Paragraph", action: () => fmt("p") }] },
+        { type: "sub", icon: "≡", label: "Align", children: [{ type: "action", label: "Left", action: () => exec("justifyLeft") }, { type: "action", label: "Center", action: () => exec("justifyCenter") }, { type: "action", label: "Right", action: () => exec("justifyRight") }, { type: "action", label: "Justify", action: () => exec("justifyFull") }] },
         { type: "sep" },
         { type: "action", icon: "A", label: "Text color", action: () => setShowColor("foreColor") },
         { type: "action", icon: "A", label: "Background color", action: () => setShowColor("backColor") },
         { type: "sep" },
         { type: "action", icon: "✕", label: "Clear formatting", action: () => exec("removeFormat") },
-      ]
+      ],
     },
     {
       label: "Tools", items: [
         { type: "action", icon: "≡", label: "Word Count", action: openWordCount },
         { type: "action", icon: "🔍", label: "Find and Replace", shortcut: "Ctrl+F", action: openFindReplace },
-      ]
+      ],
     },
     {
       label: "Table", items: [
         { type: "sub", icon: "⊞", label: "Table", picker: true, children: [], onPick: (r: number, c: number) => insertTable(r, c) },
         { type: "sep" },
         { type: "action", icon: "✕", label: "Delete table", action: deleteTable },
-      ]
+      ],
     },
   ], [exec, fmt, insertTable, toggleFS, isFS, openHtmlEditor, insertLink, insertImageFromUrl, uploadImage, insertEquation, insertHR, deleteTable, openWordCount, openFindReplace]);
 
   const TBGroups = useMemo(() => [
     [
-      {
-        html: (
-          <select className="h-6 border border-gray-300 rounded text-xs bg-white px-1 outline-none"
-            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => fmt(e.target.value)} defaultValue="p">
-            {[["Paragraph", "p"], ["Heading 1", "h1"], ["Heading 2", "h2"], ["Heading 3", "h3"], ["Blockquote", "blockquote"], ["Code", "pre"]].map(([l, v]) =>
-              <option key={v} value={v}>{l}</option>
-            )}
-          </select>
-        ),
-        title: "Block format"
-      },
-      {
-        html: (
-          <select className="h-6 border border-gray-300 rounded text-xs bg-white px-1 outline-none"
-            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => e.target.value && exec("fontName", e.target.value)}>
-            {[["Font", ""], ["Default", "inherit"], ["Arial", "Arial"], ["Georgia", "Georgia"], ["Monospace", "monospace"]].map(([l, v]) =>
-              <option key={l} value={v}>{l}</option>
-            )}
-          </select>
-        ),
-        title: "Font"
-      },
-      {
-        html: (
-          <select className="h-6 border border-gray-300 rounded text-xs bg-white px-1 outline-none"
-            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => exec("fontSize", e.target.value)} defaultValue="3">
-            {[["8pt", "1"], ["10pt", "2"], ["12pt", "3"], ["14pt", "4"], ["18pt", "5"], ["24pt", "6"], ["36pt", "7"]].map(([l, v]) =>
-              <option key={v} value={v}>{l}</option>
-            )}
-          </select>
-        ),
-        title: "Font size"
-      },
+      { html: (<select className="h-6 border border-gray-300 rounded text-xs bg-white px-1 outline-none" onChange={(e: React.ChangeEvent<HTMLSelectElement>) => fmt(e.target.value)} defaultValue="p">{[["Paragraph", "p"], ["Heading 1", "h1"], ["Heading 2", "h2"], ["Heading 3", "h3"], ["Blockquote", "blockquote"], ["Code", "pre"]].map(([l, v]) => <option key={v} value={v}>{l}</option>)}</select>), title: "Block format" },
+      { html: (<select className="h-6 border border-gray-300 rounded text-xs bg-white px-1 outline-none" onChange={(e: React.ChangeEvent<HTMLSelectElement>) => e.target.value && exec("fontName", e.target.value)}>{[["Font", ""], ["Default", "inherit"], ["Arial", "Arial"], ["Georgia", "Georgia"], ["Monospace", "monospace"]].map(([l, v]) => <option key={l} value={v}>{l}</option>)}</select>), title: "Font" },
+      { html: (<select className="h-6 border border-gray-300 rounded text-xs bg-white px-1 outline-none" onChange={(e: React.ChangeEvent<HTMLSelectElement>) => exec("fontSize", e.target.value)} defaultValue="3">{[["8pt", "1"], ["10pt", "2"], ["12pt", "3"], ["14pt", "4"], ["18pt", "5"], ["24pt", "6"], ["36pt", "7"]].map(([l, v]) => <option key={v} value={v}>{l}</option>)}</select>), title: "Font size" },
     ],
     [
-      { label: "B", title: "Bold (Ctrl+B)", fn: () => exec("bold"), style: { fontWeight: 700 } },
-      { label: "I", title: "Italic (Ctrl+I)", fn: () => exec("italic"), style: { fontStyle: "italic" } },
+      { label: "B", title: "Bold", fn: () => exec("bold"), style: { fontWeight: 700 } },
+      { label: "I", title: "Italic", fn: () => exec("italic"), style: { fontStyle: "italic" } },
       { label: "U", title: "Underline", fn: () => exec("underline"), style: { textDecoration: "underline" } },
       { label: "S\u0336", title: "Strikethrough", fn: () => exec("strikeThrough") },
     ],
     [
       { label: "A", title: "Text color", fn: () => setShowColor("foreColor"), style: { color: "#e74c3c", fontWeight: 700 } },
-      { label: "A", title: "Background color", fn: () => setShowColor("backColor"), style: { background: "linear-gradient(#fef9c3,#fef9c3) bottom/100% 4px no-repeat" } },
+      { label: "A", title: "Bg color", fn: () => setShowColor("backColor"), style: { background: "linear-gradient(#fef9c3,#fef9c3) bottom/100% 4px no-repeat" } },
       { label: "x\u00b2", title: "Superscript", fn: () => exec("superscript") },
       { label: "x\u2082", title: "Subscript", fn: () => exec("subscript") },
     ],
@@ -629,7 +506,6 @@ function RichTextEditor({
       { label: "≡", title: "Align left", fn: () => exec("justifyLeft") },
       { label: "≡", title: "Align center", fn: () => exec("justifyCenter") },
       { label: "≡", title: "Align right", fn: () => exec("justifyRight") },
-      { label: "≡", title: "Justify", fn: () => exec("justifyFull") },
     ],
     [
       { label: "1.", title: "Ordered list", fn: () => exec("insertOrderedList") },
@@ -650,16 +526,20 @@ function RichTextEditor({
       {showFR && <FindReplaceModal html={editorHtml} onUpdate={h => { if (editorRef.current) editorRef.current.innerHTML = h; updateWC(); }} onClose={() => setShowFR(false)} />}
       {showHTML && <HTMLEditorModal html={editorHtml} onUpdate={h => { if (editorRef.current) editorRef.current.innerHTML = h; updateWC(); }} onClose={() => setShowHTML(false)} />}
       {showColor && <ColorPickerModal type={showColor} onClose={() => setShowColor(null)} />}
-
-      <div ref={wrapRef} className="border border-gray-300 rounded overflow-hidden flex flex-col" style={{ minHeight: 360 }}>
-        {/* Menubar */}
-        <div data-menubar className="flex items-center gap-0.5 px-1 py-0.5 bg-[#f7f9fb] border-b border-gray-200 select-none">
+      <div ref={wrapRef} className="border border-gray-300 rounded overflow-hidden flex flex-col" style={{ minHeight: 320 }}>
+        {/* Menu bar */}
+        <div data-menubar className="flex flex-wrap items-center gap-0.5 px-1 py-0.5 bg-[#f7f9fb] border-b border-gray-200 select-none">
           {menus.map(m => (
             <div key={m.label} className="relative">
-              <button type="button"
-                onMouseDown={e => { e.preventDefault(); setOpenMenu(openMenu === m.label ? null : m.label); }}
-                className={`px-2.5 py-0.5 text-xs rounded transition-colors ${openMenu === m.label ? "text-white" : "text-gray-700 hover:bg-gray-200"}`}
-                style={openMenu === m.label ? { background: MAROON } : {}}>
+              <button
+                type="button"
+                onMouseDown={e => {
+                  e.preventDefault();
+                  setOpenMenu(prev => prev === m.label ? null : m.label);
+                }}
+                className={`px-2 py-0.5 text-xs rounded transition-colors ${openMenu === m.label ? "text-white" : "text-gray-700 hover:bg-gray-200"}`}
+                style={openMenu === m.label ? { background: MAROON } : {}}
+              >
                 {m.label}
               </button>
               {openMenu === m.label && (
@@ -670,7 +550,6 @@ function RichTextEditor({
             </div>
           ))}
         </div>
-
         {/* Toolbar */}
         <div className="flex flex-wrap items-center gap-0.5 px-2 py-1 bg-[#f7f9fb] border-b border-gray-200">
           {TBGroups.map((group, gi) => (
@@ -690,7 +569,6 @@ function RichTextEditor({
             </div>
           ))}
         </div>
-
         {/* Editor area */}
         <div
           ref={editorRef}
@@ -701,31 +579,31 @@ function RichTextEditor({
           onMouseUp={updateWC}
           data-placeholder={placeholder}
           className="flex-1 px-4 py-3 text-sm text-gray-800 outline-none overflow-y-auto"
-          style={{ minHeight: 260, lineHeight: 1.7 }}
+          style={{ minHeight: 220, lineHeight: 1.7 }}
         />
-
         {/* Status bar */}
         <div className="flex items-center gap-4 px-3 py-1 bg-[#f7f9fb] border-t border-gray-200 text-xs text-gray-400">
           <span>{wordCount} word{wordCount !== 1 ? "s" : ""}</span>
-          <span className="ml-auto cursor-pointer hover:text-gray-600"
+          <span
+            className="ml-auto cursor-pointer hover:text-gray-600"
             onClick={() => { setEditorHtml(getEditorHtml()); setShowHTML(true); }}
-            title="HTML Editor">&lt;/&gt;</span>
+            title="HTML Editor"
+          >
+            &lt;/&gt;
+          </span>
         </div>
       </div>
-
       <style>{`
-        [data-placeholder]:empty::before { content: attr(data-placeholder); color: #9ca3af; pointer-events: none; }
-        [contenteditable] table { border-collapse: collapse; width: 100%; margin: 8px 0; }
-        [contenteditable] td, [contenteditable] th { border: 1px solid #dee2e6; padding: 6px 10px; min-width: 40px; }
-        [contenteditable] th { background: #f7f9fb; font-weight: 600; }
-        [contenteditable] blockquote { border-left: 3px solid #6baef0; padding-left: 12px; color: #555; margin: 8px 0; }
-        [contenteditable] pre { background: #f4f4f4; padding: 10px; border-radius: 4px; font-family: monospace; font-size: 13px; }
-        [contenteditable] a { color: #1764ad; text-decoration: underline; }
-        [contenteditable] img { max-width: 100%; border-radius: 4px; }
-        [contenteditable] hr { border: none; border-top: 2px solid #dee2e6; margin: 12px 0; }
-        input[type="date"]::-webkit-calendar-picker-indicator{cursor:pointer;filter:invert(13%) sepia(85%) saturate(2000%) hue-rotate(340deg) brightness(70%);opacity:0.7;}
-        input[type="date"]::-webkit-calendar-picker-indicator:hover{opacity:1;}
-        input[type="date"]{color-scheme:light;accent-color:#7b1113;}
+        [data-placeholder]:empty::before{content:attr(data-placeholder);color:#9ca3af;pointer-events:none;}
+        [contenteditable] table{border-collapse:collapse;width:100%;margin:8px 0;}
+        [contenteditable] td,[contenteditable] th{border:1px solid #dee2e6;padding:6px 10px;min-width:40px;}
+        [contenteditable] th{background:#f7f9fb;font-weight:600;}
+        [contenteditable] blockquote{border-left:3px solid #6baef0;padding-left:12px;color:#555;margin:8px 0;}
+        [contenteditable] pre{background:#f4f4f4;padding:10px;border-radius:4px;font-family:monospace;font-size:13px;}
+        [contenteditable] a{color:#1764ad;text-decoration:underline;}
+        [contenteditable] img{max-width:100%;border-radius:4px;}
+        [contenteditable] hr{border:none;border-top:2px solid #dee2e6;margin:12px 0;}
+        input[type="date"]::-webkit-calendar-picker-indicator{cursor:pointer;opacity:0.7;}
         input[type="date"]::-webkit-datetime-edit-day-field:focus,
         input[type="date"]::-webkit-datetime-edit-month-field:focus,
         input[type="date"]::-webkit-datetime-edit-year-field:focus{background-color:#7b1113;color:#fff;border-radius:2px;}
@@ -736,23 +614,19 @@ function RichTextEditor({
 
 // ─── ConfirmModal ─────────────────────────────────────────────────────────────
 function ConfirmModal({ title, message, confirmLabel = "Confirm", danger = false, onConfirm, onCancel }: {
-  title: string; message: string; confirmLabel?: string; danger?: boolean;
-  onConfirm: () => void; onCancel: () => void;
+  title: string; message: string; confirmLabel?: string; danger?: boolean; onConfirm: () => void; onCancel: () => void;
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onCancel}>
-      <div className="bg-white rounded-lg shadow-xl w-80 border border-gray-200" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onCancel}>
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-sm border border-gray-200" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
           <span className="text-sm font-semibold text-gray-800">{title}</span>
           <button onClick={onCancel} className="text-gray-400 hover:text-gray-700 text-xl leading-none">×</button>
         </div>
-        <div className="px-4 py-4">
-          <p className="text-sm text-gray-600">{message}</p>
-        </div>
+        <div className="px-4 py-4"><p className="text-sm text-gray-600">{message}</p></div>
         <div className="px-4 py-3 border-t border-gray-200 flex justify-end gap-2">
           <button onClick={onCancel} className="h-8 px-4 border border-gray-300 text-xs text-gray-700 rounded hover:bg-gray-50">Cancel</button>
-          <button onClick={onConfirm} style={{ background: danger ? "#dc2626" : MAROON }}
-            className="h-8 px-4 text-white text-xs rounded hover:opacity-90">{confirmLabel}</button>
+          <button onClick={onConfirm} style={{ background: danger ? "#dc2626" : MAROON }} className="h-8 px-4 text-white text-xs rounded hover:opacity-90">{confirmLabel}</button>
         </div>
       </div>
     </div>
@@ -760,9 +634,7 @@ function ConfirmModal({ title, message, confirmLabel = "Confirm", danger = false
 }
 
 // ─── AttachButton ─────────────────────────────────────────────────────────────
-function AttachButton({ attachments, onAdd, onRemove }: {
-  attachments: AttachedFile[]; onAdd: (files: AttachedFile[]) => void; onRemove: (id: string) => void;
-}) {
+function AttachButton({ attachments, onAdd, onRemove }: { attachments: AttachedFile[]; onAdd: (files: AttachedFile[]) => void; onRemove: (id: string) => void; }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -773,63 +645,27 @@ function AttachButton({ attachments, onAdd, onRemove }: {
     const uploaded: AttachedFile[] = [];
     for (const f of Array.from(fileList)) {
       try {
-        const formData = new FormData();
-        formData.append("file", f);
+        const formData = new FormData(); formData.append("file", f);
         const res = await fetch("/api/upload/announcement", { method: "POST", body: formData });
         if (!res.ok) throw new Error(`Failed to upload ${f.name}`);
         const { fileUrl } = await res.json();
         uploaded.push({ id: `${Date.now()}-${Math.random()}`, name: f.name, size: f.size, type: f.type, url: fileUrl });
-      } catch {
-        setUploadError(`Hindi na-upload ang "${f.name}". Subukan ulit.`);
-      }
+      } catch { setUploadError(`Hindi na-upload ang "${f.name}". Subukan ulit.`); }
     }
     if (uploaded.length > 0) onAdd(uploaded);
     setUploading(false);
   };
 
-  const formatSize = (bytes: number) => {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  };
-
-  const fileIcon = (type: string) => {
-    if (type.startsWith("image/")) return "🖼️";
-    if (type === "application/pdf") return "📄";
-    if (type.includes("word")) return "📝";
-    if (type.includes("sheet") || type.includes("excel")) return "📊";
-    if (type.includes("zip") || type.includes("compressed")) return "🗜️";
-    return "📎";
-  };
+  const formatSize = (bytes: number) => bytes < 1024 ? `${bytes} B` : bytes < 1048576 ? `${(bytes / 1024).toFixed(1)} KB` : `${(bytes / 1048576).toFixed(1)} MB`;
+  const fileIcon = (type: string) => type.startsWith("image/") ? "🖼️" : type === "application/pdf" ? "📄" : type.includes("word") ? "📝" : type.includes("sheet") || type.includes("excel") ? "📊" : type.includes("zip") ? "🗜️" : "📎";
 
   return (
     <div>
-      <input ref={inputRef} type="file" multiple className="hidden"
-        onChange={(e) => handleFiles(e.target.files)}
-        onClick={(e) => ((e.target as HTMLInputElement).value = "")} />
-      <button
-        type="button"
-        onClick={() => inputRef.current?.click()}
-        disabled={uploading}
+      <input ref={inputRef} type="file" multiple className="hidden" onChange={(e) => handleFiles(e.target.files)} onClick={(e) => ((e.target as HTMLInputElement).value = "")} />
+      <button type="button" onClick={() => inputRef.current?.click()} disabled={uploading}
         style={{ background: uploading ? "#a33a3c" : MAROON }}
-        className="inline-flex items-center gap-2 text-sm text-white font-medium rounded px-4 py-1.5 hover:opacity-90 transition-opacity disabled:opacity-60 disabled:cursor-not-allowed shadow-sm"
-      >
-        {uploading ? (
-          <>
-            <svg className="animate-spin w-4 h-4 text-white" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-            </svg>
-            Uploading...
-          </>
-        ) : (
-          <>
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-            </svg>
-            Attach
-          </>
-        )}
+        className="inline-flex items-center gap-2 text-sm text-white font-medium rounded px-4 py-1.5 hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed">
+        {uploading ? (<><svg className="animate-spin w-4 h-4 text-white" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" /></svg>Uploading...</>) : (<><svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>Attach</>)}
       </button>
       {uploadError && <p className="text-xs mt-1" style={{ color: MAROON }}>{uploadError}</p>}
       {attachments.length > 0 && (
@@ -839,7 +675,7 @@ function AttachButton({ attachments, onAdd, onRemove }: {
               <span className="text-base leading-none">{fileIcon(f.type)}</span>
               <a href={f.url} target="_blank" rel="noopener noreferrer" className="flex-1 truncate hover:underline" style={{ color: MAROON }} title={f.name}>{f.name}</a>
               <span className="text-gray-400 shrink-0">{formatSize(f.size)}</span>
-              <button type="button" onClick={() => onRemove(f.id)} className="text-gray-300 hover:text-red-500 shrink-0 leading-none" title="Remove">✕</button>
+              <button type="button" onClick={() => onRemove(f.id)} className="text-gray-300 hover:text-red-500 shrink-0">✕</button>
             </div>
           ))}
         </div>
@@ -849,9 +685,10 @@ function AttachButton({ attachments, onAdd, onRemove }: {
 }
 
 // ─── AssignToSelector ─────────────────────────────────────────────────────────
-function AssignToSelector({ selected, setSelected, sections, staff }: {
-  selected: string[]; setSelected: React.Dispatch<React.SetStateAction<string[]>>;
-  sections: Section[]; staff: Staff[];
+function AssignToSelector({ selected, setSelected, staff }: {
+  selected: string[];
+  setSelected: React.Dispatch<React.SetStateAction<string[]>>;
+  staff: Staff[];
 }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -866,22 +703,25 @@ function AssignToSelector({ selected, setSelected, sections, staff }: {
     });
   };
 
-  const filtEveryone = ["Everyone"].filter((x) => x.toLowerCase().includes(search.toLowerCase()));
-  const filtSections = sections.filter((s) => s.name.toLowerCase().includes(search.toLowerCase()));
-  const filtStaff = staff.filter((s) => s.name.toLowerCase().includes(search.toLowerCase()));
+  const filteredStaff = staff.filter((s) => s.name.toLowerCase().includes(search.toLowerCase()));
+  const showEveryone = "everyone".includes(search.toLowerCase());
 
   return (
     <div className="relative" ref={boxRef} onMouseDown={(e) => e.stopPropagation()}>
-      <p className="text-xs text-gray-500 mb-1">Choose everyone, sections, or specific users.</p>
-      <div onMouseDown={(e) => { e.stopPropagation(); setOpen((v) => !v); setSearch(""); }}
-        className="w-full min-h-[42px] border rounded-sm px-2 py-1 text-sm flex flex-wrap gap-1 items-center cursor-pointer bg-white select-none"
-        style={{ borderColor: open ? MAROON : "#d1d5db" }}>
-        {selected.length > 0 ? selected.map((a) => (
-          <span key={a} className="px-2 py-0.5 rounded text-xs flex items-center gap-1 text-white font-medium" style={{ background: MAROON }}>
-            {a}
-            <button type="button" onMouseDown={(e) => { e.stopPropagation(); toggle(a); }} className="hover:opacity-70 font-bold ml-0.5">×</button>
-          </span>
-        )) : <span className="text-gray-400 text-sm">Start typing to search...</span>}
+      <p className="text-xs text-gray-500 mb-1">Choose Everyone or specific staff members.</p>
+      <div
+        onMouseDown={(e) => { e.stopPropagation(); setOpen((v) => !v); setSearch(""); }}
+        className="w-full min-h-[42px] border rounded-sm px-2 py-1.5 text-sm flex flex-wrap gap-1 items-center cursor-pointer bg-white select-none"
+        style={{ borderColor: open ? MAROON : "#d1d5db" }}
+      >
+        {selected.length > 0
+          ? selected.map((a) => (
+            <span key={a} className="px-2 py-0.5 rounded text-xs flex items-center gap-1 text-white font-medium" style={{ background: MAROON }}>
+              {a}
+              <button type="button" onMouseDown={(e) => { e.stopPropagation(); toggle(a); }} className="hover:opacity-70 font-bold ml-0.5">×</button>
+            </span>
+          ))
+          : <span className="text-gray-400 text-sm">Select audience...</span>}
         <span className="ml-auto text-gray-400 text-[10px] pl-2 shrink-0">{open ? "▲" : "▼"}</span>
       </div>
       {open && (
@@ -890,36 +730,29 @@ function AssignToSelector({ selected, setSelected, sections, staff }: {
             <input autoFocus value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search..."
               className="w-full h-6 px-2 text-xs border border-gray-200 rounded outline-none focus:border-[#7b1113]" />
           </div>
-          {filtEveryone.map((opt) => (
-            <button key={opt} type="button" onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); toggle(opt); }}
+          {showEveryone && (
+            <button type="button" onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); toggle("Everyone"); }}
               className="w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-gray-50"
-              style={{ color: selected.includes(opt) ? MAROON : "#374151", fontWeight: selected.includes(opt) ? 600 : 400 }}>
-              {opt}{selected.includes(opt) && <span style={{ color: MAROON }}>✓</span>}
+              style={{ color: selected.includes("Everyone") ? MAROON : "#374151", fontWeight: selected.includes("Everyone") ? 600 : 400 }}>
+              <span>🌐 Everyone</span>
+              {selected.includes("Everyone") && <span style={{ color: MAROON }}>✓</span>}
             </button>
-          ))}
-          {filtSections.length > 0 && (
+          )}
+          {filteredStaff.length > 0 && (
             <>
-              <div className="px-3 pt-2 pb-1 text-[10px] font-bold text-gray-500 uppercase tracking-widest border-t border-gray-100 bg-gray-50">Sections</div>
-              {filtSections.map((s) => (
+              <div className="px-3 pt-2 pb-1 text-[10px] font-bold text-gray-500 uppercase tracking-widest border-t border-gray-100 bg-gray-50">Staff</div>
+              {filteredStaff.map((s) => (
                 <button key={s.id} type="button" onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); toggle(s.name); }}
                   className="w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-gray-50"
                   style={{ color: selected.includes(s.name) ? MAROON : "#374151", fontWeight: selected.includes(s.name) ? 600 : 400 }}>
-                  {s.name}{selected.includes(s.name) && <span style={{ color: MAROON }}>✓</span>}
+                  <span>{s.name}</span>
+                  {selected.includes(s.name) && <span style={{ color: MAROON }}>✓</span>}
                 </button>
               ))}
             </>
           )}
-          {filtStaff.length > 0 && (
-            <>
-              <div className="px-3 pt-2 pb-1 text-[10px] font-bold text-gray-500 uppercase tracking-widest border-t border-gray-100 bg-gray-50">Staff</div>
-              {filtStaff.map((s) => (
-                <button key={s.id} type="button" onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); toggle(s.name); }}
-                  className="w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-gray-50"
-                  style={{ color: selected.includes(s.name) ? MAROON : "#374151", fontWeight: selected.includes(s.name) ? 600 : 400 }}>
-                  {s.name}{selected.includes(s.name) && <span style={{ color: MAROON }}>✓</span>}
-                </button>
-              ))}
-            </>
+          {!showEveryone && filteredStaff.length === 0 && (
+            <p className="px-3 py-3 text-xs text-gray-400">No results</p>
           )}
         </div>
       )}
@@ -929,38 +762,27 @@ function AssignToSelector({ selected, setSelected, sections, staff }: {
 
 // ─── ThreeDotMenu ─────────────────────────────────────────────────────────────
 function ThreeDotMenu({ onDelete, onToggleLock, locked, allowComments, onToggleComments }: {
-  onDelete: () => void; onToggleLock: () => void; locked?: boolean;
-  allowComments?: boolean; onToggleComments: () => void;
+  onDelete: () => void; onToggleLock: () => void; locked?: boolean; allowComments?: boolean; onToggleComments: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   useOnClickOutside(ref, () => setOpen(false));
-
   return (
     <div ref={ref} style={{ position: "relative" }}>
-      <button type="button" onClick={() => setOpen((v) => !v)}
-        className="text-gray-400 hover:text-gray-700 text-xl leading-none px-1">⋮</button>
+      <button type="button" onClick={() => setOpen((v) => !v)} className="text-gray-400 hover:text-gray-700 text-xl leading-none px-1">⋮</button>
       {open && (
-        <div className="absolute right-0 top-full z-50 bg-white border border-gray-200 rounded shadow-lg min-w-[168px]" style={{ marginTop: 2 }}>
-          <button type="button" onClick={() => { onDelete(); setOpen(false); }}
-            className="w-full text-left px-4 py-2 text-sm flex items-center gap-2 hover:bg-gray-50 text-red-600">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6M14 11v6" /><path d="M9 6V4h6v2" />
-            </svg>Delete
+        <div className="absolute right-0 top-full z-50 bg-white border border-gray-200 rounded shadow-lg min-w-44" style={{ marginTop: 2 }}>
+          <button type="button" onClick={() => { onDelete(); setOpen(false); }} className="w-full text-left px-4 py-2 text-sm flex items-center gap-2 hover:bg-gray-50 text-red-600">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6M14 11v6" /><path d="M9 6V4h6v2" /></svg>Delete
           </button>
-          <button type="button" onClick={() => { onToggleLock(); setOpen(false); }}
-            className="w-full text-left px-4 py-2 text-sm flex items-center gap-2 hover:bg-gray-50 text-gray-700">
+          <button type="button" onClick={() => { onToggleLock(); setOpen(false); }} className="w-full text-left px-4 py-2 text-sm flex items-center gap-2 hover:bg-gray-50 text-gray-700">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              {locked
-                ? <><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 9.9-1" /></>
-                : <><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></>}
+              {locked ? <><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 9.9-1" /></> : <><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></>}
             </svg>{locked ? "Unlock" : "Lock"}
           </button>
-          <button type="button" onClick={() => { onToggleComments(); setOpen(false); }}
-            className="w-full text-left px-4 py-2 text-sm flex items-center gap-2 hover:bg-gray-50 text-gray-700">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-            </svg>{allowComments ? "Disallow Comments" : "Allow Comments"}
+          <button type="button" onClick={() => { onToggleComments(); setOpen(false); }} className="w-full text-left px-4 py-2 text-sm flex items-center gap-2 hover:bg-gray-50 text-gray-700">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
+            {allowComments ? "Disable Comments" : "Enable Comments"}
           </button>
         </div>
       )}
@@ -968,47 +790,31 @@ function ThreeDotMenu({ onDelete, onToggleLock, locked, allowComments, onToggleC
   );
 }
 
-// ─── Role badge ───────────────────────────────────────────────────────────────
+// ─── Badges ───────────────────────────────────────────────────────────────────
 function RoleBadge({ role }: { role?: string }) {
   if (!role) return null;
-  const normalized = role.toUpperCase();
+  const n = role.toUpperCase();
   const styles: Record<string, React.CSSProperties> = {
-    ADMIN:   { background: "#fef2f2", color: MAROON,   border: "1px solid #fecaca" },
-    HEAD:    { background: "#fff7ed", color: "#c2410c", border: "1px solid #fed7aa" },
-    STAFF:   { background: "#eff6ff", color: "#1d4ed8", border: "1px solid #bfdbfe" },
+    ADMIN: { background: "#fef2f2", color: MAROON, border: "1px solid #fecaca" },
+    STAFF: { background: "#eff6ff", color: "#1d4ed8", border: "1px solid #bfdbfe" },
     TEACHER: { background: "#f5f3ff", color: "#6d28d9", border: "1px solid #ddd6fe" },
     STUDENT: { background: "#f0fdf4", color: "#15803d", border: "1px solid #bbf7d0" },
   };
-  const style = styles[normalized] ?? { background: "#f3f4f6", color: "#374151", border: "1px solid #e5e7eb" };
   return (
-    <span style={{
-      ...style,
-      fontSize: 9, fontWeight: 800, letterSpacing: "0.12em",
-      padding: "1px 6px", borderRadius: 4, textTransform: "uppercase",
-    }}>
-      {normalized}
-    </span>
+    <span style={{ ...(styles[n] ?? { background: "#f3f4f6", color: "#374151", border: "1px solid #e5e7eb" }), fontSize: 9, fontWeight: 800, letterSpacing: "0.12em", padding: "1px 6px", borderRadius: 4, textTransform: "uppercase" }}>{n}</span>
   );
 }
 
 function AuthorAvatar({ name, size = 36 }: { name: string; size?: number }) {
-  const initial = (name ?? "?").trim().charAt(0).toUpperCase();
   return (
-    <div style={{
-      width: size, height: size, borderRadius: "50%",
-      background: MAROON, color: "#fff",
-      display: "flex", alignItems: "center", justifyContent: "center",
-      fontSize: size * 0.38, fontWeight: 700, flexShrink: 0,
-    }}>
-      {initial}
+    <div style={{ width: size, height: size, borderRadius: "50%", background: MAROON, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: size * 0.38, fontWeight: 700, flexShrink: 0 }}>
+      {(name ?? "?").trim().charAt(0).toUpperCase()}
     </div>
   );
 }
 
 // ─── AnnouncementDetailView ───────────────────────────────────────────────────
-function AnnouncementDetailView({
-  announcement, onBack, onDelete, onToggleLock, onToggleComments, courseId,
-}: {
+function AnnouncementDetailView({ announcement, onBack, onDelete, onToggleLock, onToggleComments, courseId }: {
   announcement: Announcement; onBack: () => void;
   onDelete: (id: string | number) => void;
   onToggleLock: (id: string | number) => void;
@@ -1020,24 +826,21 @@ function AnnouncementDetailView({
   const [authorRole, setAuthorRole] = useState<string | undefined>(undefined);
 
   useEffect(() => {
+    if (!courseId) return;
     fetch(`/api/admin/courses/${courseId}/people`)
       .then(r => r.json())
       .then(d => {
         const people: { name?: string; courseRole?: string }[] = d.people ?? d.enrollments ?? [];
         const found = people.find(p => p.name === announcement.author);
         if (found?.courseRole) setAuthorRole(found.courseRole);
-      })
-      .catch(() => {});
+      }).catch(() => {});
   }, [courseId, announcement.author]);
 
-  const formatAudience = (assignTo?: string[]) => {
-    if (!assignTo || assignTo.length === 0) return "Everyone";
-    return assignTo.join(", ");
-  };
+  const formatAudience = (assignTo?: string[]) => !assignTo || assignTo.length === 0 ? "Everyone" : assignTo.join(", ");
 
   const submitReply = () => {
     if (!replyText.trim()) return;
-    setReplies((prev) => [...prev, {
+    setReplies(prev => [...prev, {
       id: Date.now(), text: replyText.trim(), author: "Admin",
       date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit", hour12: true }),
     }]);
@@ -1045,16 +848,14 @@ function AnnouncementDetailView({
   };
 
   return (
-    <div className="px-8 py-6">
-      <button type="button" onClick={onBack}
-        className="inline-flex items-center gap-1 text-sm mb-4 hover:underline" style={{ color: MAROON }}>
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-        </svg>Back to Announcements
+    <div className="px-4 sm:px-8 py-4 sm:py-6">
+      <button type="button" onClick={onBack} className="inline-flex items-center gap-1 text-sm mb-4 hover:underline" style={{ color: MAROON }}>
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+        Back to Announcements
       </button>
 
       <div className="border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm">
-        <div className="flex items-start gap-3 px-6 py-4 border-b border-gray-100">
+        <div className="flex items-start gap-3 px-4 sm:px-6 py-4 border-b border-gray-100">
           <AuthorAvatar name={announcement.author} size={40} />
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
@@ -1066,10 +867,8 @@ function AnnouncementDetailView({
           </div>
           <div className="flex items-center gap-2 shrink-0">
             {announcement.locked && (
-              <span className="inline-flex items-center gap-1 text-xs text-gray-500 border border-gray-200 rounded px-2 py-1">
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                  <rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                </svg>Locked
+              <span className="hidden sm:inline-flex items-center gap-1 text-xs text-gray-500 border border-gray-200 rounded px-2 py-1">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>Locked
               </span>
             )}
             <ThreeDotMenu
@@ -1082,32 +881,44 @@ function AnnouncementDetailView({
           </div>
         </div>
 
-        <div className="px-6 py-5">
-          <h1 className="text-xl font-bold text-gray-900 mb-4">{announcement.title}</h1>
-          {announcement.bodyHtml ? (
-            <div className="prose prose-sm max-w-none text-gray-700 leading-relaxed"
-              dangerouslySetInnerHTML={{ __html: announcement.bodyHtml }} style={{ lineHeight: 1.8 }} />
-          ) : announcement.bodyText ? (
-            <p className="text-sm text-gray-700 leading-relaxed">{announcement.bodyText}</p>
-          ) : (
-            <p className="text-sm text-gray-400 italic">No content.</p>
-          )}
+        <div className="px-4 sm:px-6 py-5">
+          <h1 className="text-lg sm:text-xl font-bold text-gray-900 mb-4">{announcement.title}</h1>
+          {announcement.bodyHtml
+            ? <div className="prose prose-sm max-w-none text-gray-700 leading-relaxed" dangerouslySetInnerHTML={{ __html: announcement.bodyHtml }} style={{ lineHeight: 1.8 }} />
+            : announcement.bodyText
+              ? <p className="text-sm text-gray-700 leading-relaxed">{announcement.bodyText}</p>
+              : <p className="text-sm text-gray-400 italic">No content.</p>}
           {announcement.attachments && announcement.attachments.length > 0 && (
             <div className="mt-4 pt-4 border-t border-gray-100">
               <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Attachments</div>
               <div className="flex flex-wrap gap-2">
                 {announcement.attachments.map((f) => (
                   <a key={f.id} href={f.url} target="_blank" rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 border border-gray-200 rounded-full bg-gray-50 hover:bg-gray-100 transition-colors"
-                    style={{ color: MAROON }}>📎 {f.name}</a>
+                    className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 border border-gray-200 rounded-full bg-gray-50 hover:bg-gray-100 transition-colors" style={{ color: MAROON }}>
+                    📎 {f.name}
+                  </a>
                 ))}
               </div>
             </div>
           )}
         </div>
 
-        {announcement.allowComments !== false && !announcement.locked && (
-          <div className="px-6 py-4 border-t border-gray-100 bg-gray-50">
+        {announcement.locked ? (
+          <div className="px-4 sm:px-6 py-4 border-t border-gray-100 bg-amber-50">
+            <p className="text-sm text-amber-700 flex items-center gap-2">
+              <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
+              This announcement is locked. Replies are disabled.
+            </p>
+          </div>
+        ) : announcement.allowComments === false ? (
+          <div className="px-4 sm:px-6 py-4 border-t border-gray-100 bg-gray-50">
+            <p className="text-sm text-gray-500 flex items-center gap-2">
+              <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
+              Comments are disabled for this announcement.
+            </p>
+          </div>
+        ) : (
+          <div className="px-4 sm:px-6 py-4 border-t border-gray-100 bg-gray-50">
             <div className="text-sm font-semibold text-gray-700 mb-3">
               {replies.length > 0 ? `${replies.length} Repl${replies.length !== 1 ? "ies" : "y"}` : "Reply"}
             </div>
@@ -1133,11 +944,9 @@ function AnnouncementDetailView({
                 <textarea value={replyText} onChange={(e) => setReplyText(e.target.value)}
                   placeholder="Write a reply..." rows={3}
                   className="w-full border border-gray-300 rounded px-3 py-2 text-sm resize-none outline-none focus:border-[#7b1113] transition-colors"
-                  onKeyDown={(e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) submitReply(); }}
-                />
+                  onKeyDown={(e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) submitReply(); }} />
                 <div className="flex justify-end mt-2">
-                  <button type="button" onClick={submitReply} disabled={!replyText.trim()}
-                    style={{ background: MAROON }}
+                  <button type="button" onClick={submitReply} disabled={!replyText.trim()} style={{ background: MAROON }}
                     className="h-8 px-4 text-white text-sm rounded hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed">
                     Post Reply
                   </button>
@@ -1146,35 +955,13 @@ function AnnouncementDetailView({
             </div>
           </div>
         )}
-        {announcement.locked && (
-          <div className="px-6 py-4 border-t border-gray-100 bg-amber-50">
-            <p className="text-sm text-amber-700 flex items-center gap-2">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
-              </svg>This announcement is locked. Replies are disabled.
-            </p>
-          </div>
-        )}
-        {announcement.allowComments === false && !announcement.locked && (
-          <div className="px-6 py-4 border-t border-gray-100 bg-gray-50">
-            <p className="text-sm text-gray-500 flex items-center gap-2">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-              </svg>Comments are disabled for this announcement.
-            </p>
-          </div>
-        )}
       </div>
     </div>
   );
 }
 
 // ─── AnnouncementsListView ────────────────────────────────────────────────────
-function AnnouncementsListView({
-  filter, setFilter, search, setSearch, onAdd, onMarkAllRead, announcements,
-  onRemove, onToggleLock, onToggleComments, onView,
-  selectedIds, setSelectedIds,
-}: {
+function AnnouncementsListView({ filter, setFilter, search, setSearch, onAdd, onMarkAllRead, announcements, onRemove, onToggleLock, onToggleComments, onView, selectedIds, setSelectedIds }: {
   filter: FilterType; setFilter: (v: FilterType) => void;
   search: string; setSearch: (v: string) => void;
   onAdd: () => void; onMarkAllRead: () => void;
@@ -1192,155 +979,96 @@ function AnnouncementsListView({
 
   const hasSelection = selectedIds.size > 0;
   const allChecked = announcements.length > 0 && announcements.every((a) => selectedIds.has(a.id));
-
-  const toggleAll = () => {
-    if (allChecked) setSelectedIds(new Set());
-    else setSelectedIds(new Set(announcements.map((a) => a.id)));
-  };
-
-  const toggleOne = (id: string | number) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
-      return next;
-    });
-  };
-
-  const handleBulkDelete = () => {
-    selectedIds.forEach((id) => onRemove(id));
-    setSelectedIds(new Set());
-    setConfirmDelete(null);
-  };
-
-  const handleSingleDelete = (id: string | number) => {
-    onRemove(id);
-    setPendingDeleteId(null);
-    setConfirmDelete(null);
-  };
-
-  const handleBulkLock = () => {
-    selectedIds.forEach((id) => onToggleLock(id));
-    setSelectedIds(new Set());
-    setConfirmLock(null);
-  };
-
-  const formatAudience = (assignTo?: string[]) => {
-    if (!assignTo || assignTo.length === 0) return "Everyone";
-    return assignTo.join(", ");
-  };
+  const toggleAll = () => { if (allChecked) setSelectedIds(new Set()); else setSelectedIds(new Set(announcements.map((a) => a.id))); };
+  const toggleOne = (id: string | number) => setSelectedIds((prev) => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; });
+  const handleBulkDelete = () => { selectedIds.forEach((id) => onRemove(id)); setSelectedIds(new Set()); setConfirmDelete(null); };
+  const handleSingleDelete = (id: string | number) => { onRemove(id); setPendingDeleteId(null); setConfirmDelete(null); };
+  const handleBulkLock = () => { selectedIds.forEach((id) => onToggleLock(id)); setSelectedIds(new Set()); setConfirmLock(null); };
+  const formatAudience = (assignTo?: string[]) => !assignTo || assignTo.length === 0 ? "Everyone" : assignTo.join(", ");
 
   return (
-    <div className="px-8 py-6">
-      {confirmDelete === "bulk" && (
-        <ConfirmModal title="Delete Announcements"
-          message={`Are you sure you want to delete ${selectedIds.size} announcement${selectedIds.size !== 1 ? "s" : ""}? This cannot be undone.`}
-          confirmLabel="Delete" danger onConfirm={handleBulkDelete} onCancel={() => setConfirmDelete(null)} />
-      )}
-      {confirmDelete === "single" && pendingDeleteId !== null && (
-        <ConfirmModal title="Delete Announcement"
-          message="Are you sure you want to delete this announcement? This cannot be undone."
-          confirmLabel="Delete" danger
-          onConfirm={() => handleSingleDelete(pendingDeleteId)}
-          onCancel={() => { setConfirmDelete(null); setPendingDeleteId(null); }} />
-      )}
-      {confirmLock === "bulk" && (
-        <ConfirmModal title="Toggle Lock"
-          message={`Toggle lock state for ${selectedIds.size} selected announcement${selectedIds.size !== 1 ? "s" : ""}?`}
-          confirmLabel="Confirm" onConfirm={handleBulkLock} onCancel={() => setConfirmLock(null)} />
-      )}
+    <div className="px-3 sm:px-8 py-4 sm:py-6">
+      {confirmDelete === "bulk" && <ConfirmModal title="Delete Announcements" message={`Delete ${selectedIds.size} announcement${selectedIds.size !== 1 ? "s" : ""}? This cannot be undone.`} confirmLabel="Delete" danger onConfirm={handleBulkDelete} onCancel={() => setConfirmDelete(null)} />}
+      {confirmDelete === "single" && pendingDeleteId !== null && <ConfirmModal title="Delete Announcement" message="Delete this announcement? This cannot be undone." confirmLabel="Delete" danger onConfirm={() => handleSingleDelete(pendingDeleteId)} onCancel={() => { setConfirmDelete(null); setPendingDeleteId(null); }} />}
+      {confirmLock === "bulk" && <ConfirmModal title="Toggle Lock" message={`Toggle lock for ${selectedIds.size} announcement${selectedIds.size !== 1 ? "s" : ""}?`} confirmLabel="Confirm" onConfirm={handleBulkLock} onCancel={() => setConfirmLock(null)} />}
 
-      <div className="flex items-center gap-2 mb-4 flex-wrap">
-        <div className="relative w-48">
+      <div className="flex flex-wrap items-center gap-2 mb-4">
+        <div className="relative">
           <select value={filter} onChange={(e) => setFilter(e.target.value as FilterType)}
-            className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none appearance-none pr-8">
+            className="border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none appearance-none pr-8 h-9">
             {["All", "Unread", "Recent Activity"].map((f) => <option key={f} value={f}>{f}</option>)}
           </select>
-          <svg className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-          </svg>
+          <svg className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
         </div>
-        <div className="relative flex-1">
-          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" strokeLinecap="round" />
-          </svg>
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search..."
-            className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-[#7b1113]" />
+        <div className="relative flex-1 min-w-36">
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" strokeLinecap="round" /></svg>
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search..." className="w-full pl-9 pr-3 h-9 border border-gray-300 rounded text-sm focus:outline-none focus:border-[#7b1113]" />
         </div>
-        <button type="button" onClick={onAdd} style={{ background: MAROON }}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded text-white text-sm font-medium hover:opacity-90">
-          <span className="text-lg leading-none">＋</span> Add Announcement
+        <button type="button" onClick={onAdd} style={{ background: MAROON }} className="inline-flex items-center gap-1.5 px-3 h-9 rounded text-white text-sm font-medium hover:opacity-90 whitespace-nowrap">
+          <span className="text-lg leading-none">＋</span><span className="hidden sm:inline">Add Announcement</span><span className="sm:hidden">Add</span>
         </button>
-        <button type="button" onClick={onMarkAllRead}
-          className="inline-flex items-center gap-2 text-sm border border-gray-300 px-3 py-2 rounded hover:bg-gray-50 text-gray-700">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            <path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-          </svg>Mark All as Read
+        <button type="button" onClick={onMarkAllRead} className="inline-flex items-center gap-1.5 text-sm border border-gray-300 px-3 h-9 rounded hover:bg-gray-50 text-gray-700 whitespace-nowrap">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+          <span className="hidden sm:inline">Mark All Read</span>
         </button>
-        <button type="button" title={hasSelection ? `Delete ${selectedIds.size} selected` : "Select announcements to delete"}
-          disabled={!hasSelection} onClick={() => hasSelection && setConfirmDelete("bulk")}
+        <button type="button" disabled={!hasSelection} onClick={() => hasSelection && setConfirmDelete("bulk")}
           className="inline-flex items-center justify-center w-9 h-9 border rounded transition-colors"
           style={{ borderColor: hasSelection ? "#ef4444" : "#d1d5db", color: hasSelection ? "#ef4444" : "#d1d5db", background: "white", cursor: hasSelection ? "pointer" : "not-allowed", opacity: hasSelection ? 1 : 0.45 }}>
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6M14 11v6" /><path d="M9 6V4h6v2" />
-          </svg>
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6M14 11v6" /><path d="M9 6V4h6v2" /></svg>
         </button>
-        <button type="button" title={hasSelection ? `Toggle lock for ${selectedIds.size} selected` : "Select announcements to lock/unlock"}
-          disabled={!hasSelection} onClick={() => hasSelection && setConfirmLock("bulk")}
+        <button type="button" disabled={!hasSelection} onClick={() => hasSelection && setConfirmLock("bulk")}
           className="inline-flex items-center justify-center w-9 h-9 border rounded transition-colors"
           style={{ borderColor: hasSelection ? MAROON : "#d1d5db", color: hasSelection ? MAROON : "#d1d5db", background: "white", cursor: hasSelection ? "pointer" : "not-allowed", opacity: hasSelection ? 1 : 0.45 }}>
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            <rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
-          </svg>
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
         </button>
       </div>
 
       {hasSelection && (
         <div className="mb-2 text-xs text-gray-500 flex items-center gap-2">
-          <span className="font-medium" style={{ color: MAROON }}>{selectedIds.size}</span> announcement{selectedIds.size !== 1 ? "s" : ""} selected
+          <span className="font-medium" style={{ color: MAROON }}>{selectedIds.size}</span> selected
           <button type="button" onClick={() => setSelectedIds(new Set())} className="underline hover:no-underline text-gray-400">Clear</button>
         </div>
       )}
 
       {announcements.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-24 text-center">
-          <div className="text-2xl font-semibold text-gray-700">No Announcements</div>
-          <div className="text-sm text-gray-500 mt-1">Create announcements above</div>
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <div className="text-4xl mb-3">📢</div>
+          <div className="text-lg font-semibold text-gray-700">No Announcements</div>
+          <div className="text-sm text-gray-500 mt-1">Create an announcement above</div>
         </div>
       ) : (
         <div className="divide-y divide-gray-200 border-t border-gray-200">
           <div className="flex items-center gap-3 py-2 px-1">
-            <input type="checkbox" checked={allChecked} onChange={toggleAll}
-              className="h-4 w-4 rounded border-gray-300" style={{ accentColor: MAROON }} title="Select all" />
+            <input type="checkbox" checked={allChecked} onChange={toggleAll} className="h-4 w-4 rounded border-gray-300" style={{ accentColor: MAROON }} title="Select all" />
             <span className="text-xs text-gray-400">Select all</span>
           </div>
           {announcements.map((a) => (
-            <div key={a.id} className="flex items-start gap-3 py-4 hover:bg-gray-50 transition-colors"
+            <div key={a.id} className="flex items-start gap-3 py-4 hover:bg-gray-50 transition-colors px-1"
               style={{ background: selectedIds.has(a.id) ? "#fef9f9" : undefined }}>
               <input type="checkbox" checked={selectedIds.has(a.id)} onChange={() => toggleOne(a.id)}
                 className="mt-1 h-4 w-4 rounded border-gray-300 shrink-0" style={{ accentColor: MAROON }} />
-              <AuthorAvatar name={a.author} size={36} />
+              <AuthorAvatar name={a.author} size={34} />
               <div className="flex-1 min-w-0 cursor-pointer" onClick={() => onView(a.id)}>
                 <div className="flex items-center gap-2 flex-wrap">
                   {!a.read && <span className="w-2 h-2 rounded-full shrink-0" style={{ background: MAROON }} />}
                   <h3 className="text-sm font-semibold hover:underline" style={{ color: MAROON }}>{a.title}</h3>
                   {a.locked && (
                     <span className="inline-flex items-center gap-1 text-xs text-gray-500">
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                        <rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                      </svg>Locked
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>Locked
                     </span>
                   )}
-                  {a.allowComments === false && <span className="text-xs text-gray-500">Comments off</span>}
+                  {a.allowComments === false && <span className="text-xs text-gray-400 hidden sm:inline">Comments off</span>}
                 </div>
-                <div className="text-xs text-gray-700 mt-0.5 font-semibold">{a.author}</div>
-                <div className="text-xs text-gray-400">{formatAudience(a.assignTo)}</div>
+                <div className="text-xs text-gray-700 mt-1 font-semibold">{a.author}</div>
+                <div className="text-xs text-gray-400">To: {formatAudience(a.assignTo)}</div>
                 {a.bodyText && <p className="text-sm text-gray-600 mt-1 line-clamp-2">{a.bodyText}</p>}
                 {a.attachments && a.attachments.length > 0 && (
                   <div className="flex flex-wrap gap-2 mt-2" onClick={(e) => e.stopPropagation()}>
                     {a.attachments.map((f) => (
                       <a key={f.id} href={f.url} target="_blank" rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-xs px-2 py-0.5 border border-gray-200 rounded bg-gray-50 hover:bg-gray-100"
-                        style={{ color: MAROON }}>📎 {f.name}</a>
+                        className="inline-flex items-center gap-1 text-xs px-2 py-0.5 border border-gray-200 rounded bg-gray-50 hover:bg-gray-100" style={{ color: MAROON }}>
+                        📎 {f.name}
+                      </a>
                     ))}
                   </div>
                 )}
@@ -1352,12 +1080,13 @@ function AnnouncementsListView({
               <div className="shrink-0 flex flex-col items-end gap-1">
                 <ThreeDotMenu
                   onDelete={() => { setPendingDeleteId(a.id); setConfirmDelete("single"); }}
-                  onToggleLock={() => onToggleLock(a.id)} locked={a.locked}
-                  allowComments={a.allowComments} onToggleComments={() => onToggleComments(a.id)}
+                  onToggleLock={() => onToggleLock(a.id)}
+                  locked={a.locked}
+                  allowComments={a.allowComments}
+                  onToggleComments={() => onToggleComments(a.id)}
                 />
-                <div className="text-right text-xs text-gray-500 leading-snug">
-                  <div>Posted on:</div>
-                  <div>{a.createdAtLabel}</div>
+                <div className="text-right text-xs text-gray-500 leading-snug hidden sm:block">
+                  <div>Posted:</div><div>{a.createdAtLabel}</div>
                 </div>
               </div>
             </div>
@@ -1377,7 +1106,7 @@ export function AnnouncementCreateView(props: {
   onAddAttachments: (files: AttachedFile[]) => void;
   onRemoveAttachment: (id: string) => void;
   assignTo: string[]; setAssignTo: React.Dispatch<React.SetStateAction<string[]>>;
-  sections: Section[]; staff: Staff[];
+  staff: Staff[];
   allowComment: boolean; setAllowComment: (v: boolean) => void;
   availableFromDate: string; setAvailableFromDate: (v: string) => void;
   availableFromTime: string; setAvailableFromTime: (v: string) => void;
@@ -1388,95 +1117,82 @@ export function AnnouncementCreateView(props: {
 }) {
   const {
     isCoursePublished, topicTitle, setTopicTitle, bodyHtml, setBodyHtml, setBodyText,
-    attachments, onAddAttachments, onRemoveAttachment, assignTo, setAssignTo,
-    sections, staff, allowComment, setAllowComment,
+    attachments, onAddAttachments, onRemoveAttachment, assignTo, setAssignTo, staff,
+    allowComment, setAllowComment,
     availableFromDate, setAvailableFromDate, availableFromTime, setAvailableFromTime,
     untilDate, setUntilDate, untilTime, setUntilTime,
     onCancel, onPublish, onResetUntil, isPublishing,
   } = props;
 
   return (
-    <div className="px-8 py-6">
+    <div className="px-3 sm:px-8 py-4 sm:py-6">
       <div className="flex items-center gap-6 border-b border-gray-200 mb-6">
         <div className="text-sm font-medium py-3 border-b-2 -mb-px" style={{ borderColor: MAROON, color: "#374151" }}>Details</div>
       </div>
       {!isCoursePublished && (
         <div className="mb-4 flex items-start gap-3 border border-orange-300 bg-orange-50 text-orange-900 rounded px-4 py-3">
           <div className="mt-0.5 w-6 h-6 rounded-full bg-orange-500 text-white flex items-center justify-center font-bold text-sm shrink-0">!</div>
-          <p className="text-sm leading-relaxed">
-            Notifications will not be sent retroactively for announcements created before publishing your course or before the course start date.
-          </p>
+          <p className="text-sm leading-relaxed">Notifications will not be sent retroactively for announcements created before publishing your course or before the course start date.</p>
         </div>
       )}
+
       <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-800 mb-2">Topic Title*</label>
+        <label className="block text-sm font-medium text-gray-800 mb-2">Topic Title *</label>
         <input value={topicTitle} onChange={(e) => setTopicTitle(e.target.value)} placeholder="Topic Title"
           className="w-full h-9 border rounded-sm px-3 text-sm outline-none focus:ring-1 transition-all"
           style={{ borderColor: MAROON }} />
       </div>
-      <div className="mb-2">
-        <label className="block text-sm font-medium text-gray-800 mb-2">Topic content</label>
-        {/* ← Updated RichTextEditor with Forms/Quizzes menubar+toolbar UI */}
-        <RichTextEditor
-          valueHtml={bodyHtml}
-          onChangeHtml={setBodyHtml}
-          onChangeText={setBodyText}
-          placeholder="Announcement content..."
-        />
+
+      <div className="mb-4">
+        <label className="block text-sm font-medium text-gray-800 mb-2">Topic Content</label>
+        <RichTextEditor valueHtml={bodyHtml} onChangeHtml={setBodyHtml} onChangeText={setBodyText} />
       </div>
-      <div className="mt-4 mb-6">
+
+      <div className="mb-6">
         <AttachButton attachments={attachments} onAdd={onAddAttachments} onRemove={onRemoveAttachment} />
       </div>
+
       <div className="mb-6">
-        <label className="block text-sm font-medium text-gray-800 mb-2">Assign to</label>
-        <AssignToSelector selected={assignTo} setSelected={setAssignTo} sections={sections} staff={staff} />
+        <label className="block text-sm font-medium text-gray-800 mb-2">Assign To</label>
+        <AssignToSelector selected={assignTo} setSelected={setAssignTo} staff={staff} />
       </div>
 
       <div className="mb-6">
         <div className="text-sm font-medium text-gray-800 mb-3">Options</div>
-        <div className="space-y-2 text-sm text-gray-700">
-          <label className="flex items-center gap-2 cursor-pointer select-none">
-            <input type="checkbox" checked={allowComment} onChange={(e) => setAllowComment(e.target.checked)}
-              className="h-4 w-4 rounded" style={{ accentColor: MAROON }} />
-            Allow Participants to Comment
-          </label>
+        <label className="flex items-center gap-2 cursor-pointer select-none text-sm text-gray-700">
+          <input type="checkbox" checked={allowComment} onChange={(e) => setAllowComment(e.target.checked)}
+            className="h-4 w-4 rounded" style={{ accentColor: MAROON }} />
+          Allow Participants to Comment
+        </label>
+      </div>
+
+      {/* Scheduling — no description text */}
+      <div className="mb-8 border border-gray-200 rounded-lg p-4 bg-gray-50">
+        <div className="text-sm font-medium text-gray-800 mb-4">Scheduling</div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div>
+            <div className="text-sm font-medium text-gray-800 mb-2">Available From</div>
+            <DateTimeRow label="Date & Time" date={availableFromDate} time={availableFromTime}
+              onDateChange={setAvailableFromDate} onTimeChange={setAvailableFromTime}
+              onClear={() => { setAvailableFromDate(""); setAvailableFromTime(""); }} />
+          </div>
+          <div>
+            <div className="text-sm font-medium text-gray-800 mb-2">Until</div>
+            <DateTimeRow label="Date & Time" date={untilDate} time={untilTime}
+              onDateChange={setUntilDate} onTimeChange={setUntilTime} onClear={onResetUntil} />
+          </div>
         </div>
       </div>
 
-      <div className="mb-8 grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div>
-          <div className="text-sm font-medium text-gray-800 mb-3">Available from</div>
-          <DateTimeRow
-            label="Date & Time"
-            date={availableFromDate}
-            time={availableFromTime}
-            onDateChange={setAvailableFromDate}
-            onTimeChange={setAvailableFromTime}
-            onClear={() => { setAvailableFromDate(""); setAvailableFromTime(""); }}
-          />
-        </div>
-        <div>
-          <div className="text-sm font-medium text-gray-800 mb-3">Until</div>
-          <DateTimeRow
-            label="Date & Time"
-            date={untilDate}
-            time={untilTime}
-            onDateChange={setUntilDate}
-            onTimeChange={setUntilTime}
-            onClear={onResetUntil}
-          />
-        </div>
-      </div>
-
-      <div className="flex justify-end gap-3">
+      <div className="flex flex-col sm:flex-row justify-end gap-3">
         <button onClick={onCancel} disabled={isPublishing} type="button"
-          className="text-sm border border-gray-300 rounded px-4 py-2 hover:bg-gray-50 disabled:opacity-60">Cancel</button>
+          className="text-sm border border-gray-300 rounded px-4 py-2 hover:bg-gray-50 disabled:opacity-60 order-2 sm:order-1">Cancel</button>
         <button onClick={onPublish} disabled={isPublishing || !topicTitle.trim()} type="button"
           style={{ background: MAROON }}
-          className="text-sm text-white rounded px-5 py-2 hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center gap-2">
-          {isPublishing ? (<><svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" /></svg>Publishing...</>) : "Publish"}
+          className="text-sm text-white rounded px-5 py-2 hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2 order-1 sm:order-2">
+          {isPublishing
+            ? (<><svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" /></svg>Publishing...</>)
+            : "Publish"}
         </button>
       </div>
     </div>
@@ -1494,12 +1210,10 @@ export default function CourseAnnouncementsPage({
   const [mode, setMode] = useState<Mode>("list");
   const [isPublishing, setIsPublishing] = useState(false);
   const [viewingId, setViewingId] = useState<string | number | null>(null);
-
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [filter, setFilter] = useState<FilterType>("All");
   const [search, setSearch] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<string | number>>(new Set());
-
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
 
   // Form state
@@ -1508,7 +1222,6 @@ export default function CourseAnnouncementsPage({
   const [bodyText, setBodyText] = useState("");
   const [attachments, setAttachments] = useState<AttachedFile[]>([]);
   const [assignTo, setAssignTo] = useState<string[]>(["Everyone"]);
-  const [sections, setSections] = useState<Section[]>([]);
   const [staff, setStaff] = useState<Staff[]>([]);
   const [allowComment, setAllowComment] = useState(true);
   const [availableFromDate, setAvailableFromDate] = useState("");
@@ -1519,68 +1232,59 @@ export default function CourseAnnouncementsPage({
   useEffect(() => {
     if (!courseId) return;
 
-    fetch("/api/profile")
-      .then(r => r.json())
-      .then(d => {
-        if (d.user) {
-          setCurrentUser({ id: d.user.id, name: d.user.name, courseRole: undefined });
-          fetch(`/api/admin/courses/${courseId}/people`)
-            .then(r2 => r2.json())
-            .then(d2 => {
-              const people: { id?: string; userId?: string; name?: string; courseRole?: string }[] = d2.people ?? d2.enrollments ?? [];
-              const found = people.find(p => (p.id === d.user.id || p.userId === d.user.id));
-              if (found?.courseRole) {
-                setCurrentUser(prev => prev ? { ...prev, courseRole: found.courseRole } : prev);
-              }
-            })
-            .catch(() => {});
-        }
-      })
-      .catch(() => {});
+    fetch("/api/profile").then(r => r.json()).then(d => {
+      if (d.user) {
+        setCurrentUser({ id: d.user.id, name: d.user.name });
+        fetch(`/api/admin/courses/${courseId}/people`).then(r2 => r2.json()).then(d2 => {
+          const people: { id?: string; userId?: string; courseRole?: string }[] = d2.people ?? d2.enrollments ?? [];
+          const found = people.find(p => p.id === d.user.id || p.userId === d.user.id);
+          if (found?.courseRole) setCurrentUser(prev => prev ? { ...prev, courseRole: found.courseRole } : prev);
+        }).catch(() => {});
+      }
+    }).catch(() => {});
 
     fetch(`/api/admin/courses/${courseId}/announcements`)
-      .then(async (r) => {
-        if (!r.ok) throw new Error("Failed to load announcements");
-        return r.json();
+      .then(async r => { if (!r.ok) throw new Error(); return r.json(); })
+      .then(d => {
+        setAnnouncements((d.announcements ?? []).map((a: {
+          id: string; title: string; bodyText: string; bodyHtml: string; author: string;
+          createdAt: string; assignTo: string[];
+          attachments: { id: string; name: string; size: number; mimeType: string; url: string }[];
+          locked?: boolean; allowComments?: boolean;
+          availableFrom?: string | null; availableUntil?: string | null;
+        }): Announcement => ({
+          id: a.id, title: a.title, bodyText: a.bodyText, bodyHtml: a.bodyHtml, author: a.author,
+          createdAtIso: a.createdAt,
+          createdAtLabel: new Date(a.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit", hour12: true }),
+          read: false,
+          attachments: (a.attachments ?? []).map(f => ({ id: f.id, name: f.name, size: f.size, type: f.mimeType, url: f.url })),
+          assignTo: a.assignTo ?? ["Everyone"],
+          locked: a.locked ?? false,
+          allowComments: a.allowComments ?? true,
+          availableFrom: a.availableFrom ?? null,
+          availableUntil: a.availableUntil ?? null,
+        })));
       })
-      .then((d) => {
-        setAnnouncements(
-          (d.announcements ?? []).map((a: {
-            id: string; title: string; bodyText: string; bodyHtml: string;
-            author: string; createdAt: string; assignTo: string[];
-            attachments: { id: string; name: string; size: number; mimeType: string; url: string }[];
-            locked?: boolean; allowComments?: boolean;
-          }): Announcement => ({
-            id: a.id, title: a.title, bodyText: a.bodyText, bodyHtml: a.bodyHtml,
-            author: a.author,
-            createdAtIso: a.createdAt,
-            createdAtLabel: new Date(a.createdAt).toLocaleDateString("en-US", {
-              month: "short", day: "numeric", year: "numeric",
-              hour: "numeric", minute: "2-digit", hour12: true,
-            }),
-            read: false,
-            attachments: (a.attachments ?? []).map((f): AttachedFile => ({
-              id: f.id, name: f.name, size: f.size, type: f.mimeType, url: f.url,
-            })),
-            assignTo: a.assignTo ?? ["Everyone"],
-            locked: a.locked ?? false,
-            allowComments: a.allowComments ?? true,
-          }))
-        );
-      })
-      .catch((error) => { console.error(error); setAnnouncements([]); });
+      .catch(() => setAnnouncements([]));
 
-    fetch(`/api/admin/courses/${courseId}/sections`)
-      .then((r) => r.json())
-      .then((d) => { setSections(d.sections ?? []); setStaff(d.staff ?? []); })
-      .catch(() => { setSections([]); setStaff([]); });
+    fetch(`/api/admin/courses/${courseId}/people`)
+      .then(r => r.json())
+      .then(d => {
+        const people: { id?: string; userId?: string; name?: string; courseRole?: string }[] = d.people ?? d.enrollments ?? [];
+        const staffList = people
+          .filter(p => p.courseRole && p.courseRole.toLowerCase() === "staff")
+          .map(p => ({ id: p.userId ?? p.id ?? "", name: p.name ?? "" }))
+          .filter(p => p.id && p.name);
+        setStaff(staffList);
+      })
+      .catch(() => setStaff([]));
   }, [courseId]);
 
-  const onMarkAllRead = () => setAnnouncements((prev) => prev.map((a) => ({ ...a, read: true })));
+  const onMarkAllRead = () => setAnnouncements(prev => prev.map(a => ({ ...a, read: true })));
 
   const onRemove = async (id: string | number) => {
-    setAnnouncements((prev) => prev.filter((x) => x.id !== id));
-    setSelectedIds((prev) => { const next = new Set(prev); next.delete(id); return next; });
+    setAnnouncements(prev => prev.filter(x => x.id !== id));
+    setSelectedIds(prev => { const next = new Set(prev); next.delete(id); return next; });
     if (!courseId) return;
     try {
       const res = await fetch(`/api/admin/courses/${courseId}/announcements/${id}`, { method: "DELETE" });
@@ -1589,23 +1293,22 @@ export default function CourseAnnouncementsPage({
   };
 
   const onToggleLock = (id: string | number) =>
-    setAnnouncements((prev) => prev.map((a) => a.id === id ? { ...a, locked: !a.locked } : a));
+    setAnnouncements(prev => prev.map(a => a.id === id ? { ...a, locked: !a.locked } : a));
 
   const onToggleComments = (id: string | number) =>
-    setAnnouncements((prev) => prev.map((a) => a.id === id ? { ...a, allowComments: !a.allowComments } : a));
+    setAnnouncements(prev => prev.map(a => a.id === id ? { ...a, allowComments: !a.allowComments } : a));
 
-  const onAddAttachments = (files: AttachedFile[]) => setAttachments((prev) => [...prev, ...files]);
-  const onRemoveAttachment = (id: string) => setAttachments((prev) => prev.filter((f) => f.id !== id));
+  const onAddAttachments = (files: AttachedFile[]) => setAttachments(prev => [...prev, ...files]);
+  const onRemoveAttachment = (id: string) => setAttachments(prev => prev.filter(f => f.id !== id));
 
   const filteredAnnouncements = useMemo(() => {
     const q = search.trim().toLowerCase();
     const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
     const latest = announcements.reduce<number | null>((acc, a) => {
       const t = Date.parse(a.createdAtIso);
-      if (Number.isNaN(t)) return acc;
-      return acc === null ? t : Math.max(acc, t);
+      return isNaN(t) ? acc : acc === null ? t : Math.max(acc, t);
     }, null);
-    return announcements.filter((a) => {
+    return announcements.filter(a => {
       const matchSearch = !q || a.title.toLowerCase().includes(q) || (a.bodyText ?? "").toLowerCase().includes(q);
       const matchFilter =
         filter === "All" ||
@@ -1624,23 +1327,21 @@ export default function CourseAnnouncementsPage({
   const onPublish = async () => {
     if (!topicTitle.trim()) return;
     const authorName = currentUser?.name ?? "Admin";
+    const availableFromIso = availableFromDate ? `${availableFromDate}T${availableFromTime || "00:00"}` : null;
+    const availableUntilIso = untilDate ? `${untilDate}T${untilTime || "00:00"}` : null;
 
     if (!courseId) {
       const now = new Date();
-      const newAnnouncement: Announcement = {
-        id: Date.now(), title: topicTitle.trim(), bodyText: bodyText.trim(), bodyHtml,
-        author: authorName,
+      setAnnouncements(prev => [{
+        id: Date.now(), title: topicTitle.trim(), bodyText: bodyText.trim(), bodyHtml, author: authorName,
         createdAtIso: now.toISOString(),
-        createdAtLabel: now.toLocaleDateString("en-US", {
-          month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit", hour12: true,
-        }),
+        createdAtLabel: now.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit", hour12: true }),
         read: false, attachments: [...attachments],
         assignTo: assignTo.length ? assignTo : ["Everyone"],
         locked: false, allowComments: allowComment,
-      };
-      setAnnouncements((prev) => [newAnnouncement, ...prev]);
-      resetCreateForm(); setMode("list");
-      return;
+        availableFrom: availableFromIso, availableUntil: availableUntilIso,
+      }, ...prev]);
+      resetCreateForm(); setMode("list"); return;
     }
 
     setIsPublishing(true);
@@ -1649,31 +1350,26 @@ export default function CourseAnnouncementsPage({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          title: topicTitle.trim(), bodyText: bodyText.trim(), bodyHtml,
-          author: authorName,
+          title: topicTitle.trim(), bodyText: bodyText.trim(), bodyHtml, author: authorName,
           assignTo: assignTo.length ? assignTo : ["Everyone"],
           allowComment,
-          availableFrom: availableFromDate ? `${availableFromDate}T${availableFromTime || "00:00"}` : null,
-          availableUntil: untilDate ? `${untilDate}T${untilTime || "00:00"}` : null,
-          attachments: attachments.map((f: AttachedFile) => ({ name: f.name, url: f.url, size: f.size, mimeType: f.type })),
+          availableFrom: availableFromIso,
+          availableUntil: availableUntilIso,
+          attachments: attachments.map(f => ({ name: f.name, url: f.url, size: f.size, mimeType: f.type })),
         }),
       });
       if (!res.ok) throw new Error("Failed to publish");
       const { announcement } = await res.json();
-      setAnnouncements((prev) => [{
-        id: announcement.id, title: announcement.title,
-        bodyText: announcement.bodyText, bodyHtml: announcement.bodyHtml,
-        author: announcement.author,
-        createdAtIso: announcement.createdAt,
-        createdAtLabel: new Date(announcement.createdAt).toLocaleDateString("en-US", {
-          month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit", hour12: true,
-        }),
+      setAnnouncements(prev => [{
+        id: announcement.id, title: announcement.title, bodyText: announcement.bodyText, bodyHtml: announcement.bodyHtml,
+        author: announcement.author, createdAtIso: announcement.createdAt,
+        createdAtLabel: new Date(announcement.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit", hour12: true }),
         read: false,
-        attachments: (announcement.attachments ?? []).map((a: { id: string; name: string; size: number; mimeType: string; url: string }): AttachedFile => ({
-          id: a.id, name: a.name, size: a.size, type: a.mimeType, url: a.url,
-        })),
+        attachments: (announcement.attachments ?? []).map((a: { id: string; name: string; size: number; mimeType: string; url: string }) => ({ id: a.id, name: a.name, size: a.size, type: a.mimeType, url: a.url })),
         assignTo: announcement.assignTo,
         locked: false, allowComments: allowComment,
+        availableFrom: announcement.availableFrom ?? null,
+        availableUntil: announcement.availableUntil ?? null,
       }, ...prev]);
       resetCreateForm(); setMode("list");
     } catch (err) {
@@ -1686,14 +1382,12 @@ export default function CourseAnnouncementsPage({
 
   const onCancel = () => { resetCreateForm(); setMode("list"); };
   const onResetUntil = () => { setUntilDate(""); setUntilTime(""); };
-
   const onView = (id: string | number) => {
-    setViewingId(id);
-    setMode("detail");
-    setAnnouncements((prev) => prev.map((a) => a.id === id ? { ...a, read: true } : a));
+    setViewingId(id); setMode("detail");
+    setAnnouncements(prev => prev.map(a => a.id === id ? { ...a, read: true } : a));
   };
 
-  const viewingAnnouncement = announcements.find((a) => a.id === viewingId) ?? null;
+  const viewingAnnouncement = announcements.find(a => a.id === viewingId) ?? null;
 
   if (mode === "detail" && viewingAnnouncement) {
     return (
@@ -1715,7 +1409,7 @@ export default function CourseAnnouncementsPage({
         topicTitle={topicTitle} setTopicTitle={setTopicTitle}
         bodyHtml={bodyHtml} setBodyHtml={setBodyHtml} setBodyText={setBodyText}
         attachments={attachments} onAddAttachments={onAddAttachments} onRemoveAttachment={onRemoveAttachment}
-        assignTo={assignTo} setAssignTo={setAssignTo} sections={sections} staff={staff}
+        assignTo={assignTo} setAssignTo={setAssignTo} staff={staff}
         allowComment={allowComment} setAllowComment={setAllowComment}
         availableFromDate={availableFromDate} setAvailableFromDate={setAvailableFromDate}
         availableFromTime={availableFromTime} setAvailableFromTime={setAvailableFromTime}

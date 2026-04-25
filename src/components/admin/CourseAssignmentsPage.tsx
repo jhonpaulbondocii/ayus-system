@@ -29,9 +29,6 @@ interface Assignment {
   assignmentGroup: string;
 }
 
-interface Section { id: string; name: string; }
-interface Staff   { id: string; name: string; }
-
 interface Props {
   courseId: string;
 }
@@ -77,7 +74,12 @@ function AssignmentIcon() {
 // ── localStorage helpers ──────────────────────────────────────────────────────
 function groupsStorageKey(courseId: string) { return `assignment_groups_${courseId}`; }
 function loadPersistedGroups(courseId: string): string[] {
-  try { const raw = localStorage.getItem(groupsStorageKey(courseId)); if (!raw) return []; const p = JSON.parse(raw); return Array.isArray(p) ? p : []; } catch { return []; }
+  try {
+    const raw = localStorage.getItem(groupsStorageKey(courseId));
+    if (!raw) return [];
+    const p = JSON.parse(raw);
+    return Array.isArray(p) ? p : [];
+  } catch { return []; }
 }
 function persistGroups(courseId: string, groups: string[]) {
   try { localStorage.setItem(groupsStorageKey(courseId), JSON.stringify(groups)); } catch { }
@@ -100,6 +102,9 @@ function QuickEditModal({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // suppress unused warning - courseId passed for potential future use
+  void courseId;
+
   const dateLabel = fmtDateLabel(dueDate, dueTime);
 
   const handleSave = async () => {
@@ -116,38 +121,49 @@ function QuickEditModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30" onClick={onClose}>
-      <div className="bg-white rounded-lg shadow-2xl w-[480px] border border-gray-200 overflow-hidden" onClick={(e) => e.stopPropagation()} style={{ fontFamily: FONT }}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4" onClick={onClose}>
+      <div className="bg-white rounded-lg shadow-2xl w-full max-w-[480px] border border-gray-200 overflow-hidden" onClick={(e) => e.stopPropagation()} style={{ fontFamily: FONT }}>
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
           <span className="text-sm font-bold text-gray-800">Edit Assignment</span>
           <button onClick={onClose} className="w-7 h-7 flex items-center justify-center border border-gray-300 rounded text-gray-500 hover:bg-gray-100"><X size={14} /></button>
         </div>
-        <div className="px-6 py-5 space-y-4">
+        <div className="px-5 sm:px-6 py-5 space-y-4">
           <div>
             <label className="text-xs font-medium text-gray-700 block mb-1">Name <span className="text-red-500">*</span></label>
-            <input autoFocus value={name} onChange={(e) => setName(e.target.value)}
+            <input
+              autoFocus
+              value={name}
+              onChange={(e) => setName(e.target.value)}
               className="w-full h-9 border border-gray-300 rounded px-3 text-sm outline-none transition-all"
               onFocus={(e) => (e.currentTarget.style.borderColor = MAROON)}
-              onBlur={(e) => (e.currentTarget.style.borderColor = "#d1d5db")} />
+              onBlur={(e) => (e.currentTarget.style.borderColor = "#d1d5db")}
+            />
           </div>
           <div>
             <label className="text-xs font-medium text-gray-700 block mb-2">Due at</label>
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <div className="flex-1">
                 <label className="text-[10px] text-gray-500 block mb-0.5">Date</label>
-                <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)}
+                <input
+                  type="date"
+                  value={dueDate}
+                  onChange={(e) => setDueDate(e.target.value)}
                   className="w-full h-9 border border-gray-300 rounded px-3 text-xs outline-none transition-all"
                   onFocus={(e) => (e.currentTarget.style.borderColor = MAROON)}
-                  onBlur={(e) => (e.currentTarget.style.borderColor = "#d1d5db")} />
+                  onBlur={(e) => (e.currentTarget.style.borderColor = "#d1d5db")}
+                />
               </div>
               <div>
                 <label className="text-[10px] text-gray-500 block mb-0.5">Time</label>
                 <div className="relative">
-                  <select value={dueTime} onChange={(e) => setDueTime(e.target.value)}
-                    className="h-9 border border-gray-300 rounded px-3 text-xs bg-white outline-none appearance-none pr-7 transition-all"
+                  <select
+                    value={dueTime}
+                    onChange={(e) => setDueTime(e.target.value)}
+                    className="h-9 border border-gray-300 rounded px-3 text-xs bg-white outline-none appearance-none pr-7 transition-all w-full sm:w-auto"
                     style={{ minWidth: 120 }}
                     onFocus={(e) => (e.currentTarget.style.borderColor = MAROON)}
-                    onBlur={(e) => (e.currentTarget.style.borderColor = "#d1d5db")}>
+                    onBlur={(e) => (e.currentTarget.style.borderColor = "#d1d5db")}
+                  >
                     {TIME_OPTIONS.map((t) => <option key={t}>{t}</option>)}
                   </select>
                   <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
@@ -158,18 +174,28 @@ function QuickEditModal({
           </div>
           <div>
             <label className="text-xs font-medium text-gray-700 block mb-1">Points</label>
-            <input type="number" min={0} value={points} onChange={(e) => setPoints(e.target.value)}
+            <input
+              type="number"
+              min={0}
+              value={points}
+              onChange={(e) => setPoints(e.target.value)}
               className="w-32 h-9 border border-gray-300 rounded px-3 text-sm outline-none transition-all"
               onFocus={(e) => (e.currentTarget.style.borderColor = MAROON)}
-              onBlur={(e) => (e.currentTarget.style.borderColor = "#d1d5db")} />
+              onBlur={(e) => (e.currentTarget.style.borderColor = "#d1d5db")}
+            />
           </div>
           {error && <p className="text-xs text-red-600">⚠ {error}</p>}
         </div>
-        <div className="flex items-center justify-between px-5 py-3.5 bg-gray-50 border-t border-gray-200">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 px-5 py-3.5 bg-gray-50 border-t border-gray-200">
           <button onClick={onMoreOptions} className="h-8 px-4 border border-gray-300 text-xs text-gray-600 rounded hover:bg-white transition-all">More Options</button>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 justify-end">
             <button onClick={onClose} disabled={saving} className="h-8 px-4 border border-gray-300 text-xs text-gray-600 rounded hover:bg-gray-100 disabled:opacity-50">Cancel</button>
-            <button onClick={handleSave} disabled={saving || !name.trim()} className="h-8 px-5 text-xs text-white rounded hover:opacity-90 disabled:opacity-50" style={{ background: MAROON }}>
+            <button
+              onClick={handleSave}
+              disabled={saving || !name.trim()}
+              className="h-8 px-5 text-xs text-white rounded hover:opacity-90 disabled:opacity-50"
+              style={{ background: MAROON }}
+            >
               {saving ? "Saving..." : "Save"}
             </button>
           </div>
@@ -193,12 +219,10 @@ interface AssignRow {
 }
 
 function AssignToPanel({
-  assignment, courseId, sections, staff, onClose, onSave,
+  assignment, courseId, onClose, onSave,
 }: {
   assignment: Assignment;
   courseId: string;
-  sections: Section[];
-  staff: Staff[];
   onClose: () => void;
   onSave: () => void;
 }) {
@@ -218,7 +242,9 @@ function AssignToPanel({
 
   useEffect(() => {
     if (openDropId === null) return;
-    const h = (e: MouseEvent) => { if (!(e.target as HTMLElement).closest("[data-assigndrop]")) setOpenDropId(null); };
+    const h = (e: MouseEvent) => {
+      if (!(e.target as HTMLElement).closest("[data-assigndrop]")) setOpenDropId(null);
+    };
     document.addEventListener("mousedown", h);
     return () => document.removeEventListener("mousedown", h);
   }, [openDropId]);
@@ -226,11 +252,17 @@ function AssignToPanel({
   const updateRow = (id: number, field: keyof AssignRow, value: string | string[]) =>
     setRows(p => p.map(r => r.id === id ? { ...r, [field]: value } : r));
 
+  // When toggling a specific person, remove "Everyone" first
   const toggleAssignee = (rowId: number, name: string) =>
     setRows(p => p.map(r => {
       if (r.id !== rowId) return r;
-      const has = r.assignees.includes(name);
-      return { ...r, assignees: has ? r.assignees.filter(a => a !== name) : [...r.assignees, name] };
+      if (name === "Everyone") {
+        return { ...r, assignees: ["Everyone"] };
+      }
+      const withoutEveryone = r.assignees.filter(a => a !== "Everyone");
+      const has = withoutEveryone.includes(name);
+      const next = has ? withoutEveryone.filter(a => a !== name) : [...withoutEveryone, name];
+      return { ...r, assignees: next.length ? next : ["Everyone"] };
     }));
 
   const addRow = () => setRows(p => [...p, {
@@ -278,15 +310,22 @@ function AssignToPanel({
           <div>
             <p className="text-[10px] text-gray-500 mb-0.5">Date</p>
             <div className="relative flex items-center border border-gray-300 rounded h-8 px-2 bg-white">
-              <input type="date" value={dateVal} onChange={(e) => onDateChange(e.target.value)}
-                className="flex-1 text-xs outline-none bg-transparent" />
+              <input
+                type="date"
+                value={dateVal}
+                onChange={(e) => onDateChange(e.target.value)}
+                className="flex-1 text-xs outline-none bg-transparent"
+              />
             </div>
           </div>
           <div>
             <p className="text-[10px] text-gray-500 mb-0.5">Time</p>
             <div className="relative">
-              <select value={timeVal} onChange={(e) => onTimeChange(e.target.value)}
-                className="w-full h-8 border border-gray-300 rounded px-2 text-xs bg-white outline-none appearance-none pr-6">
+              <select
+                value={timeVal}
+                onChange={(e) => onTimeChange(e.target.value)}
+                className="w-full h-8 border border-gray-300 rounded px-2 text-xs bg-white outline-none appearance-none pr-6"
+              >
                 {TIME_OPTIONS.map(t => <option key={t}>{t}</option>)}
               </select>
               <ChevronDown size={11} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
@@ -303,8 +342,8 @@ function AssignToPanel({
     <>
       <div className="fixed inset-0 z-40 bg-black/20" onClick={onClose} />
       <div
-        className="fixed top-0 right-0 h-full z-50 bg-white shadow-2xl border-l border-gray-200 flex flex-col"
-        style={{ width: 380, fontFamily: FONT }}
+        className="fixed top-0 right-0 h-full z-50 bg-white shadow-2xl border-l border-gray-200 flex flex-col w-full sm:w-[380px]"
+        style={{ fontFamily: FONT }}
       >
         <div className="flex items-start justify-between px-5 py-4 border-b border-gray-200 shrink-0">
           <div>
@@ -355,62 +394,37 @@ function AssignToPanel({
                     <input
                       readOnly
                       placeholder={row.assignees.length ? "" : "Start typing to search..."}
-                      className="flex-1 min-w-20 text-xs outline-none bg-transparent text-gray-400 cursor-pointer"
+                      className="flex-1 min-w-[60px] text-xs outline-none bg-transparent text-gray-400 cursor-pointer"
                     />
                     <ChevronDown size={12} className="text-gray-400 shrink-0" style={{ transform: openDropId === row.id ? "rotate(180deg)" : "none", transition: "transform 0.15s" }} />
                   </div>
 
                   {openDropId === row.id && (
-                    <div data-assigndrop className="absolute z-50 w-full bg-white border border-gray-200 shadow-xl rounded mt-0.5 max-h-60 overflow-y-auto"
-                      onMouseDown={(e) => e.stopPropagation()}>
+                    <div
+                      data-assigndrop
+                      className="absolute z-50 w-full bg-white border border-gray-200 shadow-xl rounded mt-0.5 max-h-60 overflow-y-auto"
+                      onMouseDown={(e) => e.stopPropagation()}
+                    >
                       <div className="px-2 pt-2 pb-1 border-b border-gray-100 sticky top-0 bg-white">
-                        <input autoFocus value={dropSearch} onChange={(e) => setDropSearch(e.target.value)}
+                        <input
+                          autoFocus
+                          value={dropSearch}
+                          onChange={(e) => setDropSearch(e.target.value)}
                           placeholder="Start typing to search..."
-                          className="w-full h-7 px-2 text-xs border border-gray-200 rounded outline-none focus:border-[#7b1113]" />
+                          className="w-full h-7 px-2 text-xs border border-gray-200 rounded outline-none focus:border-[#7b1113]"
+                        />
                       </div>
 
-                      {!dropSearch && (
-                        <button onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); toggleAssignee(row.id, "Mastery Paths"); }}
-                          className="w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-gray-50"
-                          style={{ color: row.assignees.includes("Mastery Paths") ? MAROON : "#374151", fontWeight: row.assignees.includes("Mastery Paths") ? 600 : 400 }}>
-                          Mastery Paths
-                          {row.assignees.includes("Mastery Paths") && <span style={{ color: MAROON }}>✓</span>}
-                        </button>
-                      )}
-
                       {["Everyone"].filter(o => o.toLowerCase().includes(dropSearch.toLowerCase())).map(opt => (
-                        <button key={opt} onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); toggleAssignee(row.id, opt); }}
+                        <button
+                          key={opt}
+                          onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); toggleAssignee(row.id, opt); }}
                           className="w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-gray-50"
-                          style={{ color: row.assignees.includes(opt) ? MAROON : "#374151", fontWeight: row.assignees.includes(opt) ? 600 : 400 }}>
+                          style={{ color: row.assignees.includes(opt) ? MAROON : "#374151", fontWeight: row.assignees.includes(opt) ? 600 : 400 }}
+                        >
                           {opt}{row.assignees.includes(opt) && <span style={{ color: MAROON }}>✓</span>}
                         </button>
                       ))}
-
-                      {sections.filter(s => s.name.toLowerCase().includes(dropSearch.toLowerCase())).length > 0 && (
-                        <>
-                          <div className="px-3 pt-2 pb-1 text-[10px] font-bold text-gray-500 uppercase tracking-widest bg-gray-50 border-t border-gray-100">Sections</div>
-                          {sections.filter(s => s.name.toLowerCase().includes(dropSearch.toLowerCase())).map(s => (
-                            <button key={s.id} onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); toggleAssignee(row.id, s.name); }}
-                              className="w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-gray-50"
-                              style={{ color: row.assignees.includes(s.name) ? MAROON : "#374151", fontWeight: row.assignees.includes(s.name) ? 600 : 400 }}>
-                              {s.name}{row.assignees.includes(s.name) && <span style={{ color: MAROON }}>✓</span>}
-                            </button>
-                          ))}
-                        </>
-                      )}
-
-                      {staff.filter(s => s.name.toLowerCase().includes(dropSearch.toLowerCase())).length > 0 && (
-                        <>
-                          <div className="px-3 pt-2 pb-1 text-[10px] font-bold text-gray-500 uppercase tracking-widest bg-gray-50 border-t border-gray-100">Staff</div>
-                          {staff.filter(s => s.name.toLowerCase().includes(dropSearch.toLowerCase())).map(s => (
-                            <button key={s.id} onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); toggleAssignee(row.id, s.name); }}
-                              className="w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-gray-50"
-                              style={{ color: row.assignees.includes(s.name) ? MAROON : "#374151", fontWeight: row.assignees.includes(s.name) ? 600 : 400 }}>
-                              {s.name}{row.assignees.includes(s.name) && <span style={{ color: MAROON }}>✓</span>}
-                            </button>
-                          ))}
-                        </>
-                      )}
                     </div>
                   )}
                 </div>
@@ -440,9 +454,11 @@ function AssignToPanel({
             </div>
           ))}
 
-          <button onClick={addRow}
+          <button
+            onClick={addRow}
             className="flex items-center gap-1.5 text-xs font-medium hover:underline"
-            style={{ color: MAROON }}>
+            style={{ color: MAROON }}
+          >
             <Plus size={13} /> Add
           </button>
         </div>
@@ -451,9 +467,12 @@ function AssignToPanel({
           <button onClick={onClose} className="h-8 px-4 border border-gray-300 text-xs text-gray-600 rounded hover:bg-white transition-all">
             Cancel
           </button>
-          <button onClick={handleSave} disabled={saving}
+          <button
+            onClick={handleSave}
+            disabled={saving}
             className="h-8 px-5 text-xs text-white rounded hover:opacity-90 disabled:opacity-50 font-medium"
-            style={{ background: MAROON }}>
+            style={{ background: MAROON }}
+          >
             {saving ? "Saving..." : "Save"}
           </button>
         </div>
@@ -466,27 +485,35 @@ function AssignToPanel({
 function AddGroupModal({ onClose, onSave, saving }: { onClose: () => void; onSave: (name: string) => void; saving: boolean }) {
   const [name, setName] = useState("");
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30" onClick={onClose}>
-      <div className="bg-white rounded-lg shadow-2xl w-[420px] border border-gray-200 overflow-hidden" onClick={(e) => e.stopPropagation()} style={{ fontFamily: FONT }}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4" onClick={onClose}>
+      <div className="bg-white rounded-lg shadow-2xl w-full max-w-[420px] border border-gray-200 overflow-hidden" onClick={(e) => e.stopPropagation()} style={{ fontFamily: FONT }}>
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
           <span className="text-sm font-bold text-gray-800">Add Assignment Group</span>
           <button onClick={onClose} className="w-7 h-7 flex items-center justify-center border rounded hover:bg-gray-100" style={{ borderColor: MAROON, color: MAROON }}><X size={14} /></button>
         </div>
         <div className="px-6 py-6">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
             <label className="text-sm text-gray-700 shrink-0">Group Name:</label>
-            <input autoFocus value={name} onChange={(e) => setName(e.target.value)}
+            <input
+              autoFocus
+              value={name}
+              onChange={(e) => setName(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && name.trim() && onSave(name.trim())}
               placeholder="e.g., Essay Group 1"
-              className="flex-1 h-9 border border-gray-300 rounded px-3 text-sm outline-none transition-all"
+              className="flex-1 w-full h-9 border border-gray-300 rounded px-3 text-sm outline-none transition-all"
               onFocus={(e) => (e.currentTarget.style.borderColor = MAROON)}
-              onBlur={(e) => (e.currentTarget.style.borderColor = "#d1d5db")} />
+              onBlur={(e) => (e.currentTarget.style.borderColor = "#d1d5db")}
+            />
           </div>
         </div>
         <div className="flex items-center justify-end gap-2 px-5 py-3.5 bg-gray-50 border-t border-gray-200">
           <button onClick={onClose} disabled={saving} className="h-9 px-4 border border-gray-300 text-sm text-gray-600 rounded hover:bg-gray-100 disabled:opacity-50">Cancel</button>
-          <button onClick={() => name.trim() && onSave(name.trim())} disabled={saving || !name.trim()}
-            className="h-9 px-4 text-sm text-white rounded hover:opacity-90 disabled:opacity-50" style={{ background: MAROON }}>
+          <button
+            onClick={() => name.trim() && onSave(name.trim())}
+            disabled={saving || !name.trim()}
+            className="h-9 px-4 text-sm text-white rounded hover:opacity-90 disabled:opacity-50"
+            style={{ background: MAROON }}
+          >
             {saving ? "Saving..." : "Save"}
           </button>
         </div>
@@ -504,26 +531,34 @@ function EditGroupModal({ groupName, onClose, onSave, saving }: {
 }) {
   const [name, setName] = useState(groupName);
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30" onClick={onClose}>
-      <div className="bg-white rounded-lg shadow-2xl w-[420px] border border-gray-200 overflow-hidden" onClick={(e) => e.stopPropagation()} style={{ fontFamily: FONT }}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4" onClick={onClose}>
+      <div className="bg-white rounded-lg shadow-2xl w-full max-w-[420px] border border-gray-200 overflow-hidden" onClick={(e) => e.stopPropagation()} style={{ fontFamily: FONT }}>
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
           <span className="text-sm font-bold text-gray-800">Edit Assignment Group</span>
           <button onClick={onClose} className="w-7 h-7 flex items-center justify-center border rounded hover:bg-gray-100" style={{ borderColor: MAROON, color: MAROON }}><X size={14} /></button>
         </div>
         <div className="px-6 py-6">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
             <label className="text-sm text-gray-700 shrink-0">Group Name:</label>
-            <input autoFocus value={name} onChange={(e) => setName(e.target.value)}
+            <input
+              autoFocus
+              value={name}
+              onChange={(e) => setName(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && name.trim() && onSave(name.trim())}
-              className="flex-1 h-9 border border-gray-300 rounded px-3 text-sm outline-none transition-all"
+              className="flex-1 w-full h-9 border border-gray-300 rounded px-3 text-sm outline-none transition-all"
               onFocus={(e) => (e.currentTarget.style.borderColor = MAROON)}
-              onBlur={(e) => (e.currentTarget.style.borderColor = "#d1d5db")} />
+              onBlur={(e) => (e.currentTarget.style.borderColor = "#d1d5db")}
+            />
           </div>
         </div>
         <div className="flex items-center justify-end gap-2 px-5 py-3.5 bg-gray-50 border-t border-gray-200">
           <button onClick={onClose} disabled={saving} className="h-9 px-4 border border-gray-300 text-sm text-gray-600 rounded hover:bg-gray-100 disabled:opacity-50">Cancel</button>
-          <button onClick={() => name.trim() && onSave(name.trim())} disabled={saving || !name.trim() || name.trim() === groupName}
-            className="h-9 px-4 text-sm text-white rounded hover:opacity-90 disabled:opacity-50" style={{ background: MAROON }}>
+          <button
+            onClick={() => name.trim() && onSave(name.trim())}
+            disabled={saving || !name.trim() || name.trim() === groupName}
+            className="h-9 px-4 text-sm text-white rounded hover:opacity-90 disabled:opacity-50"
+            style={{ background: MAROON }}
+          >
             {saving ? "Saving..." : "Save"}
           </button>
         </div>
@@ -544,33 +579,21 @@ function DeleteGroupModal({ groupName, assignmentCount, otherGroups, onClose, on
   const [targetGroup, setTargetGroup] = useState(otherGroups[0] ?? "");
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30" onClick={onClose}>
-      <div className="bg-white rounded-lg shadow-2xl w-[460px] border border-gray-200 overflow-hidden" onClick={(e) => e.stopPropagation()} style={{ fontFamily: FONT }}>
-        {/* Header */}
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4" onClick={onClose}>
+      <div className="bg-white rounded-lg shadow-2xl w-full max-w-[460px] border border-gray-200 overflow-hidden" onClick={(e) => e.stopPropagation()} style={{ fontFamily: FONT }}>
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
           <span className="text-sm font-bold text-gray-800">Delete Assignment Group</span>
           <button onClick={onClose} className="w-7 h-7 flex items-center justify-center border border-gray-300 rounded text-gray-500 hover:bg-gray-100"><X size={14} /></button>
         </div>
-
-        {/* Body */}
         <div className="px-6 py-5 space-y-4">
           <p className="text-sm text-gray-700">
             You are about to delete <strong>{groupName}</strong>, which has <strong>{assignmentCount}</strong> assignment{assignmentCount !== 1 ? "s" : ""} in it.
           </p>
           <p className="text-sm text-gray-700">Would you like to:</p>
-
-          {/* Delete option */}
           <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="radio"
-              checked={choice === "delete"}
-              onChange={() => setChoice("delete")}
-              className="accent-[#7b1113]"
-            />
+            <input type="radio" checked={choice === "delete"} onChange={() => setChoice("delete")} className="accent-[#7b1113]" />
             <span className="text-sm text-gray-700">Delete its assignments</span>
           </label>
-
-          {/* Move option */}
           <div className="space-y-2">
             <label className="flex items-center gap-2 cursor-pointer">
               <input
@@ -582,7 +605,6 @@ function DeleteGroupModal({ groupName, assignmentCount, otherGroups, onClose, on
               />
               <span className={`text-sm ${otherGroups.length === 0 ? "text-gray-400" : "text-gray-700"}`}>Move its assignments to</span>
             </label>
-
             {choice === "move" && otherGroups.length > 0 && (
               <div className="ml-6 relative">
                 <select
@@ -598,8 +620,6 @@ function DeleteGroupModal({ groupName, assignmentCount, otherGroups, onClose, on
             )}
           </div>
         </div>
-
-        {/* Footer */}
         <div className="flex items-center justify-end gap-2 px-5 py-3.5 bg-gray-50 border-t border-gray-200">
           <button onClick={onClose} className="h-9 px-4 border border-gray-300 text-sm text-gray-600 rounded hover:bg-gray-100">Cancel</button>
           <button
@@ -665,14 +685,18 @@ function AssignmentDropdown({ assignment, onAction, onClose }: {
   }, [onClose]);
 
   return (
-    <div ref={menuRef}
+    <div
+      ref={menuRef}
       className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-md shadow-xl z-50 overflow-hidden py-1"
       style={{ minWidth: 180, fontFamily: FONT }}
-      onClick={(e) => e.stopPropagation()}>
+      onClick={(e) => e.stopPropagation()}
+    >
       {MENU_ITEMS.map((item) => (
-        <button key={item.action}
+        <button
+          key={item.action}
           onMouseDown={(e) => { e.stopPropagation(); onAction(item.action, assignment); onClose(); }}
-          className="w-full flex items-center gap-3 px-4 py-2 text-xs text-gray-700 hover:bg-[#7b1113] hover:text-white transition-colors">
+          className="w-full flex items-center gap-3 px-4 py-2 text-xs text-gray-700 hover:bg-[#7b1113] hover:text-white transition-colors"
+        >
           <span className="shrink-0">{item.icon}</span>
           {item.label}
         </button>
@@ -681,7 +705,7 @@ function AssignmentDropdown({ assignment, onAction, onClose }: {
   );
 }
 
-// ── Group 3-dot Dropdown (Edit name + Delete only) ───────────────────────────
+// ── Group 3-dot Dropdown ─────────────────────────────────────────────────────
 function GroupDropdown({ onEdit, onDelete, onClose }: {
   onEdit: () => void;
   onDelete: () => void;
@@ -695,13 +719,16 @@ function GroupDropdown({ onEdit, onDelete, onClose }: {
   }, [onClose]);
 
   return (
-    <div ref={menuRef}
+    <div
+      ref={menuRef}
       className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-md shadow-xl z-50 overflow-hidden py-1"
       style={{ minWidth: 160, fontFamily: FONT }}
-      onClick={(e) => e.stopPropagation()}>
+      onClick={(e) => e.stopPropagation()}
+    >
       <button
         onMouseDown={(e) => { e.stopPropagation(); onEdit(); onClose(); }}
-        className="w-full flex items-center gap-3 px-4 py-2 text-xs text-gray-700 hover:bg-[#7b1113] hover:text-white transition-colors">
+        className="w-full flex items-center gap-3 px-4 py-2 text-xs text-gray-700 hover:bg-[#7b1113] hover:text-white transition-colors"
+      >
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
           <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
@@ -710,7 +737,8 @@ function GroupDropdown({ onEdit, onDelete, onClose }: {
       </button>
       <button
         onMouseDown={(e) => { e.stopPropagation(); onDelete(); onClose(); }}
-        className="w-full flex items-center gap-3 px-4 py-2 text-xs text-gray-700 hover:bg-red-600 hover:text-white transition-colors">
+        className="w-full flex items-center gap-3 px-4 py-2 text-xs text-gray-700 hover:bg-red-600 hover:text-white transition-colors"
+      >
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <polyline points="3 6 5 6 21 6" />
           <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" />
@@ -746,17 +774,24 @@ function AssignmentRow({ a, courseId, router, onEdit, onDuplicate, onAssignTo, o
   };
 
   return (
-    <div className="flex items-center gap-3 px-4 py-3 border-b bg-white hover:bg-gray-50 cursor-pointer transition-colors relative"
+    <div
+      className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-3 border-b bg-white hover:bg-gray-50 cursor-pointer transition-colors relative"
       style={{ borderColor: "#e5e7eb" }}
-      onClick={() => router.push(`/admin/courses/${courseId}/assignments/${a.id}`)}>
-      <div className="flex flex-col gap-0.5 opacity-30 shrink-0">
-        {[...Array(3)].map((_, i) => (<div key={i} className="flex gap-0.5"><div className="w-1 h-1 rounded-full bg-gray-400" /><div className="w-1 h-1 rounded-full bg-gray-400" /></div>))}
+      onClick={() => router.push(`/admin/courses/${courseId}/assignments/${a.id}`)}
+    >
+      <div className="flex flex-col gap-0.5 opacity-30 shrink-0 hidden sm:flex">
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="flex gap-0.5">
+            <div className="w-1 h-1 rounded-full bg-gray-400" />
+            <div className="w-1 h-1 rounded-full bg-gray-400" />
+          </div>
+        ))}
       </div>
       <div className="w-[3px] h-8 rounded-full shrink-0" style={{ background: MAROON }} />
       <div className="shrink-0"><AssignmentIcon /></div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-gray-800 truncate">{a.title}</p>
-        <div className="flex items-center gap-1.5 text-xs text-gray-500 mt-0.5 flex-wrap">
+        <div className="flex items-center gap-1 sm:gap-1.5 text-xs text-gray-500 mt-0.5 flex-wrap">
           {isClosed && <span className="font-medium text-gray-600">Closed</span>}
           {isClosed && due && <span>|</span>}
           {due && <span><span className="font-medium">Due</span> {due}</span>}
@@ -774,8 +809,10 @@ function AssignmentRow({ a, courseId, router, onEdit, onDuplicate, onAssignTo, o
       )}
 
       <div className="relative shrink-0" onClick={(e) => e.stopPropagation()}>
-        <button onMouseDown={(e) => { e.stopPropagation(); setMenuOpen(v => !v); }}
-          className="p-1 rounded hover:bg-gray-200 transition-colors">
+        <button
+          onMouseDown={(e) => { e.stopPropagation(); setMenuOpen(v => !v); }}
+          className="p-1 rounded hover:bg-gray-200 transition-colors"
+        >
           <MoreVertical size={16} className="text-gray-500" />
         </button>
         {menuOpen && <AssignmentDropdown assignment={a} onAction={handleAction} onClose={() => setMenuOpen(false)} />}
@@ -786,7 +823,9 @@ function AssignmentRow({ a, courseId, router, onEdit, onDuplicate, onAssignTo, o
 
 // ── Assignment Group Section ──────────────────────────────────────────────────
 function AssignmentGroupSection({ title, items, courseId, router, onAddAssignment, onEdit, onDuplicate, onAssignTo, onSpeedGrader, onEditGroup, onDeleteGroup }: {
-  title: string; items: Assignment[]; courseId: string;
+  title: string;
+  items: Assignment[];
+  courseId: string;
   router: ReturnType<typeof useRouter>;
   onAddAssignment: (group: string) => void;
   onEdit: (a: Assignment) => void;
@@ -801,13 +840,25 @@ function AssignmentGroupSection({ title, items, courseId, router, onAddAssignmen
 
   return (
     <div className="mb-4">
-      <div className="flex items-center justify-between px-4 py-2.5 border select-none" style={{ background: "#f9fafb", borderColor: "#e5e7eb" }}>
+      <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 border select-none" style={{ background: "#f9fafb", borderColor: "#e5e7eb" }}>
         <div className="flex items-center gap-2 cursor-pointer" onClick={() => setCollapsed(c => !c)}>
-          <div className="flex flex-col gap-0.5 opacity-30 mr-1">
-            {[...Array(3)].map((_, i) => (<div key={i} className="flex gap-0.5"><div className="w-1 h-1 rounded-full bg-gray-400" /><div className="w-1 h-1 rounded-full bg-gray-400" /></div>))}
+          <div className="flex flex-col gap-0.5 opacity-30 mr-1 hidden sm:flex">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="flex gap-0.5">
+                <div className="w-1 h-1 rounded-full bg-gray-400" />
+                <div className="w-1 h-1 rounded-full bg-gray-400" />
+              </div>
+            ))}
           </div>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2.5"
-            style={{ transform: collapsed ? "rotate(-90deg)" : "rotate(0deg)", transition: "transform 0.15s" }}>
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#6b7280"
+            strokeWidth="2.5"
+            style={{ transform: collapsed ? "rotate(-90deg)" : "rotate(0deg)", transition: "transform 0.15s" }}
+          >
             <path d="M6 9l6 6 6-6" />
           </svg>
           <span className="text-sm font-semibold text-gray-700">{title}</span>
@@ -816,11 +867,11 @@ function AssignmentGroupSection({ title, items, courseId, router, onAddAssignmen
           <button onClick={() => onAddAssignment(title)} className="p-1.5 text-gray-400 hover:bg-gray-200 rounded transition-colors" title="Add assignment">
             <Plus size={15} />
           </button>
-          {/* Group 3-dot menu */}
           <div className="relative" onClick={(e) => e.stopPropagation()}>
             <button
               onMouseDown={(e) => { e.stopPropagation(); setGroupMenuOpen(v => !v); }}
-              className="p-1.5 text-gray-400 hover:bg-gray-200 rounded transition-colors">
+              className="p-1.5 text-gray-400 hover:bg-gray-200 rounded transition-colors"
+            >
               <MoreVertical size={15} />
             </button>
             {groupMenuOpen && (
@@ -838,8 +889,16 @@ function AssignmentGroupSection({ title, items, courseId, router, onAddAssignmen
           {items.length === 0
             ? <div className="px-6 py-4 text-sm text-gray-400 text-center">No assignments in this group.</div>
             : items.map(a => (
-              <AssignmentRow key={a.id} a={a} courseId={courseId} router={router}
-                onEdit={onEdit} onDuplicate={onDuplicate} onAssignTo={onAssignTo} onSpeedGrader={onSpeedGrader} />
+              <AssignmentRow
+                key={a.id}
+                a={a}
+                courseId={courseId}
+                router={router}
+                onEdit={onEdit}
+                onDuplicate={onDuplicate}
+                onAssignTo={onAssignTo}
+                onSpeedGrader={onSpeedGrader}
+              />
             ))}
         </div>
       )}
@@ -858,8 +917,6 @@ export default function CourseAssignmentsPage({ courseId }: Props) {
   const [showGroupModal, setShowGroupModal] = useState(false);
   const [savingGroup, setSavingGroup] = useState(false);
   const [localGroups, setLocalGroups] = useState<string[]>([]);
-  const [sections, setSections] = useState<Section[]>([]);
-  const [staff, setStaff] = useState<Staff[]>([]);
 
   // Modals / panels
   const [quickEditTarget, setQuickEditTarget] = useState<Assignment | null>(null);
@@ -885,7 +942,7 @@ export default function CourseAssignmentsPage({ courseId }: Props) {
           return merged;
         });
       })
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setLoading(false));
   };
 
@@ -894,10 +951,6 @@ export default function CourseAssignmentsPage({ courseId }: Props) {
     const persisted = loadPersistedGroups(courseId);
     if (persisted.length > 0) setLocalGroups(persisted);
     loadAssignments();
-    fetch(`/api/admin/courses/${courseId}/sections`)
-      .then(r => r.json())
-      .then(d => { setSections(d.sections ?? []); setStaff(d.staff ?? []); })
-      .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [courseId]);
 
@@ -923,17 +976,14 @@ export default function CourseAssignmentsPage({ courseId }: Props) {
     setSavingEditGroup(true);
     try {
       const oldName = editGroupTarget;
-      // Rename in localGroups
       setLocalGroups(prev => {
         const next = prev.map(g => g === oldName ? newName : g);
         persistGroups(courseId, next);
         return next;
       });
-      // Rename in assignments (local state)
       setAssignments(prev =>
         prev.map(a => a.assignmentGroup === oldName ? { ...a, assignmentGroup: newName } : a)
       );
-      // Optionally update server (fire & forget)
       assignments
         .filter(a => a.assignmentGroup === oldName)
         .forEach(a => {
@@ -941,7 +991,7 @@ export default function CourseAssignmentsPage({ courseId }: Props) {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ assignmentGroup: newName }),
-          }).catch(() => {});
+          }).catch(() => { });
         });
       setEditGroupTarget(null);
     } finally {
@@ -955,21 +1005,18 @@ export default function CourseAssignmentsPage({ courseId }: Props) {
     const groupName = deleteGroupTarget;
 
     if (action === "delete") {
-      // Delete assignments in the group
       const toDelete = assignments.filter(a => (a.assignmentGroup || "Assignments") === groupName);
       toDelete.forEach(a => {
-        fetch(`/api/admin/courses/${courseId}/assignments/${a.id}`, { method: "DELETE" }).catch(() => {});
+        fetch(`/api/admin/courses/${courseId}/assignments/${a.id}`, { method: "DELETE" }).catch(() => { });
       });
       setAssignments(prev => prev.filter(a => (a.assignmentGroup || "Assignments") !== groupName));
     } else if (action === "move" && targetGroup) {
-      // Move assignments to target group
       setAssignments(prev =>
         prev.map(a => (a.assignmentGroup || "Assignments") === groupName
           ? { ...a, assignmentGroup: targetGroup }
           : a
         )
       );
-      // Fire & forget server updates
       assignments
         .filter(a => (a.assignmentGroup || "Assignments") === groupName)
         .forEach(a => {
@@ -977,11 +1024,10 @@ export default function CourseAssignmentsPage({ courseId }: Props) {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ assignmentGroup: targetGroup }),
-          }).catch(() => {});
+          }).catch(() => { });
         });
     }
 
-    // Remove the group
     setLocalGroups(prev => {
       const next = prev.filter(g => g !== groupName);
       persistGroups(courseId, next);
@@ -1039,30 +1085,41 @@ export default function CourseAssignmentsPage({ courseId }: Props) {
   return (
     <div className="flex flex-col h-full bg-white" style={{ fontFamily: FONT }}>
 
-      {/* Top bar — removed the standalone 3-dot button */}
-      <div className="flex items-center justify-between px-5 py-3 border-b border-gray-200 shrink-0 bg-white">
-        <div className="relative">
+      {/* Top bar */}
+      <div className="flex items-center justify-between px-3 sm:px-5 py-3 border-b border-gray-200 shrink-0 bg-white gap-2">
+        <div className="relative flex-1 sm:flex-none">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
-          <input placeholder="Search..." value={search} onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 pr-4 py-1.5 border rounded text-sm w-56 focus:outline-none" style={{ borderColor: "#d1d5db" }} />
+          <input
+            placeholder="Search..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9 pr-4 py-1.5 border rounded text-sm w-full sm:w-56 focus:outline-none"
+            style={{ borderColor: "#d1d5db" }}
+          />
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => setShowGroupModal(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium border rounded-lg hover:bg-gray-50 transition-colors"
-            style={{ borderColor: "#d1d5db", color: "#374151" }}>
-            <Plus size={14} /> Group
+          <button
+            onClick={() => setShowGroupModal(true)}
+            className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium border rounded-lg hover:bg-gray-50 transition-colors"
+            style={{ borderColor: "#d1d5db", color: "#374151" }}
+          >
+            <Plus size={14} />
+            <span className="hidden sm:inline">Group</span>
           </button>
-          <button onClick={() => router.push(`/admin/courses/${courseId}/assignments/new`)}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white rounded-lg hover:opacity-90 transition-colors"
-            style={{ background: MAROON }}>
-            <Plus size={14} /> Assignment
+          <button
+            onClick={() => router.push(`/admin/courses/${courseId}/assignments/new`)}
+            className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium text-white rounded-lg hover:opacity-90 transition-colors"
+            style={{ background: MAROON }}
+          >
+            <Plus size={14} />
+            <span className="hidden sm:inline">Assignment</span>
+            <span className="sm:hidden">New</span>
           </button>
-          {/* ← 3-dot removed from here */}
         </div>
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto px-5 py-4">
+      <div className="flex-1 overflow-y-auto px-3 sm:px-5 py-4">
         {loading ? (
           <div className="flex items-center justify-center py-20 text-gray-400 text-sm gap-2">
             <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
@@ -1074,14 +1131,22 @@ export default function CourseAssignmentsPage({ courseId }: Props) {
         ) : Object.keys(grouped).length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 gap-3">
             <p className="text-sm text-gray-400">No assignments yet.</p>
-            <button onClick={() => router.push(`/admin/courses/${courseId}/assignments/new`)}
-              className="text-xs font-bold hover:underline" style={{ color: MAROON }}>
+            <button
+              onClick={() => router.push(`/admin/courses/${courseId}/assignments/new`)}
+              className="text-xs font-bold hover:underline"
+              style={{ color: MAROON }}
+            >
               + Create your first assignment
             </button>
           </div>
         ) : (
           Object.entries(grouped).map(([group, items]) => (
-            <AssignmentGroupSection key={group} title={group} items={items} courseId={courseId} router={router}
+            <AssignmentGroupSection
+              key={group}
+              title={group}
+              items={items}
+              courseId={courseId}
+              router={router}
               onAddAssignment={(g) => router.push(`/admin/courses/${courseId}/assignments/new?group=${encodeURIComponent(g)}`)}
               onEdit={(a) => setQuickEditTarget(a)}
               onDuplicate={handleDuplicate}
@@ -1116,14 +1181,11 @@ export default function CourseAssignmentsPage({ courseId }: Props) {
         <AssignToPanel
           assignment={assignToTarget}
           courseId={courseId}
-          sections={sections}
-          staff={staff}
           onClose={() => setAssignToTarget(null)}
           onSave={loadAssignments}
         />
       )}
 
-      {/* Edit Group Name Modal */}
       {editGroupTarget && (
         <EditGroupModal
           groupName={editGroupTarget}
@@ -1133,7 +1195,6 @@ export default function CourseAssignmentsPage({ courseId }: Props) {
         />
       )}
 
-      {/* Delete Group Modal */}
       {deleteGroupTarget && (
         <DeleteGroupModal
           groupName={deleteGroupTarget}

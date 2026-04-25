@@ -44,10 +44,18 @@ export async function GET(
 
   const { id: courseId } = await params;
 
-  const [peopleCount, announcementCount, assignmentCount] = await Promise.all([
+  const [
+    peopleCount,
+    announcementCount,
+    assignmentCount,
+    quizCount,
+    formCount,
+  ] = await Promise.all([
     prisma.courseEnrollment.count({ where: { courseId } }),
     prisma.announcement.count({ where: { courseId } }),
     prisma.assignment.count({ where: { courseId } }),
+    prisma.quiz.count({ where: { courseId } }),
+    prisma.form.count({ where: { courseId } }),
   ]);
 
   const [recentSubmissions, recentAnnouncements, recentEnrollments] =
@@ -66,7 +74,6 @@ export async function GET(
 
       prisma.announcement.findMany({
         where: { courseId },
-        // ✅ author field already stores the real name now
         select: { id: true, title: true, author: true, createdAt: true },
         orderBy: { createdAt: "desc" },
         take: 5,
@@ -98,9 +105,8 @@ export async function GET(
     ...recentAnnouncements.map((a) => ({
       id: `ann-${a.id}`,
       type: "announcement" as const,
-      // ✅ Always show author name — it's now the real name from DB
       text: `New announcement: "${a.title}"`,
-      user: a.author ?? undefined, // Always set — no more "Admin" check
+      user: a.author ?? undefined,
       time: formatTime(a.createdAt),
       _ts: a.createdAt,
     })),
@@ -125,6 +131,8 @@ export async function GET(
       people: peopleCount,
       announcements: announcementCount,
       assignments: assignmentCount,
+      quizzes: quizCount,
+      forms: formCount,
     },
     activity,
   });

@@ -31,7 +31,7 @@ const PAGE_ITEMS = [
   { label: "Calendar",  href: "/admin/calendar",  icon: CalendarDays     },
 ];
 
-// ── Create Course Modal ────────────────────────────────────────────────────────
+/* ── Create Course Modal ─────────────────────────────────────────────────────── */
 function CreateCourseModal({
   onClose,
   onCreated,
@@ -61,7 +61,7 @@ function CreateCourseModal({
       position: "fixed", inset: 0, zIndex: 9999,
       display: "flex", alignItems: "center", justifyContent: "center",
       background: "rgba(0,0,0,0.35)", backdropFilter: "blur(2px)",
-      fontFamily: FONT,
+      fontFamily: FONT, padding: "0 16px",
     }}>
       <div style={{
         background: "#fff", borderRadius: 16,
@@ -121,7 +121,7 @@ function CreateCourseModal({
   );
 }
 
-// ── Sidebar ────────────────────────────────────────────────────────────────────
+/* ── Desktop Sidebar ─────────────────────────────────────────────────────────── */
 function AdminSidebar({
   groupsPanelOpen,
   onGroupsClick,
@@ -141,8 +141,8 @@ function AdminSidebar({
   } = useAdminCourses();
 
   const pageIsActive = (href: string) => {
-    if (coursesActive)    return false;
-    if (groupsPanelOpen)  return false;
+    if (coursesActive)   return false;
+    if (groupsPanelOpen) return false;
     return pathname === href || pathname.startsWith(href + "/");
   };
 
@@ -162,6 +162,7 @@ function AdminSidebar({
 
   return (
     <div className="w-16 bg-[#7b1113] text-white h-full flex flex-col items-center py-0 shrink-0 z-[200] relative">
+      {/* Logo/Account */}
       <Link href="/admin/dashboard" onClick={handlePageNavClick}
         className="flex flex-col items-center justify-center w-full py-3 hover:bg-[#5a0d0f] transition-colors border-l-2 border-transparent">
         <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center overflow-hidden">
@@ -172,7 +173,8 @@ function AdminSidebar({
         <span className="text-[10px] mt-1 text-red-200">Account</span>
       </Link>
 
-      <div className="flex flex-col items-center w-full flex-1">
+      {/* Nav items */}
+      <div className="flex flex-col items-center w-full flex-1 overflow-y-auto">
         <button onClick={handleCoursesClick}
           className={`flex flex-col items-center justify-center w-full py-2.5 px-1 transition-colors ${coursesActive ? ACTIVE_CLS : INACTIVE_CLS}`}>
           <BookOpen size={18} />
@@ -197,6 +199,7 @@ function AdminSidebar({
         })}
       </div>
 
+      {/* Logout */}
       <div className="mt-auto mb-2 w-full">
         <button onClick={() => signOut({ callbackUrl: "/admin/login" })}
           className={`flex flex-col items-center justify-center w-full py-2.5 px-1 transition-colors ${INACTIVE_CLS}`}>
@@ -208,17 +211,154 @@ function AdminSidebar({
   );
 }
 
-// ── Inner layout ───────────────────────────────────────────────────────────────
+/* ── Mobile Bottom Nav ───────────────────────────────────────────────────────── */
+function MobileBottomNav({
+  groupsPanelOpen,
+  onGroupsClick,
+}: {
+  groupsPanelOpen: boolean;
+  onGroupsClick:   () => void;
+}) {
+  const pathname = usePathname();
+  const {
+    isActive: coursesActive,
+    isOpen:   coursesOpen,
+    view:     coursesView,
+    open:     openCourses,
+    openPanel,
+    close:    closeCourses,
+    closePanel,
+  } = useAdminCourses();
+
+  const pageIsActive = (href: string) => {
+    if (coursesActive)   return false;
+    if (groupsPanelOpen) return false;
+    return pathname === href || pathname.startsWith(href + "/");
+  };
+
+  const groupsActive = groupsPanelOpen || (!coursesActive && pathname.startsWith("/admin/groups"));
+
+  const handleCoursesClick = () => {
+    if (!coursesActive) {
+      openCourses();
+    } else if (coursesView === "allCourses") {
+      if (coursesOpen) closePanel(); else openPanel();
+    } else {
+      if (coursesOpen) closeCourses(); else openCourses();
+    }
+  };
+
+  const handlePageNavClick = () => { if (coursesActive) closeCourses(); };
+
+  // Show only most important items on mobile bottom nav
+  const mobileItems = [
+    { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
+    { label: "Inbox",     href: "/admin/inbox",     icon: Inbox            },
+    { label: "Calendar",  href: "/admin/calendar",  icon: CalendarDays     },
+  ];
+
+  return (
+    <div
+      style={{
+        position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 300,
+        background: MAROON,
+        display: "flex", alignItems: "stretch",
+        borderTop: "1px solid #5a0d0f",
+        paddingBottom: "env(safe-area-inset-bottom)",
+      }}
+    >
+      {/* Courses */}
+      <button
+        onClick={handleCoursesClick}
+        style={{
+          flex: 1, display: "flex", flexDirection: "column", alignItems: "center",
+          justifyContent: "center", padding: "8px 4px", background: "none", border: "none",
+          cursor: "pointer",
+          borderTop: coursesActive ? "2px solid #facc15" : "2px solid transparent",
+        }}
+      >
+        <BookOpen size={20} color={coursesActive ? "#fff" : "rgba(255,255,255,0.65)"} />
+        <span style={{ fontSize: 9, marginTop: 3, color: coursesActive ? "#fff" : "rgba(255,255,255,0.65)", fontFamily: FONT, fontWeight: 600 }}>
+          Courses
+        </span>
+      </button>
+
+      {/* Groups */}
+      <button
+        onClick={onGroupsClick}
+        style={{
+          flex: 1, display: "flex", flexDirection: "column", alignItems: "center",
+          justifyContent: "center", padding: "8px 4px", background: "none", border: "none",
+          cursor: "pointer",
+          borderTop: groupsActive ? "2px solid #facc15" : "2px solid transparent",
+        }}
+      >
+        <FolderKanban size={20} color={groupsActive ? "#fff" : "rgba(255,255,255,0.65)"} />
+        <span style={{ fontSize: 9, marginTop: 3, color: groupsActive ? "#fff" : "rgba(255,255,255,0.65)", fontFamily: FONT, fontWeight: 600 }}>
+          Groups
+        </span>
+      </button>
+
+      {/* Other page items */}
+      {mobileItems.map(item => {
+        const Icon  = item.icon;
+        const active = pageIsActive(item.href);
+        return (
+          <Link
+            key={item.label}
+            href={item.href}
+            onClick={handlePageNavClick}
+            style={{
+              flex: 1, display: "flex", flexDirection: "column", alignItems: "center",
+              justifyContent: "center", padding: "8px 4px", textDecoration: "none",
+              borderTop: active ? "2px solid #facc15" : "2px solid transparent",
+            }}
+          >
+            <Icon size={20} color={active ? "#fff" : "rgba(255,255,255,0.65)"} />
+            <span style={{ fontSize: 9, marginTop: 3, color: active ? "#fff" : "rgba(255,255,255,0.65)", fontFamily: FONT, fontWeight: 600 }}>
+              {item.label}
+            </span>
+          </Link>
+        );
+      })}
+
+      {/* Logout */}
+      <button
+        onClick={() => signOut({ callbackUrl: "/admin/login" })}
+        style={{
+          flex: 1, display: "flex", flexDirection: "column", alignItems: "center",
+          justifyContent: "center", padding: "8px 4px", background: "none", border: "none",
+          cursor: "pointer", borderTop: "2px solid transparent",
+        }}
+      >
+        <LogOut size={20} color="rgba(255,255,255,0.65)" />
+        <span style={{ fontSize: 9, marginTop: 3, color: "rgba(255,255,255,0.65)", fontFamily: FONT, fontWeight: 600 }}>
+          Logout
+        </span>
+      </button>
+    </div>
+  );
+}
+
+/* ── Inner layout ────────────────────────────────────────────────────────────── */
 function AdminInner({ children }: { children: React.ReactNode }) {
-  const pathname    = usePathname();
-  const router      = useRouter();
+  const router = useRouter();
 
   const [groupsPanelOpen, setGroupsPanelOpen] = useState(false);
   const [showModal,       setShowModal]       = useState(false);
+  const [isMobile,        setIsMobile]        = useState(false);
 
   const { close: closeCourses } = useAdminCourses();
 
-  const triggerNewCourse = () => { setShowModal(true); };
+  // Detect mobile
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  const triggerNewCourse = () => setShowModal(true);
 
   useEffect(() => {
     const handler = () => setShowModal(true);
@@ -241,11 +381,17 @@ function AdminInner({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
-      <AdminSidebar
-        groupsPanelOpen={groupsPanelOpen}
-        onGroupsClick={() => setGroupsPanelOpen(prev => !prev)}
-      />
+
+      {/* Desktop sidebar — hidden on mobile */}
+      {!isMobile && (
+        <AdminSidebar
+          groupsPanelOpen={groupsPanelOpen}
+          onGroupsClick={() => setGroupsPanelOpen(prev => !prev)}
+        />
+      )}
+
       <AdminCoursesPanel onNewCourse={triggerNewCourse} />
+
       {groupsPanelOpen && (
         <AdminGroupsPanel
           onClose={() => setGroupsPanelOpen(false)}
@@ -253,11 +399,23 @@ function AdminInner({ children }: { children: React.ReactNode }) {
         />
       )}
 
+      {/* Main content — add bottom padding on mobile for bottom nav */}
       <div className="flex-1 flex overflow-hidden">
-        <main className="flex-1 overflow-y-auto">
+        <main
+          className="flex-1 overflow-y-auto"
+          style={{ paddingBottom: isMobile ? 64 : 0 }}
+        >
           {children}
         </main>
       </div>
+
+      {/* Mobile bottom nav */}
+      {isMobile && (
+        <MobileBottomNav
+          groupsPanelOpen={groupsPanelOpen}
+          onGroupsClick={() => setGroupsPanelOpen(prev => !prev)}
+        />
+      )}
 
       {showModal && (
         <CreateCourseModal
@@ -269,7 +427,7 @@ function AdminInner({ children }: { children: React.ReactNode }) {
   );
 }
 
-// ── Root export ────────────────────────────────────────────────────────────────
+/* ── Root export ─────────────────────────────────────────────────────────────── */
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname      = usePathname();
   const isLoginPage   = pathname === "/admin/login";

@@ -8,8 +8,9 @@ import {
   COURSE_ROLES,
 } from "@/lib/course-permissions";
 import { requireCoursePermission } from "@/lib/course-access";
+import { sendCourseEnrollmentEmail } from "@/lib/sendCourseEnrollmentEmail";
 
-type SessionUser = { role?: string };
+type SessionUser = { role?: string; name?: string | null; email?: string | null };
 
 // GET — list all enrolled people in a course
 // Allowed: any authenticated enrolled user OR ADMIN
@@ -77,6 +78,9 @@ export async function POST(
 ) {
   const { id: courseId } = await params;
 
+  const session = await getServerSession(authOptions);
+  const enrolledBy = (session?.user as SessionUser)?.name ?? "An administrator";
+
   const access = await requireCoursePermission(courseId, "manage_people");
   if (!access.ok) {
     return NextResponse.json({ error: access.error }, { status: access.status });
@@ -87,23 +91,30 @@ export async function POST(
 
   const enrollmentRole = normalizeCourseRole(role);
 
-  let user: { id: string } | null = null;
+  // Fetch full user details (we need name + email for the notification)
+  let user: { id: string; name: string | null; email: string | null } | null = null;
 
   if (userId) {
     user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true },
+      select: { id: true, name: true, email: true },
     });
   } else if (email) {
     user = await prisma.user.findUnique({
       where: { email: email.trim() },
-      select: { id: true },
+      select: { id: true, name: true, email: true },
     });
   }
 
   if (!user) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
+
+  // Fetch course name for the email
+  const course = await prisma.course.findUnique({
+    where: { id: courseId },
+    select: { name: true },
+  });
 
   const existing = await prisma.courseEnrollment.findUnique({
     where: {
@@ -114,6 +125,7 @@ export async function POST(
     },
   });
 
+  // ── Role update (already enrolled) ──────────────────────────────────────────
   if (existing) {
     const updated = await prisma.courseEnrollment.update({
       where: {
@@ -127,6 +139,19 @@ export async function POST(
       },
     });
 
+    // Notify user of their updated role (fire-and-forget)
+    if (user.email && course?.name) {
+      sendCourseEnrollmentEmail({
+        to: user.email,
+        recipientName: user.name ?? user.email,
+        courseName: course.name,
+        role: enrollmentRole,
+        enrolledBy,
+      }).catch((err: Error) =>
+        console.error("[enrollment-email] Failed to send role-update email:", err)
+      );
+    }
+
     return NextResponse.json({
       enrollment: {
         ...updated,
@@ -136,6 +161,7 @@ export async function POST(
     });
   }
 
+  // ── New enrollment ───────────────────────────────────────────────────────────
   const enrollment = await prisma.courseEnrollment.create({
     data: {
       userId: user.id,
@@ -143,6 +169,19 @@ export async function POST(
       courseRole: enrollmentRole,
     },
   });
+
+  // Notify user of their new enrollment (fire-and-forget)
+  if (user.email && course?.name) {
+    sendCourseEnrollmentEmail({
+      to: user.email,
+      recipientName: user.name ?? user.email,
+      courseName: course.name,
+      role: enrollmentRole,
+      enrolledBy,
+    }).catch((err: Error) =>
+      console.error("[enrollment-email] Failed to send enrollment email:", err)
+    );
+  }
 
   return NextResponse.json({
     enrollment: {

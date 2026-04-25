@@ -47,10 +47,10 @@ function PublishModal({ course, onConfirm, onCancel }: {
   ];
 
   return (
-    <div style={{ position:"fixed",inset:0,zIndex:100000,background:"rgba(0,0,0,0.4)",backdropFilter:"blur(4px)",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:FONT }}
+    <div style={{ position:"fixed",inset:0,zIndex:100000,background:"rgba(0,0,0,0.4)",backdropFilter:"blur(4px)",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:FONT,padding:"16px" }}
       onClick={onCancel}>
       <div onClick={e=>e.stopPropagation()}
-        style={{ background:"#fff",borderRadius:16,width:400,maxWidth:"90vw",boxShadow:"0 20px 60px rgba(0,0,0,0.18)",overflow:"hidden" }}>
+        style={{ background:"#fff",borderRadius:16,width:"100%",maxWidth:400,boxShadow:"0 20px 60px rgba(0,0,0,0.18)",overflow:"hidden" }}>
         <div style={{ background:MAROON,padding:"18px 22px" }}>
           <p style={{ fontSize:10,fontWeight:800,color:"rgba(255,255,255,0.6)",textTransform:"uppercase",letterSpacing:"0.15em",margin:0 }}>Publishing Course</p>
           <p style={{ fontSize:15,fontWeight:800,color:"#fff",margin:"4px 0 0",lineHeight:1.3 }}>{course.name}</p>
@@ -84,7 +84,7 @@ function PublishModal({ course, onConfirm, onCancel }: {
 }
 
 // ── Section Header ─────────────────────────────────────────────────────────────
-function SectionHeader({ label, count, collapsed, onToggle, accent, badge }: {
+function SectionHeader({ label, count, collapsed, onToggle, badge }: {
   label: string; count: number; collapsed: boolean; onToggle: () => void;
   accent: { text: string; bg: string; border: string }; badge?: React.ReactNode;
 }) {
@@ -112,11 +112,12 @@ function CourseListRow({ course, onTogglePublish, onDelete, onColorChange, onMov
 }) {
   return (
     <div onClick={onClick}
-      className="flex items-center gap-4 px-4 py-3 rounded-xl border border-gray-100 bg-white cursor-pointer hover:shadow-md transition-all group"
+      className="flex items-center gap-3 px-3 sm:px-4 py-3 rounded-xl border border-gray-100 bg-white cursor-pointer hover:shadow-md transition-all group"
       style={{ fontFamily:FONT }}>
       {course.image ? (
+        // eslint-disable-next-line @next/next/no-img-element
         <img src={course.image} alt={course.name}
-          style={{ width:36,height:36,borderRadius:8,objectFit:"cover",flexShrink:0 }}/>
+          style={{ width:32,height:32,borderRadius:8,objectFit:"cover",flexShrink:0 }}/>
       ) : (
         <div style={{ width:10,height:10,borderRadius:"50%",background:course.color,flexShrink:0 }}/>
       )}
@@ -124,15 +125,18 @@ function CourseListRow({ course, onTogglePublish, onDelete, onColorChange, onMov
         <p style={{ fontSize:13,fontWeight:700,color:"#111827",margin:0 }} className="truncate group-hover:underline">{course.name}</p>
         <p style={{ fontSize:11,color:"#9ca3af",margin:0 }}>{course.code}</p>
       </div>
-      <span style={{ fontSize:11,color:"#9ca3af",fontWeight:600,flexShrink:0 }}>{course._count.enrollments} enrolled</span>
+      {/* Hide enrollment count on very small screens */}
+      <span className="hidden sm:inline" style={{ fontSize:11,color:"#9ca3af",fontWeight:600,flexShrink:0 }}>{course._count.enrollments} enrolled</span>
       <span style={{
         fontSize:10,fontWeight:800,padding:"2px 8px",borderRadius:20,
         background:course.status==="PUBLISHED"?"#f0fdf4":"#f9fafb",
         color:course.status==="PUBLISHED"?"#15803d":"#6b7280",
         border:`1px solid ${course.status==="PUBLISHED"?"#bbf7d0":"#e5e7eb"}`,
-        flexShrink:0,textTransform:"uppercase",letterSpacing:"0.06em",
-      }}>{course.status==="PUBLISHED"?"Published":"Unpublished"}</span>
+        flexShrink:0,textTransform:"uppercase",letterSpacing:"0.06em",whiteSpace:"nowrap",
+      }}>{course.status==="PUBLISHED"?"Published":"Draft"}</span>
+      {/* Assignments button hidden on mobile, shown on sm+ */}
       <button onClick={e=>{e.stopPropagation();onAssignments();}}
+        className="hidden sm:block"
         style={{ fontSize:11,color:MAROON,fontWeight:700,background:"#fdf2f2",border:"none",borderRadius:8,padding:"4px 10px",cursor:"pointer",flexShrink:0 }}>
         Assignments
       </button>
@@ -178,6 +182,7 @@ export default function AdminDashboardPage() {
     };
     document.addEventListener("visibilitychange", handleVisibility);
     return () => document.removeEventListener("visibilitychange", handleVisibility);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handlePublishClick = (course: Course) => {
@@ -250,72 +255,76 @@ export default function AdminDashboardPage() {
     onFiles:         ()=>router.push(`/admin/courses/${c.id}/files`),
   });
 
+  // Responsive grid CSS injected once
+  const gridStyle: React.CSSProperties = {
+    display: "grid",
+    gap: 12,
+    // Fluid columns: min 150px, fills row
+    gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
+  };
+
   return (
     <div style={{ ...font, minHeight:"100vh", background:"#f8f8f7" }}>
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @media (min-width: 480px) {
+          .course-grid { grid-template-columns: repeat(auto-fill, minmax(178px, 1fr)) !important; }
+        }
+        @media (min-width: 768px) {
+          .course-grid { grid-template-columns: repeat(auto-fill, minmax(178px, 1fr)) !important; }
+        }
+      `}</style>
 
       {/* ── Page Header ── */}
-      <div style={{ background:"#fff", borderBottom:"1px solid #f0e4e4", padding:"20px 28px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+      <div style={{ background:"#fff", borderBottom:"1px solid #f0e4e4", padding:"14px 16px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:10, flexWrap:"wrap" }}>
         <div>
           <p style={{ fontSize:10,fontWeight:800,color:MAROON,textTransform:"uppercase",letterSpacing:"0.2em",margin:0 }}>Administration</p>
-          <h1 style={{ fontSize:22,fontWeight:900,color:"#111827",margin:"4px 0 0" }}>Dashboard</h1>
+          <h1 style={{ fontSize:18,fontWeight:900,color:"#111827",margin:"2px 0 0" }}>Dashboard</h1>
         </div>
-        <div style={{ display:"flex",alignItems:"center",gap:10 }}>
-          {/* ── Start a New Course button ── */}
+        <div style={{ display:"flex",alignItems:"center",gap:8,flexWrap:"wrap" }}>
           <button
             onClick={() => window.dispatchEvent(new Event("admin:openCreateCourse"))}
-            style={{
-              display:"flex",alignItems:"center",gap:6,
-              padding:"7px 16px",borderRadius:10,border:"none",
-              background:MAROON,color:"#fff",cursor:"pointer",
-              fontFamily:FONT,fontSize:12,fontWeight:800,
-              transition:"opacity 0.15s",
-            }}
+            style={{ display:"flex",alignItems:"center",gap:5,padding:"7px 14px",borderRadius:10,border:"none",background:MAROON,color:"#fff",cursor:"pointer",fontFamily:FONT,fontSize:12,fontWeight:800,transition:"opacity 0.15s",whiteSpace:"nowrap" }}
             onMouseEnter={e=>(e.currentTarget.style.opacity="0.88")}
             onMouseLeave={e=>(e.currentTarget.style.opacity="1")}>
-            <Plus size={14}/> Start a New Course
+            <Plus size={13}/> <span className="hidden xs:inline">Start a </span>New Course
           </button>
-          {/* ── View toggle ── */}
-          <div style={{ display:"flex",gap:4,background:"#f3f4f6",borderRadius:10,padding:3 }}>
+          <div style={{ display:"flex",gap:3,background:"#f3f4f6",borderRadius:10,padding:3 }}>
             {([["grid","Grid"] as const,["list","List"] as const]).map(([mode, label]) => (
               <button key={mode} onClick={()=>setViewMode(mode)}
-                style={{
-                  display:"flex",alignItems:"center",gap:5,padding:"5px 12px",borderRadius:8,border:"none",cursor:"pointer",fontFamily:FONT,
-                  fontSize:11,fontWeight:700,transition:"all 0.15s",
-                  background:viewMode===mode?"#fff":"none",
-                  color:viewMode===mode?"#111827":"#9ca3af",
-                  boxShadow:viewMode===mode?"0 1px 4px rgba(0,0,0,0.08)":"none",
-                }}>
-                {mode==="grid" ? <LayoutGrid size={13}/> : <List size={13}/>} {label}
+                style={{ display:"flex",alignItems:"center",gap:4,padding:"5px 10px",borderRadius:8,border:"none",cursor:"pointer",fontFamily:FONT,fontSize:11,fontWeight:700,transition:"all 0.15s",background:viewMode===mode?"#fff":"none",color:viewMode===mode?"#111827":"#9ca3af",boxShadow:viewMode===mode?"0 1px 4px rgba(0,0,0,0.08)":"none" }}>
+                {mode==="grid" ? <LayoutGrid size={12}/> : <List size={12}/>} {label}
               </button>
             ))}
           </div>
         </div>
       </div>
 
-      {/* ── Stat bar ── */}
+      {/* ── Stat bar — scrollable on mobile ── */}
       {!loading && courses.length > 0 && (
-        <div style={{ background:"#fff", borderBottom:"1px solid #f3f4f6", padding:"10px 28px", display:"flex", gap:28 }}>
-          {[
-            { label:"Total Courses",  value:courses.length },
-            { label:"Published",      value:totalPublished, color:"#15803d" },
-            { label:"Academic",       value:academic.length },
-            { label:"Non-Academic",   value:nonAcademic.length },
-            { label:"Unpublished",    value:unpublished.length, color:"#9ca3af" },
-          ].map(s=>(
-            <div key={s.label} style={{ display:"flex",flexDirection:"column" }}>
-              <span style={{ fontSize:18,fontWeight:900,color:s.color??MAROON,lineHeight:1 }}>{s.value}</span>
-              <span style={{ fontSize:10,color:"#9ca3af",fontWeight:600,marginTop:2 }}>{s.label}</span>
-            </div>
-          ))}
+        <div style={{ background:"#fff", borderBottom:"1px solid #f3f4f6", padding:"10px 16px", overflowX:"auto", WebkitOverflowScrolling:"touch" }}>
+          <div style={{ display:"flex", gap:20, minWidth:"max-content" }}>
+            {[
+              { label:"Total",       value:courses.length },
+              { label:"Published",   value:totalPublished, color:"#15803d" },
+              { label:"Academic",    value:academic.length },
+              { label:"Non-Academic",value:nonAcademic.length },
+              { label:"Unpublished", value:unpublished.length, color:"#9ca3af" },
+            ].map(s=>(
+              <div key={s.label} style={{ display:"flex",flexDirection:"column",flexShrink:0 }}>
+                <span style={{ fontSize:18,fontWeight:900,color:s.color??MAROON,lineHeight:1 }}>{s.value}</span>
+                <span style={{ fontSize:10,color:"#9ca3af",fontWeight:600,marginTop:2,whiteSpace:"nowrap" }}>{s.label}</span>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
-      <div style={{ padding:"24px 28px" }}>
+      <div style={{ padding:"16px" }}>
         {loading ? (
           <div style={{ display:"flex",alignItems:"center",justifyContent:"center",padding:"80px 0",gap:10 }}>
             <div style={{ width:20,height:20,border:`2px solid #f0e4e4`,borderTop:`2px solid ${MAROON}`,borderRadius:"50%",animation:"spin 0.8s linear infinite" }}/>
             <p style={{ fontSize:13,color:"#9ca3af",margin:0 }}>Loading courses...</p>
-            <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
           </div>
         ) : courses.length === 0 ? (
           <div style={{ display:"flex",flexDirection:"column",alignItems:"center",padding:"80px 0",gap:12 }}>
@@ -331,13 +340,13 @@ export default function AdminDashboardPage() {
             {/* ── Published ── */}
             {published.length > 0 && (
               <div style={{ background:"#fff",borderRadius:16,border:"1px solid #f0e4e4",overflow:"hidden" }}>
-                <div style={{ padding:"14px 20px 0" }}>
+                <div style={{ padding:"14px 16px 0" }}>
                   <div style={{ display:"flex",alignItems:"center",gap:8,marginBottom:4 }}>
                     <span style={{ fontSize:11,fontWeight:900,color:MAROON,textTransform:"uppercase",letterSpacing:"0.12em" }}>Published</span>
                     <span style={{ fontSize:11,color:"#9ca3af",fontWeight:600 }}>({published.length})</span>
                   </div>
                 </div>
-                <div style={{ padding:"4px 20px 16px", display:"flex",flexDirection:"column",gap:0 }}>
+                <div style={{ padding:"4px 16px 16px", display:"flex",flexDirection:"column",gap:0 }}>
 
                   {/* Academic */}
                   {academic.length > 0 && (
@@ -347,14 +356,14 @@ export default function AdminDashboardPage() {
                         collapsed={colAcademic} onToggle={()=>setColAcademic(v=>!v)}
                         accent={{ text:"#1565c0",bg:"#eff6ff",border:"#bfdbfe" }}
                         badge={
-                          <span style={{ display:"inline-flex",alignItems:"center",gap:5,background:"#eff6ff",color:"#1565c0",border:"1px solid #bfdbfe",borderRadius:20,padding:"3px 10px 3px 8px",fontSize:11,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.06em",fontFamily:FONT }}>
+                          <span style={{ display:"inline-flex",alignItems:"center",gap:5,background:"#eff6ff",color:"#1565c0",border:"1px solid #bfdbfe",borderRadius:20,padding:"3px 10px 3px 8px",fontSize:11,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.06em",fontFamily:FONT,whiteSpace:"nowrap" }}>
                             <GraduationCap size={12}/> Academic
                           </span>
                         }
                       />
                       {!colAcademic && (
                         viewMode==="grid" ? (
-                          <div style={{ display:"flex",flexWrap:"wrap",gap:14,paddingBottom:12 }}>
+                          <div className="course-grid" style={{ ...gridStyle, paddingBottom:12 }}>
                             {academic.map(c=><CourseCard key={c.id} {...cardProps(c)}/>)}
                           </div>
                         ) : (
@@ -374,14 +383,14 @@ export default function AdminDashboardPage() {
                         collapsed={colNonAcademic} onToggle={()=>setColNonAcademic(v=>!v)}
                         accent={{ text:"#b45309",bg:"#fffbeb",border:"#fde68a" }}
                         badge={
-                          <span style={{ display:"inline-flex",alignItems:"center",gap:5,background:"#fffbeb",color:"#b45309",border:"1px solid #fde68a",borderRadius:20,padding:"3px 10px 3px 8px",fontSize:11,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.06em",fontFamily:FONT }}>
+                          <span style={{ display:"inline-flex",alignItems:"center",gap:5,background:"#fffbeb",color:"#b45309",border:"1px solid #fde68a",borderRadius:20,padding:"3px 10px 3px 8px",fontSize:11,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.06em",fontFamily:FONT,whiteSpace:"nowrap" }}>
                             <Briefcase size={12}/> Non-Academic
                           </span>
                         }
                       />
                       {!colNonAcademic && (
                         viewMode==="grid" ? (
-                          <div style={{ display:"flex",flexWrap:"wrap",gap:14,paddingBottom:12 }}>
+                          <div className="course-grid" style={{ ...gridStyle, paddingBottom:12 }}>
                             {nonAcademic.map(c=><CourseCard key={c.id} {...cardProps(c)}/>)}
                           </div>
                         ) : (
@@ -401,14 +410,14 @@ export default function AdminDashboardPage() {
                         collapsed={colUncat} onToggle={()=>setColUncat(v=>!v)}
                         accent={{ text:"#6b7280",bg:"#f9fafb",border:"#e5e7eb" }}
                         badge={
-                          <span style={{ display:"inline-flex",alignItems:"center",gap:5,background:"#f9fafb",color:"#6b7280",border:"1px solid #e5e7eb",borderRadius:20,padding:"3px 10px 3px 8px",fontSize:11,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.06em",fontFamily:FONT }}>
+                          <span style={{ display:"inline-flex",alignItems:"center",gap:5,background:"#f9fafb",color:"#6b7280",border:"1px solid #e5e7eb",borderRadius:20,padding:"3px 10px 3px 8px",fontSize:11,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.06em",fontFamily:FONT,whiteSpace:"nowrap" }}>
                             <BookOpen size={12}/> Uncategorized
                           </span>
                         }
                       />
                       {!colUncat && (
                         viewMode==="grid" ? (
-                          <div style={{ display:"flex",flexWrap:"wrap",gap:14,paddingBottom:12 }}>
+                          <div className="course-grid" style={{ ...gridStyle, paddingBottom:12 }}>
                             {uncategorized.map(c=><CourseCard key={c.id} {...cardProps(c)}/>)}
                           </div>
                         ) : (
@@ -426,7 +435,7 @@ export default function AdminDashboardPage() {
             {/* ── Unpublished ── */}
             {unpublished.length > 0 && (
               <div style={{ background:"#fff",borderRadius:16,border:"1px solid #f3f4f6",overflow:"hidden" }}>
-                <div style={{ padding:"14px 20px 0" }}>
+                <div style={{ padding:"14px 16px 0" }}>
                   <SectionHeader
                     label="Unpublished" count={unpublished.length}
                     collapsed={colUnpublished} onToggle={()=>setColUnpublished(v=>!v)}
@@ -439,9 +448,9 @@ export default function AdminDashboardPage() {
                   />
                 </div>
                 {!colUnpublished && (
-                  <div style={{ padding:"0 20px 16px" }}>
+                  <div style={{ padding:"0 16px 16px" }}>
                     {viewMode==="grid" ? (
-                      <div style={{ display:"flex",flexWrap:"wrap",gap:14 }}>
+                      <div className="course-grid" style={{ ...gridStyle }}>
                         {unpublished.map(c=><CourseCard key={c.id} {...cardProps(c)}/>)}
                       </div>
                     ) : (
@@ -488,10 +497,17 @@ function CourseCard({ course, onTogglePublish, onDelete, onColorChange, onMove, 
   useEffect(()=>{
     if(!menuOpen||!triggerRef.current) return;
     const r     = triggerRef.current.getBoundingClientRect();
-    const menuW = 230, menuH = 340, vh = window.innerHeight;
-    const left  = Math.max(72, r.right-menuW);
-    const top   = vh-r.bottom-8 >= menuH ? r.bottom+4 : r.top-menuH-4;
-    setMenuStyle({ top, left, width:menuW });
+    const menuW = 230;
+    const menuH = 340;
+    const vw    = window.innerWidth;
+    const vh    = window.innerHeight;
+    // On mobile: center horizontally and position above/below trigger
+    let left = r.right - menuW;
+    if (left < 8) left = 8;
+    if (left + menuW > vw - 8) left = vw - menuW - 8;
+    const spaceBelow = vh - r.bottom - 8;
+    const top = spaceBelow >= menuH ? r.bottom + 4 : r.top - menuH - 4;
+    setMenuStyle({ top, left, width: Math.min(menuW, vw - 16) });
   },[menuOpen]);
 
   useEffect(()=>{
@@ -564,7 +580,8 @@ function CourseCard({ course, onTogglePublish, onDelete, onColorChange, onMove, 
               onKeyDown={e=>e.key==="Enter"&&applyColor(e as unknown as React.MouseEvent)}/>
           </div>
           <div style={{ display:"flex",justifyContent:"flex-end",gap:6 }}>
-            <button onClick={closeMenu} style={{ padding:"5px 12px",fontSize:12,border:"1px solid #e5e7eb",borderRadius:6,background:"#fff",cursor:"pointer",color:"#374151",fontFamily:FONT }}
+            <button onClick={closeMenu}
+              style={{ padding:"5px 12px",fontSize:12,border:"1px solid #e5e7eb",borderRadius:6,background:"#fff",cursor:"pointer",color:"#374151",fontFamily:FONT }}
               onMouseEnter={e=>{ e.currentTarget.style.borderColor=MAROON; e.currentTarget.style.color=MAROON; }}
               onMouseLeave={e=>{ e.currentTarget.style.borderColor="#e5e7eb"; e.currentTarget.style.color="#374151"; }}>Cancel</button>
             <button onClick={applyColor} style={{ padding:"5px 12px",fontSize:12,background:MAROON,color:"#fff",border:"none",borderRadius:6,cursor:"pointer",fontWeight:700,fontFamily:FONT }}>Apply</button>
@@ -628,16 +645,18 @@ function CourseCard({ course, onTogglePublish, onDelete, onColorChange, onMove, 
 
   return (
     <div
-      style={{ width:178,background:"#fff",border:"1px solid #e5e7eb",borderRadius:12,overflow:"visible",display:"flex",flexDirection:"column",boxShadow:"0 1px 4px rgba(0,0,0,.06)",fontFamily:FONT,transition:"box-shadow 0.15s, transform 0.15s",position:"relative" }}
+      // width is now controlled by the CSS grid — no fixed 178px
+      style={{ background:"#fff",border:"1px solid #e5e7eb",borderRadius:12,overflow:"visible",display:"flex",flexDirection:"column",boxShadow:"0 1px 4px rgba(0,0,0,.06)",fontFamily:FONT,transition:"box-shadow 0.15s, transform 0.15s",position:"relative",minWidth:0 }}
       onMouseEnter={e=>{ if(!menuOpen){ e.currentTarget.style.boxShadow="0 4px 16px rgba(123,17,19,.10)"; e.currentTarget.style.transform="translateY(-1px)"; }}}
       onMouseLeave={e=>{ if(!menuOpen){ e.currentTarget.style.boxShadow="0 1px 4px rgba(0,0,0,.06)"; e.currentTarget.style.transform="translateY(0)"; }}}>
 
       {/* ── Banner ── */}
       <div
-        style={{ position:"relative",height:96,backgroundColor:course.color,cursor:"pointer",borderRadius:"12px 12px 0 0",overflow:"hidden" }}
+        style={{ position:"relative",height:90,backgroundColor:course.color,cursor:"pointer",borderRadius:"12px 12px 0 0",overflow:"hidden" }}
         onClick={onClick}
       >
         {course.image && (
+          // eslint-disable-next-line @next/next/no-img-element
           <img
             src={course.image}
             alt={course.name}
@@ -646,29 +665,29 @@ function CourseCard({ course, onTogglePublish, onDelete, onColorChange, onMove, 
         )}
         {course.status==="UNPUBLISHED" && (
           <button onClick={e=>{ e.stopPropagation(); onTogglePublish(); }}
-            style={{ position:"absolute",top:8,left:8,background:"rgba(255,255,255,0.92)",border:"none",borderRadius:6,padding:"3px 10px",fontSize:11,fontWeight:700,color:"#374151",cursor:"pointer",fontFamily:FONT,zIndex:1 }}
+            style={{ position:"absolute",top:6,left:6,background:"rgba(255,255,255,0.92)",border:"none",borderRadius:6,padding:"3px 8px",fontSize:10,fontWeight:700,color:"#374151",cursor:"pointer",fontFamily:FONT,zIndex:1 }}
             onMouseEnter={e=>(e.currentTarget.style.background="#fff")}
             onMouseLeave={e=>(e.currentTarget.style.background="rgba(255,255,255,0.92)")}>
             Publish
           </button>
         )}
         <button ref={triggerRef} data-course-trigger="true" onClick={openMenu}
-          style={{ position:"absolute",top:6,right:6,background:menuOpen?"rgba(255,255,255,0.25)":"none",border:menuOpen?"1px solid rgba(255,255,255,0.4)":"none",borderRadius:"50%",cursor:"pointer",color:"rgba(255,255,255,0.9)",padding:3,display:"flex",zIndex:1 }}>
-          <MoreVertical size={16}/>
+          style={{ position:"absolute",top:5,right:5,background:menuOpen?"rgba(255,255,255,0.25)":"none",border:menuOpen?"1px solid rgba(255,255,255,0.4)":"none",borderRadius:"50%",cursor:"pointer",color:"rgba(255,255,255,0.9)",padding:3,display:"flex",zIndex:1 }}>
+          <MoreVertical size={15}/>
         </button>
       </div>
 
       {/* ── Body ── */}
-      <div style={{ padding:"10px 12px 6px",cursor:"pointer" }} onClick={onClick}>
-        <p style={{ fontSize:13,fontWeight:800,color:course.color,lineHeight:1.3,margin:0 }}>{course.name}</p>
-        <p style={{ fontSize:11,color:"#9ca3af",margin:"3px 0 0",fontWeight:600 }}>{course.code}</p>
+      <div style={{ padding:"8px 10px 4px",cursor:"pointer",flex:1 }} onClick={onClick}>
+        <p style={{ fontSize:12,fontWeight:800,color:course.color,lineHeight:1.3,margin:0,wordBreak:"break-word" }}>{course.name}</p>
+        <p style={{ fontSize:10,color:"#9ca3af",margin:"2px 0 0",fontWeight:600 }}>{course.code}</p>
       </div>
 
       {/* ── Icons ── */}
-      <div style={{ display:"flex",alignItems:"center",gap:10,padding:"8px 12px 12px" }}>
-        {iconBtn("Assignments",onAssignments,<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg>)}
-        {iconBtn("Discussions",onDiscussions,<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>)}
-        {iconBtn("Files",onFiles,<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>)}
+      <div style={{ display:"flex",alignItems:"center",gap:8,padding:"6px 10px 10px" }}>
+        {iconBtn("Assignments",onAssignments,<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg>)}
+        {iconBtn("Discussions",onDiscussions,<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>)}
+        {iconBtn("Files",onFiles,<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>)}
       </div>
 
       {dropdown}

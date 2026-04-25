@@ -28,6 +28,7 @@ export async function GET() {
         name:      true,
         code:      true,
         color:     true,
+        image:     true,
         status:    true,
         term:      true,
         startDate: true,
@@ -38,7 +39,7 @@ export async function GET() {
     return NextResponse.json({ courses: allCourses });
   }
 
-  // ── STAFF: return only enrolled courses ───────────────────────────────────
+  // ── STAFF/HEAD: return only enrolled courses ───────────────────────────────
   const enrollments = await prisma.courseEnrollment.findMany({
     where:   { userId: user.id },
     include: { course: true },
@@ -50,6 +51,7 @@ export async function GET() {
     name:      e.course.name,
     code:      e.course.code,
     color:     e.course.color,
+    image:     e.course.image,   // ← added
     status:    e.course.status,
     term:      e.course.term,
     startDate: e.course.startDate,
