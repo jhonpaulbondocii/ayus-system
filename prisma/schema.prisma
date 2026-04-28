@@ -305,6 +305,10 @@ model Assignment {
   peerReviewAnonymous Boolean      @default(false)
   notifyUsers         Boolean      @default(false)
   assignees           String[]     @default([])
+
+  // ✅ ADD THIS
+  createdById         String?
+
   createdAt           DateTime     @default(now())
   updatedAt           DateTime     @updatedAt
 

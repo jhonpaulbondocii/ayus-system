@@ -5,6 +5,7 @@ import {
   Pencil, Reply, ReplyAll, Download, Trash2,
   MoreVertical, Search, ChevronDown, X, Send,
   Inbox, MailOpen, Clock, ArrowUpRight, Bell, Archive, UserRound,
+  BookOpen, ClipboardList, Megaphone, GraduationCap, FileText,
 } from "lucide-react";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -80,6 +81,71 @@ interface FullConversation {
   messages: Message[];
 }
 
+interface CourseRef {
+  id:    string;
+  name:  string;
+  code:  string;
+  color: string;
+}
+
+interface NotifAssignment {
+  id:          string;
+  title:       string;
+  description: string | null;
+  dueDate:     string | null;
+  course:      CourseRef | null;
+  group:       { id: string; name: string } | null;
+  status:      string;
+  grade:       number | null;
+  submittedAt: string | null;
+}
+
+interface NotifAnnouncement {
+  id:          string;
+  title:       string;
+  bodyText:    string;
+  author:      string;
+  createdAt:   string;
+  course:      CourseRef;
+  attachments: { id: string; name: string; url: string }[];
+}
+
+interface NotifQuiz {
+  id:          string;
+  title:       string;
+  description: string | null;
+  quizType:    string;
+  points:      number;
+  dueDate:     string | null;
+  course:      CourseRef;
+  attempted:   boolean;
+  score:       number | null;
+  submittedAt: string | null;
+}
+
+interface NotifForm {
+  id:          string;
+  title:       string;
+  description: string | null;
+  formType:    string;
+  points:      number;
+  dueDate:     string | null;
+  course:      CourseRef;
+  submitted:   boolean;
+  score:       number | null;
+  submittedAt: string | null;
+}
+
+interface NotifEnrollment {
+  id:         string;
+  courseRole: string;
+  section:    string | null;
+  createdAt:  string;
+  course:     CourseRef & { image: string | null; status: string };
+}
+
+type NotifTab = "assignments" | "announcements" | "quizzes" | "enrollments";
+
 // ── Constants ──────────────────────────────────────────────────────────────────
 const FONT        = "'Plus Jakarta Sans','Helvetica Neue',Arial,sans-serif";
 const MAROON      = "#7b1113";
@@ -102,6 +168,13 @@ const MAILBOX_FILTERS = [
   { key: "forward",  label: "Filter Redir.",   Icon: ArrowUpRight },
 ];
 
+const NOTIF_TABS: { key: NotifTab; label: string; Icon: React.ElementType }[] = [
+  { key: "assignments",   label: "Assignments",   Icon: ClipboardList },
+  { key: "announcements", label: "Announcements", Icon: Megaphone     },
+  { key: "quizzes",       label: "Quizzes/Forms", Icon: FileText      },
+  { key: "enrollments",   label: "Enrollments",   Icon: GraduationCap },
+];
+
 // ── Helpers ────────────────────────────────────────────────────────────────────
 function timeAgo(dateStr: string) {
   const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
@@ -111,8 +184,38 @@ function timeAgo(dateStr: string) {
   return new Date(dateStr).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
+function fmtDue(iso: string | null) {
+  if (!iso) return null;
+  const d = new Date(iso);
+  return (
+    d.toLocaleDateString("en-US", { month: "short", day: "numeric" }) +
+    " at " +
+    d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }).toLowerCase()
+  );
+}
+
 function initials(name: string | null | undefined) {
   return (name ?? "?").slice(0, 2).toUpperCase();
+}
+
+function CourseDot({ color }: { color: string }) {
+  return (
+    <span style={{
+      display: "inline-block", width: 8, height: 8,
+      borderRadius: "50%", background: color, flexShrink: 0,
+    }} />
+  );
+}
+
+function StatusPill({ label, color }: { label: string; color: string }) {
+  return (
+    <span style={{
+      fontSize: 10, fontWeight: 700, borderRadius: 20,
+      padding: "2px 8px", background: color + "22", color, fontFamily: FONT,
+    }}>
+      {label}
+    </span>
+  );
 }
 
 function Avatar({ name, image, size = 34 }: { name?: string | null; image?: string | null; size?: number }) {
@@ -657,7 +760,6 @@ function ThreadViewer({
 
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-      {/* Thread header */}
       <div style={{ padding: "14px 24px", borderBottom: `1px solid ${MAROON_MID}`, flexShrink: 0, background: "#fff" }}>
         <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
           <button onClick={onBack}
@@ -685,7 +787,6 @@ function ThreadViewer({
         </div>
       </div>
 
-      {/* Messages */}
       <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px", display: "flex", flexDirection: "column", gap: 16 }}>
         {convo.messages.map(msg => {
           const isMine = msg.sender.id === currentUserId;
@@ -717,7 +818,6 @@ function ThreadViewer({
         <div ref={bottomRef} />
       </div>
 
-      {/* Reply box */}
       <div style={{ padding: "12px 24px", borderTop: `1px solid ${MAROON_MID}`, background: "#fafafa", flexShrink: 0 }}>
         {error && <p style={{ fontSize: 12, color: "#ef4444", fontFamily: FONT, margin: "0 0 8px" }}>{error}</p>}
         <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
@@ -766,7 +866,6 @@ function ComposeModal({
   const [error,        setError]        = useState<string | null>(null);
   const [attachments,  setAttachments]  = useState<File[]>([]);
 
-  // ── inline to-picker state ─────────────────────────────────────────────────
   const [toView,      setToView]      = useState<PickView>("root");
   const [toQuery,     setToQuery]     = useState("");
   const [toUsers,     setToUsers]     = useState<UserResult[]>([]);
@@ -789,7 +888,6 @@ function ComposeModal({
   useOnClickOutside(courseRef, useCallback(() => setCourseOpen(false), []));
   useOnClickOutside(toRef, useCallback(() => { setToPickerOpen(false); resetToPicker(); }, [resetToPicker]));
 
-  // fetch users (debounced)
   useEffect(() => {
     if (!toPickerOpen || toView !== "users") return;
     if (toTimer.current) clearTimeout(toTimer.current);
@@ -805,7 +903,6 @@ function ComposeModal({
     }, toQuery.trim() ? 300 : 0);
   }, [toQuery, toPickerOpen, toView]);
 
-  // fetch course people
   useEffect(() => {
     if (!toPickerOpen || toView !== "course-people" || !toCourse) return;
     setToLoading(true);
@@ -823,7 +920,6 @@ function ComposeModal({
       .catch(() => setToLoading(false));
   }, [toPickerOpen, toView, toCourse, toRole]);
 
-  // client-side filter for course people
   useEffect(() => {
     if (toView !== "course-people" || toAllPeople.length === 0) return;
     setToPeople(
@@ -846,7 +942,6 @@ function ComposeModal({
   const removeRecipient = (id: string) =>
     setRecipients(prev => prev.filter(r => r.id !== id));
 
-  // ── FIXED: real API send ───────────────────────────────────────────────────
   const handleSend = async () => {
     if (recipients.length === 0 || !body.trim()) return;
     setSending(true);
@@ -864,7 +959,7 @@ function ComposeModal({
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Failed to send");
-      onSent();   // refresh inbox list
+      onSent();
       onClose();
     } catch (e) {
       setError((e as Error).message);
@@ -872,8 +967,8 @@ function ComposeModal({
     }
   };
 
-  const courseOptions2       = courseOptions.filter(o => o.type === "course");
-  const filteredForPicker    = courseOptions.filter(o =>
+  const courseOptions2    = courseOptions.filter(o => o.type === "course");
+  const filteredForPicker = courseOptions.filter(o =>
     o.name.toLowerCase().includes(toQuery.toLowerCase())
   );
 
@@ -974,16 +1069,12 @@ function ComposeModal({
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.35)", backdropFilter: "blur(2px)" }}>
       <div style={{ background: "#fff", borderRadius: 12, width: "100%", maxWidth: 520, maxHeight: "90vh", display: "flex", flexDirection: "column", boxShadow: "0 12px 48px rgba(0,0,0,0.18)", fontFamily: FONT, overflow: "hidden" }}>
-
-        {/* Header */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", borderBottom: `1px solid ${MAROON_MID}`, flexShrink: 0 }}>
           <span style={{ fontSize: 16, fontWeight: 800, color: "#111827" }}>Compose Message</span>
           <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "#6b7280", fontSize: 20, padding: 0, lineHeight: 1 }}>×</button>
         </div>
 
         <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px", display: "flex", flexDirection: "column", gap: 14 }}>
-
-          {/* Course selector */}
           <div ref={courseRef} style={{ position: "relative" }}>
             <label style={labelStyle}>Course (optional)</label>
             <div onClick={() => setCourseOpen(v => !v)}
@@ -1011,14 +1102,12 @@ function ComposeModal({
             )}
           </div>
 
-          {/* Individual checkbox */}
           <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: 13, color: "#374151", fontFamily: FONT }}>
             <input type="checkbox" checked={individual} onChange={e => setIndividual(e.target.checked)}
               style={{ width: 14, height: 14, accentColor: MAROON, cursor: "pointer" }} />
             Send an individual message to each recipient
           </label>
 
-          {/* To field */}
           <div ref={toRef} style={{ position: "relative" }}>
             <label style={labelStyle}>To <span style={{ color: MAROON }}>*</span></label>
             <div
@@ -1069,7 +1158,6 @@ function ComposeModal({
             )}
           </div>
 
-          {/* Subject */}
           <div>
             <label style={labelStyle}>Subject</label>
             <input value={subject} onChange={e => setSubject(e.target.value)} placeholder="Enter subject…"
@@ -1078,7 +1166,6 @@ function ComposeModal({
               onBlur={e  => (e.currentTarget.style.borderColor = "#e5e7eb")} />
           </div>
 
-          {/* Message */}
           <div>
             <label style={labelStyle}>Message <span style={{ color: MAROON }}>*</span></label>
             <textarea value={body} onChange={e => setBody(e.target.value)} rows={5}
@@ -1087,7 +1174,6 @@ function ComposeModal({
               onBlur={e  => (e.currentTarget.style.borderColor = "#e5e7eb")} />
           </div>
 
-          {/* Attachments preview */}
           {attachments.length > 0 && (
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
               {attachments.map((f, i) => (
@@ -1103,7 +1189,6 @@ function ComposeModal({
           {error && <p style={{ fontSize: 12, color: "#ef4444", margin: 0, fontFamily: FONT }}>{error}</p>}
         </div>
 
-        {/* Footer */}
         <div style={{ display: "flex", alignItems: "center", padding: "10px 20px", borderTop: `1px solid ${MAROON_MID}`, background: "#fafafa", flexShrink: 0, gap: 6 }}>
           <button title="Add attachment" onClick={() => fileRef.current?.click()}
             style={{ width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", background: "none", border: "1px solid #e5e7eb", borderRadius: 6, cursor: "pointer", color: "#6b7280" }}
@@ -1132,6 +1217,271 @@ function ComposeModal({
   );
 }
 
+// ── Notifications Panel ────────────────────────────────────────────────────────
+function NotificationsPanel() {
+  const [activeTab, setActiveTab] = useState<NotifTab>("assignments");
+  const [assignments,   setAssignments]   = useState<NotifAssignment[]>([]);
+  const [announcements, setAnnouncements] = useState<NotifAnnouncement[]>([]);
+  const [quizzes,       setQuizzes]       = useState<NotifQuiz[]>([]);
+  const [forms,         setForms]         = useState<NotifForm[]>([]);
+  const [enrollments,   setEnrollments]   = useState<NotifEnrollment[]>([]);
+  const [loading,       setLoading]       = useState(true);
+
+  const fetchAll = useCallback(async () => {
+    setLoading(true);
+    const [asgn, ann, qz, enr] = await Promise.allSettled([
+      fetch("/api/assignments").then(r => r.json()),
+      fetch("/api/announcements").then(r => r.json()),
+      fetch("/api/quizzes").then(r => r.json()),
+      fetch("/api/inbox/enrollments").then(r => r.json()),
+    ]);
+    if (asgn.status === "fulfilled") setAssignments(asgn.value.assignments ?? []);
+    if (ann.status  === "fulfilled") setAnnouncements(ann.value.announcements ?? []);
+    if (qz.status   === "fulfilled") {
+      setQuizzes(qz.value.quizzes ?? []);
+      setForms(qz.value.forms ?? []);
+    }
+    if (enr.status  === "fulfilled") setEnrollments(enr.value.enrollments ?? []);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { fetchAll(); }, [fetchAll]);
+
+  const statusColor = (s: string) => {
+    if (s === "SUBMITTED" || s === "GRADED") return "#15803d";
+    if (s === "OVERDUE")  return "#dc2626";
+    return "#d97706";
+  };
+  const statusLabel = (s: string) => {
+    if (s === "SUBMITTED") return "Submitted";
+    if (s === "GRADED")    return "Graded";
+    if (s === "OVERDUE")   return "Overdue";
+    return "Pending";
+  };
+
+  const quizTypeLabel = (t: string) => {
+    if (t === "GRADED_QUIZ")     return "Graded Quiz";
+    if (t === "PRACTICE_QUIZ")   return "Practice Quiz";
+    if (t === "GRADED_SURVEY")   return "Graded Survey";
+    if (t === "UNGRADED_SURVEY") return "Survey";
+    return t;
+  };
+
+  const formTypeLabel = (t: string) => {
+    if (t === "SURVEY_FEEDBACK")  return "Survey";
+    if (t === "EVALUATION")       return "Evaluation";
+    if (t === "REGISTRATION_FORM")return "Registration";
+    if (t === "GRADED_ASSESSMENT")return "Assessment";
+    return t;
+  };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
+      {/* Sub-tabs */}
+      <div style={{ display: "flex", borderBottom: `1px solid ${MAROON_MID}`, background: "#fff", flexShrink: 0, overflowX: "auto" }}>
+        {NOTIF_TABS.map(({ key, label, Icon }) => {
+          const count =
+            key === "assignments"   ? assignments.length :
+            key === "announcements" ? announcements.length :
+            key === "quizzes"       ? quizzes.length + forms.length :
+            enrollments.length;
+          const active = activeTab === key;
+          return (
+            <button
+              key={key}
+              onClick={() => setActiveTab(key)}
+              style={{
+                display: "flex", alignItems: "center", gap: 6,
+                padding: "10px 14px", border: "none", background: "none",
+                cursor: "pointer", fontFamily: FONT, fontSize: 12, fontWeight: active ? 700 : 500,
+                color: active ? MAROON : "#6b7280", borderBottom: active ? `2px solid ${MAROON}` : "2px solid transparent",
+                whiteSpace: "nowrap", flexShrink: 0,
+              }}
+            >
+              <Icon size={13} />
+              {label}
+              {count > 0 && (
+                <span style={{ fontSize: 10, fontWeight: 800, background: active ? MAROON : "#e5e7eb", color: active ? "#fff" : "#6b7280", borderRadius: 10, padding: "0 5px", minWidth: 16, textAlign: "center" }}>
+                  {count}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Content */}
+      <div style={{ flex: 1, overflowY: "auto" }}>
+        {loading ? (
+          <ListSkeleton />
+        ) : activeTab === "assignments" ? (
+          assignments.length === 0 ? (
+            <div style={{ padding: "60px 0", textAlign: "center" }}>
+              <ClipboardList size={32} style={{ color: MAROON_MID, marginBottom: 8 }} />
+              <p style={{ fontSize: 13, color: "#9ca3af", fontFamily: FONT, margin: 0 }}>No assignments assigned to you.</p>
+            </div>
+          ) : (
+            assignments.map(a => (
+              <div key={a.id} style={{ padding: "12px 16px", borderBottom: `1px solid #f3f4f6`, display: "flex", gap: 12, alignItems: "flex-start" }}>
+                <div style={{ width: 34, height: 34, borderRadius: 8, background: a.course?.color ?? MAROON_MID, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <BookOpen size={15} style={{ color: "#fff" }} />
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2, flexWrap: "wrap" }}>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: "#111827", fontFamily: FONT, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.title}</span>
+                    <StatusPill label={statusLabel(a.status)} color={statusColor(a.status)} />
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                    {a.course && (
+                      <span style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "#6b7280", fontFamily: FONT }}>
+                        <CourseDot color={a.course.color} />
+                        {a.course.name}
+                      </span>
+                    )}
+                    {a.dueDate && (
+                      <span style={{ fontSize: 11, color: new Date(a.dueDate) < new Date() && a.status === "PENDING" ? "#dc2626" : "#9ca3af", fontFamily: FONT }}>
+                        Due {fmtDue(a.dueDate)}
+                      </span>
+                    )}
+                    {a.grade !== null && (
+                      <span style={{ fontSize: 11, color: "#15803d", fontFamily: FONT, fontWeight: 700 }}>
+                        Grade: {a.grade}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))
+          )
+        ) : activeTab === "announcements" ? (
+          announcements.length === 0 ? (
+            <div style={{ padding: "60px 0", textAlign: "center" }}>
+              <Megaphone size={32} style={{ color: MAROON_MID, marginBottom: 8 }} />
+              <p style={{ fontSize: 13, color: "#9ca3af", fontFamily: FONT, margin: 0 }}>No announcements in your courses.</p>
+            </div>
+          ) : (
+            announcements.map(a => (
+              <div key={a.id} style={{ padding: "12px 16px", borderBottom: `1px solid #f3f4f6`, display: "flex", gap: 12, alignItems: "flex-start" }}>
+                <div style={{ width: 34, height: 34, borderRadius: 8, background: a.course?.color ?? MAROON, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <Megaphone size={15} style={{ color: "#fff" }} />
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontSize: 13, fontWeight: 700, color: "#111827", fontFamily: FONT, margin: "0 0 2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.title}</p>
+                  {a.bodyText && (
+                    <p style={{ fontSize: 12, color: "#6b7280", margin: "0 0 4px", fontFamily: FONT, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.bodyText}</p>
+                  )}
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                    <span style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "#6b7280", fontFamily: FONT }}>
+                      <CourseDot color={a.course.color} />{a.course.name}
+                    </span>
+                    <span style={{ fontSize: 11, color: "#9ca3af", fontFamily: FONT }}>{timeAgo(a.createdAt)}</span>
+                    <span style={{ fontSize: 11, color: "#9ca3af", fontFamily: FONT }}>by {a.author}</span>
+                    {a.attachments.length > 0 && (
+                      <span style={{ fontSize: 11, color: MAROON, fontFamily: FONT }}>📎 {a.attachments.length} file{a.attachments.length > 1 ? "s" : ""}</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))
+          )
+        ) : activeTab === "quizzes" ? (
+          quizzes.length === 0 && forms.length === 0 ? (
+            <div style={{ padding: "60px 0", textAlign: "center" }}>
+              <FileText size={32} style={{ color: MAROON_MID, marginBottom: 8 }} />
+              <p style={{ fontSize: 13, color: "#9ca3af", fontFamily: FONT, margin: 0 }}>No quizzes or forms assigned to you.</p>
+            </div>
+          ) : (
+            <>
+              {quizzes.map(q => (
+                <div key={q.id} style={{ padding: "12px 16px", borderBottom: `1px solid #f3f4f6`, display: "flex", gap: 12, alignItems: "flex-start" }}>
+                  <div style={{ width: 34, height: 34, borderRadius: 8, background: q.course?.color ?? MAROON, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <FileText size={15} style={{ color: "#fff" }} />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2, flexWrap: "wrap" }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: "#111827", fontFamily: FONT, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{q.title}</span>
+                      <StatusPill label={quizTypeLabel(q.quizType)} color={MAROON} />
+                      {q.attempted
+                        ? <StatusPill label="Attempted" color="#15803d" />
+                        : <StatusPill label="Not Yet Taken" color="#d97706" />}
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                      <span style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "#6b7280", fontFamily: FONT }}>
+                        <CourseDot color={q.course.color} />{q.course.name}
+                      </span>
+                      {q.dueDate && <span style={{ fontSize: 11, color: "#9ca3af", fontFamily: FONT }}>Due {fmtDue(q.dueDate)}</span>}
+                      <span style={{ fontSize: 11, color: "#9ca3af", fontFamily: FONT }}>{q.points} pts</span>
+                      {q.score !== null && <span style={{ fontSize: 11, color: "#15803d", fontWeight: 700, fontFamily: FONT }}>Score: {q.score}</span>}
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {forms.map(f => (
+                <div key={f.id} style={{ padding: "12px 16px", borderBottom: `1px solid #f3f4f6`, display: "flex", gap: 12, alignItems: "flex-start" }}>
+                  <div style={{ width: 34, height: 34, borderRadius: 8, background: f.course?.color ?? "#6366f1", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <ClipboardList size={15} style={{ color: "#fff" }} />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2, flexWrap: "wrap" }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: "#111827", fontFamily: FONT, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.title}</span>
+                      <StatusPill label={formTypeLabel(f.formType)} color="#6366f1" />
+                      {f.submitted
+                        ? <StatusPill label="Submitted" color="#15803d" />
+                        : <StatusPill label="Pending" color="#d97706" />}
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                      <span style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "#6b7280", fontFamily: FONT }}>
+                        <CourseDot color={f.course.color} />{f.course.name}
+                      </span>
+                      {f.dueDate && <span style={{ fontSize: 11, color: "#9ca3af", fontFamily: FONT }}>Due {fmtDue(f.dueDate)}</span>}
+                      {f.score !== null && <span style={{ fontSize: 11, color: "#15803d", fontWeight: 700, fontFamily: FONT }}>Score: {f.score}</span>}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </>
+          )
+        ) : (
+          // enrollments
+          enrollments.length === 0 ? (
+            <div style={{ padding: "60px 0", textAlign: "center" }}>
+              <GraduationCap size={32} style={{ color: MAROON_MID, marginBottom: 8 }} />
+              <p style={{ fontSize: 13, color: "#9ca3af", fontFamily: FONT, margin: 0 }}>You are not enrolled in any courses.</p>
+            </div>
+          ) : (
+            enrollments.map(e => (
+              <div key={e.id} style={{ padding: "12px 16px", borderBottom: `1px solid #f3f4f6`, display: "flex", gap: 12, alignItems: "flex-start" }}>
+                <div style={{ width: 34, height: 34, borderRadius: 8, background: e.course?.color ?? MAROON, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0 }}>
+                  {e.course.image
+                    // eslint-disable-next-line @next/next/no-img-element
+                    ? <img src={e.course.image} alt={e.course.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    : <GraduationCap size={15} style={{ color: "#fff" }} />
+                  }
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2, flexWrap: "wrap" }}>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: "#111827", fontFamily: FONT }}>{e.course.name}</span>
+                    <StatusPill label={e.courseRole} color={MAROON} />
+                    <StatusPill
+                      label={e.course.status === "PUBLISHED" ? "Published" : "Unpublished"}
+                      color={e.course.status === "PUBLISHED" ? "#15803d" : "#9ca3af"}
+                    />
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                    <span style={{ fontSize: 11, color: "#6b7280", fontFamily: FONT }}>{e.course.code}</span>
+                    {e.section && <span style={{ fontSize: 11, color: "#9ca3af", fontFamily: FONT }}>Section: {e.section}</span>}
+                    <span style={{ fontSize: 11, color: "#9ca3af", fontFamily: FONT }}>Enrolled {timeAgo(e.createdAt)}</span>
+                  </div>
+                </div>
+              </div>
+            ))
+          )
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ── Action Button ──────────────────────────────────────────────────────────────
 function ActionBtn({
   icon, title, onClick, disabled = false,
@@ -1149,7 +1499,10 @@ function ActionBtn({
 }
 
 // ── Main Page ──────────────────────────────────────────────────────────────────
+type MainTab = "messages" | "notifications";
+
 export default function InboxPage({ currentUserId }: { currentUserId: string }) {
+  const [mainTab,       setMainTab]       = useState<MainTab>("messages");
   const [courses,       setCourses]       = useState<CourseOption[]>([]);
   const [selectedCtx,   setSelectedCtx]   = useState<CourseOption | null>(null);
   const [mailbox,       setMailbox]       = useState("inbox");
@@ -1159,7 +1512,6 @@ export default function InboxPage({ currentUserId }: { currentUserId: string }) 
   const [composeFor,    setComposeFor]    = useState<UserResult | undefined>(undefined);
   const [loading,       setLoading]       = useState(true);
 
-  // Load courses + groups
   useEffect(() => {
     Promise.all([
       fetch(API_COURSES).then(r => r.json()).catch(() => ({ courses: [] })),
@@ -1171,7 +1523,6 @@ export default function InboxPage({ currentUserId }: { currentUserId: string }) 
     });
   }, []);
 
-  // Fetch conversations
   const fetchConvos = useCallback(async () => {
     setLoading(true);
     try {
@@ -1189,7 +1540,6 @@ export default function InboxPage({ currentUserId }: { currentUserId: string }) 
 
   useEffect(() => { fetchConvos(); }, [fetchConvos]);
 
-  // Poll every 30s
   useEffect(() => {
     const id = setInterval(fetchConvos, 30_000);
     return () => clearInterval(id);
@@ -1211,68 +1561,93 @@ export default function InboxPage({ currentUserId }: { currentUserId: string }) 
   };
 
   const unreadCount = convos.filter(c => c.unread).length;
-  const hasActive   = !!activeConvoId;
+  const hasActive   = !!activeConvoId && mainTab === "messages";
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", fontFamily: FONT, background: "#fff" }}>
       <style>{`@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}`}</style>
 
-      {/* Toolbar */}
-      <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderBottom: `1px solid ${MAROON_MID}`, background: "#fff", flexShrink: 0 }}>
-        <CourseFilter options={courses} selected={selectedCtx} onSelect={setSelectedCtx} />
-        <MailboxFilter value={mailbox} onChange={v => { setMailbox(v); setActiveConvoId(null); }} />
-        <AddressBookPicker courseOptions={courses} onSelectUser={handleSelectUser} />
-        <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
-          <div style={{ position: "relative" }}>
-            <button
-              onClick={() => { setComposeFor(undefined); setComposing(true); }} title="Compose"
-              style={{ width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", background: MAROON, border: "none", borderRadius: 6, cursor: "pointer", color: "#fff" }}
-              onMouseEnter={e => (e.currentTarget.style.background = MAROON_DARK)}
-              onMouseLeave={e => (e.currentTarget.style.background = MAROON)}>
-              <Pencil size={13} />
-            </button>
-            {unreadCount > 0 && (
-              <span style={{ position: "absolute", top: -6, right: -6, background: "#ef4444", color: "#fff", fontSize: 9, fontWeight: 800, borderRadius: 10, padding: "1px 5px", fontFamily: FONT, pointerEvents: "none" }}>
-                {unreadCount}
-              </span>
+      {/* ── Main tab switcher ── */}
+      <div style={{ display: "flex", alignItems: "center", borderBottom: `1px solid ${MAROON_MID}`, background: "#fff", flexShrink: 0 }}>
+        {(["messages", "notifications"] as MainTab[]).map(tab => (
+          <button
+            key={tab}
+            onClick={() => { setMainTab(tab); setActiveConvoId(null); }}
+            style={{
+              padding: "10px 18px", border: "none", background: "none",
+              cursor: "pointer", fontFamily: FONT, fontSize: 13, fontWeight: mainTab === tab ? 700 : 500,
+              color: mainTab === tab ? MAROON : "#6b7280",
+              borderBottom: mainTab === tab ? `2px solid ${MAROON}` : "2px solid transparent",
+              display: "flex", alignItems: "center", gap: 6,
+            }}
+          >
+            {tab === "messages"
+              ? <><Inbox size={14} />Messages{unreadCount > 0 && <span style={{ fontSize: 10, fontWeight: 800, background: MAROON, color: "#fff", borderRadius: 10, padding: "0 5px" }}>{unreadCount}</span>}</>
+              : <><Bell size={14} />Notifications</>
+            }
+          </button>
+        ))}
+      </div>
+
+      {mainTab === "notifications" ? (
+        <NotificationsPanel />
+      ) : (
+        <>
+          {/* Toolbar */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderBottom: `1px solid ${MAROON_MID}`, background: "#fff", flexShrink: 0 }}>
+            <CourseFilter options={courses} selected={selectedCtx} onSelect={setSelectedCtx} />
+            <MailboxFilter value={mailbox} onChange={v => { setMailbox(v); setActiveConvoId(null); }} />
+            <AddressBookPicker courseOptions={courses} onSelectUser={handleSelectUser} />
+            <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
+              <div style={{ position: "relative" }}>
+                <button
+                  onClick={() => { setComposeFor(undefined); setComposing(true); }} title="Compose"
+                  style={{ width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", background: MAROON, border: "none", borderRadius: 6, cursor: "pointer", color: "#fff" }}
+                  onMouseEnter={e => (e.currentTarget.style.background = MAROON_DARK)}
+                  onMouseLeave={e => (e.currentTarget.style.background = MAROON)}>
+                  <Pencil size={13} />
+                </button>
+                {unreadCount > 0 && (
+                  <span style={{ position: "absolute", top: -6, right: -6, background: "#ef4444", color: "#fff", fontSize: 9, fontWeight: 800, borderRadius: 10, padding: "1px 5px", fontFamily: FONT, pointerEvents: "none" }}>
+                    {unreadCount}
+                  </span>
+                )}
+              </div>
+              <div style={{ width: 1, height: 20, background: "#e5e7eb", margin: "0 2px" }} />
+              <ActionBtn icon={<Reply size={13}/>}        title="Reply"     disabled={!hasActive} onClick={() => { if (activeConvoId) { setComposeFor(undefined); setComposing(true); } }} />
+              <ActionBtn icon={<ReplyAll size={13}/>}     title="Reply All" disabled={!hasActive} />
+              <ActionBtn icon={<Download size={13}/>}     title="Archive"   disabled={!hasActive} onClick={() => { if (activeConvoId) handleArchive(activeConvoId); }} />
+              <ActionBtn icon={<Trash2 size={13}/>}       title="Delete"    disabled={!hasActive} onClick={() => { if (activeConvoId) handleArchive(activeConvoId); }} />
+              <ActionBtn icon={<MoreVertical size={13}/>} title="More" />
+            </div>
+          </div>
+
+          {/* Body */}
+          <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
+            <div style={{ width: hasActive ? 320 : "100%", borderRight: hasActive ? `1px solid ${MAROON_MID}` : "none", overflowY: "auto", flexShrink: 0, display: "flex", flexDirection: "column" }}>
+              {loading ? (
+                <ListSkeleton />
+              ) : convos.length === 0 ? (
+                <EmptyState mailbox={mailbox} />
+              ) : (
+                convos.map(c => (
+                  <ConvoRow key={c.id} convo={c} selected={activeConvoId === c.id} onSelect={() => handleSelectConvo(c.id)} />
+                ))
+              )}
+            </div>
+
+            {hasActive && (
+              <ThreadViewer
+                convoId={activeConvoId!}
+                currentUserId={currentUserId}
+                onBack={() => setActiveConvoId(null)}
+                onArchive={handleArchive}
+              />
             )}
           </div>
-          <div style={{ width: 1, height: 20, background: "#e5e7eb", margin: "0 2px" }} />
-          <ActionBtn icon={<Reply size={13}/>}        title="Reply"     disabled={!hasActive} onClick={() => { if (activeConvoId) { setComposeFor(undefined); setComposing(true); } }} />
-          <ActionBtn icon={<ReplyAll size={13}/>}     title="Reply All" disabled={!hasActive} />
-          <ActionBtn icon={<Download size={13}/>}     title="Archive"   disabled={!hasActive} onClick={() => { if (activeConvoId) handleArchive(activeConvoId); }} />
-          <ActionBtn icon={<Trash2 size={13}/>}       title="Delete"    disabled={!hasActive} onClick={() => { if (activeConvoId) handleArchive(activeConvoId); }} />
-          <ActionBtn icon={<MoreVertical size={13}/>} title="More" />
-        </div>
-      </div>
+        </>
+      )}
 
-      {/* Body */}
-      <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
-        {/* Conversation list */}
-        <div style={{ width: hasActive ? 320 : "100%", borderRight: hasActive ? `1px solid ${MAROON_MID}` : "none", overflowY: "auto", flexShrink: 0, display: "flex", flexDirection: "column" }}>
-          {loading ? (
-            <ListSkeleton />
-          ) : convos.length === 0 ? (
-            <EmptyState mailbox={mailbox} />
-          ) : (
-            convos.map(c => (
-              <ConvoRow key={c.id} convo={c} selected={activeConvoId === c.id} onSelect={() => handleSelectConvo(c.id)} />
-            ))
-          )}
-        </div>
-
-        {/* Thread viewer */}
-        {hasActive && (
-          <ThreadViewer
-            convoId={activeConvoId!}
-            currentUserId={currentUserId}
-            onBack={() => setActiveConvoId(null)}
-            onArchive={handleArchive}
-          />
-        )}
-      </div>
-
-      {/* Compose modal */}
       {composing && (
         <ComposeModal
           initialRecipient={composeFor}

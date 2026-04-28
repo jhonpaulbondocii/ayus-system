@@ -273,6 +273,7 @@ exports.Prisma.AssignmentScalarFieldEnum = {
   peerReviewAnonymous: 'peerReviewAnonymous',
   notifyUsers: 'notifyUsers',
   assignees: 'assignees',
+  createdById: 'createdById',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };

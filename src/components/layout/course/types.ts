@@ -25,7 +25,16 @@ export interface Assignment {
   assignees?: string[];
   allowedAttempts?: number | null;
   submissionAttempts?: string;
-  submissions?: { status: string; grade: number | null; submittedAt: string | null }[];
+  submissions?: {
+    status: string;
+    grade: number | null;
+    submittedAt: string | null;
+  }[];
+  // Publisher info injected by API
+  _assignmentRole?: "manager" | "submitter";
+  _publisherName?: string | null;
+  _publisherImage?: string | null;
+  _publisherRole?: string | null;
 }
 
 export interface RawAnnouncement {

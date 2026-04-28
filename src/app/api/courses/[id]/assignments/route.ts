@@ -1,5 +1,3 @@
-// src/app/api/courses/[id]/assignments/route.ts
-
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireCoursePermission } from "@/lib/course-access";
@@ -9,32 +7,120 @@ function parseDateWithTime(
   time: string | null | undefined
 ): Date | null {
   if (!date) return null;
+
   const combined = time ? `${date} ${time}` : date;
   const parsed = new Date(combined);
+
   if (!Number.isNaN(parsed.getTime())) return parsed;
+
   const fallback = new Date(date);
   return Number.isNaN(fallback.getTime()) ? null : fallback;
 }
 
-function parseSubmissionEntries(opts: string[]): {
-  id: string; label: string; required: boolean; type: string;
-}[] | undefined {
+type SubmissionEntry = {
+  id: string | number;
+  label?: string;
+  required?: boolean;
+  type?: string;
+  allowedFileTypes?: string[];
+  maxFiles?: number | null;
+};
+
+function parseSubmissionEntries(opts: string[]): SubmissionEntry[] | undefined {
   if (!opts || opts.length === 0) return undefined;
-  try {
-    const first = JSON.parse(opts[0]);
-    if (first && typeof first === "object" && "id" in first) {
-      return opts.map(o => {
-        try { return JSON.parse(o) as { id: string; label: string; required: boolean; type: string }; }
-        catch { return null; }
-      }).filter((x): x is { id: string; label: string; required: boolean; type: string } => x !== null);
+
+  const entries: SubmissionEntry[] = [];
+
+  for (const opt of opts) {
+    try {
+      const parsed = JSON.parse(opt) as SubmissionEntry;
+
+      if (parsed && typeof parsed === "object" && "id" in parsed) {
+        entries.push(parsed);
+      }
+    } catch {
+      return undefined;
     }
-  } catch { /* plain strings — legacy */ }
-  return undefined;
+  }
+
+  return entries.length > 0 ? entries : undefined;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// GET  /api/courses/[id]/assignments
-// ─────────────────────────────────────────────────────────────────────────────
+function normalizeAssignees(assignees?: string[]): string[] {
+  if (!Array.isArray(assignees)) return [];
+  if (assignees.includes("Everyone")) return [];
+  return assignees.filter(Boolean);
+}
+
+function normalizeSubmissionEntries(entries?: SubmissionEntry[]): string[] {
+  if (!Array.isArray(entries)) return [];
+
+  return entries.map((entry) =>
+    JSON.stringify({
+      id: entry.id,
+      label: entry.label ?? "",
+      required: entry.required ?? false,
+      type: entry.type ?? "File Upload",
+
+      // IMPORTANT: save file restrictions
+      allowedFileTypes:
+        entry.type === "File Upload" ? entry.allowedFileTypes ?? [] : [],
+
+      maxFiles:
+        entry.type === "File Upload" ? entry.maxFiles ?? 1 : null,
+    })
+  );
+}
+
+function isAssignedToUser(args: {
+  assignees: string[];
+  userId: string;
+  userName: string;
+  userEmail: string;
+  userSection: string;
+  userCourseRole: string;
+}) {
+  const {
+    assignees,
+    userId,
+    userName,
+    userEmail,
+    userSection,
+    userCourseRole,
+  } = args;
+
+  if (!assignees || assignees.length === 0) return true;
+  if (assignees.includes("Everyone")) return true;
+
+  return (
+    assignees.includes(userId) ||
+    (!!userName && assignees.includes(userName)) ||
+    (!!userEmail && assignees.includes(userEmail)) ||
+    (!!userSection && assignees.includes(userSection)) ||
+    (!!userCourseRole && assignees.includes(userCourseRole))
+  );
+}
+
+function isExplicitlyAssignedToUser(args: {
+  assignees: string[];
+  userId: string;
+  userName: string;
+  userEmail: string;
+  userSection: string;
+  userCourseRole: string;
+}) {
+  const explicitAssignees = (args.assignees ?? []).filter(
+    (a) => a && a !== "Everyone"
+  );
+
+  if (explicitAssignees.length === 0) return false;
+
+  return isAssignedToUser({
+    ...args,
+    assignees: explicitAssignees,
+  });
+}
+
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -42,19 +128,48 @@ export async function GET(
   const { id: courseId } = await params;
 
   const access = await requireCoursePermission(courseId, "view_course");
+
   if (!access.ok) {
-    return NextResponse.json({ error: access.error }, { status: access.status });
+    return NextResponse.json(
+      { error: access.error },
+      { status: access.status }
+    );
   }
 
   const userId = access.userId;
-  const canManage =
-    access.systemRole === "ADMIN" || access.courseRole === "Head";
+  const isAdmin = access.systemRole === "ADMIN";
+  const isHead = access.courseRole === "Head";
+
+  const enrollment = await prisma.courseEnrollment.findUnique({
+    where: {
+      userId_courseId: {
+        userId,
+        courseId,
+      },
+    },
+    select: {
+      section: true,
+      courseRole: true,
+    },
+  });
+
+  const currentUser = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      name: true,
+      email: true,
+    },
+  });
+
+  const userName = currentUser?.name ?? "";
+  const userEmail = currentUser?.email ?? "";
+  const userSection = enrollment?.section ?? "";
+  const userCourseRole = enrollment?.courseRole ?? access.courseRole ?? "";
 
   const allAssignments = await prisma.assignment.findMany({
     where: {
       courseId,
-      // Use plain string — Prisma accepts it for String-backed enums at runtime
-      ...(canManage ? {} : { status: "PUBLISHED" }),
+      ...(isAdmin || isHead ? {} : { status: "PUBLISHED" }),
     },
     select: {
       id: true,
@@ -67,10 +182,22 @@ export async function GET(
       status: true,
       submissionType: true,
       assignmentGroup: true,
+      displayGradeAs: true,
       onlineEntryOptions: true,
       allowedAttempts: true,
       submissionAttempts: true,
+      doNotCount: true,
+      isGroupAssignment: true,
+      groupSetId: true,
+      requirePeerReviews: true,
+      anonymousGrading: true,
+      peerReviewAssign: true,
+      peerReviewAnonymous: true,
+      notifyUsers: true,
       assignees: true,
+      createdById: true,
+      createdAt: true,
+      updatedAt: true,
       submissions: {
         where: { userId },
         select: {
@@ -79,69 +206,124 @@ export async function GET(
           grade: true,
           submittedAt: true,
           fileUrl: true,
+          textEntry: true,
+          websiteUrl: true,
+          comments: true,
+          feedback: true,
         },
       },
     },
-    orderBy: { dueDate: "asc" },
+    orderBy: [{ dueDate: "asc" }, { createdAt: "desc" }],
   });
 
-  let userDisplayName = "";
-  let userSection = "";
-  let userCourseRole = access.courseRole ?? "";
+  const creatorIds = Array.from(
+    new Set(
+      allAssignments
+        .map((a) => a.createdById)
+        .filter((id): id is string => typeof id === "string" && id.length > 0)
+    )
+  );
 
-  if (!canManage) {
-    const enrollment = await prisma.courseEnrollment.findUnique({
-      where: { userId_courseId: { userId, courseId } },
-      select: { section: true, courseRole: true },
-    });
-    userSection    = enrollment?.section    ?? "";
-    userCourseRole = enrollment?.courseRole ?? userCourseRole;
+  const creators = creatorIds.length
+    ? await prisma.user.findMany({
+        where: { id: { in: creatorIds } },
+        select: {
+          id: true,
+          name: true,
+          image: true,
+          role: true,
+        },
+      })
+    : [];
 
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { name: true },
-    });
-    userDisplayName = user?.name ?? "";
-  }
+  const creatorMap = new Map(creators.map((u) => [u.id, u]));
 
-  const assignments = canManage
-    ? allAssignments
-    : allAssignments.filter(a => {
-        const assignees = a.assignees ?? [];
-        if (assignees.length === 0 || assignees.includes("Everyone")) return true;
-        if (userDisplayName && assignees.includes(userDisplayName))    return true;
-        if (userSection      && assignees.includes(userSection))        return true;
-        if (userCourseRole   && assignees.includes(userCourseRole))     return true;
-        if (assignees.includes(userId))                                 return true;
-        return false;
+  const assignments = allAssignments
+    .filter((assignment) => {
+      const assignedToCurrentUser = isAssignedToUser({
+        assignees: assignment.assignees,
+        userId,
+        userName,
+        userEmail,
+        userSection,
+        userCourseRole,
       });
 
-  const sanitized = assignments.map(({ assignees: _assignees, onlineEntryOptions, ...rest }) => {
-    const entries = parseSubmissionEntries(onlineEntryOptions);
-    return {
-      ...rest,
-      onlineEntryOptions: entries ? [] : onlineEntryOptions,
-      ...(entries ? { submissionEntries: entries } : {}),
-    };
-  });
+      if (isAdmin || isHead) return true;
+
+      return assignedToCurrentUser;
+    })
+    .map((assignment) => {
+      const { assignees, onlineEntryOptions, createdById, ...rest } =
+        assignment;
+
+      const entries = parseSubmissionEntries(onlineEntryOptions);
+
+      const isCreator = !!createdById && createdById === userId;
+
+      const assignedToYou = isAssignedToUser({
+        assignees,
+        userId,
+        userName,
+        userEmail,
+        userSection,
+        userCourseRole,
+      });
+
+      const explicitlyAssignedToYou = isExplicitlyAssignedToUser({
+        assignees,
+        userId,
+        userName,
+        userEmail,
+        userSection,
+        userCourseRole,
+      });
+
+      let assignmentRole: "manager" | "submitter";
+
+      if (isAdmin) {
+        assignmentRole = "manager";
+      } else if (isCreator) {
+        assignmentRole = "manager";
+      } else {
+        assignmentRole = "submitter";
+      }
+
+      const creator = createdById ? creatorMap.get(createdById) : null;
+
+      return {
+        ...rest,
+        createdById,
+        assignees,
+
+        onlineEntryOptions: entries ? [] : onlineEntryOptions,
+        ...(entries ? { submissionEntries: entries } : {}),
+
+        isCreator,
+        isAssignedToYou: assignedToYou && !isCreator,
+
+        _assignmentRole: assignmentRole,
+        _isAssignedToYou: assignedToYou && !isCreator,
+        _isExplicitlyAssignedToYou: explicitlyAssignedToYou,
+
+        _publisherId: createdById ?? null,
+        _publisherName: creator?.name ?? null,
+        _publisherImage: creator?.image ?? null,
+        _publisherRole: creator?.role ?? null,
+      };
+    });
 
   return NextResponse.json({
-    assignments: sanitized,
+    assignments,
     viewer: {
       systemRole: access.systemRole,
       courseRole: access.courseRole,
-      canManageAssignments: canManage,
-      canSubmitAssignments:
-        access.systemRole === "ADMIN" ||
-        access.courseRole === "Head"  ||
-        access.courseRole === "Staff",
+      canManageAssignments: isAdmin || isHead,
+      canSubmitAssignments: true,
     },
   });
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// POST  /api/courses/[id]/assignments
-// ─────────────────────────────────────────────────────────────────────────────
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -150,11 +332,15 @@ export async function POST(
     const { id: courseId } = await params;
 
     const access = await requireCoursePermission(courseId, "manage_assignments");
+
     if (!access.ok) {
-      return NextResponse.json({ error: access.error }, { status: access.status });
+      return NextResponse.json(
+        { error: access.error },
+        { status: access.status }
+      );
     }
 
-    const body = await req.json() as {
+    const body = (await req.json()) as {
       title?: string;
       description?: string;
       points?: number | string;
@@ -162,17 +348,16 @@ export async function POST(
       assignmentGroup?: string;
       displayGradeAs?: string;
       onlineEntryOptions?: string[];
-      submissionEntries?: {
-        id: string;
-        label: string;
-        required: boolean;
-        type: string;
-      }[];
+      submissionEntries?: SubmissionEntry[];
       allowedAttempts?: number | null;
       submissionAttempts?: string;
       doNotCount?: boolean;
       isGroupAssignment?: boolean;
       groupSetId?: string | null;
+      requirePeerReviews?: boolean;
+      anonymousGrading?: boolean;
+      peerReviewAssign?: string;
+      peerReviewAnonymous?: boolean;
       notifyUsers?: boolean;
       dueDate?: string;
       dueTime?: string;
@@ -181,99 +366,76 @@ export async function POST(
       availableUntil?: string;
       untilTime?: string;
       assignees?: string[];
-      // status is a plain string from the client ("PUBLISHED" | "UNPUBLISHED")
       status?: string;
     };
 
-    const {
-      title,
-      description,
-      points,
-      submissionType,
-      assignmentGroup,
-      displayGradeAs,
-      submissionEntries,
-      allowedAttempts,
-      submissionAttempts,
-      doNotCount,
-      isGroupAssignment,
-      groupSetId,
-      notifyUsers,
-      dueDate,
-      dueTime,
-      availableFrom,
-      availableFromTime,
-      availableUntil,
-      untilTime,
-      assignees,
-      status,
-    } = body;
-
-    if (!title?.trim()) {
-      return NextResponse.json({ error: "Title is required" }, { status: 400 });
-    }
-
-    if (submissionType === "Online") {
-      const hasEntries    = Array.isArray(submissionEntries)        && submissionEntries.length > 0;
-      const hasLegacyOpts = Array.isArray(body.onlineEntryOptions)  && body.onlineEntryOptions.length > 0;
-      if (!hasEntries && !hasLegacyOpts) {
-        return NextResponse.json(
-          { error: "At least one submission entry is required" },
-          { status: 400 }
-        );
-      }
+    if (!body.title?.trim()) {
+      return NextResponse.json(
+        { error: "Title is required" },
+        { status: 400 }
+      );
     }
 
     let resolvedOnlineEntryOptions: string[] = [];
 
-    if (Array.isArray(submissionEntries) && submissionEntries.length > 0) {
-      resolvedOnlineEntryOptions = submissionEntries.map(e => JSON.stringify({
-        id:       e.id,
-        label:    e.label    ?? "",
-        required: e.required ?? false,
-        type:     e.type     ?? "File Upload",
-      }));
+    if (
+      Array.isArray(body.submissionEntries) &&
+      body.submissionEntries.length > 0
+    ) {
+      resolvedOnlineEntryOptions = normalizeSubmissionEntries(
+        body.submissionEntries
+      );
     } else if (Array.isArray(body.onlineEntryOptions)) {
       resolvedOnlineEntryOptions = body.onlineEntryOptions;
     }
 
-    const resolvedAssignees: string[] =
-      !assignees ||
-      !Array.isArray(assignees) ||
-      assignees.length === 0 ||
-      assignees.includes("Everyone")
-        ? []
-        : assignees;
-
     const assignment = await prisma.assignment.create({
       data: {
         courseId,
-        title:              title.trim(),
-        description:        description        ?? null,
-        points:             parseFloat(String(points)) || 0,
-        submissionType:     submissionType     ?? "Online",
-        assignmentGroup:    assignmentGroup    ?? "Assignments",
-        displayGradeAs:     displayGradeAs     ?? "Points",
+        title: body.title.trim(),
+        description: body.description ?? null,
+        points: parseFloat(String(body.points ?? 0)) || 0,
+        submissionType: body.submissionType ?? "Online",
+        assignmentGroup: body.assignmentGroup ?? "Assignments",
+        displayGradeAs: body.displayGradeAs ?? "Points",
         onlineEntryOptions: resolvedOnlineEntryOptions,
-        allowedAttempts:    allowedAttempts    ?? null,
-        submissionAttempts: submissionAttempts ?? "Unlimited",
-        doNotCount:         doNotCount         ?? false,
-        isGroupAssignment:  isGroupAssignment  ?? false,
-        groupSetId:         groupSetId         ?? null,
-        notifyUsers:        notifyUsers        ?? false,
-        // Cast to any to satisfy Prisma's enum type — the value is always a valid
-        // CourseStatus string ("PUBLISHED" | "UNPUBLISHED") from the client.
+        allowedAttempts: body.allowedAttempts ?? null,
+        submissionAttempts: body.submissionAttempts ?? "Unlimited",
+        doNotCount: body.doNotCount ?? false,
+        isGroupAssignment: body.isGroupAssignment ?? false,
+        groupSetId: body.groupSetId ?? null,
+        requirePeerReviews: body.requirePeerReviews ?? false,
+        anonymousGrading: body.anonymousGrading ?? false,
+        peerReviewAssign: body.peerReviewAssign ?? "manually",
+        peerReviewAnonymous: body.peerReviewAnonymous ?? false,
+        notifyUsers: body.notifyUsers ?? false,
+        createdById: access.userId,
+        assignees: normalizeAssignees(body.assignees),
+
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        status:             (status ?? "UNPUBLISHED") as any,
-        dueDate:            parseDateWithTime(dueDate, dueTime),
-        availableFrom:      parseDateWithTime(availableFrom, availableFromTime),
-        availableUntil:     parseDateWithTime(availableUntil, untilTime),
-        assignees:          resolvedAssignees,
+        status: (body.status ?? "UNPUBLISHED") as any,
+        dueDate: parseDateWithTime(body.dueDate, body.dueTime),
+        availableFrom: parseDateWithTime(
+          body.availableFrom,
+          body.availableFromTime
+        ),
+        availableUntil: parseDateWithTime(
+          body.availableUntil,
+          body.untilTime
+        ),
       },
     });
 
     return NextResponse.json({
-      assignment,
+      assignment: {
+        ...assignment,
+        isCreator: true,
+        isAssignedToYou: false,
+        _assignmentRole: "manager",
+        _isAssignedToYou: false,
+        _isExplicitlyAssignedToYou: false,
+        _publisherId: access.userId,
+      },
       viewer: {
         systemRole: access.systemRole,
         courseRole: access.courseRole,
@@ -281,6 +443,7 @@ export async function POST(
     });
   } catch (err) {
     console.error("[POST /api/courses/[id]/assignments]", err);
+
     return NextResponse.json(
       { error: "Failed to create assignment" },
       { status: 500 }

@@ -15572,6 +15572,7 @@ export namespace Prisma {
     peerReviewAssign: string | null
     peerReviewAnonymous: boolean | null
     notifyUsers: boolean | null
+    createdById: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -15600,6 +15601,7 @@ export namespace Prisma {
     peerReviewAssign: string | null
     peerReviewAnonymous: boolean | null
     notifyUsers: boolean | null
+    createdById: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -15630,6 +15632,7 @@ export namespace Prisma {
     peerReviewAnonymous: number
     notifyUsers: number
     assignees: number
+    createdById: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -15670,6 +15673,7 @@ export namespace Prisma {
     peerReviewAssign?: true
     peerReviewAnonymous?: true
     notifyUsers?: true
+    createdById?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -15698,6 +15702,7 @@ export namespace Prisma {
     peerReviewAssign?: true
     peerReviewAnonymous?: true
     notifyUsers?: true
+    createdById?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -15728,6 +15733,7 @@ export namespace Prisma {
     peerReviewAnonymous?: true
     notifyUsers?: true
     assignees?: true
+    createdById?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -15845,6 +15851,7 @@ export namespace Prisma {
     peerReviewAnonymous: boolean
     notifyUsers: boolean
     assignees: string[]
+    createdById: string | null
     createdAt: Date
     updatedAt: Date
     _count: AssignmentCountAggregateOutputType | null
@@ -15894,6 +15901,7 @@ export namespace Prisma {
     peerReviewAnonymous?: boolean
     notifyUsers?: boolean
     assignees?: boolean
+    createdById?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     course?: boolean | Assignment$courseArgs<ExtArgs>
@@ -15929,6 +15937,7 @@ export namespace Prisma {
     peerReviewAnonymous?: boolean
     notifyUsers?: boolean
     assignees?: boolean
+    createdById?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     course?: boolean | Assignment$courseArgs<ExtArgs>
@@ -15961,6 +15970,7 @@ export namespace Prisma {
     peerReviewAnonymous?: boolean
     notifyUsers?: boolean
     assignees?: boolean
+    createdById?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
@@ -16011,6 +16021,7 @@ export namespace Prisma {
       peerReviewAnonymous: boolean
       notifyUsers: boolean
       assignees: string[]
+      createdById: string | null
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["assignment"]>
@@ -16435,6 +16446,7 @@ export namespace Prisma {
     readonly peerReviewAnonymous: FieldRef<"Assignment", 'Boolean'>
     readonly notifyUsers: FieldRef<"Assignment", 'Boolean'>
     readonly assignees: FieldRef<"Assignment", 'String[]'>
+    readonly createdById: FieldRef<"Assignment", 'String'>
     readonly createdAt: FieldRef<"Assignment", 'DateTime'>
     readonly updatedAt: FieldRef<"Assignment", 'DateTime'>
   }
@@ -34843,6 +34855,7 @@ export namespace Prisma {
     peerReviewAnonymous: 'peerReviewAnonymous',
     notifyUsers: 'notifyUsers',
     assignees: 'assignees',
+    createdById: 'createdById',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -36314,6 +36327,7 @@ export namespace Prisma {
     peerReviewAnonymous?: BoolFilter<"Assignment"> | boolean
     notifyUsers?: BoolFilter<"Assignment"> | boolean
     assignees?: StringNullableListFilter<"Assignment">
+    createdById?: StringNullableFilter<"Assignment"> | string | null
     createdAt?: DateTimeFilter<"Assignment"> | Date | string
     updatedAt?: DateTimeFilter<"Assignment"> | Date | string
     course?: XOR<CourseNullableRelationFilter, CourseWhereInput> | null
@@ -36348,6 +36362,7 @@ export namespace Prisma {
     peerReviewAnonymous?: SortOrder
     notifyUsers?: SortOrder
     assignees?: SortOrder
+    createdById?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     course?: CourseOrderByWithRelationInput
@@ -36385,6 +36400,7 @@ export namespace Prisma {
     peerReviewAnonymous?: BoolFilter<"Assignment"> | boolean
     notifyUsers?: BoolFilter<"Assignment"> | boolean
     assignees?: StringNullableListFilter<"Assignment">
+    createdById?: StringNullableFilter<"Assignment"> | string | null
     createdAt?: DateTimeFilter<"Assignment"> | Date | string
     updatedAt?: DateTimeFilter<"Assignment"> | Date | string
     course?: XOR<CourseNullableRelationFilter, CourseWhereInput> | null
@@ -36419,6 +36435,7 @@ export namespace Prisma {
     peerReviewAnonymous?: SortOrder
     notifyUsers?: SortOrder
     assignees?: SortOrder
+    createdById?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: AssignmentCountOrderByAggregateInput
@@ -36457,6 +36474,7 @@ export namespace Prisma {
     peerReviewAnonymous?: BoolWithAggregatesFilter<"Assignment"> | boolean
     notifyUsers?: BoolWithAggregatesFilter<"Assignment"> | boolean
     assignees?: StringNullableListFilter<"Assignment">
+    createdById?: StringNullableWithAggregatesFilter<"Assignment"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"Assignment"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Assignment"> | Date | string
   }
@@ -38992,6 +39010,7 @@ export namespace Prisma {
     peerReviewAnonymous?: boolean
     notifyUsers?: boolean
     assignees?: AssignmentCreateassigneesInput | string[]
+    createdById?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     course?: CourseCreateNestedOneWithoutAssignmentsInput
@@ -39026,6 +39045,7 @@ export namespace Prisma {
     peerReviewAnonymous?: boolean
     notifyUsers?: boolean
     assignees?: AssignmentCreateassigneesInput | string[]
+    createdById?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     submissions?: SubmissionUncheckedCreateNestedManyWithoutAssignmentInput
@@ -39056,6 +39076,7 @@ export namespace Prisma {
     peerReviewAnonymous?: BoolFieldUpdateOperationsInput | boolean
     notifyUsers?: BoolFieldUpdateOperationsInput | boolean
     assignees?: AssignmentUpdateassigneesInput | string[]
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     course?: CourseUpdateOneWithoutAssignmentsNestedInput
@@ -39090,6 +39111,7 @@ export namespace Prisma {
     peerReviewAnonymous?: BoolFieldUpdateOperationsInput | boolean
     notifyUsers?: BoolFieldUpdateOperationsInput | boolean
     assignees?: AssignmentUpdateassigneesInput | string[]
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     submissions?: SubmissionUncheckedUpdateManyWithoutAssignmentNestedInput
@@ -39122,6 +39144,7 @@ export namespace Prisma {
     peerReviewAnonymous?: boolean
     notifyUsers?: boolean
     assignees?: AssignmentCreateassigneesInput | string[]
+    createdById?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -39150,6 +39173,7 @@ export namespace Prisma {
     peerReviewAnonymous?: BoolFieldUpdateOperationsInput | boolean
     notifyUsers?: BoolFieldUpdateOperationsInput | boolean
     assignees?: AssignmentUpdateassigneesInput | string[]
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -39180,6 +39204,7 @@ export namespace Prisma {
     peerReviewAnonymous?: BoolFieldUpdateOperationsInput | boolean
     notifyUsers?: BoolFieldUpdateOperationsInput | boolean
     assignees?: AssignmentUpdateassigneesInput | string[]
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -41842,6 +41867,7 @@ export namespace Prisma {
     peerReviewAnonymous?: SortOrder
     notifyUsers?: SortOrder
     assignees?: SortOrder
+    createdById?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -41875,6 +41901,7 @@ export namespace Prisma {
     peerReviewAssign?: SortOrder
     peerReviewAnonymous?: SortOrder
     notifyUsers?: SortOrder
+    createdById?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -41903,6 +41930,7 @@ export namespace Prisma {
     peerReviewAssign?: SortOrder
     peerReviewAnonymous?: SortOrder
     notifyUsers?: SortOrder
+    createdById?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -47838,6 +47866,7 @@ export namespace Prisma {
     peerReviewAnonymous?: boolean
     notifyUsers?: boolean
     assignees?: AssignmentCreateassigneesInput | string[]
+    createdById?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     group?: GroupCreateNestedOneWithoutAssignmentsInput
@@ -47870,6 +47899,7 @@ export namespace Prisma {
     peerReviewAnonymous?: boolean
     notifyUsers?: boolean
     assignees?: AssignmentCreateassigneesInput | string[]
+    createdById?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     submissions?: SubmissionUncheckedCreateNestedManyWithoutAssignmentInput
@@ -48239,6 +48269,7 @@ export namespace Prisma {
     peerReviewAnonymous?: BoolFilter<"Assignment"> | boolean
     notifyUsers?: BoolFilter<"Assignment"> | boolean
     assignees?: StringNullableListFilter<"Assignment">
+    createdById?: StringNullableFilter<"Assignment"> | string | null
     createdAt?: DateTimeFilter<"Assignment"> | Date | string
     updatedAt?: DateTimeFilter<"Assignment"> | Date | string
   }
@@ -48875,6 +48906,7 @@ export namespace Prisma {
     peerReviewAnonymous?: boolean
     notifyUsers?: boolean
     assignees?: AssignmentCreateassigneesInput | string[]
+    createdById?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     course?: CourseCreateNestedOneWithoutAssignmentsInput
@@ -48907,6 +48939,7 @@ export namespace Prisma {
     peerReviewAnonymous?: boolean
     notifyUsers?: boolean
     assignees?: AssignmentCreateassigneesInput | string[]
+    createdById?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     submissions?: SubmissionUncheckedCreateNestedManyWithoutAssignmentInput
@@ -49624,6 +49657,7 @@ export namespace Prisma {
     peerReviewAnonymous?: boolean
     notifyUsers?: boolean
     assignees?: AssignmentCreateassigneesInput | string[]
+    createdById?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     course?: CourseCreateNestedOneWithoutAssignmentsInput
@@ -49657,6 +49691,7 @@ export namespace Prisma {
     peerReviewAnonymous?: boolean
     notifyUsers?: boolean
     assignees?: AssignmentCreateassigneesInput | string[]
+    createdById?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     repository?: RepositoryUncheckedCreateNestedOneWithoutAssignmentInput
@@ -49806,6 +49841,7 @@ export namespace Prisma {
     peerReviewAnonymous?: BoolFieldUpdateOperationsInput | boolean
     notifyUsers?: BoolFieldUpdateOperationsInput | boolean
     assignees?: AssignmentUpdateassigneesInput | string[]
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     course?: CourseUpdateOneWithoutAssignmentsNestedInput
@@ -49839,6 +49875,7 @@ export namespace Prisma {
     peerReviewAnonymous?: BoolFieldUpdateOperationsInput | boolean
     notifyUsers?: BoolFieldUpdateOperationsInput | boolean
     assignees?: AssignmentUpdateassigneesInput | string[]
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     repository?: RepositoryUncheckedUpdateOneWithoutAssignmentNestedInput
@@ -49901,6 +49938,7 @@ export namespace Prisma {
     peerReviewAnonymous?: boolean
     notifyUsers?: boolean
     assignees?: AssignmentCreateassigneesInput | string[]
+    createdById?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     course?: CourseCreateNestedOneWithoutAssignmentsInput
@@ -49934,6 +49972,7 @@ export namespace Prisma {
     peerReviewAnonymous?: boolean
     notifyUsers?: boolean
     assignees?: AssignmentCreateassigneesInput | string[]
+    createdById?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     submissions?: SubmissionUncheckedCreateNestedManyWithoutAssignmentInput
@@ -50043,6 +50082,7 @@ export namespace Prisma {
     peerReviewAnonymous?: BoolFieldUpdateOperationsInput | boolean
     notifyUsers?: BoolFieldUpdateOperationsInput | boolean
     assignees?: AssignmentUpdateassigneesInput | string[]
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     course?: CourseUpdateOneWithoutAssignmentsNestedInput
@@ -50076,6 +50116,7 @@ export namespace Prisma {
     peerReviewAnonymous?: BoolFieldUpdateOperationsInput | boolean
     notifyUsers?: BoolFieldUpdateOperationsInput | boolean
     assignees?: AssignmentUpdateassigneesInput | string[]
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     submissions?: SubmissionUncheckedUpdateManyWithoutAssignmentNestedInput
@@ -53922,6 +53963,7 @@ export namespace Prisma {
     peerReviewAnonymous?: boolean
     notifyUsers?: boolean
     assignees?: AssignmentCreateassigneesInput | string[]
+    createdById?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -54134,6 +54176,7 @@ export namespace Prisma {
     peerReviewAnonymous?: BoolFieldUpdateOperationsInput | boolean
     notifyUsers?: BoolFieldUpdateOperationsInput | boolean
     assignees?: AssignmentUpdateassigneesInput | string[]
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     group?: GroupUpdateOneWithoutAssignmentsNestedInput
@@ -54166,6 +54209,7 @@ export namespace Prisma {
     peerReviewAnonymous?: BoolFieldUpdateOperationsInput | boolean
     notifyUsers?: BoolFieldUpdateOperationsInput | boolean
     assignees?: AssignmentUpdateassigneesInput | string[]
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     submissions?: SubmissionUncheckedUpdateManyWithoutAssignmentNestedInput
@@ -54197,6 +54241,7 @@ export namespace Prisma {
     peerReviewAnonymous?: BoolFieldUpdateOperationsInput | boolean
     notifyUsers?: BoolFieldUpdateOperationsInput | boolean
     assignees?: AssignmentUpdateassigneesInput | string[]
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -54548,6 +54593,7 @@ export namespace Prisma {
     peerReviewAnonymous?: boolean
     notifyUsers?: boolean
     assignees?: AssignmentCreateassigneesInput | string[]
+    createdById?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -54600,6 +54646,7 @@ export namespace Prisma {
     peerReviewAnonymous?: BoolFieldUpdateOperationsInput | boolean
     notifyUsers?: BoolFieldUpdateOperationsInput | boolean
     assignees?: AssignmentUpdateassigneesInput | string[]
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     course?: CourseUpdateOneWithoutAssignmentsNestedInput
@@ -54632,6 +54679,7 @@ export namespace Prisma {
     peerReviewAnonymous?: BoolFieldUpdateOperationsInput | boolean
     notifyUsers?: BoolFieldUpdateOperationsInput | boolean
     assignees?: AssignmentUpdateassigneesInput | string[]
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     submissions?: SubmissionUncheckedUpdateManyWithoutAssignmentNestedInput
@@ -54663,6 +54711,7 @@ export namespace Prisma {
     peerReviewAnonymous?: BoolFieldUpdateOperationsInput | boolean
     notifyUsers?: BoolFieldUpdateOperationsInput | boolean
     assignees?: AssignmentUpdateassigneesInput | string[]
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }

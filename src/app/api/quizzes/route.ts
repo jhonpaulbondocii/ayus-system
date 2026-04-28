@@ -1,54 +1,95 @@
-import { NextResponse } from "next/server";
+// src/app/api/quizzes/route.ts
+import { NextResponse }    from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { authOptions }     from "@/lib/auth";
+import { prisma }          from "@/lib/prisma";
 
-export async function GET(req: Request) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+export async function GET() {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id)
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const { searchParams } = new URL(req.url);
-    const courseId = searchParams.get("courseId");
-    if (!courseId) {
-      return NextResponse.json({ error: "courseId required" }, { status: 400 });
-    }
+  const userId = session.user.id;
 
-    // Fetch the current user's name so we can match against assignTo
-    const currentUser = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { name: true },
-    });
+  const enrollments = await prisma.courseEnrollment.findMany({
+    where:  { userId },
+    select: { courseId: true },
+  });
+  const courseIds = enrollments.map((e) => e.courseId);
 
-    const userName = currentUser?.name ?? "";
+  if (courseIds.length === 0)
+    return NextResponse.json({ quizzes: [], forms: [] });
 
-    const quizzes = await prisma.quiz.findMany({
+  // Fetch published quizzes in enrolled courses
+  const [quizzes, forms] = await Promise.all([
+    prisma.quiz.findMany({
       where: {
-        courseId,
+        courseId:  { in: courseIds },
         published: true,
-        // Only return quizzes assigned to "Everyone" or to this specific staff member by name
-        assignTo: {
-          hasSome: ["Everyone", userName],
-        },
+        OR: [
+          { availableFrom: null },
+          { availableFrom: { lte: new Date() } },
+        ],
       },
       include: {
-        questions: {
-          include: { answers: true, matchPairs: true },
-          orderBy: { order: "asc" },
-        },
+        course:   { select: { id: true, name: true, code: true, color: true } },
         attempts: {
-          where: { userId: session.user.id },
-          orderBy: { submittedAt: "desc" },
+          where:  { userId },
+          select: { id: true, score: true, submittedAt: true },
+          orderBy:{ submittedAt: "desc" },
+          take: 1,
         },
       },
-      orderBy: { createdAt: "desc" },
-    });
+      orderBy: { dueDate: "asc" },
+    }),
 
-    return NextResponse.json({ quizzes });
-  } catch (error) {
-    console.error("GET /api/quizzes error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
+    prisma.form.findMany({
+      where: {
+        courseId:  { in: courseIds },
+        published: true,
+        OR: [
+          { availableFrom: null },
+          { availableFrom: { lte: new Date() } },
+        ],
+      },
+      include: {
+        course: { select: { id: true, name: true, code: true, color: true } },
+        formSubmissions: {
+          where:  { userId },
+          select: { id: true, score: true, createdAt: true },
+          orderBy:{ createdAt: "desc" },
+          take: 1,
+        },
+      },
+      orderBy: { dueDate: "asc" },
+    }),
+  ]);
+
+  const quizResult = quizzes.map((q) => ({
+    id:          q.id,
+    title:       q.title,
+    description: q.description,
+    quizType:    q.quizType,
+    points:      q.points,
+    dueDate:     q.dueDate?.toISOString() ?? null,
+    course:      q.course,
+    attempted:   q.attempts.length > 0,
+    score:       q.attempts[0]?.score ?? null,
+    submittedAt: q.attempts[0]?.submittedAt?.toISOString() ?? null,
+  }));
+
+  const formResult = forms.map((f) => ({
+    id:          f.id,
+    title:       f.title,
+    description: f.description,
+    formType:    f.formType,
+    points:      f.points,
+    dueDate:     f.dueDate?.toISOString() ?? null,
+    course:      f.course,
+    submitted:   f.formSubmissions.length > 0,
+    score:       f.formSubmissions[0]?.score ?? null,
+    submittedAt: f.formSubmissions[0]?.createdAt?.toISOString() ?? null,
+  }));
+
+  return NextResponse.json({ quizzes: quizResult, forms: formResult });
 }

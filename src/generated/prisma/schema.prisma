@@ -305,8 +305,12 @@ model Assignment {
   peerReviewAnonymous Boolean      @default(false)
   notifyUsers         Boolean      @default(false)
   assignees           String[]     @default([])
-  createdAt           DateTime     @default(now())
-  updatedAt           DateTime     @updatedAt
+
+  // ✅ ADD THIS
+  createdById String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   course      Course?      @relation(fields: [courseId], references: [id], onDelete: Cascade)
   group       Group?       @relation(fields: [groupId], references: [id], onDelete: Cascade)
