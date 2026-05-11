@@ -106,7 +106,8 @@ export async function sendFormEmail({
                   <tr>
                     <td style="padding:28px 24px 24px;">
 
-                      <p style="margin:0 0 6px;font-size:18px;font-weight:700;color:#1a1a1a;">${formTitle}</p>
+                      <p style="margin:0 0 2px;font-size:13px;color:#6b7280;">Hi, ${recipientName}!</p>
+<p style="margin:0 0 6px;font-size:18px;font-weight:700;color:#1a1a1a;">${formTitle}</p>
                       <p style="margin:0 0 6px;">
                         <span style="display:inline-block;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;color:#ffffff;background:${typeColor};">
                           ${formType}

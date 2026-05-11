@@ -70,7 +70,7 @@ function CreateCourseModal({
         width: "100%", maxWidth: 440, overflow: "hidden",
       }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 22px 16px", borderBottom: "1px solid #f0e4e4" }}>
-          <h2 style={{ fontSize: 16, fontWeight: 800, color: "#111827", margin: 0 }}>Create Course</h2>
+          <h2 style={{ fontSize: 16, fontWeight: 800, color: "#111827", margin: 0 }}>Create Office</h2>
           <button onClick={onClose}
             style={{ width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid #e5e7eb", borderRadius: 8, background: "none", cursor: "pointer", fontSize: 14, color: "#6b7280" }}>
             ✕
@@ -78,14 +78,14 @@ function CreateCourseModal({
         </div>
         <div style={{ padding: "20px 22px" }}>
           <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>
-            Course Name
+            Office Name
           </label>
           <input
             autoFocus
             value={name}
             onChange={e => setName(e.target.value)}
             onKeyDown={e => e.key === "Enter" && handleCreate()}
-            placeholder="Enter course name..."
+            placeholder="Enter office name..."
             style={{
               width: "100%", border: "1px solid #e5e7eb", borderRadius: 8,
               padding: "9px 12px", fontSize: 13, outline: "none",
@@ -161,7 +161,7 @@ function AdminSidebar({
   const handlePageNavClick = () => { if (coursesActive) closeCourses(); };
 
   return (
-    <div className="w-16 bg-[#7b1113] text-white h-full flex flex-col items-center py-0 shrink-0 z-[200] relative">
+    <div className="w-16 bg-[#7b1113] text-white h-full flex flex-col items-center py-0 shrink-0 z-200 relative">
       {/* Logo/Account */}
       <Link href="/admin/dashboard" onClick={handlePageNavClick}
         className="flex flex-col items-center justify-center w-full py-3 hover:bg-[#5a0d0f] transition-colors border-l-2 border-transparent">
@@ -178,7 +178,7 @@ function AdminSidebar({
         <button onClick={handleCoursesClick}
           className={`flex flex-col items-center justify-center w-full py-2.5 px-1 transition-colors ${coursesActive ? ACTIVE_CLS : INACTIVE_CLS}`}>
           <BookOpen size={18} />
-          <span className="text-[10px] mt-1 text-center leading-tight">Courses</span>
+          <span className="text-[10px] mt-1 text-center leading-tight">Offices</span>
         </button>
 
         <button onClick={onGroupsClick}
@@ -364,7 +364,6 @@ function AdminInner({ children }: { children: React.ReactNode }) {
     const handler = () => setShowModal(true);
     window.addEventListener("admin:openCreateCourse", handler);
     return () => window.removeEventListener("admin:openCreateCourse", handler);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleCreated = (courseId: string) => {

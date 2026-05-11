@@ -26,7 +26,62 @@ interface IncomingFormQuestion {
   order?: number;
 }
 
-// ✅ GET — fetch all forms with author info
+// ── FIXED: Convert stored UTC DateTime back to PH local date string (YYYY-MM-DD)
+function toPhDateString(dt: Date | null | undefined): string {
+  if (!dt) return "";
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Manila",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date(dt)); // returns YYYY-MM-DD
+}
+
+// ── FIXED: Convert stored UTC DateTime back to PH local time string (H:MM AM/PM)
+function toPhTimeString(dt: Date | null | undefined): string {
+  if (!dt) return "";
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Manila",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  }).format(new Date(dt)); // e.g. "12:00 AM"
+}
+
+// ── FIXED: Parse date+time strings as Philippine local time (UTC+8) ───────────
+// Previously used `new Date(dueDate)` which treated the date as UTC midnight,
+// causing an 8-hour offset when displayed in PH timezone.
+function parseDatePh(
+  date: string | null | undefined,
+  time: string | null | undefined
+): Date | null {
+  if (!date) return null;
+
+  // Strip any accidental ISO time component — keep only YYYY-MM-DD
+  const datePart = date.includes("T") ? date.split("T")[0] : date;
+
+  let hours = 0;
+  let minutes = 0;
+  if (time) {
+    const match = time.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+    if (match) {
+      hours = parseInt(match[1], 10);
+      minutes = parseInt(match[2], 10);
+      const period = match[3].toUpperCase();
+      if (period === "AM" && hours === 12) hours = 0;
+      if (period === "PM" && hours !== 12) hours += 12;
+    }
+  }
+
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const [year, month, day] = datePart.split("-").map(Number);
+  // Explicit +08:00 offset → stored correctly as UTC in DB
+  const isoString = `${year}-${pad(month)}-${pad(day)}T${pad(hours)}:${pad(minutes)}:00+08:00`;
+  const parsed = new Date(isoString);
+  return isNaN(parsed.getTime()) ? null : parsed;
+}
+
+// ── GET — fetch all forms with author info ────────────────────────────────────
 export async function GET(_req: NextRequest, { params }: Props) {
   try {
     const { id: courseId } = await params;
@@ -63,12 +118,13 @@ export async function GET(_req: NextRequest, { params }: Props) {
       accessCode: f.accessCode ?? "",
       confirmationMessage: f.confirmationMessage ?? "",
       assignTo: f.assignTo,
-      dueDate: f.dueDate ? f.dueDate.toISOString().split("T")[0] : "",
-      dueTime: f.dueTime ?? "",
-      availableFrom: f.availableFrom ? f.availableFrom.toISOString().split("T")[0] : "",
-      availableFromTime: f.availableFromTime ?? "",
-      availableUntil: f.availableUntil ? f.availableUntil.toISOString().split("T")[0] : "",
-      availableUntilTime: f.availableUntilTime ?? "",
+      // FIXED: use PH timezone conversion instead of raw UTC ISO split
+      dueDate:            toPhDateString(f.dueDate),
+      dueTime:            toPhTimeString(f.dueDate),
+      availableFrom:      toPhDateString(f.availableFrom),
+      availableFromTime:  toPhTimeString(f.availableFrom),
+      availableUntil:     toPhDateString(f.availableUntil),
+      availableUntilTime: toPhTimeString(f.availableUntil),
       published: f.published,
       createdAt: f.createdAt.toISOString(),
       createdAtLabel: f.createdAt.toLocaleDateString(),
@@ -87,7 +143,7 @@ export async function GET(_req: NextRequest, { params }: Props) {
   }
 }
 
-// ✅ POST — create a form, saving author info
+// ── POST — create a form, saving author info ──────────────────────────────────
 export async function POST(req: NextRequest, { params }: Props) {
   try {
     const { id: courseId } = await params;
@@ -185,11 +241,12 @@ export async function POST(req: NextRequest, { params }: Props) {
         accessCode: accessCode ? String(accessCode) : null,
         confirmationMessage: confirmationMessage ?? null,
         assignTo: Array.isArray(assignTo) ? assignTo : [],
-        dueDate: dueDate ? new Date(dueDate) : null,
-        dueTime: dueTime ?? null,
-        availableFrom: availableFrom ? new Date(availableFrom) : null,
+        // FIXED: use parseDatePh instead of new Date() to preserve PH timezone
+        dueDate:       parseDatePh(dueDate, dueTime),
+        dueTime:       dueTime ?? null,
+        availableFrom: parseDatePh(availableFrom, availableFromTime),
         availableFromTime: availableFromTime ?? null,
-        availableUntil: availableUntil ? new Date(availableUntil) : null,
+        availableUntil: parseDatePh(availableUntil, availableUntilTime),
         availableUntilTime: availableUntilTime ?? null,
         published: Boolean(published),
         questions: {

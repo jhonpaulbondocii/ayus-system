@@ -18,7 +18,6 @@ const formatDueDate = (date: Date): string => {
   const now = new Date();
   const diff = date.getTime() - now.getTime();
   const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
-
   if (days < 0) return "Overdue";
   if (days === 0) return "Due today";
   if (days === 1) return "Tomorrow";
@@ -35,19 +34,28 @@ export async function GET(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id: courseId } = await params;
-
   const now = new Date();
 
-  // Total enrolled people for "total" count
-  const totalEnrolled = await prisma.courseEnrollment.count({
-    where: { courseId },
+  // Only count Staff (not Admin/Head) as the "total" target
+  const totalStaff = await prisma.courseEnrollment.count({
+    where: {
+      courseId,
+      courseRole: { notIn: ["Admin", "Head"] },
+    },
   });
 
-  const [assignments, quizzes] = await Promise.all([
-    // Upcoming assignments with due dates
+  const staffEnrollments = await prisma.courseEnrollment.findMany({
+    where: { courseId, courseRole: { notIn: ["Admin", "Head"] } },
+    select: { userId: true },
+  });
+  const staffIds = staffEnrollments.map((e) => e.userId);
+
+  const [assignments, forms] = await Promise.all([
+    // Published assignments with upcoming due dates
     prisma.assignment.findMany({
       where: {
         courseId,
+        status: "PUBLISHED",
         dueDate: { gte: now },
       },
       select: {
@@ -57,7 +65,10 @@ export async function GET(
         _count: {
           select: {
             submissions: {
-              where: { submittedAt: { not: null } },
+              where: {
+                submittedAt: { not: null },
+                userId: { in: staffIds },
+              },
             },
           },
         },
@@ -66,10 +77,11 @@ export async function GET(
       take: 5,
     }),
 
-    // Upcoming quizzes with due dates
-    prisma.quiz.findMany({
+    // Published forms with upcoming due dates
+    prisma.form.findMany({
       where: {
         courseId,
+        published: true,
         dueDate: { gte: now },
       },
       select: {
@@ -77,7 +89,11 @@ export async function GET(
         title: true,
         dueDate: true,
         _count: {
-          select: { attempts: true },
+          select: {
+            formSubmissions: {
+              where: { userId: { in: staffIds } },
+            },
+          },
         },
       },
       orderBy: { dueDate: "asc" },
@@ -85,39 +101,42 @@ export async function GET(
     }),
   ]);
 
-  // Merge and sort by due date, take top 5
-  type DeadlineItem = {
+  type DeadlineItemRaw = {
     id: string;
     title: string;
-    type: "assignment" | "quiz";
+    type: "assignment" | "form";
     dueDate: string;
     submissions: number;
     total: number;
+    sortDate: Date;
   };
 
-  const deadlines: DeadlineItem[] = [
+  type DeadlineItem = Omit<DeadlineItemRaw, "sortDate">;
+
+  const raw: DeadlineItemRaw[] = [
     ...assignments.map((a) => ({
       id: a.id,
       title: a.title,
       type: "assignment" as const,
       dueDate: formatDueDate(a.dueDate!),
       submissions: a._count.submissions,
-      total: totalEnrolled,
-      _sortDate: a.dueDate!,
+      total: totalStaff,
+      sortDate: a.dueDate!,
     })),
-    ...quizzes.map((q) => ({
-      id: q.id,
-      title: q.title,
-      type: "quiz" as const,
-      dueDate: formatDueDate(q.dueDate!),
-      submissions: q._count.attempts,
-      total: totalEnrolled,
-      _sortDate: q.dueDate!,
+    ...forms.map((f) => ({
+      id: f.id,
+      title: f.title,
+      type: "form" as const,
+      dueDate: formatDueDate(f.dueDate!),
+      submissions: f._count.formSubmissions,
+      total: totalStaff,
+      sortDate: f.dueDate!,
     })),
-  ]
-    .sort((a, b) => a._sortDate.getTime() - b._sortDate.getTime())
-    .slice(0, 5)
-    .map(({ _sortDate: _ignored, ...rest }) => rest);
+  ].sort((a, b) => a.sortDate.getTime() - b.sortDate.getTime());
+
+  const deadlines: DeadlineItem[] = raw
+    .slice(0, 6)
+    .map(({ sortDate: _, ...rest }) => rest);
 
   return NextResponse.json({ deadlines });
 }

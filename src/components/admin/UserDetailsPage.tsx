@@ -17,15 +17,11 @@ interface Enrollment {
 
 const MAROON = "#7b1113";
 
-const VALID_COURSE_ROLES = new Set(["Teacher", "Student", "TA", "Observer", "Designer"]);
 const normalizeRole = (r: string | null | undefined): string => {
-  if (!r) return "Student";
-  if (VALID_COURSE_ROLES.has(r)) return r;
+  if (!r) return "Staff";
   const lower = r.toLowerCase();
-  for (const valid of VALID_COURSE_ROLES) {
-    if (valid.toLowerCase() === lower) return valid;
-  }
-  return "Student";
+  if (lower === "head") return "Head";
+  return "Staff";
 };
 
 export default function UserDetailsPage({ courseId, userId }: { courseId: string; userId: string }) {
@@ -233,20 +229,7 @@ export default function UserDetailsPage({ courseId, userId }: { courseId: string
         </section>
       </div>
 
-      {/* ── Right sidebar ── */}
-      <div style={{ width: 180, borderLeft: "1px solid #f3f4f6", padding: "32px 16px", flexShrink: 0 }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {["Student Grades", "Interactions Report", "Access Report", "Course Analytics"].map(label => (
-            <button key={label}
-              style={{ width: "100%", display: "flex", alignItems: "center", fontSize: 12, fontWeight: 600, color: "#374151", padding: "8px 12px", border: "1px solid #e5e7eb", borderRadius: 6, background: "#fff", cursor: "pointer", textAlign: "left", transition: "all .15s", fontFamily: "'Plus Jakarta Sans','Helvetica Neue',Arial,sans-serif" }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = MAROON; e.currentTarget.style.color = MAROON; }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = "#e5e7eb"; e.currentTarget.style.color = "#374151"; }}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-      </div>
+      
     </div>
   );
 }

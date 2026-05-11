@@ -68,7 +68,7 @@ export default function AdminGroupsPanel({ onClose, onNavigate }: AdminGroupsPan
 
   return (
     <div
-      className="fixed top-0 left-16 h-full w-72 bg-white border-r border-gray-200 shadow-xl z-[110] flex flex-col"
+      className="fixed top-0 left-16 h-full w-72 bg-white border-r border-gray-200 shadow-xl z-110 flex flex-col"
       style={{ fontFamily: "'Plus Jakarta Sans','Helvetica Neue',Arial,sans-serif" }}
     >
       {/* Header */}

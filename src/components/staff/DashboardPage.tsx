@@ -462,8 +462,11 @@ export default function DashboardPage() {
     return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
   });
 
-  const published   = sortedCourses.filter((c) => c.status === "PUBLISHED");
-  const unpublished = sortedCourses.filter((c) => c.status === "UNPUBLISHED");
+  const published     = sortedCourses.filter((c) => c.status === "PUBLISHED");
+  const unpublished   = sortedCourses.filter((c) => c.status === "UNPUBLISHED");
+  const academic      = published.filter((c) => c.term === "Academic");
+  const nonAcademic   = published.filter((c) => c.term === "Non-Academic");
+  const uncategorized = published.filter((c) => c.term !== "Academic" && c.term !== "Non-Academic");
 
   return (
     <div style={{ ...font, display: "flex", height: "100%", background: "#fff", overflow: "hidden" }}>
@@ -472,16 +475,10 @@ export default function DashboardPage() {
       <div style={{ flex: 1, padding: "24px 28px", overflowY: "auto" }}>
         {/* Header */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24, paddingBottom: 12, borderBottom: "1px solid #f0e4e4" }}>
-          <h1 style={{ fontSize: 22, fontWeight: 800, color: "#111827", margin: 0 }}>Dashboard</h1>
-          <button
-            style={{ background: "none", border: "none", cursor: "pointer", color: "#9ca3af", padding: 4, borderRadius: 6, display: "flex" }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = "#374151")}
-            onMouseLeave={(e) => (e.currentTarget.style.color = "#9ca3af")}
-            onClick={fetchCourses}
-            title="Refresh"
-          >
-            <MoreVertIcon />
-          </button>
+          <div>
+            <p style={{ fontSize: 10, fontWeight: 800, color: MAROON, textTransform: "uppercase", letterSpacing: "0.2em", margin: 0 }}>Dashboard</p>
+            <h1 style={{ fontSize: 18, fontWeight: 900, color: "#111827", margin: "2px 0 0" }}>Offices</h1>
+          </div>
         </div>
 
         {loading ? (
@@ -501,9 +498,87 @@ export default function DashboardPage() {
           <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
             {published.length > 0 && (
               <section>
-                <SectionHeading title="Published Courses" count={published.length} color={MAROON} />
+                {academic.length > 0 && (
+                  <div style={{ marginBottom: 28 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14, paddingBottom: 8, borderBottom: "1px solid #eff6ff" }}>
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "#eff6ff", color: "#1565c0", border: "1px solid #bfdbfe", borderRadius: 20, padding: "3px 10px 3px 8px", fontSize: 11, fontWeight: 800, textTransform: "uppercase" as const, letterSpacing: "0.06em", fontFamily: FONT, whiteSpace: "nowrap" as const }}>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+                        Academic
+                      </span>
+                      <span style={{ fontSize: 11, color: "#9ca3af", fontWeight: 600 }}>({academic.length})</span>
+                      <span style={{ flex: 1, height: 1, background: "#eff6ff" }}/>
+                    </div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
+                      {academic.map((c) => (
+                        <CourseCard key={c.id} course={c}
+                          onColorChange={(color) => updateColor(c.id, color)}
+                          onMove={(dir) => moveCourse(c.id, dir, "PUBLISHED")}
+                          onClick={() => router.push(`/courses/${c.id}`)}
+                          onAssignments={() => router.push(`/courses/${c.id}/assignments`)}
+                          onDiscussions={() => router.push(`/courses/${c.id}/discussions`)}
+                          onFiles={() => router.push(`/courses/${c.id}/files`)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {nonAcademic.length > 0 && (
+                  <div style={{ marginBottom: 28 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14, paddingBottom: 8, borderBottom: "1px solid #fffbeb" }}>
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "#fffbeb", color: "#b45309", border: "1px solid #fde68a", borderRadius: 20, padding: "3px 10px 3px 8px", fontSize: 11, fontWeight: 800, textTransform: "uppercase" as const, letterSpacing: "0.06em", fontFamily: FONT, whiteSpace: "nowrap" as const }}>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+                        Non-Academic
+                      </span>
+                      <span style={{ fontSize: 11, color: "#9ca3af", fontWeight: 600 }}>({nonAcademic.length})</span>
+                      <span style={{ flex: 1, height: 1, background: "#fffbeb" }}/>
+                    </div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
+                      {nonAcademic.map((c) => (
+                        <CourseCard key={c.id} course={c}
+                          onColorChange={(color) => updateColor(c.id, color)}
+                          onMove={(dir) => moveCourse(c.id, dir, "PUBLISHED")}
+                          onClick={() => router.push(`/courses/${c.id}`)}
+                          onAssignments={() => router.push(`/courses/${c.id}/assignments`)}
+                          onDiscussions={() => router.push(`/courses/${c.id}/discussions`)}
+                          onFiles={() => router.push(`/courses/${c.id}/files`)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {uncategorized.length > 0 && (
+                  <div style={{ marginBottom: 28 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14, paddingBottom: 8, borderBottom: "1px solid #f3f4f6" }}>
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "#f9fafb", color: "#6b7280", border: "1px solid #e5e7eb", borderRadius: 20, padding: "3px 10px 3px 8px", fontSize: 11, fontWeight: 800, textTransform: "uppercase" as const, letterSpacing: "0.06em", fontFamily: FONT, whiteSpace: "nowrap" as const }}>
+                        Uncategorized
+                      </span>
+                      <span style={{ fontSize: 11, color: "#9ca3af", fontWeight: 600 }}>({uncategorized.length})</span>
+                      <span style={{ flex: 1, height: 1, background: "#f3f4f6" }}/>
+                    </div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
+                      {uncategorized.map((c) => (
+                        <CourseCard key={c.id} course={c}
+                          onColorChange={(color) => updateColor(c.id, color)}
+                          onMove={(dir) => moveCourse(c.id, dir, "PUBLISHED")}
+                          onClick={() => router.push(`/courses/${c.id}`)}
+                          onAssignments={() => router.push(`/courses/${c.id}/assignments`)}
+                          onDiscussions={() => router.push(`/courses/${c.id}/discussions`)}
+                          onFiles={() => router.push(`/courses/${c.id}/files`)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </section>
+            )}
+
+            {unpublished.length > 0 && (
+              <section>
+                <SectionHeading title="Unpublished Units" count={unpublished.length} color="#6b7280" />
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
-                  {published.map((c) => (
+                  {unpublished.map((c) => (
                     <CourseCard
                       key={c.id}
                       course={c}
@@ -519,31 +594,13 @@ export default function DashboardPage() {
               </section>
             )}
 
-            {unpublished.length > 0 && (
-              <section>
-                <SectionHeading title="Unpublished Courses" count={unpublished.length} color="#6b7280" />
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
-                  {unpublished.map((c) => (
-                    <CourseCard
-                      key={c.id}
-                      course={c}
-                      onColorChange={(color) => updateColor(c.id, color)}
-                      onMove={(dir) => moveCourse(c.id, dir, "UNPUBLISHED")}
-                      onClick={() => router.push(`/courses/${c.id}`)}
-                      onAssignments={() => router.push(`/courses/${c.id}/assignments`)}
-                      onDiscussions={() => router.push(`/courses/${c.id}/discussions`)}
-                      onFiles={() => router.push(`/courses/${c.id}/files`)}
-                    />
-                  ))}
-                </div>
-              </section>
-            )}
+            
           </div>
         )}
       </div>
 
       {/* ── Right sidebar ── */}
-      <Sidebar />
+      
     </div>
   );
 }

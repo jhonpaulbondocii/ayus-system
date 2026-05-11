@@ -90,7 +90,7 @@ const COLORS = {
   warning: "#c2410c",
 };
 
-// ── All Courses Full Screen ────────────────────────────────────────────────────
+// ── All Offices Full Screen ────────────────────────────────────────────────────
 function AllCoursesFullScreen({
   courses,
   onCourseClick,
@@ -111,20 +111,20 @@ function AllCoursesFullScreen({
     >
       <div style={{ display: "flex", alignItems: "center", padding: "20px 32px 16px" }}>
         <h1 style={{ fontSize: 22, fontWeight: 800, color: COLORS.text, margin: 0 }}>
-          All Courses
+          All Offices
         </h1>
       </div>
 
       <div style={{ flex: 1, padding: "0 32px 48px" }}>
         {courses.length === 0 ? (
           <p style={{ color: COLORS.textSecondary, fontSize: 13, marginTop: 60, textAlign: "center" }}>
-            No courses assigned yet.
+            No offices assigned yet.
           </p>
         ) : (
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr style={{ borderBottom: `2px solid ${COLORS.border}` }}>
-                {[["Course Name", ""], ["Code", "120px"], ["Term", "120px"], ["Status", "120px"]].map(([label, w]) => (
+                {[["Office Name", ""], ["Code", "120px"], ["Term", "120px"], ["Status", "120px"]].map(([label, w]) => (
                   <th
                     key={label}
                     style={{
@@ -400,7 +400,7 @@ export default function CoursesPanel() {
             }}
           >
             <h1 style={{ fontSize: 15, fontWeight: 800, color: COLORS.text, margin: 0 }}>
-              Courses
+              Offices
             </h1>
 
             <button
@@ -431,7 +431,7 @@ export default function CoursesPanel() {
             </button>
           </div>
 
-          {/* All Courses link */}
+          {/* All Offices link */}
           <div style={{ padding: "10px 16px 10px", borderBottom: `1px solid #f0e4e4`, flexShrink: 0 }}>
             <button
               onClick={goFullScreen}
@@ -452,7 +452,7 @@ export default function CoursesPanel() {
                 e.currentTarget.style.textDecoration = "none";
               }}
             >
-              All Courses
+              All Offices
             </button>
           </div>
 
@@ -464,7 +464,7 @@ export default function CoursesPanel() {
             {loading ? (
               <p style={{ fontSize: 13, color: COLORS.textSecondary }}>Loading...</p>
             ) : courses.length === 0 ? (
-              <p style={{ fontSize: 13, color: COLORS.textSecondary }}>No courses assigned yet.</p>
+              <p style={{ fontSize: 13, color: COLORS.textSecondary }}>No offices assigned yet.</p>
             ) : (
               <>
                 {published.length > 0 && (
@@ -479,7 +479,7 @@ export default function CoursesPanel() {
                         margin: "0 0 6px",
                       }}
                     >
-                      Published Courses
+                      Published Offices
                     </p>
 
                     {published.map((c) => (
@@ -507,7 +507,7 @@ export default function CoursesPanel() {
                         margin: "0 0 6px",
                       }}
                     >
-                      Unpublished Courses
+                      Unpublished Offices
                     </p>
 
                     {unpublished.map((c) => (
@@ -536,7 +536,7 @@ export default function CoursesPanel() {
                   borderTop: "1px solid #f3f4f6",
                 }}
               >
-                Click on a course to view more details and manage course content.
+                Click on an office to view more details and manage office content.
               </p>
             )}
           </div>

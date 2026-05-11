@@ -16,30 +16,43 @@ export async function GET(
 
     const { id: courseId } = await params;
 
-    // Get all enrolled students
     const enrollments = await prisma.courseEnrollment.findMany({
-      where: { courseId, courseRole: "Student" },
+      where: {
+        courseId,
+        courseRole: { not: "Admin" },
+      },
       include: {
-        user: { select: { id: true, name: true, email: true, image: true } },
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            image: true,
+            position: true,
+          },
+        },
       },
       orderBy: { createdAt: "asc" },
     });
 
-    // Get all published assignments for this course
     const assignments = await prisma.assignment.findMany({
-      where: { courseId, status: "PUBLISHED" },
-      select: {
-        id: true,
-        title: true,
-        points: true,
-        dueDate: true,
-        assignmentGroup: true,
-        doNotCount: true,
+      where: {
+        courseId,
+        status: "PUBLISHED",
       },
+      select: {
+  id: true,
+  title: true,
+  points: true,
+  dueDate: true,
+  assignmentGroup: true,
+  doNotCount: true,
+  displayGradeAs: true,
+  createdById: true,
+},
       orderBy: { createdAt: "asc" },
     });
 
-    // Get all published graded quizzes for this course
     const quizzes = await prisma.quiz.findMany({
       where: {
         courseId,
@@ -52,45 +65,90 @@ export async function GET(
         points: true,
         dueDate: true,
         assignmentGroup: true,
+        authorId: true,
       },
       orderBy: { createdAt: "asc" },
     });
 
-    const studentIds = enrollments.map((e) => e.userId);
-
-    // Get all submissions for enrolled students
-    const submissions = await prisma.submission.findMany({
+    // ── FIXED: removed formType filter so all published forms appear ──
+    const forms = await prisma.form.findMany({
       where: {
-        assignmentId: { in: assignments.map((a) => a.id) },
-        userId: { in: studentIds },
+        courseId,
+        published: true,
       },
       select: {
         id: true,
-        userId: true,
-        assignmentId: true,
-        grade: true,
-        status: true,
-        submittedAt: true,
-        feedback: true,
+        title: true,
+        points: true,
+        dueDate: true,
+        assignmentGroup: true,
+        authorId: true,
       },
+      orderBy: { createdAt: "asc" },
     });
 
-    // Get best quiz attempt per student per quiz
-    const quizAttempts = await prisma.quizAttempt.findMany({
-      where: {
-        quizId: { in: quizzes.map((q) => q.id) },
-        userId: { in: studentIds },
-      },
-      select: {
-        id: true,
-        userId: true,
-        quizId: true,
-        score: true,
-        submittedAt: true,
-      },
-    });
+    const enrolledIds = enrollments.map((e) => e.userId);
+    const assignmentIds = assignments.map((a) => a.id);
+    const quizIds = quizzes.map((q) => q.id);
+    const formIds = forms.map((f) => f.id);
 
-    // Build best attempt map: { userId_quizId -> attempt }
+    const submissions =
+      assignmentIds.length > 0 && enrolledIds.length > 0
+        ? await prisma.submission.findMany({
+            where: {
+              assignmentId: { in: assignmentIds },
+              userId: { in: enrolledIds },
+            },
+            select: {
+              id: true,
+              userId: true,
+              assignmentId: true,
+              grade: true,
+              status: true,
+              submittedAt: true,
+              feedback: true,
+              fileUrl: true,
+              textEntry: true,
+              websiteUrl: true,
+              comments: true,
+            },
+          })
+        : [];
+
+    const quizAttempts =
+      quizIds.length > 0 && enrolledIds.length > 0
+        ? await prisma.quizAttempt.findMany({
+            where: {
+              quizId: { in: quizIds },
+              userId: { in: enrolledIds },
+            },
+            select: {
+              id: true,
+              userId: true,
+              quizId: true,
+              score: true,
+              submittedAt: true,
+            },
+          })
+        : [];
+
+    const formSubmissions =
+      formIds.length > 0 && enrolledIds.length > 0
+        ? await prisma.formSubmission.findMany({
+            where: {
+              formId: { in: formIds },
+              userId: { in: enrolledIds },
+            },
+            select: {
+              id: true,
+              userId: true,
+              formId: true,
+              score: true,
+              createdAt: true,
+            },
+          })
+        : [];
+
     const bestAttemptMap: Record<string, { score: number; submittedAt: Date }> = {};
     for (const attempt of quizAttempts) {
       const key = `${attempt.userId}_${attempt.quizId}`;
@@ -102,27 +160,35 @@ export async function GET(
       }
     }
 
-    // Build submission map: { userId_assignmentId -> submission }
-    const submissionMap: Record<string, typeof submissions[0]> = {};
+    const submissionMap: Record<string, (typeof submissions)[0]> = {};
     for (const sub of submissions) {
       submissionMap[`${sub.userId}_${sub.assignmentId}`] = sub;
     }
 
-    // Build student rows
-    const students = enrollments.map((enrollment) => {
+    const formSubmissionMap: Record<string, (typeof formSubmissions)[0]> = {};
+    for (const fsub of formSubmissions) {
+      formSubmissionMap[`${fsub.userId}_${fsub.formId}`] = fsub;
+    }
+
+    const staffRows = enrollments.map((enrollment) => {
       const user = enrollment.user;
 
       const assignmentGrades = assignments.map((a) => {
-        const sub = submissionMap[`${user.id}_${a.id}`];
-        return {
-          assignmentId: a.id,
-          grade: sub?.grade ?? null,
-          status: sub?.status ?? "PENDING",
-          submittedAt: sub?.submittedAt?.toISOString() ?? null,
-          feedback: sub?.feedback ?? null,
-          submissionId: sub?.id ?? null,
-        };
-      });
+  const sub = submissionMap[`${user.id}_${a.id}`];
+  return {
+    assignmentId: a.id,
+    grade: sub?.grade ?? null,
+    status: sub?.status ?? "PENDING",
+    submittedAt: sub?.submittedAt?.toISOString() ?? null,
+    feedback: sub?.feedback ?? null,
+    submissionId: sub?.id ?? null,
+    hasSubmission: !!sub?.submittedAt,
+    fileUrl: sub?.fileUrl ?? null,
+    textEntry: sub?.textEntry ?? null,
+    websiteUrl: sub?.websiteUrl ?? null,
+    displayGradeAs: a.displayGradeAs ?? "Points",
+  };
+});
 
       const quizGrades = quizzes.map((q) => {
         const attempt = bestAttemptMap[`${user.id}_${q.id}`];
@@ -133,7 +199,17 @@ export async function GET(
         };
       });
 
-      // Calculate total: sum of all graded / sum of all possible points
+      const formGrades = forms.map((f) => {
+        const fsub = formSubmissionMap[`${user.id}_${f.id}`];
+        return {
+          formId: f.id,
+          score: fsub?.score ?? null,
+          submittedAt: fsub?.createdAt?.toISOString() ?? null,
+          submissionId: fsub?.id ?? null,
+          hasSubmission: !!fsub,
+        };
+      });
+
       const totalEarned = [
         ...assignmentGrades
           .filter((g) => {
@@ -141,24 +217,35 @@ export async function GET(
             return g.grade !== null && !a?.doNotCount;
           })
           .map((g) => g.grade as number),
-        ...quizGrades.filter((g) => g.score !== null).map((g) => g.score as number),
+        ...quizGrades
+          .filter((g) => g.score !== null)
+          .map((g) => g.score as number),
+        ...formGrades
+          .filter((g) => g.score !== null)
+          .map((g) => g.score as number),
       ].reduce((sum, v) => sum + v, 0);
 
       const totalPossible = [
         ...assignments.filter((a) => !a.doNotCount).map((a) => a.points),
         ...quizzes.map((q) => q.points),
+        ...forms.map((f) => f.points),
       ].reduce((sum, v) => sum + v, 0);
 
       const percentage =
-        totalPossible > 0 ? Math.round((totalEarned / totalPossible) * 100) : null;
+        totalPossible > 0
+          ? Math.round((totalEarned / totalPossible) * 100)
+          : null;
 
       return {
         id: user.id,
         name: user.name,
         email: user.email,
         image: user.image,
+        position: user.position ?? null,
+        courseRole: enrollment.courseRole,
         assignmentGrades,
         quizGrades,
+        formGrades,
         totalEarned,
         totalPossible,
         percentage,
@@ -166,26 +253,39 @@ export async function GET(
     });
 
     return NextResponse.json({
-      students,
+      staff: staffRows,
       assignments: assignments.map((a) => ({
-        id: a.id,
-        title: a.title,
-        points: a.points,
-        dueDate: a.dueDate?.toISOString() ?? null,
-        assignmentGroup: a.assignmentGroup,
-        type: "assignment",
-      })),
+  id: a.id,
+  title: a.title,
+  points: a.points,
+  dueDate: a.dueDate?.toISOString() ?? null,
+  assignmentGroup: a.assignmentGroup ?? "Assignments",
+  doNotCount: a.doNotCount,
+  displayGradeAs: a.displayGradeAs ?? "Points",
+  type: "assignment" as const,
+})),
       quizzes: quizzes.map((q) => ({
         id: q.id,
         title: q.title,
         points: q.points,
         dueDate: q.dueDate?.toISOString() ?? null,
-        assignmentGroup: q.assignmentGroup,
-        type: "quiz",
+        assignmentGroup: q.assignmentGroup ?? "Assignments",
+        type: "quiz" as const,
+      })),
+      forms: forms.map((f) => ({
+        id: f.id,
+        title: f.title,
+        points: f.points,
+        dueDate: f.dueDate?.toISOString() ?? null,
+        assignmentGroup: f.assignmentGroup ?? "Assignments",
+        type: "form" as const,
       })),
     });
   } catch (error) {
     console.error("GET /api/admin/courses/[id]/grades error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }

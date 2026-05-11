@@ -50,6 +50,8 @@ export async function GET(
           email: true,
           image: true,
           pronouns: true,
+          position: true,
+          accountType: true,
           status: true,
         },
       },
@@ -63,8 +65,10 @@ export async function GET(
     email: e.user.email,
     image: e.user.image,
     pronouns: e.user.pronouns,
-    role: e.courseRole,          // "Staff" | "Head" | "Student" — from CourseEnrollment
-    status: e.user.status,       // ApprovalStatus — for "pending" badge in UI
+    position: e.user.position,
+    accountType: e.user.accountType,
+    role: e.courseRole,
+    status: e.user.status,
   }));
 
   return NextResponse.json({ people });
@@ -165,6 +169,8 @@ export async function POST(
           email: true,
           image: true,
           pronouns: true,
+          position: true,
+          accountType: true,
           status: true,
         },
       },
@@ -180,6 +186,8 @@ export async function POST(
         email: enrollment.user.email,
         image: enrollment.user.image,
         pronouns: enrollment.user.pronouns,
+        position: enrollment.user.position,
+        accountType: enrollment.user.accountType,
         role: enrollment.courseRole,
         status: enrollment.user.status,
       },

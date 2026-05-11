@@ -1,28 +1,40 @@
-// src/app/api/admin/courses/[id]/sections/route.ts
+// src/app/api/courses/[id]/sections/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { requireCoursePermission } from "@/lib/course-access";
 
 export async function GET(
-  req: NextRequest,
+  _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const { id: courseId } = await params;
 
-  const { id } = await params;
+  const access = await requireCoursePermission(courseId, "view_course");
+  if (!access.ok) {
+    return NextResponse.json({ error: access.error }, { status: access.status });
+  }
 
   const enrollments = await prisma.courseEnrollment.findMany({
-    where:   { courseId: id },
+    where:   { courseId },
     include: { user: { select: { id: true, name: true } } },
     orderBy: { createdAt: "asc" },
   });
 
-  const sections = enrollments.map(e => ({
+  // Distinct section names (non-empty strings only)
+  const sectionNames = Array.from(
+    new Set(
+      enrollments
+        .map(e => e.section)
+        .filter((s): s is string => typeof s === "string" && s.trim().length > 0)
+    )
+  );
+
+  const sections = sectionNames.map((name, i) => ({ id: String(i + 1), name }));
+
+  const staff = enrollments.map(e => ({
     id:   e.user.id,
-    name: e.user.name,
+    name: e.user.name ?? "",
   }));
 
-  return NextResponse.json({ sections });
+  return NextResponse.json({ sections, staff });
 }

@@ -158,6 +158,21 @@ export type FormQuestion = $Result.DefaultSelection<Prisma.$FormQuestionPayload>
  * 
  */
 export type FormSubmission = $Result.DefaultSelection<Prisma.$FormSubmissionPayload>
+/**
+ * Model Rubric
+ * 
+ */
+export type Rubric = $Result.DefaultSelection<Prisma.$RubricPayload>
+/**
+ * Model RubricCriterion
+ * 
+ */
+export type RubricCriterion = $Result.DefaultSelection<Prisma.$RubricCriterionPayload>
+/**
+ * Model RubricRating
+ * 
+ */
+export type RubricRating = $Result.DefaultSelection<Prisma.$RubricRatingPayload>
 
 /**
  * Enums
@@ -201,7 +216,10 @@ export const AssignmentStatus: {
   PENDING: 'PENDING',
   SUBMITTED: 'SUBMITTED',
   GRADED: 'GRADED',
-  OVERDUE: 'OVERDUE'
+  OVERDUE: 'OVERDUE',
+  LATE: 'LATE',
+  MISSING: 'MISSING',
+  EXCUSED: 'EXCUSED'
 };
 
 export type AssignmentStatus = (typeof AssignmentStatus)[keyof typeof AssignmentStatus]
@@ -706,6 +724,36 @@ export class PrismaClient<
     * ```
     */
   get formSubmission(): Prisma.FormSubmissionDelegate<ExtArgs>;
+
+  /**
+   * `prisma.rubric`: Exposes CRUD operations for the **Rubric** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Rubrics
+    * const rubrics = await prisma.rubric.findMany()
+    * ```
+    */
+  get rubric(): Prisma.RubricDelegate<ExtArgs>;
+
+  /**
+   * `prisma.rubricCriterion`: Exposes CRUD operations for the **RubricCriterion** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more RubricCriteria
+    * const rubricCriteria = await prisma.rubricCriterion.findMany()
+    * ```
+    */
+  get rubricCriterion(): Prisma.RubricCriterionDelegate<ExtArgs>;
+
+  /**
+   * `prisma.rubricRating`: Exposes CRUD operations for the **RubricRating** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more RubricRatings
+    * const rubricRatings = await prisma.rubricRating.findMany()
+    * ```
+    */
+  get rubricRating(): Prisma.RubricRatingDelegate<ExtArgs>;
 }
 
 export namespace Prisma {
@@ -1175,7 +1223,10 @@ export namespace Prisma {
     QuizAttempt: 'QuizAttempt',
     Form: 'Form',
     FormQuestion: 'FormQuestion',
-    FormSubmission: 'FormSubmission'
+    FormSubmission: 'FormSubmission',
+    Rubric: 'Rubric',
+    RubricCriterion: 'RubricCriterion',
+    RubricRating: 'RubricRating'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -1191,7 +1242,7 @@ export namespace Prisma {
 
   export type TypeMap<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, ClientOptions = {}> = {
     meta: {
-      modelProps: "conversation" | "conversationParticipant" | "message" | "messageAttachment" | "user" | "passwordResetToken" | "course" | "courseEnrollment" | "groupSet" | "group" | "groupMember" | "assignment" | "submission" | "repository" | "repositoryFile" | "activityLog" | "announcement" | "announcementAttachment" | "account" | "session" | "verificationToken" | "quiz" | "quizQuestion" | "quizAnswer" | "quizMatchPair" | "quizAttempt" | "form" | "formQuestion" | "formSubmission"
+      modelProps: "conversation" | "conversationParticipant" | "message" | "messageAttachment" | "user" | "passwordResetToken" | "course" | "courseEnrollment" | "groupSet" | "group" | "groupMember" | "assignment" | "submission" | "repository" | "repositoryFile" | "activityLog" | "announcement" | "announcementAttachment" | "account" | "session" | "verificationToken" | "quiz" | "quizQuestion" | "quizAnswer" | "quizMatchPair" | "quizAttempt" | "form" | "formQuestion" | "formSubmission" | "rubric" | "rubricCriterion" | "rubricRating"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -3225,6 +3276,216 @@ export namespace Prisma {
           }
         }
       }
+      Rubric: {
+        payload: Prisma.$RubricPayload<ExtArgs>
+        fields: Prisma.RubricFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.RubricFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RubricPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.RubricFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RubricPayload>
+          }
+          findFirst: {
+            args: Prisma.RubricFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RubricPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.RubricFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RubricPayload>
+          }
+          findMany: {
+            args: Prisma.RubricFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RubricPayload>[]
+          }
+          create: {
+            args: Prisma.RubricCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RubricPayload>
+          }
+          createMany: {
+            args: Prisma.RubricCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.RubricCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RubricPayload>[]
+          }
+          delete: {
+            args: Prisma.RubricDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RubricPayload>
+          }
+          update: {
+            args: Prisma.RubricUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RubricPayload>
+          }
+          deleteMany: {
+            args: Prisma.RubricDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.RubricUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.RubricUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RubricPayload>
+          }
+          aggregate: {
+            args: Prisma.RubricAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateRubric>
+          }
+          groupBy: {
+            args: Prisma.RubricGroupByArgs<ExtArgs>
+            result: $Utils.Optional<RubricGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.RubricCountArgs<ExtArgs>
+            result: $Utils.Optional<RubricCountAggregateOutputType> | number
+          }
+        }
+      }
+      RubricCriterion: {
+        payload: Prisma.$RubricCriterionPayload<ExtArgs>
+        fields: Prisma.RubricCriterionFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.RubricCriterionFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RubricCriterionPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.RubricCriterionFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RubricCriterionPayload>
+          }
+          findFirst: {
+            args: Prisma.RubricCriterionFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RubricCriterionPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.RubricCriterionFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RubricCriterionPayload>
+          }
+          findMany: {
+            args: Prisma.RubricCriterionFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RubricCriterionPayload>[]
+          }
+          create: {
+            args: Prisma.RubricCriterionCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RubricCriterionPayload>
+          }
+          createMany: {
+            args: Prisma.RubricCriterionCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.RubricCriterionCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RubricCriterionPayload>[]
+          }
+          delete: {
+            args: Prisma.RubricCriterionDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RubricCriterionPayload>
+          }
+          update: {
+            args: Prisma.RubricCriterionUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RubricCriterionPayload>
+          }
+          deleteMany: {
+            args: Prisma.RubricCriterionDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.RubricCriterionUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.RubricCriterionUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RubricCriterionPayload>
+          }
+          aggregate: {
+            args: Prisma.RubricCriterionAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateRubricCriterion>
+          }
+          groupBy: {
+            args: Prisma.RubricCriterionGroupByArgs<ExtArgs>
+            result: $Utils.Optional<RubricCriterionGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.RubricCriterionCountArgs<ExtArgs>
+            result: $Utils.Optional<RubricCriterionCountAggregateOutputType> | number
+          }
+        }
+      }
+      RubricRating: {
+        payload: Prisma.$RubricRatingPayload<ExtArgs>
+        fields: Prisma.RubricRatingFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.RubricRatingFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RubricRatingPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.RubricRatingFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RubricRatingPayload>
+          }
+          findFirst: {
+            args: Prisma.RubricRatingFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RubricRatingPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.RubricRatingFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RubricRatingPayload>
+          }
+          findMany: {
+            args: Prisma.RubricRatingFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RubricRatingPayload>[]
+          }
+          create: {
+            args: Prisma.RubricRatingCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RubricRatingPayload>
+          }
+          createMany: {
+            args: Prisma.RubricRatingCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.RubricRatingCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RubricRatingPayload>[]
+          }
+          delete: {
+            args: Prisma.RubricRatingDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RubricRatingPayload>
+          }
+          update: {
+            args: Prisma.RubricRatingUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RubricRatingPayload>
+          }
+          deleteMany: {
+            args: Prisma.RubricRatingDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.RubricRatingUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.RubricRatingUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RubricRatingPayload>
+          }
+          aggregate: {
+            args: Prisma.RubricRatingAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateRubricRating>
+          }
+          groupBy: {
+            args: Prisma.RubricRatingGroupByArgs<ExtArgs>
+            result: $Utils.Optional<RubricRatingGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.RubricRatingCountArgs<ExtArgs>
+            result: $Utils.Optional<RubricRatingCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -3984,6 +4245,68 @@ export namespace Prisma {
    */
   export type FormCountOutputTypeCountFormSubmissionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: FormSubmissionWhereInput
+  }
+
+
+  /**
+   * Count Type RubricCountOutputType
+   */
+
+  export type RubricCountOutputType = {
+    criteria: number
+  }
+
+  export type RubricCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    criteria?: boolean | RubricCountOutputTypeCountCriteriaArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * RubricCountOutputType without action
+   */
+  export type RubricCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RubricCountOutputType
+     */
+    select?: RubricCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * RubricCountOutputType without action
+   */
+  export type RubricCountOutputTypeCountCriteriaArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: RubricCriterionWhereInput
+  }
+
+
+  /**
+   * Count Type RubricCriterionCountOutputType
+   */
+
+  export type RubricCriterionCountOutputType = {
+    ratings: number
+  }
+
+  export type RubricCriterionCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    ratings?: boolean | RubricCriterionCountOutputTypeCountRatingsArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * RubricCriterionCountOutputType without action
+   */
+  export type RubricCriterionCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RubricCriterionCountOutputType
+     */
+    select?: RubricCriterionCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * RubricCriterionCountOutputType without action
+   */
+  export type RubricCriterionCountOutputTypeCountRatingsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: RubricRatingWhereInput
   }
 
 
@@ -15908,6 +16231,7 @@ export namespace Prisma {
     group?: boolean | Assignment$groupArgs<ExtArgs>
     submissions?: boolean | Assignment$submissionsArgs<ExtArgs>
     repository?: boolean | Assignment$repositoryArgs<ExtArgs>
+    rubric?: boolean | Assignment$rubricArgs<ExtArgs>
     _count?: boolean | AssignmentCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["assignment"]>
 
@@ -15980,6 +16304,7 @@ export namespace Prisma {
     group?: boolean | Assignment$groupArgs<ExtArgs>
     submissions?: boolean | Assignment$submissionsArgs<ExtArgs>
     repository?: boolean | Assignment$repositoryArgs<ExtArgs>
+    rubric?: boolean | Assignment$rubricArgs<ExtArgs>
     _count?: boolean | AssignmentCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type AssignmentIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -15994,6 +16319,7 @@ export namespace Prisma {
       group: Prisma.$GroupPayload<ExtArgs> | null
       submissions: Prisma.$SubmissionPayload<ExtArgs>[]
       repository: Prisma.$RepositoryPayload<ExtArgs> | null
+      rubric: Prisma.$RubricPayload<ExtArgs> | null
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -16392,6 +16718,7 @@ export namespace Prisma {
     group<T extends Assignment$groupArgs<ExtArgs> = {}>(args?: Subset<T, Assignment$groupArgs<ExtArgs>>): Prisma__GroupClient<$Result.GetResult<Prisma.$GroupPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
     submissions<T extends Assignment$submissionsArgs<ExtArgs> = {}>(args?: Subset<T, Assignment$submissionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SubmissionPayload<ExtArgs>, T, "findMany"> | Null>
     repository<T extends Assignment$repositoryArgs<ExtArgs> = {}>(args?: Subset<T, Assignment$repositoryArgs<ExtArgs>>): Prisma__RepositoryClient<$Result.GetResult<Prisma.$RepositoryPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
+    rubric<T extends Assignment$rubricArgs<ExtArgs> = {}>(args?: Subset<T, Assignment$rubricArgs<ExtArgs>>): Prisma__RubricClient<$Result.GetResult<Prisma.$RubricPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -16832,6 +17159,21 @@ export namespace Prisma {
   }
 
   /**
+   * Assignment.rubric
+   */
+  export type Assignment$rubricArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Rubric
+     */
+    select?: RubricSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RubricInclude<ExtArgs> | null
+    where?: RubricWhereInput
+  }
+
+  /**
    * Assignment without action
    */
   export type AssignmentDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -16860,10 +17202,12 @@ export namespace Prisma {
 
   export type SubmissionAvgAggregateOutputType = {
     grade: number | null
+    daysLate: number | null
   }
 
   export type SubmissionSumAggregateOutputType = {
     grade: number | null
+    daysLate: number | null
   }
 
   export type SubmissionMinAggregateOutputType = {
@@ -16878,6 +17222,7 @@ export namespace Prisma {
     grade: number | null
     feedback: string | null
     submittedAt: Date | null
+    daysLate: number | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -16894,6 +17239,7 @@ export namespace Prisma {
     grade: number | null
     feedback: string | null
     submittedAt: Date | null
+    daysLate: number | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -16910,6 +17256,7 @@ export namespace Prisma {
     grade: number
     feedback: number
     submittedAt: number
+    daysLate: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -16918,10 +17265,12 @@ export namespace Prisma {
 
   export type SubmissionAvgAggregateInputType = {
     grade?: true
+    daysLate?: true
   }
 
   export type SubmissionSumAggregateInputType = {
     grade?: true
+    daysLate?: true
   }
 
   export type SubmissionMinAggregateInputType = {
@@ -16936,6 +17285,7 @@ export namespace Prisma {
     grade?: true
     feedback?: true
     submittedAt?: true
+    daysLate?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -16952,6 +17302,7 @@ export namespace Prisma {
     grade?: true
     feedback?: true
     submittedAt?: true
+    daysLate?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -16968,6 +17319,7 @@ export namespace Prisma {
     grade?: true
     feedback?: true
     submittedAt?: true
+    daysLate?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -17071,6 +17423,7 @@ export namespace Prisma {
     grade: number | null
     feedback: string | null
     submittedAt: Date | null
+    daysLate: number | null
     createdAt: Date
     updatedAt: Date
     _count: SubmissionCountAggregateOutputType | null
@@ -17106,6 +17459,7 @@ export namespace Prisma {
     grade?: boolean
     feedback?: boolean
     submittedAt?: boolean
+    daysLate?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
@@ -17125,6 +17479,7 @@ export namespace Prisma {
     grade?: boolean
     feedback?: boolean
     submittedAt?: boolean
+    daysLate?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
@@ -17143,6 +17498,7 @@ export namespace Prisma {
     grade?: boolean
     feedback?: boolean
     submittedAt?: boolean
+    daysLate?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
@@ -17176,6 +17532,7 @@ export namespace Prisma {
       grade: number | null
       feedback: string | null
       submittedAt: Date | null
+      daysLate: number | null
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["submission"]>
@@ -17585,6 +17942,7 @@ export namespace Prisma {
     readonly grade: FieldRef<"Submission", 'Float'>
     readonly feedback: FieldRef<"Submission", 'String'>
     readonly submittedAt: FieldRef<"Submission", 'DateTime'>
+    readonly daysLate: FieldRef<"Submission", 'Int'>
     readonly createdAt: FieldRef<"Submission", 'DateTime'>
     readonly updatedAt: FieldRef<"Submission", 'DateTime'>
   }
@@ -34658,6 +35016,3123 @@ export namespace Prisma {
 
 
   /**
+   * Model Rubric
+   */
+
+  export type AggregateRubric = {
+    _count: RubricCountAggregateOutputType | null
+    _avg: RubricAvgAggregateOutputType | null
+    _sum: RubricSumAggregateOutputType | null
+    _min: RubricMinAggregateOutputType | null
+    _max: RubricMaxAggregateOutputType | null
+  }
+
+  export type RubricAvgAggregateOutputType = {
+    pointsPossible: number | null
+  }
+
+  export type RubricSumAggregateOutputType = {
+    pointsPossible: number | null
+  }
+
+  export type RubricMinAggregateOutputType = {
+    id: string | null
+    assignmentId: string | null
+    courseId: string | null
+    title: string | null
+    type: string | null
+    ratingDisplay: string | null
+    ratingOrder: string | null
+    scoring: string | null
+    doNotPostToGradebook: boolean | null
+    useForGrading: boolean | null
+    hideScoreTotal: boolean | null
+    pointsPossible: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type RubricMaxAggregateOutputType = {
+    id: string | null
+    assignmentId: string | null
+    courseId: string | null
+    title: string | null
+    type: string | null
+    ratingDisplay: string | null
+    ratingOrder: string | null
+    scoring: string | null
+    doNotPostToGradebook: boolean | null
+    useForGrading: boolean | null
+    hideScoreTotal: boolean | null
+    pointsPossible: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type RubricCountAggregateOutputType = {
+    id: number
+    assignmentId: number
+    courseId: number
+    title: number
+    type: number
+    ratingDisplay: number
+    ratingOrder: number
+    scoring: number
+    doNotPostToGradebook: number
+    useForGrading: number
+    hideScoreTotal: number
+    pointsPossible: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type RubricAvgAggregateInputType = {
+    pointsPossible?: true
+  }
+
+  export type RubricSumAggregateInputType = {
+    pointsPossible?: true
+  }
+
+  export type RubricMinAggregateInputType = {
+    id?: true
+    assignmentId?: true
+    courseId?: true
+    title?: true
+    type?: true
+    ratingDisplay?: true
+    ratingOrder?: true
+    scoring?: true
+    doNotPostToGradebook?: true
+    useForGrading?: true
+    hideScoreTotal?: true
+    pointsPossible?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type RubricMaxAggregateInputType = {
+    id?: true
+    assignmentId?: true
+    courseId?: true
+    title?: true
+    type?: true
+    ratingDisplay?: true
+    ratingOrder?: true
+    scoring?: true
+    doNotPostToGradebook?: true
+    useForGrading?: true
+    hideScoreTotal?: true
+    pointsPossible?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type RubricCountAggregateInputType = {
+    id?: true
+    assignmentId?: true
+    courseId?: true
+    title?: true
+    type?: true
+    ratingDisplay?: true
+    ratingOrder?: true
+    scoring?: true
+    doNotPostToGradebook?: true
+    useForGrading?: true
+    hideScoreTotal?: true
+    pointsPossible?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type RubricAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Rubric to aggregate.
+     */
+    where?: RubricWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Rubrics to fetch.
+     */
+    orderBy?: RubricOrderByWithRelationInput | RubricOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: RubricWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Rubrics from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Rubrics.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned Rubrics
+    **/
+    _count?: true | RubricCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: RubricAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: RubricSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: RubricMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: RubricMaxAggregateInputType
+  }
+
+  export type GetRubricAggregateType<T extends RubricAggregateArgs> = {
+        [P in keyof T & keyof AggregateRubric]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateRubric[P]>
+      : GetScalarType<T[P], AggregateRubric[P]>
+  }
+
+
+
+
+  export type RubricGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: RubricWhereInput
+    orderBy?: RubricOrderByWithAggregationInput | RubricOrderByWithAggregationInput[]
+    by: RubricScalarFieldEnum[] | RubricScalarFieldEnum
+    having?: RubricScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: RubricCountAggregateInputType | true
+    _avg?: RubricAvgAggregateInputType
+    _sum?: RubricSumAggregateInputType
+    _min?: RubricMinAggregateInputType
+    _max?: RubricMaxAggregateInputType
+  }
+
+  export type RubricGroupByOutputType = {
+    id: string
+    assignmentId: string
+    courseId: string | null
+    title: string
+    type: string
+    ratingDisplay: string
+    ratingOrder: string
+    scoring: string
+    doNotPostToGradebook: boolean
+    useForGrading: boolean
+    hideScoreTotal: boolean
+    pointsPossible: number
+    createdAt: Date
+    updatedAt: Date
+    _count: RubricCountAggregateOutputType | null
+    _avg: RubricAvgAggregateOutputType | null
+    _sum: RubricSumAggregateOutputType | null
+    _min: RubricMinAggregateOutputType | null
+    _max: RubricMaxAggregateOutputType | null
+  }
+
+  type GetRubricGroupByPayload<T extends RubricGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<RubricGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof RubricGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], RubricGroupByOutputType[P]>
+            : GetScalarType<T[P], RubricGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type RubricSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    assignmentId?: boolean
+    courseId?: boolean
+    title?: boolean
+    type?: boolean
+    ratingDisplay?: boolean
+    ratingOrder?: boolean
+    scoring?: boolean
+    doNotPostToGradebook?: boolean
+    useForGrading?: boolean
+    hideScoreTotal?: boolean
+    pointsPossible?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    assignment?: boolean | AssignmentDefaultArgs<ExtArgs>
+    criteria?: boolean | Rubric$criteriaArgs<ExtArgs>
+    _count?: boolean | RubricCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["rubric"]>
+
+  export type RubricSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    assignmentId?: boolean
+    courseId?: boolean
+    title?: boolean
+    type?: boolean
+    ratingDisplay?: boolean
+    ratingOrder?: boolean
+    scoring?: boolean
+    doNotPostToGradebook?: boolean
+    useForGrading?: boolean
+    hideScoreTotal?: boolean
+    pointsPossible?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    assignment?: boolean | AssignmentDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["rubric"]>
+
+  export type RubricSelectScalar = {
+    id?: boolean
+    assignmentId?: boolean
+    courseId?: boolean
+    title?: boolean
+    type?: boolean
+    ratingDisplay?: boolean
+    ratingOrder?: boolean
+    scoring?: boolean
+    doNotPostToGradebook?: boolean
+    useForGrading?: boolean
+    hideScoreTotal?: boolean
+    pointsPossible?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type RubricInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    assignment?: boolean | AssignmentDefaultArgs<ExtArgs>
+    criteria?: boolean | Rubric$criteriaArgs<ExtArgs>
+    _count?: boolean | RubricCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type RubricIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    assignment?: boolean | AssignmentDefaultArgs<ExtArgs>
+  }
+
+  export type $RubricPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "Rubric"
+    objects: {
+      assignment: Prisma.$AssignmentPayload<ExtArgs>
+      criteria: Prisma.$RubricCriterionPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      assignmentId: string
+      courseId: string | null
+      title: string
+      type: string
+      ratingDisplay: string
+      ratingOrder: string
+      scoring: string
+      doNotPostToGradebook: boolean
+      useForGrading: boolean
+      hideScoreTotal: boolean
+      pointsPossible: number
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["rubric"]>
+    composites: {}
+  }
+
+  type RubricGetPayload<S extends boolean | null | undefined | RubricDefaultArgs> = $Result.GetResult<Prisma.$RubricPayload, S>
+
+  type RubricCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<RubricFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: RubricCountAggregateInputType | true
+    }
+
+  export interface RubricDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['Rubric'], meta: { name: 'Rubric' } }
+    /**
+     * Find zero or one Rubric that matches the filter.
+     * @param {RubricFindUniqueArgs} args - Arguments to find a Rubric
+     * @example
+     * // Get one Rubric
+     * const rubric = await prisma.rubric.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends RubricFindUniqueArgs>(args: SelectSubset<T, RubricFindUniqueArgs<ExtArgs>>): Prisma__RubricClient<$Result.GetResult<Prisma.$RubricPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one Rubric that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {RubricFindUniqueOrThrowArgs} args - Arguments to find a Rubric
+     * @example
+     * // Get one Rubric
+     * const rubric = await prisma.rubric.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends RubricFindUniqueOrThrowArgs>(args: SelectSubset<T, RubricFindUniqueOrThrowArgs<ExtArgs>>): Prisma__RubricClient<$Result.GetResult<Prisma.$RubricPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first Rubric that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RubricFindFirstArgs} args - Arguments to find a Rubric
+     * @example
+     * // Get one Rubric
+     * const rubric = await prisma.rubric.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends RubricFindFirstArgs>(args?: SelectSubset<T, RubricFindFirstArgs<ExtArgs>>): Prisma__RubricClient<$Result.GetResult<Prisma.$RubricPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first Rubric that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RubricFindFirstOrThrowArgs} args - Arguments to find a Rubric
+     * @example
+     * // Get one Rubric
+     * const rubric = await prisma.rubric.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends RubricFindFirstOrThrowArgs>(args?: SelectSubset<T, RubricFindFirstOrThrowArgs<ExtArgs>>): Prisma__RubricClient<$Result.GetResult<Prisma.$RubricPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more Rubrics that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RubricFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all Rubrics
+     * const rubrics = await prisma.rubric.findMany()
+     * 
+     * // Get first 10 Rubrics
+     * const rubrics = await prisma.rubric.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const rubricWithIdOnly = await prisma.rubric.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends RubricFindManyArgs>(args?: SelectSubset<T, RubricFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RubricPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a Rubric.
+     * @param {RubricCreateArgs} args - Arguments to create a Rubric.
+     * @example
+     * // Create one Rubric
+     * const Rubric = await prisma.rubric.create({
+     *   data: {
+     *     // ... data to create a Rubric
+     *   }
+     * })
+     * 
+     */
+    create<T extends RubricCreateArgs>(args: SelectSubset<T, RubricCreateArgs<ExtArgs>>): Prisma__RubricClient<$Result.GetResult<Prisma.$RubricPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many Rubrics.
+     * @param {RubricCreateManyArgs} args - Arguments to create many Rubrics.
+     * @example
+     * // Create many Rubrics
+     * const rubric = await prisma.rubric.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends RubricCreateManyArgs>(args?: SelectSubset<T, RubricCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many Rubrics and returns the data saved in the database.
+     * @param {RubricCreateManyAndReturnArgs} args - Arguments to create many Rubrics.
+     * @example
+     * // Create many Rubrics
+     * const rubric = await prisma.rubric.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many Rubrics and only return the `id`
+     * const rubricWithIdOnly = await prisma.rubric.createManyAndReturn({ 
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends RubricCreateManyAndReturnArgs>(args?: SelectSubset<T, RubricCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RubricPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a Rubric.
+     * @param {RubricDeleteArgs} args - Arguments to delete one Rubric.
+     * @example
+     * // Delete one Rubric
+     * const Rubric = await prisma.rubric.delete({
+     *   where: {
+     *     // ... filter to delete one Rubric
+     *   }
+     * })
+     * 
+     */
+    delete<T extends RubricDeleteArgs>(args: SelectSubset<T, RubricDeleteArgs<ExtArgs>>): Prisma__RubricClient<$Result.GetResult<Prisma.$RubricPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one Rubric.
+     * @param {RubricUpdateArgs} args - Arguments to update one Rubric.
+     * @example
+     * // Update one Rubric
+     * const rubric = await prisma.rubric.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends RubricUpdateArgs>(args: SelectSubset<T, RubricUpdateArgs<ExtArgs>>): Prisma__RubricClient<$Result.GetResult<Prisma.$RubricPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more Rubrics.
+     * @param {RubricDeleteManyArgs} args - Arguments to filter Rubrics to delete.
+     * @example
+     * // Delete a few Rubrics
+     * const { count } = await prisma.rubric.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends RubricDeleteManyArgs>(args?: SelectSubset<T, RubricDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Rubrics.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RubricUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many Rubrics
+     * const rubric = await prisma.rubric.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends RubricUpdateManyArgs>(args: SelectSubset<T, RubricUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one Rubric.
+     * @param {RubricUpsertArgs} args - Arguments to update or create a Rubric.
+     * @example
+     * // Update or create a Rubric
+     * const rubric = await prisma.rubric.upsert({
+     *   create: {
+     *     // ... data to create a Rubric
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the Rubric we want to update
+     *   }
+     * })
+     */
+    upsert<T extends RubricUpsertArgs>(args: SelectSubset<T, RubricUpsertArgs<ExtArgs>>): Prisma__RubricClient<$Result.GetResult<Prisma.$RubricPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of Rubrics.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RubricCountArgs} args - Arguments to filter Rubrics to count.
+     * @example
+     * // Count the number of Rubrics
+     * const count = await prisma.rubric.count({
+     *   where: {
+     *     // ... the filter for the Rubrics we want to count
+     *   }
+     * })
+    **/
+    count<T extends RubricCountArgs>(
+      args?: Subset<T, RubricCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], RubricCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a Rubric.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RubricAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends RubricAggregateArgs>(args: Subset<T, RubricAggregateArgs>): Prisma.PrismaPromise<GetRubricAggregateType<T>>
+
+    /**
+     * Group by Rubric.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RubricGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends RubricGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: RubricGroupByArgs['orderBy'] }
+        : { orderBy?: RubricGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, RubricGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetRubricGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the Rubric model
+   */
+  readonly fields: RubricFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for Rubric.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__RubricClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    assignment<T extends AssignmentDefaultArgs<ExtArgs> = {}>(args?: Subset<T, AssignmentDefaultArgs<ExtArgs>>): Prisma__AssignmentClient<$Result.GetResult<Prisma.$AssignmentPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    criteria<T extends Rubric$criteriaArgs<ExtArgs> = {}>(args?: Subset<T, Rubric$criteriaArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RubricCriterionPayload<ExtArgs>, T, "findMany"> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the Rubric model
+   */ 
+  interface RubricFieldRefs {
+    readonly id: FieldRef<"Rubric", 'String'>
+    readonly assignmentId: FieldRef<"Rubric", 'String'>
+    readonly courseId: FieldRef<"Rubric", 'String'>
+    readonly title: FieldRef<"Rubric", 'String'>
+    readonly type: FieldRef<"Rubric", 'String'>
+    readonly ratingDisplay: FieldRef<"Rubric", 'String'>
+    readonly ratingOrder: FieldRef<"Rubric", 'String'>
+    readonly scoring: FieldRef<"Rubric", 'String'>
+    readonly doNotPostToGradebook: FieldRef<"Rubric", 'Boolean'>
+    readonly useForGrading: FieldRef<"Rubric", 'Boolean'>
+    readonly hideScoreTotal: FieldRef<"Rubric", 'Boolean'>
+    readonly pointsPossible: FieldRef<"Rubric", 'Float'>
+    readonly createdAt: FieldRef<"Rubric", 'DateTime'>
+    readonly updatedAt: FieldRef<"Rubric", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * Rubric findUnique
+   */
+  export type RubricFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Rubric
+     */
+    select?: RubricSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RubricInclude<ExtArgs> | null
+    /**
+     * Filter, which Rubric to fetch.
+     */
+    where: RubricWhereUniqueInput
+  }
+
+  /**
+   * Rubric findUniqueOrThrow
+   */
+  export type RubricFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Rubric
+     */
+    select?: RubricSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RubricInclude<ExtArgs> | null
+    /**
+     * Filter, which Rubric to fetch.
+     */
+    where: RubricWhereUniqueInput
+  }
+
+  /**
+   * Rubric findFirst
+   */
+  export type RubricFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Rubric
+     */
+    select?: RubricSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RubricInclude<ExtArgs> | null
+    /**
+     * Filter, which Rubric to fetch.
+     */
+    where?: RubricWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Rubrics to fetch.
+     */
+    orderBy?: RubricOrderByWithRelationInput | RubricOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Rubrics.
+     */
+    cursor?: RubricWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Rubrics from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Rubrics.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Rubrics.
+     */
+    distinct?: RubricScalarFieldEnum | RubricScalarFieldEnum[]
+  }
+
+  /**
+   * Rubric findFirstOrThrow
+   */
+  export type RubricFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Rubric
+     */
+    select?: RubricSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RubricInclude<ExtArgs> | null
+    /**
+     * Filter, which Rubric to fetch.
+     */
+    where?: RubricWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Rubrics to fetch.
+     */
+    orderBy?: RubricOrderByWithRelationInput | RubricOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Rubrics.
+     */
+    cursor?: RubricWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Rubrics from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Rubrics.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Rubrics.
+     */
+    distinct?: RubricScalarFieldEnum | RubricScalarFieldEnum[]
+  }
+
+  /**
+   * Rubric findMany
+   */
+  export type RubricFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Rubric
+     */
+    select?: RubricSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RubricInclude<ExtArgs> | null
+    /**
+     * Filter, which Rubrics to fetch.
+     */
+    where?: RubricWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Rubrics to fetch.
+     */
+    orderBy?: RubricOrderByWithRelationInput | RubricOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing Rubrics.
+     */
+    cursor?: RubricWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Rubrics from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Rubrics.
+     */
+    skip?: number
+    distinct?: RubricScalarFieldEnum | RubricScalarFieldEnum[]
+  }
+
+  /**
+   * Rubric create
+   */
+  export type RubricCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Rubric
+     */
+    select?: RubricSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RubricInclude<ExtArgs> | null
+    /**
+     * The data needed to create a Rubric.
+     */
+    data: XOR<RubricCreateInput, RubricUncheckedCreateInput>
+  }
+
+  /**
+   * Rubric createMany
+   */
+  export type RubricCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many Rubrics.
+     */
+    data: RubricCreateManyInput | RubricCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Rubric createManyAndReturn
+   */
+  export type RubricCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Rubric
+     */
+    select?: RubricSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many Rubrics.
+     */
+    data: RubricCreateManyInput | RubricCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RubricIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * Rubric update
+   */
+  export type RubricUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Rubric
+     */
+    select?: RubricSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RubricInclude<ExtArgs> | null
+    /**
+     * The data needed to update a Rubric.
+     */
+    data: XOR<RubricUpdateInput, RubricUncheckedUpdateInput>
+    /**
+     * Choose, which Rubric to update.
+     */
+    where: RubricWhereUniqueInput
+  }
+
+  /**
+   * Rubric updateMany
+   */
+  export type RubricUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update Rubrics.
+     */
+    data: XOR<RubricUpdateManyMutationInput, RubricUncheckedUpdateManyInput>
+    /**
+     * Filter which Rubrics to update
+     */
+    where?: RubricWhereInput
+  }
+
+  /**
+   * Rubric upsert
+   */
+  export type RubricUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Rubric
+     */
+    select?: RubricSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RubricInclude<ExtArgs> | null
+    /**
+     * The filter to search for the Rubric to update in case it exists.
+     */
+    where: RubricWhereUniqueInput
+    /**
+     * In case the Rubric found by the `where` argument doesn't exist, create a new Rubric with this data.
+     */
+    create: XOR<RubricCreateInput, RubricUncheckedCreateInput>
+    /**
+     * In case the Rubric was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<RubricUpdateInput, RubricUncheckedUpdateInput>
+  }
+
+  /**
+   * Rubric delete
+   */
+  export type RubricDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Rubric
+     */
+    select?: RubricSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RubricInclude<ExtArgs> | null
+    /**
+     * Filter which Rubric to delete.
+     */
+    where: RubricWhereUniqueInput
+  }
+
+  /**
+   * Rubric deleteMany
+   */
+  export type RubricDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Rubrics to delete
+     */
+    where?: RubricWhereInput
+  }
+
+  /**
+   * Rubric.criteria
+   */
+  export type Rubric$criteriaArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RubricCriterion
+     */
+    select?: RubricCriterionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RubricCriterionInclude<ExtArgs> | null
+    where?: RubricCriterionWhereInput
+    orderBy?: RubricCriterionOrderByWithRelationInput | RubricCriterionOrderByWithRelationInput[]
+    cursor?: RubricCriterionWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: RubricCriterionScalarFieldEnum | RubricCriterionScalarFieldEnum[]
+  }
+
+  /**
+   * Rubric without action
+   */
+  export type RubricDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Rubric
+     */
+    select?: RubricSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RubricInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model RubricCriterion
+   */
+
+  export type AggregateRubricCriterion = {
+    _count: RubricCriterionCountAggregateOutputType | null
+    _avg: RubricCriterionAvgAggregateOutputType | null
+    _sum: RubricCriterionSumAggregateOutputType | null
+    _min: RubricCriterionMinAggregateOutputType | null
+    _max: RubricCriterionMaxAggregateOutputType | null
+  }
+
+  export type RubricCriterionAvgAggregateOutputType = {
+    points: number | null
+    order: number | null
+  }
+
+  export type RubricCriterionSumAggregateOutputType = {
+    points: number | null
+    order: number | null
+  }
+
+  export type RubricCriterionMinAggregateOutputType = {
+    id: string | null
+    rubricId: string | null
+    name: string | null
+    description: string | null
+    points: number | null
+    enableRange: boolean | null
+    order: number | null
+    createdAt: Date | null
+  }
+
+  export type RubricCriterionMaxAggregateOutputType = {
+    id: string | null
+    rubricId: string | null
+    name: string | null
+    description: string | null
+    points: number | null
+    enableRange: boolean | null
+    order: number | null
+    createdAt: Date | null
+  }
+
+  export type RubricCriterionCountAggregateOutputType = {
+    id: number
+    rubricId: number
+    name: number
+    description: number
+    points: number
+    enableRange: number
+    order: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type RubricCriterionAvgAggregateInputType = {
+    points?: true
+    order?: true
+  }
+
+  export type RubricCriterionSumAggregateInputType = {
+    points?: true
+    order?: true
+  }
+
+  export type RubricCriterionMinAggregateInputType = {
+    id?: true
+    rubricId?: true
+    name?: true
+    description?: true
+    points?: true
+    enableRange?: true
+    order?: true
+    createdAt?: true
+  }
+
+  export type RubricCriterionMaxAggregateInputType = {
+    id?: true
+    rubricId?: true
+    name?: true
+    description?: true
+    points?: true
+    enableRange?: true
+    order?: true
+    createdAt?: true
+  }
+
+  export type RubricCriterionCountAggregateInputType = {
+    id?: true
+    rubricId?: true
+    name?: true
+    description?: true
+    points?: true
+    enableRange?: true
+    order?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type RubricCriterionAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which RubricCriterion to aggregate.
+     */
+    where?: RubricCriterionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RubricCriteria to fetch.
+     */
+    orderBy?: RubricCriterionOrderByWithRelationInput | RubricCriterionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: RubricCriterionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RubricCriteria from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RubricCriteria.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned RubricCriteria
+    **/
+    _count?: true | RubricCriterionCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: RubricCriterionAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: RubricCriterionSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: RubricCriterionMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: RubricCriterionMaxAggregateInputType
+  }
+
+  export type GetRubricCriterionAggregateType<T extends RubricCriterionAggregateArgs> = {
+        [P in keyof T & keyof AggregateRubricCriterion]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateRubricCriterion[P]>
+      : GetScalarType<T[P], AggregateRubricCriterion[P]>
+  }
+
+
+
+
+  export type RubricCriterionGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: RubricCriterionWhereInput
+    orderBy?: RubricCriterionOrderByWithAggregationInput | RubricCriterionOrderByWithAggregationInput[]
+    by: RubricCriterionScalarFieldEnum[] | RubricCriterionScalarFieldEnum
+    having?: RubricCriterionScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: RubricCriterionCountAggregateInputType | true
+    _avg?: RubricCriterionAvgAggregateInputType
+    _sum?: RubricCriterionSumAggregateInputType
+    _min?: RubricCriterionMinAggregateInputType
+    _max?: RubricCriterionMaxAggregateInputType
+  }
+
+  export type RubricCriterionGroupByOutputType = {
+    id: string
+    rubricId: string
+    name: string
+    description: string | null
+    points: number
+    enableRange: boolean
+    order: number
+    createdAt: Date
+    _count: RubricCriterionCountAggregateOutputType | null
+    _avg: RubricCriterionAvgAggregateOutputType | null
+    _sum: RubricCriterionSumAggregateOutputType | null
+    _min: RubricCriterionMinAggregateOutputType | null
+    _max: RubricCriterionMaxAggregateOutputType | null
+  }
+
+  type GetRubricCriterionGroupByPayload<T extends RubricCriterionGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<RubricCriterionGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof RubricCriterionGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], RubricCriterionGroupByOutputType[P]>
+            : GetScalarType<T[P], RubricCriterionGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type RubricCriterionSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    rubricId?: boolean
+    name?: boolean
+    description?: boolean
+    points?: boolean
+    enableRange?: boolean
+    order?: boolean
+    createdAt?: boolean
+    rubric?: boolean | RubricDefaultArgs<ExtArgs>
+    ratings?: boolean | RubricCriterion$ratingsArgs<ExtArgs>
+    _count?: boolean | RubricCriterionCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["rubricCriterion"]>
+
+  export type RubricCriterionSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    rubricId?: boolean
+    name?: boolean
+    description?: boolean
+    points?: boolean
+    enableRange?: boolean
+    order?: boolean
+    createdAt?: boolean
+    rubric?: boolean | RubricDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["rubricCriterion"]>
+
+  export type RubricCriterionSelectScalar = {
+    id?: boolean
+    rubricId?: boolean
+    name?: boolean
+    description?: boolean
+    points?: boolean
+    enableRange?: boolean
+    order?: boolean
+    createdAt?: boolean
+  }
+
+  export type RubricCriterionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    rubric?: boolean | RubricDefaultArgs<ExtArgs>
+    ratings?: boolean | RubricCriterion$ratingsArgs<ExtArgs>
+    _count?: boolean | RubricCriterionCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type RubricCriterionIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    rubric?: boolean | RubricDefaultArgs<ExtArgs>
+  }
+
+  export type $RubricCriterionPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "RubricCriterion"
+    objects: {
+      rubric: Prisma.$RubricPayload<ExtArgs>
+      ratings: Prisma.$RubricRatingPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      rubricId: string
+      name: string
+      description: string | null
+      points: number
+      enableRange: boolean
+      order: number
+      createdAt: Date
+    }, ExtArgs["result"]["rubricCriterion"]>
+    composites: {}
+  }
+
+  type RubricCriterionGetPayload<S extends boolean | null | undefined | RubricCriterionDefaultArgs> = $Result.GetResult<Prisma.$RubricCriterionPayload, S>
+
+  type RubricCriterionCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<RubricCriterionFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: RubricCriterionCountAggregateInputType | true
+    }
+
+  export interface RubricCriterionDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['RubricCriterion'], meta: { name: 'RubricCriterion' } }
+    /**
+     * Find zero or one RubricCriterion that matches the filter.
+     * @param {RubricCriterionFindUniqueArgs} args - Arguments to find a RubricCriterion
+     * @example
+     * // Get one RubricCriterion
+     * const rubricCriterion = await prisma.rubricCriterion.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends RubricCriterionFindUniqueArgs>(args: SelectSubset<T, RubricCriterionFindUniqueArgs<ExtArgs>>): Prisma__RubricCriterionClient<$Result.GetResult<Prisma.$RubricCriterionPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one RubricCriterion that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {RubricCriterionFindUniqueOrThrowArgs} args - Arguments to find a RubricCriterion
+     * @example
+     * // Get one RubricCriterion
+     * const rubricCriterion = await prisma.rubricCriterion.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends RubricCriterionFindUniqueOrThrowArgs>(args: SelectSubset<T, RubricCriterionFindUniqueOrThrowArgs<ExtArgs>>): Prisma__RubricCriterionClient<$Result.GetResult<Prisma.$RubricCriterionPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first RubricCriterion that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RubricCriterionFindFirstArgs} args - Arguments to find a RubricCriterion
+     * @example
+     * // Get one RubricCriterion
+     * const rubricCriterion = await prisma.rubricCriterion.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends RubricCriterionFindFirstArgs>(args?: SelectSubset<T, RubricCriterionFindFirstArgs<ExtArgs>>): Prisma__RubricCriterionClient<$Result.GetResult<Prisma.$RubricCriterionPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first RubricCriterion that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RubricCriterionFindFirstOrThrowArgs} args - Arguments to find a RubricCriterion
+     * @example
+     * // Get one RubricCriterion
+     * const rubricCriterion = await prisma.rubricCriterion.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends RubricCriterionFindFirstOrThrowArgs>(args?: SelectSubset<T, RubricCriterionFindFirstOrThrowArgs<ExtArgs>>): Prisma__RubricCriterionClient<$Result.GetResult<Prisma.$RubricCriterionPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more RubricCriteria that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RubricCriterionFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all RubricCriteria
+     * const rubricCriteria = await prisma.rubricCriterion.findMany()
+     * 
+     * // Get first 10 RubricCriteria
+     * const rubricCriteria = await prisma.rubricCriterion.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const rubricCriterionWithIdOnly = await prisma.rubricCriterion.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends RubricCriterionFindManyArgs>(args?: SelectSubset<T, RubricCriterionFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RubricCriterionPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a RubricCriterion.
+     * @param {RubricCriterionCreateArgs} args - Arguments to create a RubricCriterion.
+     * @example
+     * // Create one RubricCriterion
+     * const RubricCriterion = await prisma.rubricCriterion.create({
+     *   data: {
+     *     // ... data to create a RubricCriterion
+     *   }
+     * })
+     * 
+     */
+    create<T extends RubricCriterionCreateArgs>(args: SelectSubset<T, RubricCriterionCreateArgs<ExtArgs>>): Prisma__RubricCriterionClient<$Result.GetResult<Prisma.$RubricCriterionPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many RubricCriteria.
+     * @param {RubricCriterionCreateManyArgs} args - Arguments to create many RubricCriteria.
+     * @example
+     * // Create many RubricCriteria
+     * const rubricCriterion = await prisma.rubricCriterion.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends RubricCriterionCreateManyArgs>(args?: SelectSubset<T, RubricCriterionCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many RubricCriteria and returns the data saved in the database.
+     * @param {RubricCriterionCreateManyAndReturnArgs} args - Arguments to create many RubricCriteria.
+     * @example
+     * // Create many RubricCriteria
+     * const rubricCriterion = await prisma.rubricCriterion.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many RubricCriteria and only return the `id`
+     * const rubricCriterionWithIdOnly = await prisma.rubricCriterion.createManyAndReturn({ 
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends RubricCriterionCreateManyAndReturnArgs>(args?: SelectSubset<T, RubricCriterionCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RubricCriterionPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a RubricCriterion.
+     * @param {RubricCriterionDeleteArgs} args - Arguments to delete one RubricCriterion.
+     * @example
+     * // Delete one RubricCriterion
+     * const RubricCriterion = await prisma.rubricCriterion.delete({
+     *   where: {
+     *     // ... filter to delete one RubricCriterion
+     *   }
+     * })
+     * 
+     */
+    delete<T extends RubricCriterionDeleteArgs>(args: SelectSubset<T, RubricCriterionDeleteArgs<ExtArgs>>): Prisma__RubricCriterionClient<$Result.GetResult<Prisma.$RubricCriterionPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one RubricCriterion.
+     * @param {RubricCriterionUpdateArgs} args - Arguments to update one RubricCriterion.
+     * @example
+     * // Update one RubricCriterion
+     * const rubricCriterion = await prisma.rubricCriterion.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends RubricCriterionUpdateArgs>(args: SelectSubset<T, RubricCriterionUpdateArgs<ExtArgs>>): Prisma__RubricCriterionClient<$Result.GetResult<Prisma.$RubricCriterionPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more RubricCriteria.
+     * @param {RubricCriterionDeleteManyArgs} args - Arguments to filter RubricCriteria to delete.
+     * @example
+     * // Delete a few RubricCriteria
+     * const { count } = await prisma.rubricCriterion.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends RubricCriterionDeleteManyArgs>(args?: SelectSubset<T, RubricCriterionDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more RubricCriteria.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RubricCriterionUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many RubricCriteria
+     * const rubricCriterion = await prisma.rubricCriterion.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends RubricCriterionUpdateManyArgs>(args: SelectSubset<T, RubricCriterionUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one RubricCriterion.
+     * @param {RubricCriterionUpsertArgs} args - Arguments to update or create a RubricCriterion.
+     * @example
+     * // Update or create a RubricCriterion
+     * const rubricCriterion = await prisma.rubricCriterion.upsert({
+     *   create: {
+     *     // ... data to create a RubricCriterion
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the RubricCriterion we want to update
+     *   }
+     * })
+     */
+    upsert<T extends RubricCriterionUpsertArgs>(args: SelectSubset<T, RubricCriterionUpsertArgs<ExtArgs>>): Prisma__RubricCriterionClient<$Result.GetResult<Prisma.$RubricCriterionPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of RubricCriteria.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RubricCriterionCountArgs} args - Arguments to filter RubricCriteria to count.
+     * @example
+     * // Count the number of RubricCriteria
+     * const count = await prisma.rubricCriterion.count({
+     *   where: {
+     *     // ... the filter for the RubricCriteria we want to count
+     *   }
+     * })
+    **/
+    count<T extends RubricCriterionCountArgs>(
+      args?: Subset<T, RubricCriterionCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], RubricCriterionCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a RubricCriterion.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RubricCriterionAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends RubricCriterionAggregateArgs>(args: Subset<T, RubricCriterionAggregateArgs>): Prisma.PrismaPromise<GetRubricCriterionAggregateType<T>>
+
+    /**
+     * Group by RubricCriterion.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RubricCriterionGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends RubricCriterionGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: RubricCriterionGroupByArgs['orderBy'] }
+        : { orderBy?: RubricCriterionGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, RubricCriterionGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetRubricCriterionGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the RubricCriterion model
+   */
+  readonly fields: RubricCriterionFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for RubricCriterion.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__RubricCriterionClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    rubric<T extends RubricDefaultArgs<ExtArgs> = {}>(args?: Subset<T, RubricDefaultArgs<ExtArgs>>): Prisma__RubricClient<$Result.GetResult<Prisma.$RubricPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    ratings<T extends RubricCriterion$ratingsArgs<ExtArgs> = {}>(args?: Subset<T, RubricCriterion$ratingsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RubricRatingPayload<ExtArgs>, T, "findMany"> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the RubricCriterion model
+   */ 
+  interface RubricCriterionFieldRefs {
+    readonly id: FieldRef<"RubricCriterion", 'String'>
+    readonly rubricId: FieldRef<"RubricCriterion", 'String'>
+    readonly name: FieldRef<"RubricCriterion", 'String'>
+    readonly description: FieldRef<"RubricCriterion", 'String'>
+    readonly points: FieldRef<"RubricCriterion", 'Float'>
+    readonly enableRange: FieldRef<"RubricCriterion", 'Boolean'>
+    readonly order: FieldRef<"RubricCriterion", 'Int'>
+    readonly createdAt: FieldRef<"RubricCriterion", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * RubricCriterion findUnique
+   */
+  export type RubricCriterionFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RubricCriterion
+     */
+    select?: RubricCriterionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RubricCriterionInclude<ExtArgs> | null
+    /**
+     * Filter, which RubricCriterion to fetch.
+     */
+    where: RubricCriterionWhereUniqueInput
+  }
+
+  /**
+   * RubricCriterion findUniqueOrThrow
+   */
+  export type RubricCriterionFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RubricCriterion
+     */
+    select?: RubricCriterionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RubricCriterionInclude<ExtArgs> | null
+    /**
+     * Filter, which RubricCriterion to fetch.
+     */
+    where: RubricCriterionWhereUniqueInput
+  }
+
+  /**
+   * RubricCriterion findFirst
+   */
+  export type RubricCriterionFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RubricCriterion
+     */
+    select?: RubricCriterionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RubricCriterionInclude<ExtArgs> | null
+    /**
+     * Filter, which RubricCriterion to fetch.
+     */
+    where?: RubricCriterionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RubricCriteria to fetch.
+     */
+    orderBy?: RubricCriterionOrderByWithRelationInput | RubricCriterionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for RubricCriteria.
+     */
+    cursor?: RubricCriterionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RubricCriteria from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RubricCriteria.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of RubricCriteria.
+     */
+    distinct?: RubricCriterionScalarFieldEnum | RubricCriterionScalarFieldEnum[]
+  }
+
+  /**
+   * RubricCriterion findFirstOrThrow
+   */
+  export type RubricCriterionFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RubricCriterion
+     */
+    select?: RubricCriterionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RubricCriterionInclude<ExtArgs> | null
+    /**
+     * Filter, which RubricCriterion to fetch.
+     */
+    where?: RubricCriterionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RubricCriteria to fetch.
+     */
+    orderBy?: RubricCriterionOrderByWithRelationInput | RubricCriterionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for RubricCriteria.
+     */
+    cursor?: RubricCriterionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RubricCriteria from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RubricCriteria.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of RubricCriteria.
+     */
+    distinct?: RubricCriterionScalarFieldEnum | RubricCriterionScalarFieldEnum[]
+  }
+
+  /**
+   * RubricCriterion findMany
+   */
+  export type RubricCriterionFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RubricCriterion
+     */
+    select?: RubricCriterionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RubricCriterionInclude<ExtArgs> | null
+    /**
+     * Filter, which RubricCriteria to fetch.
+     */
+    where?: RubricCriterionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RubricCriteria to fetch.
+     */
+    orderBy?: RubricCriterionOrderByWithRelationInput | RubricCriterionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing RubricCriteria.
+     */
+    cursor?: RubricCriterionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RubricCriteria from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RubricCriteria.
+     */
+    skip?: number
+    distinct?: RubricCriterionScalarFieldEnum | RubricCriterionScalarFieldEnum[]
+  }
+
+  /**
+   * RubricCriterion create
+   */
+  export type RubricCriterionCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RubricCriterion
+     */
+    select?: RubricCriterionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RubricCriterionInclude<ExtArgs> | null
+    /**
+     * The data needed to create a RubricCriterion.
+     */
+    data: XOR<RubricCriterionCreateInput, RubricCriterionUncheckedCreateInput>
+  }
+
+  /**
+   * RubricCriterion createMany
+   */
+  export type RubricCriterionCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many RubricCriteria.
+     */
+    data: RubricCriterionCreateManyInput | RubricCriterionCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * RubricCriterion createManyAndReturn
+   */
+  export type RubricCriterionCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RubricCriterion
+     */
+    select?: RubricCriterionSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many RubricCriteria.
+     */
+    data: RubricCriterionCreateManyInput | RubricCriterionCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RubricCriterionIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * RubricCriterion update
+   */
+  export type RubricCriterionUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RubricCriterion
+     */
+    select?: RubricCriterionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RubricCriterionInclude<ExtArgs> | null
+    /**
+     * The data needed to update a RubricCriterion.
+     */
+    data: XOR<RubricCriterionUpdateInput, RubricCriterionUncheckedUpdateInput>
+    /**
+     * Choose, which RubricCriterion to update.
+     */
+    where: RubricCriterionWhereUniqueInput
+  }
+
+  /**
+   * RubricCriterion updateMany
+   */
+  export type RubricCriterionUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update RubricCriteria.
+     */
+    data: XOR<RubricCriterionUpdateManyMutationInput, RubricCriterionUncheckedUpdateManyInput>
+    /**
+     * Filter which RubricCriteria to update
+     */
+    where?: RubricCriterionWhereInput
+  }
+
+  /**
+   * RubricCriterion upsert
+   */
+  export type RubricCriterionUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RubricCriterion
+     */
+    select?: RubricCriterionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RubricCriterionInclude<ExtArgs> | null
+    /**
+     * The filter to search for the RubricCriterion to update in case it exists.
+     */
+    where: RubricCriterionWhereUniqueInput
+    /**
+     * In case the RubricCriterion found by the `where` argument doesn't exist, create a new RubricCriterion with this data.
+     */
+    create: XOR<RubricCriterionCreateInput, RubricCriterionUncheckedCreateInput>
+    /**
+     * In case the RubricCriterion was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<RubricCriterionUpdateInput, RubricCriterionUncheckedUpdateInput>
+  }
+
+  /**
+   * RubricCriterion delete
+   */
+  export type RubricCriterionDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RubricCriterion
+     */
+    select?: RubricCriterionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RubricCriterionInclude<ExtArgs> | null
+    /**
+     * Filter which RubricCriterion to delete.
+     */
+    where: RubricCriterionWhereUniqueInput
+  }
+
+  /**
+   * RubricCriterion deleteMany
+   */
+  export type RubricCriterionDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which RubricCriteria to delete
+     */
+    where?: RubricCriterionWhereInput
+  }
+
+  /**
+   * RubricCriterion.ratings
+   */
+  export type RubricCriterion$ratingsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RubricRating
+     */
+    select?: RubricRatingSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RubricRatingInclude<ExtArgs> | null
+    where?: RubricRatingWhereInput
+    orderBy?: RubricRatingOrderByWithRelationInput | RubricRatingOrderByWithRelationInput[]
+    cursor?: RubricRatingWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: RubricRatingScalarFieldEnum | RubricRatingScalarFieldEnum[]
+  }
+
+  /**
+   * RubricCriterion without action
+   */
+  export type RubricCriterionDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RubricCriterion
+     */
+    select?: RubricCriterionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RubricCriterionInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model RubricRating
+   */
+
+  export type AggregateRubricRating = {
+    _count: RubricRatingCountAggregateOutputType | null
+    _avg: RubricRatingAvgAggregateOutputType | null
+    _sum: RubricRatingSumAggregateOutputType | null
+    _min: RubricRatingMinAggregateOutputType | null
+    _max: RubricRatingMaxAggregateOutputType | null
+  }
+
+  export type RubricRatingAvgAggregateOutputType = {
+    points: number | null
+    order: number | null
+  }
+
+  export type RubricRatingSumAggregateOutputType = {
+    points: number | null
+    order: number | null
+  }
+
+  export type RubricRatingMinAggregateOutputType = {
+    id: string | null
+    criterionId: string | null
+    points: number | null
+    name: string | null
+    description: string | null
+    order: number | null
+  }
+
+  export type RubricRatingMaxAggregateOutputType = {
+    id: string | null
+    criterionId: string | null
+    points: number | null
+    name: string | null
+    description: string | null
+    order: number | null
+  }
+
+  export type RubricRatingCountAggregateOutputType = {
+    id: number
+    criterionId: number
+    points: number
+    name: number
+    description: number
+    order: number
+    _all: number
+  }
+
+
+  export type RubricRatingAvgAggregateInputType = {
+    points?: true
+    order?: true
+  }
+
+  export type RubricRatingSumAggregateInputType = {
+    points?: true
+    order?: true
+  }
+
+  export type RubricRatingMinAggregateInputType = {
+    id?: true
+    criterionId?: true
+    points?: true
+    name?: true
+    description?: true
+    order?: true
+  }
+
+  export type RubricRatingMaxAggregateInputType = {
+    id?: true
+    criterionId?: true
+    points?: true
+    name?: true
+    description?: true
+    order?: true
+  }
+
+  export type RubricRatingCountAggregateInputType = {
+    id?: true
+    criterionId?: true
+    points?: true
+    name?: true
+    description?: true
+    order?: true
+    _all?: true
+  }
+
+  export type RubricRatingAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which RubricRating to aggregate.
+     */
+    where?: RubricRatingWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RubricRatings to fetch.
+     */
+    orderBy?: RubricRatingOrderByWithRelationInput | RubricRatingOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: RubricRatingWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RubricRatings from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RubricRatings.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned RubricRatings
+    **/
+    _count?: true | RubricRatingCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: RubricRatingAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: RubricRatingSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: RubricRatingMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: RubricRatingMaxAggregateInputType
+  }
+
+  export type GetRubricRatingAggregateType<T extends RubricRatingAggregateArgs> = {
+        [P in keyof T & keyof AggregateRubricRating]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateRubricRating[P]>
+      : GetScalarType<T[P], AggregateRubricRating[P]>
+  }
+
+
+
+
+  export type RubricRatingGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: RubricRatingWhereInput
+    orderBy?: RubricRatingOrderByWithAggregationInput | RubricRatingOrderByWithAggregationInput[]
+    by: RubricRatingScalarFieldEnum[] | RubricRatingScalarFieldEnum
+    having?: RubricRatingScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: RubricRatingCountAggregateInputType | true
+    _avg?: RubricRatingAvgAggregateInputType
+    _sum?: RubricRatingSumAggregateInputType
+    _min?: RubricRatingMinAggregateInputType
+    _max?: RubricRatingMaxAggregateInputType
+  }
+
+  export type RubricRatingGroupByOutputType = {
+    id: string
+    criterionId: string
+    points: number
+    name: string
+    description: string | null
+    order: number
+    _count: RubricRatingCountAggregateOutputType | null
+    _avg: RubricRatingAvgAggregateOutputType | null
+    _sum: RubricRatingSumAggregateOutputType | null
+    _min: RubricRatingMinAggregateOutputType | null
+    _max: RubricRatingMaxAggregateOutputType | null
+  }
+
+  type GetRubricRatingGroupByPayload<T extends RubricRatingGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<RubricRatingGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof RubricRatingGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], RubricRatingGroupByOutputType[P]>
+            : GetScalarType<T[P], RubricRatingGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type RubricRatingSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    criterionId?: boolean
+    points?: boolean
+    name?: boolean
+    description?: boolean
+    order?: boolean
+    criterion?: boolean | RubricCriterionDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["rubricRating"]>
+
+  export type RubricRatingSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    criterionId?: boolean
+    points?: boolean
+    name?: boolean
+    description?: boolean
+    order?: boolean
+    criterion?: boolean | RubricCriterionDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["rubricRating"]>
+
+  export type RubricRatingSelectScalar = {
+    id?: boolean
+    criterionId?: boolean
+    points?: boolean
+    name?: boolean
+    description?: boolean
+    order?: boolean
+  }
+
+  export type RubricRatingInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    criterion?: boolean | RubricCriterionDefaultArgs<ExtArgs>
+  }
+  export type RubricRatingIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    criterion?: boolean | RubricCriterionDefaultArgs<ExtArgs>
+  }
+
+  export type $RubricRatingPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "RubricRating"
+    objects: {
+      criterion: Prisma.$RubricCriterionPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      criterionId: string
+      points: number
+      name: string
+      description: string | null
+      order: number
+    }, ExtArgs["result"]["rubricRating"]>
+    composites: {}
+  }
+
+  type RubricRatingGetPayload<S extends boolean | null | undefined | RubricRatingDefaultArgs> = $Result.GetResult<Prisma.$RubricRatingPayload, S>
+
+  type RubricRatingCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<RubricRatingFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: RubricRatingCountAggregateInputType | true
+    }
+
+  export interface RubricRatingDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['RubricRating'], meta: { name: 'RubricRating' } }
+    /**
+     * Find zero or one RubricRating that matches the filter.
+     * @param {RubricRatingFindUniqueArgs} args - Arguments to find a RubricRating
+     * @example
+     * // Get one RubricRating
+     * const rubricRating = await prisma.rubricRating.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends RubricRatingFindUniqueArgs>(args: SelectSubset<T, RubricRatingFindUniqueArgs<ExtArgs>>): Prisma__RubricRatingClient<$Result.GetResult<Prisma.$RubricRatingPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one RubricRating that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {RubricRatingFindUniqueOrThrowArgs} args - Arguments to find a RubricRating
+     * @example
+     * // Get one RubricRating
+     * const rubricRating = await prisma.rubricRating.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends RubricRatingFindUniqueOrThrowArgs>(args: SelectSubset<T, RubricRatingFindUniqueOrThrowArgs<ExtArgs>>): Prisma__RubricRatingClient<$Result.GetResult<Prisma.$RubricRatingPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first RubricRating that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RubricRatingFindFirstArgs} args - Arguments to find a RubricRating
+     * @example
+     * // Get one RubricRating
+     * const rubricRating = await prisma.rubricRating.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends RubricRatingFindFirstArgs>(args?: SelectSubset<T, RubricRatingFindFirstArgs<ExtArgs>>): Prisma__RubricRatingClient<$Result.GetResult<Prisma.$RubricRatingPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first RubricRating that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RubricRatingFindFirstOrThrowArgs} args - Arguments to find a RubricRating
+     * @example
+     * // Get one RubricRating
+     * const rubricRating = await prisma.rubricRating.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends RubricRatingFindFirstOrThrowArgs>(args?: SelectSubset<T, RubricRatingFindFirstOrThrowArgs<ExtArgs>>): Prisma__RubricRatingClient<$Result.GetResult<Prisma.$RubricRatingPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more RubricRatings that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RubricRatingFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all RubricRatings
+     * const rubricRatings = await prisma.rubricRating.findMany()
+     * 
+     * // Get first 10 RubricRatings
+     * const rubricRatings = await prisma.rubricRating.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const rubricRatingWithIdOnly = await prisma.rubricRating.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends RubricRatingFindManyArgs>(args?: SelectSubset<T, RubricRatingFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RubricRatingPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a RubricRating.
+     * @param {RubricRatingCreateArgs} args - Arguments to create a RubricRating.
+     * @example
+     * // Create one RubricRating
+     * const RubricRating = await prisma.rubricRating.create({
+     *   data: {
+     *     // ... data to create a RubricRating
+     *   }
+     * })
+     * 
+     */
+    create<T extends RubricRatingCreateArgs>(args: SelectSubset<T, RubricRatingCreateArgs<ExtArgs>>): Prisma__RubricRatingClient<$Result.GetResult<Prisma.$RubricRatingPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many RubricRatings.
+     * @param {RubricRatingCreateManyArgs} args - Arguments to create many RubricRatings.
+     * @example
+     * // Create many RubricRatings
+     * const rubricRating = await prisma.rubricRating.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends RubricRatingCreateManyArgs>(args?: SelectSubset<T, RubricRatingCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many RubricRatings and returns the data saved in the database.
+     * @param {RubricRatingCreateManyAndReturnArgs} args - Arguments to create many RubricRatings.
+     * @example
+     * // Create many RubricRatings
+     * const rubricRating = await prisma.rubricRating.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many RubricRatings and only return the `id`
+     * const rubricRatingWithIdOnly = await prisma.rubricRating.createManyAndReturn({ 
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends RubricRatingCreateManyAndReturnArgs>(args?: SelectSubset<T, RubricRatingCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RubricRatingPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a RubricRating.
+     * @param {RubricRatingDeleteArgs} args - Arguments to delete one RubricRating.
+     * @example
+     * // Delete one RubricRating
+     * const RubricRating = await prisma.rubricRating.delete({
+     *   where: {
+     *     // ... filter to delete one RubricRating
+     *   }
+     * })
+     * 
+     */
+    delete<T extends RubricRatingDeleteArgs>(args: SelectSubset<T, RubricRatingDeleteArgs<ExtArgs>>): Prisma__RubricRatingClient<$Result.GetResult<Prisma.$RubricRatingPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one RubricRating.
+     * @param {RubricRatingUpdateArgs} args - Arguments to update one RubricRating.
+     * @example
+     * // Update one RubricRating
+     * const rubricRating = await prisma.rubricRating.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends RubricRatingUpdateArgs>(args: SelectSubset<T, RubricRatingUpdateArgs<ExtArgs>>): Prisma__RubricRatingClient<$Result.GetResult<Prisma.$RubricRatingPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more RubricRatings.
+     * @param {RubricRatingDeleteManyArgs} args - Arguments to filter RubricRatings to delete.
+     * @example
+     * // Delete a few RubricRatings
+     * const { count } = await prisma.rubricRating.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends RubricRatingDeleteManyArgs>(args?: SelectSubset<T, RubricRatingDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more RubricRatings.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RubricRatingUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many RubricRatings
+     * const rubricRating = await prisma.rubricRating.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends RubricRatingUpdateManyArgs>(args: SelectSubset<T, RubricRatingUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one RubricRating.
+     * @param {RubricRatingUpsertArgs} args - Arguments to update or create a RubricRating.
+     * @example
+     * // Update or create a RubricRating
+     * const rubricRating = await prisma.rubricRating.upsert({
+     *   create: {
+     *     // ... data to create a RubricRating
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the RubricRating we want to update
+     *   }
+     * })
+     */
+    upsert<T extends RubricRatingUpsertArgs>(args: SelectSubset<T, RubricRatingUpsertArgs<ExtArgs>>): Prisma__RubricRatingClient<$Result.GetResult<Prisma.$RubricRatingPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of RubricRatings.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RubricRatingCountArgs} args - Arguments to filter RubricRatings to count.
+     * @example
+     * // Count the number of RubricRatings
+     * const count = await prisma.rubricRating.count({
+     *   where: {
+     *     // ... the filter for the RubricRatings we want to count
+     *   }
+     * })
+    **/
+    count<T extends RubricRatingCountArgs>(
+      args?: Subset<T, RubricRatingCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], RubricRatingCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a RubricRating.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RubricRatingAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends RubricRatingAggregateArgs>(args: Subset<T, RubricRatingAggregateArgs>): Prisma.PrismaPromise<GetRubricRatingAggregateType<T>>
+
+    /**
+     * Group by RubricRating.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RubricRatingGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends RubricRatingGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: RubricRatingGroupByArgs['orderBy'] }
+        : { orderBy?: RubricRatingGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, RubricRatingGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetRubricRatingGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the RubricRating model
+   */
+  readonly fields: RubricRatingFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for RubricRating.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__RubricRatingClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    criterion<T extends RubricCriterionDefaultArgs<ExtArgs> = {}>(args?: Subset<T, RubricCriterionDefaultArgs<ExtArgs>>): Prisma__RubricCriterionClient<$Result.GetResult<Prisma.$RubricCriterionPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the RubricRating model
+   */ 
+  interface RubricRatingFieldRefs {
+    readonly id: FieldRef<"RubricRating", 'String'>
+    readonly criterionId: FieldRef<"RubricRating", 'String'>
+    readonly points: FieldRef<"RubricRating", 'Float'>
+    readonly name: FieldRef<"RubricRating", 'String'>
+    readonly description: FieldRef<"RubricRating", 'String'>
+    readonly order: FieldRef<"RubricRating", 'Int'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * RubricRating findUnique
+   */
+  export type RubricRatingFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RubricRating
+     */
+    select?: RubricRatingSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RubricRatingInclude<ExtArgs> | null
+    /**
+     * Filter, which RubricRating to fetch.
+     */
+    where: RubricRatingWhereUniqueInput
+  }
+
+  /**
+   * RubricRating findUniqueOrThrow
+   */
+  export type RubricRatingFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RubricRating
+     */
+    select?: RubricRatingSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RubricRatingInclude<ExtArgs> | null
+    /**
+     * Filter, which RubricRating to fetch.
+     */
+    where: RubricRatingWhereUniqueInput
+  }
+
+  /**
+   * RubricRating findFirst
+   */
+  export type RubricRatingFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RubricRating
+     */
+    select?: RubricRatingSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RubricRatingInclude<ExtArgs> | null
+    /**
+     * Filter, which RubricRating to fetch.
+     */
+    where?: RubricRatingWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RubricRatings to fetch.
+     */
+    orderBy?: RubricRatingOrderByWithRelationInput | RubricRatingOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for RubricRatings.
+     */
+    cursor?: RubricRatingWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RubricRatings from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RubricRatings.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of RubricRatings.
+     */
+    distinct?: RubricRatingScalarFieldEnum | RubricRatingScalarFieldEnum[]
+  }
+
+  /**
+   * RubricRating findFirstOrThrow
+   */
+  export type RubricRatingFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RubricRating
+     */
+    select?: RubricRatingSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RubricRatingInclude<ExtArgs> | null
+    /**
+     * Filter, which RubricRating to fetch.
+     */
+    where?: RubricRatingWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RubricRatings to fetch.
+     */
+    orderBy?: RubricRatingOrderByWithRelationInput | RubricRatingOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for RubricRatings.
+     */
+    cursor?: RubricRatingWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RubricRatings from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RubricRatings.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of RubricRatings.
+     */
+    distinct?: RubricRatingScalarFieldEnum | RubricRatingScalarFieldEnum[]
+  }
+
+  /**
+   * RubricRating findMany
+   */
+  export type RubricRatingFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RubricRating
+     */
+    select?: RubricRatingSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RubricRatingInclude<ExtArgs> | null
+    /**
+     * Filter, which RubricRatings to fetch.
+     */
+    where?: RubricRatingWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RubricRatings to fetch.
+     */
+    orderBy?: RubricRatingOrderByWithRelationInput | RubricRatingOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing RubricRatings.
+     */
+    cursor?: RubricRatingWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RubricRatings from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RubricRatings.
+     */
+    skip?: number
+    distinct?: RubricRatingScalarFieldEnum | RubricRatingScalarFieldEnum[]
+  }
+
+  /**
+   * RubricRating create
+   */
+  export type RubricRatingCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RubricRating
+     */
+    select?: RubricRatingSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RubricRatingInclude<ExtArgs> | null
+    /**
+     * The data needed to create a RubricRating.
+     */
+    data: XOR<RubricRatingCreateInput, RubricRatingUncheckedCreateInput>
+  }
+
+  /**
+   * RubricRating createMany
+   */
+  export type RubricRatingCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many RubricRatings.
+     */
+    data: RubricRatingCreateManyInput | RubricRatingCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * RubricRating createManyAndReturn
+   */
+  export type RubricRatingCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RubricRating
+     */
+    select?: RubricRatingSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many RubricRatings.
+     */
+    data: RubricRatingCreateManyInput | RubricRatingCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RubricRatingIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * RubricRating update
+   */
+  export type RubricRatingUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RubricRating
+     */
+    select?: RubricRatingSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RubricRatingInclude<ExtArgs> | null
+    /**
+     * The data needed to update a RubricRating.
+     */
+    data: XOR<RubricRatingUpdateInput, RubricRatingUncheckedUpdateInput>
+    /**
+     * Choose, which RubricRating to update.
+     */
+    where: RubricRatingWhereUniqueInput
+  }
+
+  /**
+   * RubricRating updateMany
+   */
+  export type RubricRatingUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update RubricRatings.
+     */
+    data: XOR<RubricRatingUpdateManyMutationInput, RubricRatingUncheckedUpdateManyInput>
+    /**
+     * Filter which RubricRatings to update
+     */
+    where?: RubricRatingWhereInput
+  }
+
+  /**
+   * RubricRating upsert
+   */
+  export type RubricRatingUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RubricRating
+     */
+    select?: RubricRatingSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RubricRatingInclude<ExtArgs> | null
+    /**
+     * The filter to search for the RubricRating to update in case it exists.
+     */
+    where: RubricRatingWhereUniqueInput
+    /**
+     * In case the RubricRating found by the `where` argument doesn't exist, create a new RubricRating with this data.
+     */
+    create: XOR<RubricRatingCreateInput, RubricRatingUncheckedCreateInput>
+    /**
+     * In case the RubricRating was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<RubricRatingUpdateInput, RubricRatingUncheckedUpdateInput>
+  }
+
+  /**
+   * RubricRating delete
+   */
+  export type RubricRatingDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RubricRating
+     */
+    select?: RubricRatingSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RubricRatingInclude<ExtArgs> | null
+    /**
+     * Filter which RubricRating to delete.
+     */
+    where: RubricRatingWhereUniqueInput
+  }
+
+  /**
+   * RubricRating deleteMany
+   */
+  export type RubricRatingDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which RubricRatings to delete
+     */
+    where?: RubricRatingWhereInput
+  }
+
+  /**
+   * RubricRating without action
+   */
+  export type RubricRatingDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RubricRating
+     */
+    select?: RubricRatingSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RubricRatingInclude<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -34875,6 +38350,7 @@ export namespace Prisma {
     grade: 'grade',
     feedback: 'feedback',
     submittedAt: 'submittedAt',
+    daysLate: 'daysLate',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -35152,6 +38628,52 @@ export namespace Prisma {
   };
 
   export type FormSubmissionScalarFieldEnum = (typeof FormSubmissionScalarFieldEnum)[keyof typeof FormSubmissionScalarFieldEnum]
+
+
+  export const RubricScalarFieldEnum: {
+    id: 'id',
+    assignmentId: 'assignmentId',
+    courseId: 'courseId',
+    title: 'title',
+    type: 'type',
+    ratingDisplay: 'ratingDisplay',
+    ratingOrder: 'ratingOrder',
+    scoring: 'scoring',
+    doNotPostToGradebook: 'doNotPostToGradebook',
+    useForGrading: 'useForGrading',
+    hideScoreTotal: 'hideScoreTotal',
+    pointsPossible: 'pointsPossible',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type RubricScalarFieldEnum = (typeof RubricScalarFieldEnum)[keyof typeof RubricScalarFieldEnum]
+
+
+  export const RubricCriterionScalarFieldEnum: {
+    id: 'id',
+    rubricId: 'rubricId',
+    name: 'name',
+    description: 'description',
+    points: 'points',
+    enableRange: 'enableRange',
+    order: 'order',
+    createdAt: 'createdAt'
+  };
+
+  export type RubricCriterionScalarFieldEnum = (typeof RubricCriterionScalarFieldEnum)[keyof typeof RubricCriterionScalarFieldEnum]
+
+
+  export const RubricRatingScalarFieldEnum: {
+    id: 'id',
+    criterionId: 'criterionId',
+    points: 'points',
+    name: 'name',
+    description: 'description',
+    order: 'order'
+  };
+
+  export type RubricRatingScalarFieldEnum = (typeof RubricRatingScalarFieldEnum)[keyof typeof RubricRatingScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -36334,6 +39856,7 @@ export namespace Prisma {
     group?: XOR<GroupNullableRelationFilter, GroupWhereInput> | null
     submissions?: SubmissionListRelationFilter
     repository?: XOR<RepositoryNullableRelationFilter, RepositoryWhereInput> | null
+    rubric?: XOR<RubricNullableRelationFilter, RubricWhereInput> | null
   }
 
   export type AssignmentOrderByWithRelationInput = {
@@ -36369,6 +39892,7 @@ export namespace Prisma {
     group?: GroupOrderByWithRelationInput
     submissions?: SubmissionOrderByRelationAggregateInput
     repository?: RepositoryOrderByWithRelationInput
+    rubric?: RubricOrderByWithRelationInput
   }
 
   export type AssignmentWhereUniqueInput = Prisma.AtLeast<{
@@ -36407,6 +39931,7 @@ export namespace Prisma {
     group?: XOR<GroupNullableRelationFilter, GroupWhereInput> | null
     submissions?: SubmissionListRelationFilter
     repository?: XOR<RepositoryNullableRelationFilter, RepositoryWhereInput> | null
+    rubric?: XOR<RubricNullableRelationFilter, RubricWhereInput> | null
   }, "id">
 
   export type AssignmentOrderByWithAggregationInput = {
@@ -36494,6 +40019,7 @@ export namespace Prisma {
     grade?: FloatNullableFilter<"Submission"> | number | null
     feedback?: StringNullableFilter<"Submission"> | string | null
     submittedAt?: DateTimeNullableFilter<"Submission"> | Date | string | null
+    daysLate?: IntNullableFilter<"Submission"> | number | null
     createdAt?: DateTimeFilter<"Submission"> | Date | string
     updatedAt?: DateTimeFilter<"Submission"> | Date | string
     user?: XOR<UserRelationFilter, UserWhereInput>
@@ -36513,6 +40039,7 @@ export namespace Prisma {
     grade?: SortOrderInput | SortOrder
     feedback?: SortOrderInput | SortOrder
     submittedAt?: SortOrderInput | SortOrder
+    daysLate?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     user?: UserOrderByWithRelationInput
@@ -36536,6 +40063,7 @@ export namespace Prisma {
     grade?: FloatNullableFilter<"Submission"> | number | null
     feedback?: StringNullableFilter<"Submission"> | string | null
     submittedAt?: DateTimeNullableFilter<"Submission"> | Date | string | null
+    daysLate?: IntNullableFilter<"Submission"> | number | null
     createdAt?: DateTimeFilter<"Submission"> | Date | string
     updatedAt?: DateTimeFilter<"Submission"> | Date | string
     user?: XOR<UserRelationFilter, UserWhereInput>
@@ -36555,6 +40083,7 @@ export namespace Prisma {
     grade?: SortOrderInput | SortOrder
     feedback?: SortOrderInput | SortOrder
     submittedAt?: SortOrderInput | SortOrder
+    daysLate?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: SubmissionCountOrderByAggregateInput
@@ -36579,6 +40108,7 @@ export namespace Prisma {
     grade?: FloatNullableWithAggregatesFilter<"Submission"> | number | null
     feedback?: StringNullableWithAggregatesFilter<"Submission"> | string | null
     submittedAt?: DateTimeNullableWithAggregatesFilter<"Submission"> | Date | string | null
+    daysLate?: IntNullableWithAggregatesFilter<"Submission"> | number | null
     createdAt?: DateTimeWithAggregatesFilter<"Submission"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Submission"> | Date | string
   }
@@ -38013,6 +41543,248 @@ export namespace Prisma {
     createdAt?: DateTimeWithAggregatesFilter<"FormSubmission"> | Date | string
   }
 
+  export type RubricWhereInput = {
+    AND?: RubricWhereInput | RubricWhereInput[]
+    OR?: RubricWhereInput[]
+    NOT?: RubricWhereInput | RubricWhereInput[]
+    id?: StringFilter<"Rubric"> | string
+    assignmentId?: StringFilter<"Rubric"> | string
+    courseId?: StringNullableFilter<"Rubric"> | string | null
+    title?: StringFilter<"Rubric"> | string
+    type?: StringFilter<"Rubric"> | string
+    ratingDisplay?: StringFilter<"Rubric"> | string
+    ratingOrder?: StringFilter<"Rubric"> | string
+    scoring?: StringFilter<"Rubric"> | string
+    doNotPostToGradebook?: BoolFilter<"Rubric"> | boolean
+    useForGrading?: BoolFilter<"Rubric"> | boolean
+    hideScoreTotal?: BoolFilter<"Rubric"> | boolean
+    pointsPossible?: FloatFilter<"Rubric"> | number
+    createdAt?: DateTimeFilter<"Rubric"> | Date | string
+    updatedAt?: DateTimeFilter<"Rubric"> | Date | string
+    assignment?: XOR<AssignmentRelationFilter, AssignmentWhereInput>
+    criteria?: RubricCriterionListRelationFilter
+  }
+
+  export type RubricOrderByWithRelationInput = {
+    id?: SortOrder
+    assignmentId?: SortOrder
+    courseId?: SortOrderInput | SortOrder
+    title?: SortOrder
+    type?: SortOrder
+    ratingDisplay?: SortOrder
+    ratingOrder?: SortOrder
+    scoring?: SortOrder
+    doNotPostToGradebook?: SortOrder
+    useForGrading?: SortOrder
+    hideScoreTotal?: SortOrder
+    pointsPossible?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    assignment?: AssignmentOrderByWithRelationInput
+    criteria?: RubricCriterionOrderByRelationAggregateInput
+  }
+
+  export type RubricWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    assignmentId?: string
+    AND?: RubricWhereInput | RubricWhereInput[]
+    OR?: RubricWhereInput[]
+    NOT?: RubricWhereInput | RubricWhereInput[]
+    courseId?: StringNullableFilter<"Rubric"> | string | null
+    title?: StringFilter<"Rubric"> | string
+    type?: StringFilter<"Rubric"> | string
+    ratingDisplay?: StringFilter<"Rubric"> | string
+    ratingOrder?: StringFilter<"Rubric"> | string
+    scoring?: StringFilter<"Rubric"> | string
+    doNotPostToGradebook?: BoolFilter<"Rubric"> | boolean
+    useForGrading?: BoolFilter<"Rubric"> | boolean
+    hideScoreTotal?: BoolFilter<"Rubric"> | boolean
+    pointsPossible?: FloatFilter<"Rubric"> | number
+    createdAt?: DateTimeFilter<"Rubric"> | Date | string
+    updatedAt?: DateTimeFilter<"Rubric"> | Date | string
+    assignment?: XOR<AssignmentRelationFilter, AssignmentWhereInput>
+    criteria?: RubricCriterionListRelationFilter
+  }, "id" | "assignmentId">
+
+  export type RubricOrderByWithAggregationInput = {
+    id?: SortOrder
+    assignmentId?: SortOrder
+    courseId?: SortOrderInput | SortOrder
+    title?: SortOrder
+    type?: SortOrder
+    ratingDisplay?: SortOrder
+    ratingOrder?: SortOrder
+    scoring?: SortOrder
+    doNotPostToGradebook?: SortOrder
+    useForGrading?: SortOrder
+    hideScoreTotal?: SortOrder
+    pointsPossible?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: RubricCountOrderByAggregateInput
+    _avg?: RubricAvgOrderByAggregateInput
+    _max?: RubricMaxOrderByAggregateInput
+    _min?: RubricMinOrderByAggregateInput
+    _sum?: RubricSumOrderByAggregateInput
+  }
+
+  export type RubricScalarWhereWithAggregatesInput = {
+    AND?: RubricScalarWhereWithAggregatesInput | RubricScalarWhereWithAggregatesInput[]
+    OR?: RubricScalarWhereWithAggregatesInput[]
+    NOT?: RubricScalarWhereWithAggregatesInput | RubricScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"Rubric"> | string
+    assignmentId?: StringWithAggregatesFilter<"Rubric"> | string
+    courseId?: StringNullableWithAggregatesFilter<"Rubric"> | string | null
+    title?: StringWithAggregatesFilter<"Rubric"> | string
+    type?: StringWithAggregatesFilter<"Rubric"> | string
+    ratingDisplay?: StringWithAggregatesFilter<"Rubric"> | string
+    ratingOrder?: StringWithAggregatesFilter<"Rubric"> | string
+    scoring?: StringWithAggregatesFilter<"Rubric"> | string
+    doNotPostToGradebook?: BoolWithAggregatesFilter<"Rubric"> | boolean
+    useForGrading?: BoolWithAggregatesFilter<"Rubric"> | boolean
+    hideScoreTotal?: BoolWithAggregatesFilter<"Rubric"> | boolean
+    pointsPossible?: FloatWithAggregatesFilter<"Rubric"> | number
+    createdAt?: DateTimeWithAggregatesFilter<"Rubric"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"Rubric"> | Date | string
+  }
+
+  export type RubricCriterionWhereInput = {
+    AND?: RubricCriterionWhereInput | RubricCriterionWhereInput[]
+    OR?: RubricCriterionWhereInput[]
+    NOT?: RubricCriterionWhereInput | RubricCriterionWhereInput[]
+    id?: StringFilter<"RubricCriterion"> | string
+    rubricId?: StringFilter<"RubricCriterion"> | string
+    name?: StringFilter<"RubricCriterion"> | string
+    description?: StringNullableFilter<"RubricCriterion"> | string | null
+    points?: FloatFilter<"RubricCriterion"> | number
+    enableRange?: BoolFilter<"RubricCriterion"> | boolean
+    order?: IntFilter<"RubricCriterion"> | number
+    createdAt?: DateTimeFilter<"RubricCriterion"> | Date | string
+    rubric?: XOR<RubricRelationFilter, RubricWhereInput>
+    ratings?: RubricRatingListRelationFilter
+  }
+
+  export type RubricCriterionOrderByWithRelationInput = {
+    id?: SortOrder
+    rubricId?: SortOrder
+    name?: SortOrder
+    description?: SortOrderInput | SortOrder
+    points?: SortOrder
+    enableRange?: SortOrder
+    order?: SortOrder
+    createdAt?: SortOrder
+    rubric?: RubricOrderByWithRelationInput
+    ratings?: RubricRatingOrderByRelationAggregateInput
+  }
+
+  export type RubricCriterionWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: RubricCriterionWhereInput | RubricCriterionWhereInput[]
+    OR?: RubricCriterionWhereInput[]
+    NOT?: RubricCriterionWhereInput | RubricCriterionWhereInput[]
+    rubricId?: StringFilter<"RubricCriterion"> | string
+    name?: StringFilter<"RubricCriterion"> | string
+    description?: StringNullableFilter<"RubricCriterion"> | string | null
+    points?: FloatFilter<"RubricCriterion"> | number
+    enableRange?: BoolFilter<"RubricCriterion"> | boolean
+    order?: IntFilter<"RubricCriterion"> | number
+    createdAt?: DateTimeFilter<"RubricCriterion"> | Date | string
+    rubric?: XOR<RubricRelationFilter, RubricWhereInput>
+    ratings?: RubricRatingListRelationFilter
+  }, "id">
+
+  export type RubricCriterionOrderByWithAggregationInput = {
+    id?: SortOrder
+    rubricId?: SortOrder
+    name?: SortOrder
+    description?: SortOrderInput | SortOrder
+    points?: SortOrder
+    enableRange?: SortOrder
+    order?: SortOrder
+    createdAt?: SortOrder
+    _count?: RubricCriterionCountOrderByAggregateInput
+    _avg?: RubricCriterionAvgOrderByAggregateInput
+    _max?: RubricCriterionMaxOrderByAggregateInput
+    _min?: RubricCriterionMinOrderByAggregateInput
+    _sum?: RubricCriterionSumOrderByAggregateInput
+  }
+
+  export type RubricCriterionScalarWhereWithAggregatesInput = {
+    AND?: RubricCriterionScalarWhereWithAggregatesInput | RubricCriterionScalarWhereWithAggregatesInput[]
+    OR?: RubricCriterionScalarWhereWithAggregatesInput[]
+    NOT?: RubricCriterionScalarWhereWithAggregatesInput | RubricCriterionScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"RubricCriterion"> | string
+    rubricId?: StringWithAggregatesFilter<"RubricCriterion"> | string
+    name?: StringWithAggregatesFilter<"RubricCriterion"> | string
+    description?: StringNullableWithAggregatesFilter<"RubricCriterion"> | string | null
+    points?: FloatWithAggregatesFilter<"RubricCriterion"> | number
+    enableRange?: BoolWithAggregatesFilter<"RubricCriterion"> | boolean
+    order?: IntWithAggregatesFilter<"RubricCriterion"> | number
+    createdAt?: DateTimeWithAggregatesFilter<"RubricCriterion"> | Date | string
+  }
+
+  export type RubricRatingWhereInput = {
+    AND?: RubricRatingWhereInput | RubricRatingWhereInput[]
+    OR?: RubricRatingWhereInput[]
+    NOT?: RubricRatingWhereInput | RubricRatingWhereInput[]
+    id?: StringFilter<"RubricRating"> | string
+    criterionId?: StringFilter<"RubricRating"> | string
+    points?: FloatFilter<"RubricRating"> | number
+    name?: StringFilter<"RubricRating"> | string
+    description?: StringNullableFilter<"RubricRating"> | string | null
+    order?: IntFilter<"RubricRating"> | number
+    criterion?: XOR<RubricCriterionRelationFilter, RubricCriterionWhereInput>
+  }
+
+  export type RubricRatingOrderByWithRelationInput = {
+    id?: SortOrder
+    criterionId?: SortOrder
+    points?: SortOrder
+    name?: SortOrder
+    description?: SortOrderInput | SortOrder
+    order?: SortOrder
+    criterion?: RubricCriterionOrderByWithRelationInput
+  }
+
+  export type RubricRatingWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: RubricRatingWhereInput | RubricRatingWhereInput[]
+    OR?: RubricRatingWhereInput[]
+    NOT?: RubricRatingWhereInput | RubricRatingWhereInput[]
+    criterionId?: StringFilter<"RubricRating"> | string
+    points?: FloatFilter<"RubricRating"> | number
+    name?: StringFilter<"RubricRating"> | string
+    description?: StringNullableFilter<"RubricRating"> | string | null
+    order?: IntFilter<"RubricRating"> | number
+    criterion?: XOR<RubricCriterionRelationFilter, RubricCriterionWhereInput>
+  }, "id">
+
+  export type RubricRatingOrderByWithAggregationInput = {
+    id?: SortOrder
+    criterionId?: SortOrder
+    points?: SortOrder
+    name?: SortOrder
+    description?: SortOrderInput | SortOrder
+    order?: SortOrder
+    _count?: RubricRatingCountOrderByAggregateInput
+    _avg?: RubricRatingAvgOrderByAggregateInput
+    _max?: RubricRatingMaxOrderByAggregateInput
+    _min?: RubricRatingMinOrderByAggregateInput
+    _sum?: RubricRatingSumOrderByAggregateInput
+  }
+
+  export type RubricRatingScalarWhereWithAggregatesInput = {
+    AND?: RubricRatingScalarWhereWithAggregatesInput | RubricRatingScalarWhereWithAggregatesInput[]
+    OR?: RubricRatingScalarWhereWithAggregatesInput[]
+    NOT?: RubricRatingScalarWhereWithAggregatesInput | RubricRatingScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"RubricRating"> | string
+    criterionId?: StringWithAggregatesFilter<"RubricRating"> | string
+    points?: FloatWithAggregatesFilter<"RubricRating"> | number
+    name?: StringWithAggregatesFilter<"RubricRating"> | string
+    description?: StringNullableWithAggregatesFilter<"RubricRating"> | string | null
+    order?: IntWithAggregatesFilter<"RubricRating"> | number
+  }
+
   export type ConversationCreateInput = {
     id?: string
     subject: string
@@ -39017,6 +42789,7 @@ export namespace Prisma {
     group?: GroupCreateNestedOneWithoutAssignmentsInput
     submissions?: SubmissionCreateNestedManyWithoutAssignmentInput
     repository?: RepositoryCreateNestedOneWithoutAssignmentInput
+    rubric?: RubricCreateNestedOneWithoutAssignmentInput
   }
 
   export type AssignmentUncheckedCreateInput = {
@@ -39050,6 +42823,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     submissions?: SubmissionUncheckedCreateNestedManyWithoutAssignmentInput
     repository?: RepositoryUncheckedCreateNestedOneWithoutAssignmentInput
+    rubric?: RubricUncheckedCreateNestedOneWithoutAssignmentInput
   }
 
   export type AssignmentUpdateInput = {
@@ -39083,6 +42857,7 @@ export namespace Prisma {
     group?: GroupUpdateOneWithoutAssignmentsNestedInput
     submissions?: SubmissionUpdateManyWithoutAssignmentNestedInput
     repository?: RepositoryUpdateOneWithoutAssignmentNestedInput
+    rubric?: RubricUpdateOneWithoutAssignmentNestedInput
   }
 
   export type AssignmentUncheckedUpdateInput = {
@@ -39116,6 +42891,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     submissions?: SubmissionUncheckedUpdateManyWithoutAssignmentNestedInput
     repository?: RepositoryUncheckedUpdateOneWithoutAssignmentNestedInput
+    rubric?: RubricUncheckedUpdateOneWithoutAssignmentNestedInput
   }
 
   export type AssignmentCreateManyInput = {
@@ -39219,6 +42995,7 @@ export namespace Prisma {
     grade?: number | null
     feedback?: string | null
     submittedAt?: Date | string | null
+    daysLate?: number | null
     createdAt?: Date | string
     updatedAt?: Date | string
     user: UserCreateNestedOneWithoutSubmissionsInput
@@ -39238,6 +43015,7 @@ export namespace Prisma {
     grade?: number | null
     feedback?: string | null
     submittedAt?: Date | string | null
+    daysLate?: number | null
     createdAt?: Date | string
     updatedAt?: Date | string
     repositoryFile?: RepositoryFileUncheckedCreateNestedOneWithoutSubmissionInput
@@ -39253,6 +43031,7 @@ export namespace Prisma {
     grade?: NullableFloatFieldUpdateOperationsInput | number | null
     feedback?: NullableStringFieldUpdateOperationsInput | string | null
     submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    daysLate?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     user?: UserUpdateOneRequiredWithoutSubmissionsNestedInput
@@ -39272,6 +43051,7 @@ export namespace Prisma {
     grade?: NullableFloatFieldUpdateOperationsInput | number | null
     feedback?: NullableStringFieldUpdateOperationsInput | string | null
     submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    daysLate?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     repositoryFile?: RepositoryFileUncheckedUpdateOneWithoutSubmissionNestedInput
@@ -39289,6 +43069,7 @@ export namespace Prisma {
     grade?: number | null
     feedback?: string | null
     submittedAt?: Date | string | null
+    daysLate?: number | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -39303,6 +43084,7 @@ export namespace Prisma {
     grade?: NullableFloatFieldUpdateOperationsInput | number | null
     feedback?: NullableStringFieldUpdateOperationsInput | string | null
     submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    daysLate?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -39319,6 +43101,7 @@ export namespace Prisma {
     grade?: NullableFloatFieldUpdateOperationsInput | number | null
     feedback?: NullableStringFieldUpdateOperationsInput | string | null
     submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    daysLate?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -40905,6 +44688,270 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type RubricCreateInput = {
+    id?: string
+    courseId?: string | null
+    title: string
+    type?: string
+    ratingDisplay?: string
+    ratingOrder?: string
+    scoring?: string
+    doNotPostToGradebook?: boolean
+    useForGrading?: boolean
+    hideScoreTotal?: boolean
+    pointsPossible?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    assignment: AssignmentCreateNestedOneWithoutRubricInput
+    criteria?: RubricCriterionCreateNestedManyWithoutRubricInput
+  }
+
+  export type RubricUncheckedCreateInput = {
+    id?: string
+    assignmentId: string
+    courseId?: string | null
+    title: string
+    type?: string
+    ratingDisplay?: string
+    ratingOrder?: string
+    scoring?: string
+    doNotPostToGradebook?: boolean
+    useForGrading?: boolean
+    hideScoreTotal?: boolean
+    pointsPossible?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    criteria?: RubricCriterionUncheckedCreateNestedManyWithoutRubricInput
+  }
+
+  export type RubricUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    courseId?: NullableStringFieldUpdateOperationsInput | string | null
+    title?: StringFieldUpdateOperationsInput | string
+    type?: StringFieldUpdateOperationsInput | string
+    ratingDisplay?: StringFieldUpdateOperationsInput | string
+    ratingOrder?: StringFieldUpdateOperationsInput | string
+    scoring?: StringFieldUpdateOperationsInput | string
+    doNotPostToGradebook?: BoolFieldUpdateOperationsInput | boolean
+    useForGrading?: BoolFieldUpdateOperationsInput | boolean
+    hideScoreTotal?: BoolFieldUpdateOperationsInput | boolean
+    pointsPossible?: FloatFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    assignment?: AssignmentUpdateOneRequiredWithoutRubricNestedInput
+    criteria?: RubricCriterionUpdateManyWithoutRubricNestedInput
+  }
+
+  export type RubricUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    assignmentId?: StringFieldUpdateOperationsInput | string
+    courseId?: NullableStringFieldUpdateOperationsInput | string | null
+    title?: StringFieldUpdateOperationsInput | string
+    type?: StringFieldUpdateOperationsInput | string
+    ratingDisplay?: StringFieldUpdateOperationsInput | string
+    ratingOrder?: StringFieldUpdateOperationsInput | string
+    scoring?: StringFieldUpdateOperationsInput | string
+    doNotPostToGradebook?: BoolFieldUpdateOperationsInput | boolean
+    useForGrading?: BoolFieldUpdateOperationsInput | boolean
+    hideScoreTotal?: BoolFieldUpdateOperationsInput | boolean
+    pointsPossible?: FloatFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    criteria?: RubricCriterionUncheckedUpdateManyWithoutRubricNestedInput
+  }
+
+  export type RubricCreateManyInput = {
+    id?: string
+    assignmentId: string
+    courseId?: string | null
+    title: string
+    type?: string
+    ratingDisplay?: string
+    ratingOrder?: string
+    scoring?: string
+    doNotPostToGradebook?: boolean
+    useForGrading?: boolean
+    hideScoreTotal?: boolean
+    pointsPossible?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type RubricUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    courseId?: NullableStringFieldUpdateOperationsInput | string | null
+    title?: StringFieldUpdateOperationsInput | string
+    type?: StringFieldUpdateOperationsInput | string
+    ratingDisplay?: StringFieldUpdateOperationsInput | string
+    ratingOrder?: StringFieldUpdateOperationsInput | string
+    scoring?: StringFieldUpdateOperationsInput | string
+    doNotPostToGradebook?: BoolFieldUpdateOperationsInput | boolean
+    useForGrading?: BoolFieldUpdateOperationsInput | boolean
+    hideScoreTotal?: BoolFieldUpdateOperationsInput | boolean
+    pointsPossible?: FloatFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RubricUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    assignmentId?: StringFieldUpdateOperationsInput | string
+    courseId?: NullableStringFieldUpdateOperationsInput | string | null
+    title?: StringFieldUpdateOperationsInput | string
+    type?: StringFieldUpdateOperationsInput | string
+    ratingDisplay?: StringFieldUpdateOperationsInput | string
+    ratingOrder?: StringFieldUpdateOperationsInput | string
+    scoring?: StringFieldUpdateOperationsInput | string
+    doNotPostToGradebook?: BoolFieldUpdateOperationsInput | boolean
+    useForGrading?: BoolFieldUpdateOperationsInput | boolean
+    hideScoreTotal?: BoolFieldUpdateOperationsInput | boolean
+    pointsPossible?: FloatFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RubricCriterionCreateInput = {
+    id?: string
+    name: string
+    description?: string | null
+    points?: number
+    enableRange?: boolean
+    order?: number
+    createdAt?: Date | string
+    rubric: RubricCreateNestedOneWithoutCriteriaInput
+    ratings?: RubricRatingCreateNestedManyWithoutCriterionInput
+  }
+
+  export type RubricCriterionUncheckedCreateInput = {
+    id?: string
+    rubricId: string
+    name: string
+    description?: string | null
+    points?: number
+    enableRange?: boolean
+    order?: number
+    createdAt?: Date | string
+    ratings?: RubricRatingUncheckedCreateNestedManyWithoutCriterionInput
+  }
+
+  export type RubricCriterionUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    points?: FloatFieldUpdateOperationsInput | number
+    enableRange?: BoolFieldUpdateOperationsInput | boolean
+    order?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    rubric?: RubricUpdateOneRequiredWithoutCriteriaNestedInput
+    ratings?: RubricRatingUpdateManyWithoutCriterionNestedInput
+  }
+
+  export type RubricCriterionUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    rubricId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    points?: FloatFieldUpdateOperationsInput | number
+    enableRange?: BoolFieldUpdateOperationsInput | boolean
+    order?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ratings?: RubricRatingUncheckedUpdateManyWithoutCriterionNestedInput
+  }
+
+  export type RubricCriterionCreateManyInput = {
+    id?: string
+    rubricId: string
+    name: string
+    description?: string | null
+    points?: number
+    enableRange?: boolean
+    order?: number
+    createdAt?: Date | string
+  }
+
+  export type RubricCriterionUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    points?: FloatFieldUpdateOperationsInput | number
+    enableRange?: BoolFieldUpdateOperationsInput | boolean
+    order?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RubricCriterionUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    rubricId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    points?: FloatFieldUpdateOperationsInput | number
+    enableRange?: BoolFieldUpdateOperationsInput | boolean
+    order?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RubricRatingCreateInput = {
+    id?: string
+    points?: number
+    name: string
+    description?: string | null
+    order?: number
+    criterion: RubricCriterionCreateNestedOneWithoutRatingsInput
+  }
+
+  export type RubricRatingUncheckedCreateInput = {
+    id?: string
+    criterionId: string
+    points?: number
+    name: string
+    description?: string | null
+    order?: number
+  }
+
+  export type RubricRatingUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    points?: FloatFieldUpdateOperationsInput | number
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    order?: IntFieldUpdateOperationsInput | number
+    criterion?: RubricCriterionUpdateOneRequiredWithoutRatingsNestedInput
+  }
+
+  export type RubricRatingUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    criterionId?: StringFieldUpdateOperationsInput | string
+    points?: FloatFieldUpdateOperationsInput | number
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    order?: IntFieldUpdateOperationsInput | number
+  }
+
+  export type RubricRatingCreateManyInput = {
+    id?: string
+    criterionId: string
+    points?: number
+    name: string
+    description?: string | null
+    order?: number
+  }
+
+  export type RubricRatingUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    points?: FloatFieldUpdateOperationsInput | number
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    order?: IntFieldUpdateOperationsInput | number
+  }
+
+  export type RubricRatingUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    criterionId?: StringFieldUpdateOperationsInput | string
+    points?: FloatFieldUpdateOperationsInput | number
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    order?: IntFieldUpdateOperationsInput | number
+  }
+
   export type StringFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -41841,6 +45888,11 @@ export namespace Prisma {
     isNot?: RepositoryWhereInput | null
   }
 
+  export type RubricNullableRelationFilter = {
+    is?: RubricWhereInput | null
+    isNot?: RubricWhereInput | null
+  }
+
   export type AssignmentCountOrderByAggregateInput = {
     id?: SortOrder
     title?: SortOrder
@@ -42001,12 +46053,14 @@ export namespace Prisma {
     grade?: SortOrder
     feedback?: SortOrder
     submittedAt?: SortOrder
+    daysLate?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
 
   export type SubmissionAvgOrderByAggregateInput = {
     grade?: SortOrder
+    daysLate?: SortOrder
   }
 
   export type SubmissionMaxOrderByAggregateInput = {
@@ -42021,6 +46075,7 @@ export namespace Prisma {
     grade?: SortOrder
     feedback?: SortOrder
     submittedAt?: SortOrder
+    daysLate?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -42037,12 +46092,14 @@ export namespace Prisma {
     grade?: SortOrder
     feedback?: SortOrder
     submittedAt?: SortOrder
+    daysLate?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
 
   export type SubmissionSumOrderByAggregateInput = {
     grade?: SortOrder
+    daysLate?: SortOrder
   }
 
   export type EnumAssignmentStatusWithAggregatesFilter<$PrismaModel = never> = {
@@ -43089,6 +47146,175 @@ export namespace Prisma {
 
   export type FormSubmissionSumOrderByAggregateInput = {
     score?: SortOrder
+  }
+
+  export type RubricCriterionListRelationFilter = {
+    every?: RubricCriterionWhereInput
+    some?: RubricCriterionWhereInput
+    none?: RubricCriterionWhereInput
+  }
+
+  export type RubricCriterionOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type RubricCountOrderByAggregateInput = {
+    id?: SortOrder
+    assignmentId?: SortOrder
+    courseId?: SortOrder
+    title?: SortOrder
+    type?: SortOrder
+    ratingDisplay?: SortOrder
+    ratingOrder?: SortOrder
+    scoring?: SortOrder
+    doNotPostToGradebook?: SortOrder
+    useForGrading?: SortOrder
+    hideScoreTotal?: SortOrder
+    pointsPossible?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type RubricAvgOrderByAggregateInput = {
+    pointsPossible?: SortOrder
+  }
+
+  export type RubricMaxOrderByAggregateInput = {
+    id?: SortOrder
+    assignmentId?: SortOrder
+    courseId?: SortOrder
+    title?: SortOrder
+    type?: SortOrder
+    ratingDisplay?: SortOrder
+    ratingOrder?: SortOrder
+    scoring?: SortOrder
+    doNotPostToGradebook?: SortOrder
+    useForGrading?: SortOrder
+    hideScoreTotal?: SortOrder
+    pointsPossible?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type RubricMinOrderByAggregateInput = {
+    id?: SortOrder
+    assignmentId?: SortOrder
+    courseId?: SortOrder
+    title?: SortOrder
+    type?: SortOrder
+    ratingDisplay?: SortOrder
+    ratingOrder?: SortOrder
+    scoring?: SortOrder
+    doNotPostToGradebook?: SortOrder
+    useForGrading?: SortOrder
+    hideScoreTotal?: SortOrder
+    pointsPossible?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type RubricSumOrderByAggregateInput = {
+    pointsPossible?: SortOrder
+  }
+
+  export type RubricRelationFilter = {
+    is?: RubricWhereInput
+    isNot?: RubricWhereInput
+  }
+
+  export type RubricRatingListRelationFilter = {
+    every?: RubricRatingWhereInput
+    some?: RubricRatingWhereInput
+    none?: RubricRatingWhereInput
+  }
+
+  export type RubricRatingOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type RubricCriterionCountOrderByAggregateInput = {
+    id?: SortOrder
+    rubricId?: SortOrder
+    name?: SortOrder
+    description?: SortOrder
+    points?: SortOrder
+    enableRange?: SortOrder
+    order?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type RubricCriterionAvgOrderByAggregateInput = {
+    points?: SortOrder
+    order?: SortOrder
+  }
+
+  export type RubricCriterionMaxOrderByAggregateInput = {
+    id?: SortOrder
+    rubricId?: SortOrder
+    name?: SortOrder
+    description?: SortOrder
+    points?: SortOrder
+    enableRange?: SortOrder
+    order?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type RubricCriterionMinOrderByAggregateInput = {
+    id?: SortOrder
+    rubricId?: SortOrder
+    name?: SortOrder
+    description?: SortOrder
+    points?: SortOrder
+    enableRange?: SortOrder
+    order?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type RubricCriterionSumOrderByAggregateInput = {
+    points?: SortOrder
+    order?: SortOrder
+  }
+
+  export type RubricCriterionRelationFilter = {
+    is?: RubricCriterionWhereInput
+    isNot?: RubricCriterionWhereInput
+  }
+
+  export type RubricRatingCountOrderByAggregateInput = {
+    id?: SortOrder
+    criterionId?: SortOrder
+    points?: SortOrder
+    name?: SortOrder
+    description?: SortOrder
+    order?: SortOrder
+  }
+
+  export type RubricRatingAvgOrderByAggregateInput = {
+    points?: SortOrder
+    order?: SortOrder
+  }
+
+  export type RubricRatingMaxOrderByAggregateInput = {
+    id?: SortOrder
+    criterionId?: SortOrder
+    points?: SortOrder
+    name?: SortOrder
+    description?: SortOrder
+    order?: SortOrder
+  }
+
+  export type RubricRatingMinOrderByAggregateInput = {
+    id?: SortOrder
+    criterionId?: SortOrder
+    points?: SortOrder
+    name?: SortOrder
+    description?: SortOrder
+    order?: SortOrder
+  }
+
+  export type RubricRatingSumOrderByAggregateInput = {
+    points?: SortOrder
+    order?: SortOrder
   }
 
   export type CourseCreateNestedOneWithoutConversationsInput = {
@@ -44552,6 +48778,12 @@ export namespace Prisma {
     connect?: RepositoryWhereUniqueInput
   }
 
+  export type RubricCreateNestedOneWithoutAssignmentInput = {
+    create?: XOR<RubricCreateWithoutAssignmentInput, RubricUncheckedCreateWithoutAssignmentInput>
+    connectOrCreate?: RubricCreateOrConnectWithoutAssignmentInput
+    connect?: RubricWhereUniqueInput
+  }
+
   export type SubmissionUncheckedCreateNestedManyWithoutAssignmentInput = {
     create?: XOR<SubmissionCreateWithoutAssignmentInput, SubmissionUncheckedCreateWithoutAssignmentInput> | SubmissionCreateWithoutAssignmentInput[] | SubmissionUncheckedCreateWithoutAssignmentInput[]
     connectOrCreate?: SubmissionCreateOrConnectWithoutAssignmentInput | SubmissionCreateOrConnectWithoutAssignmentInput[]
@@ -44563,6 +48795,12 @@ export namespace Prisma {
     create?: XOR<RepositoryCreateWithoutAssignmentInput, RepositoryUncheckedCreateWithoutAssignmentInput>
     connectOrCreate?: RepositoryCreateOrConnectWithoutAssignmentInput
     connect?: RepositoryWhereUniqueInput
+  }
+
+  export type RubricUncheckedCreateNestedOneWithoutAssignmentInput = {
+    create?: XOR<RubricCreateWithoutAssignmentInput, RubricUncheckedCreateWithoutAssignmentInput>
+    connectOrCreate?: RubricCreateOrConnectWithoutAssignmentInput
+    connect?: RubricWhereUniqueInput
   }
 
   export type FloatFieldUpdateOperationsInput = {
@@ -44627,6 +48865,16 @@ export namespace Prisma {
     update?: XOR<XOR<RepositoryUpdateToOneWithWhereWithoutAssignmentInput, RepositoryUpdateWithoutAssignmentInput>, RepositoryUncheckedUpdateWithoutAssignmentInput>
   }
 
+  export type RubricUpdateOneWithoutAssignmentNestedInput = {
+    create?: XOR<RubricCreateWithoutAssignmentInput, RubricUncheckedCreateWithoutAssignmentInput>
+    connectOrCreate?: RubricCreateOrConnectWithoutAssignmentInput
+    upsert?: RubricUpsertWithoutAssignmentInput
+    disconnect?: RubricWhereInput | boolean
+    delete?: RubricWhereInput | boolean
+    connect?: RubricWhereUniqueInput
+    update?: XOR<XOR<RubricUpdateToOneWithWhereWithoutAssignmentInput, RubricUpdateWithoutAssignmentInput>, RubricUncheckedUpdateWithoutAssignmentInput>
+  }
+
   export type SubmissionUncheckedUpdateManyWithoutAssignmentNestedInput = {
     create?: XOR<SubmissionCreateWithoutAssignmentInput, SubmissionUncheckedCreateWithoutAssignmentInput> | SubmissionCreateWithoutAssignmentInput[] | SubmissionUncheckedCreateWithoutAssignmentInput[]
     connectOrCreate?: SubmissionCreateOrConnectWithoutAssignmentInput | SubmissionCreateOrConnectWithoutAssignmentInput[]
@@ -44649,6 +48897,16 @@ export namespace Prisma {
     delete?: RepositoryWhereInput | boolean
     connect?: RepositoryWhereUniqueInput
     update?: XOR<XOR<RepositoryUpdateToOneWithWhereWithoutAssignmentInput, RepositoryUpdateWithoutAssignmentInput>, RepositoryUncheckedUpdateWithoutAssignmentInput>
+  }
+
+  export type RubricUncheckedUpdateOneWithoutAssignmentNestedInput = {
+    create?: XOR<RubricCreateWithoutAssignmentInput, RubricUncheckedCreateWithoutAssignmentInput>
+    connectOrCreate?: RubricCreateOrConnectWithoutAssignmentInput
+    upsert?: RubricUpsertWithoutAssignmentInput
+    disconnect?: RubricWhereInput | boolean
+    delete?: RubricWhereInput | boolean
+    connect?: RubricWhereUniqueInput
+    update?: XOR<XOR<RubricUpdateToOneWithWhereWithoutAssignmentInput, RubricUpdateWithoutAssignmentInput>, RubricUncheckedUpdateWithoutAssignmentInput>
   }
 
   export type UserCreateNestedOneWithoutSubmissionsInput = {
@@ -45485,6 +49743,132 @@ export namespace Prisma {
     upsert?: UserUpsertWithoutFormSubmissionsInput
     connect?: UserWhereUniqueInput
     update?: XOR<XOR<UserUpdateToOneWithWhereWithoutFormSubmissionsInput, UserUpdateWithoutFormSubmissionsInput>, UserUncheckedUpdateWithoutFormSubmissionsInput>
+  }
+
+  export type AssignmentCreateNestedOneWithoutRubricInput = {
+    create?: XOR<AssignmentCreateWithoutRubricInput, AssignmentUncheckedCreateWithoutRubricInput>
+    connectOrCreate?: AssignmentCreateOrConnectWithoutRubricInput
+    connect?: AssignmentWhereUniqueInput
+  }
+
+  export type RubricCriterionCreateNestedManyWithoutRubricInput = {
+    create?: XOR<RubricCriterionCreateWithoutRubricInput, RubricCriterionUncheckedCreateWithoutRubricInput> | RubricCriterionCreateWithoutRubricInput[] | RubricCriterionUncheckedCreateWithoutRubricInput[]
+    connectOrCreate?: RubricCriterionCreateOrConnectWithoutRubricInput | RubricCriterionCreateOrConnectWithoutRubricInput[]
+    createMany?: RubricCriterionCreateManyRubricInputEnvelope
+    connect?: RubricCriterionWhereUniqueInput | RubricCriterionWhereUniqueInput[]
+  }
+
+  export type RubricCriterionUncheckedCreateNestedManyWithoutRubricInput = {
+    create?: XOR<RubricCriterionCreateWithoutRubricInput, RubricCriterionUncheckedCreateWithoutRubricInput> | RubricCriterionCreateWithoutRubricInput[] | RubricCriterionUncheckedCreateWithoutRubricInput[]
+    connectOrCreate?: RubricCriterionCreateOrConnectWithoutRubricInput | RubricCriterionCreateOrConnectWithoutRubricInput[]
+    createMany?: RubricCriterionCreateManyRubricInputEnvelope
+    connect?: RubricCriterionWhereUniqueInput | RubricCriterionWhereUniqueInput[]
+  }
+
+  export type AssignmentUpdateOneRequiredWithoutRubricNestedInput = {
+    create?: XOR<AssignmentCreateWithoutRubricInput, AssignmentUncheckedCreateWithoutRubricInput>
+    connectOrCreate?: AssignmentCreateOrConnectWithoutRubricInput
+    upsert?: AssignmentUpsertWithoutRubricInput
+    connect?: AssignmentWhereUniqueInput
+    update?: XOR<XOR<AssignmentUpdateToOneWithWhereWithoutRubricInput, AssignmentUpdateWithoutRubricInput>, AssignmentUncheckedUpdateWithoutRubricInput>
+  }
+
+  export type RubricCriterionUpdateManyWithoutRubricNestedInput = {
+    create?: XOR<RubricCriterionCreateWithoutRubricInput, RubricCriterionUncheckedCreateWithoutRubricInput> | RubricCriterionCreateWithoutRubricInput[] | RubricCriterionUncheckedCreateWithoutRubricInput[]
+    connectOrCreate?: RubricCriterionCreateOrConnectWithoutRubricInput | RubricCriterionCreateOrConnectWithoutRubricInput[]
+    upsert?: RubricCriterionUpsertWithWhereUniqueWithoutRubricInput | RubricCriterionUpsertWithWhereUniqueWithoutRubricInput[]
+    createMany?: RubricCriterionCreateManyRubricInputEnvelope
+    set?: RubricCriterionWhereUniqueInput | RubricCriterionWhereUniqueInput[]
+    disconnect?: RubricCriterionWhereUniqueInput | RubricCriterionWhereUniqueInput[]
+    delete?: RubricCriterionWhereUniqueInput | RubricCriterionWhereUniqueInput[]
+    connect?: RubricCriterionWhereUniqueInput | RubricCriterionWhereUniqueInput[]
+    update?: RubricCriterionUpdateWithWhereUniqueWithoutRubricInput | RubricCriterionUpdateWithWhereUniqueWithoutRubricInput[]
+    updateMany?: RubricCriterionUpdateManyWithWhereWithoutRubricInput | RubricCriterionUpdateManyWithWhereWithoutRubricInput[]
+    deleteMany?: RubricCriterionScalarWhereInput | RubricCriterionScalarWhereInput[]
+  }
+
+  export type RubricCriterionUncheckedUpdateManyWithoutRubricNestedInput = {
+    create?: XOR<RubricCriterionCreateWithoutRubricInput, RubricCriterionUncheckedCreateWithoutRubricInput> | RubricCriterionCreateWithoutRubricInput[] | RubricCriterionUncheckedCreateWithoutRubricInput[]
+    connectOrCreate?: RubricCriterionCreateOrConnectWithoutRubricInput | RubricCriterionCreateOrConnectWithoutRubricInput[]
+    upsert?: RubricCriterionUpsertWithWhereUniqueWithoutRubricInput | RubricCriterionUpsertWithWhereUniqueWithoutRubricInput[]
+    createMany?: RubricCriterionCreateManyRubricInputEnvelope
+    set?: RubricCriterionWhereUniqueInput | RubricCriterionWhereUniqueInput[]
+    disconnect?: RubricCriterionWhereUniqueInput | RubricCriterionWhereUniqueInput[]
+    delete?: RubricCriterionWhereUniqueInput | RubricCriterionWhereUniqueInput[]
+    connect?: RubricCriterionWhereUniqueInput | RubricCriterionWhereUniqueInput[]
+    update?: RubricCriterionUpdateWithWhereUniqueWithoutRubricInput | RubricCriterionUpdateWithWhereUniqueWithoutRubricInput[]
+    updateMany?: RubricCriterionUpdateManyWithWhereWithoutRubricInput | RubricCriterionUpdateManyWithWhereWithoutRubricInput[]
+    deleteMany?: RubricCriterionScalarWhereInput | RubricCriterionScalarWhereInput[]
+  }
+
+  export type RubricCreateNestedOneWithoutCriteriaInput = {
+    create?: XOR<RubricCreateWithoutCriteriaInput, RubricUncheckedCreateWithoutCriteriaInput>
+    connectOrCreate?: RubricCreateOrConnectWithoutCriteriaInput
+    connect?: RubricWhereUniqueInput
+  }
+
+  export type RubricRatingCreateNestedManyWithoutCriterionInput = {
+    create?: XOR<RubricRatingCreateWithoutCriterionInput, RubricRatingUncheckedCreateWithoutCriterionInput> | RubricRatingCreateWithoutCriterionInput[] | RubricRatingUncheckedCreateWithoutCriterionInput[]
+    connectOrCreate?: RubricRatingCreateOrConnectWithoutCriterionInput | RubricRatingCreateOrConnectWithoutCriterionInput[]
+    createMany?: RubricRatingCreateManyCriterionInputEnvelope
+    connect?: RubricRatingWhereUniqueInput | RubricRatingWhereUniqueInput[]
+  }
+
+  export type RubricRatingUncheckedCreateNestedManyWithoutCriterionInput = {
+    create?: XOR<RubricRatingCreateWithoutCriterionInput, RubricRatingUncheckedCreateWithoutCriterionInput> | RubricRatingCreateWithoutCriterionInput[] | RubricRatingUncheckedCreateWithoutCriterionInput[]
+    connectOrCreate?: RubricRatingCreateOrConnectWithoutCriterionInput | RubricRatingCreateOrConnectWithoutCriterionInput[]
+    createMany?: RubricRatingCreateManyCriterionInputEnvelope
+    connect?: RubricRatingWhereUniqueInput | RubricRatingWhereUniqueInput[]
+  }
+
+  export type RubricUpdateOneRequiredWithoutCriteriaNestedInput = {
+    create?: XOR<RubricCreateWithoutCriteriaInput, RubricUncheckedCreateWithoutCriteriaInput>
+    connectOrCreate?: RubricCreateOrConnectWithoutCriteriaInput
+    upsert?: RubricUpsertWithoutCriteriaInput
+    connect?: RubricWhereUniqueInput
+    update?: XOR<XOR<RubricUpdateToOneWithWhereWithoutCriteriaInput, RubricUpdateWithoutCriteriaInput>, RubricUncheckedUpdateWithoutCriteriaInput>
+  }
+
+  export type RubricRatingUpdateManyWithoutCriterionNestedInput = {
+    create?: XOR<RubricRatingCreateWithoutCriterionInput, RubricRatingUncheckedCreateWithoutCriterionInput> | RubricRatingCreateWithoutCriterionInput[] | RubricRatingUncheckedCreateWithoutCriterionInput[]
+    connectOrCreate?: RubricRatingCreateOrConnectWithoutCriterionInput | RubricRatingCreateOrConnectWithoutCriterionInput[]
+    upsert?: RubricRatingUpsertWithWhereUniqueWithoutCriterionInput | RubricRatingUpsertWithWhereUniqueWithoutCriterionInput[]
+    createMany?: RubricRatingCreateManyCriterionInputEnvelope
+    set?: RubricRatingWhereUniqueInput | RubricRatingWhereUniqueInput[]
+    disconnect?: RubricRatingWhereUniqueInput | RubricRatingWhereUniqueInput[]
+    delete?: RubricRatingWhereUniqueInput | RubricRatingWhereUniqueInput[]
+    connect?: RubricRatingWhereUniqueInput | RubricRatingWhereUniqueInput[]
+    update?: RubricRatingUpdateWithWhereUniqueWithoutCriterionInput | RubricRatingUpdateWithWhereUniqueWithoutCriterionInput[]
+    updateMany?: RubricRatingUpdateManyWithWhereWithoutCriterionInput | RubricRatingUpdateManyWithWhereWithoutCriterionInput[]
+    deleteMany?: RubricRatingScalarWhereInput | RubricRatingScalarWhereInput[]
+  }
+
+  export type RubricRatingUncheckedUpdateManyWithoutCriterionNestedInput = {
+    create?: XOR<RubricRatingCreateWithoutCriterionInput, RubricRatingUncheckedCreateWithoutCriterionInput> | RubricRatingCreateWithoutCriterionInput[] | RubricRatingUncheckedCreateWithoutCriterionInput[]
+    connectOrCreate?: RubricRatingCreateOrConnectWithoutCriterionInput | RubricRatingCreateOrConnectWithoutCriterionInput[]
+    upsert?: RubricRatingUpsertWithWhereUniqueWithoutCriterionInput | RubricRatingUpsertWithWhereUniqueWithoutCriterionInput[]
+    createMany?: RubricRatingCreateManyCriterionInputEnvelope
+    set?: RubricRatingWhereUniqueInput | RubricRatingWhereUniqueInput[]
+    disconnect?: RubricRatingWhereUniqueInput | RubricRatingWhereUniqueInput[]
+    delete?: RubricRatingWhereUniqueInput | RubricRatingWhereUniqueInput[]
+    connect?: RubricRatingWhereUniqueInput | RubricRatingWhereUniqueInput[]
+    update?: RubricRatingUpdateWithWhereUniqueWithoutCriterionInput | RubricRatingUpdateWithWhereUniqueWithoutCriterionInput[]
+    updateMany?: RubricRatingUpdateManyWithWhereWithoutCriterionInput | RubricRatingUpdateManyWithWhereWithoutCriterionInput[]
+    deleteMany?: RubricRatingScalarWhereInput | RubricRatingScalarWhereInput[]
+  }
+
+  export type RubricCriterionCreateNestedOneWithoutRatingsInput = {
+    create?: XOR<RubricCriterionCreateWithoutRatingsInput, RubricCriterionUncheckedCreateWithoutRatingsInput>
+    connectOrCreate?: RubricCriterionCreateOrConnectWithoutRatingsInput
+    connect?: RubricCriterionWhereUniqueInput
+  }
+
+  export type RubricCriterionUpdateOneRequiredWithoutRatingsNestedInput = {
+    create?: XOR<RubricCriterionCreateWithoutRatingsInput, RubricCriterionUncheckedCreateWithoutRatingsInput>
+    connectOrCreate?: RubricCriterionCreateOrConnectWithoutRatingsInput
+    upsert?: RubricCriterionUpsertWithoutRatingsInput
+    connect?: RubricCriterionWhereUniqueInput
+    update?: XOR<XOR<RubricCriterionUpdateToOneWithWhereWithoutRatingsInput, RubricCriterionUpdateWithoutRatingsInput>, RubricCriterionUncheckedUpdateWithoutRatingsInput>
   }
 
   export type NestedStringFilter<$PrismaModel = never> = {
@@ -46773,6 +51157,7 @@ export namespace Prisma {
     grade?: number | null
     feedback?: string | null
     submittedAt?: Date | string | null
+    daysLate?: number | null
     createdAt?: Date | string
     updatedAt?: Date | string
     assignment: AssignmentCreateNestedOneWithoutSubmissionsInput
@@ -46790,6 +51175,7 @@ export namespace Prisma {
     grade?: number | null
     feedback?: string | null
     submittedAt?: Date | string | null
+    daysLate?: number | null
     createdAt?: Date | string
     updatedAt?: Date | string
     repositoryFile?: RepositoryFileUncheckedCreateNestedOneWithoutSubmissionInput
@@ -47310,6 +51696,7 @@ export namespace Prisma {
     grade?: FloatNullableFilter<"Submission"> | number | null
     feedback?: StringNullableFilter<"Submission"> | string | null
     submittedAt?: DateTimeNullableFilter<"Submission"> | Date | string | null
+    daysLate?: IntNullableFilter<"Submission"> | number | null
     createdAt?: DateTimeFilter<"Submission"> | Date | string
     updatedAt?: DateTimeFilter<"Submission"> | Date | string
   }
@@ -47872,6 +52259,7 @@ export namespace Prisma {
     group?: GroupCreateNestedOneWithoutAssignmentsInput
     submissions?: SubmissionCreateNestedManyWithoutAssignmentInput
     repository?: RepositoryCreateNestedOneWithoutAssignmentInput
+    rubric?: RubricCreateNestedOneWithoutAssignmentInput
   }
 
   export type AssignmentUncheckedCreateWithoutCourseInput = {
@@ -47904,6 +52292,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     submissions?: SubmissionUncheckedCreateNestedManyWithoutAssignmentInput
     repository?: RepositoryUncheckedCreateNestedOneWithoutAssignmentInput
+    rubric?: RubricUncheckedCreateNestedOneWithoutAssignmentInput
   }
 
   export type AssignmentCreateOrConnectWithoutCourseInput = {
@@ -48912,6 +53301,7 @@ export namespace Prisma {
     course?: CourseCreateNestedOneWithoutAssignmentsInput
     submissions?: SubmissionCreateNestedManyWithoutAssignmentInput
     repository?: RepositoryCreateNestedOneWithoutAssignmentInput
+    rubric?: RubricCreateNestedOneWithoutAssignmentInput
   }
 
   export type AssignmentUncheckedCreateWithoutGroupInput = {
@@ -48944,6 +53334,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     submissions?: SubmissionUncheckedCreateNestedManyWithoutAssignmentInput
     repository?: RepositoryUncheckedCreateNestedOneWithoutAssignmentInput
+    rubric?: RubricUncheckedCreateNestedOneWithoutAssignmentInput
   }
 
   export type AssignmentCreateOrConnectWithoutGroupInput = {
@@ -49372,6 +53763,7 @@ export namespace Prisma {
     grade?: number | null
     feedback?: string | null
     submittedAt?: Date | string | null
+    daysLate?: number | null
     createdAt?: Date | string
     updatedAt?: Date | string
     user: UserCreateNestedOneWithoutSubmissionsInput
@@ -49389,6 +53781,7 @@ export namespace Prisma {
     grade?: number | null
     feedback?: string | null
     submittedAt?: Date | string | null
+    daysLate?: number | null
     createdAt?: Date | string
     updatedAt?: Date | string
     repositoryFile?: RepositoryFileUncheckedCreateNestedOneWithoutSubmissionInput
@@ -49427,6 +53820,45 @@ export namespace Prisma {
   export type RepositoryCreateOrConnectWithoutAssignmentInput = {
     where: RepositoryWhereUniqueInput
     create: XOR<RepositoryCreateWithoutAssignmentInput, RepositoryUncheckedCreateWithoutAssignmentInput>
+  }
+
+  export type RubricCreateWithoutAssignmentInput = {
+    id?: string
+    courseId?: string | null
+    title: string
+    type?: string
+    ratingDisplay?: string
+    ratingOrder?: string
+    scoring?: string
+    doNotPostToGradebook?: boolean
+    useForGrading?: boolean
+    hideScoreTotal?: boolean
+    pointsPossible?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    criteria?: RubricCriterionCreateNestedManyWithoutRubricInput
+  }
+
+  export type RubricUncheckedCreateWithoutAssignmentInput = {
+    id?: string
+    courseId?: string | null
+    title: string
+    type?: string
+    ratingDisplay?: string
+    ratingOrder?: string
+    scoring?: string
+    doNotPostToGradebook?: boolean
+    useForGrading?: boolean
+    hideScoreTotal?: boolean
+    pointsPossible?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    criteria?: RubricCriterionUncheckedCreateNestedManyWithoutRubricInput
+  }
+
+  export type RubricCreateOrConnectWithoutAssignmentInput = {
+    where: RubricWhereUniqueInput
+    create: XOR<RubricCreateWithoutAssignmentInput, RubricUncheckedCreateWithoutAssignmentInput>
   }
 
   export type CourseUpsertWithoutAssignmentsInput = {
@@ -49562,6 +53994,51 @@ export namespace Prisma {
     logs?: ActivityLogUncheckedUpdateManyWithoutRepositoryNestedInput
   }
 
+  export type RubricUpsertWithoutAssignmentInput = {
+    update: XOR<RubricUpdateWithoutAssignmentInput, RubricUncheckedUpdateWithoutAssignmentInput>
+    create: XOR<RubricCreateWithoutAssignmentInput, RubricUncheckedCreateWithoutAssignmentInput>
+    where?: RubricWhereInput
+  }
+
+  export type RubricUpdateToOneWithWhereWithoutAssignmentInput = {
+    where?: RubricWhereInput
+    data: XOR<RubricUpdateWithoutAssignmentInput, RubricUncheckedUpdateWithoutAssignmentInput>
+  }
+
+  export type RubricUpdateWithoutAssignmentInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    courseId?: NullableStringFieldUpdateOperationsInput | string | null
+    title?: StringFieldUpdateOperationsInput | string
+    type?: StringFieldUpdateOperationsInput | string
+    ratingDisplay?: StringFieldUpdateOperationsInput | string
+    ratingOrder?: StringFieldUpdateOperationsInput | string
+    scoring?: StringFieldUpdateOperationsInput | string
+    doNotPostToGradebook?: BoolFieldUpdateOperationsInput | boolean
+    useForGrading?: BoolFieldUpdateOperationsInput | boolean
+    hideScoreTotal?: BoolFieldUpdateOperationsInput | boolean
+    pointsPossible?: FloatFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    criteria?: RubricCriterionUpdateManyWithoutRubricNestedInput
+  }
+
+  export type RubricUncheckedUpdateWithoutAssignmentInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    courseId?: NullableStringFieldUpdateOperationsInput | string | null
+    title?: StringFieldUpdateOperationsInput | string
+    type?: StringFieldUpdateOperationsInput | string
+    ratingDisplay?: StringFieldUpdateOperationsInput | string
+    ratingOrder?: StringFieldUpdateOperationsInput | string
+    scoring?: StringFieldUpdateOperationsInput | string
+    doNotPostToGradebook?: BoolFieldUpdateOperationsInput | boolean
+    useForGrading?: BoolFieldUpdateOperationsInput | boolean
+    hideScoreTotal?: BoolFieldUpdateOperationsInput | boolean
+    pointsPossible?: FloatFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    criteria?: RubricCriterionUncheckedUpdateManyWithoutRubricNestedInput
+  }
+
   export type UserCreateWithoutSubmissionsInput = {
     id?: string
     name: string
@@ -49663,6 +54140,7 @@ export namespace Prisma {
     course?: CourseCreateNestedOneWithoutAssignmentsInput
     group?: GroupCreateNestedOneWithoutAssignmentsInput
     repository?: RepositoryCreateNestedOneWithoutAssignmentInput
+    rubric?: RubricCreateNestedOneWithoutAssignmentInput
   }
 
   export type AssignmentUncheckedCreateWithoutSubmissionsInput = {
@@ -49695,6 +54173,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     repository?: RepositoryUncheckedCreateNestedOneWithoutAssignmentInput
+    rubric?: RubricUncheckedCreateNestedOneWithoutAssignmentInput
   }
 
   export type AssignmentCreateOrConnectWithoutSubmissionsInput = {
@@ -49847,6 +54326,7 @@ export namespace Prisma {
     course?: CourseUpdateOneWithoutAssignmentsNestedInput
     group?: GroupUpdateOneWithoutAssignmentsNestedInput
     repository?: RepositoryUpdateOneWithoutAssignmentNestedInput
+    rubric?: RubricUpdateOneWithoutAssignmentNestedInput
   }
 
   export type AssignmentUncheckedUpdateWithoutSubmissionsInput = {
@@ -49879,6 +54359,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     repository?: RepositoryUncheckedUpdateOneWithoutAssignmentNestedInput
+    rubric?: RubricUncheckedUpdateOneWithoutAssignmentNestedInput
   }
 
   export type RepositoryFileUpsertWithoutSubmissionInput = {
@@ -49944,6 +54425,7 @@ export namespace Prisma {
     course?: CourseCreateNestedOneWithoutAssignmentsInput
     group?: GroupCreateNestedOneWithoutAssignmentsInput
     submissions?: SubmissionCreateNestedManyWithoutAssignmentInput
+    rubric?: RubricCreateNestedOneWithoutAssignmentInput
   }
 
   export type AssignmentUncheckedCreateWithoutRepositoryInput = {
@@ -49976,6 +54458,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     submissions?: SubmissionUncheckedCreateNestedManyWithoutAssignmentInput
+    rubric?: RubricUncheckedCreateNestedOneWithoutAssignmentInput
   }
 
   export type AssignmentCreateOrConnectWithoutRepositoryInput = {
@@ -50088,6 +54571,7 @@ export namespace Prisma {
     course?: CourseUpdateOneWithoutAssignmentsNestedInput
     group?: GroupUpdateOneWithoutAssignmentsNestedInput
     submissions?: SubmissionUpdateManyWithoutAssignmentNestedInput
+    rubric?: RubricUpdateOneWithoutAssignmentNestedInput
   }
 
   export type AssignmentUncheckedUpdateWithoutRepositoryInput = {
@@ -50120,6 +54604,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     submissions?: SubmissionUncheckedUpdateManyWithoutAssignmentNestedInput
+    rubric?: RubricUncheckedUpdateOneWithoutAssignmentNestedInput
   }
 
   export type RepositoryFileUpsertWithWhereUniqueWithoutRepositoryInput = {
@@ -50189,6 +54674,7 @@ export namespace Prisma {
     grade?: number | null
     feedback?: string | null
     submittedAt?: Date | string | null
+    daysLate?: number | null
     createdAt?: Date | string
     updatedAt?: Date | string
     user: UserCreateNestedOneWithoutSubmissionsInput
@@ -50207,6 +54693,7 @@ export namespace Prisma {
     grade?: number | null
     feedback?: string | null
     submittedAt?: Date | string | null
+    daysLate?: number | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -50339,6 +54826,7 @@ export namespace Prisma {
     grade?: NullableFloatFieldUpdateOperationsInput | number | null
     feedback?: NullableStringFieldUpdateOperationsInput | string | null
     submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    daysLate?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     user?: UserUpdateOneRequiredWithoutSubmissionsNestedInput
@@ -50357,6 +54845,7 @@ export namespace Prisma {
     grade?: NullableFloatFieldUpdateOperationsInput | number | null
     feedback?: NullableStringFieldUpdateOperationsInput | string | null
     submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    daysLate?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -53070,6 +57559,414 @@ export namespace Prisma {
     formsCreated?: FormUncheckedUpdateManyWithoutAuthorNestedInput
   }
 
+  export type AssignmentCreateWithoutRubricInput = {
+    id?: string
+    title: string
+    description?: string | null
+    points?: number
+    dueDate?: Date | string | null
+    availableFrom?: Date | string | null
+    availableUntil?: Date | string | null
+    status?: $Enums.CourseStatus
+    submissionType?: string
+    assignmentGroup?: string
+    displayGradeAs?: string
+    onlineEntryOptions?: AssignmentCreateonlineEntryOptionsInput | string[]
+    submissionAttempts?: string
+    allowedAttempts?: number | null
+    doNotCount?: boolean
+    isGroupAssignment?: boolean
+    groupSetId?: string | null
+    requirePeerReviews?: boolean
+    anonymousGrading?: boolean
+    peerReviewAssign?: string
+    peerReviewAnonymous?: boolean
+    notifyUsers?: boolean
+    assignees?: AssignmentCreateassigneesInput | string[]
+    createdById?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    course?: CourseCreateNestedOneWithoutAssignmentsInput
+    group?: GroupCreateNestedOneWithoutAssignmentsInput
+    submissions?: SubmissionCreateNestedManyWithoutAssignmentInput
+    repository?: RepositoryCreateNestedOneWithoutAssignmentInput
+  }
+
+  export type AssignmentUncheckedCreateWithoutRubricInput = {
+    id?: string
+    title: string
+    description?: string | null
+    points?: number
+    dueDate?: Date | string | null
+    availableFrom?: Date | string | null
+    availableUntil?: Date | string | null
+    courseId?: string | null
+    groupId?: string | null
+    status?: $Enums.CourseStatus
+    submissionType?: string
+    assignmentGroup?: string
+    displayGradeAs?: string
+    onlineEntryOptions?: AssignmentCreateonlineEntryOptionsInput | string[]
+    submissionAttempts?: string
+    allowedAttempts?: number | null
+    doNotCount?: boolean
+    isGroupAssignment?: boolean
+    groupSetId?: string | null
+    requirePeerReviews?: boolean
+    anonymousGrading?: boolean
+    peerReviewAssign?: string
+    peerReviewAnonymous?: boolean
+    notifyUsers?: boolean
+    assignees?: AssignmentCreateassigneesInput | string[]
+    createdById?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    submissions?: SubmissionUncheckedCreateNestedManyWithoutAssignmentInput
+    repository?: RepositoryUncheckedCreateNestedOneWithoutAssignmentInput
+  }
+
+  export type AssignmentCreateOrConnectWithoutRubricInput = {
+    where: AssignmentWhereUniqueInput
+    create: XOR<AssignmentCreateWithoutRubricInput, AssignmentUncheckedCreateWithoutRubricInput>
+  }
+
+  export type RubricCriterionCreateWithoutRubricInput = {
+    id?: string
+    name: string
+    description?: string | null
+    points?: number
+    enableRange?: boolean
+    order?: number
+    createdAt?: Date | string
+    ratings?: RubricRatingCreateNestedManyWithoutCriterionInput
+  }
+
+  export type RubricCriterionUncheckedCreateWithoutRubricInput = {
+    id?: string
+    name: string
+    description?: string | null
+    points?: number
+    enableRange?: boolean
+    order?: number
+    createdAt?: Date | string
+    ratings?: RubricRatingUncheckedCreateNestedManyWithoutCriterionInput
+  }
+
+  export type RubricCriterionCreateOrConnectWithoutRubricInput = {
+    where: RubricCriterionWhereUniqueInput
+    create: XOR<RubricCriterionCreateWithoutRubricInput, RubricCriterionUncheckedCreateWithoutRubricInput>
+  }
+
+  export type RubricCriterionCreateManyRubricInputEnvelope = {
+    data: RubricCriterionCreateManyRubricInput | RubricCriterionCreateManyRubricInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type AssignmentUpsertWithoutRubricInput = {
+    update: XOR<AssignmentUpdateWithoutRubricInput, AssignmentUncheckedUpdateWithoutRubricInput>
+    create: XOR<AssignmentCreateWithoutRubricInput, AssignmentUncheckedCreateWithoutRubricInput>
+    where?: AssignmentWhereInput
+  }
+
+  export type AssignmentUpdateToOneWithWhereWithoutRubricInput = {
+    where?: AssignmentWhereInput
+    data: XOR<AssignmentUpdateWithoutRubricInput, AssignmentUncheckedUpdateWithoutRubricInput>
+  }
+
+  export type AssignmentUpdateWithoutRubricInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    points?: FloatFieldUpdateOperationsInput | number
+    dueDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    availableFrom?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    availableUntil?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    status?: EnumCourseStatusFieldUpdateOperationsInput | $Enums.CourseStatus
+    submissionType?: StringFieldUpdateOperationsInput | string
+    assignmentGroup?: StringFieldUpdateOperationsInput | string
+    displayGradeAs?: StringFieldUpdateOperationsInput | string
+    onlineEntryOptions?: AssignmentUpdateonlineEntryOptionsInput | string[]
+    submissionAttempts?: StringFieldUpdateOperationsInput | string
+    allowedAttempts?: NullableIntFieldUpdateOperationsInput | number | null
+    doNotCount?: BoolFieldUpdateOperationsInput | boolean
+    isGroupAssignment?: BoolFieldUpdateOperationsInput | boolean
+    groupSetId?: NullableStringFieldUpdateOperationsInput | string | null
+    requirePeerReviews?: BoolFieldUpdateOperationsInput | boolean
+    anonymousGrading?: BoolFieldUpdateOperationsInput | boolean
+    peerReviewAssign?: StringFieldUpdateOperationsInput | string
+    peerReviewAnonymous?: BoolFieldUpdateOperationsInput | boolean
+    notifyUsers?: BoolFieldUpdateOperationsInput | boolean
+    assignees?: AssignmentUpdateassigneesInput | string[]
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    course?: CourseUpdateOneWithoutAssignmentsNestedInput
+    group?: GroupUpdateOneWithoutAssignmentsNestedInput
+    submissions?: SubmissionUpdateManyWithoutAssignmentNestedInput
+    repository?: RepositoryUpdateOneWithoutAssignmentNestedInput
+  }
+
+  export type AssignmentUncheckedUpdateWithoutRubricInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    points?: FloatFieldUpdateOperationsInput | number
+    dueDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    availableFrom?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    availableUntil?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    courseId?: NullableStringFieldUpdateOperationsInput | string | null
+    groupId?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumCourseStatusFieldUpdateOperationsInput | $Enums.CourseStatus
+    submissionType?: StringFieldUpdateOperationsInput | string
+    assignmentGroup?: StringFieldUpdateOperationsInput | string
+    displayGradeAs?: StringFieldUpdateOperationsInput | string
+    onlineEntryOptions?: AssignmentUpdateonlineEntryOptionsInput | string[]
+    submissionAttempts?: StringFieldUpdateOperationsInput | string
+    allowedAttempts?: NullableIntFieldUpdateOperationsInput | number | null
+    doNotCount?: BoolFieldUpdateOperationsInput | boolean
+    isGroupAssignment?: BoolFieldUpdateOperationsInput | boolean
+    groupSetId?: NullableStringFieldUpdateOperationsInput | string | null
+    requirePeerReviews?: BoolFieldUpdateOperationsInput | boolean
+    anonymousGrading?: BoolFieldUpdateOperationsInput | boolean
+    peerReviewAssign?: StringFieldUpdateOperationsInput | string
+    peerReviewAnonymous?: BoolFieldUpdateOperationsInput | boolean
+    notifyUsers?: BoolFieldUpdateOperationsInput | boolean
+    assignees?: AssignmentUpdateassigneesInput | string[]
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    submissions?: SubmissionUncheckedUpdateManyWithoutAssignmentNestedInput
+    repository?: RepositoryUncheckedUpdateOneWithoutAssignmentNestedInput
+  }
+
+  export type RubricCriterionUpsertWithWhereUniqueWithoutRubricInput = {
+    where: RubricCriterionWhereUniqueInput
+    update: XOR<RubricCriterionUpdateWithoutRubricInput, RubricCriterionUncheckedUpdateWithoutRubricInput>
+    create: XOR<RubricCriterionCreateWithoutRubricInput, RubricCriterionUncheckedCreateWithoutRubricInput>
+  }
+
+  export type RubricCriterionUpdateWithWhereUniqueWithoutRubricInput = {
+    where: RubricCriterionWhereUniqueInput
+    data: XOR<RubricCriterionUpdateWithoutRubricInput, RubricCriterionUncheckedUpdateWithoutRubricInput>
+  }
+
+  export type RubricCriterionUpdateManyWithWhereWithoutRubricInput = {
+    where: RubricCriterionScalarWhereInput
+    data: XOR<RubricCriterionUpdateManyMutationInput, RubricCriterionUncheckedUpdateManyWithoutRubricInput>
+  }
+
+  export type RubricCriterionScalarWhereInput = {
+    AND?: RubricCriterionScalarWhereInput | RubricCriterionScalarWhereInput[]
+    OR?: RubricCriterionScalarWhereInput[]
+    NOT?: RubricCriterionScalarWhereInput | RubricCriterionScalarWhereInput[]
+    id?: StringFilter<"RubricCriterion"> | string
+    rubricId?: StringFilter<"RubricCriterion"> | string
+    name?: StringFilter<"RubricCriterion"> | string
+    description?: StringNullableFilter<"RubricCriterion"> | string | null
+    points?: FloatFilter<"RubricCriterion"> | number
+    enableRange?: BoolFilter<"RubricCriterion"> | boolean
+    order?: IntFilter<"RubricCriterion"> | number
+    createdAt?: DateTimeFilter<"RubricCriterion"> | Date | string
+  }
+
+  export type RubricCreateWithoutCriteriaInput = {
+    id?: string
+    courseId?: string | null
+    title: string
+    type?: string
+    ratingDisplay?: string
+    ratingOrder?: string
+    scoring?: string
+    doNotPostToGradebook?: boolean
+    useForGrading?: boolean
+    hideScoreTotal?: boolean
+    pointsPossible?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    assignment: AssignmentCreateNestedOneWithoutRubricInput
+  }
+
+  export type RubricUncheckedCreateWithoutCriteriaInput = {
+    id?: string
+    assignmentId: string
+    courseId?: string | null
+    title: string
+    type?: string
+    ratingDisplay?: string
+    ratingOrder?: string
+    scoring?: string
+    doNotPostToGradebook?: boolean
+    useForGrading?: boolean
+    hideScoreTotal?: boolean
+    pointsPossible?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type RubricCreateOrConnectWithoutCriteriaInput = {
+    where: RubricWhereUniqueInput
+    create: XOR<RubricCreateWithoutCriteriaInput, RubricUncheckedCreateWithoutCriteriaInput>
+  }
+
+  export type RubricRatingCreateWithoutCriterionInput = {
+    id?: string
+    points?: number
+    name: string
+    description?: string | null
+    order?: number
+  }
+
+  export type RubricRatingUncheckedCreateWithoutCriterionInput = {
+    id?: string
+    points?: number
+    name: string
+    description?: string | null
+    order?: number
+  }
+
+  export type RubricRatingCreateOrConnectWithoutCriterionInput = {
+    where: RubricRatingWhereUniqueInput
+    create: XOR<RubricRatingCreateWithoutCriterionInput, RubricRatingUncheckedCreateWithoutCriterionInput>
+  }
+
+  export type RubricRatingCreateManyCriterionInputEnvelope = {
+    data: RubricRatingCreateManyCriterionInput | RubricRatingCreateManyCriterionInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type RubricUpsertWithoutCriteriaInput = {
+    update: XOR<RubricUpdateWithoutCriteriaInput, RubricUncheckedUpdateWithoutCriteriaInput>
+    create: XOR<RubricCreateWithoutCriteriaInput, RubricUncheckedCreateWithoutCriteriaInput>
+    where?: RubricWhereInput
+  }
+
+  export type RubricUpdateToOneWithWhereWithoutCriteriaInput = {
+    where?: RubricWhereInput
+    data: XOR<RubricUpdateWithoutCriteriaInput, RubricUncheckedUpdateWithoutCriteriaInput>
+  }
+
+  export type RubricUpdateWithoutCriteriaInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    courseId?: NullableStringFieldUpdateOperationsInput | string | null
+    title?: StringFieldUpdateOperationsInput | string
+    type?: StringFieldUpdateOperationsInput | string
+    ratingDisplay?: StringFieldUpdateOperationsInput | string
+    ratingOrder?: StringFieldUpdateOperationsInput | string
+    scoring?: StringFieldUpdateOperationsInput | string
+    doNotPostToGradebook?: BoolFieldUpdateOperationsInput | boolean
+    useForGrading?: BoolFieldUpdateOperationsInput | boolean
+    hideScoreTotal?: BoolFieldUpdateOperationsInput | boolean
+    pointsPossible?: FloatFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    assignment?: AssignmentUpdateOneRequiredWithoutRubricNestedInput
+  }
+
+  export type RubricUncheckedUpdateWithoutCriteriaInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    assignmentId?: StringFieldUpdateOperationsInput | string
+    courseId?: NullableStringFieldUpdateOperationsInput | string | null
+    title?: StringFieldUpdateOperationsInput | string
+    type?: StringFieldUpdateOperationsInput | string
+    ratingDisplay?: StringFieldUpdateOperationsInput | string
+    ratingOrder?: StringFieldUpdateOperationsInput | string
+    scoring?: StringFieldUpdateOperationsInput | string
+    doNotPostToGradebook?: BoolFieldUpdateOperationsInput | boolean
+    useForGrading?: BoolFieldUpdateOperationsInput | boolean
+    hideScoreTotal?: BoolFieldUpdateOperationsInput | boolean
+    pointsPossible?: FloatFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RubricRatingUpsertWithWhereUniqueWithoutCriterionInput = {
+    where: RubricRatingWhereUniqueInput
+    update: XOR<RubricRatingUpdateWithoutCriterionInput, RubricRatingUncheckedUpdateWithoutCriterionInput>
+    create: XOR<RubricRatingCreateWithoutCriterionInput, RubricRatingUncheckedCreateWithoutCriterionInput>
+  }
+
+  export type RubricRatingUpdateWithWhereUniqueWithoutCriterionInput = {
+    where: RubricRatingWhereUniqueInput
+    data: XOR<RubricRatingUpdateWithoutCriterionInput, RubricRatingUncheckedUpdateWithoutCriterionInput>
+  }
+
+  export type RubricRatingUpdateManyWithWhereWithoutCriterionInput = {
+    where: RubricRatingScalarWhereInput
+    data: XOR<RubricRatingUpdateManyMutationInput, RubricRatingUncheckedUpdateManyWithoutCriterionInput>
+  }
+
+  export type RubricRatingScalarWhereInput = {
+    AND?: RubricRatingScalarWhereInput | RubricRatingScalarWhereInput[]
+    OR?: RubricRatingScalarWhereInput[]
+    NOT?: RubricRatingScalarWhereInput | RubricRatingScalarWhereInput[]
+    id?: StringFilter<"RubricRating"> | string
+    criterionId?: StringFilter<"RubricRating"> | string
+    points?: FloatFilter<"RubricRating"> | number
+    name?: StringFilter<"RubricRating"> | string
+    description?: StringNullableFilter<"RubricRating"> | string | null
+    order?: IntFilter<"RubricRating"> | number
+  }
+
+  export type RubricCriterionCreateWithoutRatingsInput = {
+    id?: string
+    name: string
+    description?: string | null
+    points?: number
+    enableRange?: boolean
+    order?: number
+    createdAt?: Date | string
+    rubric: RubricCreateNestedOneWithoutCriteriaInput
+  }
+
+  export type RubricCriterionUncheckedCreateWithoutRatingsInput = {
+    id?: string
+    rubricId: string
+    name: string
+    description?: string | null
+    points?: number
+    enableRange?: boolean
+    order?: number
+    createdAt?: Date | string
+  }
+
+  export type RubricCriterionCreateOrConnectWithoutRatingsInput = {
+    where: RubricCriterionWhereUniqueInput
+    create: XOR<RubricCriterionCreateWithoutRatingsInput, RubricCriterionUncheckedCreateWithoutRatingsInput>
+  }
+
+  export type RubricCriterionUpsertWithoutRatingsInput = {
+    update: XOR<RubricCriterionUpdateWithoutRatingsInput, RubricCriterionUncheckedUpdateWithoutRatingsInput>
+    create: XOR<RubricCriterionCreateWithoutRatingsInput, RubricCriterionUncheckedCreateWithoutRatingsInput>
+    where?: RubricCriterionWhereInput
+  }
+
+  export type RubricCriterionUpdateToOneWithWhereWithoutRatingsInput = {
+    where?: RubricCriterionWhereInput
+    data: XOR<RubricCriterionUpdateWithoutRatingsInput, RubricCriterionUncheckedUpdateWithoutRatingsInput>
+  }
+
+  export type RubricCriterionUpdateWithoutRatingsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    points?: FloatFieldUpdateOperationsInput | number
+    enableRange?: BoolFieldUpdateOperationsInput | boolean
+    order?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    rubric?: RubricUpdateOneRequiredWithoutCriteriaNestedInput
+  }
+
+  export type RubricCriterionUncheckedUpdateWithoutRatingsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    rubricId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    points?: FloatFieldUpdateOperationsInput | number
+    enableRange?: BoolFieldUpdateOperationsInput | boolean
+    order?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type ConversationParticipantCreateManyConversationInput = {
     id?: string
     userId: string
@@ -53223,6 +58120,7 @@ export namespace Prisma {
     grade?: number | null
     feedback?: string | null
     submittedAt?: Date | string | null
+    daysLate?: number | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -53474,6 +58372,7 @@ export namespace Prisma {
     grade?: NullableFloatFieldUpdateOperationsInput | number | null
     feedback?: NullableStringFieldUpdateOperationsInput | string | null
     submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    daysLate?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     assignment?: AssignmentUpdateOneRequiredWithoutSubmissionsNestedInput
@@ -53491,6 +58390,7 @@ export namespace Prisma {
     grade?: NullableFloatFieldUpdateOperationsInput | number | null
     feedback?: NullableStringFieldUpdateOperationsInput | string | null
     submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    daysLate?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     repositoryFile?: RepositoryFileUncheckedUpdateOneWithoutSubmissionNestedInput
@@ -53507,6 +58407,7 @@ export namespace Prisma {
     grade?: NullableFloatFieldUpdateOperationsInput | number | null
     feedback?: NullableStringFieldUpdateOperationsInput | string | null
     submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    daysLate?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -54182,6 +59083,7 @@ export namespace Prisma {
     group?: GroupUpdateOneWithoutAssignmentsNestedInput
     submissions?: SubmissionUpdateManyWithoutAssignmentNestedInput
     repository?: RepositoryUpdateOneWithoutAssignmentNestedInput
+    rubric?: RubricUpdateOneWithoutAssignmentNestedInput
   }
 
   export type AssignmentUncheckedUpdateWithoutCourseInput = {
@@ -54214,6 +59116,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     submissions?: SubmissionUncheckedUpdateManyWithoutAssignmentNestedInput
     repository?: RepositoryUncheckedUpdateOneWithoutAssignmentNestedInput
+    rubric?: RubricUncheckedUpdateOneWithoutAssignmentNestedInput
   }
 
   export type AssignmentUncheckedUpdateManyWithoutCourseInput = {
@@ -54652,6 +59555,7 @@ export namespace Prisma {
     course?: CourseUpdateOneWithoutAssignmentsNestedInput
     submissions?: SubmissionUpdateManyWithoutAssignmentNestedInput
     repository?: RepositoryUpdateOneWithoutAssignmentNestedInput
+    rubric?: RubricUpdateOneWithoutAssignmentNestedInput
   }
 
   export type AssignmentUncheckedUpdateWithoutGroupInput = {
@@ -54684,6 +59588,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     submissions?: SubmissionUncheckedUpdateManyWithoutAssignmentNestedInput
     repository?: RepositoryUncheckedUpdateOneWithoutAssignmentNestedInput
+    rubric?: RubricUncheckedUpdateOneWithoutAssignmentNestedInput
   }
 
   export type AssignmentUncheckedUpdateManyWithoutGroupInput = {
@@ -54727,6 +59632,7 @@ export namespace Prisma {
     grade?: number | null
     feedback?: string | null
     submittedAt?: Date | string | null
+    daysLate?: number | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -54741,6 +59647,7 @@ export namespace Prisma {
     grade?: NullableFloatFieldUpdateOperationsInput | number | null
     feedback?: NullableStringFieldUpdateOperationsInput | string | null
     submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    daysLate?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     user?: UserUpdateOneRequiredWithoutSubmissionsNestedInput
@@ -54758,6 +59665,7 @@ export namespace Prisma {
     grade?: NullableFloatFieldUpdateOperationsInput | number | null
     feedback?: NullableStringFieldUpdateOperationsInput | string | null
     submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    daysLate?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     repositoryFile?: RepositoryFileUncheckedUpdateOneWithoutSubmissionNestedInput
@@ -54774,6 +59682,7 @@ export namespace Prisma {
     grade?: NullableFloatFieldUpdateOperationsInput | number | null
     feedback?: NullableStringFieldUpdateOperationsInput | string | null
     submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    daysLate?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -55162,6 +60071,80 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type RubricCriterionCreateManyRubricInput = {
+    id?: string
+    name: string
+    description?: string | null
+    points?: number
+    enableRange?: boolean
+    order?: number
+    createdAt?: Date | string
+  }
+
+  export type RubricCriterionUpdateWithoutRubricInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    points?: FloatFieldUpdateOperationsInput | number
+    enableRange?: BoolFieldUpdateOperationsInput | boolean
+    order?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ratings?: RubricRatingUpdateManyWithoutCriterionNestedInput
+  }
+
+  export type RubricCriterionUncheckedUpdateWithoutRubricInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    points?: FloatFieldUpdateOperationsInput | number
+    enableRange?: BoolFieldUpdateOperationsInput | boolean
+    order?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ratings?: RubricRatingUncheckedUpdateManyWithoutCriterionNestedInput
+  }
+
+  export type RubricCriterionUncheckedUpdateManyWithoutRubricInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    points?: FloatFieldUpdateOperationsInput | number
+    enableRange?: BoolFieldUpdateOperationsInput | boolean
+    order?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RubricRatingCreateManyCriterionInput = {
+    id?: string
+    points?: number
+    name: string
+    description?: string | null
+    order?: number
+  }
+
+  export type RubricRatingUpdateWithoutCriterionInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    points?: FloatFieldUpdateOperationsInput | number
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    order?: IntFieldUpdateOperationsInput | number
+  }
+
+  export type RubricRatingUncheckedUpdateWithoutCriterionInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    points?: FloatFieldUpdateOperationsInput | number
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    order?: IntFieldUpdateOperationsInput | number
+  }
+
+  export type RubricRatingUncheckedUpdateManyWithoutCriterionInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    points?: FloatFieldUpdateOperationsInput | number
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    order?: IntFieldUpdateOperationsInput | number
+  }
+
 
 
   /**
@@ -55215,6 +60198,14 @@ export namespace Prisma {
      * @deprecated Use FormCountOutputTypeDefaultArgs instead
      */
     export type FormCountOutputTypeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = FormCountOutputTypeDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use RubricCountOutputTypeDefaultArgs instead
+     */
+    export type RubricCountOutputTypeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = RubricCountOutputTypeDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use RubricCriterionCountOutputTypeDefaultArgs instead
+     */
+    export type RubricCriterionCountOutputTypeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = RubricCriterionCountOutputTypeDefaultArgs<ExtArgs>
     /**
      * @deprecated Use ConversationDefaultArgs instead
      */
@@ -55331,6 +60322,18 @@ export namespace Prisma {
      * @deprecated Use FormSubmissionDefaultArgs instead
      */
     export type FormSubmissionArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = FormSubmissionDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use RubricDefaultArgs instead
+     */
+    export type RubricArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = RubricDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use RubricCriterionDefaultArgs instead
+     */
+    export type RubricCriterionArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = RubricCriterionDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use RubricRatingDefaultArgs instead
+     */
+    export type RubricRatingArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = RubricRatingDefaultArgs<ExtArgs>
 
   /**
    * Batch Payload for updateMany & deleteMany & createMany

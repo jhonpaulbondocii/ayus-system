@@ -1,3 +1,5 @@
+// src/app/api/admin/courses/[id]/forms/[formId]/route.ts
+
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { FormQuestionType, FormType } from "@/generated/prisma";
@@ -47,10 +49,55 @@ type UpdateFormBody = {
   questions?: UpdateFormQuestionInput[];
 };
 
-function parseDate(value?: string | null): Date | null {
-  if (!value) return null;
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? null : date;
+// ── FIXED: Parse date+time strings as Philippine local time (UTC+8) ───────────
+function parseDatePh(
+  date: string | null | undefined,
+  time: string | null | undefined
+): Date | null {
+  if (!date) return null;
+
+  const datePart = date.includes("T") ? date.split("T")[0] : date;
+
+  let hours = 0;
+  let minutes = 0;
+  if (time) {
+    const match = time.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+    if (match) {
+      hours = parseInt(match[1], 10);
+      minutes = parseInt(match[2], 10);
+      const period = match[3].toUpperCase();
+      if (period === "AM" && hours === 12) hours = 0;
+      if (period === "PM" && hours !== 12) hours += 12;
+    }
+  }
+
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const [year, month, day] = datePart.split("-").map(Number);
+  const isoString = `${year}-${pad(month)}-${pad(day)}T${pad(hours)}:${pad(minutes)}:00+08:00`;
+  const parsed = new Date(isoString);
+  return isNaN(parsed.getTime()) ? null : parsed;
+}
+
+// ── Convert stored UTC DateTime back to PH local date string (YYYY-MM-DD) ────
+function toPhDateString(dt: Date | null | undefined): string {
+  if (!dt) return "";
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Manila",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date(dt));
+}
+
+// ── Convert stored UTC DateTime back to PH local time string (H:MM AM/PM) ────
+function toPhTimeString(dt: Date | null | undefined): string {
+  if (!dt) return "";
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Manila",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  }).format(new Date(dt));
 }
 
 function normalizeFormType(value?: string): FormType {
@@ -114,6 +161,7 @@ function normalizeQuestionType(value?: string): FormQuestionType {
   }
 }
 
+// ── GET ───────────────────────────────────────────────────────────────────────
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string; formId: string }> }
@@ -122,31 +170,32 @@ export async function GET(
     const { id: courseId, formId } = await params;
 
     const form = await prisma.form.findFirst({
-      where: {
-        id: formId,
-        courseId,
-      },
-      include: {
-        questions: {
-          orderBy: { order: "asc" },
-        },
-      },
+      where: { id: formId, courseId },
+      include: { questions: { orderBy: { order: "asc" } } },
     });
 
     if (!form) {
       return NextResponse.json({ error: "Form not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ form });
+    return NextResponse.json({
+      form: {
+        ...form,
+        dueDate:            toPhDateString(form.dueDate),
+        dueTime:            toPhTimeString(form.dueDate),
+        availableFrom:      toPhDateString(form.availableFrom),
+        availableFromTime:  toPhTimeString(form.availableFrom),
+        availableUntil:     toPhDateString(form.availableUntil),
+        availableUntilTime: toPhTimeString(form.availableUntil),
+      },
+    });
   } catch (error) {
     console.error("GET /api/admin/courses/[id]/forms/[formId] error:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch form" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to fetch form" }, { status: 500 });
   }
 }
 
+// ── PUT ───────────────────────────────────────────────────────────────────────
 export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ id: string; formId: string }> }
@@ -156,10 +205,7 @@ export async function PUT(
     const body = (await req.json()) as UpdateFormBody;
 
     const existingForm = await prisma.form.findFirst({
-      where: {
-        id: formId,
-        courseId,
-      },
+      where: { id: formId, courseId },
       select: { id: true },
     });
 
@@ -169,9 +215,7 @@ export async function PUT(
 
     const questions = Array.isArray(body.questions) ? body.questions : [];
 
-    await prisma.formQuestion.deleteMany({
-      where: { formId },
-    });
+    await prisma.formQuestion.deleteMany({ where: { formId } });
 
     const form = await prisma.form.update({
       where: { id: formId },
@@ -183,8 +227,7 @@ export async function PUT(
         points: typeof body.points === "number" ? body.points : 0,
         shuffleAnswers: Boolean(body.shuffleAnswers),
         allowMultipleResponses: Boolean(body.allowMultipleResponses),
-        responseLimit:
-          typeof body.responseLimit === "number" ? body.responseLimit : null,
+        responseLimit: typeof body.responseLimit === "number" ? body.responseLimit : null,
         anonymousResponses: Boolean(body.anonymousResponses),
         showResultsToRespondents: Boolean(body.showResultsToRespondents),
         showOneAtATime: Boolean(body.showOneAtATime),
@@ -192,11 +235,11 @@ export async function PUT(
         accessCode: body.accessCode?.trim() || null,
         confirmationMessage: body.confirmationMessage?.trim() || null,
         assignTo: Array.isArray(body.assignTo) ? body.assignTo : [],
-        dueDate: parseDate(body.dueDate),
-        dueTime: body.dueTime || null,
-        availableFrom: parseDate(body.availableFrom),
+        dueDate:       parseDatePh(body.dueDate, body.dueTime),
+        dueTime:       body.dueTime || null,
+        availableFrom: parseDatePh(body.availableFrom, body.availableFromTime),
         availableFromTime: body.availableFromTime || null,
-        availableUntil: parseDate(body.availableUntil),
+        availableUntil: parseDatePh(body.availableUntil, body.availableUntilTime),
         availableUntilTime: body.availableUntilTime || null,
         published: Boolean(body.published),
         questions: {
@@ -221,36 +264,49 @@ export async function PUT(
           })),
         },
       },
-      include: {
-        questions: {
-          orderBy: { order: "asc" },
-        },
-      },
+      include: { questions: { orderBy: { order: "asc" } } },
     });
 
-    return NextResponse.json({ form });
+    return NextResponse.json({
+      form: {
+        ...form,
+        dueDate:            toPhDateString(form.dueDate),
+        dueTime:            toPhTimeString(form.dueDate),
+        availableFrom:      toPhDateString(form.availableFrom),
+        availableFromTime:  toPhTimeString(form.availableFrom),
+        availableUntil:     toPhDateString(form.availableUntil),
+        availableUntilTime: toPhTimeString(form.availableUntil),
+      },
+    });
   } catch (error) {
     console.error("PUT /api/admin/courses/[id]/forms/[formId] error:", error);
-    return NextResponse.json(
-      { error: "Failed to update form" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to update form" }, { status: 500 });
   }
 }
 
+// ── PATCH ─────────────────────────────────────────────────────────────────────
+// Handles partial updates:
+//   - Toggle published status
+//   - Update assignTo, dueDate, availableFrom, availableUntil (from Assign To panel)
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string; formId: string }> }
 ) {
   try {
     const { id: courseId, formId } = await params;
-    const body = (await req.json()) as { published?: boolean };
+    const body = (await req.json()) as {
+      published?: boolean;
+      assignTo?: string[];
+      dueDate?: string | null;
+      dueTime?: string | null;
+      availableFrom?: string | null;
+      availableFromTime?: string | null;
+      availableUntil?: string | null;
+      availableUntilTime?: string | null;
+    };
 
     const existingForm = await prisma.form.findFirst({
-      where: {
-        id: formId,
-        courseId,
-      },
+      where: { id: formId, courseId },
       select: { id: true },
     });
 
@@ -258,29 +314,56 @@ export async function PATCH(
       return NextResponse.json({ error: "Form not found" }, { status: 404 });
     }
 
+    // Build update object with only the fields that were sent
+    const updateData: Record<string, unknown> = {};
+
+    if (typeof body.published === "boolean") {
+      updateData.published = body.published;
+    }
+
+    if (Array.isArray(body.assignTo)) {
+      updateData.assignTo = body.assignTo;
+    }
+
+    if (body.dueDate !== undefined) {
+      updateData.dueDate = parseDatePh(body.dueDate, body.dueTime ?? null);
+      updateData.dueTime = body.dueTime ?? null;
+    }
+
+    if (body.availableFrom !== undefined) {
+      updateData.availableFrom = parseDatePh(body.availableFrom, body.availableFromTime ?? null);
+      updateData.availableFromTime = body.availableFromTime ?? null;
+    }
+
+    if (body.availableUntil !== undefined) {
+      updateData.availableUntil = parseDatePh(body.availableUntil, body.availableUntilTime ?? null);
+      updateData.availableUntilTime = body.availableUntilTime ?? null;
+    }
+
     const form = await prisma.form.update({
       where: { id: formId },
-      data: {
-        published:
-          typeof body.published === "boolean" ? body.published : undefined,
-      },
-      include: {
-        questions: {
-          orderBy: { order: "asc" },
-        },
-      },
+      data: updateData,
+      include: { questions: { orderBy: { order: "asc" } } },
     });
 
-    return NextResponse.json({ form });
+    return NextResponse.json({
+      form: {
+        ...form,
+        dueDate:            toPhDateString(form.dueDate),
+        dueTime:            toPhTimeString(form.dueDate),
+        availableFrom:      toPhDateString(form.availableFrom),
+        availableFromTime:  toPhTimeString(form.availableFrom),
+        availableUntil:     toPhDateString(form.availableUntil),
+        availableUntilTime: toPhTimeString(form.availableUntil),
+      },
+    });
   } catch (error) {
     console.error("PATCH /api/admin/courses/[id]/forms/[formId] error:", error);
-    return NextResponse.json(
-      { error: "Failed to update publish status" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to update form" }, { status: 500 });
   }
 }
 
+// ── DELETE ────────────────────────────────────────────────────────────────────
 export async function DELETE(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string; formId: string }> }
@@ -289,10 +372,7 @@ export async function DELETE(
     const { id: courseId, formId } = await params;
 
     const existingForm = await prisma.form.findFirst({
-      where: {
-        id: formId,
-        courseId,
-      },
+      where: { id: formId, courseId },
       select: { id: true },
     });
 
@@ -300,19 +380,11 @@ export async function DELETE(
       return NextResponse.json({ error: "Form not found" }, { status: 404 });
     }
 
-    await prisma.form.delete({
-      where: { id: formId },
-    });
+    await prisma.form.delete({ where: { id: formId } });
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error(
-      "DELETE /api/admin/courses/[id]/forms/[formId] error:",
-      error
-    );
-    return NextResponse.json(
-      { error: "Failed to delete form" },
-      { status: 500 }
-    );
+    console.error("DELETE /api/admin/courses/[id]/forms/[formId] error:", error);
+    return NextResponse.json({ error: "Failed to delete form" }, { status: 500 });
   }
 }

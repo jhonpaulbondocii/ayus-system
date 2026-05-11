@@ -31,6 +31,9 @@ enum AssignmentStatus {
   SUBMITTED
   GRADED
   OVERDUE
+  LATE
+  MISSING
+  EXCUSED
 }
 
 enum MessageScope {
@@ -305,22 +308,19 @@ model Assignment {
   peerReviewAnonymous Boolean      @default(false)
   notifyUsers         Boolean      @default(false)
   assignees           String[]     @default([])
-
-  // ✅ ADD THIS
-  createdById String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdById         String?
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
 
   course      Course?      @relation(fields: [courseId], references: [id], onDelete: Cascade)
   group       Group?       @relation(fields: [groupId], references: [id], onDelete: Cascade)
   submissions Submission[]
   repository  Repository?
+  rubric      Rubric?
 
   @@map("assignments")
 }
 
-// ✅ Added: textEntry, websiteUrl, comments fields for online submission types
 model Submission {
   id           String           @id @default(cuid())
   userId       String
@@ -333,6 +333,7 @@ model Submission {
   grade        Float?
   feedback     String?          @db.Text
   submittedAt  DateTime?
+  daysLate     Int?
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
 
@@ -649,4 +650,57 @@ model FormSubmission {
 
   @@unique([formId, userId])
   @@map("form_submissions")
+}
+
+// ── Rubric ────────────────────────────────────────────────────────────────────
+
+model Rubric {
+  id                   String   @id @default(cuid())
+  assignmentId         String   @unique
+  courseId             String?
+  title                String
+  type                 String   @default("scale") // "scale" | "written_feedback"
+  ratingDisplay        String   @default("level") // "level" | "points"
+  ratingOrder          String   @default("high_low") // "high_low" | "low_high"
+  scoring              String   @default("scored") // "scored" | "unscored"
+  doNotPostToGradebook Boolean  @default(false)
+  useForGrading        Boolean  @default(false)
+  hideScoreTotal       Boolean  @default(false)
+  pointsPossible       Float    @default(0)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  assignment Assignment        @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  criteria   RubricCriterion[]
+
+  @@map("rubrics")
+}
+
+model RubricCriterion {
+  id          String   @id @default(cuid())
+  rubricId    String
+  name        String
+  description String?  @db.Text
+  points      Float    @default(0)
+  enableRange Boolean  @default(false)
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  rubric  Rubric         @relation(fields: [rubricId], references: [id], onDelete: Cascade)
+  ratings RubricRating[]
+
+  @@map("rubric_criteria")
+}
+
+model RubricRating {
+  id          String  @id @default(cuid())
+  criterionId String
+  points      Float   @default(0)
+  name        String
+  description String?
+  order       Int     @default(0)
+
+  criterion RubricCriterion @relation(fields: [criterionId], references: [id], onDelete: Cascade)
+
+  @@map("rubric_ratings")
 }

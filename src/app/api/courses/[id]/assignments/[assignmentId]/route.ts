@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { CourseStatus } from "@/generated/prisma";
 import { prisma } from "@/lib/prisma";
 import { requireCoursePermission } from "@/lib/course-access";
 
@@ -26,20 +27,48 @@ type SubmissionEntry = {
   maxFiles?: number | null;
 };
 
+function normalizeFileTypes(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+
+  return value
+    .filter((item): item is string => typeof item === "string")
+    .map((item) => item.replace(".", "").trim().toLowerCase())
+    .filter(Boolean);
+}
+
 function parseSubmissionEntries(opts: string[]): SubmissionEntry[] | undefined {
   if (!opts || opts.length === 0) return undefined;
 
   const entries: SubmissionEntry[] = [];
 
   for (const opt of opts) {
+    // Skip plain strings like "File Upload" — not JSON, not a submission entry
+    let parsed: unknown;
     try {
-      const parsed = JSON.parse(opt) as SubmissionEntry;
-
-      if (parsed && typeof parsed === "object" && "id" in parsed) {
-        entries.push(parsed);
-      }
+      parsed = JSON.parse(opt);
     } catch {
-      return undefined;
+      // Not JSON at all — this is a legacy plain string option, skip it
+      continue;
+    }
+
+    if (
+      parsed &&
+      typeof parsed === "object" &&
+      !Array.isArray(parsed) &&
+      "id" in (parsed as object)
+    ) {
+      const entry = parsed as SubmissionEntry;
+      entries.push({
+        id: entry.id,
+        label: entry.label ?? "",
+        required: entry.required ?? false,
+        type: entry.type ?? "File Upload",
+        allowedFileTypes: normalizeFileTypes(entry.allowedFileTypes),
+        maxFiles:
+          entry.type === "File Upload"
+            ? entry.maxFiles ?? 1
+            : null,
+      });
     }
   }
 
@@ -49,27 +78,32 @@ function parseSubmissionEntries(opts: string[]): SubmissionEntry[] | undefined {
 function normalizeSubmissionEntries(entries?: SubmissionEntry[]): string[] {
   if (!Array.isArray(entries)) return [];
 
-  return entries.map((entry) =>
-    JSON.stringify({
+  return entries.map((entry, index) => {
+    const type = entry.type ?? "File Upload";
+    const allowedFileTypes =
+      type === "File Upload" ? normalizeFileTypes(entry.allowedFileTypes) : [];
+
+    return JSON.stringify({
       id: entry.id,
-      label: entry.label ?? "",
+      label: entry.label?.trim() || `Submission ${index + 1}`,
       required: entry.required ?? false,
-      type: entry.type ?? "File Upload",
-
-      // IMPORTANT: save file restrictions
-      allowedFileTypes:
-        entry.type === "File Upload" ? entry.allowedFileTypes ?? [] : [],
-
-      maxFiles:
-        entry.type === "File Upload" ? entry.maxFiles ?? 1 : null,
-    })
-  );
+      type,
+      allowedFileTypes,
+      maxFiles: type === "File Upload" ? entry.maxFiles ?? 1 : null,
+    });
+  });
 }
 
 function normalizeAssignees(assignees: unknown): string[] {
   if (!Array.isArray(assignees)) return [];
   if (assignees.includes("Everyone")) return [];
   return assignees.filter((a): a is string => typeof a === "string" && !!a);
+}
+
+function normalizeStatus(status: unknown): CourseStatus | undefined {
+  if (status === "PUBLISHED") return CourseStatus.PUBLISHED;
+  if (status === "UNPUBLISHED") return CourseStatus.UNPUBLISHED;
+  return undefined;
 }
 
 function isAssignedToUser(args: {
@@ -198,7 +232,8 @@ export async function GET(
     );
   }
 
-  const isCreator = !!assignment.createdById && assignment.createdById === userId;
+  const isCreator =
+    !!assignment.createdById && assignment.createdById === userId;
 
   const explicitlyAssignedToYou = isExplicitlyAssignedToUser({
     assignees: assignment.assignees,
@@ -209,15 +244,8 @@ export async function GET(
     userCourseRole,
   });
 
-  let assignmentRole: "manager" | "submitter";
-
-  if (isAdmin) {
-    assignmentRole = "manager";
-  } else if (isCreator) {
-    assignmentRole = "manager";
-  } else {
-    assignmentRole = "submitter";
-  }
+  const assignmentRole: "manager" | "submitter" =
+    isAdmin || isCreator ? "manager" : "submitter";
 
   const creator = assignment.createdById
     ? await prisma.user.findUnique({
@@ -258,16 +286,15 @@ export async function GET(
     },
   });
 
-  const submissionEntries = parseSubmissionEntries(
-    assignment.onlineEntryOptions
-  );
+  const submissionEntries = parseSubmissionEntries(assignment.onlineEntryOptions);
+
+  console.log("[DEBUG API] raw:", JSON.stringify(assignment.onlineEntryOptions));
+  console.log("[DEBUG API] parsed:", JSON.stringify(submissionEntries));
 
   return NextResponse.json({
     assignment: {
       ...assignment,
-      onlineEntryOptions: submissionEntries
-        ? []
-        : assignment.onlineEntryOptions,
+      onlineEntryOptions: submissionEntries ? [] : assignment.onlineEntryOptions,
       ...(submissionEntries ? { submissionEntries } : {}),
       submissions: submission ? [submission] : [],
 
@@ -309,6 +336,9 @@ export async function PATCH(
 
   const data = (await req.json()) as Record<string, unknown>;
 
+  // Debug: check if submissionEntries is arriving from frontend
+  console.log("[DEBUG PATCH] submissionEntries received:", JSON.stringify(data.submissionEntries));
+
   const existing = await prisma.assignment.findFirst({
     where: {
       id: assignmentId,
@@ -336,9 +366,14 @@ export async function PATCH(
     patchedOnlineEntryOptions = normalizeSubmissionEntries(
       data.submissionEntries as SubmissionEntry[]
     );
+    console.log("[DEBUG PATCH] normalized to:", JSON.stringify(patchedOnlineEntryOptions));
   } else if (Array.isArray(data.onlineEntryOptions)) {
-    patchedOnlineEntryOptions = data.onlineEntryOptions as string[];
+    patchedOnlineEntryOptions = data.onlineEntryOptions.filter(
+      (item): item is string => typeof item === "string"
+    );
   }
+
+  const status = normalizeStatus(data.status);
 
   const assignment = await prisma.assignment.update({
     where: {
@@ -346,26 +381,26 @@ export async function PATCH(
     },
     data: {
       ...(data.title !== undefined && {
-        title: data.title as string,
+        title: String(data.title),
       }),
       ...(data.description !== undefined && {
-        description: data.description as string,
+        description:
+          data.description === null ? null : String(data.description),
       }),
       ...(data.points !== undefined && {
         points: parseFloat(String(data.points)) || 0,
       }),
-      ...(data.status !== undefined && {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        status: data.status as any,
+      ...(status !== undefined && {
+        status,
       }),
       ...(data.submissionType !== undefined && {
-        submissionType: data.submissionType as string,
+        submissionType: String(data.submissionType),
       }),
       ...(data.assignmentGroup !== undefined && {
-        assignmentGroup: data.assignmentGroup as string,
+        assignmentGroup: String(data.assignmentGroup),
       }),
       ...(data.displayGradeAs !== undefined && {
-        displayGradeAs: data.displayGradeAs as string,
+        displayGradeAs: String(data.displayGradeAs),
       }),
       ...(patchedOnlineEntryOptions !== undefined && {
         onlineEntryOptions: patchedOnlineEntryOptions,
@@ -377,7 +412,7 @@ export async function PATCH(
             : Number(data.allowedAttempts),
       }),
       ...(data.submissionAttempts !== undefined && {
-        submissionAttempts: data.submissionAttempts as string,
+        submissionAttempts: String(data.submissionAttempts),
       }),
       ...(data.doNotCount !== undefined && {
         doNotCount: Boolean(data.doNotCount),
@@ -386,7 +421,8 @@ export async function PATCH(
         isGroupAssignment: Boolean(data.isGroupAssignment),
       }),
       ...(data.groupSetId !== undefined && {
-        groupSetId: data.groupSetId as string | null,
+        groupSetId:
+          data.groupSetId === null ? null : String(data.groupSetId),
       }),
       ...(data.requirePeerReviews !== undefined && {
         requirePeerReviews: Boolean(data.requirePeerReviews),
@@ -395,7 +431,7 @@ export async function PATCH(
         anonymousGrading: Boolean(data.anonymousGrading),
       }),
       ...(data.peerReviewAssign !== undefined && {
-        peerReviewAssign: data.peerReviewAssign as string,
+        peerReviewAssign: String(data.peerReviewAssign),
       }),
       ...(data.peerReviewAnonymous !== undefined && {
         peerReviewAnonymous: Boolean(data.peerReviewAnonymous),
@@ -405,20 +441,20 @@ export async function PATCH(
       }),
       ...(data.dueDate !== undefined && {
         dueDate: parseDateWithTime(
-          data.dueDate as string,
-          (data.dueTime as string) ?? null
+          data.dueDate as string | null,
+          data.dueTime as string | null
         ),
       }),
       ...(data.availableFrom !== undefined && {
         availableFrom: parseDateWithTime(
-          data.availableFrom as string,
-          (data.availableFromTime as string) ?? null
+          data.availableFrom as string | null,
+          data.availableFromTime as string | null
         ),
       }),
       ...(data.availableUntil !== undefined && {
         availableUntil: parseDateWithTime(
-          data.availableUntil as string,
-          (data.untilTime as string) ?? null
+          data.availableUntil as string | null,
+          data.untilTime as string | null
         ),
       }),
       ...(data.assignees !== undefined && {
@@ -429,8 +465,14 @@ export async function PATCH(
     },
   });
 
+  const submissionEntries = parseSubmissionEntries(assignment.onlineEntryOptions);
+
   return NextResponse.json({
-    assignment,
+    assignment: {
+      ...assignment,
+      onlineEntryOptions: submissionEntries ? [] : assignment.onlineEntryOptions,
+      ...(submissionEntries ? { submissionEntries } : {}),
+    },
     viewer: {
       systemRole: access.systemRole,
       courseRole: access.courseRole,

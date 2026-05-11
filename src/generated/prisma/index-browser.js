@@ -290,6 +290,7 @@ exports.Prisma.SubmissionScalarFieldEnum = {
   grade: 'grade',
   feedback: 'feedback',
   submittedAt: 'submittedAt',
+  daysLate: 'daysLate',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -518,6 +519,43 @@ exports.Prisma.FormSubmissionScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.RubricScalarFieldEnum = {
+  id: 'id',
+  assignmentId: 'assignmentId',
+  courseId: 'courseId',
+  title: 'title',
+  type: 'type',
+  ratingDisplay: 'ratingDisplay',
+  ratingOrder: 'ratingOrder',
+  scoring: 'scoring',
+  doNotPostToGradebook: 'doNotPostToGradebook',
+  useForGrading: 'useForGrading',
+  hideScoreTotal: 'hideScoreTotal',
+  pointsPossible: 'pointsPossible',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.RubricCriterionScalarFieldEnum = {
+  id: 'id',
+  rubricId: 'rubricId',
+  name: 'name',
+  description: 'description',
+  points: 'points',
+  enableRange: 'enableRange',
+  order: 'order',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.RubricRatingScalarFieldEnum = {
+  id: 'id',
+  criterionId: 'criterionId',
+  points: 'points',
+  name: 'name',
+  description: 'description',
+  order: 'order'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -573,7 +611,10 @@ exports.AssignmentStatus = exports.$Enums.AssignmentStatus = {
   PENDING: 'PENDING',
   SUBMITTED: 'SUBMITTED',
   GRADED: 'GRADED',
-  OVERDUE: 'OVERDUE'
+  OVERDUE: 'OVERDUE',
+  LATE: 'LATE',
+  MISSING: 'MISSING',
+  EXCUSED: 'EXCUSED'
 };
 
 exports.QuizType = exports.$Enums.QuizType = {
@@ -643,7 +684,10 @@ exports.Prisma.ModelName = {
   QuizAttempt: 'QuizAttempt',
   Form: 'Form',
   FormQuestion: 'FormQuestion',
-  FormSubmission: 'FormSubmission'
+  FormSubmission: 'FormSubmission',
+  Rubric: 'Rubric',
+  RubricCriterion: 'RubricCriterion',
+  RubricRating: 'RubricRating'
 };
 
 /**

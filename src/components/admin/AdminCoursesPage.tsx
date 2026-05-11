@@ -323,8 +323,8 @@ export default function AdminCoursesPage() {
 
       {/* Add/Edit Modal — bottom sheet on mobile, centered on desktop */}
       {modal && (
-        <div className="fixed inset-0 z-[300] flex items-end sm:items-center justify-center bg-black/20 backdrop-blur-sm">
-          <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-xl w-full sm:w-[480px] overflow-hidden max-h-[92vh] flex flex-col">
+        <div className="fixed inset-0 z-300 flex items-end sm:items-center justify-center bg-black/20 backdrop-blur-sm">
+          <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-xl w-full sm:w-120 overflow-hidden max-h-[92vh] flex flex-col">
             {/* Drag handle (mobile only) */}
             <div className="sm:hidden flex justify-center pt-3 pb-1 shrink-0">
               <div className="w-10 h-1 bg-gray-200 rounded-full" />
@@ -431,7 +431,7 @@ export default function AdminCoursesPage() {
 
       {/* Delete Confirm — bottom sheet on mobile */}
       {deleteTarget && (
-        <div className="fixed inset-0 z-[300] flex items-end sm:items-center justify-center bg-black/20 backdrop-blur-sm">
+        <div className="fixed inset-0 z-300 flex items-end sm:items-center justify-center bg-black/20 backdrop-blur-sm">
           <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-xl p-6 w-full sm:w-80">
             {/* Drag handle (mobile only) */}
             <div className="sm:hidden flex justify-center mb-4">

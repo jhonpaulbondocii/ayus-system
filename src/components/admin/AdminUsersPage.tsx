@@ -8,7 +8,7 @@ import {
   MoreVertical, UserX, UserCheck, Trash2, BookPlus, Eye,
   SlidersHorizontal, ArrowUpDown, Users, Activity,
   UserPlus, Copy, RefreshCcw, EyeOff, KeyRound, Check,
-  GraduationCap, Briefcase,
+  GraduationCap, Briefcase, ChevronDown,
 } from "lucide-react";
 import EnrollModal from "./EnrollModal";
 
@@ -17,6 +17,15 @@ type Role = "ADMIN" | "STAFF" | "FACULTY" | "USER" | string;
 
 const MAROON = "#7b1113";
 const FONT   = "'Plus Jakarta Sans','Helvetica Neue',Arial,sans-serif";
+
+const NAME_SUFFIXES = ["Jr.", "Sr.", "II", "III", "IV", "V", "PhD", "MD", "Esq.", "CPA"];
+
+const TEACHING_RANKS = [
+  "Instructor I", "Instructor II", "Instructor III",
+  "Assistant Professor I", "Assistant Professor II", "Assistant Professor III", "Assistant Professor IV",
+  "Associate Professor I", "Associate Professor II", "Associate Professor III", "Associate Professor IV", "Associate Professor V",
+  "Professor I", "Professor II", "Professor III", "Professor IV", "Professor V", "Professor VI",
+];
 
 interface StaffUser {
   id: string; name: string; email: string;
@@ -88,6 +97,75 @@ function Field({ label, required, children }: { label: string; required?: boolea
         {label}{required && <span className="text-red-400 ml-0.5">*</span>}
       </label>
       {children}
+    </div>
+  );
+}
+
+/* ── Simple Select Dropdown ── */
+function SimpleSelect({
+  value, onChange, options, placeholder, disabled,
+}: {
+  value: string; onChange: (v: string) => void;
+  options: string[]; placeholder?: string; disabled?: boolean;
+}) {
+  return (
+    <div className="relative">
+      <select
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        disabled={disabled}
+        className={`${inputCls} appearance-none pr-8 ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+        style={{ fontFamily: FONT }}
+      >
+        <option value="">{placeholder ?? "Select…"}</option>
+        {options.map(o => <option key={o} value={o}>{o}</option>)}
+      </select>
+      <ChevronDown size={13} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+    </div>
+  );
+}
+
+/* ── Non-Teaching Rank Field: text + existing as dropdown ── */
+function NonTeachingRankField({
+  value, onChange, existingRanks,
+}: {
+  value: string; onChange: (v: string) => void; existingRanks: string[];
+}) {
+  const [mode, setMode] = useState<"text" | "dropdown">("text");
+
+  return (
+    <div className="space-y-1.5">
+      {existingRanks.length > 0 && (
+        <div className="flex gap-1.5">
+          <button type="button"
+            onClick={() => { setMode("text"); onChange(""); }}
+            className={`text-[10px] font-bold px-2 py-1 rounded-md border transition-all ${mode === "text" ? "text-white border-transparent" : "text-gray-500 border-gray-200 hover:border-gray-400"}`}
+            style={mode === "text" ? { background: MAROON } : {}}>
+            New
+          </button>
+          <button type="button"
+            onClick={() => { setMode("dropdown"); onChange(""); }}
+            className={`text-[10px] font-bold px-2 py-1 rounded-md border transition-all ${mode === "dropdown" ? "text-white border-transparent" : "text-gray-500 border-gray-200 hover:border-gray-400"}`}
+            style={mode === "dropdown" ? { background: MAROON } : {}}>
+            Existing
+          </button>
+        </div>
+      )}
+      {mode === "text" || existingRanks.length === 0 ? (
+        <input
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          placeholder=""
+          className={inputCls}
+        />
+      ) : (
+        <SimpleSelect
+          value={value}
+          onChange={onChange}
+          options={existingRanks}
+          placeholder="Select existing rank…"
+        />
+      )}
     </div>
   );
 }
@@ -191,11 +269,7 @@ function GroupedCourseDropdown({
         </span>
         {loading
           ? <RefreshCw size={12} className="animate-spin text-gray-400 shrink-0 ml-2"/>
-          : <svg viewBox="0 0 20 20" fill="currentColor"
-              className="w-3.5 h-3.5 text-gray-400 shrink-0 ml-2"
-              style={{ transition: "transform 0.15s", transform: open ? "rotate(180deg)" : "rotate(0deg)" }}>
-              <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd"/>
-            </svg>
+          : <ChevronDown size={13} className="text-gray-400 shrink-0 ml-2" style={{ transition: "transform 0.15s", transform: open ? "rotate(180deg)" : "rotate(0deg)" }}/>
         }
       </button>
 
@@ -203,7 +277,6 @@ function GroupedCourseDropdown({
         const menuH = 280;
         const spaceBelow = window.innerHeight - rect.bottom - 8;
         const top = spaceBelow >= menuH ? rect.bottom + 4 : rect.top - menuH - 4;
-        // On narrow screens, stretch to viewport width with padding
         const isMobile = window.innerWidth < 480;
         const left  = isMobile ? 12 : rect.left;
         const width = isMobile ? window.innerWidth - 24 : rect.width;
@@ -226,28 +299,50 @@ function GroupedCourseDropdown({
   );
 }
 
+/* ── Initials helper ── */
+function buildFullName(firstName: string, middleName: string, lastName: string, initials: boolean, suffix: string) {
+  const mid = middleName.trim()
+    ? initials
+      ? middleName.trim().split(" ").map(w => w[0]?.toUpperCase() + ".").join(" ")
+      : middleName.trim()
+    : "";
+  const parts = [firstName.trim(), mid, lastName.trim()].filter(Boolean).join(" ");
+  return suffix ? `${parts}, ${suffix}` : parts;
+}
+
 // ── Create User Modal ──────────────────────────────────────────────────────────
 const CreateUserModal = React.memo(function CreateUserModal({
-  isOpen, onClose, onCreated,
+  isOpen, onClose, onCreated, existingNonTeachingRanks,
 }: {
-  isOpen: boolean; onClose: () => void; onCreated: (user: StaffUser) => void;
+  isOpen: boolean; onClose: () => void;
+  onCreated: (user: StaffUser) => void;
+  existingNonTeachingRanks: string[];
 }) {
-  const [name,         setName]         = useState("");
+  const [firstName,    setFirstName]    = useState("");
+  const [middleName,   setMiddleName]   = useState("");
+  const [lastName,     setLastName]     = useState("");
+  const useInitials = true;
+  const [suffix,       setSuffix]       = useState("");
   const [email,        setEmail]        = useState("");
   const [password,     setPassword]     = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [department,   setDepartment]   = useState("");
+  const [staffType,    setStaffType]    = useState<"" | "Teaching" | "Non-Teaching">("");
+  const [academicRank, setAcademicRank] = useState("");
   const [saving,       setSaving]       = useState(false);
   const [error,        setError]        = useState("");
   const [copied,       setCopied]       = useState(false);
 
-  const { loading: coursesLoading, academic, nonAcademic, uncategorized } = useCourses(isOpen);
-
   useEffect(() => {
     if (!isOpen) return;
-    setName(""); setEmail(""); setPassword(""); setShowPassword(false);
-    setDepartment(""); setError(""); setCopied(false);
+    setFirstName(""); setMiddleName(""); setLastName("");
+    setSuffix("");
+    setEmail(""); setPassword(""); setShowPassword(false);
+    setStaffType(""); setAcademicRank("");
+    setError(""); setCopied(false);
   }, [isOpen]);
+
+  // Reset academic rank when staff type changes
+  useEffect(() => { setAcademicRank(""); }, [staffType]);
 
   const handleGenerate = useCallback(() => {
     const pw = generatePassword();
@@ -262,17 +357,30 @@ const CreateUserModal = React.memo(function CreateUserModal({
     setTimeout(() => setCopied(false), 2000);
   }, [password]);
 
+  const fullName = buildFullName(firstName, middleName, lastName, useInitials, suffix);
+
   const handleSubmit = async () => {
     setError("");
-    if (!name.trim())     { setError("Full name is required."); return; }
-    if (!email.trim())    { setError("Email is required."); return; }
-    if (!password.trim()) { setError("Password is required."); return; }
+    if (!firstName.trim()) { setError("First name is required."); return; }
+    if (!lastName.trim())  { setError("Last name is required."); return; }
+    if (!email.trim())     { setError("Email is required."); return; }
+    if (!password.trim())  { setError("Password is required."); return; }
+    if (!staffType)        { setError("Please select a staff type."); return; }
+
     setSaving(true);
     try {
       const res  = await fetch("/api/admin/users", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim(), email: email.trim(), password, department: department || null, status: "APPROVED" }),
+        body: JSON.stringify({
+          name: fullName,
+          email: email.trim(),
+          password,
+          department: null,
+          position: academicRank || null,
+          accountType: staffType,
+          status: "APPROVED",
+        }),
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error ?? "Failed to create user."); return; }
@@ -284,10 +392,13 @@ const CreateUserModal = React.memo(function CreateUserModal({
 
   if (!isOpen) return null;
 
+  const previewName = fullName || <span className="text-gray-300 italic">Full name preview</span>;
+
   return (
-    <div className="fixed inset-0 z-[500] flex items-end sm:items-center justify-center bg-black/30"
+    <div className="fixed inset-0 z-500 flex items-end sm:items-center justify-center bg-black/30"
       style={{ backdropFilter: "blur(4px)", fontFamily: FONT }}>
-      <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-md overflow-hidden max-h-[95vh] flex flex-col">
+      <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-lg overflow-hidden max-h-[95vh] flex flex-col">
+
         {/* Header */}
         <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-gray-100 shrink-0" style={{ background: MAROON }}>
           <div className="flex items-center gap-2.5">
@@ -309,12 +420,55 @@ const CreateUserModal = React.memo(function CreateUserModal({
           {error && (
             <div className="text-xs font-semibold text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{error}</div>
           )}
-          <Field label="Full Name" required>
-            <input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Juan Dela Cruz" className={inputCls}/>
-          </Field>
+
+          {/* ── Name Section ── */}
+          <div className="bg-gray-50 border border-gray-200 rounded-xl p-3.5 space-y-3">
+            <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Name</p>
+
+            {/* First + Last */}
+            <div className="grid grid-cols-2 gap-2">
+              <Field label="First Name" required>
+                <input value={firstName} onChange={e => setFirstName(e.target.value)}
+                  placeholder="" className={inputCls}/>
+              </Field>
+              <Field label="Last Name" required>
+                <input value={lastName} onChange={e => setLastName(e.target.value)}
+                  placeholder="" className={inputCls}/>
+              </Field>
+            </div>
+
+            {/* Middle Name */}
+            <Field label="Middle Name (optional)">
+              <input value={middleName} onChange={e => setMiddleName(e.target.value)}
+                placeholder="" className={inputCls}/>
+            </Field>
+
+            {/* Suffix */}
+            <div className="flex items-center gap-3 flex-wrap">
+              <div className="flex-1 min-w-140px">
+                <SimpleSelect
+                  value={suffix}
+                  onChange={setSuffix}
+                  options={NAME_SUFFIXES}
+                  placeholder="Suffix (optional)"
+                />
+              </div>
+            </div>
+
+            {/* Preview */}
+            <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-2">
+              <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 shrink-0">Preview:</span>
+              <span className="text-sm font-semibold text-gray-700 truncate">{previewName}</span>
+            </div>
+          </div>
+
+          {/* ── Email ── */}
           <Field label="Email Address" required>
-            <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="e.g. juan@psu.edu.ph" className={inputCls}/>
+            <input type="email" value={email} onChange={e => setEmail(e.target.value)}
+              placeholder="" className={inputCls}/>
           </Field>
+
+          {/* ── Password ── */}
           <Field label="Password" required>
             <div className="flex gap-2">
               <div className="relative flex-1 min-w-0">
@@ -339,14 +493,47 @@ const CreateUserModal = React.memo(function CreateUserModal({
               <p className="text-[10px] font-mono text-gray-400 mt-1 px-1 break-all">{password}</p>
             )}
           </Field>
-          <Field label="Department">
-            <GroupedCourseDropdown
-              value={department} onChange={setDepartment}
-              academic={academic} nonAcademic={nonAcademic} uncategorized={uncategorized}
-              loading={coursesLoading} placeholder="Select department"
-              keyFn={c => c.name} displayFn={c => `${c.name} (${c.code})`}
-            />
+
+          {/* ── Staff Type ── */}
+          <Field label="Staff Type" required>
+            <div className="flex gap-2">
+              {(["Teaching", "Non-Teaching"] as const).map(t => (
+                <button key={t} type="button"
+                  onClick={() => setStaffType(t)}
+                  className={`flex-1 h-9 rounded-lg border text-xs font-bold transition-all ${staffType === t ? "text-white border-transparent" : "border-gray-200 text-gray-500 hover:border-gray-400"}`}
+                  style={staffType === t ? { background: MAROON } : {}}>
+                  {t === "Teaching"
+                    ? <span className="flex items-center justify-center gap-1.5"><GraduationCap size={12}/> Teaching</span>
+                    : <span className="flex items-center justify-center gap-1.5"><Briefcase size={12}/> Non-Teaching</span>}
+                </button>
+              ))}
+            </div>
           </Field>
+
+          {/* ── Academic Rank — Teaching ── */}
+          {staffType === "Teaching" && (
+            <Field label="Academic Rank">
+              <SimpleSelect
+                value={academicRank}
+                onChange={setAcademicRank}
+                options={TEACHING_RANKS}
+                placeholder="Select academic rank…"
+              />
+            </Field>
+          )}
+
+          {/* ── Academic Rank — Non-Teaching ── */}
+          {staffType === "Non-Teaching" && (
+            <Field label="Academic Rank / Position">
+              <NonTeachingRankField
+                value={academicRank}
+                onChange={setAcademicRank}
+                existingRanks={existingNonTeachingRanks}
+              />
+            </Field>
+          )}
+
+          {/* Warning */}
           <div className="flex items-start gap-2.5 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2.5">
             <span className="text-amber-400 text-sm mt-0.5 shrink-0">⚠</span>
             <p className="text-[11px] font-medium text-amber-700 leading-relaxed">
@@ -402,10 +589,9 @@ function BulkEnrollModal({ userIds, userCount, onClose, onDone }: {
   };
 
   return (
-    <div className="fixed inset-0 z-[500] flex items-end sm:items-center justify-center bg-black/30"
+    <div className="fixed inset-0 z-500 flex items-end sm:items-center justify-center bg-black/30"
       style={{ backdropFilter: "blur(4px)", fontFamily: FONT }}>
       <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-sm overflow-hidden">
-        {/* Header */}
         <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-gray-100" style={{ background: MAROON }}>
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
@@ -490,7 +676,7 @@ function BulkDeleteModal({ userIds, userCount, onClose, onDeleted }: {
   };
 
   return (
-    <div className="fixed inset-0 z-[500] flex items-end sm:items-center justify-center bg-black/30"
+    <div className="fixed inset-0 z-500 flex items-end sm:items-center justify-center bg-black/30"
       style={{ backdropFilter: "blur(4px)", fontFamily: FONT }}>
       <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:w-80 mx-0 sm:mx-4 p-6">
         <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4 bg-red-50">
@@ -618,8 +804,8 @@ function MobileUserCard({ user, selected, onSelect, onView, onToggleDeactivate, 
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <StatusPill status={user.status}/>
-          {user.department && (
-            <span className="text-[10px] text-gray-500 font-medium truncate max-w-[160px]">{user.department}</span>
+          {user.accountType && (
+            <span className="text-[10px] font-bold text-gray-500">{user.accountType}</span>
           )}
         </div>
       </button>
@@ -664,6 +850,15 @@ export default function AdminUsersPage() {
 
   useEffect(() => { fetchUsers(); }, [fetchUsers]);
   useEffect(() => { setShowPw(false); setPwCopied(false); }, [viewed?.id]);
+
+  // Collect existing non-teaching ranks from current users
+  const existingNonTeachingRanks = Array.from(
+    new Set(
+      users
+        .filter(u => u.accountType === "Non-Teaching" && u.position)
+        .map(u => u.position as string)
+    )
+  );
 
   const applyAction = async (userId: string, action: "deactivate"|"reactivate"|"delete") => {
     setActing(true);
@@ -875,7 +1070,7 @@ export default function AdminUsersPage() {
                           Name <ArrowUpDown className="w-3 h-3"/>
                         </button>
                       </th>
-                      {["Department","Joined","Status",""].map((h, i) => (
+                      {["Staff Type", "Position / Rank", "Joined", "Status", ""].map((h, i) => (
                         <th key={i} className="text-left px-3 py-3 text-xs font-bold uppercase tracking-wide text-gray-600">{h}</th>
                       ))}
                     </tr>
@@ -883,7 +1078,7 @@ export default function AdminUsersPage() {
                   <tbody>
                     {paginated.length === 0 ? (
                       <tr>
-                        <td colSpan={6} className="py-20 text-center">
+                        <td colSpan={7} className="py-20 text-center">
                           <div className="flex flex-col items-center gap-2">
                             <Users className="w-8 h-8 text-gray-200"/>
                             <p className="text-sm text-gray-300 font-medium">No users found</p>
@@ -907,8 +1102,15 @@ export default function AdminUsersPage() {
                             </div>
                           </button>
                         </td>
-                        <td className="px-3 py-3.5 max-w-[160px]">
-                          <span className="text-xs text-gray-500 truncate block">{u.department ?? <span className="text-gray-200">—</span>}</span>
+                        <td className="px-3 py-3.5">
+                          {u.accountType ? (
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-widest ${u.accountType === "Teaching" ? "bg-blue-50 text-blue-600" : "bg-purple-50 text-purple-600"}`}>
+                              {u.accountType}
+                            </span>
+                          ) : <span className="text-gray-200">—</span>}
+                        </td>
+                        <td className="px-3 py-3.5 max-w-45">
+                          <span className="text-xs text-gray-500 truncate block">{u.position ?? <span className="text-gray-200">—</span>}</span>
                         </td>
                         <td className="px-3 py-3.5">
                           <span className="text-[11px] text-gray-400 tabular-nums whitespace-nowrap">{formatDate(u.createdAt)}</span>
@@ -992,11 +1194,16 @@ export default function AdminUsersPage() {
         </div>
       </div>
 
-      <CreateUserModal isOpen={showCreate} onClose={handleModalClose} onCreated={handleModalCreated}/>
+      <CreateUserModal
+        isOpen={showCreate}
+        onClose={handleModalClose}
+        onCreated={handleModalCreated}
+        existingNonTeachingRanks={existingNonTeachingRanks}
+      />
 
       {/* Confirm modal */}
       {confirm && (
-        <div className="fixed inset-0 z-[400] flex items-end sm:items-center justify-center bg-black/25 backdrop-blur-sm">
+        <div className="fixed inset-0 z-400 flex items-end sm:items-center justify-center bg-black/25 backdrop-blur-sm">
           <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl border border-gray-100 p-6 w-full sm:w-80 mx-0 sm:mx-4">
             <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4"
               style={{ background: confirm.action === "reactivate" ? MAROON : confirm.action === "delete" ? "#fef2f2" : "#f3f4f6" }}>
@@ -1038,13 +1245,11 @@ export default function AdminUsersPage() {
 
       {/* Profile Drawer */}
       {viewed && (
-        <div className="fixed inset-0 z-[400] flex items-stretch sm:items-center justify-end"
+        <div className="fixed inset-0 z-400 flex items-stretch sm:items-center justify-end"
           style={{ backdropFilter: "blur(4px)", backgroundColor: "rgba(0,0,0,0.2)" }}
           onClick={() => setViewed(null)}>
-          {/* On mobile: full-width bottom sheet style; on sm+: side drawer */}
           <div
-            className="w-full sm:w-72 sm:h-full bg-white border-l border-gray-200 shadow-2xl flex flex-col
-                       rounded-t-2xl sm:rounded-none max-h-[85vh] sm:max-h-full"
+            className="w-full sm:w-72 sm:h-full bg-white border-l border-gray-200 shadow-2xl flex flex-col rounded-t-2xl sm:rounded-none max-h-[85vh] sm:max-h-full"
             onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 shrink-0">
               <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">Profile</span>
@@ -1064,18 +1269,17 @@ export default function AdminUsersPage() {
               <div className="flex items-center gap-2 flex-wrap mt-3">
                 <StatusPill status={viewed.status}/>
                 {viewed.accountType && (
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-md text-white uppercase tracking-widest"
-                    style={{ background: MAROON }}>{viewed.accountType}</span>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-widest ${viewed.accountType === "Teaching" ? "bg-blue-50 text-blue-600" : "bg-purple-50 text-purple-600"}`}>
+                    {viewed.accountType}
+                  </span>
                 )}
               </div>
             </div>
 
             <div className="flex-1 overflow-y-auto px-5 py-2">
               {[
-                { label: "Account Type", value: viewed.accountType     ?? "—" },
-                { label: "Department",   value: viewed.department       ?? "—" },
-                { label: "Position",     value: viewed.position         ?? "—" },
-                { label: "Employment",   value: viewed.employmentStatus ?? "—" },
+                { label: "Staff Type",   value: viewed.accountType     ?? "—" },
+                { label: "Position / Rank", value: viewed.position     ?? "—" },
                 { label: "Member Since", value: formatDate(viewed.createdAt) },
               ].map(row => (
                 <div key={row.label} className="py-3.5 border-b border-gray-50 last:border-0">

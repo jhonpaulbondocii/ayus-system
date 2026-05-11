@@ -13,22 +13,27 @@ export async function PATCH(
 
   const { submissionId } = await params;
   const body = await req.json();
-  const { grade, feedback, status } = body;
+  const { grade, feedback, status, daysLate } = body;
+
+  const validStatuses = ["PENDING", "SUBMITTED", "GRADED", "OVERDUE", "LATE", "MISSING", "EXCUSED"];
+  const safeStatus = status && validStatuses.includes(status) ? status : undefined;
 
   const submission = await prisma.submission.update({
-    where: { id: submissionId },
-    data: {
-      ...(grade    !== undefined && { grade:    grade    }),
-      ...(feedback !== undefined && { feedback: feedback }),
-      ...(status   !== undefined && { status:   status   }),
-    },
-    select: {
-      id:       true,
-      grade:    true,
-      feedback: true,
-      status:   true,
-    },
-  });
+  where: { id: submissionId },
+  data: {
+    ...(grade    !== undefined && { grade:    grade    }),
+    ...(feedback !== undefined && { feedback: feedback }),
+    ...(safeStatus !== undefined && { status: safeStatus as never }),
+    ...(daysLate !== undefined && daysLate !== null && { daysLate: daysLate }),
+  },
+  select: {
+    id:       true,
+    grade:    true,
+    feedback: true,
+    status:   true,
+    daysLate: true,
+  },
+});
 
   return NextResponse.json({ submission });
 }

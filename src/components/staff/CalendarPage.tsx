@@ -314,7 +314,10 @@ export default function CalendarPage() {
   useEffect(() => {
     fetch("/api/assignments")
       .then(r => r.json())
-      .then(d => startTransition(() => { setAssignments(d.assignments ?? []); setLoading(false); }))
+      .then(d => startTransition(() => {
+  setAssignments((d.assignments ?? []).filter((a: AssignmentType) => !!a.dueDate));
+  setLoading(false);
+}))
       .catch(() => startTransition(() => setLoading(false)));
   }, []);
 

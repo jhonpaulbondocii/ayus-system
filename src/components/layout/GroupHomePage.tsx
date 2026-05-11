@@ -316,7 +316,7 @@ export default function GroupHomePage({ groupName, parentName, onBack, courseId,
             <button key={link.key} onClick={() => setSection(link.key)}
               className={`w-full text-left py-2 text-sm transition-colors leading-snug
                 ${section === link.key
-                  ? "font-bold text-gray-900 border-l-[3px] border-[#0a7040] pl-[17px] bg-gray-50"
+                  ? "font-bold text-gray-900 border-l-[3px] border-[#0a7040] pl-4.25 bg-gray-50"
                   : "text-[#0770a2] hover:bg-gray-50 pl-5"}`}>
               {link.label}
             </button>

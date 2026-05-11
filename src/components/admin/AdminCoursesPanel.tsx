@@ -105,13 +105,13 @@ export function AllCoursesFullScreen({
     >
       {/* Header */}
       <div className="flex items-center justify-between px-5 sm:px-8 pt-5 sm:pt-6 pb-4">
-        <h1 className="text-lg sm:text-2xl font-black text-gray-900">All Courses</h1>
+        <h1 className="text-lg sm:text-2xl font-black text-gray-900">All Offices</h1>
         {onNewCourse && (
           <button
             onClick={onNewCourse}
             className="bg-[#7b1113] hover:bg-[#5a0d0f] text-white text-xs sm:text-sm font-bold px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg transition-colors"
           >
-            + Course
+            + Office
           </button>
         )}
       </div>
@@ -126,7 +126,7 @@ export function AllCoursesFullScreen({
               <table className="w-full" style={{ borderCollapse: "collapse" }}>
                 <thead>
                   <tr style={{ borderBottom: "2px solid #e8d5d5" }}>
-                    {[["Course Name", ""], ["Code", "120px"], ["Term", "140px"], ["Published", "100px"]].map(([label, w]) => (
+                    {[["Office Name", ""], ["Code", "120px"], ["Term", "140px"], ["Published", "100px"]].map(([label, w]) => (
                       <th
                         key={label}
                         style={{
@@ -145,7 +145,7 @@ export function AllCoursesFullScreen({
                   {courses.length === 0 ? (
                     <tr>
                       <td colSpan={4} style={{ color: "#9ca3af", fontSize: 13, padding: "48px 0", textAlign: "center" }}>
-                        No courses yet.
+                        No offices yet.
                       </td>
                     </tr>
                   ) : courses.map((c, i) => (
@@ -177,9 +177,9 @@ export function AllCoursesFullScreen({
 
             {/* Mobile course cards */}
             <div className="sm:hidden space-y-2.5 mb-8">
-              <p className="text-[10px] font-black text-[#7b1113] uppercase tracking-widest mb-3">Courses</p>
+              <p className="text-[10px] font-black text-[#7b1113] uppercase tracking-widest mb-3">Offices</p>
               {courses.length === 0 ? (
-                <p className="text-sm text-gray-400 py-8 text-center">No courses yet.</p>
+                <p className="text-sm text-gray-400 py-8 text-center">No offices yet.</p>
               ) : courses.map(c => (
                 <button
                   key={c.id}
@@ -363,7 +363,7 @@ export default function AdminCoursesPanel({ onNewCourse }: { onNewCourse: () => 
       {/* Fullscreen overlay */}
       {isFullScreen && (
         <div
-          className="fixed bg-white z-[100]"
+          className="fixed bg-white z-100"
           style={{
             inset: 0,
             left: isMobile ? 0 : 64,
@@ -388,7 +388,7 @@ export default function AdminCoursesPanel({ onNewCourse }: { onNewCourse: () => 
           {/* Backdrop on mobile */}
           {isMobile && (
             <div
-              className="fixed inset-0 bg-black/20 z-[109]"
+              className="fixed inset-0 bg-black/20 z-109"
               onClick={handleXClose}
             />
           )}
@@ -444,7 +444,7 @@ export default function AdminCoursesPanel({ onNewCourse }: { onNewCourse: () => 
                 flexShrink: 0,
               }}
             >
-              <h1 style={{ fontSize: 15, fontWeight: 800, color: "#111827", margin: 0 }}>Courses</h1>
+              <h1 style={{ fontSize: 15, fontWeight: 800, color: "#111827", margin: 0 }}>Offices</h1>
               <button
                 onClick={handleXClose}
                 style={{
@@ -461,7 +461,7 @@ export default function AdminCoursesPanel({ onNewCourse }: { onNewCourse: () => 
               </button>
             </div>
 
-            {/* All Courses link */}
+            {/* All Offices link */}
             <div style={{ padding: "10px 16px", borderBottom: "1px solid #f0e4e4", flexShrink: 0 }}>
               <button
                 onClick={goFullScreen}
@@ -472,7 +472,7 @@ export default function AdminCoursesPanel({ onNewCourse }: { onNewCourse: () => 
                 onMouseEnter={e => (e.currentTarget.style.textDecoration = "underline")}
                 onMouseLeave={e => (e.currentTarget.style.textDecoration = "none")}
               >
-                All Courses
+                All Offices
               </button>
             </div>
 
@@ -483,7 +483,7 @@ export default function AdminCoursesPanel({ onNewCourse }: { onNewCourse: () => 
               {loading ? (
                 <p style={{ fontSize: 13, color: "#9ca3af" }}>Loading...</p>
               ) : courses.length === 0 ? (
-                <p style={{ fontSize: 13, color: "#9ca3af" }}>No courses yet.</p>
+                <p style={{ fontSize: 13, color: "#9ca3af" }}>No offices yet.</p>
               ) : (
                 <>
                   {published.length > 0 && (
@@ -493,7 +493,7 @@ export default function AdminCoursesPanel({ onNewCourse }: { onNewCourse: () => 
                         textTransform: "uppercase", letterSpacing: "0.07em",
                         margin: "0 0 6px",
                       }}>
-                        Published Courses
+                        Published Offices
                       </p>
                       {published.map(c => (
                         <CourseItem
@@ -511,7 +511,7 @@ export default function AdminCoursesPanel({ onNewCourse }: { onNewCourse: () => 
                         textTransform: "uppercase", letterSpacing: "0.07em",
                         margin: "0 0 6px",
                       }}>
-                        Unpublished Courses
+                        Unpublished Offices
                       </p>
                       {unpublished.map(c => (
                         <CourseItem
@@ -530,7 +530,7 @@ export default function AdminCoursesPanel({ onNewCourse }: { onNewCourse: () => 
                   marginTop: 20, paddingTop: 12,
                   borderTop: "1px solid #f3f4f6",
                 }}>
-                  Welcome to your courses! To customize the list of courses, click on the{" "}
+                  Welcome to your offices! To customize the list of offices, click on the{" "}
                   <button
                     onClick={goFullScreen}
                     style={{
@@ -541,7 +541,7 @@ export default function AdminCoursesPanel({ onNewCourse }: { onNewCourse: () => 
                     onMouseEnter={e => (e.currentTarget.style.textDecoration = "underline")}
                     onMouseLeave={e => (e.currentTarget.style.textDecoration = "none")}
                   >
-                    &ldquo;All Courses&rdquo;
+                    &ldquo;All Offices&rdquo;
                   </button>
                   {" "}link and star the courses to display.
                 </p>
@@ -556,7 +556,7 @@ export default function AdminCoursesPanel({ onNewCourse }: { onNewCourse: () => 
                   className="w-full h-9 bg-[#7b1113] hover:bg-[#5a0d0f] text-white text-sm font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
                 >
                   <BookOpen className="w-4 h-4" />
-                  New Course
+                  New Office
                 </button>
               </div>
             )}

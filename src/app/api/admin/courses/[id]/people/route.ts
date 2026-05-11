@@ -41,6 +41,8 @@ export async function GET(
           email: true,
           image: true,
           pronouns: true,
+          position: true,
+          accountType: true,
         },
       },
     },
@@ -55,6 +57,8 @@ export async function GET(
     pronouns: e.user.pronouns ?? null,
     role: normalizeCourseRole(e.courseRole),
     enrolledAt: e.createdAt.toISOString(),
+    position: e.user.position ?? null,
+    accountType: e.user.accountType ?? null,
   }));
 
   return NextResponse.json({

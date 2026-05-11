@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo, useRef, useState, useCallback, useEffect } from "react";
+import Image from "next/image";
 import ReactDOM from "react-dom";
 import { useRouter } from "next/navigation";
 
@@ -270,7 +271,7 @@ function CourseDetailsTab({
           style={{ width: 160, height: 96 }}
         >
           {courseImageUrl ? (
-            <img src={courseImageUrl} alt="Course" className="w-full h-full object-cover" />
+            <Image src={courseImageUrl} alt="Course" width={500} height={500} className="w-full h-full object-cover" />
           ) : (
             <div className="flex flex-col items-center gap-1">
               <svg
@@ -411,7 +412,7 @@ function ChooseImageModal({
 
   return ReactDOM.createPortal(
     <div
-      className="fixed inset-0 z-[9999] bg-black/40 flex items-end sm:items-center justify-center sm:p-6 p-0"
+      className="fixed inset-0 z-9999 bg-black/40 flex items-end sm:items-center justify-center sm:p-6 p-0"
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div
@@ -486,9 +487,11 @@ function ChooseImageModal({
                 </>
               ) : (
                 <div className="flex flex-col items-center gap-3 w-full">
-                  <img
+                  <Image
                     src={previewUrl}
                     alt="Preview"
+                    width={200}
+                    height={200}
                     className="max-h-40 sm:max-h-48 rounded border border-gray-200 object-contain shadow-sm w-full"
                     style={{ objectFit: "contain" }}
                   />

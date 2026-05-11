@@ -68,8 +68,9 @@ export async function sendAnnouncementEmail({
                   <!-- CONTENT -->
                   <tr>
                     <td style="padding:28px 24px 24px;">
-                      <p style="margin:0 0 6px;font-size:16px;font-weight:700;color:#1a1a1a;">${announcementTitle}</p>
-                      <p style="margin:0 0 20px;font-size:12px;color:#999;">Posted by ${postedBy}</p>
+                      <p style="margin:0 0 2px;font-size:13px;color:#6b7280;">Hi, ${recipientName}!</p>
+<p style="margin:0 0 6px;font-size:16px;font-weight:700;color:#1a1a1a;">${announcementTitle}</p>
+<p style="margin:0 0 20px;font-size:12px;color:#999;">Posted by ${postedBy}</p>>
 
                       <div style="font-size:14px;color:#374151;line-height:1.7;border-left:4px solid #7b1113;padding-left:16px;">
                         ${announcementBodyHtml}

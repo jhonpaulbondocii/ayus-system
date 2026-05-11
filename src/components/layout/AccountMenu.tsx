@@ -31,9 +31,7 @@ function Avatar({ name, image, size = 40 }: {
 
 export default function AccountMenu() {
   const { data: session } = useSession();
-  const [open,         setOpen]         = useState(false);
-  const [highContrast, setHighContrast] = useState(false);
-  const [dyslexiaFont, setDyslexiaFont] = useState(false);
+  const [open, setOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
 
   const name  = session?.user?.name  ?? "User";
@@ -48,13 +46,8 @@ export default function AccountMenu() {
     return () => document.removeEventListener("mousedown", h);
   }, [open]);
 
-  // ✅ 5 links lang
   const menuLinks = [
-    { label: "Notifications",  href: "/notifications" },
-    { label: "Profile",        href: "/profile"        },
-    { label: "Files",          href: "/files"           },
-    { label: "Settings",       href: "/settings"        },
-    { label: "Shared Content", href: "/shared"          },
+    { label: "Profile", href: "/profile" },
   ];
 
   const font = "'Plus Jakarta Sans','Helvetica Neue',Arial,sans-serif";
@@ -160,46 +153,6 @@ export default function AccountMenu() {
                 >
                   {item.label}
                 </Link>
-              ))}
-            </div>
-
-            {/* Divider */}
-            <div style={{ borderTop: "1px solid #f0e4e4", margin: "0 16px" }}/>
-
-            {/* Accessibility */}
-            <div style={{ padding: "16px 20px 20px" }}>
-              <p style={{ fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", color: MAROON, margin: "0 0 12px" }}>
-                Accessibility
-              </p>
-
-              {[
-                {
-                  val: highContrast, set: () => setHighContrast(v => !v),
-                  label: "Use High Contrast UI", hint: "Increases contrast for better visibility",
-                  icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 2v20M2 12h20" strokeLinecap="round"/></svg>,
-                },
-                {
-                  val: dyslexiaFont, set: () => setDyslexiaFont(v => !v),
-                  label: "Dyslexia Friendly Font", hint: "Uses OpenDyslexic font",
-                  icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M4 6h16M4 12h10M4 18h12" strokeLinecap="round"/></svg>,
-                },
-              ].map(row => (
-                <div key={row.label} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-                  <button
-                    onClick={row.set}
-                    style={{
-                      width: 30, height: 30, borderRadius: "50%", border: "2px solid",
-                      borderColor: row.val ? MAROON : "#e5e7eb",
-                      background: row.val ? MAROON : "#fff",
-                      color: row.val ? "#fff" : "#9ca3af",
-                      cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
-                      flexShrink: 0, transition: "all .15s",
-                    }}>
-                    {row.icon}
-                  </button>
-                  <span style={{ fontSize: 11, fontWeight: 500, color: "#4b5563", flex: 1 }}>{row.label}</span>
-                  <span style={{ fontSize: 11, color: "#9ca3af", cursor: "help" }} title={row.hint}>ⓘ</span>
-                </div>
               ))}
             </div>
           </div>

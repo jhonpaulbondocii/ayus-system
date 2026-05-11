@@ -612,7 +612,7 @@ export default function AdminCalendarPage() {
       }
     };
     load();
-  }, []);
+  }, [searchParams]);
 
   // Navigation
   const prevMonth = () => currentMonth===0 ? (setCurrentMonth(11), setCurrentYear(y=>y-1)) : setCurrentMonth(m=>m-1);
@@ -629,8 +629,16 @@ export default function AdminCalendarPage() {
     setSelected(d); setCurrentMonth(d.getMonth()); setCurrentYear(d.getFullYear()); setWeekStart(getWeekStart(d));
   };
 
-  const handlePrev = () => view==="month" ? prevMonth() : view==="week" ? prevWeek() : (() => { const d=new Date(selected); d.setDate(d.getDate()-1); setSelected(d); })();
-  const handleNext = () => view==="month" ? nextMonth() : view==="week" ? nextWeek() : (() => { const d=new Date(selected); d.setDate(d.getDate()+1); setSelected(d); })();
+  const handlePrev = () => {
+  if (view === "month") prevMonth();
+  else if (view === "week") prevWeek();
+  else { const d = new Date(selected); d.setDate(d.getDate() - 1); setSelected(d); }
+};
+const handleNext = () => {
+  if (view === "month") nextMonth();
+  else if (view === "week") nextWeek();
+  else { const d = new Date(selected); d.setDate(d.getDate() + 1); setSelected(d); }
+};
 
   const headerLabel = () => {
     if (view==="month") return `${MONTHS[currentMonth]} ${currentYear}`;
@@ -648,7 +656,7 @@ export default function AdminCalendarPage() {
   const toggleSource = (id: string) => {
     setHiddenSources(prev => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) { next.delete(id); } else { next.add(id); }
       return next;
     });
   };
@@ -695,7 +703,7 @@ export default function AdminCalendarPage() {
           className="w-7 h-7 flex items-center justify-center border border-gray-200 rounded hover:bg-gray-50 text-gray-500 text-sm">
           ›
         </button>
-        <h2 className="text-xs sm:text-sm font-semibold text-gray-800 ml-1 truncate max-w-[140px] sm:max-w-none">{headerLabel()}</h2>
+        <h2 className="text-xs sm:text-sm font-semibold text-gray-800 ml-1 truncate max-w-35 sm:max-w-none">{headerLabel()}</h2>
         <div className="ml-auto flex items-center border border-gray-200 rounded overflow-hidden">
           {(["Week","Month","Agenda"] as const).map((v,i) => (
             <button key={v}

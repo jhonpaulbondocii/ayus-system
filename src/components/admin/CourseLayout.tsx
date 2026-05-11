@@ -22,7 +22,6 @@ interface Repository {
 const MAROON = "#7b1113";
 const FONT   = "'Plus Jakarta Sans','Helvetica Neue',Arial,sans-serif";
 
-// Files removed from nav
 const NAV_ITEMS = [
   { label: "Home",          href: (id: string) => `/admin/courses/${id}/home`          },
   { label: "Announcements", href: (id: string) => `/admin/courses/${id}/announcements` },
@@ -30,7 +29,7 @@ const NAV_ITEMS = [
   { label: "Repositories",  href: (id: string) => `/admin/courses/${id}/repositories`  },
   { label: "Grades",        href: (id: string) => `/admin/courses/${id}/grades`        },
   { label: "People",        href: (id: string) => `/admin/courses/${id}/people`        },
-  { label: "Quizzes",       href: (id: string) => `/admin/courses/${id}/quizzes`       },
+  { label: "Forms",         href: (id: string) => `/admin/courses/${id}/forms`         },
   { label: "Settings",      href: (id: string) => `/admin/courses/${id}/settings`      },
 ];
 
@@ -51,7 +50,6 @@ export default function CourseLayout({
 
   const mobileDrawerRef = useRef<HTMLDivElement>(null);
 
-  // Detect mobile
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
     check();
@@ -59,7 +57,6 @@ export default function CourseLayout({
     return () => window.removeEventListener("resize", check);
   }, []);
 
-  // Close mobile nav on outside click
   useEffect(() => {
     if (!mobileNavOpen) return;
     const handler = (e: MouseEvent) => {
@@ -71,7 +68,6 @@ export default function CourseLayout({
     return () => document.removeEventListener("mousedown", handler);
   }, [mobileNavOpen]);
 
-  // Fetch course name
   useEffect(() => {
     if (propName || !courseId) return;
     fetch(`/api/admin/courses/${courseId}`)
@@ -80,7 +76,6 @@ export default function CourseLayout({
       .catch(() => {});
   }, [courseId, propName]);
 
-  // Auto-open repos if on a repo page
   useEffect(() => {
     if (pathname?.includes("/repositories")) {
       setRepoOpen(true);
@@ -115,11 +110,9 @@ export default function CourseLayout({
     setMobileNavOpen(false);
   };
 
-  /* ── Nav item renderer (shared between desktop sidebar & mobile drawer) ── */
   const renderNavItems = () => NAV_ITEMS.map(item => {
     const isActive = item.label === activeItem;
 
-    // Repositories — expandable
     if (item.label === "Repositories") {
       return (
         <div key="Repositories">
@@ -184,7 +177,6 @@ export default function CourseLayout({
       );
     }
 
-    // Regular nav item
     return (
       <button key={item.label} type="button"
         onClick={() => navigate(item.href(courseId))}
@@ -197,7 +189,6 @@ export default function CourseLayout({
     );
   });
 
-  /* ── Mobile horizontal tab bar ──────────────────────────────────────────── */
   const MobileTabBar = () => (
     <div style={{
       display: "flex", alignItems: "center",
@@ -205,7 +196,6 @@ export default function CourseLayout({
       background: "#fff", flexShrink: 0,
       overflow: "hidden",
     }}>
-      {/* Hamburger to open full drawer */}
       <button
         type="button"
         onClick={() => setMobileNavOpen(true)}
@@ -218,7 +208,6 @@ export default function CourseLayout({
         <Menu size={18} />
       </button>
 
-      {/* Scrollable tabs */}
       <div style={{
         display: "flex", alignItems: "center", overflowX: "auto", flex: 1,
         scrollbarWidth: "none", msOverflowStyle: "none",
@@ -251,10 +240,8 @@ export default function CourseLayout({
     </div>
   );
 
-  /* ── Mobile drawer (slide-in from left) ─────────────────────────────────── */
   const MobileDrawer = () => (
     <>
-      {/* Backdrop */}
       <div
         style={{
           position: "fixed", inset: 0, zIndex: 400,
@@ -262,7 +249,6 @@ export default function CourseLayout({
         }}
         onClick={() => setMobileNavOpen(false)}
       />
-      {/* Drawer */}
       <div
         ref={mobileDrawerRef}
         style={{
@@ -273,7 +259,6 @@ export default function CourseLayout({
           fontFamily: FONT,
         }}
       >
-        {/* Drawer header */}
         <div style={{
           display: "flex", alignItems: "center", justifyContent: "space-between",
           padding: "14px 16px", borderBottom: "1px solid #f0e4e4",
@@ -291,7 +276,6 @@ export default function CourseLayout({
           </button>
         </div>
 
-        {/* Nav items */}
         <div style={{ flex: 1, overflowY: "auto", padding: "8px" }}>
           <nav style={{ display: "flex", flexDirection: "column", gap: 2 }}>
             {renderNavItems()}
@@ -301,13 +285,9 @@ export default function CourseLayout({
     </>
   );
 
-  /* ══════════════════════════════════════════════════════════════════════════
-     RENDER
-  ══════════════════════════════════════════════════════════════════════════ */
   return (
     <div className="flex h-full bg-white overflow-hidden">
 
-      {/* ── Desktop sidebar ── */}
       {!isMobile && sidebarOpen && (
         <div className="w-52 border-r border-gray-200 shrink-0 py-3 overflow-y-auto">
           <nav className="space-y-0.5 px-2">
@@ -316,10 +296,8 @@ export default function CourseLayout({
         </div>
       )}
 
-      {/* ── Main content area ── */}
       <div className="flex-1 flex flex-col overflow-hidden">
 
-        {/* ── Breadcrumb (desktop) / Tab bar (mobile) ── */}
         {isMobile ? (
           <MobileTabBar />
         ) : (
@@ -348,13 +326,11 @@ export default function CourseLayout({
           </div>
         )}
 
-        {/* Page content */}
         <div className="flex-1 overflow-auto">
           {children}
         </div>
       </div>
 
-      {/* ── Mobile drawer overlay ── */}
       {isMobile && mobileNavOpen && <MobileDrawer />}
     </div>
   );

@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useMemo } from "react";
+import Image from "next/image";
 import { AnnouncementCreateView } from "@/components/admin/CourseAnnouncementsPage";
 import { COLORS, MAROON, fmtDateTime, normalizeAnnouncement } from "./helpers";
 import type {
@@ -35,12 +36,14 @@ function Avatar({
   image: string | null;
   size?: number;
 }) {
-  const dim = `${size}px`;
+  const dim = size;
   if (image) {
     return (
-      <img
+      <Image
         src={image}
         alt={name ?? ""}
+        width={dim}
+        height={dim}
         className="rounded-full object-cover shrink-0"
         style={{ width: dim, height: dim }}
       />
@@ -78,7 +81,7 @@ function AnnouncementThreeDot({
       </button>
       {open && (
         <div
-          className="absolute right-0 top-full z-50 bg-white border border-gray-200 rounded shadow-lg min-w-[152px]"
+          className="absolute right-0 top-full z-50 bg-white border border-gray-200 rounded shadow-lg min-w-38"
           style={{ marginTop: 2 }}
         >
           <button
@@ -251,8 +254,8 @@ function StudentAnnouncementDetail({
               <button
                 type="button"
                 onClick={() => {
-                  setLiked((v) => !v);
                   setLikeCount((c) => (liked ? c - 1 : c + 1));
+                  setLiked((v) => !v);
                 }}
                 className="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded border transition-colors"
                 style={{
@@ -378,6 +381,7 @@ function StudentAnnouncementList({
   onMarkAllRead,
   onView,
   onMarkRead,
+  onDeleteSelected,
   selectedIds,
   setSelectedIds,
 }: {
@@ -389,6 +393,7 @@ function StudentAnnouncementList({
   onMarkAllRead: () => void;
   onView: (id: string) => void;
   onMarkRead: (id: string) => void;
+  onDeleteSelected: (ids: string[]) => void;
   selectedIds: Set<string>;
   setSelectedIds: React.Dispatch<React.SetStateAction<Set<string>>>;
 }) {
@@ -400,12 +405,14 @@ function StudentAnnouncementList({
     else setSelectedIds(new Set(announcements.map((a) => a.id)));
   };
 
-  const toggleOne = (id: string) =>
+  const toggleOne = (id: string) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
+  };
 
   return (
     <div className="px-5 py-4">
@@ -477,6 +484,26 @@ function StudentAnnouncementList({
             className="underline hover:no-underline text-gray-400"
           >
             Clear
+          </button>
+          <button
+            type="button"
+            onClick={() => onDeleteSelected([...selectedIds])}
+            className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded border border-red-200 text-red-600 bg-red-50 hover:bg-red-100 transition-colors"
+          >
+            <svg
+              className="w-3 h-3"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+              />
+            </svg>
+            Delete
           </button>
         </div>
       )}
@@ -650,6 +677,12 @@ export default function CourseAnnouncementsTab({
     onMarkRead(id);
   };
 
+  const onDeleteSelected = (ids: string[]) => {
+    if (!confirm(`Delete ${ids.length} announcement${ids.length > 1 ? "s" : ""}?`)) return;
+    setAnnouncements((prev) => prev.filter((a) => !ids.includes(a.id)));
+    setSelectedIds(new Set());
+  };
+
   const resetCreateForm = () => {
     setTopicTitle("");
     setBodyHtml("");
@@ -759,7 +792,6 @@ export default function CourseAnnouncementsTab({
         }
         assignTo={assignTo}
         setAssignTo={setAssignTo}
-        sections={[]}
         staff={people.map((p) => ({ id: p.id, name: p.name ?? p.email }))}
         allowComment={allowComment}
         setAllowComment={setAllowComment}
@@ -823,6 +855,7 @@ export default function CourseAnnouncementsTab({
         onMarkAllRead={onMarkAllRead}
         onView={onView}
         onMarkRead={onMarkRead}
+        onDeleteSelected={onDeleteSelected}
         selectedIds={selectedIds}
         setSelectedIds={setSelectedIds}
       />

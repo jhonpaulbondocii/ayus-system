@@ -2,9 +2,10 @@
 
 import { useMemo, useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 
 const MAROON = "#7b1113";
-const GRADE_OPTIONS = ["Points", "Percentage", "Complete/Incomplete", "Letter Grade", "GPA Scale", "Not Graded"];
+const GRADE_OPTIONS = ["Points", "Percentage", "Complete/Incomplete", "Not Graded"];
 const SUBMISSION_TYPES = ["Online", "On Paper", "No Submission", "External Tool", "Lucid"];
 
 function buildTimes() {
@@ -31,6 +32,8 @@ interface SubmissionEntry {
   label: string;
   required: boolean;
   type: string;
+  allowedFileTypes?: string[];
+  maxFiles?: number | null;
 }
 
 interface AssignmentGroup { id: number; name: string; }
@@ -44,13 +47,44 @@ const SUBMISSION_ENTRY_TYPES = [
   "Media Recording",
 ];
 
+const ALLOWED_FILE_TYPES = [
+  { value: "pdf", label: "PDF" },
+  { value: "docx", label: "DOCX" },
+  { value: "doc", label: "DOC" },
+  { value: "txt", label: "TXT" },
+  { value: "xlsx", label: "XLSX" },
+  { value: "csv", label: "CSV" },
+  { value: "pptx", label: "PPTX" },
+  { value: "jpg", label: "JPG" },
+  { value: "jpeg", label: "JPEG" },
+  { value: "png", label: "PNG" },
+  { value: "zip", label: "ZIP" },
+  { value: "mp4", label: "MP4" },
+  { value: "webm", label: "WEBM" },
+  { value: "mp3", label: "MP3" },
+  { value: "wav", label: "WAV" },
+  { value: "m4a", label: "M4A" },
+];
+
+function normalizeFileTypes(values: string[] | undefined): string[] {
+  if (!Array.isArray(values)) return [];
+  const allowed = new Set(ALLOWED_FILE_TYPES.map(t => t.value));
+  return values
+    .map(v => v.replace(/^\./, "").trim().toLowerCase())
+    .filter(v => allowed.has(v));
+}
+
+function formatFileTypes(values: string[] | undefined): string {
+  return normalizeFileTypes(values).map(v => v.toUpperCase()).join(", ");
+}
+
 // ─── Modals ───────────────────────────────────────────────────────────────────
 function WordCountModal({ text, chars, charsNoSpace, paragraphs, onClose }: {
   text: string; chars: number; charsNoSpace: number; paragraphs: number; onClose: () => void;
 }) {
   const words = text ? text.split(/\s+/).filter(Boolean).length : 0;
   return (
-    <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/40 px-4" onClick={onClose}>
+    <div className="fixed inset-0 z-300 flex items-center justify-center bg-black/40 px-4" onClick={onClose}>
       <div className="bg-white rounded shadow-xl w-full max-w-[288px] border border-gray-200" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
           <span className="text-sm font-semibold text-gray-800">Word Count</span>
@@ -89,7 +123,7 @@ function FindReplaceModal({ html, onUpdate, onClose }: {
   };
 
   return (
-    <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/40 px-4" onClick={onClose}>
+    <div className="fixed inset-0 z-300 flex items-center justify-center bg-black/40 px-4" onClick={onClose}>
       <div className="bg-white rounded shadow-xl w-full max-w-sm border border-gray-200" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
           <span className="text-sm font-semibold text-gray-800">Find and Replace</span>
@@ -119,7 +153,7 @@ function FindReplaceModal({ html, onUpdate, onClose }: {
 function HTMLEditorModal({ html: init, onUpdate, onClose }: { html: string; onUpdate: (h: string) => void; onClose: () => void }) {
   const [html, setHtml] = useState(init);
   return (
-    <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/40 px-4" onClick={onClose}>
+    <div className="fixed inset-0 z-300 flex items-center justify-center bg-black/40 px-4" onClick={onClose}>
       <div className="bg-white rounded shadow-xl w-full max-w-2xl border border-gray-200" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
           <span className="text-sm font-semibold text-gray-800">HTML Editor</span>
@@ -142,7 +176,7 @@ function ColorPickerModal({ type, onClose }: { type: "foreColor" | "backColor"; 
     ? ["#000000", "#374151", "#ef4444", "#f97316", "#eab308", "#22c55e", "#3b82f6", "#8b5cf6", "#ec4899", "#ffffff"]
     : ["transparent", "#fef9c3", "#fce7f3", "#e0f2fe", "#dcfce7", "#ede9fe", "#ffedd5", "#fee2e2", "#d1fae5", "#f1f5f9"];
   return (
-    <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/40 px-4" onClick={onClose}>
+    <div className="fixed inset-0 z-300 flex items-center justify-center bg-black/40 px-4" onClick={onClose}>
       <div className="bg-white rounded shadow-xl border border-gray-200" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
           <span className="text-sm font-semibold text-gray-800">{type === "foreColor" ? "Text Color" : "Background Color"}</span>
@@ -227,7 +261,7 @@ function SubMenuItem({ item, onClose }: { item: MSub; onClose: () => void }) {
         <span className="flex-1">{item.label}</span><Chevron />
       </button>
       {open && (
-        <div className="absolute left-full top-0 bg-white border border-gray-200 shadow-lg rounded-sm min-w-44 py-1 z-[200]">
+        <div className="absolute left-full top-0 bg-white border border-gray-200 shadow-lg rounded-sm min-w-44 py-1 z-200">
           {item.picker ? <TablePicker onPick={(r, c) => { item.onPick?.(r, c); onClose(); }} /> : <MenuItems items={item.children} onClose={onClose} />}
         </div>
       )}
@@ -320,7 +354,6 @@ function RichTextEditor({ onChange, placeholder = "Start typing..." }: { onChang
     return () => document.removeEventListener("keydown", h);
   }, []);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const menus = useMemo((): { label: string; items: MItem[] }[] => [
     {
       label: "Edit", items: [
@@ -473,7 +506,6 @@ function RichTextEditor({ onChange, placeholder = "Start typing..." }: { onChang
     },
   ], [exec, fmt, insertHTML, insertTable, toggleFS, isFS]);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const TBGroups = useMemo(() => [
     [
       {
@@ -548,7 +580,7 @@ function RichTextEditor({ onChange, placeholder = "Start typing..." }: { onChang
                 {m.label}
               </button>
               {openMenu === m.label && (
-                <div className="absolute left-0 top-full mt-0.5 bg-white border border-gray-200 shadow-lg rounded-sm min-w-52 py-1 z-[150]">
+                <div className="absolute left-0 top-full mt-0.5 bg-white border border-gray-200 shadow-lg rounded-sm min-w-52 py-1 z-150">
                   <MenuItems items={m.items} onClose={closeMenus} />
                 </div>
               )}
@@ -634,6 +666,158 @@ function RichTextEditor({ onChange, placeholder = "Start typing..." }: { onChang
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+
+function SubmissionEntryCard({
+  entry,
+  index,
+  canRemove,
+  onRemove,
+  onUpdate,
+}: {
+  entry: SubmissionEntry;
+  index: number;
+  canRemove: boolean;
+  onRemove: () => void;
+  onUpdate: (field: keyof SubmissionEntry, value: string | boolean | string[] | number | null) => void;
+}) {
+  const isFileUpload = entry.type === "File Upload";
+  const isMediaRecording = entry.type === "Media Recording";
+  const allowedTypes = normalizeFileTypes(entry.allowedFileTypes);
+  const hasTypes = allowedTypes.length > 0;
+
+  const toggleFileType = (value: string) => {
+    const next = allowedTypes.includes(value)
+      ? allowedTypes.filter(t => t !== value)
+      : [...allowedTypes, value];
+    onUpdate("allowedFileTypes", next);
+  };
+
+  const handleTypeChange = (nextType: string) => {
+    onUpdate("type", nextType);
+    if (nextType === "File Upload") {
+      onUpdate("allowedFileTypes", []);
+      onUpdate("maxFiles", 1);
+    } else if (nextType === "Media Recording") {
+      onUpdate("allowedFileTypes", ["mp4", "webm", "mp3", "wav", "m4a"]);
+      onUpdate("maxFiles", 1);
+    } else {
+      onUpdate("allowedFileTypes", []);
+      onUpdate("maxFiles", null);
+    }
+  };
+
+  const fileTypeChoices = isMediaRecording
+    ? ALLOWED_FILE_TYPES.filter(t => ["mp4", "webm", "mp3", "wav", "m4a"].includes(t.value))
+    : ALLOWED_FILE_TYPES.filter(t => !["mp4", "webm", "mp3", "wav", "m4a"].includes(t.value));
+
+  return (
+    <div className="border border-gray-200 rounded-md overflow-hidden bg-white relative">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-gray-100" style={{ background: "#fef9f9" }}>
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded text-white" style={{ background: MAROON }}>
+            Entry {index}
+          </span>
+          <span className="text-[11px] font-semibold text-gray-600">{entry.type}</span>
+          <span
+            className="text-[10px] font-bold px-1.5 py-0.5 rounded"
+            style={entry.required ? { background: "#fef2f2", color: MAROON, border: "1px solid #f0c0c0" } : { background: "#f3f4f6", color: "#6b7280" }}
+          >
+            {entry.required ? "Required" : "Optional"}
+          </span>
+          {(isFileUpload || isMediaRecording) && hasTypes && (
+            <span className="text-[10px] font-black px-1.5 py-0.5 rounded uppercase" style={{ background: MAROON, color: "#fff" }}>
+              {formatFileTypes(allowedTypes)}
+            </span>
+          )}
+        </div>
+
+        {canRemove && (
+          <button type="button" onClick={onRemove} className="w-6 h-6 flex items-center justify-center rounded hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors" aria-label="Remove submission entry">
+            ✕
+          </button>
+        )}
+      </div>
+
+      <div className="px-3 py-3 space-y-3">
+        <div>
+          <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide block mb-1">Submission Type</label>
+          <select value={entry.type} onChange={e => handleTypeChange(e.target.value)} className="w-full h-8 border border-gray-300 rounded-sm px-2 text-xs bg-white outline-none focus:border-[#7b1113]">
+            {SUBMISSION_ENTRY_TYPES.map(t => <option key={t}>{t}</option>)}
+          </select>
+        </div>
+
+        {(isFileUpload || isMediaRecording) && (
+          <>
+            <div>
+              <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide block mb-2">
+                Allowed {isMediaRecording ? "Media" : "File"} Types
+                <span className="ml-1 normal-case font-normal text-gray-400">{isFileUpload ? "(leave empty to allow all)" : ""}</span>
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                {fileTypeChoices.map(ft => {
+                  const checked = allowedTypes.includes(ft.value);
+                  return (
+                    <label key={ft.value} className={
+                      checked
+                        ? "flex items-center gap-2 px-2.5 py-1.5 rounded border cursor-pointer transition-all text-xs font-medium select-none border-[#7b1113] bg-[#fef2f2] text-[#7b1113]"
+                        : "flex items-center gap-2 px-2.5 py-1.5 rounded border cursor-pointer transition-all text-xs font-medium select-none border-gray-200 bg-gray-50 text-gray-600 hover:border-gray-300 hover:bg-white"
+                    }>
+                      <input type="checkbox" checked={checked} onChange={() => toggleFileType(ft.value)} className="sr-only" />
+                      <span className={
+                        checked
+                          ? "w-3.5 h-3.5 rounded-sm border flex items-center justify-center shrink-0 transition-all border-[#7b1113] bg-[#7b1113]"
+                          : "w-3.5 h-3.5 rounded-sm border flex items-center justify-center shrink-0 transition-all border-gray-300 bg-white"
+                      }>
+                        {checked && (
+                          <svg width="8" height="8" viewBox="0 0 10 10" fill="none">
+                            <path d="M2 5l2.5 2.5L8 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        )}
+                      </span>
+                      .{ft.label}
+                    </label>
+                  );
+                })}
+              </div>
+
+              {hasTypes ? (
+                <div className="mt-2 flex items-center gap-1.5 flex-wrap">
+                  <span className="text-[10px] font-semibold text-gray-500">Staff will see:</span>
+                  <span className="text-[10px] font-black px-1.5 py-0.5 rounded uppercase" style={{ background: MAROON, color: "#fff" }}>
+                    {formatFileTypes(allowedTypes)}
+                  </span>
+                </div>
+              ) : (
+                <p className="text-[10px] text-gray-400 mt-1.5 italic">{isFileUpload ? "No restriction — all file types accepted." : "Choose at least one media type."}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide block mb-1">Max Files</label>
+              <input
+                type="number"
+                min={1}
+                max={20}
+                value={entry.maxFiles ?? 1}
+                onChange={e => onUpdate("maxFiles", Math.max(1, parseInt(e.target.value, 10) || 1))}
+                className="w-20 h-8 border border-gray-300 rounded-sm px-2 text-xs outline-none focus:border-[#7b1113]"
+              />
+            </div>
+          </>
+        )}
+
+        <div className="pt-1 border-t border-gray-100">
+          <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer pt-1">
+            <input type="checkbox" checked={entry.required} onChange={e => onUpdate("required", e.target.checked)} style={{ accentColor: MAROON }} />
+            Required
+          </label>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // Main Page
 // ═══════════════════════════════════════════════════════════════════════════════
 export default function CreateAssignmentPage() {
@@ -641,6 +825,10 @@ export default function CreateAssignmentPage() {
   const params = useParams<{ id: string }>();
   const searchParams = useSearchParams();
   const courseId = params?.id ?? "";
+
+  // ── Get current session user ──────────────────────────────────────────────
+  const { data: session } = useSession();
+  const sessionUserId = (session?.user as { id?: string })?.id ?? null;
 
   const initial = useMemo(() => ({
     name: searchParams.get("name") ?? "",
@@ -665,7 +853,6 @@ export default function CreateAssignmentPage() {
   const [groups, setGroups] = useState<AssignmentGroup[]>([{ id: 1, name: "Assignments" }]);
   const [groupsLoaded, setGroupsLoaded] = useState(false);
   const [displayGradeAs, setDisplayGradeAs] = useState("Points");
-  const [doNotCount, setDoNotCount] = useState(false);
   const [submissionType, setSubmissionType] = useState("Online");
   const [published, setPublished] = useState(false);
   const [notifyUsers, setNotifyUsers] = useState(false);
@@ -675,16 +862,20 @@ export default function CreateAssignmentPage() {
 
   // Submission entries
   const [submissionEntries, setSubmissionEntries] = useState<SubmissionEntry[]>([
-    { id: 1, label: "", required: false, type: "File Upload" },
+    { id: 1, label: "", required: false, type: "File Upload", allowedFileTypes: [], maxFiles: 1 },
   ]);
 
   const addSubmissionEntry = () =>
-    setSubmissionEntries(p => [...p, { id: Date.now(), label: "", required: false, type: "File Upload" }]);
+    setSubmissionEntries(p => [...p, { id: Date.now(), label: "", required: false, type: "File Upload", allowedFileTypes: [], maxFiles: 1 }]);
 
   const removeSubmissionEntry = (id: number) =>
     setSubmissionEntries(p => p.filter(e => e.id !== id));
 
-  const updateSubmissionEntry = (id: number, field: keyof SubmissionEntry, value: string | boolean) =>
+  const updateSubmissionEntry = (
+    id: number,
+    field: keyof SubmissionEntry,
+    value: string | boolean | string[] | number | null
+  ) =>
     setSubmissionEntries(p => p.map(e => e.id === id ? { ...e, [field]: value } : e));
 
   const [submissionAttempts, setSubmissionAttempts] = useState("Unlimited");
@@ -706,7 +897,6 @@ export default function CreateAssignmentPage() {
   const [groupModalOpen, setGroupModalOpen] = useState(false);
   const [newGroupName, setNewGroupName] = useState("");
 
-  // Assign rows — only "Everyone" or staff; no sections
   const [assignRows, setAssignRows] = useState<AssignTo[]>([{
     id: 1, assignees: ["Everyone"], dueDate: "", dueTime: "",
     availableFrom: "", availableFromTime: "", until: "", untilTime: ""
@@ -779,11 +969,11 @@ export default function CreateAssignmentPage() {
     setAssignRows(p => p.map(r => r.id === id ? { ...r, [field]: value } : r));
 
   const handleDateChange = (id: number, dateField: "dueDate" | "availableFrom" | "until", timeField: "dueTime" | "availableFromTime" | "untilTime", value: string) => {
-    const defaultTime = dateField === "availableFrom" ? "12:00 AM" : "11:59 PM";
     setAssignRows(p => p.map(r => {
-      if (r.id !== id) return r;
-      return { ...r, [dateField]: value, [timeField]: r[timeField] || (value ? defaultTime : "") };
-    }));
+  if (r.id !== id) return r;
+  const autoTime = dateField === "availableFrom" && value && !r[timeField] ? "12:00 AM" : r[timeField];
+  return { ...r, [dateField]: value, [timeField]: value ? autoTime : "" };
+}));
   };
 
   const getDateErrors = (row: AssignTo) => {
@@ -795,7 +985,6 @@ export default function CreateAssignmentPage() {
     return errors;
   };
 
-  // Toggle assignee: selecting a specific person removes "Everyone"
   const toggleAssignee = (rowId: number, personName: string) => setAssignRows(p => p.map(r => {
     if (r.id !== rowId) return r;
     if (personName === "Everyone") {
@@ -828,17 +1017,41 @@ export default function CreateAssignmentPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          title: name.trim(), description, points: parseFloat(points) || 0,
-          submissionType, assignmentGroup: group, displayGradeAs,
+          title: name.trim(),
+          description,
+          points: parseFloat(points) || 0,
+          submissionType,
+          assignmentGroup: group,
+          displayGradeAs,
           status: publish ? "PUBLISHED" : "UNPUBLISHED",
           assignees: row?.assignees ?? [],
-          dueDate: row?.dueDate || null, dueTime: row?.dueTime || null,
-          availableFrom: row?.availableFrom || null, availableFromTime: row?.availableFromTime || null,
-          availableUntil: row?.until || null, untilTime: row?.untilTime || null,
-          submissionEntries, submissionAttempts,
+          dueDate: row?.dueDate || null,
+          dueTime: row?.dueTime || null,
+          availableFrom: row?.availableFrom || null,
+          availableFromTime: row?.availableFromTime || null,
+          availableUntil: row?.until || null,
+          untilTime: row?.untilTime || null,
+          submissionEntries: submissionEntries.map(entry => ({
+            id: entry.id,
+            label: entry.label,
+            required: entry.required,
+            type: entry.type,
+            allowedFileTypes:
+              entry.type === "File Upload" || entry.type === "Media Recording"
+                ? normalizeFileTypes(entry.allowedFileTypes)
+                : [],
+            maxFiles:
+              entry.type === "File Upload" || entry.type === "Media Recording"
+                ? entry.maxFiles ?? 1
+                : null,
+          })),
+          submissionAttempts,
           allowedAttempts: submissionAttempts === "Limited" ? allowedAttempts : null,
-          doNotCount, isGroupAssignment, groupSetId: groupSet || null, notifyUsers,
-        })
+          isGroupAssignment,
+          groupSetId: groupSet || null,
+          notifyUsers,
+          createdById: sessionUserId,
+        }),
       });
       if (res.ok) {
         setPublished(publish);
@@ -853,6 +1066,9 @@ export default function CreateAssignmentPage() {
       setSaving(false);
     }
   };
+
+  // suppress assignGradesIndividually unused warning
+  void assignGradesIndividually;
 
   if (!mounted) return null;
 
@@ -1013,61 +1229,51 @@ export default function CreateAssignmentPage() {
                 <label className="text-xs text-gray-700 sm:text-right pt-2">
                   Submission Entries <span className="text-red-500">*</span>
                 </label>
-                <div className="space-y-2 w-full sm:max-w-xl">
+                <div className="space-y-3 w-full sm:max-w-xl">
                   {submissionEntries.map((entry, idx) => (
-                    <div key={entry.id} className="border border-gray-200 rounded-sm p-3 space-y-2 relative bg-white">
-                      {submissionEntries.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => removeSubmissionEntry(entry.id)}
-                          className="absolute top-2 right-2 text-gray-400 hover:text-red-500 text-xs leading-none"
-                        >
-                          ✕
-                        </button>
-                      )}
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded text-white" style={{ background: MAROON }}>
-                          Entry {idx + 1}
-                        </span>
-                      </div>
-                      <div>
-                        <label className="text-xs text-gray-500 block mb-1">Label</label>
-                        <input
-                          type="text"
-                          value={entry.label}
-                          onChange={e => updateSubmissionEntry(entry.id, "label", e.target.value)}
-                          placeholder="e.g. Excel File, PDF Report..."
-                          className="w-full h-8 border border-gray-300 rounded-sm px-2 text-xs outline-none focus:border-[#7b1113]"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-xs text-gray-500 block mb-1">Submission Type</label>
-                        <select
-                          value={entry.type}
-                          onChange={e => updateSubmissionEntry(entry.id, "type", e.target.value)}
-                          className="w-full h-8 border border-gray-300 rounded-sm px-2 text-xs bg-white outline-none focus:border-[#7b1113]"
-                        >
-                          {SUBMISSION_ENTRY_TYPES.map(t => <option key={t}>{t}</option>)}
-                        </select>
-                      </div>
-                      <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer pt-1">
-                        <input
-                          type="checkbox"
-                          checked={entry.required}
-                          onChange={e => updateSubmissionEntry(entry.id, "required", e.target.checked)}
-                          style={{ accentColor: MAROON }}
-                        />
-                        Required
-                      </label>
-                    </div>
+                    <SubmissionEntryCard
+                      key={entry.id}
+                      entry={entry}
+                      index={idx + 1}
+                      canRemove={submissionEntries.length > 1}
+                      onRemove={() => removeSubmissionEntry(entry.id)}
+                      onUpdate={(field, value) => updateSubmissionEntry(entry.id, field, value)}
+                    />
                   ))}
                   <button
                     type="button"
                     onClick={addSubmissionEntry}
-                    className="w-full h-8 border border-dashed border-gray-300 bg-gray-50 text-xs text-gray-600 rounded-sm hover:bg-gray-100 hover:border-gray-400 flex items-center justify-center gap-1"
+                    className="w-full h-9 border border-dashed border-gray-300 bg-gray-50 text-xs text-gray-600 rounded-md hover:bg-gray-100 hover:border-gray-400 flex items-center justify-center gap-1.5 transition-colors"
                   >
-                    + Add Submission
+                    + Add Submission Entry
                   </button>
+
+                  <div className="rounded-md p-3 border text-xs" style={{ background: "#fef2f2", borderColor: "#f0c0c0" }}>
+                    <p className="font-bold mb-2" style={{ color: MAROON }}>Staff View Preview</p>
+                    <div className="space-y-2">
+                      {submissionEntries.map(entry => {
+                        const allowed = normalizeFileTypes(entry.allowedFileTypes);
+                        const showTypes = (entry.type === "File Upload" || entry.type === "Media Recording") && allowed.length > 0;
+                        return (
+                          <div key={entry.id} className="flex items-center gap-2 flex-wrap bg-white rounded border border-gray-100 px-2.5 py-2">
+                            <span className="text-xs font-semibold text-gray-700">{entry.label || entry.type}</span>
+                            <span
+                              className="text-[10px] font-bold px-1.5 py-0.5 rounded"
+                              style={entry.required ? { background: "#fef2f2", color: MAROON, border: "1px solid #f0c0c0" } : { background: "#f3f4f6", color: "#6b7280" }}
+                            >
+                              {entry.required ? "Required" : "Optional"}
+                            </span>
+                            {showTypes && (
+                              <span className="text-[10px] font-black px-1.5 py-0.5 rounded uppercase" style={{ background: MAROON, color: "#fff" }}>
+                                {formatFileTypes(allowed)}
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <p className="text-gray-400 mt-2">Example: File Upload <strong>[Required]</strong> <strong>[PDF]</strong>.</p>
+                  </div>
                 </div>
               </>
             )}
@@ -1110,11 +1316,6 @@ export default function CreateAssignmentPage() {
               {GRADE_OPTIONS.map(o => <option key={o}>{o}</option>)}
             </select>
 
-            <div />
-            <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
-              <input type="checkbox" checked={doNotCount} onChange={e => setDoNotCount(e.target.checked)} style={{ accentColor: MAROON }} />
-              Do not count this assignment towards the final grade
-            </label>
 
             <label className="text-xs text-gray-700 sm:text-right pt-2">Group Assignment</label>
             <div className="border border-gray-200 rounded-sm p-3 w-full sm:w-80 space-y-2">
@@ -1162,12 +1363,11 @@ export default function CreateAssignmentPage() {
                     <button type="button" onClick={() => removeAssignRow(row.id)} className="absolute top-2 right-2 text-gray-400 hover:text-red-500 text-xs">✕</button>
                   )}
 
-                  {/* Assign To dropdown — Everyone or specific staff only (no sections) */}
                   <div className="relative" data-dropdown onMouseDown={e => e.stopPropagation()}>
                     <p className="text-xs font-medium text-gray-700 mb-1">Assign To</p>
                     <div
                       onMouseDown={e => { e.stopPropagation(); setOpenDropdownId(openDropdownId === row.id ? null : row.id); setDropdownSearch(""); }}
-                      className="w-full min-h-[30px] border rounded-sm px-2 py-1 text-xs flex flex-wrap gap-1 items-center cursor-pointer bg-white select-none"
+                      className="w-full min-h-7.5 border rounded-sm px-2 py-1 text-xs flex flex-wrap gap-1 items-center cursor-pointer bg-white select-none"
                       style={{ borderColor: MAROON }}
                     >
                       {row.assignees.length > 0 ? row.assignees.map(a => (
@@ -1203,7 +1403,6 @@ export default function CreateAssignmentPage() {
                           />
                         </div>
 
-                        {/* Everyone option */}
                         {["Everyone"].filter(o => o.toLowerCase().includes(dropdownSearch.toLowerCase())).map(opt => (
                           <button
                             key={opt}
@@ -1216,7 +1415,6 @@ export default function CreateAssignmentPage() {
                           </button>
                         ))}
 
-                        {/* Staff only — no sections */}
                         {staff.filter(s => s.name.toLowerCase().includes(dropdownSearch.toLowerCase())).length > 0 && (
                           <>
                             <div className="px-3 pt-2 pb-1 text-[10px] font-bold text-gray-500 uppercase tracking-widest border-t border-gray-100 bg-gray-50">Staff</div>
@@ -1237,7 +1435,6 @@ export default function CreateAssignmentPage() {
                     )}
                   </div>
 
-                  {/* Date fields */}
                   {(() => {
                     const errs = getDateErrors(row);
                     return ([
@@ -1300,7 +1497,7 @@ export default function CreateAssignmentPage() {
       {/* ── Add Assignment Group Modal ── */}
       {groupModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 px-4">
-          <div className="w-full max-w-[460px] bg-white shadow-xl border border-gray-200 rounded">
+          <div className="w-full max-w-115 bg-white shadow-xl border border-gray-200 rounded">
             <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
               <div className="text-sm font-semibold text-gray-800">Add Assignment Group</div>
               <button onClick={() => setGroupModalOpen(false)} className="w-6 h-6 flex items-center justify-center border text-gray-700 rounded text-sm" style={{ borderColor: MAROON, color: MAROON }}>×</button>
@@ -1450,7 +1647,6 @@ export default function CreateAssignmentPage() {
         </div>
       )}
 
-      {/* ── Bottom bar ── */}
       {BottomBar}
     </div>
   );

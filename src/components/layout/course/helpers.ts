@@ -19,7 +19,7 @@ export const COLORS = {
 
 export const ALL_TABS = [
   "Home","Announcements","Assignments","Discussions",
-  "Grades","People","Files","Syllabus","Collaborations","Quizzes",
+  "Grades","People","Files","Syllabus","Collaborations","Form",
 ] as const;
 
 export const HIDDEN_FOR_HEAD: string[] = ["Discussions","Collaborations","Syllabus","Files"];

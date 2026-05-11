@@ -10,8 +10,8 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "PSU Canvas",
-  description: "Pampanga State University Learning Management System",
+  title: "AYUS",
+  description: "Integrated Campus Operations Platform",
 };
 
 export default function RootLayout({

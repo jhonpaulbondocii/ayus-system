@@ -8,7 +8,7 @@ import {
   MoreVertical, X, Check, Loader2, ChevronRight,
   ChevronDown, GripVertical, User,
 } from "lucide-react";
-import { COLORS, MAROON, FONT, normalizeCourseRole } from "./helpers";
+import { normalizeCourseRole } from "./helpers";
 import type { Course, Person, Group, Membership } from "./types";
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -52,7 +52,7 @@ interface Props {
   groups: Group[];
   membership: Membership | null;
   canManagePeople: boolean;
-  currentUserId: string; // <-- needed to guard self-delete
+  currentUserId: string | null; // ← accepts null
   onAddPeople: () => void;
   onAddGroup: () => void;
 }
@@ -191,13 +191,12 @@ function Avatar({ name, image, size = 32 }: { name: string | null; image: string
    MAIN COMPONENT
 ───────────────────────────────────────────────────────────────────────────── */
 export default function CoursePeopleTab({
-  course, courseId, people: initialPeople, groups: initialGroups,
-  membership, canManagePeople, currentUserId,
+  courseId, people: initialPeople,
+  canManagePeople, currentUserId,
 }: Props) {
   const router = useRouter();
   const accentM = { accentColor: "#7b1113" };
 
-  // ── Local state ─────────────────────────────────────────────────────────────
   const [people, setPeople] = useState(initialPeople);
   const [activeTab, setActiveTab] = useState("everyone");
   const [search, setSearch] = useState("");
@@ -210,7 +209,6 @@ export default function CoursePeopleTab({
   const [groupMenuOpen, setGroupMenuOpen] = useState<string | null>(null);
   const [addToGroupMenu, setAddToGroupMenu] = useState<string | null>(null);
 
-  // ── Add People modal ───────────────────────────────────────────────────────
   const [addModal, setAddModal] = useState(false);
   const [chips, setChips] = useState<Chip[]>([]);
   const [inputVal, setInputVal] = useState("");
@@ -219,7 +217,6 @@ export default function CoursePeopleTab({
   const [addError, setAddError] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Group set modal
   const [groupSetModal, setGroupSetModal] = useState(false);
   const [groupSetName, setGroupSetName] = useState("");
   const [selfSignUp, setSelfSignUp] = useState(false);
@@ -230,19 +227,16 @@ export default function CoursePeopleTab({
   const [leaderType, setLeaderType] = useState("first");
   const [savingGroupSet, setSavingGroupSet] = useState(false);
 
-  // Add group modal
   const [addGroupModal, setAddGroupModal] = useState<string | null>(null);
   const [newGroupName, setNewGroupName] = useState("");
   const [newGroupLimit, setNewGroupLimit] = useState(0);
   const [savingGroup, setSavingGroup] = useState(false);
 
-  // Edit group modal
   const [editGroupModal, setEditGroupModal] = useState<{ id: string; name: string; limit: number } | null>(null);
   const [editGroupName, setEditGroupName] = useState("");
   const [editGroupLimit, setEditGroupLimit] = useState(0);
   const [savingEditGroup, setSavingEditGroup] = useState(false);
 
-  // Edit group set modal
   const [editGsModal, setEditGsModal] = useState<GroupSet | null>(null);
   const [editGsName, setEditGsName] = useState("");
   const [editGsSelfSignUp, setEditGsSelfSignUp] = useState(false);
@@ -252,21 +246,17 @@ export default function CoursePeopleTab({
   const [editGsLimit, setEditGsLimit] = useState(0);
   const [savingEditGs, setSavingEditGs] = useState(false);
 
-  // Move panel
   const [movePanel, setMovePanel] = useState<{ groupSetId: string; fromGroupId: string; userId: string; userName: string } | null>(null);
   const [moveToGroupId, setMoveToGroupId] = useState("");
   const [movePlacement, setMovePlacement] = useState("At the Top");
   const [movingStudent, setMovingStudent] = useState(false);
 
-  // Clone modal
   const [cloneModal, setCloneModal] = useState<GroupSet | null>(null);
   const [cloneName, setCloneName] = useState("");
   const [submittingClone, setSubmittingClone] = useState(false);
 
-  // ── Sync people from props ─────────────────────────────────────────────────
   useEffect(() => { setPeople(initialPeople); }, [initialPeople]);
 
-  // ── Fetch group sets ───────────────────────────────────────────────────────
   const fetchGroupSets = useCallback(() => {
     fetch(`/api/courses/${courseId}/groupsets`)
       .then((r) => r.json())
@@ -291,7 +281,6 @@ export default function CoursePeopleTab({
       .catch(() => {});
   }, [courseId]);
 
-  /* ── Chip / email input helpers ─────────────────────────────────────────── */
   const isValidEmailFormat = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
 
   const commitInput = () => {
@@ -336,7 +325,6 @@ export default function CoursePeopleTab({
     }
   };
 
-  /* ── Add people ─────────────────────────────────────────────────────────── */
   const handleAddPeople = async () => {
     if (inputVal.trim()) commitInput();
 
@@ -417,9 +405,7 @@ export default function CoursePeopleTab({
     setAddError("");
   };
 
-  // ── Remove / role management ───────────────────────────────────────────────
   const removeUser = async (userId: string) => {
-    // Guard: cannot remove yourself
     if (userId === currentUserId) return;
     await fetch(`/api/courses/${courseId}/people`, {
       method: "DELETE", headers: { "Content-Type": "application/json" },
@@ -429,7 +415,6 @@ export default function CoursePeopleTab({
     setMenuOpenId(null);
   };
 
-  // ── Group set operations ───────────────────────────────────────────────────
   const resetGsModal = () => {
     setGroupSetName(""); setSelfSignUp(false); setRequireSameSection(false);
     setGroupStructure("Create groups later"); setCreateGroupsNow(0);
@@ -494,7 +479,6 @@ export default function CoursePeopleTab({
     } finally { setSubmittingClone(false); }
   };
 
-  // ── Group operations ───────────────────────────────────────────────────────
   const handleAddGroup = async () => {
     if (!newGroupName.trim() || !addGroupModal) return;
     setSavingGroup(true);
@@ -519,7 +503,6 @@ export default function CoursePeopleTab({
     fetchGroupSets(); setGroupMenuOpen(null);
   };
 
-  // ── Member operations ──────────────────────────────────────────────────────
   const addStudentToGroup = async (gsId: string, gId: string, userId: string) => {
     setAddToGroupMenu(null);
     await fetch(`/api/courses/${courseId}/groupsets/${gsId}/groups/${gId}/members`, {
@@ -560,9 +543,14 @@ export default function CoursePeopleTab({
     } finally { setMovingStudent(false); }
   };
 
-  // ── Derived ────────────────────────────────────────────────────────────────
-  const toggleGroup = (id: string) =>
-    setExpandedGroups((p) => { const s = new Set(p); s.has(id) ? s.delete(id) : s.add(id); return s; });
+  const toggleGroup = (id: string) => {
+    setExpandedGroups((p) => {
+      const s = new Set(p);
+      if (s.has(id)) s.delete(id);
+      else s.add(id);
+      return s;
+    });
+  };
 
   const filtered = people.filter((p) => {
     const q = search.toLowerCase();
@@ -590,13 +578,11 @@ export default function CoursePeopleTab({
 
   const validChipCount = chips.filter((c) => c.status !== "invalid").length + (inputVal.trim() ? 1 : 0);
 
-  /* ── RENDER ──────────────────────────────────────────────────────────────── */
   return (
     <>
       <style>{CSS}</style>
       <div className="cpt-root">
 
-        {/* ── Tab Bar (with inline + Group Set button on the right) ─────────── */}
         <div className="cpt-tabbar">
           <div className="cpt-tabs">
             {tabs.map((t) => (
@@ -606,21 +592,14 @@ export default function CoursePeopleTab({
               </button>
             ))}
           </div>
-
-          {/* + Group Set button — lives in the tab bar, right side */}
           {canManagePeople && (
-            <button
-              type="button"
-              className="cpt-btn-secondary"
-              style={{ marginBottom: 6, fontSize: 11 }}
-              onClick={() => { resetGsModal(); setGroupSetModal(true); }}
-            >
+            <button type="button" className="cpt-btn-secondary" style={{ marginBottom: 6, fontSize: 11 }}
+              onClick={() => { resetGsModal(); setGroupSetModal(true); }}>
               + Group Set
             </button>
           )}
         </div>
 
-        {/* ── EVERYONE TAB ─────────────────────────────────────────────────── */}
         {activeTab === "everyone" && (
           <>
             <div className="cpt-toolbar">
@@ -643,8 +622,6 @@ export default function CoursePeopleTab({
                   <DropArrow />
                 </div>
               </div>
-
-              {/* + People — only in the toolbar of the Everyone tab */}
               {canManagePeople && (
                 <button className="cpt-btn-primary" onClick={() => { closeAddModal(); setAddModal(true); }}>
                   + People
@@ -656,18 +633,18 @@ export default function CoursePeopleTab({
               <thead>
                 <tr>
                   <th className="avatar-col" />
-                  {["Name", "Login ID", "Section", "Role"].map((h) => <th key={h}>{h}</th>)}
+                  {["Name", "Login ID", "Staff Type", "Position", "Role"].map((h) => <th key={h}>{h}</th>)}
                   {canManagePeople && <th className="action-col" />}
                 </tr>
               </thead>
               <tbody>
                 {filtered.length === 0 ? (
-                  <tr><td colSpan={canManagePeople ? 6 : 5} style={{ padding: "48px 0", textAlign: "center", fontSize: 13, color: "#9ca3af" }}>
+                  <tr><td colSpan={canManagePeople ? 8 : 7} style={{ padding: "48px 0", textAlign: "center", fontSize: 13, color: "#9ca3af" }}>
                     No people enrolled yet.
                   </td></tr>
                 ) : (
                   filtered.map((p, i) => {
-                    const isSelf = p.id === currentUserId;
+                    const isSelf = currentUserId !== null && p.id === currentUserId;
                     return (
                       <tr key={p.id} className={i % 2 === 0 ? "even" : "odd"}>
                         <td><Avatar name={p.name} image={p.image} /></td>
@@ -679,7 +656,17 @@ export default function CoursePeopleTab({
                           {p.status === "PENDING" && <span style={{ fontSize: 10, background: "#374151", color: "#fff", padding: "2px 6px", borderRadius: 4, marginLeft: 6 }}>pending</span>}
                         </td>
                         <td>{p.email}</td>
-                        <td>{course.name}</td>
+                        <td>
+                          {p.accountType
+                            ? <span className="cpt-badge" style={{
+                                background: p.accountType === "Teaching" ? "#eff6ff" : "#f5f3ff",
+                                color: p.accountType === "Teaching" ? "#1d4ed8" : "#7c3aed",
+                              }}>
+                                {p.accountType}
+                              </span>
+                            : <span style={{ color: "#d1d5db" }}>—</span>}
+                        </td>
+                        <td>{p.position ?? <span style={{ color: "#d1d5db" }}>—</span>}</td>
                         <td>
                           <span className="cpt-badge" style={{ color: "#7b1113" }}>
                             {normalizeCourseRole(p.role)}
@@ -718,24 +705,18 @@ export default function CoursePeopleTab({
           </>
         )}
 
-        {/* ── GROUPS EMPTY STATE ────────────────────────────────────────────── */}
         {isGroupsArea && groupSets.length === 0 && (
           <div style={{ padding: "24px 20px" }}>
             <h2 style={{ fontSize: 20, fontWeight: 800, color: "#7b1113", marginBottom: 12 }}>Student Groups</h2>
             <p style={{ fontSize: 13, color: "#4a5568", lineHeight: 1.6, maxWidth: 820, marginBottom: 8 }}>
-              Student groups are a useful way to organize students for things like group projects or papers. Every student group gets their own calendar, discussion board and collaboration tools so they can organize themselves and work together more effectively.
-            </p>
-            <p style={{ fontSize: 13, color: "#4a5568", lineHeight: 1.6, maxWidth: 820 }}>
-              You can randomly assign students to groups of a specific size, or manually create and organize the groups. Once your groups are created, you can set assignments to be &quot;group submission&quot; assignments, which means each group will have one submission for all users of that group.
+              Staff groups are a useful way to organize students for things like group projects or papers.
             </p>
           </div>
         )}
 
-        {/* ── ACTIVE GROUP SET ──────────────────────────────────────────────── */}
         {activeGs && (
           <>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 8, padding: "12px 20px 0" }}>
-              {/* + Group button lives here, inside the group set view */}
               <button className="cpt-btn-secondary" onClick={() => { setNewGroupName(""); setNewGroupLimit(0); setAddGroupModal(activeGs.id); }}>
                 + Group
               </button>
@@ -756,7 +737,6 @@ export default function CoursePeopleTab({
             </div>
 
             <div className="cpt-groups-layout">
-              {/* Unassigned */}
               <div className="cpt-unassigned-col">
                 <p className="cpt-section-title">Unassigned Members ({unassigned.length})</p>
                 <input className="cpt-input" placeholder="Search users" style={{ width: "100%", marginBottom: 10, boxSizing: "border-box" }} />
@@ -792,7 +772,6 @@ export default function CoursePeopleTab({
                 )}
               </div>
 
-              {/* Groups */}
               <div className="cpt-groups-col">
                 <p className="cpt-section-title">Groups ({activeGs.groups.length})</p>
                 {activeGs.groups.length === 0 ? (
@@ -833,7 +812,6 @@ export default function CoursePeopleTab({
                               </div>
                             )}
                           </div>
-
                           {expanded && (
                             <div className="cpt-group-members">
                               {!g.members || g.members.length === 0 ? (
@@ -898,23 +876,15 @@ export default function CoursePeopleTab({
           </>
         )}
 
-        {/* ════════════════════════════════════════════════════════════════════
-            MODALS
-        ════════════════════════════════════════════════════════════════════ */}
-
-        {/* ── ADD PEOPLE MODAL ─────────────────────────────────────────────── */}
+        {/* MODALS */}
         {addModal && canManagePeople && (
           <div className="cpt-overlay" onClick={(e) => { if (e.target === e.currentTarget) closeAddModal(); }}>
             <div className="cpt-modal" style={{ width: 520 }}>
-
               <div className="cpt-modal-header">
                 <h2 className="cpt-modal-title">Add People</h2>
                 <button className="cpt-btn-icon" onClick={closeAddModal}><X size={18} /></button>
               </div>
-
               <div className="cpt-modal-body" style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-
-                {/* Info callout */}
                 <div style={{ display: "flex", gap: 10, background: "#fef2f2", border: "1px solid #f0c0c0", borderRadius: 8, padding: "10px 14px" }}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7b1113" strokeWidth={2.2} style={{ flexShrink: 0, marginTop: 1 }}>
                     <circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" strokeLinecap="round" />
@@ -923,124 +893,58 @@ export default function CoursePeopleTab({
                     Enter the <strong>email address</strong> of each person you want to add. They must already have an account in the system.
                   </p>
                 </div>
-
-                {/* Email chip input */}
                 <div>
                   <label style={{ display: "block", fontSize: 13, fontWeight: 700, color: "#2d3b45", marginBottom: 6 }}>
                     Email Addresses <span style={{ color: "#c0392b" }}>*</span>
                   </label>
-
-                  <div
-                    className="cpt-chip-box"
-                    onClick={() => inputRef.current?.focus()}
-                  >
+                  <div className="cpt-chip-box" onClick={() => inputRef.current?.focus()}>
                     {chips.map((chip) => {
                       const isInvalid = chip.status === "invalid";
                       const isValid = chip.status === "valid";
                       return (
-                        <span
-                          key={chip.id}
-                          title={chip.errorMsg}
-                          style={{
-                            display: "inline-flex", alignItems: "center", gap: 5,
-                            padding: "3px 6px 3px 8px", borderRadius: 6, fontSize: 12,
-                            background: isValid ? "#f0fdf4" : isInvalid ? "#fef2f2" : "#f3f4f6",
-                            border: `1px solid ${isValid ? "#86efac" : isInvalid ? "#f0c0c0" : "#e5e7eb"}`,
-                            color: isValid ? "#15803d" : isInvalid ? "#7b1113" : "#374151",
-                          }}
-                        >
+                        <span key={chip.id} title={chip.errorMsg} style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "3px 6px 3px 8px", borderRadius: 6, fontSize: 12, background: isValid ? "#f0fdf4" : isInvalid ? "#fef2f2" : "#f3f4f6", border: `1px solid ${isValid ? "#86efac" : isInvalid ? "#f0c0c0" : "#e5e7eb"}`, color: isValid ? "#15803d" : isInvalid ? "#7b1113" : "#374151" }}>
                           {chip.email}
-                          {chip.role !== "Staff" && (
-                            <span style={{ fontSize: 10, opacity: 0.6, marginLeft: 2 }}>· {chip.role}</span>
-                          )}
                           {isValid && <Check size={11} color="#16a34a" />}
-                          {isInvalid && (
-                            <span title={chip.errorMsg} style={{ fontSize: 10, marginLeft: 2 }}>✕</span>
-                          )}
-                          <button
-                            type="button"
-                            onMouseDown={(e) => { e.preventDefault(); removeChip(chip.id); }}
-                            style={{ background: "none", border: "none", cursor: "pointer", padding: 0, display: "flex", color: "inherit", opacity: 0.6, marginLeft: 1 }}
-                          >
+                          <button type="button" onMouseDown={(e) => { e.preventDefault(); removeChip(chip.id); }} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, display: "flex", color: "inherit", opacity: 0.6, marginLeft: 1 }}>
                             <X size={11} />
                           </button>
                         </span>
                       );
                     })}
-
-                    <input
-                      ref={inputRef}
-                      className="cpt-chip-input"
-                      type="email"
-                      value={inputVal}
-                      onChange={(e) => setInputVal(e.target.value)}
-                      onKeyDown={handleKD}
-                      onPaste={handlePaste}
-                      placeholder={chips.length === 0 ? "e.g. juan@example.com" : ""}
-                      autoComplete="off"
-                      autoCorrect="off"
-                      autoCapitalize="off"
-                      spellCheck={false}
-                    />
+                    <input ref={inputRef} className="cpt-chip-input" type="email" value={inputVal}
+                      onChange={(e) => setInputVal(e.target.value)} onKeyDown={handleKD} onPaste={handlePaste}
+                      placeholder={chips.length === 0 ? "e.g. juan@example.com" : ""} autoComplete="off" />
                   </div>
-
                   <p style={{ fontSize: 11, color: "#9ca3af", marginTop: 5 }}>
-                    Press <kbd style={{ fontSize: 10, background: "#f3f4f6", border: "1px solid #e5e7eb", borderRadius: 4, padding: "1px 4px" }}>Enter</kbd> or <kbd style={{ fontSize: 10, background: "#f3f4f6", border: "1px solid #e5e7eb", borderRadius: 4, padding: "1px 4px" }}>,</kbd> after each email · Paste multiple emails at once
+                    Press <kbd style={{ fontSize: 10, background: "#f3f4f6", border: "1px solid #e5e7eb", borderRadius: 4, padding: "1px 4px" }}>Enter</kbd> after each email
                   </p>
                 </div>
-
-                {/* Role — dropdown for future extensibility */}
                 <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <label style={{ fontSize: 13, fontWeight: 700, color: "#2d3b45", flexShrink: 0 }}>
-                    Role <span style={{ color: "#c0392b" }}>*</span>
-                  </label>
+                  <label style={{ fontSize: 13, fontWeight: 700, color: "#2d3b45", flexShrink: 0 }}>Role <span style={{ color: "#c0392b" }}>*</span></label>
                   <div style={{ position: "relative" }}>
-                    <select
-                      className="cpt-select"
-                      value={inputRole}
-                      onChange={(e) => setInputRole(e.target.value as EnrollableRole)}
-                      style={{ minWidth: 140 }}
-                    >
-                      {ENROLLABLE_ROLES.map((r) => (
-                        <option key={r} value={r}>{r}</option>
-                      ))}
+                    <select className="cpt-select" value={inputRole} onChange={(e) => setInputRole(e.target.value as EnrollableRole)} style={{ minWidth: 140 }}>
+                      {ENROLLABLE_ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
                     </select>
                     <DropArrow />
                   </div>
-                  <span style={{ fontSize: 11, color: "#9ca3af" }}>Applied to all emails above</span>
                 </div>
-
-                {/* Error message */}
                 {addError && (
                   <div style={{ display: "flex", gap: 8, background: "#fef2f2", border: "1px solid #f0c0c0", borderRadius: 8, padding: "9px 12px" }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7b1113" strokeWidth={2.2} style={{ flexShrink: 0, marginTop: 1 }}>
-                      <circle cx="12" cy="12" r="10" /><path d="M15 9l-6 6M9 9l6 6" strokeLinecap="round" />
-                    </svg>
                     <p style={{ fontSize: 12, color: "#7b1113", margin: 0, fontWeight: 600 }}>{addError}</p>
                   </div>
                 )}
               </div>
-
               <div className="cpt-modal-footer">
-                <button className="cpt-btn-secondary" onClick={closeAddModal} disabled={adding}>
-                  Cancel
-                </button>
-                <button
-                  className="cpt-btn-primary"
-                  onClick={() => void handleAddPeople()}
-                  disabled={adding || (chips.length === 0 && !inputVal.trim())}
-                >
+                <button className="cpt-btn-secondary" onClick={closeAddModal} disabled={adding}>Cancel</button>
+                <button className="cpt-btn-primary" onClick={() => void handleAddPeople()} disabled={adding || (chips.length === 0 && !inputVal.trim())}>
                   {adding && <Loader2 size={13} className="cpt-spin" />}
-                  {adding
-                    ? "Adding…"
-                    : `Add ${validChipCount > 0 ? validChipCount : ""} to Course`}
+                  {adding ? "Adding…" : `Add ${validChipCount > 0 ? validChipCount : ""} to Course`}
                 </button>
               </div>
             </div>
           </div>
         )}
 
-        {/* Group Set Modal */}
         {groupSetModal && canManagePeople && (
           <div className="cpt-overlay" onClick={(e) => { if (e.target === e.currentTarget) setGroupSetModal(false); }}>
             <div className="cpt-modal" style={{ width: 560, maxHeight: "90vh" }}>
@@ -1110,7 +1014,6 @@ export default function CoursePeopleTab({
           </div>
         )}
 
-        {/* Add Group Modal */}
         {addGroupModal && canManagePeople && (
           <div className="cpt-overlay" onClick={(e) => { if (e.target === e.currentTarget) setAddGroupModal(null); }}>
             <div className="cpt-modal" style={{ width: 440 }}>
@@ -1138,7 +1041,6 @@ export default function CoursePeopleTab({
           </div>
         )}
 
-        {/* Edit Group Modal */}
         {editGroupModal && canManagePeople && (
           <div className="cpt-overlay" onClick={(e) => { if (e.target === e.currentTarget) setEditGroupModal(null); }}>
             <div className="cpt-modal" style={{ width: 380 }}>
@@ -1166,7 +1068,6 @@ export default function CoursePeopleTab({
           </div>
         )}
 
-        {/* Edit Group Set Modal */}
         {editGsModal && canManagePeople && (
           <div className="cpt-overlay" onClick={(e) => { if (e.target === e.currentTarget) setEditGsModal(null); }}>
             <div className="cpt-modal" style={{ width: 560, maxHeight: "90vh" }}>
@@ -1213,7 +1114,6 @@ export default function CoursePeopleTab({
           </div>
         )}
 
-        {/* Clone Modal */}
         {cloneModal && canManagePeople && (
           <div className="cpt-overlay" onClick={(e) => { if (e.target === e.currentTarget) setCloneModal(null); }}>
             <div className="cpt-modal" style={{ width: 440 }}>
@@ -1235,7 +1135,6 @@ export default function CoursePeopleTab({
           </div>
         )}
 
-        {/* Move Panel */}
         {movePanel && (() => {
           const gs = groupSets.find((g) => g.id === movePanel.groupSetId);
           const others = gs?.groups.filter((g) => g.id !== movePanel.fromGroupId) ?? [];
@@ -1251,7 +1150,7 @@ export default function CoursePeopleTab({
                   <div>
                     <label style={{ display: "block", fontSize: 13, fontWeight: 700, color: "#2d3b45", marginBottom: 6 }}>Groups</label>
                     <div style={{ position: "relative" }}>
-                      <select className="cpt-select" value={moveToGroupId} onChange={(e) => { setMoveToGroupId(e.target.value); }} style={{ width: "100%" }}>
+                      <select className="cpt-select" value={moveToGroupId} onChange={(e) => setMoveToGroupId(e.target.value)} style={{ width: "100%" }}>
                         {others.length === 0 ? <option value="">No other groups</option> : others.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
                       </select>
                       <DropArrow />

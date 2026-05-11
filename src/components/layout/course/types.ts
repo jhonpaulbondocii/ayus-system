@@ -29,12 +29,20 @@ export interface Assignment {
     status: string;
     grade: number | null;
     submittedAt: string | null;
+    // ✅ Added missing fields used by CourseAssignmentSubmitterDetail
+    fileUrl?: string | null;
+    fileName?: string | null;
+    textEntry?: string | null;
+    websiteUrl?: string | null;
+    comments?: string | null;
+    feedback?: string | null;
   }[];
   // Publisher info injected by API
   _assignmentRole?: "manager" | "submitter";
   _publisherName?: string | null;
   _publisherImage?: string | null;
   _publisherRole?: string | null;
+  _publisherId?: string | null;
 }
 
 export interface RawAnnouncement {
@@ -105,6 +113,7 @@ export interface Person {
   pronouns: string | null;
   department: string | null;
   position: string | null;
+  accountType: string | null;
   employmentStatus: string | null;
   bio: string | null;
   status: string;
@@ -197,7 +206,7 @@ export type Tab =
   | "Files"
   | "Syllabus"
   | "Collaborations"
-  | "Quizzes"
+  | "Form"
   | "Settings";
 
 export type TabKey = "details" | "submission" | "settings" | "assign";

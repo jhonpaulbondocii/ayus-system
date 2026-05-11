@@ -5,13 +5,16 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
-  COLORS, MAROON, FONT,
+  MAROON, FONT,
   fmtDate, fmtDue, normalizeAnnouncement,
 } from "./helpers";
 import type {
   Course, Membership, Group,
-  Assignment, Announcement, RawAnnouncement,
+  Assignment as BaseAssignment, Announcement, RawAnnouncement,
 } from "./types";
+
+// ✅ Fix: extend the imported Assignment type to include createdById
+type Assignment = BaseAssignment & { createdById?: string; status?: string };
 
 /* ─────────────────────────────────────────────────────────────────────────────
    PROPS
@@ -26,6 +29,7 @@ interface Props {
   canManagePeople: boolean;
   canManageCourse: boolean;
   isHead: boolean;
+  currentUserId: string;
   onTabChange: (tab: string) => void;
 }
 
@@ -33,767 +37,508 @@ interface Props {
    CSS
 ───────────────────────────────────────────────────────────────────────────── */
 const CSS = `
-.cht-root { font-family:'Plus Jakarta Sans','Helvetica Neue',Arial,sans-serif; }
+  .ch-root * { box-sizing: border-box; }
+  .ch-root {
+    font-family: 'Plus Jakarta Sans','Helvetica Neue',Arial,sans-serif;
+    color: #111827;
+    background: #f8f9fa;
+    min-height: 100vh;
+  }
 
-/* ── stat card ── */
-.cht-stat {
-  background:#fff;
-  border:1px solid #f0e4e4;
-  border-radius:14px;
-  padding:18px 22px;
-  display:flex;
-  flex-direction:column;
-  gap:4px;
-  transition:box-shadow .2s, border-color .2s;
-  cursor:default;
-}
-.cht-stat:hover { box-shadow:0 4px 18px rgba(123,17,19,.09); border-color:#f0c0c0; }
-.cht-stat-val  { font-size:28px; font-weight:800; color:#7b1113; line-height:1; }
-.cht-stat-lbl  { font-size:11px; font-weight:700; color:#9ca3af; text-transform:uppercase; letter-spacing:.07em; margin-top:2px; }
+  @keyframes ch-fade {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: none; }
+  }
+  .ch-fade { animation: ch-fade .3s ease both; }
 
-/* ── section card ── */
-.cht-card {
-  background:#fff;
-  border:1px solid #f0e4e4;
-  border-radius:14px;
-  overflow:hidden;
-}
-.cht-card-header {
-  display:flex; align-items:center; justify-content:space-between;
-  padding:14px 18px;
-  border-bottom:1px solid #f9f0f0;
-  background:#fdf8f8;
-}
-.cht-card-title {
-  font-size:12px; font-weight:800; color:#7b1113;
-  text-transform:uppercase; letter-spacing:.08em;
-}
-.cht-card-link {
-  font-size:11px; font-weight:700; color:#7b1113;
-  background:none; border:none; cursor:pointer; text-decoration:underline; opacity:.7;
-}
-.cht-card-link:hover { opacity:1; }
+  /* ── Header ── */
+  .ch-header {
+    background: #fff;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 20px 28px 16px;
+  }
+  .ch-header-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .ch-course-name {
+    font-size: 22px;
+    font-weight: 800;
+    color: #111827;
+    margin: 0 0 4px;
+  }
+  .ch-course-meta {
+    font-size: 12px;
+    color: #6b7280;
+    font-weight: 500;
+  }
+  .ch-role-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    border-radius: 999px;
+    padding: 4px 12px;
+    font-size: 11px;
+    font-weight: 700;
+  }
 
-/* ── list rows ── */
-.cht-row {
-  display:flex; align-items:center; gap:12px;
-  padding:11px 18px;
-  border-bottom:1px solid #fdf0f0;
-  transition:background .12s;
-}
-.cht-row:last-child { border-bottom:none; }
-.cht-row:hover { background:#fdf8f8; }
-.cht-row-icon {
-  width:32px; height:32px; border-radius:8px;
-  display:flex; align-items:center; justify-content:center;
-  flex-shrink:0;
-}
-.cht-row-title { font-size:13px; font-weight:600; color:#111827; }
-.cht-row-sub   { font-size:11px; color:#9ca3af; margin-top:1px; }
-.cht-row-right  { margin-left:auto; text-align:right; flex-shrink:0; }
-.cht-row-badge {
-  font-size:10px; font-weight:800;
-  padding:3px 8px; border-radius:20px;
-  display:inline-block;
-}
+  /* ── View switcher tabs (Head only) ── */
+  .ch-view-tabs {
+    display: flex;
+    border-bottom: 2px solid #e5e7eb;
+    background: #fff;
+    padding: 0 28px;
+  }
+  .ch-view-tab {
+    padding: 10px 18px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #6b7280;
+    cursor: pointer;
+    border: none;
+    background: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    transition: color .15s, border-color .15s;
+    letter-spacing: .02em;
+  }
+  .ch-view-tab.active { color: #7b1113; border-bottom-color: #7b1113; }
+  .ch-view-tab:hover:not(.active) { color: #374151; }
 
-/* ── quick action btn ── */
-.cht-qa {
-  display:flex; flex-direction:column; align-items:center; gap:8px;
-  padding:16px 12px;
-  background:#fff; border:1px solid #f0e4e4; border-radius:12px;
-  cursor:pointer; transition:all .18s; text-align:center;
-  flex:1;
-}
-.cht-qa:hover { background:#fdf8f8; border-color:#f0c0c0; transform:translateY(-1px); box-shadow:0 4px 14px rgba(123,17,19,.09); }
-.cht-qa-icon {
-  width:38px; height:38px; border-radius:10px;
-  display:flex; align-items:center; justify-content:center;
-  background:#fef2f2;
-}
-.cht-qa-lbl { font-size:11px; font-weight:700; color:#374151; line-height:1.3; }
+  /* ── Body ── */
+  .ch-body { padding: 20px 28px 32px; max-width: 1080px; }
 
-/* ── activity item ── */
-.cht-act {
-  display:flex; align-items:flex-start; gap:10px;
-  padding:10px 18px; border-bottom:1px solid #fdf0f0;
-  transition:background .12s;
-}
-.cht-act:last-child { border-bottom:none; }
-.cht-act:hover { background:#fdf8f8; }
-.cht-act-dot {
-  width:8px; height:8px; border-radius:50%;
-  flex-shrink:0; margin-top:5px;
-}
+  /* ── Section title ── */
+  .ch-section-title {
+    font-size: 10px;
+    font-weight: 800;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: .09em;
+    margin: 0 0 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .ch-section-title::after { content: ''; flex: 1; height: 1px; background: #e5e7eb; }
 
-/* ── progress bar ── */
-.cht-bar-bg { height:6px; background:#f3f4f6; border-radius:99px; overflow:hidden; }
-.cht-bar-fill { height:100%; border-radius:99px; background:linear-gradient(90deg,#7b1113,#b91c1c); transition:width .4s ease; }
+  /* ── KPI strip ── */
+  .ch-kpi-strip { display: grid; gap: 12px; margin-bottom: 20px; }
+  .ch-kpi {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 16px 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    transition: box-shadow .18s, border-color .18s;
+  }
+  .ch-kpi.clickable { cursor: pointer; }
+  .ch-kpi.clickable:hover { border-color: #f0c0c0; box-shadow: 0 4px 14px rgba(123,17,19,.08); }
+  .ch-kpi-icon {
+    width: 38px; height: 38px; border-radius: 10px; background: #fef2f2;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .ch-kpi-val { font-size: 24px; font-weight: 800; color: #7b1113; line-height: 1; }
+  .ch-kpi-lbl { font-size: 11px; font-weight: 600; color: #6b7280; margin-top: 2px; }
 
-/* ── empty state ── */
-.cht-empty {
-  padding:28px 18px; text-align:center;
-  font-size:12px; color:#9ca3af;
-  display:flex; flex-direction:column; align-items:center; gap:6px;
-}
+  /* ── Quick actions ── */
+  .ch-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .ch-action-btn {
+    display: flex; align-items: center; gap: 7px;
+    padding: 9px 14px; background: #fff; border: 1px solid #e5e7eb;
+    border-radius: 10px; font-size: 12px; font-weight: 700; color: #374151;
+    cursor: pointer; transition: all .15s;
+  }
+  .ch-action-btn:hover { background: #fdf8f8; border-color: #f0c0c0; color: #7b1113; }
 
-/* ── staff welcome banner ── */
-.cht-welcome {
-  border-radius:16px; padding:24px 28px;
-  background:linear-gradient(135deg,#7b1113 0%,#b91c1c 60%,#dc2626 100%);
-  color:#fff; position:relative; overflow:hidden;
-}
-.cht-welcome::before {
-  content:''; position:absolute; right:-40px; top:-40px;
-  width:180px; height:180px; border-radius:50%;
-  background:rgba(255,255,255,.06);
-}
-.cht-welcome::after {
-  content:''; position:absolute; right:40px; bottom:-60px;
-  width:140px; height:140px; border-radius:50%;
-  background:rgba(255,255,255,.04);
-}
+  /* ── Card ── */
+  .ch-card {
+    background: #fff; border: 1px solid #e5e7eb;
+    border-radius: 12px; overflow: hidden; margin-bottom: 12px;
+  }
+  .ch-card-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 16px; border-bottom: 1px solid #f3f4f6;
+  }
+  .ch-card-title {
+    font-size: 12px; font-weight: 800; color: #374151;
+    display: flex; align-items: center; gap: 7px;
+    text-transform: uppercase; letter-spacing: .06em;
+  }
+  .ch-card-link {
+    font-size: 11px; font-weight: 700; color: #7b1113;
+    background: none; border: none; cursor: pointer; opacity: .7; transition: opacity .15s;
+  }
+  .ch-card-link:hover { opacity: 1; text-decoration: underline; }
 
-@keyframes cht-fade-in { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
-.cht-fade { animation:cht-fade-in .35s ease both; }
+  /* ── Rows ── */
+  .ch-row {
+    display: flex; align-items: center; gap: 11px;
+    padding: 10px 16px; border-bottom: 1px solid #f9fafb; transition: background .1s;
+  }
+  .ch-row:last-child { border-bottom: none; }
+  .ch-row.clickable { cursor: pointer; }
+  .ch-row.clickable:hover { background: #fafafa; }
+  .ch-row-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .ch-row-icon {
+    width: 32px; height: 32px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .ch-row-title {
+    font-size: 13px; font-weight: 600; color: #111827;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .ch-row-sub { font-size: 11px; color: #9ca3af; margin-top: 1px; }
+  .ch-row-right { margin-left: auto; text-align: right; flex-shrink: 0; }
+
+  /* ── Badge ── */
+  .ch-badge {
+    font-size: 10px; font-weight: 700; padding: 3px 8px;
+    border-radius: 20px; display: inline-block; white-space: nowrap;
+  }
+
+  /* ── Progress bar ── */
+  .ch-bar-track { height: 5px; background: #f3f4f6; border-radius: 99px; overflow: hidden; }
+  .ch-bar-fill {
+    height: 100%; border-radius: 99px;
+    background: linear-gradient(90deg, #7b1113, #b91c1c); transition: width .5s ease;
+  }
+
+  /* ── Empty state ── */
+  .ch-empty {
+    padding: 28px 18px; text-align: center; font-size: 12px; color: #9ca3af;
+    display: flex; flex-direction: column; align-items: center; gap: 5px;
+  }
+
+  /* ── Two-col grid ── */
+  .ch-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  /* ── Info box ── */
+  .ch-infobox {
+    background: #fdf8f8; border: 1px solid #f0e4e4; border-radius: 10px;
+    padding: 12px 14px; display: flex; align-items: center; justify-content: space-between;
+    font-size: 12px; font-weight: 600; color: #374151;
+  }
+  .ch-infobox-val { font-size: 18px; font-weight: 800; color: #7b1113; }
 `;
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   SHARED SMALL COMPONENTS
+   ICONS
 ───────────────────────────────────────────────────────────────────────────── */
-function MembershipBadge({ role }: { role: "Staff" | "Head" }) {
-  return (
-    <span
-      style={{
-        display: "inline-flex", alignItems: "center",
-        borderRadius: 999, padding: "3px 10px",
-        fontSize: 11, fontWeight: 700, border: "1px solid #f0c0c0",
-        color: MAROON, background: "#fdf8f8",
-      }}
-    >
-      {role}
-    </span>
-  );
-}
-
-function AssignmentIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+const Icon = {
+  Assignment: () => (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <rect x="4" y="3" width="14" height="18" rx="2" />
       <path d="M8 8h8M8 12h8M8 16h5" strokeLinecap="round" />
     </svg>
-  );
-}
-
-function AnnouncementIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+  ),
+  Announcement: () => (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <path d="M22 7.535V17a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7.535" strokeLinecap="round" />
       <path d="M22 7 12 13 2 7" strokeLinecap="round" />
     </svg>
-  );
-}
-
-function PeopleIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+  ),
+  People: () => (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" strokeLinecap="round" />
       <circle cx="9" cy="7" r="4" />
       <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" strokeLinecap="round" />
     </svg>
-  );
-}
-
-function GradeIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+  ),
+  Grade: () => (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
-  );
-}
-
-function SettingsIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+  ),
+  Settings: () => (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <circle cx="12" cy="12" r="3" />
       <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" strokeLinecap="round" />
     </svg>
-  );
-}
-
-function QuizIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+  ),
+  Clock: () => (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <circle cx="12" cy="12" r="10" />
-      <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01" strokeLinecap="round" />
+      <path d="M12 6v6l4 2" strokeLinecap="round" />
     </svg>
-  );
-}
+  ),
+  Chart: () => (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <line x1="18" y1="20" x2="18" y2="10" strokeLinecap="round" />
+      <line x1="12" y1="20" x2="12" y2="4" strokeLinecap="round" />
+      <line x1="6" y1="20" x2="6" y2="14" strokeLinecap="round" />
+    </svg>
+  ),
+  Form: () => (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <path d="M14 2v6h6M12 13H8M16 17H8" strokeLinecap="round" />
+    </svg>
+  ),
+};
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   HEAD HOME VIEW
+   HELPERS
 ───────────────────────────────────────────────────────────────────────────── */
-function HeadHomeView({
-  course, courseId, groups,
-  canManageAnnouncements, canManageAssignments, canManagePeople,
-  onTabChange,
-}: {
-  course: Course; courseId: string; groups: Group[];
-  canManageAnnouncements: boolean; canManageAssignments: boolean; canManagePeople: boolean;
-  onTabChange: (tab: string) => void;
-}) {
-  const [assignments, setAssignments] = useState<Assignment[]>([]);
-  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
-  const [peopleCount, setPeopleCount] = useState(0);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    Promise.all([
-      fetch(`/api/courses/${courseId}/assignments`).then((r) => r.json()).catch(() => ({ assignments: [] })),
-      fetch(`/api/courses/${courseId}/announcements`).then((r) => r.json()).catch(() => ({ announcements: [] })),
-      fetch(`/api/courses/${courseId}/people`).then((r) => r.json()).catch(() => ({ people: [] })),
-    ]).then(([aData, anData, pData]) => {
-      setAssignments(aData.assignments ?? []);
-      const raw = anData.announcements ?? anData.items ?? anData.data ?? [];
-      setAnnouncements(raw.map((item: RawAnnouncement, i: number) => normalizeAnnouncement(item, i)));
-      setPeopleCount((pData.people ?? []).length);
-      setLoading(false);
-    });
-  }, [courseId]);
-
-  const now = new Date();
-
-  // Stats
-  const totalAssignments = assignments.length;
-  const publishedAssignments = assignments.filter((a) => a.status === "PUBLISHED").length;
-  const ungradedCount = assignments.filter((a) => {
-    const subs = a.submissions ?? [];
-    return subs.some((s) => s.status === "SUBMITTED" && s.grade == null);
-  }).length;
-  const upcomingDue = assignments.filter((a) => a.dueDate && new Date(a.dueDate) > now && new Date(a.dueDate) <= new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)).length;
-
-  // Recent items
-  const recentAnnouncements = announcements.slice(0, 4);
-  const upcomingAssignments = assignments
-    .filter((a) => a.dueDate && new Date(a.dueDate) >= now)
-    .sort((a, b) => new Date(a.dueDate!).getTime() - new Date(b.dueDate!).getTime())
-    .slice(0, 5);
-  const unpublishedAssignments = assignments.filter((a) => a.status !== "PUBLISHED").slice(0, 4);
-
-  if (loading) {
-    return (
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 200, color: "#9ca3af", fontSize: 13, fontFamily: FONT }}>
-        Loading dashboard…
-      </div>
-    );
-  }
-
+function EmptyState({ emoji, text }: { emoji: string; text: string }) {
   return (
-    <div className="cht-root cht-fade" style={{ padding: "24px 28px", maxWidth: 1100 }}>
+    <div className="ch-empty">
+      <div style={{ fontSize: 22 }}>{emoji}</div>
+      <div>{text}</div>
+    </div>
+  );
+}
 
-      {/* ── Header ── */}
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 24, flexWrap: "wrap", gap: 12 }}>
-        <div>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
-            <h1 style={{ fontSize: 20, fontWeight: 800, color: "#111827", margin: 0 }}>{course.name}</h1>
-            <MembershipBadge role="Head" />
-            <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 20, background: course.status === "published" ? "#f0fdf4" : "#f9fafb", color: course.status === "published" ? "#15803d" : "#6b7280", border: `1px solid ${course.status === "published" ? "#bbf7d0" : "#e5e7eb"}` }}>
-              {course.status === "published" ? "Published" : "Unpublished"}
-            </span>
-          </div>
-          <p style={{ fontSize: 13, color: "#6b7280", margin: 0 }}>{course.code}{course.term ? ` · ${course.term}` : ""}</p>
-        </div>
-        {course.image && (
-          <div style={{ width: 80, height: 56, borderRadius: 10, overflow: "hidden", border: "1px solid #f0e4e4", flexShrink: 0 }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={course.image} alt={course.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-          </div>
-        )}
+function ProgressRow({ label, current, total, unit = "" }: {
+  label: string; current: number; total: number; unit?: string;
+}) {
+  const pct = total > 0 ? Math.min((current / total) * 100, 100) : 0;
+  return (
+    <div style={{ marginBottom: 10 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
+        <span style={{ fontSize: 12, fontWeight: 600, color: "#374151" }}>{label}</span>
+        <span style={{ fontSize: 12, fontWeight: 700, color: MAROON }}>{current}{unit}/{total}{unit}</span>
       </div>
-
-      {/* ── Stats Row ── */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 24 }}>
-        <div className="cht-stat" onClick={() => onTabChange("Assignments")} style={{ cursor: "pointer" }}>
-          <div className="cht-stat-val">{totalAssignments}</div>
-          <div className="cht-stat-lbl">Total Assignments</div>
-        </div>
-        <div className="cht-stat" onClick={() => onTabChange("Assignments")} style={{ cursor: "pointer" }}>
-          <div className="cht-stat-val" style={{ color: ungradedCount > 0 ? "#b91c1c" : "#7b1113" }}>{ungradedCount}</div>
-          <div className="cht-stat-lbl">Needs Grading</div>
-        </div>
-        <div className="cht-stat" onClick={() => onTabChange("People")} style={{ cursor: "pointer" }}>
-          <div className="cht-stat-val">{peopleCount}</div>
-          <div className="cht-stat-lbl">Members Enrolled</div>
-        </div>
-        <div className="cht-stat">
-          <div className="cht-stat-val">{upcomingDue}</div>
-          <div className="cht-stat-lbl">Due This Week</div>
-        </div>
-      </div>
-
-      {/* ── Quick Actions ── */}
-      <div style={{ marginBottom: 24 }}>
-        <p style={{ fontSize: 11, fontWeight: 800, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10 }}>Quick Actions</p>
-        <div style={{ display: "flex", gap: 10 }}>
-          {canManageAnnouncements && (
-            <button className="cht-qa" onClick={() => onTabChange("Announcements")}>
-              <div className="cht-qa-icon"><AnnouncementIcon /></div>
-              <span className="cht-qa-lbl">Post Announcement</span>
-            </button>
-          )}
-          {canManageAssignments && (
-            <button className="cht-qa" onClick={() => onTabChange("Assignments")}>
-              <div className="cht-qa-icon"><AssignmentIcon /></div>
-              <span className="cht-qa-lbl">Create Assignment</span>
-            </button>
-          )}
-          {canManageAssignments && (
-            <button className="cht-qa" onClick={() => onTabChange("Quizzes")}>
-              <div className="cht-qa-icon"><QuizIcon /></div>
-              <span className="cht-qa-lbl">Create Quiz / Form</span>
-            </button>
-          )}
-          {canManagePeople && (
-            <button className="cht-qa" onClick={() => onTabChange("People")}>
-              <div className="cht-qa-icon"><PeopleIcon /></div>
-              <span className="cht-qa-lbl">Manage People</span>
-            </button>
-          )}
-          <button className="cht-qa" onClick={() => onTabChange("Grades")}>
-            <div className="cht-qa-icon"><GradeIcon /></div>
-            <span className="cht-qa-lbl">View Grades</span>
-          </button>
-          <button className="cht-qa" onClick={() => onTabChange("Settings")}>
-            <div className="cht-qa-icon"><SettingsIcon /></div>
-            <span className="cht-qa-lbl">Course Settings</span>
-          </button>
-        </div>
-      </div>
-
-      {/* ── Two-column grid ── */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
-
-        {/* Upcoming Due */}
-        <div className="cht-card">
-          <div className="cht-card-header">
-            <span className="cht-card-title">📅 Upcoming Due Dates</span>
-            <button className="cht-card-link" onClick={() => onTabChange("Assignments")}>View all</button>
-          </div>
-          {upcomingAssignments.length === 0 ? (
-            <div className="cht-empty">
-              <span style={{ fontSize: 22 }}>✅</span>
-              <span>No upcoming due dates</span>
-            </div>
-          ) : (
-            upcomingAssignments.map((a) => {
-              const daysLeft = a.dueDate ? Math.ceil((new Date(a.dueDate).getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) : null;
-              const isUrgent = daysLeft !== null && daysLeft <= 2;
-              return (
-                <div key={a.id} className="cht-row">
-                  <div className="cht-row-icon" style={{ background: "#fef2f2" }}>
-                    <span style={{ color: MAROON }}><AssignmentIcon /></span>
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div className="cht-row-title" style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{a.title}</div>
-                    <div className="cht-row-sub">{a.assignmentGroup} · {a.points} pts</div>
-                  </div>
-                  <div className="cht-row-right">
-                    <div style={{ fontSize: 11, fontWeight: 700, color: isUrgent ? "#b91c1c" : "#6b7280" }}>
-                      {daysLeft === 0 ? "Due today" : daysLeft === 1 ? "Due tomorrow" : `${daysLeft}d left`}
-                    </div>
-                    <div style={{ fontSize: 10, color: "#9ca3af" }}>{fmtDue(a.dueDate)}</div>
-                  </div>
-                </div>
-              );
-            })
-          )}
-        </div>
-
-        {/* Recent Announcements */}
-        <div className="cht-card">
-          <div className="cht-card-header">
-            <span className="cht-card-title">📢 Recent Announcements</span>
-            <button className="cht-card-link" onClick={() => onTabChange("Announcements")}>View all</button>
-          </div>
-          {recentAnnouncements.length === 0 ? (
-            <div className="cht-empty">
-              <span style={{ fontSize: 22 }}>📭</span>
-              <span>No announcements yet</span>
-            </div>
-          ) : (
-            recentAnnouncements.map((a) => (
-              <div key={a.id} className="cht-row">
-                <div className="cht-row-icon" style={{ background: "#fef2f2" }}>
-                  <span style={{ color: MAROON }}><AnnouncementIcon /></span>
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div className="cht-row-title" style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{a.title}</div>
-                  <div className="cht-row-sub">To: {a.recipientsLabel}</div>
-                </div>
-                <div className="cht-row-right">
-                  <div style={{ fontSize: 10, color: "#9ca3af" }}>{fmtDate(a.createdAt)}</div>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      </div>
-
-      {/* ── Bottom row ── */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-
-        {/* Unpublished Assignments */}
-        <div className="cht-card">
-          <div className="cht-card-header">
-            <span className="cht-card-title">🔒 Unpublished Assignments</span>
-            <span style={{ fontSize: 11, color: "#9ca3af", fontWeight: 600 }}>{unpublishedAssignments.length} draft{unpublishedAssignments.length !== 1 ? "s" : ""}</span>
-          </div>
-          {unpublishedAssignments.length === 0 ? (
-            <div className="cht-empty">
-              <span style={{ fontSize: 22 }}>🎉</span>
-              <span>All assignments are published</span>
-            </div>
-          ) : (
-            unpublishedAssignments.map((a) => (
-              <div key={a.id} className="cht-row" style={{ cursor: "pointer" }} onClick={() => onTabChange("Assignments")}>
-                <div className="cht-row-icon" style={{ background: "#f9fafb" }}>
-                  <span style={{ color: "#9ca3af" }}><AssignmentIcon /></span>
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div className="cht-row-title" style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", color: "#6b7280" }}>{a.title}</div>
-                  <div className="cht-row-sub">{a.points} pts · {a.assignmentGroup}</div>
-                </div>
-                <span className="cht-row-badge" style={{ background: "#f9fafb", color: "#6b7280", border: "1px solid #e5e7eb" }}>Draft</span>
-              </div>
-            ))
-          )}
-        </div>
-
-        {/* Published Progress + Groups */}
-        <div className="cht-card">
-          <div className="cht-card-header">
-            <span className="cht-card-title">📊 Course Overview</span>
-          </div>
-          <div style={{ padding: "16px 18px", display: "flex", flexDirection: "column", gap: 16 }}>
-
-            {/* Published progress */}
-            <div>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                <span style={{ fontSize: 12, fontWeight: 600, color: "#374151" }}>Assignment Publishing</span>
-                <span style={{ fontSize: 12, fontWeight: 700, color: MAROON }}>{publishedAssignments}/{totalAssignments} published</span>
-              </div>
-              <div className="cht-bar-bg">
-                <div className="cht-bar-fill" style={{ width: totalAssignments > 0 ? `${(publishedAssignments / totalAssignments) * 100}%` : "0%" }} />
-              </div>
-            </div>
-
-            {/* Announcement count */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px", background: "#fdf8f8", borderRadius: 10, border: "1px solid #f0e4e4" }}>
-              <span style={{ fontSize: 12, fontWeight: 600, color: "#374151" }}>Total Announcements</span>
-              <span style={{ fontSize: 18, fontWeight: 800, color: MAROON }}>{announcements.length}</span>
-            </div>
-
-            {/* Groups */}
-            {groups.length > 0 && (
-              <div>
-                <p style={{ fontSize: 11, fontWeight: 800, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 8 }}>Course Groups</p>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                  {groups.slice(0, 6).map((g) => (
-                    <span key={g.id} style={{ fontSize: 11, fontWeight: 600, padding: "4px 10px", borderRadius: 20, background: "#fef2f2", color: MAROON, border: "1px solid #f0c0c0" }}>
-                      {g.name} · {g.memberCount}
-                    </span>
-                  ))}
-                  {groups.length > 6 && (
-                    <span style={{ fontSize: 11, color: "#9ca3af", padding: "4px 6px" }}>+{groups.length - 6} more</span>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
+      <div className="ch-bar-track">
+        <div className="ch-bar-fill" style={{ width: `${pct}%` }} />
       </div>
     </div>
   );
 }
 
+function KpiCard({ value, label, icon, urgent = false, onClick }: {
+  value: number | string; label: string; icon: React.ReactNode; urgent?: boolean; onClick?: () => void;
+}) {
+  return (
+    <div className={`ch-kpi ${onClick ? "clickable" : ""}`} onClick={onClick}>
+      <div className="ch-kpi-icon">
+        <span style={{ color: urgent ? "#b91c1c" : MAROON }}>{icon}</span>
+      </div>
+      <div>
+        <div className="ch-kpi-val" style={{ color: urgent ? "#b91c1c" : MAROON }}>{value}</div>
+        <div className="ch-kpi-lbl">{label}</div>
+      </div>
+    </div>
+  );
+}
+
+function ActionBtn({ icon, label, onClick }: {
+  icon: React.ReactNode; label: string; onClick: () => void;
+}) {
+  return (
+    <button className="ch-action-btn" onClick={onClick}>
+      <span style={{ color: MAROON }}>{icon}</span>
+      {label}
+    </button>
+  );
+}
+
 /* ─────────────────────────────────────────────────────────────────────────────
-   STAFF HOME VIEW
+   CARDS
 ───────────────────────────────────────────────────────────────────────────── */
-function StaffHomeView({
-  course, courseId, groups, onTabChange,
-}: {
-  course: Course; courseId: string; groups: Group[]; onTabChange: (tab: string) => void;
+
+function UpcomingDueCard({ assignments, now, courseId, onTabChange, isHead, headManagementView = false, currentUserId = "" }: {
+  assignments: Assignment[]; now: Date; courseId: string;
+  onTabChange: (t: string) => void; isHead: boolean;
+  headManagementView?: boolean; currentUserId?: string;
 }) {
   const router = useRouter();
-  const [assignments, setAssignments] = useState<Assignment[]>([]);
-  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    Promise.all([
-      fetch(`/api/courses/${courseId}/assignments`).then((r) => r.json()).catch(() => ({ assignments: [] })),
-      fetch(`/api/courses/${courseId}/announcements`).then((r) => r.json()).catch(() => ({ announcements: [] })),
-    ]).then(([aData, anData]) => {
-      setAssignments(aData.assignments ?? []);
-      const raw = anData.announcements ?? anData.items ?? anData.data ?? [];
-      setAnnouncements(raw.map((item: RawAnnouncement, i: number) => normalizeAnnouncement(item, i)));
-      setLoading(false);
-    });
-  }, [courseId]);
+  const sourceAssignments = headManagementView && currentUserId
+    ? assignments.filter((a) => a.createdById === currentUserId)
+    : assignments;
 
-  const now = new Date();
-
-  // Upcoming assignments (next 7 days)
-  const upcoming = assignments
+  const upcoming = sourceAssignments
     .filter((a) => a.dueDate && new Date(a.dueDate) >= now)
     .sort((a, b) => new Date(a.dueDate!).getTime() - new Date(b.dueDate!).getTime())
     .slice(0, 5);
 
-  // Past due / submitted
-  const submitted = assignments.filter((a) => (a.submissions ?? []).some((s) => s.submittedAt));
-  const totalPoints = assignments.reduce((sum, a) => sum + (a.points || 0), 0);
-  const earnedPoints = assignments.reduce((sum, a) => {
-    const sub = (a.submissions ?? [])[0];
-    return sum + (sub?.grade ?? 0);
-  }, 0);
-
-  // Recent announcements
-  const recentAnnouncements = announcements.slice(0, 3);
-  const unreadCount = announcements.filter((a) => !a.read).length;
-
-  // My groups
-  const myGroups = groups.filter((g) => g.isMember);
-
-  if (loading) {
-    return (
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 200, color: "#9ca3af", fontSize: 13, fontFamily: FONT }}>
-        Loading…
-      </div>
-    );
-  }
-
   return (
-    <div className="cht-root cht-fade" style={{ padding: "24px 28px", maxWidth: 960 }}>
-
-      {/* ── Welcome Banner ── */}
-      <div className="cht-welcome" style={{ marginBottom: 24 }}>
-        <div style={{ position: "relative", zIndex: 1 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
-            <h1 style={{ fontSize: 20, fontWeight: 800, color: "#fff", margin: 0 }}>{course.name}</h1>
-            <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20, background: "rgba(255,255,255,.18)", color: "#fff" }}>Staff</span>
-          </div>
-          <p style={{ fontSize: 13, color: "rgba(255,255,255,.75)", margin: 0 }}>
-            {course.code}{course.term ? ` · ${course.term}` : ""}
-            {course.status === "published" ? " · Published" : " · Unpublished"}
-          </p>
-          <div style={{ display: "flex", gap: 20, marginTop: 14 }}>
-            <div>
-              <div style={{ fontSize: 22, fontWeight: 800, color: "#fff" }}>{submitted.length}<span style={{ fontSize: 14, opacity: 0.7 }}>/{assignments.length}</span></div>
-              <div style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,.6)", textTransform: "uppercase", letterSpacing: "0.07em" }}>Submitted</div>
-            </div>
-            <div style={{ width: 1, background: "rgba(255,255,255,.2)" }} />
-            <div>
-              <div style={{ fontSize: 22, fontWeight: 800, color: "#fff" }}>{totalPoints > 0 ? Math.round((earnedPoints / totalPoints) * 100) : 0}<span style={{ fontSize: 14, opacity: 0.7 }}>%</span></div>
-              <div style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,.6)", textTransform: "uppercase", letterSpacing: "0.07em" }}>Grade</div>
-            </div>
-            <div style={{ width: 1, background: "rgba(255,255,255,.2)" }} />
-            <div>
-              <div style={{ fontSize: 22, fontWeight: 800, color: "#fff" }}>{unreadCount}</div>
-              <div style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,.6)", textTransform: "uppercase", letterSpacing: "0.07em" }}>Unread</div>
-            </div>
-          </div>
-        </div>
+    <div className="ch-card">
+      <div className="ch-card-head">
+        <span className="ch-card-title"><Icon.Clock /> Upcoming Due Dates</span>
+        <button className="ch-card-link" onClick={() => onTabChange("Assignments")}>View all →</button>
       </div>
-
-      {/* ── Quick Nav ── */}
-      <div style={{ display: "flex", gap: 10, marginBottom: 24 }}>
-        {[
-          { label: "Assignments", tab: "Assignments", icon: <AssignmentIcon /> },
-          { label: "Quizzes", tab: "Quizzes", icon: <QuizIcon /> },
-          { label: "Announcements", tab: "Announcements", icon: <AnnouncementIcon /> },
-          { label: "Grades", tab: "Grades", icon: <GradeIcon /> },
-        ].map((item) => (
-          <button key={item.tab} className="cht-qa" onClick={() => onTabChange(item.tab)}>
-            <div className="cht-qa-icon">{item.icon}</div>
-            <span className="cht-qa-lbl">{item.label}</span>
-          </button>
-        ))}
-      </div>
-
-      {/* ── Main content grid ── */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
-
-        {/* What's Due Soon */}
-        <div className="cht-card">
-          <div className="cht-card-header">
-            <span className="cht-card-title">📋 What&apos;s Due Soon</span>
-            <button className="cht-card-link" onClick={() => onTabChange("Assignments")}>View all</button>
-          </div>
-          {upcoming.length === 0 ? (
-            <div className="cht-empty">
-              <span style={{ fontSize: 22 }}>🎉</span>
-              <span>No upcoming due dates!</span>
-            </div>
-          ) : (
-            upcoming.map((a) => {
-              const sub = (a.submissions ?? [])[0];
-              const isSubmitted = !!sub?.submittedAt;
-              const daysLeft = a.dueDate ? Math.ceil((new Date(a.dueDate).getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) : null;
-              const isUrgent = daysLeft !== null && daysLeft <= 2 && !isSubmitted;
-
-              return (
-                <div key={a.id} className="cht-row" style={{ cursor: "pointer" }}
-                  onClick={() => router.push(`/courses/${courseId}/assignments/${a.id}`)}>
-                  <div className="cht-row-icon" style={{ background: isSubmitted ? "#f0fdf4" : isUrgent ? "#fef2f2" : "#fdf8f8" }}>
-                    <span style={{ color: isSubmitted ? "#15803d" : MAROON }}><AssignmentIcon /></span>
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div className="cht-row-title" style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{a.title}</div>
-                    <div className="cht-row-sub">{a.points} pts · Due {fmtDue(a.dueDate)}</div>
-                  </div>
-                  <div className="cht-row-right">
-                    {isSubmitted ? (
-                      <span className="cht-row-badge" style={{ background: "#f0fdf4", color: "#15803d", border: "1px solid #bbf7d0" }}>✓ Submitted</span>
-                    ) : (
-                      <span className="cht-row-badge" style={{ background: isUrgent ? "#fef2f2" : "#f9fafb", color: isUrgent ? "#b91c1c" : "#6b7280", border: `1px solid ${isUrgent ? "#f0c0c0" : "#e5e7eb"}` }}>
-                        {daysLeft === 0 ? "Today" : daysLeft === 1 ? "Tomorrow" : `${daysLeft}d`}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              );
-            })
-          )}
-        </div>
-
-        {/* Recent Announcements */}
-        <div className="cht-card">
-          <div className="cht-card-header">
-            <span className="cht-card-title">
-              📢 Announcements
-              {unreadCount > 0 && (
-                <span style={{ marginLeft: 8, fontSize: 10, fontWeight: 800, padding: "2px 6px", borderRadius: 20, background: MAROON, color: "#fff" }}>
-                  {unreadCount} new
-                </span>
-              )}
-            </span>
-            <button className="cht-card-link" onClick={() => onTabChange("Announcements")}>View all</button>
-          </div>
-          {recentAnnouncements.length === 0 ? (
-            <div className="cht-empty">
-              <span style={{ fontSize: 22 }}>📭</span>
-              <span>No announcements yet</span>
-            </div>
-          ) : (
-            recentAnnouncements.map((a) => (
-              <div key={a.id} className="cht-row" style={{ cursor: "pointer" }} onClick={() => onTabChange("Announcements")}>
-                <div style={{ width: 8, height: 8, borderRadius: "50%", background: a.read ? "transparent" : MAROON, flexShrink: 0, marginTop: 4, border: a.read ? "1px solid #e5e7eb" : "none" }} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div className="cht-row-title" style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", fontWeight: a.read ? 500 : 700 }}>{a.title}</div>
-                  <div className="cht-row-sub">{a.authorName} · {fmtDate(a.createdAt)}</div>
-                  {a.body && (
-                    <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                      {a.body.slice(0, 60)}{a.body.length > 60 ? "…" : ""}
+      {upcoming.length === 0 ? (
+        <EmptyState emoji="✅" text="No upcoming due dates" />
+      ) : (
+        upcoming.map((a) => {
+          const daysLeft = a.dueDate
+            ? Math.ceil((new Date(a.dueDate).getTime() - now.getTime()) / 86400000)
+            : null;
+          const urgent = daysLeft !== null && daysLeft <= 2;
+          const sub = (a.submissions ?? [])[0];
+          const submitted = !!sub?.submittedAt;
+          return (
+            <div
+              key={a.id}
+              className="ch-row clickable"
+              onClick={() => isHead ? onTabChange("Assignments") : router.push(`/courses/${courseId}/assignments/${a.id}`)}
+            >
+              <div className="ch-row-icon" style={{ background: submitted ? "#f0fdf4" : urgent ? "#fef2f2" : "#f9fafb" }}>
+                <span style={{ color: submitted ? "#15803d" : MAROON }}><Icon.Assignment /></span>
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div className="ch-row-title">{a.title}</div>
+                <div className="ch-row-sub">{a.assignmentGroup} · {a.points} pts</div>
+              </div>
+              <div className="ch-row-right">
+                {submitted ? (
+                  <span className="ch-badge" style={{ background: "#f0fdf4", color: "#15803d", border: "1px solid #bbf7d0" }}>✓ Submitted</span>
+                ) : (
+                  <>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: urgent ? "#b91c1c" : "#6b7280" }}>
+                      {daysLeft === 0 ? "Due today" : daysLeft === 1 ? "Tomorrow" : `${daysLeft}d left`}
                     </div>
-                  )}
-                </div>
+                    <div style={{ fontSize: 10, color: "#9ca3af" }}>{fmtDue(a.dueDate)}</div>
+                  </>
+                )}
               </div>
-            ))
+            </div>
+          );
+        })
+      )}
+    </div>
+  );
+}
+
+function AnnouncementsCard({ announcements, onTabChange }: {
+  announcements: Announcement[]; onTabChange: (t: string) => void;
+}) {
+  const unread = announcements.filter((a) => !a.read).length;
+  return (
+    <div className="ch-card">
+      <div className="ch-card-head">
+        <span className="ch-card-title">
+          <Icon.Announcement /> Announcements
+          {unread > 0 && (
+            <span className="ch-badge" style={{ background: MAROON, color: "#fff", fontSize: 9 }}>{unread} new</span>
           )}
-        </div>
+        </span>
+        <button className="ch-card-link" onClick={() => onTabChange("Announcements")}>View all →</button>
       </div>
-
-      {/* ── Bottom row ── */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-
-        {/* My Progress */}
-        <div className="cht-card">
-          <div className="cht-card-header">
-            <span className="cht-card-title">📈 My Progress</span>
-            <button className="cht-card-link" onClick={() => onTabChange("Grades")}>View grades</button>
+      {announcements.length === 0 ? (
+        <EmptyState emoji="📭" text="No announcements yet" />
+      ) : (
+        announcements.slice(0, 5).map((a) => (
+          <div key={a.id} className="ch-row clickable" onClick={() => onTabChange("Announcements")}>
+            <div className="ch-row-dot" style={{ background: a.read ? "transparent" : MAROON, border: a.read ? "1.5px solid #e5e7eb" : "none" }} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div className="ch-row-title" style={{ fontWeight: a.read ? 500 : 700 }}>{a.title}</div>
+              <div className="ch-row-sub">{a.authorName} · {fmtDate(a.createdAt)}</div>
+            </div>
           </div>
-          <div style={{ padding: "16px 18px", display: "flex", flexDirection: "column", gap: 14 }}>
+        ))
+      )}
+    </div>
+  );
+}
 
-            {/* Submission progress */}
-            <div>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                <span style={{ fontSize: 12, fontWeight: 600, color: "#374151" }}>Submissions</span>
-                <span style={{ fontSize: 12, fontWeight: 700, color: MAROON }}>{submitted.length}/{assignments.length}</span>
-              </div>
-              <div className="cht-bar-bg">
-                <div className="cht-bar-fill" style={{ width: assignments.length > 0 ? `${(submitted.length / assignments.length) * 100}%` : "0%" }} />
-              </div>
-            </div>
-
-            {/* Grade overview */}
-            <div>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                <span style={{ fontSize: 12, fontWeight: 600, color: "#374151" }}>Overall Grade</span>
-                <span style={{ fontSize: 12, fontWeight: 700, color: MAROON }}>
-                  {earnedPoints} / {totalPoints} pts
-                </span>
-              </div>
-              <div className="cht-bar-bg">
-                <div className="cht-bar-fill" style={{ width: totalPoints > 0 ? `${Math.min((earnedPoints / totalPoints) * 100, 100)}%` : "0%" }} />
-              </div>
-            </div>
-
-            {/* Recent grades */}
-            {assignments.filter((a) => (a.submissions ?? [])[0]?.grade != null).slice(0, 3).map((a) => {
-              const sub = (a.submissions ?? [])[0];
-              const pct = Math.round(((sub?.grade ?? 0) / a.points) * 100);
+function MyProgressCard({ assignments, onTabChange }: {
+  assignments: Assignment[]; onTabChange: (t: string) => void;
+}) {
+  const submitted = assignments.filter((a) => (a.submissions ?? [])[0]?.submittedAt);
+  const totalPts = assignments.reduce((s, a) => s + (a.points || 0), 0);
+  const earnedPts = assignments.reduce((s, a) => s + ((a.submissions ?? [])[0]?.grade ?? 0), 0);
+  const graded = assignments.filter((a) => (a.submissions ?? [])[0]?.grade != null);
+  return (
+    <div className="ch-card">
+      <div className="ch-card-head">
+        <span className="ch-card-title"><Icon.Chart /> My Progress</span>
+        <button className="ch-card-link" onClick={() => onTabChange("Grades")}>View grades →</button>
+      </div>
+      <div style={{ padding: "14px 16px" }}>
+        <ProgressRow label="Submissions" current={submitted.length} total={assignments.length} />
+        <ProgressRow label="Overall Grade" current={earnedPts} total={totalPts} unit=" pts" />
+        {graded.length > 0 && (
+          <>
+            <p style={{ fontSize: 10, fontWeight: 800, color: "#9ca3af", textTransform: "uppercase", letterSpacing: ".08em", margin: "10px 0 8px" }}>
+              Recent Grades
+            </p>
+            {graded.slice(0, 3).map((a) => {
+              const grade = (a.submissions ?? [])[0]?.grade ?? 0;
+              const pct = a.points > 0 ? Math.round((grade / a.points) * 100) : 0;
+              const color = pct >= 75 ? "#15803d" : pct >= 50 ? "#b45309" : "#b91c1c";
               return (
-                <div key={a.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 12px", background: "#fdf8f8", borderRadius: 8, border: "1px solid #f0e4e4" }}>
-                  <span style={{ fontSize: 12, fontWeight: 600, color: "#374151", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "60%" }}>{a.title}</span>
-                  <span style={{ fontSize: 12, fontWeight: 800, color: pct >= 75 ? "#15803d" : pct >= 50 ? "#b45309" : "#b91c1c" }}>
-                    {sub?.grade} / {a.points} <span style={{ fontWeight: 500, color: "#9ca3af" }}>({pct}%)</span>
-                  </span>
+                <div key={a.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "7px 10px", background: "#fafafa", borderRadius: 8, border: "1px solid #f3f4f6", marginBottom: 5 }}>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: "#374151", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "58%" }}>{a.title}</span>
+                  <span style={{ fontSize: 12, fontWeight: 800, color }}>{grade}/{a.points}<span style={{ fontWeight: 500, color: "#9ca3af" }}> ({pct}%)</span></span>
                 </div>
               );
             })}
+          </>
+        )}
+        {graded.length === 0 && <p style={{ fontSize: 12, color: "#9ca3af", textAlign: "center", marginTop: 8 }}>No grades yet</p>}
+      </div>
+    </div>
+  );
+}
 
-            {assignments.filter((a) => (a.submissions ?? [])[0]?.grade != null).length === 0 && (
-              <p style={{ fontSize: 12, color: "#9ca3af", textAlign: "center" }}>No grades yet</p>
-            )}
-          </div>
-        </div>
-
-        {/* My Groups */}
-        <div className="cht-card">
-          <div className="cht-card-header">
-            <span className="cht-card-title">👥 My Groups</span>
-          </div>
-          {myGroups.length === 0 ? (
-            <div className="cht-empty">
-              <span style={{ fontSize: 22 }}>🔍</span>
-              <span>You are not in any group yet</span>
+function MyGroupsCard({ groups, courseId }: { groups: Group[]; courseId: string }) {
+  const router = useRouter();
+  const myGroups = groups.filter((g) => g.isMember);
+  return (
+    <div className="ch-card">
+      <div className="ch-card-head">
+        <span className="ch-card-title"><Icon.People /> My Groups</span>
+      </div>
+      {myGroups.length === 0 ? (
+        <EmptyState emoji="🔍" text="You are not in any group yet" />
+      ) : (
+        myGroups.map((g) => (
+          <div key={g.id} className="ch-row clickable" onClick={() => router.push(`/courses/${courseId}/groups/${g.id}`)}>
+            <div className="ch-row-icon" style={{ background: "#fef2f2" }}>
+              <span style={{ color: MAROON }}><Icon.People /></span>
             </div>
-          ) : (
-            myGroups.map((g) => (
-              <div key={g.id} className="cht-row" style={{ cursor: "pointer" }}
-                onClick={() => router.push(`/courses/${courseId}/groups/${g.id}`)}>
-                <div className="cht-row-icon" style={{ background: "#fef2f2" }}>
-                  <span style={{ color: MAROON }}><PeopleIcon /></span>
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div className="cht-row-title">{g.name}</div>
-                  <div className="cht-row-sub">{g.memberCount} member{g.memberCount !== 1 ? "s" : ""} · {g.groupSetName}</div>
-                </div>
-                <span style={{ fontSize: 11, color: MAROON, fontWeight: 700 }}>Visit →</span>
-              </div>
-            ))
-          )}
-
-          {/* Course image */}
-          {course.image && myGroups.length === 0 && (
-            <div style={{ padding: "0 18px 18px" }}>
-              <div style={{ borderRadius: 10, overflow: "hidden", border: "1px solid #f0e4e4", height: 120 }}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={course.image} alt={course.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-              </div>
+            <div style={{ flex: 1 }}>
+              <div className="ch-row-title">{g.name}</div>
+              <div className="ch-row-sub">{g.memberCount} member{g.memberCount !== 1 ? "s" : ""} · {g.groupSetName}</div>
             </div>
-          )}
+            <span style={{ fontSize: 11, color: MAROON, fontWeight: 700 }}>Visit →</span>
+          </div>
+        ))
+      )}
+    </div>
+  );
+}
+
+function UnitOverviewCard({ allAssignments, currentUserId, announcements, groups }: {
+  allAssignments: Assignment[]; currentUserId: string;
+  announcements: number; groups: Group[];
+}) {
+  const myAssignments = allAssignments.filter((a) => a.createdById === currentUserId);
+  const myPublished   = myAssignments.filter((a) => a.status === "PUBLISHED").length;
+  const myTotal       = myAssignments.length;
+
+  return (
+    <div className="ch-card">
+      <div className="ch-card-head">
+        <span className="ch-card-title"><Icon.Chart /> Unit Overview</span>
+      </div>
+      <div style={{ padding: "14px 16px" }}>
+        <ProgressRow label="My Assignments Published" current={myPublished} total={myTotal} />
+        <div className="ch-infobox" style={{ marginTop: 10, marginBottom: groups.length > 0 ? 14 : 0 }}>
+          <span>Total Announcements</span>
+          <span className="ch-infobox-val">{announcements}</span>
         </div>
+        {groups.length > 0 && (
+          <>
+            <p style={{ fontSize: 10, fontWeight: 800, color: "#9ca3af", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 8 }}>Unit Groups</p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+              {groups.slice(0, 6).map((g) => (
+                <span key={g.id} style={{ fontSize: 11, fontWeight: 600, padding: "4px 10px", borderRadius: 20, background: "#fef2f2", color: MAROON, border: "1px solid #f0c0c0" }}>
+                  {g.name} · {g.memberCount}
+                </span>
+              ))}
+              {groups.length > 6 && <span style={{ fontSize: 11, color: "#9ca3af", padding: "4px 6px" }}>+{groups.length - 6} more</span>}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
@@ -812,34 +557,245 @@ export default function CourseHomeTab({
   canManagePeople,
   canManageCourse,
   isHead,
+  currentUserId = "",
   onTabChange,
 }: Props) {
+  void membership;
+  void canManageCourse;
+
+  const [headView, setHeadView] = useState<"admin" | "staff">("admin");
+  const [assignments, setAssignments]     = useState<Assignment[]>([]);
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [peopleCount, setPeopleCount]     = useState(0);
+  const [loading, setLoading]             = useState(true);
+
+  useEffect(() => {
+    const base = `/api/courses/${courseId}`;
+    Promise.all([
+      fetch(`${base}/assignments`).then((r) => r.json()).catch(() => ({ assignments: [] })),
+      fetch(`${base}/announcements`).then((r) => r.json()).catch(() => ({ announcements: [] })),
+      fetch(`${base}/people`).then((r) => r.json()).catch(() => ({ people: [] })),
+    ]).then(([aData, anData, pData]) => {
+      setAssignments(aData.assignments ?? []);
+      const raw = anData.announcements ?? anData.items ?? anData.data ?? [];
+      setAnnouncements(raw.map((item: RawAnnouncement, i: number) => normalizeAnnouncement(item, i)));
+      setPeopleCount((pData.people ?? []).length);
+      setLoading(false);
+    });
+  }, [courseId]);
+
+  const now = new Date();
+
+  // ── Only count assignments created by the current user for head's KPIs ──
+  const myCreatedAssignments = assignments.filter((a) => a.createdById === currentUserId);
+  const myPublishedCount     = myCreatedAssignments.filter((a) => a.status === "PUBLISHED").length;
+
+  const totalAssignments = assignments.length;
+
+  const ungradedCount = myCreatedAssignments.filter((a) =>
+    (a.submissions ?? []).some((s) => s.status === "SUBMITTED" && s.grade == null)
+  ).length;
+
+  // ✅ FIX: Due This Week for head = only their own created assignments
+  const dueThisWeekHead = myCreatedAssignments.filter((a) =>
+    a.dueDate && new Date(a.dueDate) > now && new Date(a.dueDate) <= new Date(now.getTime() + 7 * 86400000)
+  ).length;
+
+  // Due This Week for staff/student = all assignments in the unit
+  const dueThisWeekAll = assignments.filter((a) =>
+    a.dueDate && new Date(a.dueDate) > now && new Date(a.dueDate) <= new Date(now.getTime() + 7 * 86400000)
+  ).length;
+
+  const mySubmitted  = assignments.filter((a) => (a.submissions ?? [])[0]?.submittedAt).length;
+  const myTotalPts   = assignments.reduce((s, a) => s + (a.points || 0), 0);
+  const myEarnedPts  = assignments.reduce((s, a) => s + ((a.submissions ?? [])[0]?.grade ?? 0), 0);
+  const myGradePct   = myTotalPts > 0 ? Math.round((myEarnedPts / myTotalPts) * 100) : 0;
+  const unreadCount  = announcements.filter((a) => !a.read).length;
+
+  if (loading) {
+    return (
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 220, color: "#9ca3af", fontSize: 13, fontFamily: FONT, gap: 10 }}>
+        <svg className="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="40 60" />
+        </svg>
+        Loading dashboard…
+      </div>
+    );
+  }
+
+  /* ── HEAD ── */
   if (isHead) {
     return (
       <>
         <style>{CSS}</style>
-        <HeadHomeView
-          course={course}
-          courseId={courseId}
-          groups={groups}
-          canManageAnnouncements={canManageAnnouncements}
-          canManageAssignments={canManageAssignments}
-          canManagePeople={canManagePeople}
-          onTabChange={onTabChange}
-        />
+        <div className="ch-root ch-fade">
+
+          {/* Header */}
+          <div className="ch-header">
+            <div className="ch-header-top">
+              <div>
+                <h1 className="ch-course-name">{course.name}</h1>
+                <span className="ch-course-meta">{course.code}{course.term ? ` · ${course.term}` : ""}</span>
+              </div>
+              <span className="ch-role-badge" style={{ background: "#fef2f2", color: MAROON, border: "1px solid #f0c0c0" }}>
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: MAROON, display: "inline-block" }} />
+                Head
+              </span>
+            </div>
+          </div>
+
+          {/* View switcher */}
+          <div className="ch-view-tabs">
+            <button className={`ch-view-tab ${headView === "admin" ? "active" : ""}`} onClick={() => setHeadView("admin")}>
+              Unit Management
+            </button>
+            <button className={`ch-view-tab ${headView === "staff" ? "active" : ""}`} onClick={() => setHeadView("staff")}>
+              My Dashboard
+            </button>
+          </div>
+
+          {/* UNIT MANAGEMENT VIEW */}
+          {headView === "admin" && (
+            <div className="ch-body">
+              <p className="ch-section-title">Unit Overview</p>
+              <div className="ch-kpi-strip" style={{ gridTemplateColumns: "repeat(4, 1fr)" }}>
+                <KpiCard
+                  value={myCreatedAssignments.length}
+                  label={`My Assignments (${myPublishedCount} published)`}
+                  icon={<Icon.Assignment />}
+                  onClick={() => onTabChange("Assignments")}
+                />
+                <KpiCard value={ungradedCount} label="Needs Grading" icon={<Icon.Grade />} urgent={ungradedCount > 0} onClick={() => onTabChange("Assignments")} />
+                <KpiCard value={peopleCount} label="Members Enrolled" icon={<Icon.People />} onClick={() => onTabChange("People")} />
+                <KpiCard value={dueThisWeekHead} label="Due This Week" icon={<Icon.Clock />} />
+              </div>
+
+              <p className="ch-section-title">Quick Actions</p>
+              <div className="ch-actions" style={{ marginBottom: 20 }}>
+                {canManageAnnouncements && <ActionBtn icon={<Icon.Announcement />} label="Post Announcement" onClick={() => onTabChange("Announcements")} />}
+                {canManageAssignments && <ActionBtn icon={<Icon.Assignment />} label="Create Assignment" onClick={() => onTabChange("Assignments")} />}
+                {canManageAssignments && <ActionBtn icon={<Icon.Form />} label="Create Form" onClick={() => onTabChange("Quizzes")} />}
+{canManageAssignments && <ActionBtn icon={<Icon.Form />} label="Create Form (Survey)" onClick={() => onTabChange("Forms")} />}
+                {canManagePeople && <ActionBtn icon={<Icon.People />} label="Manage People" onClick={() => onTabChange("People")} />}
+                <ActionBtn icon={<Icon.Settings />} label="Settings" onClick={() => onTabChange("Settings")} />
+              </div>
+
+              <p className="ch-section-title">At a Glance</p>
+              <div className="ch-grid-2">
+                <div>
+                  <UpcomingDueCard
+                    assignments={assignments}
+                    now={now}
+                    courseId={courseId}
+                    onTabChange={onTabChange}
+                    isHead={true}
+                    headManagementView={true}
+                    currentUserId={currentUserId}
+                  />
+                  <AnnouncementsCard announcements={announcements} onTabChange={onTabChange} />
+                </div>
+                <div>
+                  <UnitOverviewCard
+                    allAssignments={assignments}
+                    currentUserId={currentUserId}
+                    announcements={announcements.length}
+                    groups={groups}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* MY DASHBOARD VIEW */}
+          {headView === "staff" && (
+            <div className="ch-body">
+              <p className="ch-section-title">My Status</p>
+              <div className="ch-kpi-strip" style={{ gridTemplateColumns: "repeat(4, 1fr)" }}>
+                <KpiCard value={`${mySubmitted}/${totalAssignments}`} label="Submitted" icon={<Icon.Assignment />} />
+                <KpiCard value={`${myGradePct}%`} label="Current Grade" icon={<Icon.Chart />} />
+                <KpiCard value={unreadCount} label="Unread Announcements" icon={<Icon.Announcement />} urgent={unreadCount > 0} />
+                <KpiCard value={dueThisWeekAll} label="Due This Week" icon={<Icon.Clock />} urgent={dueThisWeekAll > 0} />
+              </div>
+
+              <p className="ch-section-title">Quick Actions</p>
+              <div className="ch-actions" style={{ marginBottom: 20 }}>
+                <ActionBtn icon={<Icon.Grade />} label="View My Grades" onClick={() => onTabChange("Grades")} />
+                <ActionBtn icon={<Icon.Announcement />} label="Announcements" onClick={() => onTabChange("Announcements")} />
+                <ActionBtn icon={<Icon.Assignment />} label="My Assignments" onClick={() => onTabChange("Assignments")} />
+              </div>
+
+              <p className="ch-section-title">At a Glance</p>
+              <div className="ch-grid-2">
+                <div>
+                  <UpcomingDueCard
+                    assignments={assignments}
+                    now={now}
+                    courseId={courseId}
+                    onTabChange={onTabChange}
+                    isHead={true}
+                  />
+                  <AnnouncementsCard announcements={announcements} onTabChange={onTabChange} />
+                </div>
+                <div>
+                  <MyProgressCard assignments={assignments} onTabChange={onTabChange} />
+                  <MyGroupsCard groups={groups} courseId={courseId} />
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </>
     );
   }
 
+  /* ── STAFF (non-head) ── */
   return (
     <>
       <style>{CSS}</style>
-      <StaffHomeView
-        course={course}
-        courseId={courseId}
-        groups={groups}
-        onTabChange={onTabChange}
-      />
+      <div className="ch-root ch-fade">
+        <div className="ch-header">
+          <div className="ch-header-top">
+            <div>
+              <h1 className="ch-course-name">{course.name}</h1>
+              <span className="ch-course-meta">{course.code}{course.term ? ` · ${course.term}` : ""}</span>
+            </div>
+            <span className="ch-role-badge" style={{ background: "#eff6ff", color: "#0369a1", border: "1px solid #bae6fd" }}>
+              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#0369a1", display: "inline-block" }} />
+              Staff
+            </span>
+          </div>
+        </div>
+
+        <div className="ch-body">
+          <p className="ch-section-title">My Status</p>
+          <div className="ch-kpi-strip" style={{ gridTemplateColumns: "repeat(4, 1fr)" }}>
+            <KpiCard value={`${mySubmitted}/${totalAssignments}`} label="Submitted" icon={<Icon.Assignment />} />
+            <KpiCard value={`${myGradePct}%`} label="Current Grade" icon={<Icon.Chart />} />
+            <KpiCard value={unreadCount} label="Unread Announcements" icon={<Icon.Announcement />} urgent={unreadCount > 0} />
+            <KpiCard value={dueThisWeekAll} label="Due This Week" icon={<Icon.Clock />} urgent={dueThisWeekAll > 0} />
+          </div>
+
+          <p className="ch-section-title">Quick Actions</p>
+          <div className="ch-actions" style={{ marginBottom: 20 }}>
+  <ActionBtn icon={<Icon.Grade />} label="View Grades" onClick={() => onTabChange("Grades")} />
+  <ActionBtn icon={<Icon.Announcement />} label="Announcements" onClick={() => onTabChange("Announcements")} />
+  <ActionBtn icon={<Icon.Assignment />} label="Assignments" onClick={() => onTabChange("Assignments")} />
+  <ActionBtn icon={<Icon.Form />} label="Form" onClick={() => onTabChange("Form")} />
+</div>
+
+          <p className="ch-section-title">At a Glance</p>
+          <div className="ch-grid-2">
+            <div>
+              <UpcomingDueCard assignments={assignments} now={now} courseId={courseId} onTabChange={onTabChange} isHead={false} />
+              <AnnouncementsCard announcements={announcements} onTabChange={onTabChange} />
+            </div>
+            <div>
+              <MyProgressCard assignments={assignments} onTabChange={onTabChange} />
+              <MyGroupsCard groups={groups} courseId={courseId} />
+            </div>
+          </div>
+        </div>
+      </div>
     </>
   );
 }

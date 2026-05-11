@@ -18,6 +18,8 @@ interface Person {
   pronouns: string | null;
   role: string;
   enrolledAt: string;
+  position: string | null;
+  accountType: string | null;
 }
 interface GroupMember {
   user: { id: string; name: string; pronouns?: string | null };
@@ -297,25 +299,6 @@ const Avatar = ({ name, image, size = 32 }: { name: string; image: string | null
 /* ─────────────────────────────────────────────────────────────────────────────
    FIXED MENU — positions itself via getBoundingClientRect on the trigger btn
 ───────────────────────────────────────────────────────────────────────────── */
-const FixedMenu = ({ children, triggerRef }: { children: React.ReactNode; triggerRef: React.RefObject<HTMLButtonElement | null> }) => {
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const menu = menuRef.current;
-    const btn  = triggerRef.current;
-    if (!menu || !btn) return;
-    const r = btn.getBoundingClientRect();
-    menu.style.top  = `${r.bottom + 4}px`;
-    menu.style.left = `${Math.max(4, r.right - menu.offsetWidth)}px`;
-  }, [triggerRef]);
-
-  return (
-    <div ref={menuRef} className="cpp-menu-fixed" style={{ top: -9999, left: -9999 }}>
-      {children}
-    </div>
-  );
-};
-
 /* ─────────────────────────────────────────────────────────────────────────────
    COMPONENT
 ───────────────────────────────────────────────────────────────────────────── */
@@ -417,14 +400,16 @@ export default function CoursePeoplePage() {
 
   /* ── close menus on outside click ─────────────────────────────────────── */
   useEffect(() => {
-    const handler = () => {
-      setMenuOpenId(null);
-      setGsMenuOpen(null);
-      setGroupMenuOpen(null);
-      setMemberMenuOpen(null);
-      setAddToGroupMenu(null);
-    };
-    document.addEventListener("click", handler);
+    const handler = (e: MouseEvent) => {
+  const t = e.target as HTMLElement;
+  if (t.closest(".cpp-menu-fixed") || t.closest(".cpp-menu") || t.closest(".cpp-btn-icon") || t.closest(".cpp-plus-btn")) return;
+  setMenuOpenId(null);
+  setGsMenuOpen(null);
+  setGroupMenuOpen(null);
+  setMemberMenuOpen(null);
+  setAddToGroupMenu(null);
+};
+document.addEventListener("click", handler);
     return () => document.removeEventListener("click", handler);
   }, []);
 
@@ -722,8 +707,14 @@ export default function CoursePeoplePage() {
   };
 
   /* ── Member operations ─────────────────────────────────────────────────── */
-  const toggleGroup = (id: string) =>
-    setExpandedGroups(p => { const s = new Set(p); s.has(id) ? s.delete(id) : s.add(id); return s; });
+  const toggleGroup = (id: string) => {
+    setExpandedGroups((p) => {
+      const s = new Set(p);
+      if (s.has(id)) s.delete(id);
+      else s.add(id);
+      return s;
+    });
+  };
 
   const addStudentToGroup = async (gsId: string, gId: string, userId: string) => {
     setAddToGroupMenu(null);
@@ -785,8 +776,14 @@ export default function CoursePeoplePage() {
     if (allBrowseSel) setSelectedIds(p => { const s = new Set(p); browseFiltered.forEach(u => s.delete(u.id)); return s; });
     else setSelectedIds(p => { const s = new Set(p); browseFiltered.forEach(u => s.add(u.id)); return s; });
   };
-  const toggleUser = (id: string) =>
-    setSelectedIds(p => { const s = new Set(p); s.has(id) ? s.delete(id) : s.add(id); return s; });
+  const toggleUser = (id: string) => {
+    setSelectedIds((p) => {
+      const s = new Set(p);
+      if (s.has(id)) s.delete(id);
+      else s.add(id);
+      return s;
+    });
+  };
 
   const activeGs     = groupSets.find(gs => gs.id === activeTab) ?? null;
   const isGroupsArea = activeTab === "groups" || !!activeGs;
@@ -860,7 +857,7 @@ export default function CoursePeoplePage() {
                     <thead>
                       <tr>
                         <th className="avatar-col" />
-                        {["Name","Login ID","Section","Role"].map(h => <th key={h}>{h}</th>)}
+                        {["Name","Login ID","Staff Type","Position","Role"].map(h => <th key={h}>{h}</th>)}
                         <th className="action-col" />
                       </tr>
                     </thead>
@@ -875,7 +872,17 @@ export default function CoursePeoplePage() {
                             {p.pronouns && <span style={{ fontSize:12, color:"#9ca3af", marginLeft:4 }}>({p.pronouns})</span>}
                           </td>
                           <td>{p.email}</td>
-                          <td>{courseName}</td>
+                          <td>
+                            {p.accountType
+                              ? <span className="cpp-badge" style={{
+                                  background: p.accountType === "Teaching" ? "#eff6ff" : "#f5f3ff",
+                                  color: p.accountType === "Teaching" ? "#1d4ed8" : "#7c3aed",
+                                }}>
+                                  {p.accountType}
+                                </span>
+                              : <span style={{ color:"#d1d5db" }}>—</span>}
+                          </td>
+                          <td>{p.position ?? <span style={{ color:"#d1d5db" }}>—</span>}</td>
                           <td><span className="cpp-badge" style={{ color:"#7b1113" }}>{normalizeCourseRole(p.role)}</span></td>
                           <td>
                             {/* ── FIX: use position:fixed menu so it is never clipped by overflow:auto ── */}
@@ -885,7 +892,7 @@ export default function CoursePeoplePage() {
                                 else personBtnRefs.current.delete(p.id);
                               }}
                               className="cpp-btn-icon"
-                              onClick={e => { e.stopPropagation(); setMenuOpenId(menuOpenId === p.id ? null : p.id); }}
+                              onClick={() => setMenuOpenId(menuOpenId === p.id ? null : p.id)}
                             >
                               <MoreVertical size={15} />
                             </button>
@@ -902,13 +909,12 @@ export default function CoursePeoplePage() {
                                   el.style.left = `${Math.max(4, r.right - el.offsetWidth)}px`;
                                 }}
                               >
-                                {p.role !== "Staff" && <button className="cpp-menu-item" onClick={() => void updatePersonRole(p.id,"Staff")}>Set as Staff</button>}
-                                {p.role !== "Head"  && <button className="cpp-menu-item" onClick={() => void updatePersonRole(p.id,"Head")}>Set as Head</button>}
-                                <div className="cpp-menu-divider" />
-                                <button className="cpp-menu-item" onClick={() => { router.push(`/admin/courses/${courseId}/people/${p.id}`); setMenuOpenId(null); }}>User Details</button>
-                                <button className="cpp-menu-item">Deactivate User</button>
-                                <div className="cpp-menu-divider" />
-                                <button className="cpp-menu-item danger" onClick={() => void removeUser(p.id)}>Remove From Course</button>
+                                <button className="cpp-menu-item" onClick={(e) => { e.stopPropagation(); router.push(`/admin/courses/${courseId}/people/${p.id}`); setMenuOpenId(null); }}>View Profile</button>
+<div className="cpp-menu-divider" />
+{p.role !== "Staff" && <button className="cpp-menu-item" onClick={(e) => { e.stopPropagation(); void updatePersonRole(p.id,"Staff"); }}>Set as Staff</button>}
+{p.role !== "Head"  && <button className="cpp-menu-item" onClick={(e) => { e.stopPropagation(); void updatePersonRole(p.id,"Head"); }}>Set as Head</button>}
+<div className="cpp-menu-divider" />
+<button className="cpp-menu-item danger" onClick={(e) => { e.stopPropagation(); void removeUser(p.id); }}>Remove From Office</button>
                               </div>
                             )}
                           </td>
@@ -931,7 +937,14 @@ export default function CoursePeoplePage() {
                           {p.pronouns && <span style={{ fontSize:11, color:"#9ca3af", fontWeight:400, marginLeft:4 }}>({p.pronouns})</span>}
                         </div>
                         <div className="cpp-person-card-email">{p.email}</div>
-                        <div className="cpp-person-card-role">{normalizeCourseRole(p.role)}</div>
+                        <div style={{ display:"flex", flexDirection:"column", gap:2, marginTop:4 }}>
+                          {p.accountType && (
+                            <span style={{ fontSize:10, fontWeight:700, color: p.accountType === "Teaching" ? "#1d4ed8" : "#7c3aed" }}>
+                              {p.accountType}
+                            </span>
+                          )}
+                          <span className="cpp-person-card-role">{normalizeCourseRole(p.role)}{p.position ? ` · ${p.position}` : ""}</span>
+                        </div>
                       </div>
                       <div style={{ flexShrink:0 }}>
                         {/* ── FIX: same fixed-menu pattern for mobile cards ── */}
@@ -941,7 +954,7 @@ export default function CoursePeoplePage() {
                             else personBtnRefs.current.delete(`mobile-${p.id}`);
                           }}
                           className="cpp-btn-icon"
-                          onClick={e => { e.stopPropagation(); setMenuOpenId(menuOpenId === p.id ? null : p.id); }}
+                          onClick={() => setMenuOpenId(menuOpenId === p.id ? null : p.id)}
                         >
                           <MoreVertical size={15} />
                         </button>
@@ -958,13 +971,12 @@ export default function CoursePeoplePage() {
                               el.style.left = `${Math.max(4, r.right - el.offsetWidth)}px`;
                             }}
                           >
-                            {p.role !== "Staff" && <button className="cpp-menu-item" onClick={() => void updatePersonRole(p.id,"Staff")}>Set as Staff</button>}
-                            {p.role !== "Head"  && <button className="cpp-menu-item" onClick={() => void updatePersonRole(p.id,"Head")}>Set as Head</button>}
-                            <div className="cpp-menu-divider" />
-                            <button className="cpp-menu-item" onClick={() => { router.push(`/admin/courses/${courseId}/people/${p.id}`); setMenuOpenId(null); }}>User Details</button>
-                            <button className="cpp-menu-item">Deactivate User</button>
-                            <div className="cpp-menu-divider" />
-                            <button className="cpp-menu-item danger" onClick={() => void removeUser(p.id)}>Remove From Course</button>
+                            <button className="cpp-menu-item" onClick={(e) => { e.stopPropagation(); router.push(`/admin/courses/${courseId}/people/${p.id}`); setMenuOpenId(null); }}>View Profile</button>
+<div className="cpp-menu-divider" />
+{p.role !== "Staff" && <button className="cpp-menu-item" onClick={(e) => { e.stopPropagation(); void updatePersonRole(p.id,"Staff"); }}>Set as Staff</button>}
+{p.role !== "Head"  && <button className="cpp-menu-item" onClick={(e) => { e.stopPropagation(); void updatePersonRole(p.id,"Head"); }}>Set as Head</button>}
+<div className="cpp-menu-divider" />
+<button className="cpp-menu-item danger" onClick={(e) => { e.stopPropagation(); void removeUser(p.id); }}>Remove From Office</button>
                           </div>
                         )}
                       </div>
@@ -979,12 +991,12 @@ export default function CoursePeoplePage() {
         {/* ── Groups empty state ── */}
         {isGroupsArea && groupSets.length === 0 && (
           <div style={{ marginTop:24 }}>
-            <h2 style={{ fontSize:20, fontWeight:800, color:"#7b1113", marginBottom:12 }}>Student Groups</h2>
+            <h2 style={{ fontSize:20, fontWeight:800, color:"#7b1113", marginBottom:12 }}>Staff Groups</h2>
             <p style={{ fontSize:13, color:"#4a5568", lineHeight:1.6, maxWidth:820, marginBottom:8 }}>
-              Student groups are a useful way to organize students for things like group projects or papers. Every student group gets their own calendar, discussion board and collaboration tools so they can organize themselves and work together more effectively.
+              Staff groups are a useful way to organize students for things like group projects or papers. Every student group gets their own calendar, discussion board and collaboration tools so they can organize themselves and work together more effectively.
             </p>
             <p style={{ fontSize:13, color:"#4a5568", lineHeight:1.6, maxWidth:820 }}>
-              You can randomly assign students to groups of a specific size, or manually create and organize the groups. Once your groups are created, you can set assignments to be &quot;group submission&quot; assignments, which means each group will have one submission for all users of that group.
+              You can randomly assign staff to groups of a specific size, or manually create and organize the groups. Once your groups are created, you can set assignments to be &quot;group submission&quot; assignments, which means each group will have one submission for all users of that group.
             </p>
           </div>
         )}

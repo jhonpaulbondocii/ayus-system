@@ -2,8 +2,9 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { COLORS, MAROON, FONT } from "./helpers";
+import { MAROON, FONT } from "./helpers";
 import type { Course } from "./types";
 
 // ── Head Image Modal ───────────────────────────────────────────────────────────
@@ -63,7 +64,7 @@ function HeadImageModal({
 
   return (
     <div
-      className="fixed inset-0 z-[9999] bg-black/40 flex items-center justify-center p-6"
+      className="fixed inset-0 z-9999 bg-black/40 flex items-center justify-center p-6"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div className="w-full max-w-xl bg-white rounded-lg shadow-2xl overflow-hidden">
@@ -116,9 +117,11 @@ function HeadImageModal({
                 </>
               ) : (
                 <div className="flex flex-col items-center gap-3 w-full">
-                  <img
+                  <Image
                     src={previewUrl}
                     alt="Preview"
+                    width={200}
+                    height={200}
                     className="max-h-48 rounded border border-gray-200 object-contain shadow-sm"
                   />
                   <p className="text-xs text-gray-500 font-medium">{file?.name}</p>
@@ -268,7 +271,7 @@ export default function CourseSettingsTab({ courseId, course, onCourseUpdate }: 
           className="mt-1 w-40 h-24 border-2 border-dashed border-gray-300 rounded overflow-hidden flex items-center justify-center hover:border-[#7b1113] transition-colors group bg-gray-50"
         >
           {courseImageUrl ? (
-            <img src={courseImageUrl} alt="Course" className="w-full h-full object-cover" />
+            <Image src={courseImageUrl} alt="Course" width={500} height={500} className="w-full h-full object-cover" />
           ) : (
             <div className="flex flex-col items-center gap-1">
               <svg

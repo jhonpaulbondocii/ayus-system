@@ -77,7 +77,6 @@ const GROUP_MEMBERS: Person[] = [
   { id: "m7", name: "Quizon, Nhica",         section: "Syllabus & Lesson Plan Consolidation", role: "Faculty" },
 ];
 
-const ALL_MEMBERS: Person[] = GROUP_MEMBERS;
 
 const COURSE_PEOPLE: Record<string, Person[]> = {
   "1": GROUP_MEMBERS,

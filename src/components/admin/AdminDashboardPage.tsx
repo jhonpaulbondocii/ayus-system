@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useTransition, useRef } from "react";
+import { useState, useEffect, useTransition, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import {
@@ -84,8 +84,8 @@ function PublishModal({ course, onConfirm, onCancel }: {
 }
 
 // ── Section Header ─────────────────────────────────────────────────────────────
-function SectionHeader({ label, count, collapsed, onToggle, badge }: {
-  label: string; count: number; collapsed: boolean; onToggle: () => void;
+function SectionHeader({ count, collapsed, onToggle, badge }: {
+  count: number; collapsed: boolean; onToggle: () => void;
   accent: { text: string; bg: string; border: string }; badge?: React.ReactNode;
 }) {
   return (
@@ -97,7 +97,7 @@ function SectionHeader({ label, count, collapsed, onToggle, badge }: {
       </span>
       {badge}
       <span style={{ fontSize:11,color:"#9ca3af",fontWeight:600 }}>
-        {count} {count===1?"course":"courses"}
+        {count} {count===1?"office":"offices"}
       </span>
       <span style={{ flex:1,height:1,background:"#f3f4f6",marginLeft:4 }}/>
     </button>
@@ -105,10 +105,8 @@ function SectionHeader({ label, count, collapsed, onToggle, badge }: {
 }
 
 // ── List Row ───────────────────────────────────────────────────────────────────
-function CourseListRow({ course, onTogglePublish, onDelete, onColorChange, onMove, onChangeCategory, onClick, onAssignments }: {
-  course: Course; onTogglePublish: ()=>void; onDelete: ()=>void;
-  onColorChange: (c:string)=>void; onMove: (d:"top"|"up"|"down"|"bottom")=>void;
-  onChangeCategory: (c:Category)=>void; onClick: ()=>void; onAssignments: ()=>void;
+function CourseListRow({ course, onClick, onAssignments }: {
+  course: Course; onClick: ()=>void; onAssignments: ()=>void;
 }) {
   return (
     <div onClick={onClick}
@@ -125,7 +123,6 @@ function CourseListRow({ course, onTogglePublish, onDelete, onColorChange, onMov
         <p style={{ fontSize:13,fontWeight:700,color:"#111827",margin:0 }} className="truncate group-hover:underline">{course.name}</p>
         <p style={{ fontSize:11,color:"#9ca3af",margin:0 }}>{course.code}</p>
       </div>
-      {/* Hide enrollment count on very small screens */}
       <span className="hidden sm:inline" style={{ fontSize:11,color:"#9ca3af",fontWeight:600,flexShrink:0 }}>{course._count.enrollments} enrolled</span>
       <span style={{
         fontSize:10,fontWeight:800,padding:"2px 8px",borderRadius:20,
@@ -134,7 +131,6 @@ function CourseListRow({ course, onTogglePublish, onDelete, onColorChange, onMov
         border:`1px solid ${course.status==="PUBLISHED"?"#bbf7d0":"#e5e7eb"}`,
         flexShrink:0,textTransform:"uppercase",letterSpacing:"0.06em",whiteSpace:"nowrap",
       }}>{course.status==="PUBLISHED"?"Published":"Draft"}</span>
-      {/* Assignments button hidden on mobile, shown on sm+ */}
       <button onClick={e=>{e.stopPropagation();onAssignments();}}
         className="hidden sm:block"
         style={{ fontSize:11,color:MAROON,fontWeight:700,background:"#fdf2f2",border:"none",borderRadius:8,padding:"4px 10px",cursor:"pointer",flexShrink:0 }}>
@@ -159,7 +155,7 @@ export default function AdminDashboardPage() {
   const [colUnpublished, setColUnpublished] = useState(true);
   const [colUncat,       setColUncat]       = useState(true);
 
-  const fetchCourses = () => {
+  const fetchCourses = useCallback(() => {
     fetch("/api/admin/courses")
       .then(r=>r.json())
       .then(d=>startTransition(()=>{
@@ -173,7 +169,7 @@ export default function AdminDashboardPage() {
         setLoading(false);
       }))
       .catch(()=>startTransition(()=>setLoading(false)));
-  };
+  }, [startTransition]);
 
   useEffect(() => {
     fetchCourses();
@@ -182,8 +178,7 @@ export default function AdminDashboardPage() {
     };
     document.addEventListener("visibilitychange", handleVisibility);
     return () => document.removeEventListener("visibilitychange", handleVisibility);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [fetchCourses]);
 
   const handlePublishClick = (course: Course) => {
     if (course.status==="PUBLISHED") handleTogglePublish(course.id,"PUBLISHED",null);
@@ -255,13 +250,18 @@ export default function AdminDashboardPage() {
     onFiles:         ()=>router.push(`/admin/courses/${c.id}/files`),
   });
 
-  // Responsive grid CSS injected once
   const gridStyle: React.CSSProperties = {
-    display: "grid",
-    gap: 12,
-    // Fluid columns: min 150px, fills row
-    gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
+    display:"grid", gap:12,
+    gridTemplateColumns:"repeat(auto-fill, minmax(160px, 1fr))",
   };
+
+  const listRows = (list: Course[]) => list.map(c=>(
+    <CourseListRow
+      key={c.id} course={c}
+      onClick={()=>router.push(`/admin/courses/${c.id}/home`)}
+      onAssignments={()=>router.push(`/admin/courses/${c.id}/assignments`)}
+    />
+  ));
 
   return (
     <div style={{ ...font, minHeight:"100vh", background:"#f8f8f7" }}>
@@ -270,27 +270,24 @@ export default function AdminDashboardPage() {
         @media (min-width: 480px) {
           .course-grid { grid-template-columns: repeat(auto-fill, minmax(178px, 1fr)) !important; }
         }
-        @media (min-width: 768px) {
-          .course-grid { grid-template-columns: repeat(auto-fill, minmax(178px, 1fr)) !important; }
-        }
       `}</style>
 
       {/* ── Page Header ── */}
-      <div style={{ background:"#fff", borderBottom:"1px solid #f0e4e4", padding:"14px 16px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:10, flexWrap:"wrap" }}>
+      <div style={{ background:"#fff",borderBottom:"1px solid #f0e4e4",padding:"14px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,flexWrap:"wrap" }}>
         <div>
           <p style={{ fontSize:10,fontWeight:800,color:MAROON,textTransform:"uppercase",letterSpacing:"0.2em",margin:0 }}>Administration</p>
-          <h1 style={{ fontSize:18,fontWeight:900,color:"#111827",margin:"2px 0 0" }}>Dashboard</h1>
+          <h1 style={{ fontSize:18,fontWeight:900,color:"#111827",margin:"2px 0 0" }}>Offices</h1>
         </div>
         <div style={{ display:"flex",alignItems:"center",gap:8,flexWrap:"wrap" }}>
           <button
-            onClick={() => window.dispatchEvent(new Event("admin:openCreateCourse"))}
+            onClick={()=>window.dispatchEvent(new Event("admin:openCreateCourse"))}
             style={{ display:"flex",alignItems:"center",gap:5,padding:"7px 14px",borderRadius:10,border:"none",background:MAROON,color:"#fff",cursor:"pointer",fontFamily:FONT,fontSize:12,fontWeight:800,transition:"opacity 0.15s",whiteSpace:"nowrap" }}
             onMouseEnter={e=>(e.currentTarget.style.opacity="0.88")}
             onMouseLeave={e=>(e.currentTarget.style.opacity="1")}>
-            <Plus size={13}/> <span className="hidden xs:inline">Start a </span>New Course
+            <Plus size={13}/> <span className="hidden xs:inline">Start a </span>New Office
           </button>
           <div style={{ display:"flex",gap:3,background:"#f3f4f6",borderRadius:10,padding:3 }}>
-            {([["grid","Grid"] as const,["list","List"] as const]).map(([mode, label]) => (
+            {([["grid","Grid"] as const,["list","List"] as const]).map(([mode, label])=>(
               <button key={mode} onClick={()=>setViewMode(mode)}
                 style={{ display:"flex",alignItems:"center",gap:4,padding:"5px 10px",borderRadius:8,border:"none",cursor:"pointer",fontFamily:FONT,fontSize:11,fontWeight:700,transition:"all 0.15s",background:viewMode===mode?"#fff":"none",color:viewMode===mode?"#111827":"#9ca3af",boxShadow:viewMode===mode?"0 1px 4px rgba(0,0,0,0.08)":"none" }}>
                 {mode==="grid" ? <LayoutGrid size={12}/> : <List size={12}/>} {label}
@@ -300,16 +297,16 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
-      {/* ── Stat bar — scrollable on mobile ── */}
+      {/* ── Stat bar ── */}
       {!loading && courses.length > 0 && (
-        <div style={{ background:"#fff", borderBottom:"1px solid #f3f4f6", padding:"10px 16px", overflowX:"auto", WebkitOverflowScrolling:"touch" }}>
-          <div style={{ display:"flex", gap:20, minWidth:"max-content" }}>
+        <div style={{ background:"#fff",borderBottom:"1px solid #f3f4f6",padding:"10px 16px",overflowX:"auto" }}>
+          <div style={{ display:"flex",gap:20,minWidth:"max-content" }}>
             {[
-              { label:"Total",       value:courses.length },
-              { label:"Published",   value:totalPublished, color:"#15803d" },
-              { label:"Academic",    value:academic.length },
-              { label:"Non-Academic",value:nonAcademic.length },
-              { label:"Unpublished", value:unpublished.length, color:"#9ca3af" },
+              { label:"Total",        value:courses.length },
+              { label:"Published",    value:totalPublished, color:"#15803d" },
+              { label:"Academic",     value:academic.length },
+              { label:"Non-Academic", value:nonAcademic.length },
+              { label:"Unpublished",  value:unpublished.length, color:"#9ca3af" },
             ].map(s=>(
               <div key={s.label} style={{ display:"flex",flexDirection:"column",flexShrink:0 }}>
                 <span style={{ fontSize:18,fontWeight:900,color:s.color??MAROON,lineHeight:1 }}>{s.value}</span>
@@ -324,21 +321,21 @@ export default function AdminDashboardPage() {
         {loading ? (
           <div style={{ display:"flex",alignItems:"center",justifyContent:"center",padding:"80px 0",gap:10 }}>
             <div style={{ width:20,height:20,border:`2px solid #f0e4e4`,borderTop:`2px solid ${MAROON}`,borderRadius:"50%",animation:"spin 0.8s linear infinite" }}/>
-            <p style={{ fontSize:13,color:"#9ca3af",margin:0 }}>Loading courses...</p>
+            <p style={{ fontSize:13,color:"#9ca3af",margin:0 }}>Loading offices...</p>
           </div>
-        ) : courses.length === 0 ? (
+        ) : courses.length===0 ? (
           <div style={{ display:"flex",flexDirection:"column",alignItems:"center",padding:"80px 0",gap:12 }}>
             <div style={{ width:56,height:56,borderRadius:"50%",background:"#fef2f2",display:"flex",alignItems:"center",justifyContent:"center" }}>
               <BookOpen size={24} color={MAROON}/>
             </div>
-            <p style={{ fontSize:14,fontWeight:700,color:"#374151",margin:0 }}>No courses yet</p>
-            <p style={{ fontSize:12,color:"#9ca3af",margin:0 }}>Create your first course to get started.</p>
+            <p style={{ fontSize:14,fontWeight:700,color:"#374151",margin:0 }}>No offices yet</p>
+            <p style={{ fontSize:12,color:"#9ca3af",margin:0 }}>Create your first office to get started.</p>
           </div>
         ) : (
           <div style={{ display:"flex",flexDirection:"column",gap:8 }}>
 
             {/* ── Published ── */}
-            {published.length > 0 && (
+            {published.length>0 && (
               <div style={{ background:"#fff",borderRadius:16,border:"1px solid #f0e4e4",overflow:"hidden" }}>
                 <div style={{ padding:"14px 16px 0" }}>
                   <div style={{ display:"flex",alignItems:"center",gap:8,marginBottom:4 }}>
@@ -346,85 +343,43 @@ export default function AdminDashboardPage() {
                     <span style={{ fontSize:11,color:"#9ca3af",fontWeight:600 }}>({published.length})</span>
                   </div>
                 </div>
-                <div style={{ padding:"4px 16px 16px", display:"flex",flexDirection:"column",gap:0 }}>
+                <div style={{ padding:"4px 16px 16px",display:"flex",flexDirection:"column",gap:0 }}>
 
-                  {/* Academic */}
-                  {academic.length > 0 && (
+                  {academic.length>0 && (
                     <div style={{ marginBottom:4 }}>
-                      <SectionHeader
-                        label="Academic" count={academic.length}
-                        collapsed={colAcademic} onToggle={()=>setColAcademic(v=>!v)}
+                      <SectionHeader count={academic.length} collapsed={colAcademic} onToggle={()=>setColAcademic(v=>!v)}
                         accent={{ text:"#1565c0",bg:"#eff6ff",border:"#bfdbfe" }}
-                        badge={
-                          <span style={{ display:"inline-flex",alignItems:"center",gap:5,background:"#eff6ff",color:"#1565c0",border:"1px solid #bfdbfe",borderRadius:20,padding:"3px 10px 3px 8px",fontSize:11,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.06em",fontFamily:FONT,whiteSpace:"nowrap" }}>
-                            <GraduationCap size={12}/> Academic
-                          </span>
-                        }
+                        badge={<span style={{ display:"inline-flex",alignItems:"center",gap:5,background:"#eff6ff",color:"#1565c0",border:"1px solid #bfdbfe",borderRadius:20,padding:"3px 10px 3px 8px",fontSize:11,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.06em",fontFamily:FONT,whiteSpace:"nowrap" }}><GraduationCap size={12}/> Academic</span>}
                       />
-                      {!colAcademic && (
-                        viewMode==="grid" ? (
-                          <div className="course-grid" style={{ ...gridStyle, paddingBottom:12 }}>
-                            {academic.map(c=><CourseCard key={c.id} {...cardProps(c)}/>)}
-                          </div>
-                        ) : (
-                          <div style={{ display:"flex",flexDirection:"column",gap:6,paddingBottom:12 }}>
-                            {academic.map(c=><CourseListRow key={c.id} {...cardProps(c)}/>)}
-                          </div>
-                        )
+                      {!colAcademic && (viewMode==="grid"
+                        ? <div className="course-grid" style={{ ...gridStyle,paddingBottom:12 }}>{academic.map(c=><CourseCard key={c.id} {...cardProps(c)}/>)}</div>
+                        : <div style={{ display:"flex",flexDirection:"column",gap:6,paddingBottom:12 }}>{listRows(academic)}</div>
                       )}
                     </div>
                   )}
 
-                  {/* Non-Academic */}
-                  {nonAcademic.length > 0 && (
+                  {nonAcademic.length>0 && (
                     <div style={{ marginBottom:4 }}>
-                      <SectionHeader
-                        label="Non-Academic" count={nonAcademic.length}
-                        collapsed={colNonAcademic} onToggle={()=>setColNonAcademic(v=>!v)}
+                      <SectionHeader count={nonAcademic.length} collapsed={colNonAcademic} onToggle={()=>setColNonAcademic(v=>!v)}
                         accent={{ text:"#b45309",bg:"#fffbeb",border:"#fde68a" }}
-                        badge={
-                          <span style={{ display:"inline-flex",alignItems:"center",gap:5,background:"#fffbeb",color:"#b45309",border:"1px solid #fde68a",borderRadius:20,padding:"3px 10px 3px 8px",fontSize:11,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.06em",fontFamily:FONT,whiteSpace:"nowrap" }}>
-                            <Briefcase size={12}/> Non-Academic
-                          </span>
-                        }
+                        badge={<span style={{ display:"inline-flex",alignItems:"center",gap:5,background:"#fffbeb",color:"#b45309",border:"1px solid #fde68a",borderRadius:20,padding:"3px 10px 3px 8px",fontSize:11,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.06em",fontFamily:FONT,whiteSpace:"nowrap" }}><Briefcase size={12}/> Non-Academic</span>}
                       />
-                      {!colNonAcademic && (
-                        viewMode==="grid" ? (
-                          <div className="course-grid" style={{ ...gridStyle, paddingBottom:12 }}>
-                            {nonAcademic.map(c=><CourseCard key={c.id} {...cardProps(c)}/>)}
-                          </div>
-                        ) : (
-                          <div style={{ display:"flex",flexDirection:"column",gap:6,paddingBottom:12 }}>
-                            {nonAcademic.map(c=><CourseListRow key={c.id} {...cardProps(c)}/>)}
-                          </div>
-                        )
+                      {!colNonAcademic && (viewMode==="grid"
+                        ? <div className="course-grid" style={{ ...gridStyle,paddingBottom:12 }}>{nonAcademic.map(c=><CourseCard key={c.id} {...cardProps(c)}/>)}</div>
+                        : <div style={{ display:"flex",flexDirection:"column",gap:6,paddingBottom:12 }}>{listRows(nonAcademic)}</div>
                       )}
                     </div>
                   )}
 
-                  {/* Uncategorized */}
-                  {uncategorized.length > 0 && (
+                  {uncategorized.length>0 && (
                     <div style={{ marginBottom:4 }}>
-                      <SectionHeader
-                        label="Uncategorized" count={uncategorized.length}
-                        collapsed={colUncat} onToggle={()=>setColUncat(v=>!v)}
+                      <SectionHeader count={uncategorized.length} collapsed={colUncat} onToggle={()=>setColUncat(v=>!v)}
                         accent={{ text:"#6b7280",bg:"#f9fafb",border:"#e5e7eb" }}
-                        badge={
-                          <span style={{ display:"inline-flex",alignItems:"center",gap:5,background:"#f9fafb",color:"#6b7280",border:"1px solid #e5e7eb",borderRadius:20,padding:"3px 10px 3px 8px",fontSize:11,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.06em",fontFamily:FONT,whiteSpace:"nowrap" }}>
-                            <BookOpen size={12}/> Uncategorized
-                          </span>
-                        }
+                        badge={<span style={{ display:"inline-flex",alignItems:"center",gap:5,background:"#f9fafb",color:"#6b7280",border:"1px solid #e5e7eb",borderRadius:20,padding:"3px 10px 3px 8px",fontSize:11,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.06em",fontFamily:FONT,whiteSpace:"nowrap" }}><BookOpen size={12}/> Uncategorized</span>}
                       />
-                      {!colUncat && (
-                        viewMode==="grid" ? (
-                          <div className="course-grid" style={{ ...gridStyle, paddingBottom:12 }}>
-                            {uncategorized.map(c=><CourseCard key={c.id} {...cardProps(c)}/>)}
-                          </div>
-                        ) : (
-                          <div style={{ display:"flex",flexDirection:"column",gap:6,paddingBottom:12 }}>
-                            {uncategorized.map(c=><CourseListRow key={c.id} {...cardProps(c)}/>)}
-                          </div>
-                        )
+                      {!colUncat && (viewMode==="grid"
+                        ? <div className="course-grid" style={{ ...gridStyle,paddingBottom:12 }}>{uncategorized.map(c=><CourseCard key={c.id} {...cardProps(c)}/>)}</div>
+                        : <div style={{ display:"flex",flexDirection:"column",gap:6,paddingBottom:12 }}>{listRows(uncategorized)}</div>
                       )}
                     </div>
                   )}
@@ -433,31 +388,20 @@ export default function AdminDashboardPage() {
             )}
 
             {/* ── Unpublished ── */}
-            {unpublished.length > 0 && (
+            {unpublished.length>0 && (
               <div style={{ background:"#fff",borderRadius:16,border:"1px solid #f3f4f6",overflow:"hidden" }}>
                 <div style={{ padding:"14px 16px 0" }}>
-                  <SectionHeader
-                    label="Unpublished" count={unpublished.length}
-                    collapsed={colUnpublished} onToggle={()=>setColUnpublished(v=>!v)}
+                  <SectionHeader count={unpublished.length} collapsed={colUnpublished} onToggle={()=>setColUnpublished(v=>!v)}
                     accent={{ text:"#6b7280",bg:"#f9fafb",border:"#e5e7eb" }}
-                    badge={
-                      <span style={{ fontSize:11,fontWeight:900,color:"#6b7280",textTransform:"uppercase",letterSpacing:"0.12em",fontFamily:FONT }}>
-                        Unpublished
-                      </span>
-                    }
+                    badge={<span style={{ fontSize:11,fontWeight:900,color:"#6b7280",textTransform:"uppercase",letterSpacing:"0.12em",fontFamily:FONT }}>Unpublished</span>}
                   />
                 </div>
                 {!colUnpublished && (
                   <div style={{ padding:"0 16px 16px" }}>
-                    {viewMode==="grid" ? (
-                      <div className="course-grid" style={{ ...gridStyle }}>
-                        {unpublished.map(c=><CourseCard key={c.id} {...cardProps(c)}/>)}
-                      </div>
-                    ) : (
-                      <div style={{ display:"flex",flexDirection:"column",gap:6 }}>
-                        {unpublished.map(c=><CourseListRow key={c.id} {...cardProps(c)}/>)}
-                      </div>
-                    )}
+                    {viewMode==="grid"
+                      ? <div className="course-grid" style={{ ...gridStyle }}>{unpublished.map(c=><CourseCard key={c.id} {...cardProps(c)}/>)}</div>
+                      : <div style={{ display:"flex",flexDirection:"column",gap:6 }}>{listRows(unpublished)}</div>
+                    }
                   </div>
                 )}
               </div>
@@ -488,40 +432,56 @@ function CourseCard({ course, onTogglePublish, onDelete, onColorChange, onMove, 
   const [menuTab,       setMenuTab]       = useState<"color"|"move"|"more">("color");
   const [hexInput,      setHexInput]      = useState(course.color);
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const [menuStyle,     setMenuStyle]     = useState<React.CSSProperties>({});
   const [, startTransition]               = useTransition();
+
+  // ✅ Fix: use regular state for menu position so it can be read during render
+  const [menuStyle, setMenuStyle] = useState<React.CSSProperties>({});
   const triggerRef = useRef<HTMLButtonElement>(null);
 
   useEffect(()=>{ startTransition(()=>setHexInput(course.color)); },[course.color]);
 
-  useEffect(()=>{
-    if(!menuOpen||!triggerRef.current) return;
+  // Compute and store position imperatively in the event handler — never inside an effect.
+  const computeAndApplyPosition = useCallback(()=>{
+    if (!triggerRef.current) return;
     const r     = triggerRef.current.getBoundingClientRect();
     const menuW = 230;
     const menuH = 340;
     const vw    = window.innerWidth;
     const vh    = window.innerHeight;
-    // On mobile: center horizontally and position above/below trigger
     let left = r.right - menuW;
     if (left < 8) left = 8;
     if (left + menuW > vw - 8) left = vw - menuW - 8;
     const spaceBelow = vh - r.bottom - 8;
     const top = spaceBelow >= menuH ? r.bottom + 4 : r.top - menuH - 4;
+    // ✅ setState called from an event handler — not inside an effect body
     setMenuStyle({ top, left, width: Math.min(menuW, vw - 16) });
-  },[menuOpen]);
+  }, []);
 
+  // Only the outside-click listener lives in an effect — no setState inside it.
   useEffect(()=>{
-    if(!menuOpen) return;
+    if (!menuOpen) return;
     const h = (e:MouseEvent) => {
       const t = e.target as HTMLElement;
-      if(!t.closest("[data-course-menu]")&&!t.closest("[data-course-trigger]")){ setMenuOpen(false); setConfirmDelete(false); }
+      if (!t.closest("[data-course-menu]") && !t.closest("[data-course-trigger]")) {
+        setMenuOpen(false);
+        setConfirmDelete(false);
+      }
     };
-    document.addEventListener("mousedown",h);
-    return ()=>document.removeEventListener("mousedown",h);
+    document.addEventListener("mousedown", h);
+    return ()=>document.removeEventListener("mousedown", h);
   },[menuOpen]);
 
-  const openMenu  = (e:React.MouseEvent) => { e.stopPropagation(); setMenuTab("color"); setHexInput(course.color); setConfirmDelete(false); setMenuOpen(v=>!v); };
-  const closeMenu = () => { setMenuOpen(false); setConfirmDelete(false); };
+  const openMenu = (e:React.MouseEvent) => {
+    e.stopPropagation();
+    setMenuTab("color");
+    setHexInput(course.color);
+    setConfirmDelete(false);
+    const willOpen = !menuOpen;
+    if (willOpen) computeAndApplyPosition();
+    setMenuOpen(willOpen);
+  };
+
+  const closeMenu  = () => { setMenuOpen(false); setConfirmDelete(false); };
   const applyColor = (e:React.MouseEvent) => { e.stopPropagation(); onColorChange(hexInput.startsWith("#")?hexInput:`#${hexInput}`); closeMenu(); };
 
   const iconBtn = (title:string,cb:()=>void,svg:React.ReactNode) => (
@@ -545,9 +505,9 @@ function CourseCard({ course, onTogglePublish, onDelete, onColorChange, onMove, 
   ];
 
   const tabStyle = (tab:string): React.CSSProperties => ({
-    flex:1, padding:"8px 0", fontSize:11, fontWeight:700,
-    color:menuTab===tab?MAROON:"#9ca3af", background:"none", border:"none", cursor:"pointer",
-    borderBottom:menuTab===tab?`2px solid ${MAROON}`:"2px solid transparent", fontFamily:FONT,
+    flex:1,padding:"8px 0",fontSize:11,fontWeight:700,
+    color:menuTab===tab?MAROON:"#9ca3af",background:"none",border:"none",cursor:"pointer",
+    borderBottom:menuTab===tab?`2px solid ${MAROON}`:"2px solid transparent",fontFamily:FONT,
   });
 
   const dropdown = menuOpen ? createPortal(
@@ -626,7 +586,7 @@ function CourseCard({ course, onTogglePublish, onDelete, onColorChange, onMove, 
             <button onClick={()=>setConfirmDelete(true)}
               style={{ display:"flex",alignItems:"center",gap:8,width:"100%",padding:"8px 10px",fontSize:13,color:"#dc2626",background:"none",border:"1px solid #fee2e2",borderRadius:8,cursor:"pointer",fontFamily:FONT }}
               onMouseEnter={e=>(e.currentTarget.style.background="#fef2f2")} onMouseLeave={e=>(e.currentTarget.style.background="none")}>
-              <Trash2 size={14}/> Delete Course
+              <Trash2 size={14}/> Delete Office
             </button>
           ) : (
             <div>
@@ -645,23 +605,15 @@ function CourseCard({ course, onTogglePublish, onDelete, onColorChange, onMove, 
 
   return (
     <div
-      // width is now controlled by the CSS grid — no fixed 178px
       style={{ background:"#fff",border:"1px solid #e5e7eb",borderRadius:12,overflow:"visible",display:"flex",flexDirection:"column",boxShadow:"0 1px 4px rgba(0,0,0,.06)",fontFamily:FONT,transition:"box-shadow 0.15s, transform 0.15s",position:"relative",minWidth:0 }}
       onMouseEnter={e=>{ if(!menuOpen){ e.currentTarget.style.boxShadow="0 4px 16px rgba(123,17,19,.10)"; e.currentTarget.style.transform="translateY(-1px)"; }}}
       onMouseLeave={e=>{ if(!menuOpen){ e.currentTarget.style.boxShadow="0 1px 4px rgba(0,0,0,.06)"; e.currentTarget.style.transform="translateY(0)"; }}}>
 
       {/* ── Banner ── */}
-      <div
-        style={{ position:"relative",height:90,backgroundColor:course.color,cursor:"pointer",borderRadius:"12px 12px 0 0",overflow:"hidden" }}
-        onClick={onClick}
-      >
+      <div style={{ position:"relative",height:90,backgroundColor:course.color,cursor:"pointer",borderRadius:"12px 12px 0 0",overflow:"hidden" }} onClick={onClick}>
         {course.image && (
           // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={course.image}
-            alt={course.name}
-            style={{ position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover" }}
-          />
+          <img src={course.image} alt={course.name} style={{ position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover" }}/>
         )}
         {course.status==="UNPUBLISHED" && (
           <button onClick={e=>{ e.stopPropagation(); onTogglePublish(); }}

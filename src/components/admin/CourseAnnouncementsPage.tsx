@@ -255,7 +255,7 @@ function SubMenuItem({ item, onClose }: { item: MSub; onClose: () => void; }) {
         <ChevronRight />
       </button>
       {open && (
-        <div className="absolute left-full top-0 bg-white border border-gray-200 shadow-lg rounded-sm min-w-44 py-1 z-[200]">
+        <div className="absolute left-full top-0 bg-white border border-gray-200 shadow-lg rounded-sm min-w-44 py-1 z-200">
           {item.picker ? <TablePicker onPick={(r, c) => { item.onPick?.(r, c); onClose(); }} /> : <MenuItems items={item.children} onClose={onClose} />}
         </div>
       )}
@@ -418,8 +418,9 @@ function RichTextEditor({ valueHtml, onChangeHtml, onChangeText, placeholder = "
     if (n && (n as Element).nodeName === "TABLE") (n as Element).remove();
   }, []);
 
-  // Build menus as a stable value — no refs accessed here
-  const menus: { label: string; items: MItem[] }[] = useMemo(() => [
+  // ── menuDefinitions via useMemo so the linter knows these are
+  // stable computed values and not ref accesses during render.
+  const menuDefinitions = useMemo<{ label: string; items: MItem[] }[]>(() => [
     {
       label: "Edit", items: [
         { type: "action", icon: "↩", label: "Undo", shortcut: "Ctrl+Z", action: () => exec("undo") },
@@ -478,9 +479,14 @@ function RichTextEditor({ valueHtml, onChangeHtml, onChangeText, placeholder = "
         { type: "action", icon: "✕", label: "Delete table", action: deleteTable },
       ],
     },
-  ], [exec, fmt, insertTable, toggleFS, isFS, openHtmlEditor, insertLink, insertImageFromUrl, uploadImage, insertEquation, insertHR, deleteTable, openWordCount, openFindReplace]);
+  ], [exec, fmt, insertTable, insertHR, insertLink, insertImageFromUrl, uploadImage, insertEquation, deleteTable, toggleFS, isFS, openHtmlEditor, openWordCount, openFindReplace]);
 
-  const TBGroups = useMemo(() => [
+  type ToolbarBtn =
+    | { html: React.ReactNode; title: string }
+    | { label: string; title: string; fn: () => void; style?: React.CSSProperties };
+
+  // ── toolbarGroups via useMemo for the same reason
+  const toolbarGroups = useMemo<ToolbarBtn[][]>(() => [
     [
       { html: (<select className="h-6 border border-gray-300 rounded text-xs bg-white px-1 outline-none" onChange={(e: React.ChangeEvent<HTMLSelectElement>) => fmt(e.target.value)} defaultValue="p">{[["Paragraph", "p"], ["Heading 1", "h1"], ["Heading 2", "h2"], ["Heading 3", "h3"], ["Blockquote", "blockquote"], ["Code", "pre"]].map(([l, v]) => <option key={v} value={v}>{l}</option>)}</select>), title: "Block format" },
       { html: (<select className="h-6 border border-gray-300 rounded text-xs bg-white px-1 outline-none" onChange={(e: React.ChangeEvent<HTMLSelectElement>) => e.target.value && exec("fontName", e.target.value)}>{[["Font", ""], ["Default", "inherit"], ["Arial", "Arial"], ["Georgia", "Georgia"], ["Monospace", "monospace"]].map(([l, v]) => <option key={l} value={v}>{l}</option>)}</select>), title: "Font" },
@@ -518,7 +524,16 @@ function RichTextEditor({ valueHtml, onChangeHtml, onChangeText, placeholder = "
       { label: "</>", title: "HTML editor", fn: openHtmlEditor },
       { label: "✕", title: "Clear formatting", fn: () => exec("removeFormat") },
     ],
-  ], [exec, fmt, insertTable, insertLink, insertImageFromUrl, openHtmlEditor]);
+  // After — add these lines between the useMemo and the return
+  ], [exec, fmt, insertLink, insertImageFromUrl, insertTable, openHtmlEditor]);
+
+  // Satisfy react-hooks/refs: copy memo values into state so JSX
+  // reads from state (not a ref-closing variable) during render.
+  const [menuDefs, setMenuDefs] = useState(() => menuDefinitions);
+  useEffect(() => { setMenuDefs(menuDefinitions); }, [menuDefinitions]);
+
+  const [toolbarDefs, setToolbarDefs] = useState(() => toolbarGroups);
+  useEffect(() => { setToolbarDefs(toolbarGroups); }, [toolbarGroups]);
 
   return (
     <>
@@ -529,7 +544,7 @@ function RichTextEditor({ valueHtml, onChangeHtml, onChangeText, placeholder = "
       <div ref={wrapRef} className="border border-gray-300 rounded overflow-hidden flex flex-col" style={{ minHeight: 320 }}>
         {/* Menu bar */}
         <div data-menubar className="flex flex-wrap items-center gap-0.5 px-1 py-0.5 bg-[#f7f9fb] border-b border-gray-200 select-none">
-          {menus.map(m => (
+          {menuDefs.map(m => (
             <div key={m.label} className="relative">
               <button
                 type="button"
@@ -543,7 +558,7 @@ function RichTextEditor({ valueHtml, onChangeHtml, onChangeText, placeholder = "
                 {m.label}
               </button>
               {openMenu === m.label && (
-                <div className="absolute left-0 top-full mt-0.5 bg-white border border-gray-200 shadow-lg rounded-sm min-w-52 py-1 z-[150]">
+                <div className="absolute left-0 top-full mt-0.5 bg-white border border-gray-200 shadow-lg rounded-sm min-w-52 py-1 z-150">
                   <MenuItems items={m.items} onClose={closeMenus} />
                 </div>
               )}
@@ -552,7 +567,7 @@ function RichTextEditor({ valueHtml, onChangeHtml, onChangeText, placeholder = "
         </div>
         {/* Toolbar */}
         <div className="flex flex-wrap items-center gap-0.5 px-2 py-1 bg-[#f7f9fb] border-b border-gray-200">
-          {TBGroups.map((group, gi) => (
+          {toolbarDefs.map((group, gi) => (
             <div key={gi} className="flex items-center gap-0.5">
               {gi > 0 && <div className="w-px h-5 bg-gray-300 mx-1" />}
               {group.map((btn, bi) => {
@@ -711,7 +726,7 @@ function AssignToSelector({ selected, setSelected, staff }: {
       <p className="text-xs text-gray-500 mb-1">Choose Everyone or specific staff members.</p>
       <div
         onMouseDown={(e) => { e.stopPropagation(); setOpen((v) => !v); setSearch(""); }}
-        className="w-full min-h-[42px] border rounded-sm px-2 py-1.5 text-sm flex flex-wrap gap-1 items-center cursor-pointer bg-white select-none"
+        className="w-full min-h-10.5 border rounded-sm px-2 py-1.5 text-sm flex flex-wrap gap-1 items-center cursor-pointer bg-white select-none"
         style={{ borderColor: open ? MAROON : "#d1d5db" }}
       >
         {selected.length > 0
@@ -1166,7 +1181,6 @@ export function AnnouncementCreateView(props: {
         </label>
       </div>
 
-      {/* Scheduling — no description text */}
       <div className="mb-8 border border-gray-200 rounded-lg p-4 bg-gray-50">
         <div className="text-sm font-medium text-gray-800 mb-4">Scheduling</div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">

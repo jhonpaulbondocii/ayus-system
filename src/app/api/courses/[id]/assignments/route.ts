@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { CourseStatus } from "@/generated/prisma";
 import { prisma } from "@/lib/prisma";
 import { requireCoursePermission } from "@/lib/course-access";
 
@@ -8,9 +9,7 @@ function parseDateWithTime(
 ): Date | null {
   if (!date) return null;
 
-  const combined = time ? `${date} ${time}` : date;
-  const parsed = new Date(combined);
-
+  const parsed = new Date(time ? `${date} ${time}` : date);
   if (!Number.isNaN(parsed.getTime())) return parsed;
 
   const fallback = new Date(date);
@@ -26,6 +25,15 @@ type SubmissionEntry = {
   maxFiles?: number | null;
 };
 
+function normalizeFileTypes(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+
+  return value
+    .filter((item): item is string => typeof item === "string")
+    .map((item) => item.replace(".", "").trim().toLowerCase())
+    .filter(Boolean);
+}
+
 function parseSubmissionEntries(opts: string[]): SubmissionEntry[] | undefined {
   if (!opts || opts.length === 0) return undefined;
 
@@ -36,40 +44,66 @@ function parseSubmissionEntries(opts: string[]): SubmissionEntry[] | undefined {
       const parsed = JSON.parse(opt) as SubmissionEntry;
 
       if (parsed && typeof parsed === "object" && "id" in parsed) {
-        entries.push(parsed);
+        const type = parsed.type ?? "File Upload";
+
+        entries.push({
+          id: parsed.id,
+          label: parsed.label ?? "",
+          required: parsed.required ?? false,
+          type,
+          allowedFileTypes:
+            type === "File Upload"
+              ? normalizeFileTypes(parsed.allowedFileTypes)
+              : [],
+          maxFiles:
+            type === "File Upload"
+              ? parsed.maxFiles ?? 1
+              : null,
+        });
       }
     } catch {
       return undefined;
     }
   }
 
-  return entries.length > 0 ? entries : undefined;
-}
-
-function normalizeAssignees(assignees?: string[]): string[] {
-  if (!Array.isArray(assignees)) return [];
-  if (assignees.includes("Everyone")) return [];
-  return assignees.filter(Boolean);
+  return entries.length ? entries : undefined;
 }
 
 function normalizeSubmissionEntries(entries?: SubmissionEntry[]): string[] {
   if (!Array.isArray(entries)) return [];
 
-  return entries.map((entry) =>
-    JSON.stringify({
+  return entries.map((entry, index) => {
+    const type = entry.type ?? "File Upload";
+
+    return JSON.stringify({
       id: entry.id,
-      label: entry.label ?? "",
+      label: entry.label?.trim() || `Submission ${index + 1}`,
       required: entry.required ?? false,
-      type: entry.type ?? "File Upload",
-
-      // IMPORTANT: save file restrictions
+      type,
       allowedFileTypes:
-        entry.type === "File Upload" ? entry.allowedFileTypes ?? [] : [],
-
+        type === "File Upload"
+          ? normalizeFileTypes(entry.allowedFileTypes)
+          : [],
       maxFiles:
-        entry.type === "File Upload" ? entry.maxFiles ?? 1 : null,
-    })
+        type === "File Upload"
+          ? entry.maxFiles ?? 1
+          : null,
+    });
+  });
+}
+
+function normalizeAssignees(assignees: unknown): string[] {
+  if (!Array.isArray(assignees)) return [];
+  if (assignees.includes("Everyone")) return [];
+
+  return assignees.filter(
+    (item): item is string => typeof item === "string" && item.trim().length > 0
   );
+}
+
+function normalizeStatus(value: unknown): CourseStatus {
+  if (value === "PUBLISHED") return CourseStatus.PUBLISHED;
+  return CourseStatus.UNPUBLISHED;
 }
 
 function isAssignedToUser(args: {
@@ -109,8 +143,8 @@ function isExplicitlyAssignedToUser(args: {
   userSection: string;
   userCourseRole: string;
 }) {
-  const explicitAssignees = (args.assignees ?? []).filter(
-    (a) => a && a !== "Everyone"
+  const explicitAssignees = args.assignees.filter(
+    (item) => item && item !== "Everyone"
   );
 
   if (explicitAssignees.length === 0) return false;
@@ -169,7 +203,7 @@ export async function GET(
   const allAssignments = await prisma.assignment.findMany({
     where: {
       courseId,
-      ...(isAdmin || isHead ? {} : { status: "PUBLISHED" }),
+      ...(isAdmin || isHead ? {} : { status: CourseStatus.PUBLISHED }),
     },
     select: {
       id: true,
@@ -216,31 +250,54 @@ export async function GET(
     orderBy: [{ dueDate: "asc" }, { createdAt: "desc" }],
   });
 
+  // ── Collect unique creator IDs ─────────────────────────────────────────────
   const creatorIds = Array.from(
     new Set(
       allAssignments
-        .map((a) => a.createdById)
+        .map((assignment) => assignment.createdById)
         .filter((id): id is string => typeof id === "string" && id.length > 0)
     )
   );
 
-  const creators = creatorIds.length
-    ? await prisma.user.findMany({
-        where: { id: { in: creatorIds } },
-        select: {
-          id: true,
-          name: true,
-          image: true,
-          role: true,
-        },
-      })
-    : [];
+  // ── Fetch creator user info ────────────────────────────────────────────────
+  const creators =
+    creatorIds.length > 0
+      ? await prisma.user.findMany({
+          where: { id: { in: creatorIds } },
+          select: {
+            id: true,
+            name: true,
+            image: true,
+          },
+        })
+      : [];
 
-  const creatorMap = new Map(creators.map((u) => [u.id, u]));
+  const creatorMap = new Map(creators.map((creator) => [creator.id, creator]));
+
+  // ── FIX: fetch course role (courseRole) of each creator from CourseEnrollment
+  //    instead of using User.role (which is the system role, not the course role)
+  const creatorEnrollments =
+    creatorIds.length > 0
+      ? await prisma.courseEnrollment.findMany({
+          where: {
+            courseId,
+            userId: { in: creatorIds },
+          },
+          select: {
+            userId: true,
+            courseRole: true,
+          },
+        })
+      : [];
+
+  // Map: creatorUserId → courseRole (e.g. "Head", "Staff", "Admin")
+  const creatorCourseRoleMap = new Map(
+    creatorEnrollments.map((e) => [e.userId, e.courseRole])
+  );
 
   const assignments = allAssignments
     .filter((assignment) => {
-      const assignedToCurrentUser = isAssignedToUser({
+      const assignedToYou = isAssignedToUser({
         assignees: assignment.assignees,
         userId,
         userName,
@@ -250,14 +307,13 @@ export async function GET(
       });
 
       if (isAdmin || isHead) return true;
-
-      return assignedToCurrentUser;
+      return assignedToYou;
     })
     .map((assignment) => {
-      const { assignees, onlineEntryOptions, createdById, ...rest } =
+      const { onlineEntryOptions, createdById, assignees, ...rest } =
         assignment;
 
-      const entries = parseSubmissionEntries(onlineEntryOptions);
+      const submissionEntries = parseSubmissionEntries(onlineEntryOptions);
 
       const isCreator = !!createdById && createdById === userId;
 
@@ -279,25 +335,22 @@ export async function GET(
         userCourseRole,
       });
 
-      let assignmentRole: "manager" | "submitter";
-
-      if (isAdmin) {
-        assignmentRole = "manager";
-      } else if (isCreator) {
-        assignmentRole = "manager";
-      } else {
-        assignmentRole = "submitter";
-      }
+      const assignmentRole: "manager" | "submitter" =
+        isAdmin || isCreator ? "manager" : "submitter";
 
       const creator = createdById ? creatorMap.get(createdById) : null;
+
+      // ✅ FIX: use the creator's courseRole in this course, not their system role
+      const publisherCourseRole = createdById
+        ? (creatorCourseRoleMap.get(createdById) ?? null)
+        : null;
 
       return {
         ...rest,
         createdById,
         assignees,
-
-        onlineEntryOptions: entries ? [] : onlineEntryOptions,
-        ...(entries ? { submissionEntries: entries } : {}),
+        onlineEntryOptions: submissionEntries ? [] : onlineEntryOptions,
+        ...(submissionEntries ? { submissionEntries } : {}),
 
         isCreator,
         isAssignedToYou: assignedToYou && !isCreator,
@@ -309,7 +362,10 @@ export async function GET(
         _publisherId: createdById ?? null,
         _publisherName: creator?.name ?? null,
         _publisherImage: creator?.image ?? null,
-        _publisherRole: creator?.role ?? null,
+
+        // ✅ was: creator?.role (system role like "ADMIN", "USER")
+        // now:  courseRole from CourseEnrollment (like "Head", "Staff")
+        _publisherRole: publisherCourseRole,
       };
     });
 
@@ -342,7 +398,7 @@ export async function POST(
 
     const body = (await req.json()) as {
       title?: string;
-      description?: string;
+      description?: string | null;
       points?: number | string;
       submissionType?: string;
       assignmentGroup?: string;
@@ -359,12 +415,12 @@ export async function POST(
       peerReviewAssign?: string;
       peerReviewAnonymous?: boolean;
       notifyUsers?: boolean;
-      dueDate?: string;
-      dueTime?: string;
-      availableFrom?: string;
-      availableFromTime?: string;
-      availableUntil?: string;
-      untilTime?: string;
+      dueDate?: string | null;
+      dueTime?: string | null;
+      availableFrom?: string | null;
+      availableFromTime?: string | null;
+      availableUntil?: string | null;
+      untilTime?: string | null;
       assignees?: string[];
       status?: string;
     };
@@ -376,17 +432,17 @@ export async function POST(
       );
     }
 
-    let resolvedOnlineEntryOptions: string[] = [];
+    let onlineEntryOptions: string[] = [];
 
     if (
       Array.isArray(body.submissionEntries) &&
       body.submissionEntries.length > 0
     ) {
-      resolvedOnlineEntryOptions = normalizeSubmissionEntries(
-        body.submissionEntries
-      );
+      onlineEntryOptions = normalizeSubmissionEntries(body.submissionEntries);
     } else if (Array.isArray(body.onlineEntryOptions)) {
-      resolvedOnlineEntryOptions = body.onlineEntryOptions;
+      onlineEntryOptions = body.onlineEntryOptions.filter(
+        (item): item is string => typeof item === "string"
+      );
     }
 
     const assignment = await prisma.assignment.create({
@@ -398,7 +454,7 @@ export async function POST(
         submissionType: body.submissionType ?? "Online",
         assignmentGroup: body.assignmentGroup ?? "Assignments",
         displayGradeAs: body.displayGradeAs ?? "Points",
-        onlineEntryOptions: resolvedOnlineEntryOptions,
+        onlineEntryOptions,
         allowedAttempts: body.allowedAttempts ?? null,
         submissionAttempts: body.submissionAttempts ?? "Unlimited",
         doNotCount: body.doNotCount ?? false,
@@ -409,40 +465,57 @@ export async function POST(
         peerReviewAssign: body.peerReviewAssign ?? "manually",
         peerReviewAnonymous: body.peerReviewAnonymous ?? false,
         notifyUsers: body.notifyUsers ?? false,
-        createdById: access.userId,
         assignees: normalizeAssignees(body.assignees),
-
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        status: (body.status ?? "UNPUBLISHED") as any,
+        createdById: access.userId,
+        status: normalizeStatus(body.status),
         dueDate: parseDateWithTime(body.dueDate, body.dueTime),
         availableFrom: parseDateWithTime(
           body.availableFrom,
           body.availableFromTime
         ),
-        availableUntil: parseDateWithTime(
-          body.availableUntil,
-          body.untilTime
-        ),
+        availableUntil: parseDateWithTime(body.availableUntil, body.untilTime),
       },
+    });
+
+    const submissionEntries = parseSubmissionEntries(
+      assignment.onlineEntryOptions
+    );
+
+    // ✅ FIX: also return correct courseRole on POST (the creator's own course role)
+    const creatorEnrollment = await prisma.courseEnrollment.findUnique({
+      where: {
+        userId_courseId: {
+          userId: access.userId,
+          courseId,
+        },
+      },
+      select: { courseRole: true },
     });
 
     return NextResponse.json({
       assignment: {
         ...assignment,
+        onlineEntryOptions: submissionEntries
+          ? []
+          : assignment.onlineEntryOptions,
+        ...(submissionEntries ? { submissionEntries } : {}),
+
         isCreator: true,
         isAssignedToYou: false,
         _assignmentRole: "manager",
         _isAssignedToYou: false,
         _isExplicitlyAssignedToYou: false,
         _publisherId: access.userId,
+        // ✅ use courseRole not system role
+        _publisherRole: creatorEnrollment?.courseRole ?? null,
       },
       viewer: {
         systemRole: access.systemRole,
         courseRole: access.courseRole,
       },
     });
-  } catch (err) {
-    console.error("[POST /api/courses/[id]/assignments]", err);
+  } catch (error) {
+    console.error("[POST /api/courses/[id]/assignments]", error);
 
     return NextResponse.json(
       { error: "Failed to create assignment" },

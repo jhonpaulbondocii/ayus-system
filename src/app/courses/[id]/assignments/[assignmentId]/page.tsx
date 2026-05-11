@@ -1,14 +1,10 @@
 // src/app/courses/[id]/assignments/[assignmentId]/page.tsx
-import MainLayout from "@/components/layout/MainLayout";
-import CourseAssignmentDetailPage from "@/components/layout/CourseAssignmentDetailPage";
+import { redirect } from "next/navigation";
 
 type Props = { params: Promise<{ id: string; assignmentId: string }> };
 
 export default async function Page({ params }: Props) {
-  const { id, assignmentId } = await params;
-  return (
-    <MainLayout>
-      <CourseAssignmentDetailPage courseId={id} assignmentId={assignmentId} />
-    </MainLayout>
-  );
+  const { id } = await params;
+  // Redirect to the course assignments tab — the sidebar lives there
+  redirect(`/courses/${id}?tab=Assignments`);
 }

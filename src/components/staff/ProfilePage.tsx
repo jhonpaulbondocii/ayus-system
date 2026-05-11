@@ -18,11 +18,7 @@ const INPUT_BLUR = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>)
 };
 
 const accountLinks = [
-  { label: "Notifications", href: "/notifications" },
-  { label: "Profile",       href: "/profile"        },
-  { label: "Files",         href: "/files"           },
-  { label: "Settings",      href: "/settings"        },
-  { label: "Shared Content",href: "/shared"          },
+  { label: "Profile", href: "/profile" },
 ];
 
 interface UserProfile {
@@ -56,8 +52,6 @@ export default function ProfilePage() {
   const [name,          setName]          = useState("");
   const [pronouns,      setPronouns]      = useState("");
   const [bio,           setBio]           = useState("");
-  const [position,      setPosition]      = useState("");
-  const [department,    setDepartment]    = useState("");
   const [contactNumber, setContactNumber] = useState("");
 
   const [photoOpen,   setPhotoOpen]   = useState(false);
@@ -73,8 +67,6 @@ export default function ProfilePage() {
           setName(d.user?.name               ?? "");
           setPronouns(d.user?.pronouns        ?? "");
           setBio(d.user?.bio                  ?? "");
-          setPosition(d.user?.position        ?? "");
-          setDepartment(d.user?.department    ?? "");
           setContactNumber(d.user?.contactNumber ?? "");
           setLoading(false);
         });
@@ -88,7 +80,7 @@ export default function ProfilePage() {
       const res = await fetch("/api/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, pronouns, bio, position, department, contactNumber }),
+        body: JSON.stringify({ name, pronouns, bio, contactNumber }),
       });
       const data = await res.json();
       startTransition(() => {
@@ -219,8 +211,9 @@ export default function ProfilePage() {
             {/* Info table */}
             <div className="rounded-xl p-3 space-y-2" style={{ background: "#fdf8f8" }}>
               {[
-                { label: "Email",  value: user?.email },
-                { label: "Role",   value: user?.role?.toLowerCase() },
+                { label: "Email",    value: user?.email },
+                { label: "Role",     value: user?.role?.toLowerCase() },
+                { label: "Position", value: user?.position || "—" },
               ].map(row => (
                 <div key={row.label} className="flex gap-3 items-center">
                   <span className="text-[10px] font-black uppercase tracking-widest w-24 shrink-0" style={{ color: MAROON }}>{row.label}</span>
@@ -228,19 +221,14 @@ export default function ProfilePage() {
                 </div>
               ))}
 
-              {[
-                { label: "Position",   val: position,      set: setPosition      },
-                { label: "Department", val: department,    set: setDepartment    },
-                { label: "Contact No.",val: contactNumber, set: setContactNumber },
-              ].map(row => (
-                <div key={row.label} className="flex gap-3 items-center">
-                  <span className="text-[10px] font-black uppercase tracking-widest w-24 shrink-0" style={{ color: MAROON }}>{row.label}</span>
-                  {editing
-                    ? <input value={row.val} onChange={e => row.set(e.target.value)}
-                        className={INPUT_CLS} style={{ flex: 1 }} onFocus={INPUT_FOCUS} onBlur={INPUT_BLUR}/>
-                    : <span className="text-xs text-gray-700">{row.val || "—"}</span>}
-                </div>
-              ))}
+              <div className="flex gap-3 items-center">
+                <span className="text-[10px] font-black uppercase tracking-widest w-24 shrink-0" style={{ color: MAROON }}>Contact No.</span>
+                {editing
+                  ? <input value={contactNumber} onChange={e => setContactNumber(e.target.value)}
+                      className={INPUT_CLS} style={{ flex: 1 }} onFocus={INPUT_FOCUS} onBlur={INPUT_BLUR}
+                      placeholder="e.g. 09XX-XXX-XXXX"/>
+                  : <span className="text-xs text-gray-700">{contactNumber || "—"}</span>}
+              </div>
             </div>
 
             {/* Bio */}

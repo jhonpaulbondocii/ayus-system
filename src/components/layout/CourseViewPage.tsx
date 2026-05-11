@@ -9,8 +9,11 @@ import {
   Suspense,
 } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 
-// ── Tab Components ─────────────────────────────────────────────────────────────
+import Navbar from "./NavBar";
+import type { BreadcrumbItem } from "./NavBar";
+
 import CourseHomeTab from "./course/CourseHomeTab";
 import CourseAnnouncementsTab from "./course/CourseAnnouncementsTab";
 import CourseAssignmentsTab from "./course/CourseAssignmentsTab";
@@ -19,13 +22,11 @@ import CoursePeopleTab from "./course/CoursePeopleTab";
 import CourseQuizzesTab from "./course/CourseQuizzesTab";
 import CourseSettingsTab from "./course/CourseSettingsTab";
 
-// ── Shared helpers & types ─────────────────────────────────────────────────────
 import {
   FONT,
   MAROON,
   COLORS,
   ALL_TABS,
-  HIDDEN_FOR_HEAD,
   HIDDEN_FOR_STAFF,
   normalizeAnnouncement,
   normalizeCourseRole,
@@ -44,9 +45,6 @@ import type {
   Tab,
 } from "./course/types";
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// SHARED SMALL COMPONENTS (used only in this file)
-// ═══════════════════════════════════════════════════════════════════════════════
 function MembershipBadge({ role }: { role: "Staff" | "Head" }) {
   return (
     <span
@@ -58,12 +56,11 @@ function MembershipBadge({ role }: { role: "Staff" | "Head" }) {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// MAIN COURSE VIEW INNER
-// ═══════════════════════════════════════════════════════════════════════════════
 function CourseViewInner({ courseId }: { courseId: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { data: session, status: sessionStatus } = useSession();
+  const currentUserId = (session?.user as { id?: string })?.id ?? null;
 
   const [course, setCourse] = useState<Course | null>(null);
   const [membership, setMembership] = useState<Membership | null>(null);
@@ -76,6 +73,9 @@ function CourseViewInner({ courseId }: { courseId: string }) {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<Tab>("Home");
 
+  const [drillLabel, setDrillLabel] = useState<string | null>(null);
+  const [drillBack, setDrillBack] = useState<(() => void) | null>(null);
+
   const [showAddPeopleModal, setShowAddPeopleModal] = useState(false);
   const [showAddGroupModal, setShowAddGroupModal] = useState(false);
   const [newPersonEmail, setNewPersonEmail] = useState("");
@@ -85,9 +85,16 @@ function CourseViewInner({ courseId }: { courseId: string }) {
 
   const [, startTransition] = useTransition();
 
+  const handleTabChange = (tab: Tab) => {
+  drillBack?.();        // ← i-reset ang internal state ng current tab
+  setActiveTab(tab);
+  setDrillLabel(null);
+  setDrillBack(null);
+};
+
   useEffect(() => {
     const tabParam = searchParams.get("tab") as Tab | null;
-    const validTabs: Tab[] = [...ALL_TABS, "Settings"];
+    const validTabs: Tab[] = [...ALL_TABS];
     if (tabParam && validTabs.includes(tabParam)) {
       startTransition(() => setActiveTab(tabParam));
     }
@@ -152,15 +159,19 @@ function CourseViewInner({ courseId }: { courseId: string }) {
     };
   }, [courseId]);
 
-  const isHead = membership?.role === "Head";
+  const sessionLoaded = sessionStatus !== "loading";
+  const dataLoaded = !loading && sessionLoaded;
+
+  const isAdmin = (session?.user as { role?: string })?.role === "ADMIN";
+  const isHead = dataLoaded && (membership?.role === "Head" || isAdmin);
+  const canManageAssignments = dataLoaded && (membership?.permissions.manageAssignments ?? false);
   const canManageAnnouncements = membership?.permissions.manageAnnouncements ?? false;
-  const canManageAssignments = membership?.permissions.manageAssignments ?? false;
   const canManagePeople = membership?.permissions.managePeople ?? false;
   const canManageCourse = membership?.permissions.manageCourse ?? false;
 
-  const TABS: Tab[] = isHead
-    ? [...ALL_TABS.filter((t) => !HIDDEN_FOR_HEAD.includes(t)), "Settings"]
-    : ALL_TABS.filter((t) => !HIDDEN_FOR_STAFF.includes(t));
+  const TABS: Tab[] = ALL_TABS.filter(
+    (t) => !HIDDEN_FOR_STAFF.includes(t)
+  ) as Tab[];
 
   const handleAddPerson = async () => {
     const email = newPersonEmail.trim();
@@ -216,181 +227,251 @@ function CourseViewInner({ courseId }: { courseId: string }) {
 
   if (loading) {
     return (
-      <div
-        className="flex items-center justify-center h-64 text-sm"
-        style={{ color: COLORS.textMuted, fontFamily: FONT }}
-      >
-        Loading...
-      </div>
+      <>
+        <Navbar />
+        <div
+          className="flex items-center justify-center h-64 text-sm"
+          style={{ color: COLORS.textMuted, fontFamily: FONT }}
+        >
+          Loading...
+        </div>
+      </>
     );
   }
 
   if (!course) {
     return (
-      <div
-        className="flex flex-col items-center justify-center h-64 text-center gap-3"
-        style={{ fontFamily: FONT }}
-      >
-        <p className="text-sm" style={{ color: COLORS.textSecondary }}>
-          Course not found.
-        </p>
-        <button
-          onClick={() => router.back()}
-          className="text-sm hover:underline"
-          style={{ color: COLORS.primary }}
+      <>
+        <Navbar showBack onBack={() => router.back()} />
+        <div
+          className="flex flex-col items-center justify-center h-64 text-center gap-3"
+          style={{ fontFamily: FONT }}
         >
-          ← Go back
-        </button>
-      </div>
+          <p className="text-sm" style={{ color: COLORS.textSecondary }}>
+            Course not found.
+          </p>
+          <button
+            onClick={() => router.back()}
+            className="text-sm hover:underline"
+            style={{ color: COLORS.primary }}
+          >
+            ← Go back
+          </button>
+        </div>
+      </>
     );
   }
 
+  const goHome = () => handleTabChange("Home");
+
+  // FIX: goToTab now calls drillBack() first to reset the tab's internal state
+  // (e.g. clear selectedAssignment in CourseAssignmentsTab) before clearing
+  // the breadcrumb drill state.
+  const goToTab = () => {
+    drillBack?.();
+    setDrillLabel(null);
+    setDrillBack(null);
+  };
+
+  const breadcrumbs: BreadcrumbItem[] = [
+    { label: course.code ?? "Course", onClick: goHome },
+    ...(activeTab !== "Home"
+      ? [
+          {
+            label: activeTab,
+            onClick: drillLabel ? goToTab : undefined,
+          },
+        ]
+      : []),
+    ...(drillLabel ? [{ label: drillLabel }] : []),
+  ];
+
   return (
     <div
-      className="flex h-full bg-white overflow-hidden"
+      className="flex flex-col h-full bg-white overflow-hidden"
       style={{ fontFamily: FONT, fontSize: 13 }}
     >
-      {/* ── Sidebar ── */}
-      <nav
-        className="w-52 border-r bg-white shrink-0 overflow-y-auto py-3"
-        style={{ borderColor: COLORS.border }}
-      >
-        <div className="px-3 pb-3">
-          <div
-            className="rounded-lg border px-3 py-2 bg-[#fdf8f8]"
-            style={{ borderColor: "#f0e4e4" }}
-          >
-            <div className="text-[11px] uppercase tracking-wide text-gray-500 font-semibold">
-              Course Role
-            </div>
-            <div className="mt-1 flex items-center justify-between gap-2">
-              <span className="text-sm font-semibold text-gray-800">{course.code}</span>
-              <MembershipBadge role={membership?.role ?? "Staff"} />
+      <Navbar breadcrumbs={breadcrumbs} />
+
+      <div className="flex flex-1 overflow-hidden">
+
+        <nav
+          className="w-52 border-r bg-white shrink-0 overflow-y-auto py-3"
+          style={{ borderColor: COLORS.border }}
+        >
+          <div className="px-3 pb-3">
+            <div
+              className="rounded-lg border px-3 py-2 bg-[#fdf8f8]"
+              style={{ borderColor: "#f0e4e4" }}
+            >
+              <div className="text-[11px] uppercase tracking-wide text-gray-500 font-semibold">
+                Unit Role
+              </div>
+              <div className="mt-1 flex items-center justify-between gap-2">
+                <span className="text-sm font-semibold text-gray-800">{course.code}</span>
+                <MembershipBadge role={membership?.role ?? "Staff"} />
+              </div>
             </div>
           </div>
-        </div>
-        <div className="space-y-0.5 px-0">
-          {TABS.map((tab) => {
-            const isActive = activeTab === tab;
-            return (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className="w-full text-left text-sm py-2 transition-colors flex items-center gap-2"
-                style={{
-                  fontFamily: FONT,
-                  paddingLeft: isActive ? 13 : 16,
-                  paddingRight: 12,
-                  color: isActive ? COLORS.text : COLORS.primary,
-                  fontWeight: isActive ? 600 : 500,
-                  background: isActive ? COLORS.primarySoft : "transparent",
-                  borderLeft: isActive
-                    ? `3px solid ${COLORS.primary}`
-                    : "3px solid transparent",
-                }}
-                onMouseEnter={(e) => {
-                  if (!isActive) e.currentTarget.style.background = COLORS.primarySoft;
-                }}
-                onMouseLeave={(e) => {
-                  if (!isActive) e.currentTarget.style.background = "transparent";
-                }}
-              >
-                {tab}
-              </button>
-            );
-          })}
-        </div>
-      </nav>
-
-      {/* ── Main Content ── */}
-      <div className="flex-1 overflow-y-auto bg-white">
-
-        {/* HOME */}
-        {activeTab === "Home" && (
-          <CourseHomeTab
-            course={course}
-            membership={membership}
-            groups={groups}
-            courseId={courseId}
-            canManageAnnouncements={canManageAnnouncements}
-            canManageAssignments={canManageAssignments}
-            canManagePeople={canManagePeople}
-            canManageCourse={canManageCourse}
-            isHead={isHead}
-            onTabChange={(tab) => setActiveTab(tab as Tab)}
-          />
-        )}
-
-        {/* ANNOUNCEMENTS */}
-        {activeTab === "Announcements" && (
-          <CourseAnnouncementsTab
-            courseId={courseId}
-            courseStatus={course.status}
-            announcements={announcements}
-            setAnnouncements={setAnnouncements}
-            people={people}
-            canManageAnnouncements={canManageAnnouncements}
-          />
-        )}
-
-        {/* ASSIGNMENTS */}
-        {activeTab === "Assignments" && (
-          <CourseAssignmentsTab
-            courseId={courseId}
-            assignments={assignments}
-            setAssignments={setAssignments}
-            sections={sections}
-            staff={staff}
-            isHead={isHead}
-            canManageAssignments={canManageAssignments}
-          />
-        )}
-
-        {/* GRADES */}
-        {activeTab === "Grades" && (
-          <CourseGradesTab course={course} assignments={assignments} />
-        )}
-
-        {/* PEOPLE */}
-        {activeTab === "People" && (
-          <CoursePeopleTab
-            course={course}
-            courseId={courseId}
-            people={people}
-            groups={groups}
-            membership={membership}
-            canManagePeople={canManagePeople}
-            onAddPeople={() => setShowAddPeopleModal(true)}
-            onAddGroup={() => setShowAddGroupModal(true)}
-          />
-        )}
-
-        {/* COLLABORATIONS */}
-        {activeTab === "Collaborations" && (
-          <div className="px-8 py-8 text-sm" style={{ color: COLORS.textMuted }}>
-            No content available.
+          <div className="space-y-0.5 px-0">
+            {TABS.map((tab) => {
+              const isActive = activeTab === tab;
+              return (
+                <button
+                  key={tab}
+                  onClick={() => handleTabChange(tab)}
+                  className="w-full text-left text-sm py-2 transition-colors flex items-center gap-2"
+                  style={{
+                    fontFamily: FONT,
+                    paddingLeft: isActive ? 13 : 16,
+                    paddingRight: 12,
+                    color: isActive ? COLORS.text : COLORS.primary,
+                    fontWeight: isActive ? 600 : 500,
+                    background: isActive ? COLORS.primarySoft : "transparent",
+                    borderLeft: isActive
+                      ? `3px solid ${COLORS.primary}`
+                      : "3px solid transparent",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isActive) e.currentTarget.style.background = COLORS.primarySoft;
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isActive) e.currentTarget.style.background = "transparent";
+                  }}
+                >
+                  {tab}
+                </button>
+              );
+            })}
           </div>
-        )}
+        </nav>
 
-        {/* QUIZZES */}
-        {activeTab === "Quizzes" && <CourseQuizzesTab courseId={courseId} />}
+        <div className="flex-1 overflow-hidden flex flex-col bg-white">
 
-        {/* SETTINGS */}
-        {activeTab === "Settings" && isHead && course && (
-          <CourseSettingsTab
-            courseId={courseId}
-            course={course}
-            onCourseUpdate={(updated) =>
-              setCourse((prev) => (prev ? { ...prev, ...updated } : prev))
-            }
-          />
-        )}
+          {activeTab === "Home" && (
+            <div className="flex-1 overflow-y-auto">
+              <CourseHomeTab
+                course={course}
+                membership={membership}
+                groups={groups}
+                courseId={courseId}
+                canManageAnnouncements={canManageAnnouncements}
+                canManageAssignments={canManageAssignments}
+                canManagePeople={canManagePeople}
+                canManageCourse={canManageCourse}
+                isHead={isHead}
+                currentUserId={currentUserId ?? ""}
+                onTabChange={(tab) => handleTabChange(tab as Tab)}
+              />
+            </div>
+          )}
+
+          {activeTab === "Announcements" && (
+            <div className="flex-1 overflow-y-auto">
+              <CourseAnnouncementsTab
+                courseId={courseId}
+                courseStatus={course.status}
+                announcements={announcements}
+                setAnnouncements={setAnnouncements}
+                people={people}
+                canManageAnnouncements={canManageAnnouncements}
+              />
+            </div>
+          )}
+
+          {activeTab === "Assignments" && (
+  <div className={`flex-1 flex flex-col ${drillLabel ? "overflow-hidden" : "overflow-y-auto"}`}>
+              <CourseAssignmentsTab
+                courseId={courseId}
+                assignments={assignments}
+                setAssignments={setAssignments}
+                sections={sections}
+                staff={staff}
+                isHead={isHead}
+                canManageAssignments={canManageAssignments}
+                currentUserId={currentUserId}
+                onNavDrillIn={(label: string, backFn: () => void) => {
+                  setDrillLabel(label);
+                  setDrillBack(() => backFn);
+                }}
+                onNavDrillOut={() => {
+                  setDrillLabel(null);
+                  setDrillBack(null);
+                }}
+              />
+            </div>
+          )}
+
+          {activeTab === "Grades" && sessionLoaded && (
+            <div className="flex-1 overflow-y-auto">
+              <CourseGradesTab
+                courseId={courseId}
+                isHead={isHead}
+                isAdmin={isAdmin}
+                currentUserId={currentUserId}
+              />
+            </div>
+          )}
+
+          {activeTab === "People" && (
+            <div className="flex-1 overflow-y-auto">
+              <CoursePeopleTab
+                course={course}
+                courseId={courseId}
+                people={people}
+                groups={groups}
+                membership={membership}
+                canManagePeople={canManagePeople}
+                currentUserId={currentUserId}
+                onAddPeople={() => setShowAddPeopleModal(true)}
+                onAddGroup={() => setShowAddGroupModal(true)}
+              />
+            </div>
+          )}
+
+          {activeTab === "Collaborations" && (
+            <div className="flex-1 overflow-y-auto px-8 py-8 text-sm" style={{ color: COLORS.textMuted }}>
+              No content available.
+            </div>
+          )}
+
+          {activeTab === "Form" && dataLoaded && (
+            <div className="flex-1 overflow-hidden flex flex-col">
+              <CourseQuizzesTab
+                courseId={courseId}
+                isHead={isHead}
+                canManageForms={canManageAssignments}
+                currentUserId={currentUserId}
+              />
+            </div>
+          )}
+          {activeTab === "Form" && !dataLoaded && (
+            <div
+              className="flex-1 flex items-center justify-center text-sm"
+              style={{ color: COLORS.textMuted }}
+            >
+              Loading...
+            </div>
+          )}
+
+          {activeTab === "Settings" && isHead && course && (
+            <div className="flex-1 overflow-y-auto">
+              <CourseSettingsTab
+                courseId={courseId}
+                course={course}
+                onCourseUpdate={(updated) =>
+                  setCourse((prev) => (prev ? { ...prev, ...updated } : prev))
+                }
+              />
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* ── Add People Modal ── */}
+      {/* Add People Modal */}
       {showAddPeopleModal && (
         <div
-          className="fixed inset-0 z-[200] flex items-center justify-center bg-black/30 backdrop-blur-sm"
+          className="fixed inset-0 z-200 flex items-center justify-center bg-black/30 backdrop-blur-sm"
           onClick={() => setShowAddPeopleModal(false)}
         >
           <div
@@ -453,10 +534,10 @@ function CourseViewInner({ courseId }: { courseId: string }) {
         </div>
       )}
 
-      {/* ── Add Group Modal ── */}
+      {/* Add Group Modal */}
       {showAddGroupModal && (
         <div
-          className="fixed inset-0 z-[200] flex items-center justify-center bg-black/30 backdrop-blur-sm"
+          className="fixed inset-0 z-200 flex items-center justify-center bg-black/30 backdrop-blur-sm"
           onClick={() => setShowAddGroupModal(false)}
         >
           <div
