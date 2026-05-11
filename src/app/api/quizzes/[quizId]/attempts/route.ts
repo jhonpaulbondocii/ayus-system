@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 
 export async function POST(
   req: Request,
-  { params }: { params: { quizId: string } }
+  { params }: { params: Promise<{ quizId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -13,11 +13,12 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { quizId } = await params;
     const { score, durationSeconds, answers } = await req.json();
 
     const attempt = await prisma.quizAttempt.create({
       data: {
-        quizId: params.quizId,
+        quizId,
         userId: session.user.id,
         score,
         durationSeconds,
