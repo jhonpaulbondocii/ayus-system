@@ -517,6 +517,7 @@ model QuizQuestion {
   quizId        String
   type          QuizQuestionType @default(MULTIPLE_CHOICE)
   question      String           @db.Text
+  description   String?          @db.Text
   points        Float            @default(1)
   correctAnswer String?
   order         Int              @default(0)

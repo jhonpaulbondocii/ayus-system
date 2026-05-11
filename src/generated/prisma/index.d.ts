@@ -27588,6 +27588,7 @@ export namespace Prisma {
     quizId: string | null
     type: $Enums.QuizQuestionType | null
     question: string | null
+    description: string | null
     points: number | null
     correctAnswer: string | null
     order: number | null
@@ -27599,6 +27600,7 @@ export namespace Prisma {
     quizId: string | null
     type: $Enums.QuizQuestionType | null
     question: string | null
+    description: string | null
     points: number | null
     correctAnswer: string | null
     order: number | null
@@ -27610,6 +27612,7 @@ export namespace Prisma {
     quizId: number
     type: number
     question: number
+    description: number
     points: number
     correctAnswer: number
     order: number
@@ -27633,6 +27636,7 @@ export namespace Prisma {
     quizId?: true
     type?: true
     question?: true
+    description?: true
     points?: true
     correctAnswer?: true
     order?: true
@@ -27644,6 +27648,7 @@ export namespace Prisma {
     quizId?: true
     type?: true
     question?: true
+    description?: true
     points?: true
     correctAnswer?: true
     order?: true
@@ -27655,6 +27660,7 @@ export namespace Prisma {
     quizId?: true
     type?: true
     question?: true
+    description?: true
     points?: true
     correctAnswer?: true
     order?: true
@@ -27753,6 +27759,7 @@ export namespace Prisma {
     quizId: string
     type: $Enums.QuizQuestionType
     question: string
+    description: string | null
     points: number
     correctAnswer: string | null
     order: number
@@ -27783,6 +27790,7 @@ export namespace Prisma {
     quizId?: boolean
     type?: boolean
     question?: boolean
+    description?: boolean
     points?: boolean
     correctAnswer?: boolean
     order?: boolean
@@ -27798,6 +27806,7 @@ export namespace Prisma {
     quizId?: boolean
     type?: boolean
     question?: boolean
+    description?: boolean
     points?: boolean
     correctAnswer?: boolean
     order?: boolean
@@ -27810,6 +27819,7 @@ export namespace Prisma {
     quizId?: boolean
     type?: boolean
     question?: boolean
+    description?: boolean
     points?: boolean
     correctAnswer?: boolean
     order?: boolean
@@ -27838,6 +27848,7 @@ export namespace Prisma {
       quizId: string
       type: $Enums.QuizQuestionType
       question: string
+      description: string | null
       points: number
       correctAnswer: string | null
       order: number
@@ -28242,6 +28253,7 @@ export namespace Prisma {
     readonly quizId: FieldRef<"QuizQuestion", 'String'>
     readonly type: FieldRef<"QuizQuestion", 'QuizQuestionType'>
     readonly question: FieldRef<"QuizQuestion", 'String'>
+    readonly description: FieldRef<"QuizQuestion", 'String'>
     readonly points: FieldRef<"QuizQuestion", 'Float'>
     readonly correctAnswer: FieldRef<"QuizQuestion", 'String'>
     readonly order: FieldRef<"QuizQuestion", 'Int'>
@@ -38512,6 +38524,7 @@ export namespace Prisma {
     quizId: 'quizId',
     type: 'type',
     question: 'question',
+    description: 'description',
     points: 'points',
     correctAnswer: 'correctAnswer',
     order: 'order',
@@ -40900,6 +40913,7 @@ export namespace Prisma {
     quizId?: StringFilter<"QuizQuestion"> | string
     type?: EnumQuizQuestionTypeFilter<"QuizQuestion"> | $Enums.QuizQuestionType
     question?: StringFilter<"QuizQuestion"> | string
+    description?: StringNullableFilter<"QuizQuestion"> | string | null
     points?: FloatFilter<"QuizQuestion"> | number
     correctAnswer?: StringNullableFilter<"QuizQuestion"> | string | null
     order?: IntFilter<"QuizQuestion"> | number
@@ -40914,6 +40928,7 @@ export namespace Prisma {
     quizId?: SortOrder
     type?: SortOrder
     question?: SortOrder
+    description?: SortOrderInput | SortOrder
     points?: SortOrder
     correctAnswer?: SortOrderInput | SortOrder
     order?: SortOrder
@@ -40931,6 +40946,7 @@ export namespace Prisma {
     quizId?: StringFilter<"QuizQuestion"> | string
     type?: EnumQuizQuestionTypeFilter<"QuizQuestion"> | $Enums.QuizQuestionType
     question?: StringFilter<"QuizQuestion"> | string
+    description?: StringNullableFilter<"QuizQuestion"> | string | null
     points?: FloatFilter<"QuizQuestion"> | number
     correctAnswer?: StringNullableFilter<"QuizQuestion"> | string | null
     order?: IntFilter<"QuizQuestion"> | number
@@ -40945,6 +40961,7 @@ export namespace Prisma {
     quizId?: SortOrder
     type?: SortOrder
     question?: SortOrder
+    description?: SortOrderInput | SortOrder
     points?: SortOrder
     correctAnswer?: SortOrderInput | SortOrder
     order?: SortOrder
@@ -40964,6 +40981,7 @@ export namespace Prisma {
     quizId?: StringWithAggregatesFilter<"QuizQuestion"> | string
     type?: EnumQuizQuestionTypeWithAggregatesFilter<"QuizQuestion"> | $Enums.QuizQuestionType
     question?: StringWithAggregatesFilter<"QuizQuestion"> | string
+    description?: StringNullableWithAggregatesFilter<"QuizQuestion"> | string | null
     points?: FloatWithAggregatesFilter<"QuizQuestion"> | number
     correctAnswer?: StringNullableWithAggregatesFilter<"QuizQuestion"> | string | null
     order?: IntWithAggregatesFilter<"QuizQuestion"> | number
@@ -43972,6 +43990,7 @@ export namespace Prisma {
     id?: string
     type?: $Enums.QuizQuestionType
     question: string
+    description?: string | null
     points?: number
     correctAnswer?: string | null
     order?: number
@@ -43986,6 +44005,7 @@ export namespace Prisma {
     quizId: string
     type?: $Enums.QuizQuestionType
     question: string
+    description?: string | null
     points?: number
     correctAnswer?: string | null
     order?: number
@@ -43998,6 +44018,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     type?: EnumQuizQuestionTypeFieldUpdateOperationsInput | $Enums.QuizQuestionType
     question?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
     points?: FloatFieldUpdateOperationsInput | number
     correctAnswer?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
@@ -44012,6 +44033,7 @@ export namespace Prisma {
     quizId?: StringFieldUpdateOperationsInput | string
     type?: EnumQuizQuestionTypeFieldUpdateOperationsInput | $Enums.QuizQuestionType
     question?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
     points?: FloatFieldUpdateOperationsInput | number
     correctAnswer?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
@@ -44025,6 +44047,7 @@ export namespace Prisma {
     quizId: string
     type?: $Enums.QuizQuestionType
     question: string
+    description?: string | null
     points?: number
     correctAnswer?: string | null
     order?: number
@@ -44035,6 +44058,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     type?: EnumQuizQuestionTypeFieldUpdateOperationsInput | $Enums.QuizQuestionType
     question?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
     points?: FloatFieldUpdateOperationsInput | number
     correctAnswer?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
@@ -44046,6 +44070,7 @@ export namespace Prisma {
     quizId?: StringFieldUpdateOperationsInput | string
     type?: EnumQuizQuestionTypeFieldUpdateOperationsInput | $Enums.QuizQuestionType
     question?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
     points?: FloatFieldUpdateOperationsInput | number
     correctAnswer?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
@@ -46675,6 +46700,7 @@ export namespace Prisma {
     quizId?: SortOrder
     type?: SortOrder
     question?: SortOrder
+    description?: SortOrder
     points?: SortOrder
     correctAnswer?: SortOrder
     order?: SortOrder
@@ -46691,6 +46717,7 @@ export namespace Prisma {
     quizId?: SortOrder
     type?: SortOrder
     question?: SortOrder
+    description?: SortOrder
     points?: SortOrder
     correctAnswer?: SortOrder
     order?: SortOrder
@@ -46702,6 +46729,7 @@ export namespace Prisma {
     quizId?: SortOrder
     type?: SortOrder
     question?: SortOrder
+    description?: SortOrder
     points?: SortOrder
     correctAnswer?: SortOrder
     order?: SortOrder
@@ -55796,6 +55824,7 @@ export namespace Prisma {
     id?: string
     type?: $Enums.QuizQuestionType
     question: string
+    description?: string | null
     points?: number
     correctAnswer?: string | null
     order?: number
@@ -55808,6 +55837,7 @@ export namespace Prisma {
     id?: string
     type?: $Enums.QuizQuestionType
     question: string
+    description?: string | null
     points?: number
     correctAnswer?: string | null
     order?: number
@@ -56010,6 +56040,7 @@ export namespace Prisma {
     quizId?: StringFilter<"QuizQuestion"> | string
     type?: EnumQuizQuestionTypeFilter<"QuizQuestion"> | $Enums.QuizQuestionType
     question?: StringFilter<"QuizQuestion"> | string
+    description?: StringNullableFilter<"QuizQuestion"> | string | null
     points?: FloatFilter<"QuizQuestion"> | number
     correctAnswer?: StringNullableFilter<"QuizQuestion"> | string | null
     order?: IntFilter<"QuizQuestion"> | number
@@ -56300,6 +56331,7 @@ export namespace Prisma {
     id?: string
     type?: $Enums.QuizQuestionType
     question: string
+    description?: string | null
     points?: number
     correctAnswer?: string | null
     order?: number
@@ -56313,6 +56345,7 @@ export namespace Prisma {
     quizId: string
     type?: $Enums.QuizQuestionType
     question: string
+    description?: string | null
     points?: number
     correctAnswer?: string | null
     order?: number
@@ -56340,6 +56373,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     type?: EnumQuizQuestionTypeFieldUpdateOperationsInput | $Enums.QuizQuestionType
     question?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
     points?: FloatFieldUpdateOperationsInput | number
     correctAnswer?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
@@ -56353,6 +56387,7 @@ export namespace Prisma {
     quizId?: StringFieldUpdateOperationsInput | string
     type?: EnumQuizQuestionTypeFieldUpdateOperationsInput | $Enums.QuizQuestionType
     question?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
     points?: FloatFieldUpdateOperationsInput | number
     correctAnswer?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
@@ -56364,6 +56399,7 @@ export namespace Prisma {
     id?: string
     type?: $Enums.QuizQuestionType
     question: string
+    description?: string | null
     points?: number
     correctAnswer?: string | null
     order?: number
@@ -56377,6 +56413,7 @@ export namespace Prisma {
     quizId: string
     type?: $Enums.QuizQuestionType
     question: string
+    description?: string | null
     points?: number
     correctAnswer?: string | null
     order?: number
@@ -56404,6 +56441,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     type?: EnumQuizQuestionTypeFieldUpdateOperationsInput | $Enums.QuizQuestionType
     question?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
     points?: FloatFieldUpdateOperationsInput | number
     correctAnswer?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
@@ -56417,6 +56455,7 @@ export namespace Prisma {
     quizId?: StringFieldUpdateOperationsInput | string
     type?: EnumQuizQuestionTypeFieldUpdateOperationsInput | $Enums.QuizQuestionType
     question?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
     points?: FloatFieldUpdateOperationsInput | number
     correctAnswer?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
@@ -59815,6 +59854,7 @@ export namespace Prisma {
     id?: string
     type?: $Enums.QuizQuestionType
     question: string
+    description?: string | null
     points?: number
     correctAnswer?: string | null
     order?: number
@@ -59834,6 +59874,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     type?: EnumQuizQuestionTypeFieldUpdateOperationsInput | $Enums.QuizQuestionType
     question?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
     points?: FloatFieldUpdateOperationsInput | number
     correctAnswer?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
@@ -59846,6 +59887,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     type?: EnumQuizQuestionTypeFieldUpdateOperationsInput | $Enums.QuizQuestionType
     question?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
     points?: FloatFieldUpdateOperationsInput | number
     correctAnswer?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
@@ -59858,6 +59900,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     type?: EnumQuizQuestionTypeFieldUpdateOperationsInput | $Enums.QuizQuestionType
     question?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
     points?: FloatFieldUpdateOperationsInput | number
     correctAnswer?: NullableStringFieldUpdateOperationsInput | string | null
     order?: IntFieldUpdateOperationsInput | number
