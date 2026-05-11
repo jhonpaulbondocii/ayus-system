@@ -33,9 +33,8 @@ export async function GET(req: NextRequest) {
   const participantRows = await prisma.conversationParticipant.findMany({
     where: participantWhere,
     include: {
-      conversation: {
-        where: courseId ? { courseId } : undefined,
-        include: {
+  conversation: {
+    include: {
           messages: {
             orderBy: { createdAt: "desc" },
             take: 1,
@@ -57,7 +56,10 @@ export async function GET(req: NextRequest) {
     orderBy: { conversation: { updatedAt: "desc" } },
   });
 
-  const rows = participantRows.filter((p) => p.conversation !== null);
+  const rows = participantRows.filter((p) => 
+  p.conversation !== null && 
+  (!courseId || p.conversation.courseId === courseId)
+);
 
   type ParticipantRow   = (typeof rows)[number];
   type ConvoParticipant = ParticipantRow["conversation"]["participants"][number];
