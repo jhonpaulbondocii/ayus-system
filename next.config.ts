@@ -1,15 +1,17 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
   reactCompiler: true,
+  outputFileTracingExcludes: {
+    "*": ["public/uploads/**"],
+  },
   images: {
     remotePatterns: [
       {
-        protocol: 'https',
-        hostname: 'res.cloudinary.com',
-        port: '',
-        pathname: '/**',
+        protocol: "https",
+        hostname: "res.cloudinary.com",
+        port: "",
+        pathname: "/**",
       },
     ],
   },
