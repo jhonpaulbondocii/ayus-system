@@ -43,9 +43,42 @@ interface Props {
   currentUserId?: string | null;
   currentUserName?: string | null;
   currentUserRole?: string | null;
-  // removed currentUserImage — was unused
 }
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   SEEN / NEW BADGE HELPERS
+───────────────────────────────────────────────────────────────────────────── */
+const SEEN_KEY = (courseId: string) => `seen_assignments_${courseId}`;
+
+function getSeenIds(courseId: string): Set<string> {
+  try {
+    const raw = localStorage.getItem(SEEN_KEY(courseId));
+    return new Set(raw ? JSON.parse(raw) : []);
+  } catch { return new Set(); }
+}
+
+function markSeen(courseId: string, id: string) {
+  try {
+    const seen = getSeenIds(courseId);
+    seen.add(String(id));
+    localStorage.setItem(SEEN_KEY(courseId), JSON.stringify([...seen]));
+  } catch { /* ignore */ }
+}
+
+function NewBadge() {
+  return (
+    <span
+      className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase tracking-wide text-white"
+      style={{ background: "#dc2626", letterSpacing: "0.08em" }}
+    >
+      NEW
+    </span>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   DATE / TIME HELPERS
+───────────────────────────────────────────────────────────────────────────── */
 function fmtDue(iso: string | null) {
   if (!iso) return null;
   const d = new Date(iso);
@@ -77,6 +110,9 @@ function fmtDateLabel(date: string, time: string) {
   } catch { return ""; }
 }
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   GROUP PERSISTENCE
+───────────────────────────────────────────────────────────────────────────── */
 function groupsStorageKey(courseId: string) { return `assignment_groups_${courseId}`; }
 function loadPersistedGroups(courseId: string): string[] {
   try {
@@ -91,7 +127,9 @@ function persistGroups(courseId: string, groups: string[]) {
   try { localStorage.setItem(groupsStorageKey(courseId), JSON.stringify(groups)); } catch { }
 }
 
-// ── Avatar ─────────────────────────────────────────────────────────────────────
+/* ─────────────────────────────────────────────────────────────────────────────
+   AVATAR
+───────────────────────────────────────────────────────────────────────────── */
 function PublisherAvatar({ name, image, size = 20 }: { name?: string | null; image?: string | null; size?: number }) {
   const [imgError, setImgError] = useState(false);
   const initial = name ? name.charAt(0).toUpperCase() : "?";
@@ -129,7 +167,6 @@ function PublisherChip({ name, image, role }: { name?: string | null; image?: st
   );
 }
 
-// ── AuthorBadge — shown on your own assignments ────────────────────────────────
 function AuthorBadge({ name, role }: { name: string; role: string }) {
   return (
     <span
@@ -142,7 +179,9 @@ function AuthorBadge({ name, role }: { name: string; role: string }) {
   );
 }
 
-// ── Publish toggle ─────────────────────────────────────────────────────────────
+/* ─────────────────────────────────────────────────────────────────────────────
+   PUBLISH TOGGLE
+───────────────────────────────────────────────────────────────────────────── */
 function PublishToggle({ published, onToggle }: { published: boolean; onToggle: () => void }) {
   return (
     <button
@@ -166,7 +205,9 @@ function PublishToggle({ published, onToggle }: { published: boolean; onToggle: 
   );
 }
 
-// ── Assignment icon ────────────────────────────────────────────────────────────
+/* ─────────────────────────────────────────────────────────────────────────────
+   ASSIGNMENT ICON
+───────────────────────────────────────────────────────────────────────────── */
 function AssignmentIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="1.5" style={{ flexShrink: 0 }}>
@@ -176,7 +217,9 @@ function AssignmentIcon() {
   );
 }
 
-// ── Row 3-dot menu (portal) ────────────────────────────────────────────────────
+/* ─────────────────────────────────────────────────────────────────────────────
+   ROW 3-DOT MENU
+───────────────────────────────────────────────────────────────────────────── */
 type DropdownAction = "edit" | "speedgrader" | "duplicate" | "assignTo" | "delete";
 
 function AssignmentRowMenu({
@@ -256,7 +299,9 @@ function AssignmentRowMenu({
   );
 }
 
-// ── Group 3-dot menu (portal) ──────────────────────────────────────────────────
+/* ─────────────────────────────────────────────────────────────────────────────
+   GROUP 3-DOT MENU
+───────────────────────────────────────────────────────────────────────────── */
 function GroupMenu({
   onEdit,
   onDelete,
@@ -343,7 +388,9 @@ function GroupMenu({
   );
 }
 
-// ── Delete Assignment Modal ────────────────────────────────────────────────────
+/* ─────────────────────────────────────────────────────────────────────────────
+   DELETE ASSIGNMENT MODAL
+───────────────────────────────────────────────────────────────────────────── */
 function DeleteAssignmentModal({ assignment, onClose, onConfirm, deleting }: {
   assignment: Assignment; onClose: () => void; onConfirm: () => void; deleting: boolean;
 }) {
@@ -371,7 +418,9 @@ function DeleteAssignmentModal({ assignment, onClose, onConfirm, deleting }: {
   );
 }
 
-// ── Quick Edit Modal ───────────────────────────────────────────────────────────
+/* ─────────────────────────────────────────────────────────────────────────────
+   QUICK EDIT MODAL
+───────────────────────────────────────────────────────────────────────────── */
 function QuickEditModal({ assignment, courseId, onClose, onSave, onMoreOptions }: {
   assignment: Assignment; courseId: string; onClose: () => void;
   onSave: (updated: Partial<Assignment> & { dueTime?: string }) => Promise<void>;
@@ -464,7 +513,9 @@ function QuickEditModal({ assignment, courseId, onClose, onSave, onMoreOptions }
   );
 }
 
-// ── Assign To Right Panel ──────────────────────────────────────────────────────
+/* ─────────────────────────────────────────────────────────────────────────────
+   ASSIGN TO PANEL
+───────────────────────────────────────────────────────────────────────────── */
 interface AssignRow {
   id: number;
   assignees: string[];
@@ -641,7 +692,9 @@ function AssignToPanel({ assignment, courseId, onClose, onSave }: {
   );
 }
 
-// ── Add Group Modal ────────────────────────────────────────────────────────────
+/* ─────────────────────────────────────────────────────────────────────────────
+   ADD / EDIT / DELETE GROUP MODALS
+───────────────────────────────────────────────────────────────────────────── */
 function AddGroupModal({ onClose, onSave, saving }: { onClose: () => void; onSave: (name: string) => void; saving: boolean }) {
   const [name, setName] = useState("");
   return (
@@ -673,7 +726,6 @@ function AddGroupModal({ onClose, onSave, saving }: { onClose: () => void; onSav
   );
 }
 
-// ── Edit Group Modal ───────────────────────────────────────────────────────────
 function EditGroupModal({ groupName, onClose, onSave, saving }: {
   groupName: string; onClose: () => void; onSave: (newName: string) => void; saving: boolean;
 }) {
@@ -707,7 +759,6 @@ function EditGroupModal({ groupName, onClose, onSave, saving }: {
   );
 }
 
-// ── Delete Group Modal ─────────────────────────────────────────────────────────
 function DeleteGroupModal({ groupName, assignmentCount, otherGroups, onClose, onDelete }: {
   groupName: string; assignmentCount: number; otherGroups: string[];
   onClose: () => void; onDelete: (action: "delete" | "move", targetGroup?: string) => void;
@@ -758,7 +809,9 @@ function DeleteGroupModal({ groupName, assignmentCount, otherGroups, onClose, on
   );
 }
 
-// ── Assignment Row ─────────────────────────────────────────────────────────────
+/* ─────────────────────────────────────────────────────────────────────────────
+   ASSIGNMENT ROW  (now receives seenIds + onView for mark-seen logic)
+───────────────────────────────────────────────────────────────────────────── */
 function AssignmentRow({
   a,
   courseId,
@@ -766,6 +819,8 @@ function AssignmentRow({
   variant,
   currentUserName,
   currentUserRole,
+  seenIds,
+  onView,
   onEdit,
   onDuplicate,
   onAssignTo,
@@ -779,6 +834,8 @@ function AssignmentRow({
   variant: "mine" | "others";
   currentUserName?: string | null;
   currentUserRole?: string | null;
+  seenIds: Set<string>;
+  onView: (a: Assignment) => void;
   onEdit: (a: Assignment) => void;
   onDuplicate: (a: Assignment) => void;
   onAssignTo: (a: Assignment) => void;
@@ -790,6 +847,7 @@ function AssignmentRow({
   const now = new Date();
   const isClosed = a.availableUntil && now > new Date(a.availableUntil);
   const due = fmtDue(a.dueDate);
+  const isNew = !seenIds.has(String(a.id));
 
   const authorDisplayName = variant === "mine"
     ? (currentUserName ?? a.publisherName ?? a.createdBy)
@@ -806,11 +864,16 @@ function AssignmentRow({
     else if (action === "delete") onDelete(assignment);
   };
 
+  const handleClick = () => {
+    onView(a);
+    router.push(`/admin/courses/${courseId}/assignments/${a.id}`);
+  };
+
   return (
     <div
       className="flex items-start sm:items-center gap-3 px-3 sm:px-4 py-4 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-0 relative cursor-pointer"
       style={{ background: variant === "mine" ? "#fff" : "#fafcff" }}
-      onClick={() => router.push(`/admin/courses/${courseId}/assignments/${a.id}`)}
+      onClick={handleClick}
     >
       <div className="absolute left-0 top-0 bottom-0 w-0.5 rounded-full" style={{ background: accentColor }} />
       <div className="shrink-0 mt-0.5 sm:mt-0 pl-2" onClick={(e) => e.stopPropagation()}>
@@ -824,6 +887,8 @@ function AssignmentRow({
           <h3 className="text-sm font-semibold truncate max-w-full hover:underline" style={{ color: MAROON }}>
             {a.title}
           </h3>
+          {/* ── NEW badge ── */}
+          {isNew && <NewBadge />}
           {a.status === "UNPUBLISHED" && (
             <span className="text-[10px] text-amber-600 font-medium">Not Published</span>
           )}
@@ -851,14 +916,19 @@ function AssignmentRow({
   );
 }
 
-// ── Assignment Group Section ───────────────────────────────────────────────────
+/* ─────────────────────────────────────────────────────────────────────────────
+   ASSIGNMENT GROUP SECTION  (now shows new-count dot on collapsed header)
+───────────────────────────────────────────────────────────────────────────── */
 function AssignmentGroupSection({
   title, items, courseId, router, currentUserName, currentUserRole,
+  seenIds, onView,
   onAddAssignment, onEdit, onDuplicate, onAssignTo, onSpeedGrader, onDelete, onTogglePublish,
   onEditGroup, onDeleteGroup, isLastGroup, rowVariant = "mine",
 }: {
   title: string; items: Assignment[]; courseId: string; router: ReturnType<typeof useRouter>;
   currentUserName?: string | null; currentUserRole?: string | null;
+  seenIds: Set<string>;
+  onView: (a: Assignment) => void;
   onAddAssignment: (group: string) => void;
   onEdit: (a: Assignment) => void; onDuplicate: (a: Assignment) => void;
   onAssignTo: (a: Assignment) => void; onSpeedGrader: (a: Assignment) => void;
@@ -867,6 +937,9 @@ function AssignmentGroupSection({
   isLastGroup?: boolean; rowVariant?: "mine" | "others";
 }) {
   const [collapsed, setCollapsed] = useState(false);
+  // Count unseen assignments in this group
+  const newCount = items.filter(a => !seenIds.has(String(a.id))).length;
+
   return (
     <div className="mb-3">
       <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-t select-none">
@@ -877,6 +950,15 @@ function AssignmentGroupSection({
           </svg>
           <span className="text-sm font-semibold text-gray-700">{title}</span>
           <span className="text-xs text-gray-400 ml-1">({items.length})</span>
+          {/* ── New-count dot on collapsed group ── */}
+          {newCount > 0 && (
+            <span
+              className="ml-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold text-white"
+              style={{ background: "#dc2626" }}
+            >
+              {newCount}
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-1">
           {rowVariant === "mine" && (
@@ -898,6 +980,8 @@ function AssignmentGroupSection({
                 variant={rowVariant}
                 currentUserName={currentUserName}
                 currentUserRole={currentUserRole}
+                seenIds={seenIds}
+                onView={onView}
                 onEdit={onEdit} onDuplicate={onDuplicate} onAssignTo={onAssignTo}
                 onSpeedGrader={onSpeedGrader} onDelete={onDelete} onTogglePublish={onTogglePublish}
               />
@@ -909,18 +993,25 @@ function AssignmentGroupSection({
   );
 }
 
-// ── Others Author Section ──────────────────────────────────────────────────────
+/* ─────────────────────────────────────────────────────────────────────────────
+   OTHERS AUTHOR SECTION
+───────────────────────────────────────────────────────────────────────────── */
 function OthersAuthorSection({
   authorName, authorRole, authorImage, items, courseId, router,
+  seenIds, onView,
   onEdit, onDuplicate, onAssignTo, onSpeedGrader, onDelete, onTogglePublish,
 }: {
   authorName: string; authorRole?: string | null; authorImage?: string | null;
   items: Assignment[]; courseId: string; router: ReturnType<typeof useRouter>;
+  seenIds: Set<string>;
+  onView: (a: Assignment) => void;
   onEdit: (a: Assignment) => void; onDuplicate: (a: Assignment) => void;
   onAssignTo: (a: Assignment) => void; onSpeedGrader: (a: Assignment) => void;
   onDelete: (a: Assignment) => void; onTogglePublish: (a: Assignment) => void;
 }) {
   const [collapsed, setCollapsed] = useState(false);
+  const newCount = items.filter(a => !seenIds.has(String(a.id))).length;
+
   return (
     <div className="mb-4">
       <div className="flex items-center gap-2 px-4 py-2.5 border select-none cursor-pointer rounded-t"
@@ -938,11 +1029,21 @@ function OthersAuthorSection({
           </span>
         )}
         <span className="text-xs text-blue-400 ml-1">({items.length})</span>
+        {/* ── New-count dot ── */}
+        {newCount > 0 && (
+          <span
+            className="ml-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold text-white"
+            style={{ background: "#dc2626" }}
+          >
+            {newCount}
+          </span>
+        )}
       </div>
       {!collapsed && (
         <div className="border border-t-0 rounded-b overflow-hidden" style={{ borderColor: "#bfdbfe" }}>
           {items.map(a => (
             <AssignmentRow key={a.id} a={a} courseId={courseId} router={router} variant="others"
+              seenIds={seenIds} onView={onView}
               onEdit={onEdit} onDuplicate={onDuplicate} onAssignTo={onAssignTo}
               onSpeedGrader={onSpeedGrader} onDelete={onDelete} onTogglePublish={onTogglePublish} />
           ))}
@@ -952,17 +1053,24 @@ function OthersAuthorSection({
   );
 }
 
-// ── Others Group Section ───────────────────────────────────────────────────────
+/* ─────────────────────────────────────────────────────────────────────────────
+   OTHERS GROUP SECTION
+───────────────────────────────────────────────────────────────────────────── */
 function OthersGroupSection({
   title, items, courseId, router,
+  seenIds, onView,
   onEdit, onDuplicate, onAssignTo, onSpeedGrader, onDelete, onTogglePublish,
 }: {
   title: string; items: Assignment[]; courseId: string; router: ReturnType<typeof useRouter>;
+  seenIds: Set<string>;
+  onView: (a: Assignment) => void;
   onEdit: (a: Assignment) => void; onDuplicate: (a: Assignment) => void;
   onAssignTo: (a: Assignment) => void; onSpeedGrader: (a: Assignment) => void;
   onDelete: (a: Assignment) => void; onTogglePublish: (a: Assignment) => void;
 }) {
   const [collapsed, setCollapsed] = useState(false);
+  const newCount = items.filter(a => !seenIds.has(String(a.id))).length;
+
   return (
     <div className="mb-4">
       <div className="flex items-center gap-2 px-4 py-2.5 border select-none cursor-pointer rounded-t"
@@ -974,11 +1082,21 @@ function OthersGroupSection({
         </svg>
         <span className="text-sm font-semibold" style={{ color: "#0369a1" }}>{title}</span>
         <span className="text-xs text-blue-400 ml-1">({items.length})</span>
+        {/* ── New-count dot ── */}
+        {newCount > 0 && (
+          <span
+            className="ml-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold text-white"
+            style={{ background: "#dc2626" }}
+          >
+            {newCount}
+          </span>
+        )}
       </div>
       {!collapsed && (
         <div className="border border-t-0 rounded-b overflow-hidden" style={{ borderColor: "#bae6fd" }}>
           {items.map(a => (
             <AssignmentRow key={a.id} a={a} courseId={courseId} router={router} variant="others"
+              seenIds={seenIds} onView={onView}
               onEdit={onEdit} onDuplicate={onDuplicate} onAssignTo={onAssignTo}
               onSpeedGrader={onSpeedGrader} onDelete={onDelete} onTogglePublish={onTogglePublish} />
           ))}
@@ -988,15 +1106,14 @@ function OthersGroupSection({
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// MAIN PAGE
-// ═══════════════════════════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════════════════════════
+   MAIN PAGE
+═══════════════════════════════════════════════════════════════════════════════ */
 export default function CourseAssignmentsPage({
   courseId,
   currentUserId,
   currentUserName,
   currentUserRole,
-  // fix: removed currentUserImage — was defined but never used
 }: Props) {
   const router = useRouter();
   const [assignments, setAssignments] = useState<Assignment[]>([]);
@@ -1004,7 +1121,6 @@ export default function CourseAssignmentsPage({
 
   const [mySearch, setMySearch] = useState("");
   const [showGroupModal, setShowGroupModal] = useState(false);
-  // fix: removed setSavingGroup — was assigned but never used; hardcode false instead
   const [localGroups, setLocalGroups] = useState<string[]>(["Assignments"]);
   const [othersSearch, setOthersSearch] = useState("");
   const [othersViewMode, setOthersViewMode] = useState<"author" | "group">("author");
@@ -1021,12 +1137,21 @@ export default function CourseAssignmentsPage({
   const [resolvedUserId, setResolvedUserId] = useState<string | null | undefined>(currentUserId);
   const [resolvedUserName, setResolvedUserName] = useState<string | null | undefined>(currentUserName);
 
+  /* ── NEW/SEEN STATE ── */
+  const [seenIds, setSeenIds] = useState<Set<string>>(() => getSeenIds(courseId));
+
+  /* Mark an assignment as seen and refresh the seenIds state */
+  const handleView = useCallback((a: Assignment) => {
+    markSeen(courseId, String(a.id));
+    setSeenIds(getSeenIds(courseId));
+  }, [courseId]);
+
   useEffect(() => {
     if (!currentUserId) {
       fetch("/api/auth/session").then(r => r.json()).then(s => {
         if (s?.user?.id) setResolvedUserId(s.user.id);
         if (s?.user?.name) setResolvedUserName(s.user.name);
-      }).catch(() => {});
+      }).catch(() => { });
     }
   }, [currentUserId]);
 
@@ -1037,6 +1162,8 @@ export default function CourseAssignmentsPage({
       .then(d => {
         const list: Assignment[] = d.assignments ?? [];
         setAssignments(list);
+        /* Refresh seenIds so newly loaded assignments evaluate correctly */
+        setSeenIds(getSeenIds(courseId));
         const apiGroups = [...new Set(
           list
             .filter(a => isMyAssignment(a, resolvedUserId, resolvedUserName))
@@ -1074,7 +1201,7 @@ export default function CourseAssignmentsPage({
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status: newStatus }),
-    }).catch(() => {});
+    }).catch(() => { });
   };
 
   const handleSaveGroup = (name: string) => {
@@ -1170,6 +1297,7 @@ export default function CourseAssignmentsPage({
     } finally { setDeletingAssignment(false); }
   };
 
+  /* ── Derived lists ── */
   const myAssignments = assignments.filter(a => isMyAssignment(a, resolvedUserId, resolvedUserName));
   const otherAssignments = assignments.filter(a => !isMyAssignment(a, resolvedUserId, resolvedUserName));
   const myFiltered = myAssignments.filter(a => a.title.toLowerCase().includes(mySearch.toLowerCase()));
@@ -1197,6 +1325,7 @@ export default function CourseAssignmentsPage({
     othersByGroup[g].push(a);
   }
 
+  /* Shared row action handlers */
   const rowHandlers = {
     onEdit: (a: Assignment) => setQuickEditTarget(a),
     onDuplicate: handleDuplicate,
@@ -1259,6 +1388,8 @@ export default function CourseAssignmentsPage({
               rowVariant="mine"
               currentUserName={resolvedUserName}
               currentUserRole={currentUserRole}
+              seenIds={seenIds}
+              onView={handleView}
               onAddAssignment={(g) => router.push(`/admin/courses/${courseId}/assignments/new?group=${encodeURIComponent(g)}`)}
               onEditGroup={(g) => setEditGroupTarget(g)}
               onDeleteGroup={(g) => {
@@ -1324,11 +1455,15 @@ export default function CourseAssignmentsPage({
         ) : othersViewMode === "author" ? (
           Object.entries(othersByAuthor).map(([author, { role, image, items }]) => (
             <OthersAuthorSection key={author} authorName={author} authorRole={role} authorImage={image}
-              items={items} courseId={courseId} router={router} {...rowHandlers} />
+              items={items} courseId={courseId} router={router}
+              seenIds={seenIds} onView={handleView}
+              {...rowHandlers} />
           ))
         ) : (
           Object.entries(othersByGroup).map(([grp, items]) => (
-            <OthersGroupSection key={grp} title={grp} items={items} courseId={courseId} router={router} {...rowHandlers} />
+            <OthersGroupSection key={grp} title={grp} items={items} courseId={courseId} router={router}
+              seenIds={seenIds} onView={handleView}
+              {...rowHandlers} />
           ))
         )}
       </div>

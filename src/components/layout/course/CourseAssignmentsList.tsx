@@ -23,7 +23,7 @@ type AssignmentWithRole = Assignment & {
   _assignmentRole?: "manager" | "submitter";
   _publisherName?: string | null;
   _publisherImage?: string | null;
-  _publisherRole?: string | null;       // ← course role (HEAD, STAFF, etc.)
+  _publisherRole?: string | null;
   _publisherId?: string | null;
   _isAssignedToYou?: boolean;
   _isExplicitlyAssignedToYou?: boolean;
@@ -32,6 +32,37 @@ type AssignmentWithRole = Assignment & {
 };
 
 const DEFAULT_GROUP = "Assignments";
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   SEEN / NEW BADGE HELPERS
+───────────────────────────────────────────────────────────────────────────── */
+const SEEN_KEY = (courseId: string) => `seen_assignments_${courseId}`;
+
+function getSeenIds(courseId: string): Set<string> {
+  try {
+    const raw = localStorage.getItem(SEEN_KEY(courseId));
+    return new Set(raw ? JSON.parse(raw) : []);
+  } catch { return new Set(); }
+}
+
+function markSeen(courseId: string, id: string | number) {
+  try {
+    const seen = getSeenIds(courseId);
+    seen.add(String(id));
+    localStorage.setItem(SEEN_KEY(courseId), JSON.stringify([...seen]));
+  } catch { /* ignore */ }
+}
+
+function NewBadge() {
+  return (
+    <span
+      className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase tracking-wide text-white"
+      style={{ background: "#dc2626", letterSpacing: "0.08em" }}
+    >
+      NEW
+    </span>
+  );
+}
 
 /* ─────────────────────────────────────────────────────────────────────────────
    HELPERS
@@ -97,9 +128,7 @@ function PublisherChip({ name, image, role }: { name?: string | null; image?: st
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   AUTHOR BADGE (on your own assignments)
-   — always uses _publisherRole (course role) from the assignment data,
-     falling back to currentUserRole only if no course role is available
+   AUTHOR BADGE
 ───────────────────────────────────────────────────────────────────────────── */
 function AuthorBadge({ name, role }: { name: string; role: string }) {
   return (
@@ -173,8 +202,8 @@ function AssignmentRowMenu({ assignment, onAction, isManager }: {
   const handleOpen = () => {
     if (!btnRef.current) return;
     const rect = btnRef.current.getBoundingClientRect();
-    const items = isManager ? 4 : 0;
-    const h = items * 38 + 8;
+    const itemCount = isManager ? 4 : 0;
+    const h = itemCount * 38 + 8;
     const w = 180;
     const top = window.innerHeight - rect.bottom >= h ? rect.bottom + 4 : rect.top - h - 4;
     const left = Math.min(rect.right - w, window.innerWidth - w - 8);
@@ -660,13 +689,12 @@ function AssignToPanel({ assignment, courseId, sections, staff, onClose, onSave 
 
 /* ─────────────────────────────────────────────────────────────────────────────
    MINE ASSIGNMENT ROW
-   FIX: authorRole now uses _publisherRole (course role) first,
-        falling back to currentUserRole only if no course role exists.
 ───────────────────────────────────────────────────────────────────────────── */
-function MineAssignmentRow({ a, currentUserName, currentUserRole, onView, onEdit, onDuplicate, onAssignTo, onDelete, onTogglePublish }: {
+function MineAssignmentRow({ a, currentUserName, currentUserRole, seenIds, onView, onEdit, onDuplicate, onAssignTo, onDelete, onTogglePublish }: {
   a: AssignmentWithRole;
   currentUserName?: string | null;
   currentUserRole?: string | null;
+  seenIds: Set<string>;
   onView: (a: AssignmentWithRole) => void;
   onEdit: (a: AssignmentWithRole) => void;
   onDuplicate: (a: AssignmentWithRole) => void;
@@ -678,7 +706,6 @@ function MineAssignmentRow({ a, currentUserName, currentUserRole, onView, onEdit
   const isClosed = a.availableUntil && now > new Date(a.availableUntil);
   const due = fmtDue(a.dueDate);
 
-  // ── FIX: always prefer the course role stored on the assignment ──
   const authorName = a._publisherName ?? currentUserName;
   const authorRole = a._publisherRole ?? currentUserRole ?? "Staff";
 
@@ -701,6 +728,7 @@ function MineAssignmentRow({ a, currentUserName, currentUserRole, onView, onEdit
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
           <h3 className="text-sm font-semibold truncate max-w-full hover:underline" style={{ color: MAROON }}>{a.title}</h3>
+          {!seenIds.has(String(a.id)) && <NewBadge />}
           {a.status === "UNPUBLISHED" && <span className="text-[10px] text-amber-600 font-medium">Not Published</span>}
           {isClosed && <span className="text-[10px] text-gray-500 font-medium">Closed</span>}
         </div>
@@ -720,9 +748,13 @@ function MineAssignmentRow({ a, currentUserName, currentUserRole, onView, onEdit
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   OTHERS ASSIGNMENT ROW (submitter view in "Published by Others")
+   OTHERS ASSIGNMENT ROW
 ───────────────────────────────────────────────────────────────────────────── */
-function OthersAssignmentRow({ a, onView }: { a: AssignmentWithRole; onView: (a: AssignmentWithRole) => void }) {
+function OthersAssignmentRow({ a, seenIds, onView }: {
+  a: AssignmentWithRole;
+  seenIds: Set<string>;
+  onView: (a: AssignmentWithRole) => void;
+}) {
   const now = new Date();
   const sub = a.submissions?.[0];
   const isClosed = a.availableUntil && now > new Date(a.availableUntil);
@@ -738,6 +770,7 @@ function OthersAssignmentRow({ a, onView }: { a: AssignmentWithRole; onView: (a:
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
           <h3 className="text-sm font-semibold truncate hover:underline" style={{ color: "#1d4ed8" }}>{a.title}</h3>
+          {!seenIds.has(String(a.id)) && <NewBadge />}
           {isClosed && <span className="text-[10px] text-gray-500 font-medium">Closed</span>}
           {isLocked && <span className="text-[10px] text-amber-600 font-medium">Not yet open</span>}
         </div>
@@ -757,9 +790,10 @@ function OthersAssignmentRow({ a, onView }: { a: AssignmentWithRole; onView: (a:
 /* ─────────────────────────────────────────────────────────────────────────────
    MINE GROUP SECTION
 ───────────────────────────────────────────────────────────────────────────── */
-function MineGroupSection({ title, items, currentUserName, currentUserRole, onAddAssignment, onView, onEdit, onDuplicate, onAssignTo, onDelete, onTogglePublish, onEditGroup, onDeleteGroup, isLastGroup }: {
+function MineGroupSection({ title, items, currentUserName, currentUserRole, seenIds, onAddAssignment, onView, onEdit, onDuplicate, onAssignTo, onDelete, onTogglePublish, onEditGroup, onDeleteGroup, isLastGroup }: {
   title: string; items: AssignmentWithRole[];
   currentUserName?: string | null; currentUserRole?: string | null;
+  seenIds: Set<string>;
   onAddAssignment: (group: string) => void;
   onView: (a: AssignmentWithRole) => void;
   onEdit: (a: AssignmentWithRole) => void;
@@ -772,6 +806,8 @@ function MineGroupSection({ title, items, currentUserName, currentUserRole, onAd
   isLastGroup?: boolean;
 }) {
   const [collapsed, setCollapsed] = useState(false);
+  const newCount = items.filter(a => !seenIds.has(String(a.id))).length;
+
   return (
     <div className="mb-3">
       <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-t select-none">
@@ -782,6 +818,11 @@ function MineGroupSection({ title, items, currentUserName, currentUserRole, onAd
           </svg>
           <span className="text-sm font-semibold text-gray-700">{title}</span>
           <span className="text-xs text-gray-400 ml-1">({items.length})</span>
+          {newCount > 0 && (
+            <span className="ml-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold text-white" style={{ background: "#dc2626" }}>
+              {newCount}
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-1">
           <button onClick={() => onAddAssignment(title)} className="p-1.5 text-gray-400 hover:bg-gray-200 rounded transition-colors" title="Add assignment"><Plus size={15} /></button>
@@ -794,6 +835,7 @@ function MineGroupSection({ title, items, currentUserName, currentUserRole, onAd
             ? <div className="px-6 py-4 text-sm text-gray-400 text-center">No assignments in this group.</div>
             : items.map(a => (
               <MineAssignmentRow key={a.id} a={a} currentUserName={currentUserName} currentUserRole={currentUserRole}
+                seenIds={seenIds}
                 onView={onView} onEdit={onEdit} onDuplicate={onDuplicate} onAssignTo={onAssignTo} onDelete={onDelete} onTogglePublish={onTogglePublish} />
             ))}
         </div>
@@ -805,9 +847,9 @@ function MineGroupSection({ title, items, currentUserName, currentUserRole, onAd
 /* ─────────────────────────────────────────────────────────────────────────────
    OTHERS AUTHOR SECTION
 ───────────────────────────────────────────────────────────────────────────── */
-function OthersAuthorSection({ authorName, authorRole, authorImage, items, onView }: {
+function OthersAuthorSection({ authorName, authorRole, authorImage, items, seenIds, onView }: {
   authorName: string; authorRole?: string | null; authorImage?: string | null;
-  items: AssignmentWithRole[]; onView: (a: AssignmentWithRole) => void;
+  items: AssignmentWithRole[]; seenIds: Set<string>; onView: (a: AssignmentWithRole) => void;
 }) {
   const [collapsed, setCollapsed] = useState(false);
   return (
@@ -828,7 +870,7 @@ function OthersAuthorSection({ authorName, authorRole, authorImage, items, onVie
       </div>
       {!collapsed && (
         <div className="border border-t-0 rounded-b overflow-hidden" style={{ borderColor: "#bfdbfe" }}>
-          {items.map(a => <OthersAssignmentRow key={a.id} a={a} onView={onView} />)}
+          {items.map(a => <OthersAssignmentRow key={a.id} a={a} seenIds={seenIds} onView={onView} />)}
         </div>
       )}
     </div>
@@ -838,8 +880,8 @@ function OthersAuthorSection({ authorName, authorRole, authorImage, items, onVie
 /* ─────────────────────────────────────────────────────────────────────────────
    OTHERS GROUP SECTION
 ───────────────────────────────────────────────────────────────────────────── */
-function OthersGroupSection({ title, items, onView }: {
-  title: string; items: AssignmentWithRole[]; onView: (a: AssignmentWithRole) => void;
+function OthersGroupSection({ title, items, seenIds, onView }: {
+  title: string; items: AssignmentWithRole[]; seenIds: Set<string>; onView: (a: AssignmentWithRole) => void;
 }) {
   const [collapsed, setCollapsed] = useState(false);
   return (
@@ -856,7 +898,7 @@ function OthersGroupSection({ title, items, onView }: {
       </div>
       {!collapsed && (
         <div className="border border-t-0 rounded-b overflow-hidden" style={{ borderColor: "#bae6fd" }}>
-          {items.map(a => <OthersAssignmentRow key={a.id} a={a} onView={onView} />)}
+          {items.map(a => <OthersAssignmentRow key={a.id} a={a} seenIds={seenIds} onView={onView} />)}
         </div>
       )}
     </div>
@@ -897,6 +939,13 @@ export default function CourseAssignmentsList({
   const [savingEditGroup, setSavingEditGroup] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<AssignmentWithRole | null>(null);
   const [deletingAssignment, setDeletingAssignment] = useState(false);
+  const [seenIds, setSeenIds] = useState<Set<string>>(() => getSeenIds(courseId));
+
+  const handleView = useCallback((a: AssignmentWithRole) => {
+    markSeen(courseId, a.id);
+    setSeenIds(getSeenIds(courseId));
+    onViewDetail(a);
+  }, [courseId, onViewDetail]);
 
   const resolved = useMemo(
     () => assignments.map(a => ({ ...a, _assignmentRole: resolveRole(a, currentUserId) })),
@@ -912,28 +961,27 @@ export default function CourseAssignmentsList({
       setAssignments(list);
       const apiGroups = [...new Set(list.filter(a => resolveRole(a, currentUserId) === "manager").map(a => a.assignmentGroup || DEFAULT_GROUP))];
       setLocalGroups(prev => {
-  const merged = [...new Set([DEFAULT_GROUP, ...prev, ...apiGroups])];
-  // Ensure DEFAULT_GROUP is always first
-  const ordered = [DEFAULT_GROUP, ...merged.filter(g => g !== DEFAULT_GROUP)];
-  persistGroups(courseId, ordered);
-  return ordered;
-});
+        const merged = [...new Set([DEFAULT_GROUP, ...prev, ...apiGroups])];
+        const ordered = [DEFAULT_GROUP, ...merged.filter(g => g !== DEFAULT_GROUP)];
+        persistGroups(courseId, ordered);
+        return ordered;
+      });
     }).catch(() => { });
   }, [courseId, setAssignments, currentUserId]);
 
   useEffect(() => {
-  const persisted = loadPersistedGroups(courseId);
-  const apiGroups = [...new Set(
-    assignments
-      .filter(a => resolveRole(a, currentUserId) === "manager")
-      .map(a => a.assignmentGroup || DEFAULT_GROUP)
-  )];
-  const merged = [...new Set([DEFAULT_GROUP, ...persisted, ...apiGroups])];
-  const ordered = [DEFAULT_GROUP, ...merged.filter(g => g !== DEFAULT_GROUP)];
-  persistGroups(courseId, ordered);
-  setLocalGroups(ordered);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [courseId]);
+    const persisted = loadPersistedGroups(courseId);
+    const apiGroups = [...new Set(
+      assignments
+        .filter(a => resolveRole(a, currentUserId) === "manager")
+        .map(a => a.assignmentGroup || DEFAULT_GROUP)
+    )];
+    const merged = [...new Set([DEFAULT_GROUP, ...persisted, ...apiGroups])];
+    const ordered = [DEFAULT_GROUP, ...merged.filter(g => g !== DEFAULT_GROUP)];
+    persistGroups(courseId, ordered);
+    setLocalGroups(ordered);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [courseId]);
 
   const myFiltered = myAssignments.filter(a => a.title.toLowerCase().includes(mySearch.toLowerCase()));
   const othersFiltered = otherAssignments.filter(a => a.title.toLowerCase().includes(othersSearch.toLowerCase()));
@@ -953,16 +1001,16 @@ export default function CourseAssignmentsList({
   for (const a of othersFiltered) { const g = a.assignmentGroup || DEFAULT_GROUP; if (!othersByGroup[g]) othersByGroup[g] = []; othersByGroup[g].push(a); }
 
   const handleSaveGroup = (name: string) => {
-  const trimmed = name.trim();
-  if (!trimmed) return;
-  setLocalGroups(prev => {
-    if (prev.includes(trimmed)) return prev;
-    const next = [DEFAULT_GROUP, ...prev.filter(g => g !== DEFAULT_GROUP), trimmed];
-    persistGroups(courseId, next);
-    return next;
-  });
-  setShowGroupModal(false);
-};
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    setLocalGroups(prev => {
+      if (prev.includes(trimmed)) return prev;
+      const next = [DEFAULT_GROUP, ...prev.filter(g => g !== DEFAULT_GROUP), trimmed];
+      persistGroups(courseId, next);
+      return next;
+    });
+    setShowGroupModal(false);
+  };
 
   const handleEditGroupSave = async (newName: string) => {
     if (!editGroupTarget) return;
@@ -992,14 +1040,12 @@ export default function CourseAssignmentsList({
       });
     }
     setLocalGroups(prev => {
-  const next = prev.filter(g => g !== groupName);
-  // Always keep DEFAULT_GROUP — never allow it to be removed
-  const safe = next.includes(DEFAULT_GROUP) ? next : [DEFAULT_GROUP, ...next];
-  // Don't remove if it's the last group
-  if (safe.length === 0) return [DEFAULT_GROUP];
-  persistGroups(courseId, safe);
-  return safe;
-});
+      const next = prev.filter(g => g !== groupName);
+      const safe = next.includes(DEFAULT_GROUP) ? next : [DEFAULT_GROUP, ...next];
+      if (safe.length === 0) return [DEFAULT_GROUP];
+      persistGroups(courseId, safe);
+      return safe;
+    });
     setDeleteGroupTarget(null);
   };
 
@@ -1065,29 +1111,30 @@ export default function CourseAssignmentsList({
 
       <div className="px-3 sm:px-5 py-4 border-b-2 border-gray-200 space-y-3">
         {localGroups.length > 0 ? (
-  Object.entries(myGrouped).map(([grp, items]) => (
-    <MineGroupSection key={grp} title={grp} items={items}
-      currentUserName={currentUserName} currentUserRole={currentUserRole}
-      onAddAssignment={g => onCreateNew(g)}
-      onView={a => onViewDetail(a)}
-      onEdit={a => setQuickEditTarget(a)}
-      onDuplicate={handleDuplicate}
-      onAssignTo={a => setAssignToTarget(a)}
-      onDelete={a => setDeleteTarget(a)}
-      onTogglePublish={handleTogglePublish}
-      onEditGroup={g => setEditGroupTarget(g)}
-      onDeleteGroup={g => setDeleteGroupTarget(g)}
-      isLastGroup={localGroups.length <= 1}
-    />
-  ))
-) : mySearch && myFiltered.length === 0 ? (
-  <p className="text-sm text-gray-400 text-center py-6">No results for &ldquo;{mySearch}&rdquo;</p>
-) : (
-  <div className="flex flex-col items-center justify-center py-10 gap-3">
-    <p className="text-sm text-gray-400">No assignments published by you yet.</p>
-    <button onClick={() => onCreateNew()} className="text-xs font-bold hover:underline" style={{ color: MAROON }}>+ Create your first assignment</button>
-  </div>
-)}
+          Object.entries(myGrouped).map(([grp, items]) => (
+            <MineGroupSection key={grp} title={grp} items={items}
+              currentUserName={currentUserName} currentUserRole={currentUserRole}
+              seenIds={seenIds}
+              onAddAssignment={g => onCreateNew(g)}
+              onView={handleView}
+              onEdit={a => setQuickEditTarget(a)}
+              onDuplicate={handleDuplicate}
+              onAssignTo={a => setAssignToTarget(a)}
+              onDelete={a => setDeleteTarget(a)}
+              onTogglePublish={handleTogglePublish}
+              onEditGroup={g => setEditGroupTarget(g)}
+              onDeleteGroup={g => setDeleteGroupTarget(g)}
+              isLastGroup={localGroups.length <= 1}
+            />
+          ))
+        ) : mySearch && myFiltered.length === 0 ? (
+          <p className="text-sm text-gray-400 text-center py-6">No results for &ldquo;{mySearch}&rdquo;</p>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-10 gap-3">
+            <p className="text-sm text-gray-400">No assignments published by you yet.</p>
+            <button onClick={() => onCreateNew()} className="text-xs font-bold hover:underline" style={{ color: MAROON }}>+ Create your first assignment</button>
+          </div>
+        )}
       </div>
 
       {/* ── SECTION 2: Published by Others ── */}
@@ -1123,11 +1170,11 @@ export default function CourseAssignmentsList({
           <p className="text-sm text-gray-400 text-center py-6">No results for &ldquo;{othersSearch}&rdquo;</p>
         ) : othersViewMode === "author" ? (
           Object.entries(othersByAuthor).map(([author, { role, image, items }]) => (
-            <OthersAuthorSection key={author} authorName={author} authorRole={role} authorImage={image} items={items} onView={onViewDetail} />
+            <OthersAuthorSection key={author} authorName={author} authorRole={role} authorImage={image} items={items} seenIds={seenIds} onView={handleView} />
           ))
         ) : (
           Object.entries(othersByGroup).map(([grp, items]) => (
-            <OthersGroupSection key={grp} title={grp} items={items} onView={onViewDetail} />
+            <OthersGroupSection key={grp} title={grp} items={items} seenIds={seenIds} onView={handleView} />
           ))
         )}
       </div>

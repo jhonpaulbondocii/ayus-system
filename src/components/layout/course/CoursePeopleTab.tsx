@@ -633,7 +633,7 @@ export default function CoursePeopleTab({
               <thead>
                 <tr>
                   <th className="avatar-col" />
-                  {["Name", "Login ID", "Staff Type", "Position", "Role"].map((h) => <th key={h}>{h}</th>)}
+                  {["Name", "Login ID", "Faculty Type", "Position", "Role"].map((h) => <th key={h}>{h}</th>)}
                   {canManagePeople && <th className="action-col" />}
                 </tr>
               </thead>
@@ -707,9 +707,9 @@ export default function CoursePeopleTab({
 
         {isGroupsArea && groupSets.length === 0 && (
           <div style={{ padding: "24px 20px" }}>
-            <h2 style={{ fontSize: 20, fontWeight: 800, color: "#7b1113", marginBottom: 12 }}>Student Groups</h2>
+            <h2 style={{ fontSize: 20, fontWeight: 800, color: "#7b1113", marginBottom: 12 }}>Staff Groups</h2>
             <p style={{ fontSize: 13, color: "#4a5568", lineHeight: 1.6, maxWidth: 820, marginBottom: 8 }}>
-              Staff groups are a useful way to organize students for things like group projects or papers.
+              Staff groups are a useful way to organize staff for things like group projects or papers.
             </p>
           </div>
         )}
@@ -977,8 +977,8 @@ export default function CoursePeopleTab({
                       <div style={{ position: "relative" }}>
                         <select className="cpt-select" value={groupStructure} onChange={(e) => { setGroupStructure(e.target.value); setCreateGroupsNow(0); }} style={{ width: "100%" }}>
                           <option>Create groups later</option>
-                          <option>Split students by number of groups</option>
-                          <option>Split number of students per group</option>
+                          <option>Split staff by number of groups</option>
+                          <option>Split number of staff per group</option>
                         </select>
                         <DropArrow />
                       </div>

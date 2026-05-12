@@ -338,6 +338,7 @@ exports.Prisma.AnnouncementScalarFieldEnum = {
   authorId: 'authorId',
   assignTo: 'assignTo',
   allowComment: 'allowComment',
+  locked: 'locked',
   allowLiking: 'allowLiking',
   availableFrom: 'availableFrom',
   availableUntil: 'availableUntil',

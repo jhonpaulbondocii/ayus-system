@@ -1306,11 +1306,47 @@ export default function CourseAnnouncementsPage({
     } catch (err) { console.error(err); }
   };
 
-  const onToggleLock = (id: string | number) =>
-    setAnnouncements(prev => prev.map(a => a.id === id ? { ...a, locked: !a.locked } : a));
+  const onToggleLock = async (id: string | number) => {
+  const current = announcements.find(a => a.id === id);
+  const newValue = current ? !current.locked : true;
+  setAnnouncements(prev =>
+    prev.map(a => a.id === id ? { ...a, locked: newValue } : a)
+  );
+  if (!courseId) return;
+  try {
+    const res = await fetch(`/api/admin/courses/${courseId}/announcements/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ locked: newValue }),
+    });
+    if (!res.ok) throw new Error("Failed");
+  } catch {
+    setAnnouncements(prev =>
+      prev.map(a => a.id === id ? { ...a, locked: !newValue } : a)
+    );
+  }
+};
 
-  const onToggleComments = (id: string | number) =>
-    setAnnouncements(prev => prev.map(a => a.id === id ? { ...a, allowComments: !a.allowComments } : a));
+  const onToggleComments = async (id: string | number) => {
+  const current = announcements.find(a => a.id === id);
+  const newValue = current ? !current.allowComments : false;
+  setAnnouncements(prev =>
+    prev.map(a => a.id === id ? { ...a, allowComments: newValue } : a)
+  );
+  if (!courseId) return;
+  try {
+    const res = await fetch(`/api/admin/courses/${courseId}/announcements/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ allowComments: newValue }),
+    });
+    if (!res.ok) throw new Error("Failed");
+  } catch {
+    setAnnouncements(prev =>
+      prev.map(a => a.id === id ? { ...a, allowComments: !newValue } : a)
+    );
+  }
+};
 
   const onAddAttachments = (files: AttachedFile[]) => setAttachments(prev => [...prev, ...files]);
   const onRemoveAttachment = (id: string) => setAttachments(prev => prev.filter(f => f.id !== id));
@@ -1364,13 +1400,13 @@ export default function CourseAnnouncementsPage({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          title: topicTitle.trim(), bodyText: bodyText.trim(), bodyHtml, author: authorName,
-          assignTo: assignTo.length ? assignTo : ["Everyone"],
-          allowComment,
-          availableFrom: availableFromIso,
-          availableUntil: availableUntilIso,
-          attachments: attachments.map(f => ({ name: f.name, url: f.url, size: f.size, mimeType: f.type })),
-        }),
+  title: topicTitle.trim(), bodyText: bodyText.trim(), bodyHtml, author: authorName,
+  assignTo: assignTo.length ? assignTo : ["Everyone"],
+  allowComments: allowComment,
+  availableFrom: availableFromIso,
+  availableUntil: availableUntilIso,
+  attachments: attachments.map(f => ({ name: f.name, url: f.url, size: f.size, mimeType: f.type })),
+}),
       });
       if (!res.ok) throw new Error("Failed to publish");
       const { announcement } = await res.json();

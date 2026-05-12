@@ -857,7 +857,7 @@ document.addEventListener("click", handler);
                     <thead>
                       <tr>
                         <th className="avatar-col" />
-                        {["Name","Login ID","Staff Type","Position","Role"].map(h => <th key={h}>{h}</th>)}
+                        {["Name","Login ID","Faculty Type","Position","Role"].map(h => <th key={h}>{h}</th>)}
                         <th className="action-col" />
                       </tr>
                     </thead>
@@ -993,7 +993,7 @@ document.addEventListener("click", handler);
           <div style={{ marginTop:24 }}>
             <h2 style={{ fontSize:20, fontWeight:800, color:"#7b1113", marginBottom:12 }}>Staff Groups</h2>
             <p style={{ fontSize:13, color:"#4a5568", lineHeight:1.6, maxWidth:820, marginBottom:8 }}>
-              Staff groups are a useful way to organize students for things like group projects or papers. Every student group gets their own calendar, discussion board and collaboration tools so they can organize themselves and work together more effectively.
+              Staff groups are a useful way to organize staff for things like group projects or papers. Every staff group gets their own calendar, discussion board and collaboration tools so they can organize themselves and work together more effectively.
             </p>
             <p style={{ fontSize:13, color:"#4a5568", lineHeight:1.6, maxWidth:820 }}>
               You can randomly assign staff to groups of a specific size, or manually create and organize the groups. Once your groups are created, you can set assignments to be &quot;group submission&quot; assignments, which means each group will have one submission for all users of that group.
@@ -1386,8 +1386,8 @@ document.addEventListener("click", handler);
                       <div style={{ position:"relative" }}>
                         <select className="cpp-select" value={groupStructure} onChange={e => { setGroupStructure(e.target.value); setCreateGroupsNow(0); }} style={{ width:"100%" }}>
                           <option>Create groups later</option>
-                          <option>Split students by number of groups</option>
-                          <option>Split number of students per group</option>
+                          <option>Split staff by number of groups</option>
+                          <option>Split number of staff per group</option>
                         </select>
                         <DropArrow />
                       </div>

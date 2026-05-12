@@ -405,6 +405,7 @@ model Announcement {
   authorId       String?
   assignTo       String[]  @default([])
   allowComment   Boolean   @default(false)
+  locked         Boolean   @default(false) // ← DAGDAG ITO
   allowLiking    Boolean   @default(false)
   availableFrom  DateTime?
   availableUntil DateTime?

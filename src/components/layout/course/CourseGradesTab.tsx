@@ -357,7 +357,7 @@ function FilterPanel({
           </div>
           {[
             { id: "assignmentGroups" as FilterSection, label: "Assignment Groups", count: activeFilters.filter(f => f.type === "assignmentGroup").length },
-            { id: "studentGroups" as FilterSection, label: "Student Groups", count: activeFilters.filter(f => f.type === "studentGroup").length },
+            { id: "studentGroups" as FilterSection, label: "Staff Groups", count: activeFilters.filter(f => f.type === "studentGroup").length },
             { id: "status" as FilterSection, label: "Status", count: activeFilters.filter(f => f.type === "status").length },
             { id: "submissions" as FilterSection, label: "Submissions", count: activeFilters.filter(f => f.type === "submissions").length },
             { id: "startEndDate" as FilterSection, label: "Start & End Date", count: activeFilters.filter(f => f.type === "dateRange").length },
@@ -1195,26 +1195,20 @@ function CellEditor({
   const isCI = dga === "Complete/Incomplete";
   const isPct = dga === "Percentage";
   const inputRef = useRef<HTMLInputElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
   const savedRef = useRef(false);
 
   const [ciVal, setCiVal] = useState<string>(
     score === col.points ? "complete" : score === 0 ? "incomplete" : ""
   );
 
-  const doSave = async (grade: number | null) => {
+  const doSave = useCallback(async (grade: number | null) => {
     if (savedRef.current) return;
     savedRef.current = true;
     await onSave(grade);
     onDismiss();
-  };
+  }, [onSave, onDismiss]);
 
-  const handleContainerBlur = (e: React.FocusEvent<HTMLDivElement>) => {
-    if (containerRef.current && containerRef.current.contains(e.relatedTarget as Node)) return;
-    if (isCI) {
-      doSave(ciVal === "complete" ? col.points : ciVal === "incomplete" ? 0 : null);
-      return;
-    }
+  const commitFromInput = useCallback(() => {
     const val = inputRef.current?.value.trim() ?? "";
     if (isPct) {
       const pct = parseFloat(val);
@@ -1223,16 +1217,36 @@ function CellEditor({
       const v = parseFloat(val);
       doSave(!val || isNaN(v) ? null : v);
     }
-  };
+  }, [isPct, col.points, doSave]);
+
+  // Save on click anywhere outside — white space, filter btn, tabs, anywhere
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (
+        target.closest("[data-cell-editor]") ||
+        target.closest("[data-arrow-btn]")
+      ) return;
+      if (isCI) {
+        doSave(ciVal === "complete" ? col.points : ciVal === "incomplete" ? 0 : null);
+      } else {
+        commitFromInput();
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [isCI, ciVal, col.points, doSave, commitFromInput]);
 
   if (isCI) {
     return (
-      <div ref={containerRef} tabIndex={-1} onBlur={handleContainerBlur}
-        className="flex items-stretch w-full h-full border-2 rounded outline-none"
+      <div data-cell-editor className="flex items-stretch w-full h-full border-2 rounded"
         style={{ borderColor: "#2563eb" }}>
         <select autoFocus value={ciVal} onChange={e => setCiVal(e.target.value)}
           className="flex-1 h-9 text-xs font-bold bg-white outline-none px-1 cursor-pointer"
-          onKeyDown={e => { if (e.key === "Escape") { savedRef.current = true; onDismiss(); } }}>
+          onKeyDown={e => {
+            if (e.key === "Enter") doSave(ciVal === "complete" ? col.points : ciVal === "incomplete" ? 0 : null);
+            if (e.key === "Escape") { savedRef.current = true; onDismiss(); }
+          }}>
           <option value="" disabled>Select…</option>
           <option value="complete">✓ Complete</option>
           <option value="incomplete">✗ Incomplete</option>
@@ -1244,19 +1258,16 @@ function CellEditor({
   }
 
   if (isPct) {
-    const initPct = score !== null && col.points > 0 ? String(Math.round((score / col.points) * 100)) : "";
+    const initPct = score !== null && col.points > 0
+      ? String(Math.round((score / col.points) * 100)) : "";
     return (
-      <div ref={containerRef} tabIndex={-1} onBlur={handleContainerBlur}
-        className="flex items-stretch w-full h-full border-2 rounded outline-none"
+      <div data-cell-editor className="flex items-stretch w-full h-full border-2 rounded"
         style={{ borderColor: "#2563eb" }}>
-        <input ref={inputRef} autoFocus type="number" min={0} max={100} step={1} defaultValue={initPct}
+        <input ref={inputRef} autoFocus type="number" min={0} max={100} step={1}
+          defaultValue={initPct}
           className="flex-1 h-9 text-sm font-semibold text-center bg-white outline-none w-0"
           onKeyDown={e => {
-            if (e.key === "Enter") {
-              const val = inputRef.current?.value.trim() ?? "";
-              const pct = parseFloat(val);
-              doSave(!val || isNaN(pct) ? null : Math.round((pct / 100) * col.points * 10) / 10);
-            }
+            if (e.key === "Enter") { e.preventDefault(); commitFromInput(); }
             if (e.key === "Escape") { savedRef.current = true; onDismiss(); }
           }} />
         <span className="text-[10px] font-bold text-gray-400 self-center px-1">%</span>
@@ -1266,17 +1277,13 @@ function CellEditor({
   }
 
   return (
-    <div ref={containerRef} tabIndex={-1} onBlur={handleContainerBlur}
-      className="flex items-stretch w-full h-full border-2 rounded outline-none"
+    <div data-cell-editor className="flex items-stretch w-full h-full border-2 rounded"
       style={{ borderColor: "#2563eb" }}>
-      <input ref={inputRef} autoFocus type="number" min={0} max={col.points} step={0.5} defaultValue={score ?? ""}
+      <input ref={inputRef} autoFocus type="number" min={0} max={col.points} step={0.5}
+        defaultValue={score ?? ""}
         className="flex-1 h-9 text-sm font-semibold text-center bg-white outline-none w-0"
         onKeyDown={e => {
-          if (e.key === "Enter") {
-            const val = inputRef.current?.value.trim() ?? "";
-            const v = parseFloat(val);
-            doSave(!val || isNaN(v) ? null : v);
-          }
+          if (e.key === "Enter") { e.preventDefault(); commitFromInput(); }
           if (e.key === "Escape") { savedRef.current = true; onDismiss(); }
         }} />
       <span className="text-[10px] font-bold text-gray-400 self-center pr-1 shrink-0">/{col.points}</span>

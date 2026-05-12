@@ -21346,6 +21346,7 @@ export namespace Prisma {
     author: string | null
     authorId: string | null
     allowComment: boolean | null
+    locked: boolean | null
     allowLiking: boolean | null
     availableFrom: Date | null
     availableUntil: Date | null
@@ -21362,6 +21363,7 @@ export namespace Prisma {
     author: string | null
     authorId: string | null
     allowComment: boolean | null
+    locked: boolean | null
     allowLiking: boolean | null
     availableFrom: Date | null
     availableUntil: Date | null
@@ -21379,6 +21381,7 @@ export namespace Prisma {
     authorId: number
     assignTo: number
     allowComment: number
+    locked: number
     allowLiking: number
     availableFrom: number
     availableUntil: number
@@ -21397,6 +21400,7 @@ export namespace Prisma {
     author?: true
     authorId?: true
     allowComment?: true
+    locked?: true
     allowLiking?: true
     availableFrom?: true
     availableUntil?: true
@@ -21413,6 +21417,7 @@ export namespace Prisma {
     author?: true
     authorId?: true
     allowComment?: true
+    locked?: true
     allowLiking?: true
     availableFrom?: true
     availableUntil?: true
@@ -21430,6 +21435,7 @@ export namespace Prisma {
     authorId?: true
     assignTo?: true
     allowComment?: true
+    locked?: true
     allowLiking?: true
     availableFrom?: true
     availableUntil?: true
@@ -21520,6 +21526,7 @@ export namespace Prisma {
     authorId: string | null
     assignTo: string[]
     allowComment: boolean
+    locked: boolean
     allowLiking: boolean
     availableFrom: Date | null
     availableUntil: Date | null
@@ -21554,6 +21561,7 @@ export namespace Prisma {
     authorId?: boolean
     assignTo?: boolean
     allowComment?: boolean
+    locked?: boolean
     allowLiking?: boolean
     availableFrom?: boolean
     availableUntil?: boolean
@@ -21574,6 +21582,7 @@ export namespace Prisma {
     authorId?: boolean
     assignTo?: boolean
     allowComment?: boolean
+    locked?: boolean
     allowLiking?: boolean
     availableFrom?: boolean
     availableUntil?: boolean
@@ -21592,6 +21601,7 @@ export namespace Prisma {
     authorId?: boolean
     assignTo?: boolean
     allowComment?: boolean
+    locked?: boolean
     allowLiking?: boolean
     availableFrom?: boolean
     availableUntil?: boolean
@@ -21624,6 +21634,7 @@ export namespace Prisma {
       authorId: string | null
       assignTo: string[]
       allowComment: boolean
+      locked: boolean
       allowLiking: boolean
       availableFrom: Date | null
       availableUntil: Date | null
@@ -22033,6 +22044,7 @@ export namespace Prisma {
     readonly authorId: FieldRef<"Announcement", 'String'>
     readonly assignTo: FieldRef<"Announcement", 'String[]'>
     readonly allowComment: FieldRef<"Announcement", 'Boolean'>
+    readonly locked: FieldRef<"Announcement", 'Boolean'>
     readonly allowLiking: FieldRef<"Announcement", 'Boolean'>
     readonly availableFrom: FieldRef<"Announcement", 'DateTime'>
     readonly availableUntil: FieldRef<"Announcement", 'DateTime'>
@@ -38422,6 +38434,7 @@ export namespace Prisma {
     authorId: 'authorId',
     assignTo: 'assignTo',
     allowComment: 'allowComment',
+    locked: 'locked',
     allowLiking: 'allowLiking',
     availableFrom: 'availableFrom',
     availableUntil: 'availableUntil',
@@ -40366,6 +40379,7 @@ export namespace Prisma {
     authorId?: StringNullableFilter<"Announcement"> | string | null
     assignTo?: StringNullableListFilter<"Announcement">
     allowComment?: BoolFilter<"Announcement"> | boolean
+    locked?: BoolFilter<"Announcement"> | boolean
     allowLiking?: BoolFilter<"Announcement"> | boolean
     availableFrom?: DateTimeNullableFilter<"Announcement"> | Date | string | null
     availableUntil?: DateTimeNullableFilter<"Announcement"> | Date | string | null
@@ -40385,6 +40399,7 @@ export namespace Prisma {
     authorId?: SortOrderInput | SortOrder
     assignTo?: SortOrder
     allowComment?: SortOrder
+    locked?: SortOrder
     allowLiking?: SortOrder
     availableFrom?: SortOrderInput | SortOrder
     availableUntil?: SortOrderInput | SortOrder
@@ -40407,6 +40422,7 @@ export namespace Prisma {
     authorId?: StringNullableFilter<"Announcement"> | string | null
     assignTo?: StringNullableListFilter<"Announcement">
     allowComment?: BoolFilter<"Announcement"> | boolean
+    locked?: BoolFilter<"Announcement"> | boolean
     allowLiking?: BoolFilter<"Announcement"> | boolean
     availableFrom?: DateTimeNullableFilter<"Announcement"> | Date | string | null
     availableUntil?: DateTimeNullableFilter<"Announcement"> | Date | string | null
@@ -40426,6 +40442,7 @@ export namespace Prisma {
     authorId?: SortOrderInput | SortOrder
     assignTo?: SortOrder
     allowComment?: SortOrder
+    locked?: SortOrder
     allowLiking?: SortOrder
     availableFrom?: SortOrderInput | SortOrder
     availableUntil?: SortOrderInput | SortOrder
@@ -40449,6 +40466,7 @@ export namespace Prisma {
     authorId?: StringNullableWithAggregatesFilter<"Announcement"> | string | null
     assignTo?: StringNullableListFilter<"Announcement">
     allowComment?: BoolWithAggregatesFilter<"Announcement"> | boolean
+    locked?: BoolWithAggregatesFilter<"Announcement"> | boolean
     allowLiking?: BoolWithAggregatesFilter<"Announcement"> | boolean
     availableFrom?: DateTimeNullableWithAggregatesFilter<"Announcement"> | Date | string | null
     availableUntil?: DateTimeNullableWithAggregatesFilter<"Announcement"> | Date | string | null
@@ -43366,6 +43384,7 @@ export namespace Prisma {
     authorId?: string | null
     assignTo?: AnnouncementCreateassignToInput | string[]
     allowComment?: boolean
+    locked?: boolean
     allowLiking?: boolean
     availableFrom?: Date | string | null
     availableUntil?: Date | string | null
@@ -43385,6 +43404,7 @@ export namespace Prisma {
     authorId?: string | null
     assignTo?: AnnouncementCreateassignToInput | string[]
     allowComment?: boolean
+    locked?: boolean
     allowLiking?: boolean
     availableFrom?: Date | string | null
     availableUntil?: Date | string | null
@@ -43402,6 +43422,7 @@ export namespace Prisma {
     authorId?: NullableStringFieldUpdateOperationsInput | string | null
     assignTo?: AnnouncementUpdateassignToInput | string[]
     allowComment?: BoolFieldUpdateOperationsInput | boolean
+    locked?: BoolFieldUpdateOperationsInput | boolean
     allowLiking?: BoolFieldUpdateOperationsInput | boolean
     availableFrom?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     availableUntil?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -43421,6 +43442,7 @@ export namespace Prisma {
     authorId?: NullableStringFieldUpdateOperationsInput | string | null
     assignTo?: AnnouncementUpdateassignToInput | string[]
     allowComment?: BoolFieldUpdateOperationsInput | boolean
+    locked?: BoolFieldUpdateOperationsInput | boolean
     allowLiking?: BoolFieldUpdateOperationsInput | boolean
     availableFrom?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     availableUntil?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -43439,6 +43461,7 @@ export namespace Prisma {
     authorId?: string | null
     assignTo?: AnnouncementCreateassignToInput | string[]
     allowComment?: boolean
+    locked?: boolean
     allowLiking?: boolean
     availableFrom?: Date | string | null
     availableUntil?: Date | string | null
@@ -43455,6 +43478,7 @@ export namespace Prisma {
     authorId?: NullableStringFieldUpdateOperationsInput | string | null
     assignTo?: AnnouncementUpdateassignToInput | string[]
     allowComment?: BoolFieldUpdateOperationsInput | boolean
+    locked?: BoolFieldUpdateOperationsInput | boolean
     allowLiking?: BoolFieldUpdateOperationsInput | boolean
     availableFrom?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     availableUntil?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -43472,6 +43496,7 @@ export namespace Prisma {
     authorId?: NullableStringFieldUpdateOperationsInput | string | null
     assignTo?: AnnouncementUpdateassignToInput | string[]
     allowComment?: BoolFieldUpdateOperationsInput | boolean
+    locked?: BoolFieldUpdateOperationsInput | boolean
     allowLiking?: BoolFieldUpdateOperationsInput | boolean
     availableFrom?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     availableUntil?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -46335,6 +46360,7 @@ export namespace Prisma {
     authorId?: SortOrder
     assignTo?: SortOrder
     allowComment?: SortOrder
+    locked?: SortOrder
     allowLiking?: SortOrder
     availableFrom?: SortOrder
     availableUntil?: SortOrder
@@ -46351,6 +46377,7 @@ export namespace Prisma {
     author?: SortOrder
     authorId?: SortOrder
     allowComment?: SortOrder
+    locked?: SortOrder
     allowLiking?: SortOrder
     availableFrom?: SortOrder
     availableUntil?: SortOrder
@@ -46367,6 +46394,7 @@ export namespace Prisma {
     author?: SortOrder
     authorId?: SortOrder
     allowComment?: SortOrder
+    locked?: SortOrder
     allowLiking?: SortOrder
     availableFrom?: SortOrder
     availableUntil?: SortOrder
@@ -52342,6 +52370,7 @@ export namespace Prisma {
     authorId?: string | null
     assignTo?: AnnouncementCreateassignToInput | string[]
     allowComment?: boolean
+    locked?: boolean
     allowLiking?: boolean
     availableFrom?: Date | string | null
     availableUntil?: Date | string | null
@@ -52359,6 +52388,7 @@ export namespace Prisma {
     authorId?: string | null
     assignTo?: AnnouncementCreateassignToInput | string[]
     allowComment?: boolean
+    locked?: boolean
     allowLiking?: boolean
     availableFrom?: Date | string | null
     availableUntil?: Date | string | null
@@ -52720,6 +52750,7 @@ export namespace Prisma {
     authorId?: StringNullableFilter<"Announcement"> | string | null
     assignTo?: StringNullableListFilter<"Announcement">
     allowComment?: BoolFilter<"Announcement"> | boolean
+    locked?: BoolFilter<"Announcement"> | boolean
     allowLiking?: BoolFilter<"Announcement"> | boolean
     availableFrom?: DateTimeNullableFilter<"Announcement"> | Date | string | null
     availableUntil?: DateTimeNullableFilter<"Announcement"> | Date | string | null
@@ -55329,6 +55360,7 @@ export namespace Prisma {
     authorId?: string | null
     assignTo?: AnnouncementCreateassignToInput | string[]
     allowComment?: boolean
+    locked?: boolean
     allowLiking?: boolean
     availableFrom?: Date | string | null
     availableUntil?: Date | string | null
@@ -55347,6 +55379,7 @@ export namespace Prisma {
     authorId?: string | null
     assignTo?: AnnouncementCreateassignToInput | string[]
     allowComment?: boolean
+    locked?: boolean
     allowLiking?: boolean
     availableFrom?: Date | string | null
     availableUntil?: Date | string | null
@@ -55379,6 +55412,7 @@ export namespace Prisma {
     authorId?: NullableStringFieldUpdateOperationsInput | string | null
     assignTo?: AnnouncementUpdateassignToInput | string[]
     allowComment?: BoolFieldUpdateOperationsInput | boolean
+    locked?: BoolFieldUpdateOperationsInput | boolean
     allowLiking?: BoolFieldUpdateOperationsInput | boolean
     availableFrom?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     availableUntil?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -55397,6 +55431,7 @@ export namespace Prisma {
     authorId?: NullableStringFieldUpdateOperationsInput | string | null
     assignTo?: AnnouncementUpdateassignToInput | string[]
     allowComment?: BoolFieldUpdateOperationsInput | boolean
+    locked?: BoolFieldUpdateOperationsInput | boolean
     allowLiking?: BoolFieldUpdateOperationsInput | boolean
     availableFrom?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     availableUntil?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -58917,6 +58952,7 @@ export namespace Prisma {
     authorId?: string | null
     assignTo?: AnnouncementCreateassignToInput | string[]
     allowComment?: boolean
+    locked?: boolean
     allowLiking?: boolean
     availableFrom?: Date | string | null
     availableUntil?: Date | string | null
@@ -59197,6 +59233,7 @@ export namespace Prisma {
     authorId?: NullableStringFieldUpdateOperationsInput | string | null
     assignTo?: AnnouncementUpdateassignToInput | string[]
     allowComment?: BoolFieldUpdateOperationsInput | boolean
+    locked?: BoolFieldUpdateOperationsInput | boolean
     allowLiking?: BoolFieldUpdateOperationsInput | boolean
     availableFrom?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     availableUntil?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -59214,6 +59251,7 @@ export namespace Prisma {
     authorId?: NullableStringFieldUpdateOperationsInput | string | null
     assignTo?: AnnouncementUpdateassignToInput | string[]
     allowComment?: BoolFieldUpdateOperationsInput | boolean
+    locked?: BoolFieldUpdateOperationsInput | boolean
     allowLiking?: BoolFieldUpdateOperationsInput | boolean
     availableFrom?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     availableUntil?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -59231,6 +59269,7 @@ export namespace Prisma {
     authorId?: NullableStringFieldUpdateOperationsInput | string | null
     assignTo?: AnnouncementUpdateassignToInput | string[]
     allowComment?: BoolFieldUpdateOperationsInput | boolean
+    locked?: BoolFieldUpdateOperationsInput | boolean
     allowLiking?: BoolFieldUpdateOperationsInput | boolean
     availableFrom?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     availableUntil?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null

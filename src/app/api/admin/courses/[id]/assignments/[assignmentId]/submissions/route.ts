@@ -47,9 +47,9 @@ export async function GET(
 
   // ── 1. Fetch assignment so we can compute late client-side ──────────────────
   const assignment = await prisma.assignment.findUnique({
-    where: { id: assignmentId },
-    select: { dueDate: true },
-  });
+  where: { id: assignmentId },
+  select: { dueDate: true, createdById: true },  // ← dagdag ang createdById
+});
 
   // ── 2. Fetch actual submissions ─────────────────────────────────────────────
   const submissions = await prisma.submission.findMany({
@@ -118,28 +118,31 @@ export async function GET(
 
   // ── 6. Missing rows — enrolled users with no submission record ───────────────
   const missingRows = enrollments
-    .filter(e => !submissionByUserId.has(e.userId))
-    .map(e => ({
-      id:          null,
-      userId:      e.user.id,
-      userName:    e.user.name,
-      userEmail:   e.user.email,
-      courseRole:  e.courseRole,
-      status:      "MISSING",
-      grade:       null,
-      feedback:    null,
-      submittedAt: null,
-      textEntry:   null,
-      websiteUrl:  null,
-      comments:    null,
-      daysLate:    null,
-      isLate:      false,
-      isMissing:   true,
-      isMulti:     false,
-      entries:     [],
-      fileUrl:     null,
-      allFileUrls: [],
-    }));
+  .filter(e =>
+    !submissionByUserId.has(e.userId) &&
+    e.userId !== assignment?.createdById
+  )
+  .map(e => ({
+    id:          null,
+    userId:      e.user.id,
+    userName:    e.user.name,
+    userEmail:   e.user.email,
+    courseRole:  e.courseRole,
+    status:      "MISSING",
+    grade:       null,
+    feedback:    null,
+    submittedAt: null,
+    textEntry:   null,
+    websiteUrl:  null,
+    comments:    null,
+    daysLate:    null,
+    isLate:      false,
+    isMissing:   true,
+    isMulti:     false,
+    entries:     [],
+    fileUrl:     null,
+    allFileUrls: [],
+  }));
 
   return NextResponse.json({
     submissions: [...submittedRows, ...missingRows],

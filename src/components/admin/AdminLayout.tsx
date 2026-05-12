@@ -1,5 +1,6 @@
 "use client";
 
+import { HistoryProvider, AdminHistoryPanel, useHistory, HistoryTracker } from "@/components/admin/AdminHistoryPage";
 import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
@@ -27,7 +28,6 @@ const PAGE_ITEMS = [
   { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
   { label: "Users",     href: "/admin/users",     icon: Users            },
   { label: "Inbox",     href: "/admin/inbox",     icon: Inbox            },
-  { label: "History",   href: "/admin/history",   icon: Clock            },
   { label: "Calendar",  href: "/admin/calendar",  icon: CalendarDays     },
 ];
 
@@ -140,6 +140,8 @@ function AdminSidebar({
     closePanel,
   } = useAdminCourses();
 
+  const { isOpen: historyIsOpen, open: openHistory, closePanel: closeHistoryPanel } = useHistory();
+
   const pageIsActive = (href: string) => {
     if (coursesActive)   return false;
     if (groupsPanelOpen) return false;
@@ -185,6 +187,12 @@ function AdminSidebar({
           className={`flex flex-col items-center justify-center w-full py-2.5 px-1 transition-colors ${groupsActive ? ACTIVE_CLS : INACTIVE_CLS}`}>
           <FolderKanban size={18} />
           <span className="text-[10px] mt-1 text-center leading-tight">Groups</span>
+        </button>
+
+        <button onClick={() => { handlePageNavClick(); if (historyIsOpen) { closeHistoryPanel(); } else { openHistory(); } }}
+          className={`flex flex-col items-center justify-center w-full py-2.5 px-1 transition-colors ${historyIsOpen ? ACTIVE_CLS : INACTIVE_CLS}`}>
+          <Clock size={18} />
+          <span className="text-[10px] mt-1 text-center leading-tight">History</span>
         </button>
 
         {PAGE_ITEMS.map(item => {
@@ -250,7 +258,6 @@ function MobileBottomNav({
 
   const handlePageNavClick = () => { if (coursesActive) closeCourses(); };
 
-  // Show only most important items on mobile bottom nav
   const mobileItems = [
     { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
     { label: "Inbox",     href: "/admin/inbox",     icon: Inbox            },
@@ -267,7 +274,6 @@ function MobileBottomNav({
         paddingBottom: "env(safe-area-inset-bottom)",
       }}
     >
-      {/* Courses */}
       <button
         onClick={handleCoursesClick}
         style={{
@@ -283,7 +289,6 @@ function MobileBottomNav({
         </span>
       </button>
 
-      {/* Groups */}
       <button
         onClick={onGroupsClick}
         style={{
@@ -299,7 +304,6 @@ function MobileBottomNav({
         </span>
       </button>
 
-      {/* Other page items */}
       {mobileItems.map(item => {
         const Icon  = item.icon;
         const active = pageIsActive(item.href);
@@ -322,7 +326,6 @@ function MobileBottomNav({
         );
       })}
 
-      {/* Logout */}
       <button
         onClick={() => signOut({ callbackUrl: "/admin/login" })}
         style={{
@@ -350,7 +353,6 @@ function AdminInner({ children }: { children: React.ReactNode }) {
 
   const { close: closeCourses } = useAdminCourses();
 
-  // Detect mobile
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
     check();
@@ -381,7 +383,6 @@ function AdminInner({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
 
-      {/* Desktop sidebar — hidden on mobile */}
       {!isMobile && (
         <AdminSidebar
           groupsPanelOpen={groupsPanelOpen}
@@ -389,7 +390,9 @@ function AdminInner({ children }: { children: React.ReactNode }) {
         />
       )}
 
+      <HistoryTracker isAdmin={true} />
       <AdminCoursesPanel onNewCourse={triggerNewCourse} />
+      <AdminHistoryPanel />
 
       {groupsPanelOpen && (
         <AdminGroupsPanel
@@ -398,7 +401,6 @@ function AdminInner({ children }: { children: React.ReactNode }) {
         />
       )}
 
-      {/* Main content — add bottom padding on mobile for bottom nav */}
       <div className="flex-1 flex overflow-hidden">
         <main
           className="flex-1 overflow-y-auto"
@@ -408,7 +410,6 @@ function AdminInner({ children }: { children: React.ReactNode }) {
         </main>
       </div>
 
-      {/* Mobile bottom nav */}
       {isMobile && (
         <MobileBottomNav
           groupsPanelOpen={groupsPanelOpen}
@@ -436,7 +437,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <AdminCoursesProvider>
-      <AdminInner>{children}</AdminInner>
+      <HistoryProvider>
+        <AdminInner>{children}</AdminInner>
+      </HistoryProvider>
     </AdminCoursesProvider>
   );
 }

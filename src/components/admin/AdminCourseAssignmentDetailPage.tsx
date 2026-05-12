@@ -1419,106 +1419,155 @@ export default function AdminCourseAssignmentDetailPage({
         <div className="flex-1 overflow-y-auto px-4 sm:px-8 py-6">
 
           {activeTab === "overview" && (
-            <>
-              <div className="flex items-start gap-3 mb-4">
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style={{ background: "#fef2f2" }}>
-                  <FileText size={18} style={{ color: MAROON }} />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2 flex-wrap mb-1">
-                    <h1 className="text-xl sm:text-2xl font-black text-gray-900">{assignment.title}</h1>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full text-white font-medium"
-                      style={{ background: MAROON }}>{assignment.assignmentGroup || "Assignment"}</span>
+            <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+
+              {/* ── Hero Banner ── */}
+              <div style={{
+                background: `linear-gradient(135deg, ${MAROON} 0%, #5a0d0f 100%)`,
+                borderRadius: 16, padding: "24px 28px", position: "relative", overflow: "hidden",
+              }}>
+                <div style={{ position: "absolute", top: -30, right: -30, width: 120, height: 120, borderRadius: "50%", background: "rgba(255,255,255,0.04)" }} />
+                <div style={{ position: "absolute", bottom: -20, right: 60, width: 80, height: 80, borderRadius: "50%", background: "rgba(255,255,255,0.03)" }} />
+                <div style={{ display: "flex", alignItems: "flex-start", gap: 16, position: "relative" }}>
+                  <div style={{ width: 48, height: 48, borderRadius: 12, background: "rgba(255,255,255,0.12)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <FileText size={22} color="#fff" />
                   </div>
-                  {creator && (
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-black shrink-0"
-                        style={{ background: MAROON }}>{creator.name.charAt(0).toUpperCase()}</div>
-                      <span className="text-sm font-bold text-gray-800">{creator.name}</span>
-                      {creator.courseRole && <RoleBadge role={creator.courseRole} />}
-                      <span className="text-xs text-gray-400">· Posted {fmtDateTime(creator.createdAt)}</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" as const, marginBottom: 6 }}>
+                      <h1 style={{ fontSize: 22, fontWeight: 900, color: "#fff", margin: 0, letterSpacing: "-0.02em", lineHeight: 1.2 }}>
+                        {assignment.title}
+                      </h1>
+                      <span style={{ fontSize: 10, fontWeight: 800, padding: "3px 10px", borderRadius: 20, background: "rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.9)", letterSpacing: "0.06em", textTransform: "uppercase" as const }}>
+                        {assignment.assignmentGroup || "Assignment"}
+                      </span>
                     </div>
-                  )}
+                    {creator && (
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" as const }}>
+                        <div style={{ width: 24, height: 24, borderRadius: "50%", background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 900, color: "#fff" }}>
+                          {creator.name.charAt(0).toUpperCase()}
+                        </div>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.9)" }}>{creator.name}</span>
+                        {creator.courseRole && <RoleBadge role={creator.courseRole} />}
+                        <span style={{ fontSize: 11, color: "rgba(255,255,255,0.5)" }}>· Posted {fmtDateTime(creator.createdAt)}</span>
+                      </div>
+                    )}
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.12)", borderRadius: 20, padding: "6px 12px", flexShrink: 0 }}>
+                    <div style={{ width: 7, height: 7, borderRadius: "50%", background: availability.statusColor }} />
+                    <span style={{ fontSize: 11, fontWeight: 800, color: "#fff" }}>{availability.statusLabel}</span>
+                  </div>
                 </div>
               </div>
 
+              {/* ── Description ── */}
               {assignment.description ? (
-                <div className="mb-6 text-sm text-gray-700 leading-relaxed border-l-4 pl-4" style={{ borderColor: MAROON }}>
-                  <style>{`.assignment-desc{font-size:13px;color:#374151;line-height:1.7;}.assignment-desc p{margin:0 0 8px;}.assignment-desc a{color:#7b1113;text-decoration:underline;}`}</style>
+                <div style={{ background: "#fff", border: "1px solid #f0e4e4", borderLeft: `4px solid ${MAROON}`, borderRadius: "0 12px 12px 0", padding: "16px 20px" }}>
+                  <p style={{ fontSize: 10, fontWeight: 800, color: MAROON, textTransform: "uppercase" as const, letterSpacing: "0.1em", margin: "0 0 8px" }}>Description</p>
+                  <style>{`.assignment-desc{font-size:13px;color:#374151;line-height:1.75;}.assignment-desc p{margin:0 0 8px;}.assignment-desc a{color:#7b1113;text-decoration:underline;}`}</style>
                   <div className="assignment-desc" dangerouslySetInnerHTML={{ __html: assignment.description }} />
                 </div>
               ) : (
-                <p className="mb-6 text-sm italic text-gray-400">No description provided.</p>
+                <p style={{ fontSize: 13, color: "#9ca3af", fontStyle: "italic", margin: 0 }}>No description provided.</p>
               )}
 
-              <div className="bg-white border border-gray-100 rounded-lg mb-5 overflow-hidden">
-                <div className="px-4 py-2 border-b" style={{ background: "#fdf2f2" }}>
-                  <p className="text-[10px] font-black uppercase tracking-widest" style={{ color: MAROON }}>Details</p>
-                </div>
-                <div className="px-5 py-4 grid grid-cols-2 sm:grid-cols-3 gap-4">
-                  {[
-                    ["Points",          `${assignment.points}`],
-                    ["Submission Type", submittingLabel],
-                    ["Group",           assignment.assignmentGroup || "—"],
-                    ["Attempts",        assignment.allowedAttempts != null ? `${assignment.allowedAttempts}` : "Unlimited"],
-                    ["Status",          isPublished ? "Published" : "Unpublished"],
-                    ["Can Submit",      availability.canSubmit ? "Yes" : "No"],
-                  ].map(([k, v]) => (
-                    <div key={k}>
-                      <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">{k}</p>
-                      <p className="text-sm font-bold text-gray-800">{v}</p>
+              {/* ── Stats Row ── */}
+              {submissions.length > 0 && (() => {
+                const { submitted: s, graded: g, missing: m, late: l, avgScore: a } = computeStats(submissions, assignment);
+                return (
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 10 }}>
+                    {[
+                      { label: "Submitted", value: s.length, color: "#1d4ed8", bg: "#eff6ff", border: "#bfdbfe" },
+                      { label: "Graded",    value: g.length, color: "#15803d", bg: "#f0fdf4", border: "#bbf7d0" },
+                      { label: "Missing",   value: m.length, color: MAROON,    bg: "#fef2f2", border: "#f0c0c0" },
+                      { label: "Late",      value: l.length, color: "#dc2626", bg: "#fef2f2", border: "#fecaca" },
+                      { label: "Avg Score", value: a != null ? `${a}%` : "—", color: "#6b7280", bg: "#f9fafb", border: "#e5e7eb" },
+                    ].map(stat => (
+                      <div key={stat.label} style={{ background: stat.bg, border: `1px solid ${stat.border}`, borderRadius: 12, padding: "14px 10px", textAlign: "center" as const }}>
+                        <p style={{ fontSize: 22, fontWeight: 900, color: stat.color, margin: 0, lineHeight: 1 }}>{stat.value}</p>
+                        <p style={{ fontSize: 9, fontWeight: 800, color: stat.color, textTransform: "uppercase" as const, letterSpacing: "0.1em", margin: "4px 0 0" }}>{stat.label}</p>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+
+              {/* ── Details + Schedule ── */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+                <div style={{ background: "#fff", border: "1px solid #f0e4e4", borderRadius: 14, overflow: "hidden" }}>
+                  <div style={{ padding: "10px 18px", background: "linear-gradient(90deg, #fef2f2, #fff)", borderBottom: "1px solid #fce8e8", display: "flex", alignItems: "center", gap: 8 }}>
+                    <div style={{ width: 26, height: 26, borderRadius: 7, background: MAROON, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                     </div>
-                  ))}
+                    <p style={{ fontSize: 10, fontWeight: 800, color: MAROON, textTransform: "uppercase" as const, letterSpacing: "0.1em", margin: 0 }}>Details</p>
+                  </div>
+                  <div style={{ padding: "14px 18px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px 16px" }}>
+                    {[
+                      ["Points",      `${assignment.points} pts`],
+                      ["Submission",  submittingLabel],
+                      ["Group",       assignment.assignmentGroup || "—"],
+                      ["Attempts",    assignment.allowedAttempts != null ? `${assignment.allowedAttempts}` : "Unlimited"],
+                      ["Status",      isPublished ? "Published" : "Unpublished"],
+                      ["Can Submit",  availability.canSubmit ? "Yes" : "No"],
+                    ].map(([k, v]) => (
+                      <div key={k}>
+                        <p style={{ fontSize: 9, fontWeight: 800, color: "#9ca3af", textTransform: "uppercase" as const, letterSpacing: "0.1em", margin: "0 0 3px" }}>{k}</p>
+                        <p style={{ fontSize: 12, fontWeight: 700, color: "#111827", margin: 0 }}>{v}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={{ background: "#fff", border: "1px solid #f0e4e4", borderRadius: 14, overflow: "hidden" }}>
+                  <div style={{ padding: "10px 18px", background: "linear-gradient(90deg, #fef2f2, #fff)", borderBottom: "1px solid #fce8e8", display: "flex", alignItems: "center", gap: 8 }}>
+                    <div style={{ width: 26, height: 26, borderRadius: 7, background: MAROON, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    </div>
+                    <p style={{ fontSize: 10, fontWeight: 800, color: MAROON, textTransform: "uppercase" as const, letterSpacing: "0.1em", margin: 0 }}>Schedule</p>
+                  </div>
+                  <div style={{ padding: "14px 18px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px 16px" }}>
+                    {[
+                      ["Due Date",       fmtDue(assignment.dueDate)],
+                      ["Assigned To",    forLabel],
+                      ["Available From", fmtDate(assignment.availableFrom)],
+                      ["Until",          fmtDate(assignment.availableUntil)],
+                    ].map(([k, v]) => (
+                      <div key={k}>
+                        <p style={{ fontSize: 9, fontWeight: 800, color: "#9ca3af", textTransform: "uppercase" as const, letterSpacing: "0.1em", margin: "0 0 3px" }}>{k}</p>
+                        <p style={{ fontSize: 12, fontWeight: 700, color: "#111827", margin: 0 }}>{v}</p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
 
-              <div className="bg-white border border-gray-100 rounded-lg mb-5 overflow-hidden">
-                <div className="px-4 py-2 border-b" style={{ background: "#fdf2f2" }}>
-                  <p className="text-[10px] font-black uppercase tracking-widest" style={{ color: MAROON }}>Schedule</p>
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm min-w-100">
-                    <thead>
-                      <tr className="border-b border-gray-100">
-                        {["Due", "For", "Available From", "Until"].map(h => (
-                          <th key={h} className="text-left px-5 py-3 text-[10px] font-black uppercase tracking-widest text-gray-400">{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td className="px-5 py-3 text-sm font-semibold text-gray-700">{fmtDue(assignment.dueDate)}</td>
-                        <td className="px-5 py-3 text-sm font-semibold text-gray-700">{forLabel}</td>
-                        <td className="px-5 py-3 text-sm text-gray-600">{fmtDate(assignment.availableFrom)}</td>
-                        <td className="px-5 py-3 text-sm text-gray-600">{fmtDate(assignment.availableUntil)}</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
+              {/* ── Rubric ── */}
               <RubricSection courseId={courseId} assignmentId={assignmentId} />
 
+              {/* ── Submissions CTA ── */}
               {submitted.length > 0 && (
-                <button onClick={() => setActiveTab("submissions")}
-                  className="mt-5 w-full flex items-center justify-between px-5 py-4 rounded-xl border transition-all hover:shadow-sm group"
-                  style={{ background: "#fdf2f2", borderColor: "#f0c0c0" }}>
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: MAROON }}>
-                      <FileText size={15} className="text-white" />
+                <button
+                  onClick={() => setActiveTab("submissions")}
+                  style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", borderRadius: 14, border: "1px solid #f0c0c0", background: "linear-gradient(90deg, #fef2f2, #fff)", cursor: "pointer", fontFamily: FONT }}
+                  onMouseEnter={e => (e.currentTarget.style.boxShadow = "0 4px 16px rgba(123,17,19,0.1)")}
+                  onMouseLeave={e => (e.currentTarget.style.boxShadow = "none")}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                    <div style={{ width: 40, height: 40, borderRadius: 10, background: MAROON, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <FileText size={18} color="#fff" />
                     </div>
-                    <div className="text-left">
-                      <p className="text-sm font-black" style={{ color: MAROON }}>
+                    <div style={{ textAlign: "left" as const }}>
+                      <p style={{ fontSize: 14, fontWeight: 900, color: MAROON, margin: 0 }}>
                         {submitted.length} Submission{submitted.length !== 1 ? "s" : ""}
                       </p>
-                      <p className="text-xs text-gray-500">Click to view, grade, and download</p>
+                      <p style={{ fontSize: 11, color: "#9ca3af", margin: "2px 0 0" }}>Click to view, grade, and download</p>
                     </div>
                   </div>
-                  <ChevronDown size={16} className="-rotate-90 group-hover:translate-x-0.5 transition-transform"
-                    style={{ color: MAROON }} />
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={MAROON} strokeWidth="2.5">
+                    <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
                 </button>
               )}
-            </>
+            </div>
           )}
 
           {activeTab === "submissions" && (

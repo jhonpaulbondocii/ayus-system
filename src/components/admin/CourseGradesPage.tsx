@@ -1216,6 +1216,11 @@ function CellDisplay({
 
 /* ─────────────────────────────────────────────────────────────────────────────
    INLINE CELL EDITOR
+   — Save/Cancel buttons removed. Grades save on:
+     • Select change (Complete/Incomplete)
+     • Enter key (Points / Percentage)
+     • Clicking outside / blur (Points / Percentage)
+     • Escape dismisses without saving
 ───────────────────────────────────────────────────────────────────────────── */
 function CellEditor({
   col, score, onSave, onOpenPanel, onDismiss,
@@ -1230,13 +1235,54 @@ function CellEditor({
   const isCI = dga === "Complete/Incomplete";
   const isPct = dga === "Percentage";
   const inputRef = useRef<HTMLInputElement>(null);
+  const committedRef = useRef(false);
   const [ciVal, setCiVal] = useState<string>(
     score === col.points ? "complete" : score === 0 ? "incomplete" : ""
   );
 
+  const commitPct = useCallback(async () => {
+    if (committedRef.current) return;
+    committedRef.current = true;
+    const val = inputRef.current?.value.trim() ?? "";
+    const pct = parseFloat(val);
+    const grade = !val || isNaN(pct) ? null : Math.round((pct / 100) * col.points * 10) / 10;
+    await onSave(grade);
+    onDismiss();
+  }, [col.points, onSave, onDismiss]);
+
+  const commitPts = useCallback(async () => {
+    if (committedRef.current) return;
+    committedRef.current = true;
+    const val = inputRef.current?.value.trim() ?? "";
+    const v = parseFloat(val);
+    await onSave(!val || isNaN(v) ? null : v);
+    onDismiss();
+  }, [onSave, onDismiss]);
+
+  const commitCI = useCallback(async (val: string) => {
+    if (committedRef.current) return;
+    committedRef.current = true;
+    const grade = val === "complete" ? col.points : val === "incomplete" ? 0 : null;
+    await onSave(grade);
+    onDismiss();
+  }, [col.points, onSave, onDismiss]);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.closest("[data-cell-editor]") || target.closest("[data-arrow-btn]")) return;
+      if (isCI) void commitCI(ciVal);
+      else if (isPct) void commitPct();
+      else void commitPts();
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [isCI, isPct, ciVal, commitCI, commitPct, commitPts]);
+
+  // ── Complete / Incomplete ──────────────────────────────────────────────────
   if (isCI) {
     return (
-      <div data-cell-editor className="flex flex-col w-full">
+      <div data-cell-editor className="flex w-full">
         <div className="flex items-stretch w-full border-2 rounded" style={{ borderColor: "#2563eb" }}>
           <select
             autoFocus
@@ -1251,37 +1297,16 @@ function CellEditor({
           </select>
           <ArrowBtn onOpenPanel={onOpenPanel} />
         </div>
-        <div className="flex gap-1 mt-1 px-0.5">
-          <button
-            data-cell-editor
-            onMouseDown={e => e.stopPropagation()}
-            onClick={async e => {
-              e.stopPropagation();
-              const grade = ciVal === "complete" ? col.points : ciVal === "incomplete" ? 0 : null;
-              await onSave(grade);
-              onDismiss();
-            }}
-            className="flex-1 h-6 text-[10px] font-black text-white rounded"
-            style={{ background: MAROON }}>
-            Save
-          </button>
-          <button
-            data-cell-editor
-            onMouseDown={e => e.stopPropagation()}
-            onClick={e => { e.stopPropagation(); onDismiss(); }}
-            className="flex-1 h-6 text-[10px] font-semibold text-gray-600 rounded border border-gray-300 bg-white">
-            Cancel
-          </button>
-        </div>
       </div>
     );
   }
 
+  // ── Percentage ────────────────────────────────────────────────────────────
   if (isPct) {
     const initPct = score !== null && col.points > 0
       ? String(Math.round((score / col.points) * 100)) : "";
     return (
-      <div data-cell-editor className="flex flex-col w-full">
+      <div data-cell-editor className="flex w-full">
         <div className="flex items-stretch w-full border-2 rounded" style={{ borderColor: "#2563eb" }}>
           <input
             ref={inputRef}
@@ -1290,41 +1315,21 @@ function CellEditor({
             defaultValue={initPct}
             className="flex-1 h-9 text-sm font-semibold text-center bg-white outline-none w-0"
             onClick={e => e.stopPropagation()}
-            onKeyDown={e => { if (e.key === "Escape") onDismiss(); }}
+            onKeyDown={e => {
+              if (e.key === "Escape") { onDismiss(); return; }
+              if (e.key === "Enter") { e.preventDefault(); void commitPct(); }
+            }}
           />
           <span className="text-[10px] font-bold text-gray-400 self-center px-1">%</span>
           <ArrowBtn onOpenPanel={onOpenPanel} />
-        </div>
-        <div className="flex gap-1 mt-1 px-0.5">
-          <button
-            data-cell-editor
-            onMouseDown={e => e.stopPropagation()}
-            onClick={async e => {
-              e.stopPropagation();
-              const val = inputRef.current?.value.trim() ?? "";
-              const pct = parseFloat(val);
-              const grade = !val || isNaN(pct) ? null : Math.round((pct / 100) * col.points * 10) / 10;
-              await onSave(grade);
-              onDismiss();
-            }}
-            className="flex-1 h-6 text-[10px] font-black text-white rounded"
-            style={{ background: MAROON }}>
-            Save
-          </button>
-          <button
-            data-cell-editor
-            onMouseDown={e => e.stopPropagation()}
-            onClick={e => { e.stopPropagation(); onDismiss(); }}
-            className="flex-1 h-6 text-[10px] font-semibold text-gray-600 rounded border border-gray-300 bg-white">
-            Cancel
-          </button>
         </div>
       </div>
     );
   }
 
+  // ── Points (default) ──────────────────────────────────────────────────────
   return (
-    <div data-cell-editor className="flex flex-col w-full">
+    <div data-cell-editor className="flex w-full">
       <div className="flex items-stretch w-full border-2 rounded" style={{ borderColor: "#2563eb" }}>
         <input
           ref={inputRef}
@@ -1333,33 +1338,13 @@ function CellEditor({
           defaultValue={score ?? ""}
           className="flex-1 h-9 text-sm font-semibold text-center bg-white outline-none w-0"
           onClick={e => e.stopPropagation()}
-          onKeyDown={e => { if (e.key === "Escape") onDismiss(); }}
+          onKeyDown={e => {
+            if (e.key === "Escape") { onDismiss(); return; }
+            if (e.key === "Enter") { e.preventDefault(); void commitPts(); }
+          }}
         />
         <span className="text-[10px] font-bold text-gray-400 self-center pr-1 shrink-0">/{col.points}</span>
         <ArrowBtn onOpenPanel={onOpenPanel} />
-      </div>
-      <div className="flex gap-1 mt-1 px-0.5">
-        <button
-          data-cell-editor
-          onMouseDown={e => e.stopPropagation()}
-          onClick={async e => {
-            e.stopPropagation();
-            const val = inputRef.current?.value.trim() ?? "";
-            const v = parseFloat(val);
-            await onSave(!val || isNaN(v) ? null : v);
-            onDismiss();
-          }}
-          className="flex-1 h-6 text-[10px] font-black text-white rounded"
-          style={{ background: MAROON }}>
-          Save
-        </button>
-        <button
-          data-cell-editor
-          onMouseDown={e => e.stopPropagation()}
-          onClick={e => { e.stopPropagation(); onDismiss(); }}
-          className="flex-1 h-6 text-[10px] font-semibold text-gray-600 rounded border border-gray-300 bg-white">
-          Cancel
-        </button>
       </div>
     </div>
   );
@@ -1404,20 +1389,6 @@ export default function CourseGradesPage({ courseId }: { courseId: string }) {
 
   useEffect(() => { fetchGrades(); }, [fetchGrades]);
 
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      const t = e.target as HTMLElement;
-      if (
-        !t.closest("[data-cell-editor]") &&
-        !t.closest("[data-grade-cell]") &&
-        !t.closest("[data-arrow-btn]")
-      ) {
-        setActiveCell(null);
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
 
   const navigateToSpeedgrader = useCallback((staffId: string, assignmentId: string, submissionId: string) => {
     window.open(`/admin/courses/${courseId}/assignments/${assignmentId}/speedgrader?submissionId=${submissionId}&staffId=${staffId}`, "_blank");
@@ -1948,7 +1919,7 @@ export default function CourseGradesPage({ courseId }: { courseId: string }) {
       <div className="border-t border-gray-200 px-5 py-2 flex items-center gap-4 shrink-0 bg-gray-50">
         <div className="flex items-center gap-1.5">
           <Eye size={10} className="text-gray-400" />
-          <span className="text-[10px] font-medium text-gray-400">Click any cell to grade inline</span>
+          <span className="text-[10px] font-medium text-gray-400">Click cell to edit · Enter or click away to save · Esc to cancel</span>
         </div>
         <div className="flex items-center gap-1.5">
           <ClipboardList size={10} className="text-gray-400" />
