@@ -5,10 +5,9 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Mail } from "lucide-react";
 
 type Step = "identify" | "otp" | "reset" | "done";
-type Via  = "email" | "sms";
 
 function PageShell({ children }: { children: React.ReactNode }) {
   return (
@@ -40,7 +39,6 @@ function CardHeader({ title, sub }: { title: string; sub?: React.ReactNode }) {
   );
 }
 
-// Step indicator: 3 steps
 const STEPS = ["Identify", "Verify OTP", "Reset Password"];
 function StepIndicator({ active }: { active: number }) {
   return (
@@ -65,7 +63,6 @@ function StepIndicator({ active }: { active: number }) {
 
 export default function ForgotPasswordPage() {
   const [step,         setStep]         = useState<Step>("identify");
-  const [via,          setVia]          = useState<Via>("email");
   const [identifier,   setIdentifier]   = useState("");
   const [otp,          setOtp]          = useState(["", "", "", "", "", ""]);
   const [resetTokenId, setResetTokenId] = useState("");
@@ -77,7 +74,6 @@ export default function ForgotPasswordPage() {
   const [error,        setError]        = useState("");
   const [resendTimer,  setResendTimer]  = useState(0);
 
-  // ── Resend countdown ──
   const startResendTimer = () => {
     setResendTimer(60);
     const t = setInterval(() => {
@@ -88,16 +84,15 @@ export default function ForgotPasswordPage() {
   // ── Step 1: Send OTP ──
   const handleSend = async () => {
     setError("");
-    if (!identifier.trim()) { setError("Please enter your " + (via === "email" ? "email address." : "mobile number.")); return; }
-    if (via === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identifier)) { setError("Enter a valid email address."); return; }
-    if (via === "sms" && !/^(09|\+639)\d{9}$/.test(identifier.replace(/\s/g, ""))) { setError("Enter a valid PH mobile number (09XXXXXXXXX)."); return; }
+    if (!identifier.trim()) { setError("Please enter your email address."); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identifier)) { setError("Enter a valid email address."); return; }
 
     setLoading(true);
     try {
       const res = await fetch("/api/forgot-password/send", {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ identifier: identifier.trim(), via }),
+        body:    JSON.stringify({ identifier: identifier.trim() }),
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error ?? "Failed to send code."); return; }
@@ -127,7 +122,7 @@ export default function ForgotPasswordPage() {
       const res = await fetch("/api/forgot-password/verify", {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ identifier: identifier.trim(), via, otp: code }),
+        body:    JSON.stringify({ identifier: identifier.trim(), via: "email", otp: code }),
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error ?? "Invalid code."); return; }
@@ -146,7 +141,7 @@ export default function ForgotPasswordPage() {
       await fetch("/api/forgot-password/send", {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ identifier: identifier.trim(), via }),
+        body:    JSON.stringify({ identifier: identifier.trim() }),
       });
       startResendTimer();
     } catch { setError("Failed to resend. Try again."); }
@@ -178,60 +173,31 @@ export default function ForgotPasswordPage() {
       err ? "border-red-300 bg-red-50/50" : "border-gray-200 hover:border-gray-300"
     }`;
 
-  // ── STEP 1: Identify ──────────────────────────────────────────────────────────
+  // ── STEP 1: Identify ──
   if (step === "identify") return (
     <PageShell>
-      <CardHeader title="Forgot Password" sub="Choose how you want to receive your reset code" />
+      <CardHeader title="Forgot Password" sub="Enter your email to receive a reset code" />
       <StepIndicator active={0} />
 
       {error && <div className="mb-4 text-xs text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">{error}</div>}
 
-      {/* Via toggle */}
-      <div className="flex rounded-lg border border-gray-200 overflow-hidden mb-4">
-        {(["email", "sms"] as Via[]).map(v => (
-          <button key={v} type="button"
-            onClick={() => { setVia(v); setIdentifier(""); setError(""); }}
-            className={`flex-1 py-2 text-xs font-semibold transition-colors ${
-              via === v ? "bg-[#7b1113] text-white" : "bg-white text-gray-500 hover:bg-gray-50"
-            }`}>
-            {v === "email" ? "📧 Email" : "📱 Mobile Number"}
-          </button>
-        ))}
-      </div>
-
       <div className="mb-4">
         <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1.5">
-          {via === "email" ? "PSU Email Address" : "Mobile Number"} <span className="text-red-500">*</span>
+          Email Address <span className="text-red-500">*</span>
         </label>
-        {via === "email" ? (
+        <div className="relative">
+          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
           <input
             type="email"
             value={identifier}
             onChange={e => { setIdentifier(e.target.value); setError(""); }}
-            placeholder="yourname@pampangastateu.edu.ph"
-            className={inputCls(!!error)}
+            placeholder="yourname@email.com"
+            className={`${inputCls(!!error)} pl-9`}
             onKeyDown={e => e.key === "Enter" && void handleSend()}
           />
-        ) : (
-          <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 pointer-events-none select-none">+63</span>
-            <input
-              type="tel"
-              value={identifier}
-              onChange={e => {
-                const v = e.target.value.replace(/\D/g, "").slice(0, 11);
-                setIdentifier(v); setError("");
-              }}
-              placeholder="9XX XXX XXXX"
-              className={`${inputCls(!!error)} pl-9`}
-              onKeyDown={e => e.key === "Enter" && void handleSend()}
-            />
-          </div>
-        )}
+        </div>
         <p className="text-[11px] text-gray-400 mt-1">
-          {via === "email"
-            ? "We'll send a 6-digit code to this email."
-            : "We'll send a 6-digit code via SMS to this number."}
+          We&apos;ll send a 6-digit code to this email address.
         </p>
       </div>
 
@@ -246,12 +212,12 @@ export default function ForgotPasswordPage() {
     </PageShell>
   );
 
-  // ── STEP 2: OTP ───────────────────────────────────────────────────────────────
+  // ── STEP 2: OTP ──
   if (step === "otp") return (
     <PageShell>
       <CardHeader
         title="Enter Reset Code"
-        sub={<>Code sent to <span className="font-medium text-gray-600">{via === "email" ? identifier : `+63 ${identifier}`}</span></>}
+        sub={<>Code sent to <span className="font-medium text-gray-600">{identifier}</span></>}
       />
       <StepIndicator active={1} />
 
@@ -286,13 +252,13 @@ export default function ForgotPasswordPage() {
       <p className="text-xs text-center text-gray-300 mt-2">
         <button onClick={() => { setStep("identify"); setOtp(["","","","","",""]); setError(""); }}
           className="hover:text-gray-500 hover:underline">
-          ← Change {via === "email" ? "email" : "number"}
+          ← Change email
         </button>
       </p>
     </PageShell>
   );
 
-  // ── STEP 3: New Password ──────────────────────────────────────────────────────
+  // ── STEP 3: New Password ──
   if (step === "reset") return (
     <PageShell>
       <CardHeader title="Set New Password" sub="Choose a strong password for your account" />
@@ -344,7 +310,7 @@ export default function ForgotPasswordPage() {
     </PageShell>
   );
 
-  // ── DONE ──────────────────────────────────────────────────────────────────────
+  // ── DONE ──
   return (
     <PageShell>
       <div className="text-center py-2">

@@ -67,17 +67,25 @@ function LoginForm() {
   };
 
   return (
-    <div className="relative min-h-screen w-full flex flex-col items-center justify-center">
+    <div className="relative min-h-screen w-full flex flex-col items-center justify-center"
+      style={{ background: "linear-gradient(135deg, #7b1113 0%, #4a0a0b 50%, #1a0304 100%)" }}>
 
-      {/* Background */}
-      <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: "url('/bg-login.jpg')" }}
-      />
-      <div className="absolute inset-0 bg-black/20" />
+      {/* Subtle pattern overlay */}
+      <div className="absolute inset-0 opacity-5"
+        style={{
+          backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`,
+          backgroundSize: "32px 32px"
+        }}/>
+
+      {/* Decorative blobs */}
+      <div className="absolute top-0 left-0 w-96 h-96 rounded-full opacity-10"
+        style={{ background: "#ff4444", filter: "blur(80px)", transform: "translate(-30%, -30%)" }}/>
+      <div className="absolute bottom-0 right-0 w-96 h-96 rounded-full opacity-10"
+        style={{ background: "#ff8800", filter: "blur(80px)", transform: "translate(30%, 30%)" }}/>
 
       {/* Card */}
-      <div className="relative z-10 bg-white rounded-lg shadow-2xl px-10 py-10 w-full max-w-sm mx-4">
+      <div className="relative z-10 bg-white rounded-2xl shadow-2xl px-10 py-10 w-full max-w-sm mx-4"
+        style={{ boxShadow: "0 25px 60px rgba(0,0,0,0.4)" }}>
 
         {/* Logo */}
         <div className="flex justify-center mb-4">
@@ -102,7 +110,7 @@ function LoginForm() {
 
         {/* Error */}
         {error && (
-          <div className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">
+          <div className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
             {error}
           </div>
         )}
@@ -119,7 +127,7 @@ function LoginForm() {
               placeholder="Enter your email"
               value={email}
               onChange={e => setEmail(e.target.value)}
-              className="w-full border border-gray-300 rounded px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#7b1113]/30 transition-colors"
+              className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#7b1113]/30 focus:border-[#7b1113] transition-colors bg-gray-50 focus:bg-white"
             />
           </div>
 
@@ -130,7 +138,7 @@ function LoginForm() {
               </label>
               <Link
                 href="/forgot-password"
-                className="text-xs text-[#7b1113] hover:underline"
+                className="text-xs text-[#7b1113] hover:underline font-medium"
               >
                 Forgot password?
               </Link>
@@ -142,7 +150,7 @@ function LoginForm() {
                 placeholder="Enter your password"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
-                className="w-full border border-gray-300 rounded px-4 py-2.5 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-[#7b1113]/30 transition-colors"
+                className="w-full border border-gray-200 rounded-lg px-4 py-2.5 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-[#7b1113]/30 focus:border-[#7b1113] transition-colors bg-gray-50 focus:bg-white"
               />
               <button
                 type="button"
@@ -169,7 +177,8 @@ function LoginForm() {
             suppressHydrationWarning
             type="submit"
             disabled={loading}
-            className="w-full bg-[#7b1113] hover:bg-[#5a0d0f] disabled:opacity-70 text-white font-bold py-3 rounded transition-colors text-sm"
+            className="w-full disabled:opacity-70 text-white font-bold py-3 rounded-lg transition-all text-sm mt-2"
+            style={{ background: "linear-gradient(135deg, #7b1113, #5a0d0f)" }}
           >
             {loading ? "Logging in..." : "Log In"}
           </button>
@@ -177,30 +186,21 @@ function LoginForm() {
 
         {/* Divider */}
         <div className="flex items-center gap-3 my-4">
-          <div className="flex-1 h-px bg-gray-200" />
+          <div className="flex-1 h-px bg-gray-100" />
           <span className="text-xs text-gray-400">or</span>
-          <div className="flex-1 h-px bg-gray-200" />
+          <div className="flex-1 h-px bg-gray-100" />
         </div>
 
         {/* Admin login */}
         <Link
           href="/admin/login"
-          className="w-full flex items-center justify-center gap-2 border border-gray-300 hover:border-[#7b1113] hover:bg-[#7b1113]/5 text-gray-600 hover:text-[#7b1113] font-medium py-2.5 rounded transition-colors text-sm"
+          className="w-full flex items-center justify-center gap-2 border border-gray-200 hover:border-[#7b1113] hover:bg-[#7b1113]/5 text-gray-500 hover:text-[#7b1113] font-medium py-2.5 rounded-lg transition-all text-sm"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
             <path d="M12 2a4 4 0 100 8 4 4 0 000-8zM4 20a8 8 0 0116 0" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
           Log in as Administrator
         </Link>
-      </div>
-
-      {/* Footer */}
-      <div className="relative z-10 flex items-center justify-center gap-3 mt-4 text-xs text-white/80">
-        <Link href="/help"    className="hover:text-white">Help</Link>
-        <span className="text-white/50">|</span>
-        <Link href="/privacy" className="hover:text-white">Privacy Policy</Link>
-        <span className="text-white/50">|</span>
-        <Link href="/terms"   className="hover:text-white">Terms</Link>
       </div>
     </div>
   );
