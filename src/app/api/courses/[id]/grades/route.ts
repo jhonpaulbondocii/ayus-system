@@ -23,6 +23,8 @@ export async function GET(
     });
     const isAdmin = user?.role === "ADMIN";
 
+    let isHeadOnly = false;
+
     if (!isAdmin) {
       const enrollment = await prisma.courseEnrollment.findUnique({
         where: { userId_courseId: { userId, courseId } },
@@ -30,30 +32,34 @@ export async function GET(
       if (!enrollment) {
         return NextResponse.json({ error: "Not enrolled" }, { status: 403 });
       }
+      const roles = enrollment.courseRole.split(",").map((r) => r.trim().toLowerCase());
+      const isHead = roles.includes("head");
+      const isStaff = roles.includes("staff");
+      isHeadOnly = isHead && !isStaff;
     }
 
     // Fetch assignments assigned to this user but NOT created by them
     const assignments = await prisma.assignment.findMany({
-  where: {
-    courseId,
-    status: "PUBLISHED",
-    AND: [
-      {
-        OR: [
-          { createdById: null },
-          { createdById: { not: userId } },
+      where: {
+        courseId,
+        status: "PUBLISHED",
+        AND: [
+          {
+            OR: [
+              { createdById: null },
+              { createdById: { not: userId } },
+            ],
+          },
+          {
+            OR: [
+              { assignees: { has: userId } },
+              { assignees: { has: "everyone" } },
+              { assignees: { has: "Everyone" } },
+              { assignees: { isEmpty: true } },
+            ],
+          },
         ],
       },
-      {
-        OR: [
-          { assignees: { has: userId } },
-          { assignees: { has: "everyone" } },
-          { assignees: { has: "Everyone" } },
-          { assignees: { isEmpty: true } },
-        ],
-      },
-    ],
-  },
       include: {
         submissions: {
           where: { userId },
@@ -74,26 +80,26 @@ export async function GET(
 
     // Fetch forms assigned to this user but NOT created by them
     const forms = await prisma.form.findMany({
-  where: {
-    courseId,
-    published: true,
-    AND: [
-      {
-        OR: [
-          { authorId: null },
-          { authorId: { not: userId } },
+      where: {
+        courseId,
+        published: true,
+        AND: [
+          {
+            OR: [
+              { authorId: null },
+              { authorId: { not: userId } },
+            ],
+          },
+          {
+            OR: [
+              { assignTo: { has: userId } },
+              { assignTo: { has: "everyone" } },
+              { assignTo: { has: "Everyone" } },
+              { assignTo: { isEmpty: true } },
+            ],
+          },
         ],
       },
-      {
-        OR: [
-          { assignTo: { has: userId } },
-          { assignTo: { has: "everyone" } },
-          { assignTo: { has: "Everyone" } },
-          { assignTo: { isEmpty: true } },
-        ],
-      },
-    ],
-  },
       include: {
         formSubmissions: {
           where: { userId },
@@ -103,11 +109,32 @@ export async function GET(
             createdAt: true,
           },
         },
+        author: {
+          select: { role: true },
+        },
       },
       orderBy: { dueDate: "asc" },
     });
 
-    const assignmentRows = assignments.map((a) => {
+    // Head Only: i-filter in-memory — Admin-created lang ang makikita
+    let adminUserIds: string[] = [];
+    if (isHeadOnly) {
+      const adminUsers = await prisma.user.findMany({
+        where: { role: "ADMIN" },
+        select: { id: true },
+      });
+      adminUserIds = adminUsers.map((u) => u.id);
+    }
+
+    const visibleAssignments = isHeadOnly
+      ? assignments.filter((a) => a.createdById && adminUserIds.includes(a.createdById))
+      : assignments;
+
+    const visibleForms = isHeadOnly
+      ? forms.filter((f) => f.authorRole === "ADMIN")
+      : forms;
+
+    const assignmentRows = visibleAssignments.map((a) => {
       const sub = a.submissions[0] ?? null;
       return {
         id: a.id,
@@ -115,7 +142,6 @@ export async function GET(
         points: a.points,
         dueDate: a.dueDate ? a.dueDate.toISOString() : null,
         assignmentGroup: a.assignmentGroup,
-        // ✅ Include displayGradeAs so the frontend can format correctly
         displayGradeAs: a.displayGradeAs ?? "Points",
         type: "assignment" as const,
         submission: sub
@@ -134,7 +160,7 @@ export async function GET(
       };
     });
 
-    const formRows = forms.map((f) => {
+    const formRows = visibleForms.map((f) => {
       const sub = f.formSubmissions[0] ?? null;
       return {
         id: f.id,
@@ -142,7 +168,6 @@ export async function GET(
         points: f.points,
         dueDate: f.dueDate ? f.dueDate.toISOString() : null,
         assignmentGroup: f.assignmentGroup,
-        // Forms always display as Points
         displayGradeAs: "Points",
         type: "form" as const,
         submission: sub

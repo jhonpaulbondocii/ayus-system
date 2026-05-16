@@ -4,7 +4,6 @@ import { prisma } from "@/lib/prisma";
 import { requireCoursePermission } from "@/lib/course-access";
 import { FormType, FormQuestionType } from "@/generated/prisma";
 
-// ── Enum mappers ──────────────────────────────────────────────────────────────
 function toFormType(value: string): FormType {
   const map: Record<string, FormType> = {
     "Survey / Feedback": FormType.SURVEY_FEEDBACK,
@@ -61,7 +60,6 @@ function fromFormQuestionType(value: FormQuestionType): string {
   return map[value] ?? "short_answer";
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
 function isAssignedToUser(
   assignTo: string[],
   userName: string,
@@ -71,28 +69,20 @@ function isAssignedToUser(
 ): boolean {
   if (!assignTo || assignTo.length === 0) return true;
   if (assignTo.includes("Everyone")) return true;
-  if (userName      && assignTo.includes(userName))      return true;
-  if (userSection   && assignTo.includes(userSection))   return true;
+  if (userName       && assignTo.includes(userName))       return true;
+  if (userSection    && assignTo.includes(userSection))    return true;
   if (userCourseRole && assignTo.includes(userCourseRole)) return true;
   if (assignTo.includes(userId)) return true;
   return false;
 }
 
-// ── FIXED: Parse date+time as Philippine local time (UTC+8) ──────────────────
-// Builds an explicit ISO string with +08:00 offset so the stored UTC is correct.
-// e.g. "2026-05-02T00:00:00+08:00" → stored as "2026-05-01T16:00:00Z"
-// Also safely strips any ISO time component from the date string before parsing.
 function parseDate(
   date: string | null | undefined,
   time: string | null | undefined
 ): Date | null {
   if (!date) return null;
-
-  // Strip any time component — only keep YYYY-MM-DD
   const datePart = date.includes("T") ? date.split("T")[0] : date;
-
-  let hours = 0;
-  let minutes = 0;
+  let hours = 0, minutes = 0;
   if (time) {
     const match = time.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
     if (match) {
@@ -103,7 +93,6 @@ function parseDate(
       if (period === "PM" && hours !== 12) hours += 12;
     }
   }
-
   const pad = (n: number) => String(n).padStart(2, "0");
   const [year, month, day] = datePart.split("-").map(Number);
   const isoString = `${year}-${pad(month)}-${pad(day)}T${pad(hours)}:${pad(minutes)}:00+08:00`;
@@ -111,17 +100,11 @@ function parseDate(
   return isNaN(parsed.getTime()) ? null : parsed;
 }
 
-// ── FIXED: Convert stored UTC DateTime back to PH local date/time strings ────
-// When the frontend re-sends form data for editing, dueDate must be YYYY-MM-DD
-// and dueTime must be "H:MM AM/PM" — not a raw ISO string — so parseDate works.
 function toPhDateString(dt: Date | null | undefined): string | null {
   if (!dt) return null;
-  // en-CA locale returns YYYY-MM-DD format
   return new Intl.DateTimeFormat("en-CA", {
     timeZone: "Asia/Manila",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
+    year: "numeric", month: "2-digit", day: "2-digit",
   }).format(new Date(dt));
 }
 
@@ -129,16 +112,11 @@ function toPhTimeString(dt: Date | null | undefined): string | null {
   if (!dt) return null;
   return new Intl.DateTimeFormat("en-US", {
     timeZone: "Asia/Manila",
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  }).format(new Date(dt)); // e.g. "12:00 AM"
+    hour: "numeric", minute: "2-digit", hour12: true,
+  }).format(new Date(dt));
 }
 
-function sanitizeQuestion(
-  q: Record<string, unknown>,
-  order: number
-): Record<string, unknown> {
+function sanitizeQuestion(q: Record<string, unknown>, order: number): Record<string, unknown> {
   const STRIP = new Set(["id", "createdAt", "updatedAt", "formId", "isActive"]);
   const clean: Record<string, unknown> = { order };
   for (const [k, v] of Object.entries(q)) {
@@ -152,8 +130,6 @@ function sanitizeQuestion(
   return clean;
 }
 
-// ── FIXED: serializeForm converts DateTime fields back to PH date+time strings
-// Previously returned raw ISO strings which broke parseDate on re-save.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function serializeForm(f: any) {
   return {
@@ -172,6 +148,15 @@ function serializeForm(f: any) {
   };
 }
 
+function getRoleType(courseRole: string): "headOnly" | "both" | "staffOnly" {
+  const roles = courseRole.split(",").map((r) => r.trim().toLowerCase());
+  const hasHead = roles.includes("head");
+  const hasStaff = roles.includes("staff");
+  if (hasHead && hasStaff) return "both";
+  if (hasHead) return "headOnly";
+  return "staffOnly";
+}
+
 // ── GET /api/courses/[id]/forms ──────────────────────────────────────────────
 export async function GET(
   _req: NextRequest,
@@ -186,7 +171,6 @@ export async function GET(
 
   const userId  = access.userId;
   const isAdmin = access.systemRole === "ADMIN";
-  const isHead  = access.courseRole === "Head";
 
   const enrollment = await prisma.courseEnrollment.findUnique({
     where: { userId_courseId: { userId, courseId } },
@@ -201,6 +185,9 @@ export async function GET(
   });
   const userDisplayName = userRow?.name ?? "";
 
+  const roleType = isAdmin ? "admin" : getRoleType(userCourseRole);
+  const isHead = roleType === "headOnly" || roleType === "both";
+
   const allForms = await prisma.form.findMany({
     where: {
       courseId,
@@ -208,26 +195,44 @@ export async function GET(
     },
     include: {
       questions: { orderBy: { order: "asc" } },
-      author: { select: { id: true, name: true, image: true } },
+      author: { select: { id: true, name: true, image: true, role: true } },
     },
     orderBy: { createdAt: "desc" },
   });
 
   const sanitized = allForms
-    .filter(f => {
-      if (isAdmin || isHead) return true;
+    .filter((f) => {
       const assignTo = (f.assignTo as string[]) ?? [];
-      return isAssignedToUser(assignTo, userDisplayName, userSection, userCourseRole, userId);
+      const assignedToYou = isAssignedToUser(
+        assignTo, userDisplayName, userSection, userCourseRole, userId
+      );
+      const isCreator = f.author?.id === userId || f.authorId === userId;
+
+      // Check if the author is a system Admin
+      const authorIsAdmin = f.author?.role === "ADMIN";
+
+      if (roleType === "admin") return true;
+
+      if (roleType === "headOnly") {
+        // Head Only: sees forms they created + forms FROM ADMIN assigned to them
+        return isCreator || (authorIsAdmin && assignedToYou);
+      }
+
+      if (roleType === "both") {
+        // Both: sees forms they created + forms assigned to them (from Head or Admin)
+        return isCreator || assignedToYou;
+      }
+
+      // Staff Only: only forms assigned to them
+      return assignedToYou;
     })
-    .map(f => {
+    .map((f) => {
       const assignTo = (f.assignTo as string[]) ?? [];
+      const isCreator = f.author?.id === userId || f.authorId === userId;
 
       let formRole: "manager" | "submitter";
-      if (isAdmin) {
+      if (isAdmin || isCreator) {
         formRole = "manager";
-      } else if (isHead) {
-        const isAuthor = f.author?.id === userId || f.authorId === userId;
-        formRole = isAuthor ? "manager" : "submitter";
       } else {
         formRole = "submitter";
       }
@@ -239,7 +244,7 @@ export async function GET(
         _publisherName:   f.author?.name  ?? null,
         _publisherImage:  f.author?.image ?? null,
         _publisherId:     f.author?.id    ?? null,
-        isCreator:        f.author?.id === userId || f.authorId === userId,
+        isCreator,
         _isAssignedToYou: isAssignedToUser(
           assignTo, userDisplayName, userSection, userCourseRole, userId
         ),
@@ -296,19 +301,19 @@ export async function POST(
         courseId,
         authorId:                    access.userId,
         title:                       title.trim(),
-        description:                 description              ?? "",
+        description:                 description               ?? "",
         formType:                    toFormType(formType ?? "Survey / Feedback"),
-        assignmentGroup:             assignmentGroup          ?? "Assignments",
+        assignmentGroup:             assignmentGroup           ?? "Assignments",
         points:                      parseFloat(String(points)) || 0,
-        shuffleAnswers:              shuffleAnswers            ?? false,
-        allowMultipleResponses:      allowMultipleResponses    ?? false,
-        responseLimit:               responseLimit             ?? null,
-        anonymousResponses:          anonymousResponses         ?? false,
-        showResultsToRespondents:    showResultsToRespondents  ?? false,
-        showOneAtATime:              showOneAtATime             ?? false,
+        shuffleAnswers:              shuffleAnswers             ?? false,
+        allowMultipleResponses:      allowMultipleResponses     ?? false,
+        responseLimit:               responseLimit              ?? null,
+        anonymousResponses:          anonymousResponses          ?? false,
+        showResultsToRespondents:    showResultsToRespondents   ?? false,
+        showOneAtATime:              showOneAtATime              ?? false,
         lockQuestionsAfterAnswering: lockQuestionsAfterAnswering ?? false,
-        accessCode:                  accessCode                ?? "",
-        confirmationMessage:         confirmationMessage        ?? "",
+        accessCode:                  accessCode                 ?? "",
+        confirmationMessage:         confirmationMessage         ?? "",
         assignTo:                    resolvedAssignTo,
         dueDate:                     parseDate(dueDate, dueTime),
         availableFrom:               parseDate(availableFrom, availableFromTime),

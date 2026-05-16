@@ -30,15 +30,26 @@ const COURSE_ROLE_PERMISSIONS: Record<CourseRole, CoursePermission[]> = {
   ],
 };
 
-export function normalizeCourseRole(role: unknown): CourseRole {
-  if (typeof role !== "string") return "Staff";
+/** Parse a comma-separated role string into individual CourseRoles */
+export function parseRoles(raw: unknown): CourseRole[] {
+  if (typeof raw !== "string" || !raw.trim()) return ["Staff"];
+  const parts = raw.split(",").map(r => r.trim());
+  const valid = parts.filter((r): r is CourseRole =>
+    COURSE_ROLES.includes(r as CourseRole)
+  );
+  return valid.length > 0 ? valid : ["Staff"];
+}
 
-  const normalized = role.trim().toLowerCase();
+/** Serialize roles array back to comma-separated string for DB storage */
+export function serializeRoles(roles: CourseRole[]): string {
+  const unique = [...new Set(roles)].filter(r => COURSE_ROLES.includes(r));
+  return unique.length > 0 ? unique.join(",") : "Staff";
+}
 
-  if (normalized === "head") return "Head";
-  if (normalized === "staff") return "Staff";
-
-  return "Staff";
+/** Legacy: normalize to a single role (used for display/fallback) */
+export function normalizeCourseRole(raw: unknown): string {
+  const roles = parseRoles(raw);
+  return roles.join(",");
 }
 
 export function isValidCourseRole(role: unknown): role is CourseRole {
@@ -50,6 +61,7 @@ export function hasCoursePermission(
   role: unknown,
   permission: CoursePermission
 ): boolean {
-  const normalizedRole = normalizeCourseRole(role);
-  return COURSE_ROLE_PERMISSIONS[normalizedRole].includes(permission);
+  // Check permission across ALL assigned roles
+  const roles = parseRoles(role);
+  return roles.some(r => COURSE_ROLE_PERMISSIONS[r].includes(permission));
 }

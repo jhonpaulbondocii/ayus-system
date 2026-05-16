@@ -147,7 +147,7 @@ export interface MembershipPermissions {
 }
 
 export interface Membership {
-  role: "Staff" | "Head";
+  role: string;
   permissions: MembershipPermissions;
 }
 

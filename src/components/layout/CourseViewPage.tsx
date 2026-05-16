@@ -45,7 +45,7 @@ import type {
   Tab,
 } from "./course/types";
 
-function MembershipBadge({ role }: { role: "Staff" | "Head" }) {
+function MembershipBadge({ role }: { role: string }) {
   return (
     <span
       className="inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold border"
@@ -163,7 +163,11 @@ function CourseViewInner({ courseId }: { courseId: string }) {
   const dataLoaded = !loading && sessionLoaded;
 
   const isAdmin = (session?.user as { role?: string })?.role === "ADMIN";
-  const isHead = dataLoaded && (membership?.role === "Head" || isAdmin);
+const isHead = dataLoaded && (
+  membership?.role === "Head" ||
+  membership?.role?.includes("Head") ||
+  isAdmin
+);
   const canManageAssignments = dataLoaded && (membership?.permissions.manageAssignments ?? false);
   const canManageAnnouncements = membership?.permissions.manageAnnouncements ?? false;
   const canManagePeople = membership?.permissions.managePeople ?? false;
@@ -305,12 +309,11 @@ function CourseViewInner({ courseId }: { courseId: string }) {
               style={{ borderColor: "#f0e4e4" }}
             >
               <div className="text-[11px] uppercase tracking-wide text-gray-500 font-semibold">
-                Unit Role
-              </div>
-              <div className="mt-1 flex items-center justify-between gap-2">
-                <span className="text-sm font-semibold text-gray-800">{course.code}</span>
-                <MembershipBadge role={membership?.role ?? "Staff"} />
-              </div>
+  Office Role
+</div>
+<div className="mt-1">
+  <MembershipBadge role={membership?.role ?? "Staff"} />
+</div>
             </div>
           </div>
           <div className="space-y-0.5 px-0">
@@ -405,11 +408,12 @@ function CourseViewInner({ courseId }: { courseId: string }) {
           {activeTab === "Grades" && sessionLoaded && (
             <div className="flex-1 overflow-y-auto">
               <CourseGradesTab
-                courseId={courseId}
-                isHead={isHead}
-                isAdmin={isAdmin}
-                currentUserId={currentUserId}
-              />
+  courseId={courseId}
+  isHead={isHead}
+  isAdmin={isAdmin}
+  currentUserId={currentUserId}
+  courseRole={membership?.role}
+/>
             </div>
           )}
 
@@ -423,6 +427,8 @@ function CourseViewInner({ courseId }: { courseId: string }) {
                 membership={membership}
                 canManagePeople={canManagePeople}
                 currentUserId={currentUserId}
+                isAdmin={isAdmin}
+                isHead={isHead}
                 onAddPeople={() => setShowAddPeopleModal(true)}
                 onAddGroup={() => setShowAddGroupModal(true)}
               />

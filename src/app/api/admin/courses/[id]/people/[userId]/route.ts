@@ -1,48 +1,24 @@
-// src/app/api/courses/[id]/people/[userId]/route.ts
+// src/app/api/admin/courses/[id]/people/[userId]/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { requireCoursePermission } from "@/lib/course-access";
 import { parseRoles, serializeRoles } from "@/lib/course-roles";
 
 type Params = { params: Promise<{ id: string; userId: string }> };
 
-async function getCallerEnrollment(userId: string, courseId: string) {
-  return prisma.courseEnrollment.findUnique({
-    where: { userId_courseId: { userId, courseId } },
-  });
-}
-
 /**
- * PATCH /api/courses/[id]/people/[userId]
- * Body: { roles?: string[]; courseId?: string }
- * Only Head or ADMIN may call this.
+ * PATCH /api/admin/courses/[id]/people/[userId]
+ * Body: { roles?: string[]; courseId?: string } (courseId = new office/course to move to)
+ *
+ * - roles: e.g. ["Staff"], ["Head"], ["Staff","Head"]
+ * - courseId: if provided, moves the enrollment to a different course (Change Office)
  */
 export async function PATCH(req: NextRequest, { params }: Params) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   const { id: courseId, userId } = await params;
 
-  // Permission check
-  const isAdmin = (session.user as { role?: string }).role === "ADMIN";
-  if (!isAdmin) {
-    const caller = await getCallerEnrollment(session.user.id, courseId);
-    if (!caller || !caller.courseRole.includes("Head")) {
-      return NextResponse.json(
-        { error: "Only Heads or Admins can update roles." },
-        { status: 403 }
-      );
-    }
-  }
-
-  const enrollment = await prisma.courseEnrollment.findUnique({
-    where: { userId_courseId: { userId, courseId } },
-  });
-  if (!enrollment) {
-    return NextResponse.json({ error: "Enrollment not found." }, { status: 404 });
+  const access = await requireCoursePermission(courseId, "manage_people");
+  if (!access.ok) {
+    return NextResponse.json({ error: access.error }, { status: access.status });
   }
 
   const body = await req.json();
@@ -51,16 +27,27 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     courseId?: string;
   };
 
-  // ── Change Office ───────────────────────────────────────────────────────────
+  // ── Validate enrollment exists ──────────────────────────────────────────────
+  const enrollment = await prisma.courseEnrollment.findUnique({
+    where: { userId_courseId: { userId, courseId } },
+  });
+
+  if (!enrollment) {
+    return NextResponse.json({ error: "Enrollment not found." }, { status: 404 });
+  }
+
+  // ── Change Office: move enrollment to a different course ────────────────────
   if (newCourseId && newCourseId !== courseId) {
+    // Verify target course exists
     const targetCourse = await prisma.course.findUnique({
       where: { id: newCourseId },
-      select: { id: true },
+      select: { id: true, name: true },
     });
     if (!targetCourse) {
       return NextResponse.json({ error: "Target course not found." }, { status: 404 });
     }
 
+    // Check if already enrolled in target
     const alreadyInTarget = await prisma.courseEnrollment.findUnique({
       where: { userId_courseId: { userId, courseId: newCourseId } },
     });
@@ -71,19 +58,24 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       );
     }
 
+    // Move: delete from current, create in new
     await prisma.$transaction([
       prisma.courseEnrollment.delete({
         where: { userId_courseId: { userId, courseId } },
       }),
       prisma.courseEnrollment.create({
-        data: { userId, courseId: newCourseId, courseRole: enrollment.courseRole },
+        data: {
+          userId,
+          courseId: newCourseId,
+          courseRole: enrollment.courseRole,
+        },
       }),
     ]);
 
     return NextResponse.json({ success: true, movedTo: newCourseId });
   }
 
-  // ── Edit Roles ──────────────────────────────────────────────────────────────
+  // ── Edit Roles: update courseRole ───────────────────────────────────────────
   if (roles !== undefined) {
     const validRoles = parseRoles(roles.join(","));
     const serialized = serializeRoles(validRoles);

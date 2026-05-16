@@ -2,6 +2,7 @@
 // src/components/layout/course/CourseGradesTab.tsx
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useSession } from "next-auth/react";
 import Image from "next/image";
 import {
   Search, Filter,
@@ -27,6 +28,7 @@ interface Props {
   isHead: boolean;
   isAdmin?: boolean;
   currentUserId?: string | null;
+  courseRole?: string | null;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -1300,6 +1302,7 @@ function MyGradesView({ courseId }: { courseId: string }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [search, setSearch] = useState("");
+  const { data: session } = useSession();
 
   const load = useCallback(async () => {
     setLoading(true); setError(false);
@@ -1460,9 +1463,15 @@ function MyGradesView({ courseId }: { courseId: string }) {
                 <td className="sticky left-0 z-10 bg-white group-hover:bg-blue-50/30 border-r border-gray-200 px-4 py-2.5 transition-colors"
                   style={{ width: NAME_W }}>
                   <div className="flex items-center gap-2.5">
-                    <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[9px] font-black shrink-0"
-                      style={{ background: MAROON }}>Me</div>
-                    <p className="text-xs font-bold truncate" style={{ color: "#0770A3" }}>My Grades</p>
+                    {session?.user?.image
+                      ? <Image src={session.user.image} alt={session.user.name ?? ""} width={28} height={28} className="w-7 h-7 rounded-full object-cover shrink-0" />
+                      : <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[9px] font-black shrink-0"
+                          style={{ background: MAROON }}>
+                          {getInitials(session?.user?.name ?? "Me")}
+                        </div>}
+                    <p className="text-xs font-bold truncate" style={{ color: "#0770A3" }}>
+                      {session?.user?.name ?? "My Grades"}
+                    </p>
                   </div>
                 </td>
 
@@ -2145,10 +2154,11 @@ function ManageGradesView({ courseId }: { courseId: string }) {
 /* ─────────────────────────────────────────────────────────────────────────────
    MAIN EXPORT
 ───────────────────────────────────────────────────────────────────────────── */
-export default function CourseGradesTab({ courseId, isHead, isAdmin }: Props) {
-  const [activeTab, setActiveTab] = useState<"my-grades" | "manage">(
-    isHead ? "manage" : "my-grades"
-  );
+export default function CourseGradesTab({ courseId, isHead, isAdmin, courseRole }: Props) {
+  const isStaffHead = courseRole?.includes("Staff") && courseRole?.includes("Head");
+  const isHeadOnly = isHead && !isStaffHead && !isAdmin;
+
+  const [activeTab, setActiveTab] = useState<"my-grades" | "manage">("manage");
 
   if (!isHead) {
     return (
@@ -2158,7 +2168,7 @@ export default function CourseGradesTab({ courseId, isHead, isAdmin }: Props) {
     );
   }
 
-  if (isAdmin) {
+  if (isAdmin || isHeadOnly) {
     return (
       <div className="flex flex-col h-full" style={{ fontFamily: FONT }}>
         <ManageGradesView courseId={courseId} />

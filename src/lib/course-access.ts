@@ -3,7 +3,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { normalizeCourseRole, hasCoursePermission } from "@/lib/course-permissions";
+import { hasCoursePermission, parseRoles } from "@/lib/course-permissions";
 
 type SessionUser = {
   id?: string;
@@ -16,7 +16,7 @@ export type CourseAccessResult =
       session: Awaited<ReturnType<typeof getServerSession>>;
       userId: string;
       systemRole: string;
-      courseRole: "Staff" | "Head" | null;
+      courseRole: string | null; // now supports "Staff", "Head", "Staff,Head"
     }
   | {
       ok: false;
@@ -30,11 +30,7 @@ export async function getCourseAccess(
   const session = await getServerSession(authOptions);
 
   if (!session?.user) {
-    return {
-      ok: false,
-      status: 401,
-      error: "Unauthorized",
-    };
+    return { ok: false, status: 401, error: "Unauthorized" };
   }
 
   const sessionUser = session.user as SessionUser;
@@ -42,52 +38,27 @@ export async function getCourseAccess(
   const systemRole = sessionUser.role ?? "";
 
   if (!userId) {
-    return {
-      ok: false,
-      status: 401,
-      error: "Unauthorized",
-    };
+    return { ok: false, status: 401, error: "Unauthorized" };
   }
 
   if (systemRole === "ADMIN") {
-    return {
-      ok: true,
-      session,
-      userId,
-      systemRole,
-      courseRole: null,
-    };
+    return { ok: true, session, userId, systemRole, courseRole: null };
   }
 
   const enrollment = await prisma.courseEnrollment.findUnique({
-    where: {
-      userId_courseId: {
-        userId,
-        courseId,
-      },
-    },
-    select: {
-      courseRole: true,
-    },
+    where: { userId_courseId: { userId, courseId } },
+    select: { courseRole: true },
   });
 
   if (!enrollment) {
-    return {
-      ok: false,
-      status: 403,
-      error: "Forbidden",
-    };
+    return { ok: false, status: 403, error: "Forbidden" };
   }
 
-  const courseRole = normalizeCourseRole(enrollment.courseRole);
+  // Preserve the raw value (e.g. "Staff", "Head", "Staff,Head")
+  const roles = parseRoles(enrollment.courseRole);
+  const courseRole = roles.join(",");
 
-  return {
-    ok: true,
-    session,
-    userId,
-    systemRole,
-    courseRole,
-  };
+  return { ok: true, session, userId, systemRole, courseRole };
 }
 
 export async function requireCoursePermission(
@@ -98,24 +69,15 @@ export async function requireCoursePermission(
 
   if (!access.ok) return access;
 
-  if (access.systemRole === "ADMIN") {
-    return access;
-  }
+  if (access.systemRole === "ADMIN") return access;
 
   if (!access.courseRole) {
-    return {
-      ok: false,
-      status: 403,
-      error: "Forbidden",
-    };
+    return { ok: false, status: 403, error: "Forbidden" };
   }
 
+  // hasCoursePermission now handles comma-separated roles
   if (!hasCoursePermission(access.courseRole, permission)) {
-    return {
-      ok: false,
-      status: 403,
-      error: "Forbidden",
-    };
+    return { ok: false, status: 403, error: "Forbidden" };
   }
 
   return access;

@@ -20,10 +20,11 @@ function AdminLoginForm() {
   const router       = useRouter();
   const searchParams = useSearchParams();
 
-  const [email,    setEmail]    = useState("");
-  const [password, setPassword] = useState("");
-  const [loading,  setLoading]  = useState(false);
-  const [error,    setError]    = useState("");
+  const [email,        setEmail]        = useState("");
+  const [password,     setPassword]     = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading,      setLoading]      = useState(false);
+  const [error,        setError]        = useState("");
 
   useEffect(() => {
     const err = searchParams.get("error");
@@ -70,18 +71,34 @@ function AdminLoginForm() {
   };
 
   return (
-    <div className="relative min-h-screen w-full flex flex-col items-center justify-center">
-
-      {/* Background */}
+    <div
+      className="relative min-h-screen w-full flex flex-col items-center justify-center"
+      style={{ background: "linear-gradient(135deg, #7b1113 0%, #4a0a0b 50%, #1a0304 100%)" }}
+    >
+      {/* Subtle dot pattern overlay */}
       <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: "url('/bg-login.jpg')" }}
+        className="absolute inset-0 opacity-5"
+        style={{
+          backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`,
+          backgroundSize: "32px 32px",
+        }}
       />
-      <div className="absolute inset-0 bg-black/20" />
+
+      {/* Decorative blobs */}
+      <div
+        className="absolute top-0 left-0 w-96 h-96 rounded-full opacity-10"
+        style={{ background: "#ff4444", filter: "blur(80px)", transform: "translate(-30%, -30%)" }}
+      />
+      <div
+        className="absolute bottom-0 right-0 w-96 h-96 rounded-full opacity-10"
+        style={{ background: "#ff8800", filter: "blur(80px)", transform: "translate(30%, 30%)" }}
+      />
 
       {/* Card */}
-      <div className="relative z-10 bg-white rounded-lg shadow-2xl px-10 py-10 w-full max-w-sm mx-4">
-
+      <div
+        className="relative z-10 bg-white rounded-2xl shadow-2xl px-10 py-10 w-full max-w-sm mx-4"
+        style={{ boxShadow: "0 25px 60px rgba(0,0,0,0.4)" }}
+      >
         {/* Logo */}
         <div className="flex justify-center mb-4">
           <Image
@@ -105,7 +122,7 @@ function AdminLoginForm() {
 
         {/* Error */}
         {error && (
-          <div className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">
+          <div className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
             {error}
           </div>
         )}
@@ -122,7 +139,7 @@ function AdminLoginForm() {
               placeholder="Enter admin email"
               value={email}
               onChange={e => setEmail(e.target.value)}
-              className="w-full border border-gray-300 rounded px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#7b1113]/30 transition-colors"
+              className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#7b1113]/30 focus:border-[#7b1113] transition-colors bg-gray-50 focus:bg-white"
             />
           </div>
 
@@ -130,21 +147,42 @@ function AdminLoginForm() {
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Password
             </label>
-            <input
-              suppressHydrationWarning
-              type="password"
-              placeholder="Enter your password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              className="w-full border border-gray-300 rounded px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#7b1113]/30 transition-colors"
-            />
+            <div className="relative">
+              <input
+                suppressHydrationWarning
+                type={showPassword ? "text" : "password"}
+                placeholder="Enter your password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                className="w-full border border-gray-200 rounded-lg px-4 py-2.5 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-[#7b1113]/30 focus:border-[#7b1113] transition-colors bg-gray-50 focus:bg-white"
+              />
+              <button
+                type="button"
+                tabIndex={-1}
+                onClick={() => setShowPassword(v => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                {showPassword ? (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24" strokeLinecap="round" strokeLinejoin="round"/>
+                    <line x1="1" y1="1" x2="23" y2="23" strokeLinecap="round"/>
+                  </svg>
+                ) : (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" strokeLinecap="round" strokeLinejoin="round"/>
+                    <circle cx="12" cy="12" r="3" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                )}
+              </button>
+            </div>
           </div>
 
           <button
             suppressHydrationWarning
             type="submit"
             disabled={loading}
-            className="w-full bg-[#7b1113] hover:bg-[#5a0d0f] disabled:opacity-70 text-white font-bold py-3 rounded transition-colors text-sm"
+            className="w-full disabled:opacity-70 text-white font-bold py-3 rounded-lg transition-all text-sm mt-2"
+            style={{ background: "linear-gradient(135deg, #7b1113, #5a0d0f)" }}
           >
             {loading ? "Logging in..." : "Log In"}
           </button>
@@ -152,30 +190,21 @@ function AdminLoginForm() {
 
         {/* Divider */}
         <div className="flex items-center gap-3 my-4">
-          <div className="flex-1 h-px bg-gray-200" />
+          <div className="flex-1 h-px bg-gray-100" />
           <span className="text-xs text-gray-400">or</span>
-          <div className="flex-1 h-px bg-gray-200" />
+          <div className="flex-1 h-px bg-gray-100" />
         </div>
 
         {/* Back to user login */}
         <Link
           href="/login"
-          className="w-full flex items-center justify-center gap-2 border border-gray-300 hover:border-[#7b1113] hover:bg-[#7b1113]/5 text-gray-600 hover:text-[#7b1113] font-medium py-2.5 rounded transition-colors text-sm"
+          className="w-full flex items-center justify-center gap-2 border border-gray-200 hover:border-[#7b1113] hover:bg-[#7b1113]/5 text-gray-500 hover:text-[#7b1113] font-medium py-2.5 rounded-lg transition-all text-sm"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
             <path d="M19 12H5M12 5l-7 7 7 7"/>
           </svg>
           Back to User Login
         </Link>
-      </div>
-
-      {/* Footer */}
-      <div className="relative z-10 flex items-center justify-center gap-3 mt-4 text-xs text-white/80">
-        <Link href="/help"    className="hover:text-white">Help</Link>
-        <span className="text-white/50">|</span>
-        <Link href="/privacy" className="hover:text-white">Privacy Policy</Link>
-        <span className="text-white/50">|</span>
-        <Link href="/terms"   className="hover:text-white">Terms</Link>
       </div>
     </div>
   );

@@ -30,12 +30,14 @@ export async function GET(
     if (!enrollment) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
-    const isHead = enrollment.courseRole.toLowerCase() === "head";
+    const roles = enrollment.courseRole.split(",").map((r) => r.trim().toLowerCase());
+    const isHead = roles.includes("head");
     if (!isHead) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
   }
 
+  // Fetch all enrollments except current user
   const staffEnrollments = await prisma.courseEnrollment.findMany({
     where: { courseId, userId: { not: userId } },
     include: {
@@ -51,17 +53,32 @@ export async function GET(
     },
   });
 
-  const assignments = await prisma.assignment.findMany({
-  where: {
-    courseId,
-    createdById: userId,
-    status: "PUBLISHED",
-    displayGradeAs: { not: "Not Graded" },
-    points: { gt: 0 },
-  },
-  orderBy: { dueDate: "asc" },
-});
+  // Filter: Staff Only at Both palagi. Kapag Admin, kasama rin ang Head Only.
+  const receivingStaff = staffEnrollments.filter((enr) => {
+    const roles = enr.courseRole.split(",").map((r) => r.trim().toLowerCase());
+    const hasStaff = roles.includes("staff");
+    const hasHead = roles.includes("head");
+    const isHeadOnly = hasHead && !hasStaff;
 
+    // Admin: lahat — Staff Only, Both, at Head Only
+    if (isAdmin) return hasStaff || isHeadOnly;
+
+    // Head (Head Only or Both): Staff Only at Both lang ang nakikita
+    // Hindi kasama ang ibang Head Only
+    return hasStaff;
+  });
+
+  // Fetch assignments created by this head/admin only
+  const assignments = await prisma.assignment.findMany({
+    where: {
+      courseId,
+      createdById: userId,
+      status: "PUBLISHED",
+    },
+    orderBy: { dueDate: "asc" },
+  });
+
+  // Fetch forms created by this head/admin only
   const forms = await prisma.form.findMany({
     where: { courseId, authorId: userId, published: true },
     orderBy: { dueDate: "asc" },
@@ -69,7 +86,7 @@ export async function GET(
 
   const assignmentIds = assignments.map((a) => a.id);
   const formIds = forms.map((f) => f.id);
-  const staffIds = staffEnrollments.map((e) => e.userId);
+  const staffIds = receivingStaff.map((e) => e.userId);
 
   const submissions =
     assignmentIds.length > 0 && staffIds.length > 0
@@ -110,7 +127,6 @@ export async function GET(
         })
       : [];
 
-  // ✅ Include displayGradeAs in assignment columns
   const assignmentColumns = assignments.map((a) => ({
     id: a.id,
     title: a.title,
@@ -122,7 +138,6 @@ export async function GET(
     type: "assignment" as const,
   }));
 
-  // Forms always Points
   const formColumns = forms.map((f) => ({
     id: f.id,
     title: f.title,
@@ -134,7 +149,7 @@ export async function GET(
     type: "form" as const,
   }));
 
-  const staffRows = staffEnrollments.map((enr) => {
+  const staffRows = receivingStaff.map((enr) => {
     const s = enr.user;
 
     const assignmentGrades = assignments.map((a) => {
@@ -152,7 +167,6 @@ export async function GET(
         fileUrl: sub?.fileUrl ?? null,
         textEntry: sub?.textEntry ?? null,
         websiteUrl: sub?.websiteUrl ?? null,
-        // ✅ Carry displayGradeAs per grade entry so the UI can use it
         displayGradeAs: a.displayGradeAs ?? "Points",
       };
     });
@@ -171,7 +185,6 @@ export async function GET(
       };
     });
 
-    // Recalculate totals — skip doNotCount and Not Graded assignments
     const earnedFromAssignments = assignmentGrades.reduce((sum, g) => {
       const col = assignments.find((a) => a.id === g.assignmentId);
       if (col?.doNotCount) return sum;
@@ -238,21 +251,53 @@ export async function PATCH(
     const enrollment = await prisma.courseEnrollment.findUnique({
       where: { userId_courseId: { userId, courseId } },
     });
-    if (!enrollment || enrollment.courseRole.toLowerCase() !== "head") {
+    if (!enrollment) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+    const roles = enrollment.courseRole.split(",").map((r) => r.trim().toLowerCase());
+    if (!roles.includes("head")) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
   }
 
   const body = await req.json();
-  const { staffId, assignmentId, grade, feedback } = body as {
+  const { staffId, assignmentId, formId, grade, feedback, score, status, daysLate } = body as {
     staffId: string;
-    assignmentId: string;
-    grade: number | null;
+    assignmentId?: string;
+    formId?: string;
+    grade?: number | null;
     feedback?: string;
+    score?: number | null;
+    status?: string;
+    daysLate?: number | null;
   };
 
   if (staffId === userId) {
     return NextResponse.json({ error: "Cannot grade yourself" }, { status: 400 });
+  }
+
+  // ── Form score update ────────────────────────────────────────────────────
+  if (formId) {
+    const form = await prisma.form.findFirst({
+      where: { id: formId, courseId, authorId: userId },
+      select: { id: true },
+    });
+    if (!form) {
+      return NextResponse.json({ error: "Form not found" }, { status: 404 });
+    }
+
+    const updated = await prisma.formSubmission.upsert({
+      where: { formId_userId: { formId, userId: staffId } },
+      update: { score: score ?? 0 },
+      create: { formId, userId: staffId, score: score ?? 0, answers: {} },
+    });
+
+    return NextResponse.json({ submission: updated });
+  }
+
+  // ── Assignment grade update ──────────────────────────────────────────────
+  if (!assignmentId) {
+    return NextResponse.json({ error: "assignmentId or formId required" }, { status: 400 });
   }
 
   const assignment = await prisma.assignment.findFirst({
@@ -263,24 +308,28 @@ export async function PATCH(
     return NextResponse.json({ error: "Assignment not found" }, { status: 404 });
   }
 
+  const resolvedStatus = status ?? (grade !== null && grade !== undefined ? "GRADED" : "PENDING");
+
   const updated = await prisma.submission.upsert({
     where: { userId_assignmentId: { userId: staffId, assignmentId } },
     update: {
-      grade,
+      grade: grade ?? null,
       feedback: feedback ?? null,
-      status: grade !== null ? "GRADED" : "PENDING",
+      status: resolvedStatus as never,
+      daysLate: daysLate ?? null,
       updatedAt: new Date(),
     },
     create: {
       userId: staffId,
       assignmentId,
-      grade,
+      grade: grade ?? null,
       feedback: feedback ?? null,
-      status: grade !== null ? "GRADED" : "PENDING",
+      status: resolvedStatus as never,
+      daysLate: daysLate ?? null,
     },
   });
 
-  if (grade !== null) {
+  if (grade !== null && grade !== undefined) {
     try {
       const [staffUser, course] = await Promise.all([
         prisma.user.findUnique({
@@ -310,4 +359,4 @@ export async function PATCH(
   }
 
   return NextResponse.json({ submission: updated });
-}
+} 
