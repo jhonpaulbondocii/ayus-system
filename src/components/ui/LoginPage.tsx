@@ -16,6 +16,402 @@ const ERROR_MESSAGES: Record<string, string> = {
   default:           "Something went wrong. Please try again.",
 };
 
+/* ─── tiny inline styles so no extra CSS file is needed ─── */
+const styles = `
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --maroon:       #7b1113;
+    --maroon-dark:  #5a0d0f;
+    --maroon-deep:  #3d0809;
+    --maroon-light: #f9ecec;
+    --maroon-mid:   #c0393c;
+    --accent:       #e85d26;
+    --text-primary: #1a1a2e;
+    --text-secondary: #64657a;
+    --text-muted:   #9899a8;
+    --border:       #e8e8f0;
+    --surface:      #ffffff;
+    --bg-soft:      #f7f7fb;
+    --shadow-card:  0 2px 4px rgba(0,0,0,.04), 0 8px 24px rgba(0,0,0,.08), 0 24px 56px rgba(123,17,19,.12);
+    --radius-card:  20px;
+    --radius-input: 10px;
+    --radius-btn:   10px;
+    --transition:   all .22s cubic-bezier(.4,0,.2,1);
+    --font-body:    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  html, body { height: 100%; }
+
+  .ayus-root {
+    font-family: var(--font-body);
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    padding: 16px;
+    background: #0f0304;
+  }
+
+  /* ── animated gradient background ── */
+  .ayus-bg {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 90% 70% at 15% 20%, rgba(123,17,19,.85) 0%, transparent 60%),
+      radial-gradient(ellipse 80% 60% at 85% 80%, rgba(58,6,8,.9) 0%, transparent 55%),
+      radial-gradient(ellipse 60% 50% at 50% 50%, rgba(35,3,4,1) 0%, transparent 80%),
+      #0f0304;
+    animation: bgPulse 8s ease-in-out infinite alternate;
+  }
+
+  @keyframes bgPulse {
+    0%   { filter: brightness(1); }
+    100% { filter: brightness(1.12); }
+  }
+
+  /* ── noise grain texture ── */
+  .ayus-grain {
+    position: absolute;
+    inset: 0;
+    opacity: .035;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 180px;
+    pointer-events: none;
+  }
+
+  /* ── floating orbs ── */
+  .ayus-orb {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    filter: blur(70px);
+  }
+  .ayus-orb-1 {
+    width: clamp(200px, 40vw, 480px);
+    height: clamp(200px, 40vw, 480px);
+    top: -15%;
+    left: -10%;
+    background: radial-gradient(circle, rgba(200,40,44,.5) 0%, transparent 70%);
+    animation: orbDrift1 12s ease-in-out infinite alternate;
+  }
+  .ayus-orb-2 {
+    width: clamp(180px, 35vw, 400px);
+    height: clamp(180px, 35vw, 400px);
+    bottom: -10%;
+    right: -8%;
+    background: radial-gradient(circle, rgba(232,93,38,.35) 0%, transparent 70%);
+    animation: orbDrift2 15s ease-in-out infinite alternate;
+  }
+  .ayus-orb-3 {
+    width: clamp(100px, 20vw, 240px);
+    height: clamp(100px, 20vw, 240px);
+    top: 50%;
+    right: 20%;
+    background: radial-gradient(circle, rgba(160,20,22,.3) 0%, transparent 70%);
+    animation: orbDrift1 18s ease-in-out infinite alternate-reverse;
+  }
+
+  @keyframes orbDrift1 {
+    0%   { transform: translate(0, 0) scale(1); }
+    100% { transform: translate(6%, 8%) scale(1.08); }
+  }
+  @keyframes orbDrift2 {
+    0%   { transform: translate(0, 0) scale(1); }
+    100% { transform: translate(-5%, -6%) scale(1.1); }
+  }
+
+  /* ── decorative lines ── */
+  .ayus-lines {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    opacity: .06;
+  }
+  .ayus-lines svg { width: 100%; height: 100%; }
+
+  /* ── card ── */
+  .ayus-card {
+    position: relative;
+    z-index: 10;
+    width: 100%;
+    max-width: 420px;
+    background: var(--surface);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+    padding: clamp(28px, 6vw, 44px) clamp(24px, 6vw, 40px);
+    animation: cardIn .55s cubic-bezier(.22,1,.36,1) both;
+    border: 1px solid rgba(255,255,255,.08);
+  }
+
+  @keyframes cardIn {
+    0%   { opacity: 0; transform: translateY(28px) scale(.97); }
+    100% { opacity: 1; transform: translateY(0)    scale(1); }
+  }
+
+  /* ── logo badge ── */
+  .ayus-logo-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    animation: cardIn .55s .05s cubic-bezier(.22,1,.36,1) both;
+  }
+  .ayus-logo-ring {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(145deg, var(--maroon), var(--maroon-dark));
+    box-shadow: 0 4px 20px rgba(123,17,19,.35), inset 0 1px 0 rgba(255,255,255,.15);
+    position: relative;
+  }
+  .ayus-logo-ring::after {
+    content: '';
+    position: absolute;
+    inset: -3px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(123,17,19,.2);
+  }
+
+  /* ── header text ── */
+  .ayus-title {
+    font-family: var(--font-body);
+    font-size: clamp(20px, 4vw, 24px);
+    font-weight: 700;
+    color: var(--text-primary);
+    text-align: center;
+    letter-spacing: -.01em;
+    line-height: 1.2;
+    animation: cardIn .55s .08s cubic-bezier(.22,1,.36,1) both;
+    margin-bottom: 4px;
+  }
+  .ayus-subtitle {
+    font-size: 13px;
+    color: var(--text-muted);
+    text-align: center;
+    margin-bottom: 24px;
+    font-weight: 400;
+    animation: cardIn .55s .1s cubic-bezier(.22,1,.36,1) both;
+    letter-spacing: .01em;
+  }
+
+  /* ── divider between logo and form ── */
+  .ayus-divider-top {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+    margin-bottom: 24px;
+  }
+
+  /* ── error banner ── */
+  .ayus-error {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    background: #fff5f5;
+    border: 1px solid #fecaca;
+    border-left: 3px solid #ef4444;
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 18px;
+    font-size: 13px;
+    color: #c0392b;
+    line-height: 1.45;
+    animation: slideDown .25s cubic-bezier(.22,1,.36,1);
+  }
+
+  @keyframes slideDown {
+    0%   { opacity: 0; transform: translateY(-8px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── form fields ── */
+  .ayus-field { margin-bottom: 16px; animation: cardIn .55s .12s cubic-bezier(.22,1,.36,1) both; }
+  .ayus-field:last-of-type { animation-delay: .14s; }
+
+  .ayus-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+    letter-spacing: .01em;
+  }
+  .ayus-label-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+  .ayus-forgot {
+    font-size: 12px;
+    color: var(--maroon);
+    font-weight: 500;
+    text-decoration: none;
+    transition: var(--transition);
+    letter-spacing: .01em;
+  }
+  .ayus-forgot:hover { color: var(--maroon-mid); text-decoration: underline; }
+
+  .ayus-input-wrap { position: relative; }
+
+  .ayus-input {
+    width: 100%;
+    height: 46px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-input);
+    padding: 0 14px;
+    font-family: var(--font-body);
+    font-size: 14px;
+    color: var(--text-primary);
+    background: var(--bg-soft);
+    transition: var(--transition);
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  .ayus-input::placeholder { color: var(--text-muted); }
+  .ayus-input:focus {
+    border-color: var(--maroon);
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(123,17,19,.1);
+  }
+  .ayus-input-pw { padding-right: 44px; }
+
+  .ayus-eye-btn {
+    position: absolute;
+    right: 0;
+    top: 0;
+    height: 46px;
+    width: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: color .18s;
+    border-radius: 0 var(--radius-input) var(--radius-input) 0;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .ayus-eye-btn:hover { color: var(--maroon); }
+
+  /* ── submit button ── */
+  .ayus-btn-primary {
+    width: 100%;
+    height: 48px;
+    border: none;
+    border-radius: var(--radius-btn);
+    background: linear-gradient(135deg, var(--maroon) 0%, var(--maroon-dark) 100%);
+    color: #fff;
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: .03em;
+    cursor: pointer;
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+    margin-top: 8px;
+    box-shadow: 0 4px 14px rgba(123,17,19,.35);
+    -webkit-tap-highlight-color: transparent;
+    animation: cardIn .55s .16s cubic-bezier(.22,1,.36,1) both;
+  }
+  .ayus-btn-primary::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,.12) 0%, transparent 60%);
+    opacity: 0;
+    transition: opacity .2s;
+  }
+  .ayus-btn-primary:hover:not(:disabled)::before { opacity: 1; }
+  .ayus-btn-primary:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(123,17,19,.4);
+  }
+  .ayus-btn-primary:active:not(:disabled) { transform: translateY(0); }
+  .ayus-btn-primary:disabled { opacity: .65; cursor: not-allowed; }
+
+  /* spinner inside button */
+  .ayus-spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255,255,255,.35);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+    vertical-align: middle;
+    margin-right: 8px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── or divider ── */
+  .ayus-or {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 18px 0;
+    animation: cardIn .55s .18s cubic-bezier(.22,1,.36,1) both;
+  }
+  .ayus-or-line { flex: 1; height: 1px; background: var(--border); }
+  .ayus-or-text { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+
+  /* ── secondary button ── */
+  .ayus-btn-secondary {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    height: 46px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-btn);
+    background: transparent;
+    color: var(--text-secondary);
+    font-family: var(--font-body);
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: var(--transition);
+    -webkit-tap-highlight-color: transparent;
+    animation: cardIn .55s .2s cubic-bezier(.22,1,.36,1) both;
+  }
+  .ayus-btn-secondary:hover {
+    border-color: var(--maroon);
+    color: var(--maroon);
+    background: var(--maroon-light);
+  }
+
+  /* ── responsive tweaks ── */
+  @media (max-width: 400px) {
+    .ayus-card { border-radius: 16px; }
+    .ayus-logo-ring { width: 60px; height: 60px; }
+  }
+
+  @media (min-width: 768px) {
+    .ayus-root { padding: 32px; }
+  }
+
+  /* ── reduced motion ── */
+  @media (prefers-reduced-motion: reduce) {
+    .ayus-bg, .ayus-orb-1, .ayus-orb-2, .ayus-orb-3 { animation: none; }
+    .ayus-card, .ayus-logo-wrap, .ayus-title, .ayus-subtitle,
+    .ayus-field, .ayus-btn-primary, .ayus-or, .ayus-btn-secondary, .ayus-footer {
+      animation: none;
+    }
+  }
+`;
+
 function LoginForm() {
   const router       = useRouter();
   const searchParams = useSearchParams();
@@ -58,7 +454,6 @@ function LoginForm() {
       const role = data?.user?.role;
 
       router.push(role === "ADMIN" ? "/admin/dashboard" : "/dashboard");
-
     } catch {
       setError("Network error. Please check your connection.");
     } finally {
@@ -67,142 +462,167 @@ function LoginForm() {
   };
 
   return (
-    <div className="relative min-h-screen w-full flex flex-col items-center justify-center"
-      style={{ background: "linear-gradient(135deg, #7b1113 0%, #4a0a0b 50%, #1a0304 100%)" }}>
+    <>
+      {/* Inject styles */}
+      <style dangerouslySetInnerHTML={{ __html: styles }} />
 
-      {/* Subtle pattern overlay */}
-      <div className="absolute inset-0 opacity-5"
-        style={{
-          backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`,
-          backgroundSize: "32px 32px"
-        }}/>
+      <div className="ayus-root">
+        {/* Background layers */}
+        <div className="ayus-bg" />
+        <div className="ayus-grain" />
+        <div className="ayus-orb ayus-orb-1" />
+        <div className="ayus-orb ayus-orb-2" />
+        <div className="ayus-orb ayus-orb-3" />
 
-      {/* Decorative blobs */}
-      <div className="absolute top-0 left-0 w-96 h-96 rounded-full opacity-10"
-        style={{ background: "#ff4444", filter: "blur(80px)", transform: "translate(-30%, -30%)" }}/>
-      <div className="absolute bottom-0 right-0 w-96 h-96 rounded-full opacity-10"
-        style={{ background: "#ff8800", filter: "blur(80px)", transform: "translate(30%, 30%)" }}/>
-
-      {/* Card */}
-      <div className="relative z-10 bg-white rounded-2xl shadow-2xl px-10 py-10 w-full max-w-sm mx-4"
-        style={{ boxShadow: "0 25px 60px rgba(0,0,0,0.4)" }}>
-
-        {/* Logo */}
-        <div className="flex justify-center mb-4">
-          <Image
-            src="/psu-logo.png"
-            alt="PSU Logo"
-            width={64}
-            height={64}
-            className="rounded-full"
-          />
-        </div>
-
-        {/* Title */}
-        <div className="text-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-800 mb-1">
-            Welcome to AYUS
-          </h1>
-          <p className="text-sm text-gray-500">
-            Integrated Campus Operations Platform
-          </p>
-        </div>
-
-        {/* Error */}
-        {error && (
-          <div className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
-            {error}
-          </div>
-        )}
-
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Email
-            </label>
-            <input
-              suppressHydrationWarning
-              type="email"
-              placeholder="Enter your email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#7b1113]/30 focus:border-[#7b1113] transition-colors bg-gray-50 focus:bg-white"
-            />
-          </div>
-
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="block text-sm font-medium text-gray-700">
-                Password
-              </label>
-              <Link
-                href="/forgot-password"
-                className="text-xs text-[#7b1113] hover:underline font-medium"
-              >
-                Forgot password?
-              </Link>
-            </div>
-            <div className="relative">
-              <input
-                suppressHydrationWarning
-                type={showPassword ? "text" : "password"}
-                placeholder="Enter your password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-4 py-2.5 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-[#7b1113]/30 focus:border-[#7b1113] transition-colors bg-gray-50 focus:bg-white"
-              />
-              <button
-                type="button"
-                tabIndex={-1}
-                onClick={() => setShowPassword(v => !v)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                {showPassword ? (
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                    <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24" strokeLinecap="round" strokeLinejoin="round"/>
-                    <line x1="1" y1="1" x2="23" y2="23" strokeLinecap="round"/>
-                  </svg>
-                ) : (
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" strokeLinecap="round" strokeLinejoin="round"/>
-                    <circle cx="12" cy="12" r="3" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                )}
-              </button>
-            </div>
-          </div>
-
-          <button
-            suppressHydrationWarning
-            type="submit"
-            disabled={loading}
-            className="w-full disabled:opacity-70 text-white font-bold py-3 rounded-lg transition-all text-sm mt-2"
-            style={{ background: "linear-gradient(135deg, #7b1113, #5a0d0f)" }}
-          >
-            {loading ? "Logging in..." : "Log In"}
-          </button>
-        </form>
-
-        {/* Divider */}
-        <div className="flex items-center gap-3 my-4">
-          <div className="flex-1 h-px bg-gray-100" />
-          <span className="text-xs text-gray-400">or</span>
-          <div className="flex-1 h-px bg-gray-100" />
-        </div>
-
-        {/* Admin login */}
-        <Link
-          href="/admin/login"
-          className="w-full flex items-center justify-center gap-2 border border-gray-200 hover:border-[#7b1113] hover:bg-[#7b1113]/5 text-gray-500 hover:text-[#7b1113] font-medium py-2.5 rounded-lg transition-all text-sm"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            <path d="M12 2a4 4 0 100 8 4 4 0 000-8zM4 20a8 8 0 0116 0" strokeLinecap="round" strokeLinejoin="round"/>
+        {/* Decorative diagonal lines */}
+        <div className="ayus-lines" aria-hidden="true">
+          <svg viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice" fill="none"
+            xmlns="http://www.w3.org/2000/svg">
+            <line x1="-100" y1="900" x2="700"  y2="-100" stroke="white" strokeWidth="1"/>
+            <line x1="100"  y1="900" x2="900"  y2="-100" stroke="white" strokeWidth=".5"/>
+            <line x1="500"  y1="900" x2="1300" y2="-100" stroke="white" strokeWidth=".8"/>
+            <line x1="700"  y1="900" x2="1500" y2="-100" stroke="white" strokeWidth=".4"/>
           </svg>
-          Log in as Administrator
-        </Link>
+        </div>
+
+        {/* ── Card ── */}
+        <main className="ayus-card" role="main">
+
+          {/* Logo */}
+          <div className="ayus-logo-wrap">
+            <div className="ayus-logo-ring">
+              <Image
+                src="/psu-logo.png"
+                alt="PSU Logo"
+                width={44}
+                height={44}
+                priority
+                style={{ borderRadius: "50%", objectFit: "cover" }}
+              />
+            </div>
+          </div>
+
+          {/* Heading */}
+          <h1 className="ayus-title">Welcome to AYUS</h1>
+          <p className="ayus-subtitle">Integrated Campus Operations Platform</p>
+
+          <div className="ayus-divider-top" />
+
+          {/* Error */}
+          {error && (
+            <div className="ayus-error" role="alert">
+              {/* warning icon */}
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" strokeWidth="2" strokeLinecap="round"
+                strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}>
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+              <span>{error}</span>
+            </div>
+          )}
+
+          {/* Form */}
+          <form onSubmit={handleSubmit} noValidate>
+
+            {/* Email */}
+            <div className="ayus-field">
+              <label className="ayus-label" htmlFor="email">Email</label>
+              <div className="ayus-input-wrap">
+                <input
+                  suppressHydrationWarning
+                  id="email"
+                  type="email"
+                  autoComplete="email"
+                  inputMode="email"
+                  placeholder="Enter your email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  className="ayus-input"
+                  aria-required="true"
+                />
+              </div>
+            </div>
+
+            {/* Password */}
+            <div className="ayus-field">
+              <div className="ayus-label-row">
+                <label className="ayus-label" htmlFor="password" style={{ marginBottom: 0 }}>
+                  Password
+                </label>
+                <Link href="/forgot-password" className="ayus-forgot" tabIndex={0}>
+                  Forgot password?
+                </Link>
+              </div>
+              <div className="ayus-input-wrap">
+                <input
+                  suppressHydrationWarning
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="current-password"
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  className="ayus-input ayus-input-pw"
+                  aria-required="true"
+                />
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  onClick={() => setShowPassword(v => !v)}
+                  className="ayus-eye-btn"
+                >
+                  {showPassword ? (
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/>
+                      <line x1="1" y1="1" x2="23" y2="23"/>
+                    </svg>
+                  ) : (
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                      <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Submit */}
+            <button
+              suppressHydrationWarning
+              type="submit"
+              disabled={loading}
+              className="ayus-btn-primary"
+              aria-busy={loading}
+            >
+              {loading && <span className="ayus-spinner" aria-hidden="true" />}
+              {loading ? "Logging in…" : "Log In"}
+            </button>
+          </form>
+
+          {/* OR divider */}
+          <div className="ayus-or" aria-hidden="true">
+            <div className="ayus-or-line" />
+            <span className="ayus-or-text">or</span>
+            <div className="ayus-or-line" />
+          </div>
+
+          {/* Admin login */}
+          <Link href="/admin/login" className="ayus-btn-secondary">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2a4 4 0 100 8 4 4 0 000-8z"/>
+              <path d="M4 20a8 8 0 0116 0"/>
+            </svg>
+            Log in as Administrator
+          </Link>
+        </main>
       </div>
-    </div>
+    </>
   );
 }
 
