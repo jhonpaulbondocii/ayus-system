@@ -2,7 +2,7 @@
 
 // src/components/ui/LoginPage.tsx
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
@@ -422,6 +422,13 @@ function LoginForm() {
   const [loading,      setLoading]      = useState(false);
   const [error,        setError]        = useState("");
 
+  const passwordRef = useRef<HTMLInputElement>(null);
+  const handlePasswordFocus = () => {
+    setTimeout(() => {
+      passwordRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 300);
+  };
+
   useEffect(() => {
     const err = searchParams.get("error");
     if (err) setError(ERROR_MESSAGES[err] ?? ERROR_MESSAGES.default);
@@ -558,12 +565,14 @@ function LoginForm() {
               <div className="ayus-input-wrap">
                 <input
                   suppressHydrationWarning
+                  ref={passwordRef}
                   id="password"
                   type={showPassword ? "text" : "password"}
                   autoComplete="current-password"
                   placeholder="Enter your password"
                   value={password}
                   onChange={e => setPassword(e.target.value)}
+                  onFocus={handlePasswordFocus}
                   className="ayus-input ayus-input-pw"
                   aria-required="true"
                 />
