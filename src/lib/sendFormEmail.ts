@@ -12,6 +12,7 @@ export async function sendFormEmail({
   availableFrom,
   availableUntil,
   postedBy,
+  senderRole = "Admin",
 }: {
   to: string;
   recipientName: string;
@@ -24,8 +25,12 @@ export async function sendFormEmail({
   availableFrom?: string | null;
   availableUntil?: string | null;
   postedBy: string;
+  senderRole?: "Admin" | "Head";
 }) {
-  const loginUrl = `https://canvas-system-production.up.railway.app/login`;
+  const loginUrl = `https://ayus-system-production.up.railway.app/login`;
+
+  const roleLabel = senderRole === "Head" ? "Course Head" : "Administrator";
+  const bannerNote = senderRole === "Head" ? ` · Posted by Course Head` : "";
 
   const fmtDate = (iso: string | null | undefined) => {
     if (!iso) return null;
@@ -97,7 +102,7 @@ export async function sendFormEmail({
                   <tr>
                     <td style="background:#f3f3f3;padding:10px 24px;border-bottom:1px solid #e5e5e5;">
                       <p style="margin:0;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#7b1113;">
-                        📋 New Form Assigned · ${courseTitle}
+                        📋 New Form Assigned · ${courseTitle}${bannerNote}
                       </p>
                     </td>
                   </tr>
@@ -105,15 +110,14 @@ export async function sendFormEmail({
                   <!-- CONTENT -->
                   <tr>
                     <td style="padding:28px 24px 24px;">
-
                       <p style="margin:0 0 2px;font-size:13px;color:#6b7280;">Hi, ${recipientName}!</p>
-<p style="margin:0 0 6px;font-size:18px;font-weight:700;color:#1a1a1a;">${formTitle}</p>
+                      <p style="margin:0 0 6px;font-size:18px;font-weight:700;color:#1a1a1a;">${formTitle}</p>
                       <p style="margin:0 0 6px;">
                         <span style="display:inline-block;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;color:#ffffff;background:${typeColor};">
                           ${formType}
                         </span>
                       </p>
-                      <p style="margin:0 0 20px;font-size:12px;color:#999;">Posted by ${postedBy}</p>
+                      <p style="margin:0 0 20px;font-size:12px;color:#999;">Posted by ${postedBy} &mdash; <span style="color:#7b1113;font-weight:600;">${roleLabel}</span></p>
 
                       <!-- Details Box -->
                       <table width="100%" cellpadding="0" cellspacing="0" border="0"
@@ -122,7 +126,6 @@ export async function sendFormEmail({
                           <td style="padding:16px 20px;">
                             <p style="margin:0 0 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#999;">Form Details</p>
                             <table width="100%" cellpadding="0" cellspacing="0" border="0">
-
                               ${points != null && points > 0 ? `
                               <tr>
                                 <td style="padding:4px 0;width:130px;vertical-align:top;">
@@ -132,7 +135,6 @@ export async function sendFormEmail({
                                   <span style="font-size:13px;color:#1a1a1a;font-weight:600;">${points}</span>
                                 </td>
                               </tr>` : ""}
-
                               ${dueDateStr ? `
                               <tr>
                                 <td style="padding:4px 0;vertical-align:top;">
@@ -142,7 +144,6 @@ export async function sendFormEmail({
                                   <span style="font-size:13px;color:#7b1113;font-weight:600;">${dueDateStr}</span>
                                 </td>
                               </tr>` : ""}
-
                               ${availableStr ? `
                               <tr>
                                 <td style="padding:4px 0;vertical-align:top;">
@@ -152,7 +153,6 @@ export async function sendFormEmail({
                                   <span style="font-size:13px;color:#1a1a1a;">${availableStr}</span>
                                 </td>
                               </tr>` : ""}
-
                               ${untilStr ? `
                               <tr>
                                 <td style="padding:4px 0;vertical-align:top;">
@@ -162,20 +162,17 @@ export async function sendFormEmail({
                                   <span style="font-size:13px;color:#1a1a1a;">${untilStr}</span>
                                 </td>
                               </tr>` : ""}
-
                             </table>
                           </td>
                         </tr>
                       </table>
 
                       ${formDescriptionHtml ? `
-                      <!-- Description -->
                       <p style="margin:0 0 8px;font-size:13px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:0.5px;">Description / Instructions</p>
                       <div style="font-size:14px;color:#374151;line-height:1.7;border-left:4px solid #e5e7eb;padding-left:16px;margin-bottom:24px;">
                         ${formDescriptionHtml}
                       </div>` : ""}
 
-                      <!-- CTA Button -->
                       <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:8px;">
                         <tr>
                           <td>

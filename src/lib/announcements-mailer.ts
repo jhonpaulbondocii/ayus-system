@@ -1,4 +1,4 @@
-import { transporter } from "./mailer"; // reuse your existing transporter
+import { transporter } from "./mailer";
 
 export async function sendAnnouncementEmail({
   to,
@@ -7,6 +7,7 @@ export async function sendAnnouncementEmail({
   announcementBodyHtml,
   courseTitle = "AYUS",
   postedBy,
+  senderRole = "Admin",
 }: {
   to: string;
   recipientName: string;
@@ -14,8 +15,12 @@ export async function sendAnnouncementEmail({
   announcementBodyHtml: string;
   courseTitle?: string;
   postedBy: string;
+  senderRole?: "Admin" | "Head";
 }) {
-  const loginUrl = `https://canvas-system-production.up.railway.app/login`;
+  const loginUrl = `https://ayus-system-production.up.railway.app/login`;
+
+  const roleLabel = senderRole === "Head" ? "Course Head" : "Administrator";
+  const bannerNote = senderRole === "Head" ? ` · Posted by Course Head` : "";
 
   await transporter.sendMail({
     from: `"AYUS - Pampanga State University" <${process.env.GMAIL_USER}>`,
@@ -60,7 +65,7 @@ export async function sendAnnouncementEmail({
                   <tr>
                     <td style="background:#f3f3f3;padding:10px 24px;border-bottom:1px solid #e5e5e5;">
                       <p style="margin:0;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#7b1113;">
-                        📢 New Announcement · ${courseTitle}
+                        📢 New Announcement · ${courseTitle}${bannerNote}
                       </p>
                     </td>
                   </tr>
@@ -69,8 +74,8 @@ export async function sendAnnouncementEmail({
                   <tr>
                     <td style="padding:28px 24px 24px;">
                       <p style="margin:0 0 2px;font-size:13px;color:#6b7280;">Hi, ${recipientName}!</p>
-<p style="margin:0 0 6px;font-size:16px;font-weight:700;color:#1a1a1a;">${announcementTitle}</p>
-<p style="margin:0 0 20px;font-size:12px;color:#999;">Posted by ${postedBy}</p>>
+                      <p style="margin:0 0 6px;font-size:16px;font-weight:700;color:#1a1a1a;">${announcementTitle}</p>
+                      <p style="margin:0 0 20px;font-size:12px;color:#999;">Posted by ${postedBy} &mdash; <span style="color:#7b1113;font-weight:600;">${roleLabel}</span></p>
 
                       <div style="font-size:14px;color:#374151;line-height:1.7;border-left:4px solid #7b1113;padding-left:16px;">
                         ${announcementBodyHtml}

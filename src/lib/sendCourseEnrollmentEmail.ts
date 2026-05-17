@@ -1,4 +1,4 @@
-import { transporter } from "./mailer"; // reuse your existing transporter
+import { transporter } from "./mailer";
 
 export async function sendCourseEnrollmentEmail({
   to,
@@ -6,21 +6,26 @@ export async function sendCourseEnrollmentEmail({
   courseName,
   role,
   enrolledBy,
+  senderRole = "Admin",
 }: {
   to: string;
   recipientName: string;
   courseName: string;
   role: string; // "Staff" | "Head"
   enrolledBy: string;
+  senderRole?: "Admin" | "Head";
 }) {
-  const loginUrl = `https://canvas-system-production.up.railway.app/login`;
+  const loginUrl = `https://ayus-system-production.up.railway.app/login`;
 
   const roleLabel = role === "Head" ? "Head" : "Staff";
+  const enrollerLabel = senderRole === "Head" ? "Course Head" : "Administrator";
 
   const roleDescription =
     roleLabel === "Head"
       ? "As <strong>Head</strong>, you have elevated access and may assist in managing course content, members, and settings."
       : "As a <strong>Staff</strong> member, you have access to course materials and collaborative tools for this course.";
+
+  const bannerNote = senderRole === "Head" ? ` · Added by Course Head` : "";
 
   await transporter.sendMail({
     from: `"AYUS - Pampanga State University" <${process.env.GMAIL_USER}>`,
@@ -68,7 +73,7 @@ export async function sendCourseEnrollmentEmail({
                   <tr>
                     <td style="background:#f3f3f3;padding:10px 24px;border-bottom:1px solid #e5e5e5;">
                       <p style="margin:0;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#7b1113;">
-                        🎓 Course Enrollment Notification
+                        🎓 Course Enrollment Notification${bannerNote}
                       </p>
                     </td>
                   </tr>
@@ -80,7 +85,9 @@ export async function sendCourseEnrollmentEmail({
                       <p style="margin:0 0 12px;font-size:16px;font-weight:600;color:#1a1a1a;">Good day, ${recipientName}</p>
 
                       <p style="margin:0 0 28px;font-size:14px;color:#555555;line-height:1.6;">
-                        You have been added to a course in AYUS by <strong>${enrolledBy}</strong>. Your enrollment details are shown below.
+                        You have been added to a course in AYUS by <strong>${enrolledBy}</strong>
+                        (<span style="color:#7b1113;font-weight:600;">${enrollerLabel}</span>).
+                        Your enrollment details are shown below.
                       </p>
 
                       <!-- Enrollment Details Box -->

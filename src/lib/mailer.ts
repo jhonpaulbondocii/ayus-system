@@ -19,7 +19,7 @@ export async function sendWelcomeEmail({
   email: string;
   password: string;
 }) {
-  const loginUrl = `https://canvas-system-production.up.railway.app/login`;
+  const loginUrl = `https://ayus-system-production.up.railway.app/login`;
 
   await transporter.sendMail({
     from: `"AYUS - Pampanga State University" <${process.env.GMAIL_USER}>`,

@@ -14,7 +14,7 @@ export async function sendInboxMessageEmail({
   subject:       string;
   messageBody:   string;
 }) {
-  const loginUrl = `https://canvas-system-production.up.railway.app/inbox`;
+  const loginUrl = `https://ayus-system-production.up.railway.app/inbox`;
 
   // Truncate long messages for the preview
   const preview =
