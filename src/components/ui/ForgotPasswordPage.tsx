@@ -124,7 +124,16 @@ export default function ForgotPasswordPage() {
   const [error,        setError]        = useState("");
   const [resendTimer,  setResendTimer]  = useState(0);
   const [mounted,      setMounted]      = useState(false);
-  const firstOtpRef = useRef<HTMLInputElement>(null);
+  const firstOtpRef    = useRef<HTMLInputElement>(null);
+  const emailRef       = useRef<HTMLInputElement>(null);
+  const passRef        = useRef<HTMLInputElement>(null);
+  const confirmRef     = useRef<HTMLInputElement>(null);
+
+  const scrollToField = (ref: React.RefObject<HTMLInputElement | null>) => {
+    setTimeout(() => {
+      ref.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 300);
+  };
 
   useEffect(() => { setMounted(true); }, []);
   useEffect(() => { if (step === "otp") firstOtpRef.current?.focus(); }, [step]);
@@ -258,12 +267,14 @@ export default function ForgotPasswordPage() {
         <div className="fp-input-wrap">
           <Mail className="fp-input__icon" size={16} />
           <input
+            ref={emailRef}
             id="fp-email"
             type="email"
             autoComplete="email"
             autoFocus
             value={identifier}
             onChange={e => { setIdentifier(e.target.value); setError(""); }}
+            onFocus={() => scrollToField(emailRef)}
             placeholder="yourname@school.edu"
             className="fp-input fp-input--icon-left"
             onKeyDown={e => e.key === "Enter" && void handleSend()}
@@ -378,11 +389,13 @@ export default function ForgotPasswordPage() {
         </label>
         <div className="fp-input-wrap">
           <input
+            ref={passRef}
             id="fp-pass"
             type={showPass ? "text" : "password"}
             autoComplete="new-password"
             value={password}
             onChange={e => { setPassword(e.target.value); setError(""); }}
+            onFocus={() => scrollToField(passRef)}
             placeholder="Min. 8 characters"
             className="fp-input fp-input--icon-right"
           />
@@ -401,11 +414,13 @@ export default function ForgotPasswordPage() {
         </label>
         <div className="fp-input-wrap">
           <input
+            ref={confirmRef}
             id="fp-confirm"
             type={showConfirm ? "text" : "password"}
             autoComplete="new-password"
             value={confirm}
             onChange={e => { setConfirm(e.target.value); setError(""); }}
+            onFocus={() => scrollToField(confirmRef)}
             placeholder="Re-enter password"
             className={`fp-input fp-input--icon-right ${confirm && password !== confirm ? "fp-input--error" : ""}`}
             onKeyDown={e => e.key === "Enter" && void handleReset()}

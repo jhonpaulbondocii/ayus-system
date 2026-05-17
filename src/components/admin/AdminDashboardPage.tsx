@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import {
   BookOpen, MoreVertical, Trash2, GraduationCap, Briefcase,
   ChevronDown, ChevronRight, LayoutGrid, List, Plus,
+  Users, History, Home, Inbox, Calendar, LogOut,
+  BookMarked, Group, BarChart2, Menu, X,
 } from "lucide-react";
 
 interface Course {
@@ -20,7 +22,8 @@ type Category = "Academic" | "Non-Academic";
 type ViewMode = "grid" | "list";
 
 const MAROON = "#7b1113";
-const FONT   = "'Plus Jakarta Sans','Helvetica Neue',Arial,sans-serif";
+const MAROON_LIGHT = "#fdf2f2";
+const FONT = "'Plus Jakarta Sans','Helvetica Neue',Arial,sans-serif";
 const font: React.CSSProperties = { fontFamily: FONT };
 
 const PRESET_COLORS = [
@@ -30,9 +33,150 @@ const PRESET_COLORS = [
   "#37474f","#546e7a","#78909c","#5d4037",
 ];
 
+// ── Bottom Nav Items ────────────────────────────────────────────────────────────
+// All nav items – split into primary (always visible) and secondary (overflow/drawer)
+const PRIMARY_NAV = [
+  { label: "Courses",   icon: BookMarked,  href: "/courses" },
+  { label: "Groups",    icon: Group,       href: "/groups" },
+  { label: "Dashboard", icon: Home,        href: "/admin" },
+  { label: "Inbox",     icon: Inbox,       href: "/inbox" },
+  { label: "Calendar",  icon: Calendar,    href: "/calendar" },
+];
+
+const SECONDARY_NAV = [
+  { label: "Users",   icon: Users,   href: "/admin/users" },
+  { label: "History", icon: History, href: "/admin/history" },
+  { label: "Reports", icon: BarChart2, href: "/admin/reports" },
+  { label: "Logout",  icon: LogOut,  href: "/logout" },
+];
+
 function getGroupKey(c: Course): string {
   if (c.status === "UNPUBLISHED") return "unpublished";
   return c.term === "Academic" ? "academic" : c.term === "Non-Academic" ? "non-academic" : "uncategorized";
+}
+
+// ── Mobile Drawer Nav ──────────────────────────────────────────────────────────
+function MobileMoreDrawer({ open, onClose, currentPath }: {
+  open: boolean; onClose: () => void; currentPath: string;
+}) {
+  if (!open) return null;
+  return createPortal(
+    <>
+      {/* backdrop */}
+      <div
+        onClick={onClose}
+        style={{
+          position: "fixed", inset: 0, zIndex: 200000,
+          background: "rgba(0,0,0,0.45)", backdropFilter: "blur(3px)",
+        }}
+      />
+      {/* drawer */}
+      <div style={{
+        position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 200001,
+        background: "#fff", borderRadius: "20px 20px 0 0",
+        boxShadow: "0 -8px 40px rgba(0,0,0,0.18)",
+        padding: "0 0 env(safe-area-inset-bottom,16px)",
+        fontFamily: FONT,
+      }}>
+        {/* handle */}
+        <div style={{ display: "flex", justifyContent: "center", padding: "12px 0 4px" }}>
+          <div style={{ width: 36, height: 4, borderRadius: 99, background: "#e5e7eb" }}/>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 20px 12px" }}>
+          <p style={{ fontSize: 13, fontWeight: 800, color: "#111827", margin: 0 }}>More</p>
+          <button onClick={onClose} style={{ background: "#f3f4f6", border: "none", borderRadius: "50%", width: 30, height: 30, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#6b7280" }}>
+            <X size={15}/>
+          </button>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 4, padding: "0 16px 24px" }}>
+          {SECONDARY_NAV.map(item => {
+            const Icon = item.icon;
+            const active = currentPath === item.href;
+            const isLogout = item.label === "Logout";
+            return (
+              <a key={item.label} href={item.href}
+                style={{
+                  display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
+                  padding: "14px 8px", borderRadius: 14, textDecoration: "none",
+                  background: active ? MAROON_LIGHT : isLogout ? "#fef2f2" : "#f9fafb",
+                  border: `1px solid ${active ? "#f0c4c4" : isLogout ? "#fee2e2" : "#f3f4f6"}`,
+                }}>
+                <Icon size={20} color={active ? MAROON : isLogout ? "#dc2626" : "#6b7280"}/>
+                <span style={{ fontSize: 10, fontWeight: 700, color: active ? MAROON : isLogout ? "#dc2626" : "#6b7280" }}>
+                  {item.label}
+                </span>
+              </a>
+            );
+          })}
+        </div>
+      </div>
+    </>,
+    document.body
+  );
+}
+
+// ── Bottom Nav Bar ─────────────────────────────────────────────────────────────
+function BottomNavBar({ currentPath = "/admin" }: { currentPath?: string }) {
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  return (
+    <>
+      <nav style={{
+        position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 10000,
+        background: MAROON,
+        paddingBottom: "env(safe-area-inset-bottom, 0px)",
+        boxShadow: "0 -2px 20px rgba(0,0,0,0.18)",
+        fontFamily: FONT,
+      }}>
+        <div style={{
+          display: "flex", alignItems: "stretch",
+          maxWidth: 640, margin: "0 auto",
+        }}>
+          {PRIMARY_NAV.map(item => {
+            const Icon = item.icon;
+            const active = currentPath === item.href;
+            return (
+              <a key={item.label} href={item.href} style={{
+                flex: 1, display: "flex", flexDirection: "column",
+                alignItems: "center", justifyContent: "center",
+                gap: 3, padding: "10px 4px 10px", textDecoration: "none",
+                borderBottom: active ? "3px solid rgba(255,255,255,0.9)" : "3px solid transparent",
+                background: active ? "rgba(255,255,255,0.12)" : "transparent",
+                transition: "all 0.15s",
+              }}>
+                <Icon size={18} color={active ? "#fff" : "rgba(255,255,255,0.55)"}/>
+                <span style={{
+                  fontSize: 9, fontWeight: active ? 800 : 600, letterSpacing: "0.02em",
+                  color: active ? "#fff" : "rgba(255,255,255,0.55)",
+                  whiteSpace: "nowrap",
+                }}>
+                  {item.label}
+                </span>
+              </a>
+            );
+          })}
+
+          {/* More button */}
+          <button onClick={() => setDrawerOpen(true)} style={{
+            flex: 1, display: "flex", flexDirection: "column",
+            alignItems: "center", justifyContent: "center",
+            gap: 3, padding: "10px 4px 10px", border: "none",
+            background: drawerOpen ? "rgba(255,255,255,0.12)" : "transparent",
+            borderBottom: drawerOpen ? "3px solid rgba(255,255,255,0.9)" : "3px solid transparent",
+            cursor: "pointer", transition: "all 0.15s",
+          }}>
+            <Menu size={18} color={drawerOpen ? "#fff" : "rgba(255,255,255,0.55)"}/>
+            <span style={{
+              fontSize: 9, fontWeight: drawerOpen ? 800 : 600, letterSpacing: "0.02em",
+              color: drawerOpen ? "#fff" : "rgba(255,255,255,0.55)",
+            }}>More</span>
+          </button>
+        </div>
+      </nav>
+
+      <MobileMoreDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} currentPath={currentPath}/>
+    </>
+  );
 }
 
 // ── Publish Modal ──────────────────────────────────────────────────────────────
@@ -47,7 +191,8 @@ function PublishModal({ course, onConfirm, onCancel }: {
   ];
 
   return (
-    <div style={{ position:"fixed",inset:0,zIndex:100000,background:"rgba(0,0,0,0.4)",backdropFilter:"blur(4px)",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:FONT,padding:"16px" }}
+    <div
+      style={{ position:"fixed",inset:0,zIndex:100000,background:"rgba(0,0,0,0.4)",backdropFilter:"blur(4px)",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:FONT,padding:"16px" }}
       onClick={onCancel}>
       <div onClick={e=>e.stopPropagation()}
         style={{ background:"#fff",borderRadius:16,width:"100%",maxWidth:400,boxShadow:"0 20px 60px rgba(0,0,0,0.18)",overflow:"hidden" }}>
@@ -270,6 +415,10 @@ export default function AdminDashboardPage() {
         @media (min-width: 480px) {
           .course-grid { grid-template-columns: repeat(auto-fill, minmax(178px, 1fr)) !important; }
         }
+        /* Bottom nav safe area */
+        .page-content {
+          padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+        }
       `}</style>
 
       {/* ── Page Header ── */}
@@ -284,7 +433,7 @@ export default function AdminDashboardPage() {
             style={{ display:"flex",alignItems:"center",gap:5,padding:"7px 14px",borderRadius:10,border:"none",background:MAROON,color:"#fff",cursor:"pointer",fontFamily:FONT,fontSize:12,fontWeight:800,transition:"opacity 0.15s",whiteSpace:"nowrap" }}
             onMouseEnter={e=>(e.currentTarget.style.opacity="0.88")}
             onMouseLeave={e=>(e.currentTarget.style.opacity="1")}>
-            <Plus size={13}/> <span className="hidden xs:inline">Start a </span>New Office
+            <Plus size={13}/> New Office
           </button>
           <div style={{ display:"flex",gap:3,background:"#f3f4f6",borderRadius:10,padding:3 }}>
             {([["grid","Grid"] as const,["list","List"] as const]).map(([mode, label])=>(
@@ -317,7 +466,8 @@ export default function AdminDashboardPage() {
         </div>
       )}
 
-      <div style={{ padding:"16px" }}>
+      {/* ── Content ── */}
+      <div className="page-content" style={{ padding:"16px" }}>
         {loading ? (
           <div style={{ display:"flex",alignItems:"center",justifyContent:"center",padding:"80px 0",gap:10 }}>
             <div style={{ width:20,height:20,border:`2px solid #f0e4e4`,borderTop:`2px solid ${MAROON}`,borderRadius:"50%",animation:"spin 0.8s linear infinite" }}/>
@@ -417,6 +567,9 @@ export default function AdminDashboardPage() {
           onCancel={()=>setPublishTarget(null)}
         />
       )}
+
+      {/* ── Bottom Nav (mobile) ── */}
+      <BottomNavBar currentPath="/admin"/>
     </div>
   );
 }
@@ -433,14 +586,11 @@ function CourseCard({ course, onTogglePublish, onDelete, onColorChange, onMove, 
   const [hexInput,      setHexInput]      = useState(course.color);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [, startTransition]               = useTransition();
-
-  // ✅ Fix: use regular state for menu position so it can be read during render
-  const [menuStyle, setMenuStyle] = useState<React.CSSProperties>({});
+  const [menuStyle, setMenuStyle]         = useState<React.CSSProperties>({});
   const triggerRef = useRef<HTMLButtonElement>(null);
 
   useEffect(()=>{ startTransition(()=>setHexInput(course.color)); },[course.color]);
 
-  // Compute and store position imperatively in the event handler — never inside an effect.
   const computeAndApplyPosition = useCallback(()=>{
     if (!triggerRef.current) return;
     const r     = triggerRef.current.getBoundingClientRect();
@@ -453,11 +603,9 @@ function CourseCard({ course, onTogglePublish, onDelete, onColorChange, onMove, 
     if (left + menuW > vw - 8) left = vw - menuW - 8;
     const spaceBelow = vh - r.bottom - 8;
     const top = spaceBelow >= menuH ? r.bottom + 4 : r.top - menuH - 4;
-    // ✅ setState called from an event handler — not inside an effect body
     setMenuStyle({ top, left, width: Math.min(menuW, vw - 16) });
   }, []);
 
-  // Only the outside-click listener lives in an effect — no setState inside it.
   useEffect(()=>{
     if (!menuOpen) return;
     const h = (e:MouseEvent) => {
