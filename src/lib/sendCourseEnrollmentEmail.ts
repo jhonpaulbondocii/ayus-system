@@ -1,3 +1,5 @@
+// src/lib/sendCourseEnrollmentEmail.ts
+
 import { transporter } from "./mailer";
 
 export async function sendCourseEnrollmentEmail({
