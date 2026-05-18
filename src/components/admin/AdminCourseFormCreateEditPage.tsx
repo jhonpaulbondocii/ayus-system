@@ -129,6 +129,18 @@ function useOnClickOutside<T extends HTMLElement>(ref: React.RefObject<T | null>
   }, [ref, handler]);
 }
 
+// ── useIsMobile ───────────────────────────────────────────────────────────────
+function useIsMobile(breakpoint = 640) {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < breakpoint);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, [breakpoint]);
+  return isMobile;
+}
+
 // ══════════════════════════════════════════════════════════════════════════════
 // RICH TEXT EDITOR
 // ══════════════════════════════════════════════════════════════════════════════
@@ -212,7 +224,7 @@ function HTMLEditorModal({ html: init, onUpdate, onClose }: { html: string; onUp
           <button onClick={onClose} className="text-gray-400 hover:text-gray-700 text-xl leading-none">×</button>
         </div>
         <div className="px-4 py-4">
-          <textarea value={html} onChange={e => setHtml(e.target.value)} className="w-full h-64 border border-gray-300 rounded px-3 py-2 text-xs font-mono outline-none focus:border-[#7b1113] resize-none" />
+          <textarea value={html} onChange={e => setHtml(e.target.value)} className="w-full h-48 sm:h-64 border border-gray-300 rounded px-3 py-2 text-xs font-mono outline-none focus:border-[#7b1113] resize-none" />
         </div>
         <div className="px-4 py-3 border-t border-gray-200 flex justify-end gap-2">
           <button onClick={onClose} className="h-7 px-3 border border-gray-300 text-xs text-gray-700 rounded hover:bg-gray-50">Cancel</button>
@@ -312,6 +324,49 @@ function SubMenuItem({ item, onClose }: { item: MSub; onClose: () => void }) {
   );
 }
 
+// Mobile-optimized simplified toolbar (replaces full menubar on small screens)
+function MobileRichToolbar({ exec, fmt, insertHTML, setShowColor, onHtmlEditorClick }: {
+  exec: (cmd: string, val?: string) => void;
+  fmt: (tag: string) => void;
+  insertHTML: (html: string) => void;
+  setShowColor: (t: "foreColor" | "backColor") => void;
+  onHtmlEditorClick: () => void;
+}) {
+  const tools = [
+    { label: "B", title: "Bold", fn: () => exec("bold"), style: { fontWeight: 700 } },
+    { label: "I", title: "Italic", fn: () => exec("italic"), style: { fontStyle: "italic" } },
+    { label: "U", title: "Underline", fn: () => exec("underline"), style: { textDecoration: "underline" } },
+    { label: "S̶", title: "Strikethrough", fn: () => exec("strikeThrough"), style: {} },
+    { label: "•", title: "Bullet list", fn: () => exec("insertUnorderedList"), style: {} },
+    { label: "1.", title: "Ordered list", fn: () => exec("insertOrderedList"), style: {} },
+    { label: "◀≡", title: "Align left", fn: () => exec("justifyLeft"), style: {} },
+    { label: "≡", title: "Center", fn: () => exec("justifyCenter"), style: {} },
+    { label: "A", title: "Text color", fn: () => setShowColor("foreColor"), style: { color: "#e74c3c", fontWeight: 700 } },
+    { label: "🔗", title: "Link", fn: () => { const url = prompt("URL:"); if (!url) return; const txt = prompt("Link text:") || url; insertHTML(`<a href="${url}">${txt}</a>`); }, style: {} },
+    { label: "</>", title: "HTML editor", fn: () => onHtmlEditorClick(), style: {} },
+    { label: "✕", title: "Clear formatting", fn: () => exec("removeFormat"), style: {} },
+  ];
+  return (
+    <div className="flex items-center gap-0.5 px-2 py-1 bg-[#f7f9fb] border-b border-gray-200 overflow-x-auto">
+      <style>{`.mobile-toolbar-scroll::-webkit-scrollbar { display: none; }`}</style>
+      <div className="flex items-center gap-0.5 min-w-max mobile-toolbar-scroll">
+        <select className="h-7 border border-gray-300 rounded text-[11px] bg-white px-1 outline-none shrink-0 mr-1"
+          onChange={(e: React.ChangeEvent<HTMLSelectElement>) => fmt(e.target.value)} defaultValue="p">
+          {[["Para","p"],["H1","h1"],["H2","h2"],["H3","h3"]].map(([l,v]) => <option key={v} value={v}>{l}</option>)}
+        </select>
+        {tools.map((btn, i) => (
+          <button key={i} type="button" title={btn.title}
+            style={btn.style as React.CSSProperties}
+            onMouseDown={e => { e.preventDefault(); btn.fn?.(); }}
+            className="h-7 min-w-7 px-1 border border-transparent rounded text-xs hover:bg-blue-50 hover:border-blue-200 text-gray-700 flex items-center justify-center shrink-0">
+            {btn.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function RichTextEditor({ onChange, placeholder = "Start typing...", initialHtml = "" }: {
   onChange?: (html: string) => void; placeholder?: string; initialHtml?: string;
 }) {
@@ -327,6 +382,7 @@ function RichTextEditor({ onChange, placeholder = "Start typing...", initialHtml
   const [editorHtml, setEditorHtml] = useState("");
   const [isFS, setIsFS] = useState(false);
   const initialized = useRef(false);
+  const isMobile = useIsMobile(640);
 
   useEffect(() => {
     if (!initialized.current && editorRef.current && initialHtml) {
@@ -440,15 +496,9 @@ function RichTextEditor({ onChange, placeholder = "Start typing...", initialHtml
             { type: "action", label: "Upload image", action: () => { const inp = document.createElement("input"); inp.type = "file"; inp.accept = "image/*"; inp.onchange = () => { const f = inp.files?.[0]; if (!f) return; const r = new FileReader(); r.onload = ev => insertHTML(`<img src="${ev.target?.result}" style="max-width:100%;" />`); r.readAsDataURL(f); }; inp.click(); } },
           ]
         },
-        {
-          type: "sub", icon: "▶", label: "Media", children: [
-            { type: "action", label: "Insert/Edit Video", action: () => { let url = prompt("Video URL (YouTube/Vimeo):"); if (!url) return; if (url.includes("youtube.com/watch?v=")) url = url.replace("watch?v=", "embed/"); else if (url.includes("youtu.be/")) url = url.replace("youtu.be/", "www.youtube.com/embed/"); else if (url.includes("vimeo.com/")) url = url.replace("vimeo.com/", "player.vimeo.com/video/"); insertHTML(`<iframe src="${url}" width="560" height="315" frameborder="0" allowfullscreen style="max-width:100%;border-radius:4px;"></iframe>`); } },
-          ]
-        },
         { type: "sep" },
         { type: "action", icon: "∑", label: "Equation", action: () => { const eq = prompt("Equation (LaTeX or plain):"); if (!eq) return; insertHTML(`<code style="font-family:monospace;background:#f4f4f4;padding:2px 6px;border-radius:3px;">${eq}</code>`); } },
         { type: "sub", icon: "⊞", label: "Table", picker: true, children: [], onPick: (r: number, c: number) => insertTable(r, c) },
-        { type: "action", icon: "{ }", label: "Embed", action: () => { const code = prompt("Embed code (iframe):"); if (!code) return; insertHTML(code); } },
         { type: "action", icon: "—", label: "Horizontal line", action: () => insertHTML('<hr style="border:none;border-top:2px solid #dee2e6;margin:12px 0;"/><p><br></p>') },
       ]
     },
@@ -458,8 +508,6 @@ function RichTextEditor({ onChange, placeholder = "Start typing...", initialHtml
         { type: "action", icon: "I", label: "Italic", shortcut: "Ctrl+I", action: () => exec("italic") },
         { type: "action", icon: "U", label: "Underline", shortcut: "Ctrl+U", action: () => exec("underline") },
         { type: "action", icon: "S", label: "Strikethrough", action: () => exec("strikeThrough") },
-        { type: "action", icon: "x²", label: "Superscript", action: () => exec("superscript") },
-        { type: "action", icon: "x₂", label: "Subscript", action: () => exec("subscript") },
         { type: "sep" },
         { type: "sub", icon: "¶", label: "Formats", children: [
           { type: "action", label: "Heading 1", action: () => fmt("h1") },
@@ -472,24 +520,6 @@ function RichTextEditor({ onChange, placeholder = "Start typing...", initialHtml
         { type: "sub", icon: "▤", label: "Blocks", children: [
           { type: "action", label: "Ordered List", action: () => exec("insertOrderedList") },
           { type: "action", label: "Bullet List", action: () => exec("insertUnorderedList") },
-        ]},
-        { type: "sub", icon: "F", label: "Fonts", children: [
-          { type: "action", label: "Default", action: () => exec("fontName", "inherit") },
-          { type: "action", label: "Sans-serif", action: () => exec("fontName", "Arial, sans-serif") },
-          { type: "action", label: "Serif", action: () => exec("fontName", "Georgia, serif") },
-          { type: "action", label: "Monospace", action: () => exec("fontName", "monospace") },
-        ]},
-        { type: "sub", icon: "A↕", label: "Font sizes", children: [
-          { type: "action", label: "Small (8pt)", action: () => exec("fontSize", "1") },
-          { type: "action", label: "Normal (12pt)", action: () => exec("fontSize", "3") },
-          { type: "action", label: "Large (18pt)", action: () => exec("fontSize", "5") },
-          { type: "action", label: "Huge (36pt)", action: () => exec("fontSize", "7") },
-        ]},
-        { type: "sub", icon: "≡", label: "Align", children: [
-          { type: "action", label: "Left", action: () => exec("justifyLeft") },
-          { type: "action", label: "Center", action: () => exec("justifyCenter") },
-          { type: "action", label: "Right", action: () => exec("justifyRight") },
-          { type: "action", label: "Justify", action: () => exec("justifyFull") },
         ]},
         { type: "sep" },
         { type: "action", icon: "A", label: "Text color", action: () => setShowColor("foreColor") },
@@ -504,14 +534,8 @@ function RichTextEditor({ onChange, placeholder = "Start typing...", initialHtml
         { type: "action", icon: "🔍", label: "Find and Replace", shortcut: "Ctrl+F", action: () => { setEditorHtml(editorRef.current?.innerHTML ?? ""); setShowFR(true); } },
       ]
     },
-    {
-      label: "Table", items: [
-        { type: "sub", icon: "⊞", label: "Table", picker: true, children: [], onPick: (r: number, c: number) => insertTable(r, c) },
-        { type: "sep" },
-        { type: "action", icon: "✕", label: "Delete table", action: () => { const sel = window.getSelection(); if (!sel?.rangeCount) return; let n: Node | null = sel.getRangeAt(0).commonAncestorContainer; while (n && (n as Element).nodeName !== "TABLE") n = n.parentNode; if (n && (n as Element).nodeName === "TABLE") (n as Element).remove(); } },
-      ]
-    },
   ], [exec, fmt, insertHTML, insertTable, toggleFS, isFS]);
+
   const TBGroups = useMemo(() => [
     [
       { html: <select className="h-6 border border-gray-300 rounded text-xs bg-white px-1 outline-none" onChange={(e: React.ChangeEvent<HTMLSelectElement>) => fmt(e.target.value)} defaultValue="p">{[["Paragraph","p"],["Heading 1","h1"],["Heading 2","h2"],["Heading 3","h3"],["Heading 4","h4"],["Blockquote","blockquote"],["Code","pre"]].map(([l,v]) => <option key={v} value={v}>{l}</option>)}</select>, title: "Block format" },
@@ -538,7 +562,6 @@ function RichTextEditor({ onChange, placeholder = "Start typing...", initialHtml
       { label: "◀≡", title: "Align left", fn: () => exec("justifyLeft"), style: {} },
       { label: "≡", title: "Align center", fn: () => exec("justifyCenter"), style: {} },
       { label: "≡▶", title: "Align right", fn: () => exec("justifyRight"), style: {} },
-      { label: "≡≡", title: "Justify", fn: () => exec("justifyFull"), style: {} },
     ],
     [
       { label: "1.", title: "Ordered list", fn: () => exec("insertOrderedList"), style: {} },
@@ -560,52 +583,67 @@ function RichTextEditor({ onChange, placeholder = "Start typing...", initialHtml
       {showHTML && <HTMLEditorModal html={editorHtml} onUpdate={h => { if (editorRef.current) editorRef.current.innerHTML = h; }} onClose={() => setShowHTML(false)} />}
       {showColor && <ColorPickerModal type={showColor} onClose={() => setShowColor(null)} />}
 
-      <div ref={wrapRef} className="border border-gray-300 rounded overflow-hidden flex flex-col" style={{ minHeight: 260 }}>
-        {/* Menubar */}
-        <div data-menubar className="flex items-center gap-0.5 px-1 py-0.5 bg-[#f7f9fb] border-b border-gray-200 select-none flex-wrap">
-          {menus.map(m => (
-            <div key={m.label} className="relative">
-              <button type="button"
-                onMouseDown={e => { e.preventDefault(); setOpenMenu(openMenu === m.label ? null : m.label); }}
-                className={`px-2 sm:px-2.5 py-0.5 text-xs rounded transition-colors ${openMenu === m.label ? "text-white" : "text-gray-700 hover:bg-gray-200"}`}
-                style={openMenu === m.label ? { background: MAROON } : {}}>
-                {m.label}
-              </button>
-              {openMenu === m.label && (
-                <div className="absolute left-0 top-full mt-0.5 bg-white border border-gray-200 shadow-lg rounded-sm min-w-52 py-1 z-150">
-                  <MenuItems items={m.items} onClose={closeMenus} />
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-
-        {/* Toolbar */}
-        <div className="flex flex-wrap items-center gap-0.5 px-2 py-1 bg-[#f7f9fb] border-b border-gray-200">
-          {TBGroups.map((group, gi) => (
-            <div key={gi} className="flex items-center gap-0.5">
-              {gi > 0 && <div className="w-px h-5 bg-gray-300 mx-1" />}
-              {group.map((btn, bi) => {
-                if ("html" in btn) return <div key={bi} title={btn.title}>{btn.html}</div>;
-                return (
-                  <button key={bi} type="button" title={btn.title}
-                    style={btn.style as React.CSSProperties}
-                    onMouseDown={e => { e.preventDefault(); btn.fn?.(); }}
-                    className="h-6 min-w-6 px-1 border border-transparent rounded text-xs hover:bg-blue-50 hover:border-blue-200 text-gray-700 flex items-center justify-center">
-                    {btn.label}
+      <div ref={wrapRef} className="border border-gray-300 rounded overflow-hidden flex flex-col" style={{ minHeight: 220 }}>
+        {isMobile ? (
+          /* Mobile: streamlined single-row scrollable toolbar */
+          <MobileRichToolbar
+            exec={exec}
+            fmt={fmt}
+            insertHTML={insertHTML}
+            setShowColor={setShowColor}
+            onHtmlEditorClick={() => {
+              setEditorHtml(editorRef.current?.innerHTML ?? "");
+              setShowHTML(true);
+            }}
+          />
+        ) : (
+          <>
+            {/* Desktop: Menubar */}
+            <div data-menubar className="flex items-center gap-0.5 px-1 py-0.5 bg-[#f7f9fb] border-b border-gray-200 select-none flex-wrap">
+              {menus.map(m => (
+                <div key={m.label} className="relative">
+                  <button type="button"
+                    onMouseDown={e => { e.preventDefault(); setOpenMenu(openMenu === m.label ? null : m.label); }}
+                    className={`px-2 py-0.5 text-xs rounded transition-colors ${openMenu === m.label ? "text-white" : "text-gray-700 hover:bg-gray-200"}`}
+                    style={openMenu === m.label ? { background: MAROON } : {}}>
+                    {m.label}
                   </button>
-                );
-              })}
+                  {openMenu === m.label && (
+                    <div className="absolute left-0 top-full mt-0.5 bg-white border border-gray-200 shadow-lg rounded-sm min-w-52 py-1 z-150">
+                      <MenuItems items={m.items} onClose={closeMenus} />
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+            {/* Desktop: Toolbar */}
+            <div className="flex flex-wrap items-center gap-0.5 px-2 py-1 bg-[#f7f9fb] border-b border-gray-200">
+              {TBGroups.map((group, gi) => (
+                <div key={gi} className="flex items-center gap-0.5">
+                  {gi > 0 && <div className="w-px h-5 bg-gray-300 mx-1" />}
+                  {group.map((btn, bi) => {
+                    if ("html" in btn) return <div key={bi} title={btn.title}>{btn.html}</div>;
+                    return (
+                      <button key={bi} type="button" title={btn.title}
+                        style={btn.style as React.CSSProperties}
+                        onMouseDown={e => { e.preventDefault(); btn.fn?.(); }}
+                        className="h-6 min-w-6 px-1 border border-transparent rounded text-xs hover:bg-blue-50 hover:border-blue-200 text-gray-700 flex items-center justify-center">
+                        {btn.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+          </>
+        )}
 
-        {/* Editor */}
+        {/* Editor area */}
         <div ref={editorRef} contentEditable suppressContentEditableWarning
           onInput={updateWC} onKeyUp={updateWC} onMouseUp={updateWC}
           data-placeholder={placeholder}
-          className="flex-1 px-4 py-3 text-sm text-gray-800 outline-none overflow-y-auto"
-          style={{ minHeight: 200, lineHeight: 1.7 }}
+          className="flex-1 px-3 sm:px-4 py-3 text-sm text-gray-800 outline-none overflow-y-auto"
+          style={{ minHeight: 160, lineHeight: 1.7 }}
         />
 
         {/* Status bar */}
@@ -665,13 +703,13 @@ function AssignToDropdown({ selected, setSelected, staff }: {
     <div ref={boxRef} style={{ position: "relative" }}>
       <div
         onMouseDown={e => { e.stopPropagation(); setOpen(v => !v); setSearch(""); }}
-        className="w-full min-h-8 border rounded-sm px-2 py-1 text-xs flex flex-wrap gap-1 items-center cursor-pointer bg-white select-none"
+        className="w-full min-h-9 border rounded-sm px-2 py-1.5 text-xs flex flex-wrap gap-1 items-center cursor-pointer bg-white select-none"
         style={{ borderColor: open ? MAROON : "#d1d5db" }}
       >
         {selected.length > 0 ? selected.map(a => (
           <span key={a} className="px-2 py-0.5 rounded text-xs flex items-center gap-1 text-white font-medium" style={{ background: MAROON }}>
             {a}
-            <button type="button" onMouseDown={e => { e.stopPropagation(); toggle(a); }} className="hover:opacity-70 font-bold ml-0.5">×</button>
+            <button type="button" onMouseDown={e => { e.stopPropagation(); toggle(a); }} className="hover:opacity-70 font-bold ml-0.5 text-sm leading-none">×</button>
           </span>
         )) : <span className="text-gray-400">Start typing to search...</span>}
         <span className="ml-auto text-gray-400 text-[10px] pl-2 shrink-0">{open ? "▲" : "▼"}</span>
@@ -679,11 +717,11 @@ function AssignToDropdown({ selected, setSelected, staff }: {
       {open && (
         <div className="absolute z-50 w-full bg-white border border-gray-200 shadow-lg rounded-sm mt-0.5 max-h-52 overflow-y-auto">
           <div className="px-2 pt-2 pb-1 border-b border-gray-100 sticky top-0 bg-white">
-            <input autoFocus value={search} onChange={e => setSearch(e.target.value)} placeholder="Search..." className="w-full h-6 px-2 text-xs border border-gray-200 rounded outline-none focus:border-[#7b1113]" />
+            <input autoFocus value={search} onChange={e => setSearch(e.target.value)} placeholder="Search..." className="w-full h-7 px-2 text-xs border border-gray-200 rounded outline-none focus:border-[#7b1113]" />
           </div>
           {["Everyone"].filter(o => o.toLowerCase().includes(search.toLowerCase())).map(opt => (
             <button key={opt} type="button" onMouseDown={e => { e.preventDefault(); e.stopPropagation(); toggle(opt); }}
-              className="w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-gray-50"
+              className="w-full text-left px-3 py-2.5 text-xs flex items-center justify-between hover:bg-gray-50 min-h-10"
               style={{ color: selected.includes(opt) ? MAROON : "#374151", fontWeight: selected.includes(opt) ? 600 : 400 }}>
               {opt}{selected.includes(opt) && <span style={{ color: MAROON }}>✓</span>}
             </button>
@@ -693,7 +731,7 @@ function AssignToDropdown({ selected, setSelected, staff }: {
               <div className="px-3 pt-2 pb-1 text-[10px] font-bold text-gray-500 uppercase tracking-widest border-t border-gray-100 bg-gray-50">Staff</div>
               {filtStaff.map(s => (
                 <button key={s.id} type="button" onMouseDown={e => { e.preventDefault(); e.stopPropagation(); toggle(s.name); }}
-                  className="w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-gray-50"
+                  className="w-full text-left px-3 py-2.5 text-xs flex items-center justify-between hover:bg-gray-50 min-h-10"
                   style={{ color: selected.includes(s.name) ? MAROON : "#374151", fontWeight: selected.includes(s.name) ? 600 : 400 }}>
                   {s.name}{selected.includes(s.name) && <span style={{ color: MAROON }}>✓</span>}
                 </button>
@@ -712,10 +750,39 @@ function QuestionTypeMenu({ current, onChange }: { current: QuestionType; onChan
   const ref = useRef<HTMLDivElement>(null);
   useOnClickOutside(ref, () => setOpen(false));
   const cur = ALL_Q_TYPES.find(t => t.value === current);
+
+  // On mobile, render as a native select for better UX
+  const isMobile = useIsMobile(640);
+  if (isMobile) {
+    return (
+      <select
+        value={current}
+        onChange={e => {
+          const t = e.target.value as QuestionType;
+          const defaults: Partial<FormQuestion> = {};
+          if (["multiple_choice", "checkboxes", "dropdown"].includes(t)) defaults.options = ["Option 1", "Option 2", "Option 3"];
+          if (["mc_grid", "checkbox_grid"].includes(t)) { defaults.rows = ["Row 1", "Row 2"]; defaults.columns = ["Column 1", "Column 2"]; }
+          if (t === "linear_scale") { defaults.scaleMin = 1; defaults.scaleMax = 5; }
+          onChange(t);
+        }}
+        className="h-9 px-2 border border-gray-300 rounded text-xs bg-white outline-none min-w-35 max-w-full"
+        style={{ color: MAROON }}
+      >
+        {QUESTION_CATEGORIES.map(cat => (
+          <optgroup key={cat.label} label={cat.label}>
+            {cat.types.map(t => (
+              <option key={t.value} value={t.value}>{t.label}</option>
+            ))}
+          </optgroup>
+        ))}
+      </select>
+    );
+  }
+
   return (
     <div ref={ref} className="relative">
       <button type="button" onClick={() => setOpen(v => !v)}
-        className="h-8 px-2 sm:px-3 border border-gray-300 rounded text-xs bg-white flex items-center gap-1 sm:gap-2 hover:border-gray-400 min-w-32 sm:min-w-44">
+        className="h-8 px-2 sm:px-3 border border-gray-300 rounded text-xs bg-white flex items-center gap-1 sm:gap-2 hover:border-gray-400 min-w-35 sm:min-w-44">
         <span className="text-gray-500">{cur?.icon}</span>
         <span className="flex-1 text-left truncate">{cur?.label}</span>
         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="6 9 12 15 18 9" /></svg>
@@ -727,7 +794,7 @@ function QuestionTypeMenu({ current, onChange }: { current: QuestionType; onChan
               <div className="px-3 pt-2 pb-1 text-[10px] font-bold text-gray-400 uppercase tracking-widest">{cat.label}</div>
               {cat.types.map(t => (
                 <button key={t.value} type="button" onClick={() => { onChange(t.value); setOpen(false); }}
-                  className={`w-full text-left px-3 py-1.5 text-xs flex items-center gap-2 hover:bg-gray-50 ${current === t.value ? "font-medium" : ""}`}
+                  className={`w-full text-left px-3 py-2 text-xs flex items-center gap-2 hover:bg-gray-50 min-h-9 ${current === t.value ? "font-medium" : ""}`}
                   style={{ color: current === t.value ? MAROON : "#374151" }}>
                   <span className="w-5 text-center text-sm">{t.icon}</span>
                   {t.label}
@@ -742,21 +809,20 @@ function QuestionTypeMenu({ current, onChange }: { current: QuestionType; onChan
   );
 }
 
-// ── Question Action Bar — no per-question points ──────────────────────────────
+// ── Question Action Bar ───────────────────────────────────────────────────────
 function QuestionActionBar({ question, isGraded, isSection, onChange, onDuplicate, onDelete, onMoveUp, onMoveDown }: {
   question: FormQuestion; isGraded: boolean; isSection: boolean;
   onChange: (q: FormQuestion) => void; onDuplicate: () => void; onDelete: () => void;
   onMoveUp: () => void; onMoveDown: () => void;
 }) {
-  // isGraded kept in signature for compatibility but no per-question pts UI
   void isGraded;
   return (
-    <div className="flex items-center justify-end gap-1 px-3 sm:px-6 py-3 border-t border-gray-100 flex-wrap">
-      <button type="button" onClick={onMoveUp} className="w-7 h-7 flex items-center justify-center rounded hover:bg-gray-100 text-gray-400 text-xs">↑</button>
-      <button type="button" onClick={onMoveDown} className="w-7 h-7 flex items-center justify-center rounded hover:bg-gray-100 text-gray-400 text-xs">↓</button>
+    <div className="flex items-center justify-end gap-1 px-3 sm:px-6 py-2.5 sm:py-3 border-t border-gray-100 flex-wrap">
+      <button type="button" onClick={onMoveUp} className="w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 text-gray-400 text-sm">↑</button>
+      <button type="button" onClick={onMoveDown} className="w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 text-gray-400 text-sm">↓</button>
       <div className="w-px h-5 bg-gray-200 mx-1" />
-      <button type="button" onClick={onDuplicate} className="w-7 h-7 flex items-center justify-center rounded hover:bg-gray-100 text-gray-400">
-        <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+      <button type="button" onClick={onDuplicate} className="w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 text-gray-400">
+        <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
           <rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" strokeLinecap="round" />
         </svg>
       </button>
@@ -765,15 +831,15 @@ function QuestionActionBar({ question, isGraded, isSection, onChange, onDuplicat
           <div className="w-px h-5 bg-gray-200 mx-1" />
           <span className="text-xs text-gray-500 mr-1">Required</span>
           <button type="button" onClick={() => onChange({ ...question, required: !question.required })}
-            className="relative inline-flex h-5 w-9 items-center rounded-full transition-colors"
+            className="relative inline-flex h-5 w-9 items-center rounded-full transition-colors shrink-0"
             style={{ background: question.required ? MAROON : "#d1d5db" }}>
             <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${question.required ? "translate-x-4" : "translate-x-1"}`} />
           </button>
         </>
       )}
       <div className="w-px h-5 bg-gray-200 mx-1" />
-      <button type="button" onClick={onDelete} className="w-7 h-7 flex items-center justify-center rounded hover:bg-red-50 text-gray-400 hover:text-red-500">
-        <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+      <button type="button" onClick={onDelete} className="w-8 h-8 flex items-center justify-center rounded hover:bg-red-50 text-gray-400 hover:text-red-500">
+        <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
           <polyline points="3 6 5 6 21 6" strokeLinecap="round" /><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" strokeLinecap="round" />
           <path d="M10 11v6M14 11v6" strokeLinecap="round" /><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" strokeLinecap="round" />
         </svg>
@@ -808,11 +874,11 @@ function QuestionCard({ question, isActive, isGraded, onActivate, onChange, onDu
       <div onClick={!isActive ? onActivate : undefined}
         className={`relative bg-white rounded-lg border-t-4 shadow-sm transition-all ${isActive ? "shadow-md" : "cursor-pointer hover:shadow-md"}`}
         style={{ borderTopColor: MAROON, borderLeft: isActive ? `3px solid ${MAROON}` : "1px solid #e5e7eb", borderRight: "1px solid #e5e7eb", borderBottom: "1px solid #e5e7eb" }}>
-        <div className="px-4 sm:px-6 py-5">
+        <div className="px-4 sm:px-6 py-4 sm:py-5">
           {isActive ? (
             <div className="space-y-3">
               <input value={question.sectionTitle ?? ""} onChange={e => onChange({ ...question, sectionTitle: e.target.value })} placeholder="Section title"
-                className="w-full text-lg sm:text-xl font-medium border-0 border-b-2 border-gray-300 pb-1 outline-none bg-transparent" style={{ borderBottomColor: MAROON }} />
+                className="w-full text-base sm:text-xl font-medium border-0 border-b-2 border-gray-300 pb-1 outline-none bg-transparent" style={{ borderBottomColor: MAROON }} />
               <input value={question.sectionDescription ?? ""} onChange={e => onChange({ ...question, sectionDescription: e.target.value })} placeholder="Section description (optional)"
                 className="w-full text-sm border-0 border-b border-gray-200 pb-1 outline-none bg-transparent text-gray-600" />
             </div>
@@ -833,55 +899,66 @@ function QuestionCard({ question, isActive, isGraded, onActivate, onChange, onDu
     <div onClick={!isActive ? onActivate : undefined}
       className={`relative bg-white rounded-lg shadow-sm transition-all ${isActive ? "shadow-md" : "cursor-pointer hover:shadow-md"}`}
       style={{ border: "1px solid #e5e7eb", borderLeft: isActive ? `3px solid ${MAROON}` : "1px solid #e5e7eb" }}>
-      <div className="px-4 sm:px-6 pt-5 pb-3">
-        <div className="flex items-start gap-2 sm:gap-3 mb-4">
-          <div className="flex-1 min-w-0">
+      <div className="px-3 sm:px-6 pt-4 sm:pt-5 pb-3">
+        {/* Question header row */}
+        <div className={`flex items-start gap-2 mb-3 sm:mb-4 ${isActive ? "flex-col sm:flex-row" : ""}`}>
+          <div className="flex-1 min-w-0 w-full">
             {isActive ? (
               <input value={question.question} onChange={e => onChange({ ...question, question: e.target.value })} placeholder="Question"
                 className="w-full text-sm bg-gray-50 border-0 border-b-2 px-3 py-2 outline-none rounded-t" style={{ borderBottomColor: MAROON }} />
             ) : (
-              <div className="text-sm font-medium text-gray-800">
+              <div className="text-sm font-medium text-gray-800 pr-2">
                 {question.question || <span className="text-gray-400 italic">Question</span>}
                 {question.required && <span className="ml-1" style={{ color: MAROON }}>*</span>}
               </div>
             )}
           </div>
-          {isActive && (
-            <QuestionTypeMenu current={question.type} onChange={t => {
-              const defaults: Partial<FormQuestion> = {};
-              if (["multiple_choice", "checkboxes", "dropdown"].includes(t)) defaults.options = ["Option 1", "Option 2", "Option 3"];
-              if (["mc_grid", "checkbox_grid"].includes(t)) { defaults.rows = ["Row 1", "Row 2"]; defaults.columns = ["Column 1", "Column 2"]; }
-              if (t === "linear_scale") { defaults.scaleMin = 1; defaults.scaleMax = 5; }
-              onChange({ ...question, type: t, ...defaults });
-            }} />
+          {isActive ? (
+            <div className="w-full sm:w-auto">
+              <QuestionTypeMenu current={question.type} onChange={t => {
+                const defaults: Partial<FormQuestion> = {};
+                if (["multiple_choice", "checkboxes", "dropdown"].includes(t)) defaults.options = ["Option 1", "Option 2", "Option 3"];
+                if (["mc_grid", "checkbox_grid"].includes(t)) { defaults.rows = ["Row 1", "Row 2"]; defaults.columns = ["Column 1", "Column 2"]; }
+                if (t === "linear_scale") { defaults.scaleMin = 1; defaults.scaleMax = 5; }
+                onChange({ ...question, type: t, ...defaults });
+              }} />
+            </div>
+          ) : (
+            <div className="text-[10px] text-gray-400 shrink-0 mt-0.5 whitespace-nowrap">{getTypeLabel(question.type)}</div>
           )}
-          {!isActive && <div className="text-[10px] text-gray-400 shrink-0 mt-0.5">{getTypeLabel(question.type)}</div>}
         </div>
+
         {isActive && (
           <input value={question.description ?? ""} onChange={e => onChange({ ...question, description: e.target.value })} placeholder="Description (optional)"
-            className="w-full text-xs text-gray-500 border-0 border-b border-gray-200 pb-1 mb-4 outline-none bg-transparent" />
+            className="w-full text-xs text-gray-500 border-0 border-b border-gray-200 pb-1 mb-3 sm:mb-4 outline-none bg-transparent" />
         )}
+
         {["multiple_choice", "checkboxes", "dropdown"].includes(question.type) && (
           <div className="space-y-2">
             {(question.options ?? []).map((opt, idx) => (
               <div key={idx} className="flex items-center gap-2">
-                <span className="shrink-0 text-gray-400">{question.type === "multiple_choice" ? "◉" : question.type === "checkboxes" ? "☑" : `${idx + 1}.`}</span>
+                <span className="shrink-0 text-gray-400 text-sm">{question.type === "multiple_choice" ? "◉" : question.type === "checkboxes" ? "☑" : `${idx + 1}.`}</span>
                 {isActive ? (
-                  <><input value={opt} onChange={e => updateOptions(idx, e.target.value)} className="flex-1 text-sm border-0 border-b border-gray-300 pb-0.5 outline-none bg-transparent" />
-                    <button type="button" onClick={() => removeOption(idx)} className="w-5 h-5 flex items-center justify-center text-gray-300 hover:text-gray-500 text-sm">×</button></>
+                  <>
+                    <input value={opt} onChange={e => updateOptions(idx, e.target.value)}
+                      className="flex-1 text-sm border-0 border-b border-gray-300 pb-0.5 outline-none bg-transparent min-w-0" />
+                    <button type="button" onClick={() => removeOption(idx)} className="w-6 h-6 flex items-center justify-center text-gray-300 hover:text-gray-500 text-base shrink-0">×</button>
+                  </>
                 ) : <span className="text-sm text-gray-600">{opt}</span>}
               </div>
             ))}
             {isActive && (
               <div className="flex items-center gap-2 mt-1">
-                <span className="text-gray-300 shrink-0">{question.type === "multiple_choice" ? "◉" : question.type === "checkboxes" ? "☑" : `${(question.options?.length ?? 0) + 1}.`}</span>
-                <button type="button" onClick={addOption} className="text-sm text-gray-400 hover:text-gray-600">Add option</button>
+                <span className="text-gray-300 shrink-0 text-sm">{question.type === "multiple_choice" ? "◉" : question.type === "checkboxes" ? "☑" : `${(question.options?.length ?? 0) + 1}.`}</span>
+                <button type="button" onClick={addOption} className="text-sm text-gray-400 hover:text-gray-600 text-left">Add option</button>
               </div>
             )}
           </div>
         )}
+
         {question.type === "short_answer" && <div className="border-b border-dashed border-gray-300 py-1"><span className="text-sm text-gray-300">Short answer text</span></div>}
         {question.type === "paragraph" && <div className="border-b border-dashed border-gray-300 py-2"><span className="text-sm text-gray-300">Long answer text</span></div>}
+
         {question.type === "linear_scale" && (
           <div className="flex items-center gap-2 flex-wrap">
             {Array.from({ length: (question.scaleMax ?? 5) - (question.scaleMin ?? 1) + 1 }, (_, i) => i + (question.scaleMin ?? 1)).map(n => (
@@ -889,34 +966,42 @@ function QuestionCard({ question, isActive, isGraded, onActivate, onChange, onDu
             ))}
           </div>
         )}
+
         {["mc_grid", "checkbox_grid"].includes(question.type) && (
-          <div className="overflow-x-auto">
-            <table className="text-xs border-collapse">
+          <div className="overflow-x-auto -mx-3 sm:mx-0 px-3 sm:px-0">
+            <table className="text-xs border-collapse min-w-full">
               <thead><tr>
-                <th className="w-20 sm:w-24 p-2" />
+                <th className="w-16 sm:w-24 p-1 sm:p-2" />
                 {(question.columns ?? []).map((col, ci) => (
-                  <th key={ci} className="p-2 text-center min-w-14 sm:min-w-16">
-                    {isActive ? <input value={col} onChange={e => updateCol(ci, e.target.value)} className="w-14 sm:w-16 text-center border-0 border-b border-gray-300 outline-none bg-transparent text-xs" /> : col}
+                  <th key={ci} className="p-1 sm:p-2 text-center min-w-15">
+                    {isActive
+                      ? <input value={col} onChange={e => updateCol(ci, e.target.value)} className="w-12 sm:w-16 text-center border-0 border-b border-gray-300 outline-none bg-transparent text-xs" />
+                      : col}
                   </th>
                 ))}
-                {isActive && <th className="p-2"><button type="button" onClick={addCol} className="text-xs text-blue-500 hover:underline">+ Col</button></th>}
+                {isActive && <th className="p-1 sm:p-2"><button type="button" onClick={addCol} className="text-xs text-blue-500 hover:underline whitespace-nowrap">+ Col</button></th>}
               </tr></thead>
               <tbody>
                 {(question.rows ?? []).map((row, ri) => (
                   <tr key={ri} className="border-t border-gray-100">
-                    <td className="p-2">{isActive ? <input value={row} onChange={e => updateRow(ri, e.target.value)} className="w-16 sm:w-20 border-0 border-b border-gray-300 outline-none bg-transparent text-xs" /> : row}</td>
+                    <td className="p-1 sm:p-2">
+                      {isActive
+                        ? <input value={row} onChange={e => updateRow(ri, e.target.value)} className="w-14 sm:w-20 border-0 border-b border-gray-300 outline-none bg-transparent text-xs" />
+                        : row}
+                    </td>
                     {(question.columns ?? []).map((_, ci) => (
-                      <td key={ci} className="p-2 text-center"><div className={`w-4 h-4 mx-auto border-2 border-gray-300 ${question.type === "mc_grid" ? "rounded-full" : "rounded-sm"}`} /></td>
+                      <td key={ci} className="p-1 sm:p-2 text-center"><div className={`w-4 h-4 mx-auto border-2 border-gray-300 ${question.type === "mc_grid" ? "rounded-full" : "rounded-sm"}`} /></td>
                     ))}
                   </tr>
                 ))}
-                {isActive && <tr><td className="p-2"><button type="button" onClick={addRow} className="text-xs text-blue-500 hover:underline">+ Add row</button></td></tr>}
+                {isActive && <tr><td className="p-1 sm:p-2"><button type="button" onClick={addRow} className="text-xs text-blue-500 hover:underline">+ Add row</button></td></tr>}
               </tbody>
             </table>
           </div>
         )}
-        {question.type === "date" && <div className="flex items-center gap-2 text-sm text-gray-400 border-b border-dashed border-gray-300 py-1 w-40 sm:w-48"><span>📅</span> Month / Day / Year</div>}
-        {question.type === "time" && <div className="flex items-center gap-2 text-sm text-gray-400 border-b border-dashed border-gray-300 py-1 w-32 sm:w-36"><span>🕐</span> Time</div>}
+
+        {question.type === "date" && <div className="flex items-center gap-2 text-sm text-gray-400 border-b border-dashed border-gray-300 py-1 max-w-45"><span>📅</span> Month / Day / Year</div>}
+        {question.type === "time" && <div className="flex items-center gap-2 text-sm text-gray-400 border-b border-dashed border-gray-300 py-1 max-w-35"><span>🕐</span> Time</div>}
         {question.type === "file_upload" && <div className="border-2 border-dashed border-gray-300 rounded p-4 text-center"><span className="text-xs text-gray-400">Add File</span></div>}
       </div>
       {isActive && <QuestionActionBar {...actionBarProps} />}
@@ -930,17 +1015,34 @@ function FloatingToolbar({ onAdd }: { onAdd: (type: QuestionType | "section") =>
   const ref = useRef<HTMLDivElement>(null);
   useOnClickOutside(ref, () => setOpen(false));
   const groups = [
-    { group: "Choice", options: [{ label: "Multiple Choice", action: () => onAdd("multiple_choice") }, { label: "Checkboxes", action: () => onAdd("checkboxes") }, { label: "Dropdown", action: () => onAdd("dropdown") }] },
-    { group: "Text", options: [{ label: "Short Answer", action: () => onAdd("short_answer") }, { label: "Paragraph", action: () => onAdd("paragraph") }] },
-    { group: "Scale & Grid", options: [{ label: "Linear Scale", action: () => onAdd("linear_scale") }, { label: "Multiple Choice Grid", action: () => onAdd("mc_grid") }, { label: "Checkbox Grid", action: () => onAdd("checkbox_grid") }] },
-    { group: "Date & Time", options: [{ label: "Date", action: () => onAdd("date") }, { label: "Time", action: () => onAdd("time") }] },
-    { group: "Other", options: [{ label: "File Upload", action: () => onAdd("file_upload") }, { label: "Section Divider", action: () => onAdd("section") }] },
+    { group: "Choice", options: [
+      { label: "Multiple Choice", action: () => onAdd("multiple_choice") },
+      { label: "Checkboxes", action: () => onAdd("checkboxes") },
+      { label: "Dropdown", action: () => onAdd("dropdown") },
+    ]},
+    { group: "Text", options: [
+      { label: "Short Answer", action: () => onAdd("short_answer") },
+      { label: "Paragraph", action: () => onAdd("paragraph") },
+    ]},
+    { group: "Scale & Grid", options: [
+      { label: "Linear Scale", action: () => onAdd("linear_scale") },
+      { label: "Multiple Choice Grid", action: () => onAdd("mc_grid") },
+      { label: "Checkbox Grid", action: () => onAdd("checkbox_grid") },
+    ]},
+    { group: "Date & Time", options: [
+      { label: "Date", action: () => onAdd("date") },
+      { label: "Time", action: () => onAdd("time") },
+    ]},
+    { group: "Other", options: [
+      { label: "File Upload", action: () => onAdd("file_upload") },
+      { label: "Section Divider", action: () => onAdd("section") },
+    ]},
   ];
   return (
-    <div ref={ref} className="fixed right-3 sm:right-8 bottom-20 z-40 flex flex-col items-end gap-2">
+    <div ref={ref} className="fixed right-3 sm:right-8 bottom-18 z-40 flex flex-col items-end gap-2">
       {open && (
-        <div className="bg-white border border-gray-200 rounded-xl shadow-2xl w-52 sm:w-56 overflow-hidden mb-1" style={{ maxHeight: "70vh", overflowY: "auto" }}>
-          <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+        <div className="bg-white border border-gray-200 rounded-xl shadow-2xl w-48 sm:w-56 overflow-hidden mb-1" style={{ maxHeight: "55vh", overflowY: "auto" }}>
+          <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white">
             <span className="text-xs font-semibold text-gray-700">Add Question</span>
             <button type="button" onClick={() => setOpen(false)} className="w-5 h-5 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 text-sm">×</button>
           </div>
@@ -948,7 +1050,8 @@ function FloatingToolbar({ onAdd }: { onAdd: (type: QuestionType | "section") =>
             <div key={g.group}>
               <div className="px-4 pt-3 pb-1 text-[10px] font-bold text-gray-400 uppercase tracking-widest">{g.group}</div>
               {g.options.map(item => (
-                <button key={item.label} type="button" onClick={() => { item.action(); setOpen(false); }} className="w-full text-left px-4 py-2 hover:bg-gray-50 text-xs text-gray-700">{item.label}</button>
+                <button key={item.label} type="button" onClick={() => { item.action(); setOpen(false); }}
+                  className="w-full text-left px-4 py-2.5 hover:bg-gray-50 text-xs text-gray-700 min-h-9">{item.label}</button>
               ))}
             </div>
           ))}
@@ -956,9 +1059,9 @@ function FloatingToolbar({ onAdd }: { onAdd: (type: QuestionType | "section") =>
         </div>
       )}
       <button type="button" onClick={() => setOpen(v => !v)}
-        className="flex items-center gap-2 px-4 h-10 rounded-full text-white text-sm font-medium shadow-lg hover:opacity-90"
+        className="flex items-center gap-2 px-4 h-10 rounded-full text-white text-sm font-medium shadow-lg hover:opacity-90 active:scale-95 transition-transform"
         style={{ background: MAROON }}>
-        {open ? "Close" : "+ Add Question"}
+        {open ? "✕ Close" : "+ Add Question"}
       </button>
     </div>
   );
@@ -970,6 +1073,7 @@ function QuestionsTab({ questions, isGraded, onChange }: {
 }) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const idCounter = useRef(1000);
+
   const newQuestion = (type: QuestionType | "section"): FormQuestion => {
     const id = String(idCounter.current++);
     if (type === "section") return { id, type: "section", question: "", points: 0, required: false, sectionTitle: "New Section", sectionDescription: "" };
@@ -993,9 +1097,9 @@ function QuestionsTab({ questions, isGraded, onChange }: {
           <span>{questions.filter(q => q.type !== "section").length} question(s)</span>
         </div>
       )}
-      <div className="space-y-3 pb-20">
+      <div className="space-y-3 pb-24">
         {questions.length === 0 && (
-          <div className="text-center py-12 sm:py-16 bg-white rounded-lg border border-dashed border-gray-300">
+          <div className="text-center py-10 sm:py-16 bg-white rounded-lg border border-dashed border-gray-300">
             <div className="text-3xl mb-3">📋</div>
             <p className="text-sm text-gray-400 mb-1">No questions yet</p>
             <p className="text-xs text-gray-300">Use the + button to add questions</p>
@@ -1016,15 +1120,15 @@ function QuestionsTab({ questions, isGraded, onChange }: {
 // ── Submission Preview ────────────────────────────────────────────────────────
 function SubmitConfirmationPreview({ message, allowMultiple }: { message: string; allowMultiple: boolean }) {
   return (
-    <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6 sm:p-8 text-center max-w-md mx-auto mt-4 sm:mt-8">
-      <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: "#f0fdf4" }}>
-        <svg width="28" height="28" fill="none" stroke="#16a34a" strokeWidth={2.5} viewBox="0 0 24 24">
+    <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6 sm:p-8 text-center max-w-md mx-auto mt-4 sm:mt-6">
+      <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: "#f0fdf4" }}>
+        <svg width="24" height="24" fill="none" stroke="#16a34a" strokeWidth={2.5} viewBox="0 0 24 24">
           <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </div>
-      <h3 className="text-base font-semibold text-gray-800 mb-2">Your response has been recorded</h3>
-      <p className="text-sm text-gray-500 mb-4">{message || "Thank you for completing this form."}</p>
-      {allowMultiple && <button type="button" className="text-sm hover:underline font-medium" style={{ color: MAROON }}>Submit another response</button>}
+      <h3 className="text-sm sm:text-base font-semibold text-gray-800 mb-2">Your response has been recorded</h3>
+      <p className="text-xs sm:text-sm text-gray-500 mb-4">{message || "Thank you for completing this form."}</p>
+      {allowMultiple && <button type="button" className="text-xs sm:text-sm hover:underline font-medium" style={{ color: MAROON }}>Submit another response</button>}
     </div>
   );
 }
@@ -1064,9 +1168,9 @@ function AvailabilityBanner({ availableFrom, availableFromTime, availableUntil, 
   };
   const cfg = configs[status];
   return (
-    <div className="flex items-center gap-2 px-3 py-2 rounded-md text-xs font-medium mb-4"
+    <div className="flex items-center gap-2 px-3 py-2 rounded-md text-xs font-medium mb-3"
       style={{ background: cfg.bg, border: `1px solid ${cfg.border}`, color: cfg.text }}>
-      <span>{cfg.icon}</span><span>{cfg.msg}</span>
+      <span>{cfg.icon}</span><span className="wrap-break-word">{cfg.msg}</span>
     </div>
   );
 }
@@ -1099,7 +1203,6 @@ export default function AdminCourseFormCreateEditPage() {
   const [formType, setFormType] = useState<FormType>("Survey / Feedback");
   const [assignmentGroup, setAssignmentGroup] = useState("Assignments");
   const [groups, setGroups] = useState<AssignmentGroup[]>([{ id: 1, name: "Assignments" }]);
-  // ▼ points is now ALWAYS visible, not conditional on isGraded
   const [points, setPoints] = useState("0");
   const [confirmationMessage, setConfirmationMessage] = useState("");
   const [allowMultipleResponses, setAllowMultipleResponses] = useState(false);
@@ -1206,6 +1309,7 @@ export default function AdminCourseFormCreateEditPage() {
     setAssignmentGroup(n); setGroupModalOpen(false); setNewGroupName("");
   };
 
+  // ── Date/Time Row (responsive) ────────────────────────────────────────────
   const DateTimeRow = ({ label, date, onDateChange, time, onTimeChange, onClear }: {
     label: string; date: string; onDateChange: (v: string) => void;
     time: string; onTimeChange: (v: string) => void; onClear: () => void;
@@ -1213,9 +1317,11 @@ export default function AdminCourseFormCreateEditPage() {
     <div>
       <p className="text-xs font-medium text-gray-700 mb-1">{label}</p>
       <div className="flex border border-gray-300 rounded-sm overflow-hidden">
-        <input type="date" value={date} onChange={e => onDateChange(e.target.value)} className="flex-1 h-8 border-0 px-2 text-xs outline-none bg-white min-w-0" />
-        <div className="w-px bg-gray-200 self-stretch" />
-        <select value={time} onChange={e => onTimeChange(e.target.value)} className="h-8 border-0 px-1 text-xs bg-white outline-none w-24 shrink-0">
+        <input type="date" value={date} onChange={e => onDateChange(e.target.value)}
+          className="flex-1 h-9 border-0 px-2 text-xs outline-none bg-white min-w-0" />
+        <div className="w-px bg-gray-200 self-stretch shrink-0" />
+        <select value={time} onChange={e => onTimeChange(e.target.value)}
+          className="h-9 border-0 px-1 text-xs bg-white outline-none w-20 sm:w-24 shrink-0">
           <option value="">Time</option>
           {TIME_OPTIONS.map(t => <option key={t}>{t}</option>)}
         </select>
@@ -1226,48 +1332,62 @@ export default function AdminCourseFormCreateEditPage() {
 
   if (!mounted) return null;
 
+  const TABS: { key: TabKey; label: string }[] = [
+    { key: "details", label: "Details" },
+    { key: "questions", label: "Questions" },
+    { key: "responses", label: "After Submission" },
+  ];
+
   return (
     <div className="w-full h-full bg-white flex flex-col" style={{ fontFamily: FONT }} suppressHydrationWarning>
 
-      {/* Top bar */}
-      <div className="flex items-center justify-between px-3 sm:px-6 py-2.5 border-b border-gray-200 bg-white shrink-0">
-        <h1 className="text-sm font-semibold text-gray-800 truncate">
+      {/* ── Top bar ── */}
+      <div className="flex items-center justify-between px-3 sm:px-6 py-2 sm:py-2.5 border-b border-gray-200 bg-white shrink-0 gap-2">
+        <h1 className="text-sm font-semibold text-gray-800 truncate min-w-0">
           {isEditing ? "Edit Form" : "New Form"}
         </h1>
-        <div className="flex items-center gap-3 sm:gap-4 text-xs text-gray-600">
-          {parseFloat(points) > 0 && <span>Points <strong className="text-gray-800">{parseFloat(points)}</strong></span>}
+        <div className="flex items-center gap-2 sm:gap-4 text-xs text-gray-600 shrink-0">
+          {parseFloat(points) > 0 && (
+            <span className="hidden sm:inline">Points <strong className="text-gray-800">{parseFloat(points)}</strong></span>
+          )}
           <div className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded-full border" style={published ? { background: "#22c55e", borderColor: "#22c55e" } : { borderColor: "#9ca3af" }} />
-            {published ? "Published" : "Not Published"}
+            <span className="w-2.5 h-2.5 rounded-full border shrink-0" style={published ? { background: "#22c55e", borderColor: "#22c55e" } : { borderColor: "#9ca3af" }} />
+            <span className="hidden xs:inline">{published ? "Published" : "Unpublished"}</span>
           </div>
         </div>
       </div>
 
-      {/* Tab bar */}
-      <div className="flex items-end border-b border-gray-200 px-3 sm:px-6 bg-white shrink-0 overflow-x-auto">
-        {(["details", "questions", "responses"] as const).map(key => (
-          <button key={key} onClick={() => setActiveTab(key)}
-            className={`px-3 sm:px-4 py-2 text-xs border border-b-0 -mb-px mr-0.5 transition-colors rounded-t capitalize whitespace-nowrap ${activeTab === key ? "bg-white border-gray-200 text-gray-900 font-medium" : "border-transparent text-gray-500 hover:text-gray-700"}`}>
-            {key === "questions" ? (
-              <span className="flex items-center gap-1">
-                Questions
-                {questions.length > 0 && (
-                  <span className="inline-flex items-center justify-center w-4 h-4 rounded-full text-[10px] text-white" style={{ background: MAROON }}>
-                    {questions.filter(q => q.type !== "section").length}
-                  </span>
-                )}
-              </span>
-            ) : key === "responses" ? "After Submission" : "Details"}
-          </button>
-        ))}
+      {/* ── Tab bar (scrollable on mobile) ── */}
+      <div className="border-b border-gray-200 bg-white shrink-0 overflow-x-auto">
+        <div className="flex items-end px-3 sm:px-6 min-w-max">
+          {TABS.map(tab => (
+            <button key={tab.key} onClick={() => setActiveTab(tab.key)}
+              className={`px-3 sm:px-4 py-2.5 text-xs border border-b-0 -mb-px mr-0.5 transition-colors rounded-t whitespace-nowrap ${
+                activeTab === tab.key
+                  ? "bg-white border-gray-200 text-gray-900 font-medium"
+                  : "border-transparent text-gray-500 hover:text-gray-700"
+              }`}>
+              {tab.key === "questions" ? (
+                <span className="flex items-center gap-1">
+                  Questions
+                  {questions.length > 0 && (
+                    <span className="inline-flex items-center justify-center w-4 h-4 rounded-full text-[10px] text-white" style={{ background: MAROON }}>
+                      {questions.filter(q => q.type !== "section").length}
+                    </span>
+                  )}
+                </span>
+              ) : tab.label}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Scrollable body */}
-      <div className="flex-1 overflow-y-auto px-3 sm:px-8 py-4 sm:py-5">
+      {/* ── Scrollable body ── */}
+      <div className="flex-1 overflow-y-auto px-3 sm:px-8 py-4">
 
-        {/* ── DETAILS ── */}
+        {/* ── DETAILS TAB ── */}
         {activeTab === "details" && (
-          <>
+          <div className="max-w-2xl w-full mx-auto sm:mx-0">
             {/* Title */}
             <div className="mb-4">
               <label className="text-xs text-gray-500 block mb-1">Form Title <span className="text-red-500">*</span></label>
@@ -1275,95 +1395,85 @@ export default function AdminCourseFormCreateEditPage() {
                 className="w-full h-9 border rounded-sm px-3 text-sm outline-none" style={{ borderColor: MAROON }} />
             </div>
 
-            {/* ▼ RICH TEXT EDITOR replaces plain textarea */}
-            <div className="mb-6">
+            {/* Description */}
+            <div className="mb-5">
               <label className="text-xs text-gray-500 block mb-1">Form Description / Instructions</label>
-              <RichTextEditor
-                onChange={setDescription}
-                placeholder="Form description or instructions..."
-                initialHtml={initialDescription}
-              />
+              <RichTextEditor onChange={setDescription} placeholder="Form description or instructions..." initialHtml={initialDescription} />
             </div>
 
-            <div className="w-full max-w-2xl">
-              <div className="space-y-4">
-                {/* Form Type */}
-                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4">
-                  <label className="text-xs text-gray-700 font-medium sm:w-36 sm:text-right shrink-0">Form Type</label>
-                  <select value={formType} onChange={e => setFormType(e.target.value as FormType)}
-                    className="h-8 border border-gray-300 rounded-sm px-3 text-xs w-full sm:w-72 bg-white outline-none focus:border-[#7b1113]">
-                    <option>Survey / Feedback</option>
-                    <option>Evaluation</option>
-                    <option>Registration Form</option>
-                    <option>Graded Assessment</option>
-                  </select>
-                </div>
+            {/* Form fields */}
+            <div className="space-y-4">
+              {/* Form Type */}
+              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4">
+                <label className="text-xs text-gray-700 font-medium sm:w-36 sm:text-right shrink-0">Form Type</label>
+                <select value={formType} onChange={e => setFormType(e.target.value as FormType)}
+                  className="h-9 border border-gray-300 rounded-sm px-3 text-xs w-full sm:w-72 bg-white outline-none focus:border-[#7b1113]">
+                  <option>Survey / Feedback</option>
+                  <option>Evaluation</option>
+                  <option>Registration Form</option>
+                  <option>Graded Assessment</option>
+                </select>
+              </div>
 
-                {/* Assignment Group */}
-                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4">
-                  <label className="text-xs text-gray-700 font-medium sm:w-36 sm:text-right shrink-0">Assignment Group</label>
-                  <select value={assignmentGroup}
-                    onChange={e => { if (e.target.value === "__create__") { setNewGroupName(""); setGroupModalOpen(true); } else setAssignmentGroup(e.target.value); }}
-                    className="h-8 border border-gray-300 rounded-sm px-3 text-xs w-full sm:w-72 bg-white outline-none focus:border-[#7b1113]">
-                    {groups.map(g => <option key={g.id} value={g.name}>{g.name}</option>)}
-                    <option value="__create__">[ Create Group ]</option>
-                  </select>
-                </div>
+              {/* Assignment Group */}
+              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4">
+                <label className="text-xs text-gray-700 font-medium sm:w-36 sm:text-right shrink-0">Assignment Group</label>
+                <select value={assignmentGroup}
+                  onChange={e => { if (e.target.value === "__create__") { setNewGroupName(""); setGroupModalOpen(true); } else setAssignmentGroup(e.target.value); }}
+                  className="h-9 border border-gray-300 rounded-sm px-3 text-xs w-full sm:w-72 bg-white outline-none focus:border-[#7b1113]">
+                  {groups.map(g => <option key={g.id} value={g.name}>{g.name}</option>)}
+                  <option value="__create__">[ Create Group ]</option>
+                </select>
+              </div>
 
-                {/* ▼ Points — ALWAYS visible, not just when isGraded */}
-                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4">
-                  <label className="text-xs text-gray-700 font-medium sm:w-36 sm:text-right shrink-0">Points</label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="number"
-                      min={0}
-                      value={points}
-                      onChange={e => setPoints(e.target.value)}
-                      placeholder="0"
-                      className="h-8 border border-gray-300 rounded-sm px-3 text-xs w-32 outline-none focus:border-[#7b1113]"
-                    />
-                    <span className="text-xs text-gray-500">pts total</span>
+              {/* Points */}
+              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4">
+                <label className="text-xs text-gray-700 font-medium sm:w-36 sm:text-right shrink-0">Points</label>
+                <div className="flex items-center gap-2">
+                  <input type="number" min={0} value={points} onChange={e => setPoints(e.target.value)}
+                    placeholder="0" className="h-9 border border-gray-300 rounded-sm px-3 text-xs w-28 sm:w-32 outline-none focus:border-[#7b1113]" />
+                  <span className="text-xs text-gray-500">pts total</span>
+                </div>
+              </div>
+
+              {/* Assign section */}
+              <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-4">
+                <label className="text-xs text-gray-700 font-medium sm:w-36 sm:text-right sm:pt-2 shrink-0">Assign</label>
+                <div className="border border-gray-200 rounded-sm p-3 w-full space-y-3">
+                  <div>
+                    <p className="text-xs font-medium text-gray-700 mb-1">Assign To</p>
+                    <AssignToDropdown selected={assignTo} setSelected={setAssignTo} staff={staff} />
                   </div>
-                </div>
-
-                {/* Assign */}
-                <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-4">
-                  <label className="text-xs text-gray-700 font-medium sm:w-36 sm:text-right sm:pt-2 shrink-0">Assign</label>
-                  <div className="border border-gray-200 rounded-sm p-3 w-full sm:max-w-lg space-y-3">
-                    <div>
-                      <p className="text-xs font-medium text-gray-700 mb-1">Assign To</p>
-                      <AssignToDropdown selected={assignTo} setSelected={setAssignTo} staff={staff} />
-                    </div>
-                    <AvailabilityBanner availableFrom={availableFrom} availableFromTime={availableFromTime} availableUntil={availableUntil} availableUntilTime={availableUntilTime} />
-                    <DateTimeRow label="Due Date" date={dueDate} onDateChange={setDueDate} time={dueTime} onTimeChange={setDueTime} onClear={() => { setDueDate(""); setDueTime(""); }} />
-                    <DateTimeRow label="Available From" date={availableFrom} onDateChange={setAvailableFrom} time={availableFromTime} onTimeChange={setAvailableFromTime} onClear={() => { setAvailableFrom(""); setAvailableFromTime(""); }} />
-                    <DateTimeRow label="Until" date={availableUntil} onDateChange={setAvailableUntil} time={availableUntilTime} onTimeChange={setAvailableUntilTime} onClear={() => { setAvailableUntil(""); setAvailableUntilTime(""); }} />
-                    <div className="bg-blue-50 border border-blue-100 rounded p-2 text-[10px] text-blue-700 leading-relaxed">
-                      <strong>Note:</strong> &ldquo;Available From&rdquo; controls when respondents can start answering. The form is always <em>visible</em> but responses are only accepted within the available window.
-                    </div>
+                  <AvailabilityBanner availableFrom={availableFrom} availableFromTime={availableFromTime} availableUntil={availableUntil} availableUntilTime={availableUntilTime} />
+                  <DateTimeRow label="Due Date" date={dueDate} onDateChange={setDueDate} time={dueTime} onTimeChange={setDueTime} onClear={() => { setDueDate(""); setDueTime(""); }} />
+                  <DateTimeRow label="Available From" date={availableFrom} onDateChange={setAvailableFrom} time={availableFromTime} onTimeChange={setAvailableFromTime} onClear={() => { setAvailableFrom(""); setAvailableFromTime(""); }} />
+                  <DateTimeRow label="Until" date={availableUntil} onDateChange={setAvailableUntil} time={availableUntilTime} onTimeChange={setAvailableUntilTime} onClear={() => { setAvailableUntil(""); setAvailableUntilTime(""); }} />
+                  <div className="bg-blue-50 border border-blue-100 rounded p-2 text-[10px] text-blue-700 leading-relaxed">
+                    <strong>Note:</strong> &ldquo;Available From&rdquo; controls when respondents can start answering. The form is always <em>visible</em> but responses are only accepted within the available window.
                   </div>
                 </div>
               </div>
             </div>
-          </>
+          </div>
         )}
 
-        {/* ── QUESTIONS ── */}
+        {/* ── QUESTIONS TAB ── */}
         {activeTab === "questions" && (
           <QuestionsTab questions={questions} isGraded={isGraded} onChange={setQuestions} />
         )}
 
-        {/* ── AFTER SUBMISSION ── */}
+        {/* ── AFTER SUBMISSION TAB ── */}
         {activeTab === "responses" && (
-          <div className="max-w-lg space-y-5">
+          <div className="max-w-lg w-full mx-auto sm:mx-0 space-y-5">
             <div>
               <label className="text-xs font-medium text-gray-700 block mb-1">Confirmation Message</label>
               <textarea value={confirmationMessage} onChange={e => setConfirmationMessage(e.target.value)}
                 placeholder="Thank you for completing this form." rows={3}
                 className="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:border-[#7b1113] resize-none" />
             </div>
-            <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
-              <input type="checkbox" checked={allowMultipleResponses} onChange={e => setAllowMultipleResponses(e.target.checked)} style={{ accentColor: MAROON }} />
+            <label className="flex items-center gap-2.5 text-xs text-gray-700 cursor-pointer min-h-10">
+              <input type="checkbox" checked={allowMultipleResponses} onChange={e => setAllowMultipleResponses(e.target.checked)}
+                className="w-4 h-4 shrink-0" style={{ accentColor: MAROON }} />
               Show &ldquo;Submit another response&rdquo; button
             </label>
             <div className="border-t border-gray-100 pt-4">
@@ -1382,12 +1492,11 @@ export default function AdminCourseFormCreateEditPage() {
               <div className="text-sm font-semibold text-gray-800">Add Assignment Group</div>
               <button onClick={() => setGroupModalOpen(false)} className="w-6 h-6 flex items-center justify-center border rounded text-sm" style={{ borderColor: MAROON, color: MAROON }}>×</button>
             </div>
-            <div className="px-4 sm:px-6 py-6">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
-                <label className="text-xs text-gray-700 shrink-0">Group Name:</label>
-                <input value={newGroupName} onChange={e => setNewGroupName(e.target.value)} onKeyDown={e => e.key === "Enter" && saveGroup()}
-                  placeholder="e.g., Evaluation Group 1" className="flex-1 w-full h-8 border border-gray-300 px-2 text-xs outline-none focus:border-[#7b1113] rounded-sm" />
-              </div>
+            <div className="px-4 sm:px-6 py-5">
+              <label className="text-xs text-gray-700 block mb-1.5">Group Name</label>
+              <input value={newGroupName} onChange={e => setNewGroupName(e.target.value)} onKeyDown={e => e.key === "Enter" && saveGroup()}
+                placeholder="e.g., Evaluation Group 1"
+                className="w-full h-9 border border-gray-300 px-3 text-xs outline-none focus:border-[#7b1113] rounded-sm" />
             </div>
             <div className="bg-gray-50 border-t border-gray-200 px-4 py-3 flex justify-end gap-2">
               <button onClick={() => setGroupModalOpen(false)} className="h-8 px-4 border border-gray-300 bg-white text-xs text-gray-700 hover:bg-gray-50 rounded">Cancel</button>
@@ -1397,23 +1506,38 @@ export default function AdminCourseFormCreateEditPage() {
         </div>
       )}
 
-      {/* ── Bottom bar ── */}
+      {/* ── Bottom action bar ── */}
       <div className="shrink-0 border-t border-gray-200 bg-white px-3 sm:px-8 py-3 flex items-center justify-between gap-2">
-        <div className="min-w-0">
-          {saveError && <span className="text-xs text-red-600 font-medium">⚠ {saveError}</span>}
+        <div className="min-w-0 flex-1">
+          {saveError && (
+            <span className="text-xs text-red-600 font-medium flex items-center gap-1">
+              <span>⚠</span>
+              <span className="truncate">{saveError}</span>
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <button onClick={() => router.push(`/admin/courses/${courseId}/forms`)} disabled={saving}
-            className="h-8 px-3 sm:px-5 border border-gray-300 bg-white text-xs text-gray-700 rounded hover:bg-gray-50 disabled:opacity-50">
+            className="h-9 px-3 sm:px-5 border border-gray-300 bg-white text-xs text-gray-700 rounded hover:bg-gray-50 disabled:opacity-50 min-w-15">
             Cancel
           </button>
+          {/* Save & Publish: hidden on mobile to save space, shown on sm+ */}
           <button onClick={() => handleSave(true)} disabled={saving}
-            className="h-8 px-3 sm:px-5 border border-gray-300 bg-gray-50 text-xs text-gray-700 rounded hover:bg-gray-100 disabled:opacity-50 hidden sm:block">
-            {saving ? "Saving..." : "Save & Publish"}
+            className="h-9 px-3 sm:px-5 border border-gray-300 bg-gray-50 text-xs text-gray-700 rounded hover:bg-gray-100 disabled:opacity-50 hidden sm:block">
+            {saving ? "Saving…" : "Save & Publish"}
+          </button>
+          {/* On mobile: show a publish icon button */}
+          <button onClick={() => handleSave(true)} disabled={saving}
+            title="Save & Publish"
+            className="h-9 w-9 border border-gray-300 bg-gray-50 text-gray-600 rounded hover:bg-gray-100 disabled:opacity-50 flex sm:hidden items-center justify-center"
+            aria-label="Save & Publish">
+            <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path d="M12 19V5M5 12l7-7 7 7" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
           </button>
           <button onClick={() => handleSave(false)} disabled={saving}
-            style={{ background: MAROON }} className="h-8 px-3 sm:px-5 text-white text-xs rounded hover:opacity-90 disabled:opacity-50">
-            {saving ? "Saving..." : "Save"}
+            style={{ background: MAROON }} className="h-9 px-3 sm:px-5 text-white text-xs rounded hover:opacity-90 disabled:opacity-50 min-w-15">
+            {saving ? "Saving…" : "Save"}
           </button>
         </div>
       </div>
@@ -1422,6 +1546,9 @@ export default function AdminCourseFormCreateEditPage() {
         input[type="date"]::-webkit-calendar-picker-indicator{cursor:pointer;filter:invert(13%) sepia(85%) saturate(2000%) hue-rotate(340deg) brightness(70%);opacity:.7;}
         input[type="date"]::-webkit-calendar-picker-indicator:hover{opacity:1;}
         input[type="date"]{color-scheme:light;accent-color:#7b1113;}
+        @media (max-width:380px){
+          .xs\\:inline { display: inline; }
+        }
       `}</style>
     </div>
   );

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { ChevronDown, ChevronRight, Menu, X } from "lucide-react";
+import { ChevronDown, ChevronRight, Menu, X, ChevronLeft } from "lucide-react";
 
 interface Props {
   courseId:    string;
@@ -56,7 +56,6 @@ export default function CourseLayout({
     const check = () => {
       const mobile = window.innerWidth < 768;
       setIsMobile(mobile);
-      // Auto-collapse sidebar on small desktop (768–1024)
       if (window.innerWidth < 1024 && window.innerWidth >= 768) {
         setSidebarOpen(false);
       }
@@ -130,6 +129,10 @@ export default function CourseLayout({
     router.push(href);
     setMobileNavOpen(false);
   };
+
+  // Derive the section-level href for the active nav item (used in breadcrumb back tap)
+  const activeNavHref = NAV_ITEMS.find(i => i.label === activeItem)?.href(courseId)
+    ?? `/admin/courses/${courseId}/home`;
 
   /* ─────────────────────────────────────────────────────────────────────────
      NAV ITEMS (shared between sidebar and mobile drawer)
@@ -238,49 +241,163 @@ export default function CourseLayout({
   });
 
   /* ─────────────────────────────────────────────────────────────────────────
-     MOBILE: horizontal scrollable tab bar
+     MOBILE: top nav bar (breadcrumb + tabs)
   ───────────────────────────────────────────────────────────────────────── */
-  const MobileTabBar = () => (
-    <div style={{
-      display: "flex",
-      alignItems: "stretch",
-      borderBottom: "1px solid #e5e7eb",
-      background: "#fff",
-      flexShrink: 0,
-      minHeight: 48,
-    }}>
-      {/* Hamburger */}
-      <button
-        type="button"
-        onClick={() => setMobileNavOpen(true)}
-        style={{
-          padding: "0 14px",
-          background: "none",
-          border: "none",
-          borderRight: "1px solid #f0e4e4",
-          cursor: "pointer",
-          flexShrink: 0,
-          color: MAROON,
-          display: "flex",
-          alignItems: "center",
-          minWidth: 48,
-          justifyContent: "center",
-        }}
-        aria-label="Open navigation"
-      >
-        <Menu size={18} />
-      </button>
+  const MobileTopNav = () => (
+    <div style={{ borderBottom: "1px solid #e5e7eb", background: "#fff", flexShrink: 0 }}>
 
-      {/* Scrollable tabs */}
+      {/* ── Breadcrumb row ── */}
+      <div style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 0,
+        padding: "0 4px 0 0",
+        minHeight: 40,
+        borderBottom: "1px solid #f3f4f6",
+      }}>
+        {/* Hamburger */}
+        <button
+          type="button"
+          onClick={() => setMobileNavOpen(true)}
+          style={{
+            width: 44,
+            minWidth: 44,
+            height: 40,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            color: MAROON,
+            flexShrink: 0,
+          }}
+          aria-label="Open navigation"
+        >
+          <Menu size={17} />
+        </button>
+
+        {/* Course name — tappable, navigates to course home */}
+        <button
+          type="button"
+          onClick={() => router.push(`/admin/courses/${courseId}/home`)}
+          style={{
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            fontFamily: FONT,
+            fontSize: 12,
+            fontWeight: 600,
+            color: MAROON,
+            maxWidth: 140,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+            flexShrink: 1,
+            padding: "0 2px",
+          }}
+        >
+          {courseName || "Course"}
+        </button>
+
+        {/* Chevron separator */}
+        <ChevronRight size={13} style={{ color: "#d1d5db", flexShrink: 0, margin: "0 1px" }} />
+
+        {/* Active section — if there's a subItem, this is tappable and goes back to section */}
+        {subItem ? (
+          <>
+            <button
+              type="button"
+              onClick={() => router.push(activeNavHref)}
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                fontFamily: FONT,
+                fontSize: 12,
+                fontWeight: 600,
+                color: MAROON,
+                maxWidth: 100,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                flexShrink: 1,
+                padding: "0 2px",
+              }}
+            >
+              {activeItem}
+            </button>
+            <ChevronRight size={13} style={{ color: "#d1d5db", flexShrink: 0, margin: "0 1px" }} />
+            <span style={{
+              fontFamily: FONT,
+              fontSize: 12,
+              fontWeight: 400,
+              color: "#6b7280",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              flexShrink: 1,
+              flex: 1,
+              padding: "0 2px",
+            }}>
+              {subItem}
+            </span>
+          </>
+        ) : (
+          <span style={{
+            fontFamily: FONT,
+            fontSize: 12,
+            fontWeight: 400,
+            color: "#6b7280",
+            flexShrink: 1,
+            flex: 1,
+            padding: "0 2px",
+          }}>
+            {activeItem}
+          </span>
+        )}
+
+        {/* Back button — only shows when there's a subItem (i.e. we're deep in a section) */}
+        {subItem && (
+          <button
+            type="button"
+            onClick={() => router.push(activeNavHref)}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 3,
+              height: 30,
+              padding: "0 10px 0 6px",
+              marginLeft: "auto",
+              flexShrink: 0,
+              background: "#fef2f2",
+              border: `1px solid #fecaca`,
+              borderRadius: 20,
+              cursor: "pointer",
+              fontFamily: FONT,
+              fontSize: 11,
+              fontWeight: 700,
+              color: MAROON,
+              whiteSpace: "nowrap",
+            }}
+            aria-label={`Back to ${activeItem}`}
+          >
+            <ChevronLeft size={12} />
+            {activeItem}
+          </button>
+        )}
+      </div>
+
+      {/* ── Scrollable tab bar ── */}
       <div
         ref={tabsScrollRef}
         style={{
           display: "flex",
           alignItems: "stretch",
           overflowX: "auto",
-          flex: 1,
           scrollbarWidth: "none",
           WebkitOverflowScrolling: "touch",
+          minHeight: 42,
         }}
         className="hide-scrollbar"
       >
@@ -301,7 +418,7 @@ export default function CourseLayout({
                 cursor: "pointer",
                 fontFamily: FONT,
                 whiteSpace: "nowrap",
-                fontSize: 13,
+                fontSize: 12,
                 fontWeight: isActive ? 700 : 500,
                 color: isActive ? MAROON : "#6b7280",
                 transition: "all .15s",
@@ -323,7 +440,6 @@ export default function CourseLayout({
   ───────────────────────────────────────────────────────────────────────── */
   const MobileDrawer = () => (
     <>
-      {/* Backdrop */}
       <div
         style={{
           position: "fixed", inset: 0, zIndex: 400,
@@ -333,7 +449,6 @@ export default function CourseLayout({
         }}
         onClick={() => setMobileNavOpen(false)}
       />
-      {/* Drawer panel */}
       <div
         ref={mobileDrawerRef}
         style={{
@@ -348,7 +463,6 @@ export default function CourseLayout({
           fontFamily: FONT,
         }}
       >
-        {/* Drawer header */}
         <div style={{
           display: "flex",
           alignItems: "center",
@@ -371,8 +485,7 @@ export default function CourseLayout({
             style={{
               background: "none", border: "none", cursor: "pointer",
               color: "rgba(255,255,255,0.85)", display: "flex",
-              padding: 4, flexShrink: 0,
-              borderRadius: 6,
+              padding: 4, flexShrink: 0, borderRadius: 6,
             }}
             aria-label="Close navigation"
           >
@@ -380,7 +493,6 @@ export default function CourseLayout({
           </button>
         </div>
 
-        {/* Drawer nav */}
         <div style={{ flex: 1, overflowY: "auto", padding: "8px" }}>
           <nav style={{ display: "flex", flexDirection: "column", gap: 2 }}>
             {renderNavItems()}
@@ -411,9 +523,9 @@ export default function CourseLayout({
       {/* ── Main content area ── */}
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
 
-        {/* Mobile: tab bar; Desktop: breadcrumb bar */}
+        {/* Mobile: breadcrumb + tab bar; Desktop: breadcrumb bar */}
         {isMobile ? (
-          <MobileTabBar />
+          <MobileTopNav />
         ) : (
           <div
             className="border-b border-gray-200 flex items-center px-4 shrink-0 gap-2"
@@ -438,7 +550,7 @@ export default function CourseLayout({
             <span className="text-gray-300 text-sm shrink-0">›</span>
             <button
               type="button"
-              onClick={() => router.push(NAV_ITEMS.find(i => i.label === activeItem)?.href(courseId) ?? `/admin/courses/${courseId}/home`)}
+              onClick={() => router.push(activeNavHref)}
               className={[
                 "text-sm transition-colors hover:underline shrink-0",
                 subItem ? "text-[#7b1113] font-semibold" : "text-gray-500",
@@ -449,7 +561,7 @@ export default function CourseLayout({
             {subItem && (
               <>
                 <span className="text-gray-300 text-sm shrink-0">›</span>
-                <span className="text-sm text-gray-700 truncate">{subItem}</span>
+                <span className="text-sm text-gray-500 truncate">{subItem}</span>
               </>
             )}
           </div>
@@ -461,7 +573,7 @@ export default function CourseLayout({
         </div>
       </div>
 
-      {/* Mobile drawer (portal-like, conditionally rendered) */}
+      {/* Mobile drawer */}
       {isMobile && mobileNavOpen && <MobileDrawer />}
     </div>
   );

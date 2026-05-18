@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import {
   RefreshCw, ChevronLeft, Download, Search,
   Calendar, ChevronDown, ChevronUp, X, FileText,
+  ArrowRight,
 } from "lucide-react";
 
 const MAROON = "#7b1113";
@@ -52,6 +53,11 @@ function fmtDateTime(iso: string) {
     " · " +
     d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
   );
+}
+
+function fmtDateShort(iso: string) {
+  const d = new Date(iso);
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
 function fmtAnswerValue(val: string | string[] | null): string {
@@ -115,8 +121,7 @@ function ScoreEditor({
     const parsed = parseFloat(input);
     if (isNaN(parsed) || parsed < 0) { setError("Invalid score."); return; }
     if (totalPoints > 0 && parsed > totalPoints) { setError(`Max is ${totalPoints} pts.`); return; }
-    setSaving(true);
-    setError(null);
+    setSaving(true); setError(null);
     try {
       const res = await fetch(`/api/admin/courses/${courseId}/forms/${formId}/submissions`, {
         method: "PATCH",
@@ -145,7 +150,7 @@ function ScoreEditor({
           step={0.5}
           value={input}
           onChange={e => { setInput(e.target.value); setError(null); setSaved(false); }}
-          className="w-20 h-8 border-2 rounded-lg px-2 text-sm font-black outline-none text-center"
+          className="w-20 h-9 border-2 rounded-lg px-2 text-sm font-black outline-none text-center"
           style={{ borderColor: MAROON, color: MAROON }}
         />
         <span className="text-sm font-bold text-gray-400">
@@ -154,7 +159,7 @@ function ScoreEditor({
         <button
           onClick={handleSave}
           disabled={saving}
-          className="h-8 px-4 rounded-lg text-xs font-black text-white disabled:opacity-60 transition-colors"
+          className="h-9 px-4 rounded-lg text-xs font-black text-white disabled:opacity-60 transition-colors flex-1 sm:flex-none"
           style={{ background: saved ? "#15803d" : MAROON }}
         >
           {saving ? "Saving…" : saved ? "✓ Saved!" : "Save Score"}
@@ -177,25 +182,43 @@ function SubmissionModal({
   formId: string;
   onScoreUpdate: (id: string, score: number) => void;
 }) {
+  // Prevent body scroll on mount
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
+
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
-      onClick={onClose}
-    >
+    <>
+      {/* Backdrop */}
       <div
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[85vh] flex flex-col border border-gray-100 overflow-hidden"
-        onClick={e => e.stopPropagation()}
+        className="fixed inset-0 z-50 bg-black/40"
+        onClick={onClose}
+      />
+
+      {/* Sheet — bottom on mobile, centered modal on sm+ */}
+      <div
+        className="fixed z-50 bg-white flex flex-col border border-gray-100 overflow-hidden
+          /* mobile: bottom sheet */
+          bottom-0 left-0 right-0 rounded-t-2xl max-h-[92dvh]
+          /* sm+: centered modal */
+          sm:inset-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2
+          sm:rounded-2xl sm:shadow-2xl sm:w-full sm:max-w-xl sm:max-h-[85vh]"
         style={{ fontFamily: FONT }}
+        onClick={e => e.stopPropagation()}
       >
+        {/* Mobile drag handle */}
+        <div className="flex justify-center pt-3 sm:hidden shrink-0">
+          <div className="w-10 h-1 rounded-full bg-gray-200" />
+        </div>
+
         {/* Header */}
         <div
-          className="flex items-center justify-between px-6 py-4 border-b border-gray-100 shrink-0"
+          className="flex items-center justify-between px-5 py-3.5 border-b border-gray-100 shrink-0"
           style={{ background: MAROON }}
         >
           <div className="min-w-0">
-            <p className="text-[10px] font-black uppercase tracking-widest text-white/60">
-              Response Detail
-            </p>
+            <p className="text-[10px] font-black uppercase tracking-widest text-white/60">Response Detail</p>
             <p className="text-sm font-bold text-white truncate mt-0.5">{formTitle}</p>
           </div>
           <button
@@ -206,34 +229,36 @@ function SubmissionModal({
           </button>
         </div>
 
-        {/* User info + score editor */}
-        <div className="px-6 py-4 border-b border-gray-100 shrink-0 bg-gray-50">
-          <div className="flex items-center gap-3">
+        {/* User info + score */}
+        <div className="px-5 py-4 border-b border-gray-100 shrink-0 bg-gray-50">
+          <div className="flex items-start gap-3">
             <div
               className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-black shrink-0"
               style={{ background: MAROON }}
             >
               {getInitial(submission.user?.name ?? null, submission.user?.email ?? "?")}
             </div>
-            <div className="min-w-0">
+            <div className="flex-1 min-w-0">
               <p className="text-sm font-bold text-gray-800 truncate">
                 {submission.user?.name ?? "Anonymous"}
               </p>
               <p className="text-xs text-gray-400 truncate">{submission.user?.email ?? "—"}</p>
               {submission.user?.courseRole && (
-                <p className="text-xs font-semibold" style={{ color: MAROON }}>
+                <p className="text-xs font-semibold mt-0.5" style={{ color: MAROON }}>
                   {submission.user.courseRole}
                   {submission.user.section ? ` · ${submission.user.section}` : ""}
                 </p>
               )}
             </div>
-            <div className="ml-auto text-right shrink-0">
+            <div className="text-right shrink-0">
               <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Submitted</p>
-              <p className="text-xs text-gray-600 font-semibold">{fmtDateTime(submission.createdAt)}</p>
+              <p className="text-xs text-gray-600 font-semibold">{fmtDateShort(submission.createdAt)}</p>
+              <p className="text-[10px] text-gray-400">
+                {new Date(submission.createdAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
+              </p>
             </div>
           </div>
 
-          {/* Score editor */}
           <ScoreEditor
             submissionId={submission.id}
             score={submission.score ?? 0}
@@ -244,50 +269,52 @@ function SubmissionModal({
           />
         </div>
 
-        {/* Answers */}
-        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+        {/* Answers — scrollable */}
+        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3 overscroll-contain">
           {!submission.answers || submission.answers.length === 0 ? (
-            <p className="text-sm text-gray-400 text-center py-8">No answers recorded.</p>
+            <p className="text-sm text-gray-400 text-center py-10">No answers recorded.</p>
           ) : (
             submission.answers.map((ans, i) => (
               <div
                 key={ans.questionId ?? i}
                 className="border border-gray-100 rounded-xl p-4 bg-white shadow-sm"
               >
-                <div className="flex items-start justify-between gap-2 mb-2">
-                  <p className="text-xs font-bold text-gray-700 flex-1">
-                    <span className="text-gray-400 mr-1.5 font-mono">{i + 1}.</span>
-                    {ans.question}
-                  </p>
-                </div>
-                <p className="text-sm text-gray-800 pl-5">{fmtAnswerValue(ans.answer)}</p>
+                <p className="text-xs font-bold text-gray-600 mb-2 leading-snug">
+                  <span className="text-gray-400 mr-1.5 font-mono">{i + 1}.</span>
+                  {ans.question}
+                </p>
+                <p className="text-sm text-gray-900 font-medium pl-4 break-words">
+                  {fmtAnswerValue(ans.answer)}
+                </p>
               </div>
             ))
           )}
+          {/* Bottom padding for safe area on mobile */}
+          <div className="h-2" />
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-3 border-t border-gray-100 bg-gray-50 shrink-0 flex justify-between items-center gap-2">
+        <div className="px-5 py-4 border-t border-gray-100 bg-white shrink-0 flex gap-2 pb-safe">
           <button
             onClick={onClose}
-            className="h-8 px-4 border border-gray-200 rounded-lg text-xs font-bold text-gray-600 hover:bg-gray-100 transition-colors"
+            className="flex-1 sm:flex-none h-11 sm:h-9 px-5 border border-gray-200 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-50 transition-colors"
           >
             Close
           </button>
           <button
             onClick={onGrade}
-            className="h-8 px-4 rounded-lg text-xs font-black text-white transition-colors"
+            className="flex-1 sm:flex-none h-11 sm:h-9 px-5 rounded-xl text-sm font-black text-white transition-colors flex items-center justify-center gap-1.5"
             style={{ background: MAROON }}
           >
-            View in Gradebook →
+            Gradebook <ArrowRight size={13} />
           </button>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 
-// ── Submission Row ────────────────────────────────────────────────────────────
+// ── Submission Row — desktop ───────────────────────────────────────────────────
 function SubmissionRow({
   submission, index, onClick,
 }: {
@@ -296,21 +323,18 @@ function SubmissionRow({
   onClick: () => void;
 }) {
   const answerCount = submission.answers?.length ?? 0;
-
   return (
     <div
       onClick={onClick}
-      className="flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 cursor-pointer transition-colors border-b border-gray-100 last:border-0 group"
+      className="hidden sm:flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 cursor-pointer transition-colors border-b border-gray-100 last:border-0 group"
     >
       <span className="text-xs text-gray-300 font-mono w-5 shrink-0 text-right">{index + 1}</span>
-
       <div
         className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-black shrink-0"
         style={{ background: MAROON }}
       >
         {getInitial(submission.user?.name ?? null, submission.user?.email ?? "?")}
       </div>
-
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-gray-800 truncate group-hover:underline">
           {submission.user?.name ?? "Anonymous"}
@@ -323,13 +347,9 @@ function SubmissionRow({
           </p>
         )}
       </div>
-
       {answerCount > 0 && (
-        <span className="hidden sm:inline text-xs text-gray-400 shrink-0">
-          {answerCount} answer{answerCount !== 1 ? "s" : ""}
-        </span>
+        <span className="text-xs text-gray-400 shrink-0">{answerCount} ans</span>
       )}
-
       {submission.score !== null && submission.score !== undefined && (
         <span
           className="text-xs font-bold px-2 py-0.5 rounded-full shrink-0"
@@ -338,13 +358,71 @@ function SubmissionRow({
           {submission.score}/{submission.totalPoints ?? "?"} pts
         </span>
       )}
-
-      <div className="hidden sm:flex items-center gap-1 text-xs text-gray-400 shrink-0">
+      <div className="flex items-center gap-1 text-xs text-gray-400 shrink-0">
         <Calendar size={11} />
         {fmtDateTime(submission.createdAt)}
       </div>
-
       <ChevronDown size={13} className="text-gray-300 group-hover:text-gray-500 shrink-0 -rotate-90" />
+    </div>
+  );
+}
+
+// ── Submission Card — mobile ───────────────────────────────────────────────────
+function SubmissionCard({
+  submission, index, onClick,
+}: {
+  submission: Submission;
+  index: number;
+  onClick: () => void;
+}) {
+  const answerCount = submission.answers?.length ?? 0;
+  return (
+    <div
+      onClick={onClick}
+      className="sm:hidden flex items-center gap-3 px-4 py-3.5 border-b border-gray-100 last:border-0 active:bg-gray-50 cursor-pointer transition-colors"
+    >
+      {/* Avatar */}
+      <div
+        className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-black shrink-0"
+        style={{ background: MAROON }}
+      >
+        {getInitial(submission.user?.name ?? null, submission.user?.email ?? "?")}
+      </div>
+
+      {/* Info */}
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold text-gray-800 truncate">
+          {submission.user?.name ?? "Anonymous"}
+        </p>
+        <p className="text-xs text-gray-400 truncate">{submission.user?.email ?? "—"}</p>
+        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+          {submission.user?.courseRole && (
+            <span className="text-[10px] font-bold" style={{ color: MAROON }}>
+              {submission.user.courseRole}
+              {submission.user.section ? ` · ${submission.user.section}` : ""}
+            </span>
+          )}
+          <span className="text-[10px] text-gray-400 flex items-center gap-0.5">
+            <Calendar size={9} /> {fmtDateShort(submission.createdAt)}
+          </span>
+          {answerCount > 0 && (
+            <span className="text-[10px] text-gray-400">{answerCount} answers</span>
+          )}
+        </div>
+      </div>
+
+      {/* Score badge + chevron */}
+      <div className="flex flex-col items-end gap-1.5 shrink-0">
+        {submission.score !== null && submission.score !== undefined && (
+          <span
+            className="text-[11px] font-black px-2 py-0.5 rounded-full"
+            style={{ background: "#fef2f2", color: MAROON }}
+          >
+            {submission.score}/{submission.totalPoints ?? "?"} pts
+          </span>
+        )}
+        <ChevronDown size={13} className="text-gray-300 -rotate-90" />
+      </div>
     </div>
   );
 }
@@ -375,6 +453,7 @@ export default function AdminCourseFormResponsesPage({
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Submission | null>(null);
   const [sortDir, setSortDir] = useState<"desc" | "asc">("desc");
+  const [showSearch, setShowSearch] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -401,12 +480,8 @@ export default function AdminCourseFormResponsesPage({
   };
 
   const handleScoreUpdate = (submissionId: string, newScore: number) => {
-    setSubmissions(prev =>
-      prev.map(s => s.id === submissionId ? { ...s, score: newScore } : s)
-    );
-    setSelected(prev =>
-      prev?.id === submissionId ? { ...prev, score: newScore } : prev
-    );
+    setSubmissions(prev => prev.map(s => s.id === submissionId ? { ...s, score: newScore } : s));
+    setSelected(prev => prev?.id === submissionId ? { ...prev, score: newScore } : prev);
   };
 
   const filtered = submissions
@@ -424,24 +499,38 @@ export default function AdminCourseFormResponsesPage({
 
   const formTitle = form?.title ?? "Form";
   const isGraded = form?.formType === "Graded Assessment";
+  const avgScore = isGraded && submissions.length
+    ? (submissions.reduce((s, sub) => s + (sub.score ?? 0), 0) / submissions.length).toFixed(1)
+    : null;
 
   return (
     <div className="flex flex-col h-full bg-white" style={{ fontFamily: FONT }}>
 
       {/* ── Header ── */}
-      <div className="border-b border-gray-200 px-4 sm:px-6 py-3 flex items-center gap-3 shrink-0 bg-white">
+      <div className="border-b border-gray-200 px-3 sm:px-6 py-3 flex items-center gap-2 sm:gap-3 shrink-0 bg-white">
         <button
           onClick={() => router.push(`/admin/courses/${courseId}/forms/${formId}`)}
-          className="flex items-center gap-1 text-xs font-bold hover:underline shrink-0"
+          className="flex items-center gap-1 text-xs font-bold hover:underline shrink-0 py-1"
           style={{ color: MAROON }}
         >
-          <ChevronLeft size={13} /> Back
+          <ChevronLeft size={14} />
+          <span className="hidden sm:inline">Back</span>
         </button>
+
         <div className="flex-1 min-w-0">
-          <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Responses</p>
-          <p className="text-sm font-bold text-gray-800 truncate">{formTitle}</p>
+          <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold leading-none mb-0.5">Responses</p>
+          <p className="text-sm font-bold text-gray-800 truncate leading-tight">{formTitle}</p>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+
+        <div className="flex items-center gap-1.5 shrink-0">
+          {/* Mobile search toggle */}
+          <button
+            onClick={() => setShowSearch(s => !s)}
+            className="sm:hidden w-8 h-8 flex items-center justify-center border border-gray-200 rounded-lg text-gray-500 hover:bg-gray-50 transition-colors"
+          >
+            {showSearch ? <X size={14} /> : <Search size={14} />}
+          </button>
+
           <button
             onClick={handleRefresh}
             className="w-8 h-8 flex items-center justify-center border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-400 transition-colors"
@@ -452,117 +541,151 @@ export default function AdminCourseFormResponsesPage({
           <button
             onClick={() => exportCSV(filtered, formTitle)}
             disabled={!filtered.length}
-            className="flex items-center gap-1.5 h-8 px-3 border border-gray-200 rounded-lg text-xs font-bold text-gray-600 hover:bg-gray-50 disabled:opacity-40 transition-colors"
+            className="flex items-center gap-1.5 h-8 px-2 sm:px-3 border border-gray-200 rounded-lg text-xs font-bold text-gray-600 hover:bg-gray-50 disabled:opacity-40 transition-colors"
           >
-            <Download size={12} /> Export CSV
+            <Download size={12} />
+            <span className="hidden sm:inline">Export CSV</span>
           </button>
         </div>
       </div>
 
-      {/* ── Stats bar ── */}
-      <div className="flex items-center gap-6 px-4 sm:px-6 py-3 border-b border-gray-100 bg-gray-50 shrink-0 overflow-x-auto">
-        <div className="shrink-0">
-          <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Total Responses</p>
-          <p className="text-lg font-black" style={{ color: MAROON }}>{submissions.length}</p>
+      {/* Mobile search bar (expandable) */}
+      {showSearch && (
+        <div className="sm:hidden px-3 py-2 border-b border-gray-100 bg-white shrink-0">
+          <div className="relative">
+            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              autoFocus
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search by name or email..."
+              className="w-full pl-8 pr-8 h-9 border border-gray-200 rounded-lg text-xs outline-none focus:border-gray-400 bg-white"
+            />
+            {search && (
+              <button
+                onClick={() => setSearch("")}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-500"
+              >
+                <X size={12} />
+              </button>
+            )}
+          </div>
         </div>
-        {isGraded && submissions.length > 0 && (
+      )}
+
+      {/* ── Stats bar ── */}
+      <div className="flex items-center gap-4 sm:gap-8 px-4 sm:px-6 py-3 border-b border-gray-100 bg-gray-50 shrink-0 overflow-x-auto">
+        <div className="shrink-0">
+          <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 leading-none mb-1">Total</p>
+          <p className="text-xl font-black leading-none" style={{ color: MAROON }}>{submissions.length}</p>
+        </div>
+        {avgScore !== null && (
           <div className="shrink-0">
-            <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Avg Score</p>
-            <p className="text-lg font-black" style={{ color: MAROON }}>
-              {(submissions.reduce((s, sub) => s + (sub.score ?? 0), 0) / submissions.length).toFixed(1)}
-            </p>
+            <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 leading-none mb-1">Avg Score</p>
+            <p className="text-xl font-black leading-none" style={{ color: MAROON }}>{avgScore}</p>
+          </div>
+        )}
+        {search && (
+          <div className="shrink-0">
+            <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 leading-none mb-1">Results</p>
+            <p className="text-xl font-black leading-none text-gray-600">{filtered.length}</p>
           </div>
         )}
       </div>
 
-      {/* ── Search + sort ── */}
-      <div className="flex items-center gap-2 px-4 sm:px-6 py-3 border-b border-gray-100 shrink-0 flex-wrap">
-        <div className="relative flex-1 min-w-40 max-w-xs">
+      {/* ── Search + sort (desktop only) ── */}
+      <div className="hidden sm:flex items-center gap-2 px-6 py-3 border-b border-gray-100 shrink-0">
+        <div className="relative flex-1 max-w-xs">
           <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search by name or email..."
-            className="w-full pl-8 pr-3 h-8 border border-gray-200 rounded-lg text-xs outline-none focus:border-gray-400 bg-white"
+            className="w-full pl-8 pr-8 h-8 border border-gray-200 rounded-lg text-xs outline-none focus:border-gray-400 bg-white"
           />
           {search && (
             <button
               onClick={() => setSearch("")}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-500"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-500"
             >
               <X size={12} />
             </button>
           )}
         </div>
         <button
-          onClick={() => setSortDir(d => (d === "desc" ? "asc" : "desc"))}
+          onClick={() => setSortDir(d => d === "desc" ? "asc" : "desc")}
           className="flex items-center gap-1 h-8 px-3 border border-gray-200 rounded-lg text-xs font-bold text-gray-500 hover:bg-gray-50 transition-colors shrink-0"
         >
           {sortDir === "desc" ? <ChevronDown size={12} /> : <ChevronUp size={12} />}
           {sortDir === "desc" ? "Newest first" : "Oldest first"}
         </button>
+      </div>
+
+      {/* Mobile sort pill */}
+      <div className="sm:hidden flex items-center gap-2 px-3 py-2 border-b border-gray-100 shrink-0">
+        <button
+          onClick={() => setSortDir(d => d === "desc" ? "asc" : "desc")}
+          className="flex items-center gap-1 h-7 px-2.5 border border-gray-200 rounded-full text-[10px] font-bold text-gray-500 bg-white transition-colors"
+        >
+          {sortDir === "desc" ? <ChevronDown size={11} /> : <ChevronUp size={11} />}
+          {sortDir === "desc" ? "Newest first" : "Oldest first"}
+        </button>
         {search && (
-          <span className="text-xs text-gray-400 shrink-0">
+          <span className="text-[10px] text-gray-400 ml-1">
             {filtered.length} result{filtered.length !== 1 ? "s" : ""}
           </span>
         )}
       </div>
 
       {/* ── Content ── */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto overscroll-contain">
         {loading ? (
           <div className="flex items-center justify-center py-20 gap-2 text-gray-400 text-sm">
             <RefreshCw size={14} className="animate-spin" /> Loading responses...
           </div>
         ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 gap-3">
+          <div className="flex flex-col items-center justify-center py-20 gap-3 px-4">
             <div
               className="w-14 h-14 rounded-full flex items-center justify-center"
               style={{ background: "#fef2f2" }}
             >
               <FileText size={22} style={{ color: MAROON }} />
             </div>
-            <p className="text-sm font-semibold text-gray-500">
+            <p className="text-sm font-semibold text-gray-500 text-center">
               {search ? `No results for "${search}"` : "No responses yet"}
             </p>
             {!search && (
-              <p className="text-xs text-gray-400">Responses will appear here once submitted.</p>
+              <p className="text-xs text-gray-400 text-center">Responses will appear here once submitted.</p>
             )}
           </div>
         ) : (
           <div>
-            <div className="hidden sm:flex items-center gap-3 px-4 py-2 border-b border-gray-100 bg-gray-50">
+            {/* Desktop column headers */}
+            <div className="hidden sm:flex items-center gap-3 px-4 py-2 border-b border-gray-100 bg-gray-50 sticky top-0 z-10">
               <span className="w-5 shrink-0" />
               <span className="w-8 shrink-0" />
-              <span className="flex-1 text-[10px] font-black uppercase tracking-widest text-gray-400">
-                Respondent
-              </span>
-              <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 w-20 text-center">
-                Answers
-              </span>
+              <span className="flex-1 text-[10px] font-black uppercase tracking-widest text-gray-400">Respondent</span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 w-14 text-center">Answers</span>
               {isGraded && (
-                <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 w-20 text-center">
-                  Score
-                </span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 w-20 text-center">Score</span>
               )}
-              <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 w-40 text-right">
-                Submitted
-              </span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 w-44 text-right">Submitted</span>
               <span className="w-4 shrink-0" />
             </div>
+
             {filtered.map((s, i) => (
-              <SubmissionRow
-                key={s.id}
-                submission={s}
-                index={i}
-                onClick={() => setSelected(s)}
-              />
+              <div key={s.id}>
+                {/* Desktop row */}
+                <SubmissionRow submission={s} index={i} onClick={() => setSelected(s)} />
+                {/* Mobile card */}
+                <SubmissionCard submission={s} index={i} onClick={() => setSelected(s)} />
+              </div>
             ))}
           </div>
         )}
       </div>
 
-      {/* ── Detail Modal ── */}
+      {/* ── Detail Modal / Sheet ── */}
       {selected && (
         <SubmissionModal
           submission={selected}
