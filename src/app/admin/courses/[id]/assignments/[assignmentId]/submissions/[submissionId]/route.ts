@@ -15,7 +15,7 @@ async function requireAdmin() {
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: Promise<{ submissionId: string }> }
+  { params }: { params: Promise<{ id: string; assignmentId: string; submissionId: string }> }
 ) {
   if (!await requireAdmin())
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
