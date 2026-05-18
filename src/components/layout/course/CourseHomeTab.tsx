@@ -13,12 +13,8 @@ import type {
   Assignment as BaseAssignment, Announcement, RawAnnouncement,
 } from "./types";
 
-// ✅ Fix: extend the imported Assignment type to include createdById
 type Assignment = BaseAssignment & { createdById?: string; status?: string };
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   PROPS
-───────────────────────────────────────────────────────────────────────────── */
 interface Props {
   course: Course;
   membership: Membership | null;
@@ -34,7 +30,7 @@ interface Props {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   CSS
+   CSS — fully responsive
 ───────────────────────────────────────────────────────────────────────────── */
 const CSS = `
   .ch-root * { box-sizing: border-box; }
@@ -42,7 +38,7 @@ const CSS = `
     font-family: 'Plus Jakarta Sans','Helvetica Neue',Arial,sans-serif;
     color: #111827;
     background: #f8f9fa;
-    min-height: 100vh;
+    min-height: 100%;
   }
 
   @keyframes ch-fade {
@@ -55,105 +51,108 @@ const CSS = `
   .ch-header {
     background: #fff;
     border-bottom: 1px solid #e5e7eb;
-    padding: 20px 28px 16px;
+    padding: 16px 16px 14px;
+  }
+  @media (min-width: 640px) {
+    .ch-header { padding: 20px 28px 16px; }
   }
   .ch-header-top {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    gap: 12px;
+    gap: 10px;
     flex-wrap: wrap;
   }
   .ch-course-name {
-    font-size: 22px;
+    font-size: 17px;
     font-weight: 800;
     color: #111827;
-    margin: 0 0 4px;
+    margin: 0 0 3px;
+    line-height: 1.3;
   }
-  .ch-course-meta {
-    font-size: 12px;
-    color: #6b7280;
-    font-weight: 500;
-  }
+  @media (min-width: 480px) { .ch-course-name { font-size: 20px; } }
+  @media (min-width: 640px) { .ch-course-name { font-size: 22px; } }
+  .ch-course-meta { font-size: 12px; color: #6b7280; font-weight: 500; }
   .ch-role-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    border-radius: 999px;
-    padding: 4px 12px;
-    font-size: 11px;
-    font-weight: 700;
+    display: inline-flex; align-items: center; gap: 5px;
+    border-radius: 999px; padding: 4px 12px;
+    font-size: 11px; font-weight: 700;
+    white-space: nowrap; flex-shrink: 0;
   }
 
-  /* ── View switcher tabs (Head only) ── */
+  /* ── View switcher ── */
   .ch-view-tabs {
     display: flex;
     border-bottom: 2px solid #e5e7eb;
     background: #fff;
-    padding: 0 28px;
+    padding: 0 16px;
+    overflow-x: auto;
+    scrollbar-width: none;
   }
+  .ch-view-tabs::-webkit-scrollbar { display: none; }
+  @media (min-width: 640px) { .ch-view-tabs { padding: 0 28px; } }
   .ch-view-tab {
-    padding: 10px 18px;
-    font-size: 12px;
-    font-weight: 700;
-    color: #6b7280;
-    cursor: pointer;
-    border: none;
-    background: none;
-    border-bottom: 2px solid transparent;
-    margin-bottom: -2px;
+    padding: 10px 14px;
+    font-size: 12px; font-weight: 700; color: #6b7280;
+    cursor: pointer; border: none; background: none;
+    border-bottom: 2px solid transparent; margin-bottom: -2px;
     transition: color .15s, border-color .15s;
-    letter-spacing: .02em;
+    letter-spacing: .02em; white-space: nowrap; flex-shrink: 0;
   }
+  @media (min-width: 640px) { .ch-view-tab { padding: 10px 18px; } }
   .ch-view-tab.active { color: #7b1113; border-bottom-color: #7b1113; }
   .ch-view-tab:hover:not(.active) { color: #374151; }
 
   /* ── Body ── */
-  .ch-body { padding: 20px 28px 32px; max-width: 1080px; }
+  .ch-body { padding: 14px 12px 28px; }
+  @media (min-width: 480px) { .ch-body { padding: 16px 16px 28px; } }
+  @media (min-width: 640px) { .ch-body { padding: 20px 28px 32px; max-width: 1080px; } }
 
   /* ── Section title ── */
   .ch-section-title {
-    font-size: 10px;
-    font-weight: 800;
-    color: #9ca3af;
-    text-transform: uppercase;
-    letter-spacing: .09em;
+    font-size: 10px; font-weight: 800; color: #9ca3af;
+    text-transform: uppercase; letter-spacing: .09em;
     margin: 0 0 10px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    display: flex; align-items: center; gap: 8px;
   }
   .ch-section-title::after { content: ''; flex: 1; height: 1px; background: #e5e7eb; }
 
   /* ── KPI strip ── */
-  .ch-kpi-strip { display: grid; gap: 12px; margin-bottom: 20px; }
+  .ch-kpi-strip { display: grid; gap: 10px; margin-bottom: 18px; }
+  /* Mobile: 2 columns */
+  .ch-kpi-strip { grid-template-columns: repeat(2, 1fr); }
+  /* Tablet+: 4 columns */
+  @media (min-width: 640px) {
+    .ch-kpi-strip { grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+  }
+
   .ch-kpi {
-    background: #fff;
-    border: 1px solid #e5e7eb;
-    border-radius: 12px;
-    padding: 16px 18px;
-    display: flex;
-    align-items: center;
-    gap: 14px;
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
+    padding: 12px 14px; display: flex; align-items: center; gap: 10px;
     transition: box-shadow .18s, border-color .18s;
   }
+  @media (min-width: 640px) { .ch-kpi { padding: 16px 18px; gap: 14px; } }
   .ch-kpi.clickable { cursor: pointer; }
   .ch-kpi.clickable:hover { border-color: #f0c0c0; box-shadow: 0 4px 14px rgba(123,17,19,.08); }
   .ch-kpi-icon {
-    width: 38px; height: 38px; border-radius: 10px; background: #fef2f2;
+    width: 34px; height: 34px; border-radius: 10px; background: #fef2f2;
     display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   }
-  .ch-kpi-val { font-size: 24px; font-weight: 800; color: #7b1113; line-height: 1; }
-  .ch-kpi-lbl { font-size: 11px; font-weight: 600; color: #6b7280; margin-top: 2px; }
+  @media (min-width: 640px) { .ch-kpi-icon { width: 38px; height: 38px; } }
+  .ch-kpi-val { font-size: 20px; font-weight: 800; color: #7b1113; line-height: 1; }
+  @media (min-width: 640px) { .ch-kpi-val { font-size: 24px; } }
+  .ch-kpi-lbl { font-size: 10px; font-weight: 600; color: #6b7280; margin-top: 2px; }
+  @media (min-width: 640px) { .ch-kpi-lbl { font-size: 11px; } }
 
   /* ── Quick actions ── */
   .ch-actions { display: flex; gap: 8px; flex-wrap: wrap; }
   .ch-action-btn {
     display: flex; align-items: center; gap: 7px;
-    padding: 9px 14px; background: #fff; border: 1px solid #e5e7eb;
-    border-radius: 10px; font-size: 12px; font-weight: 700; color: #374151;
-    cursor: pointer; transition: all .15s;
+    padding: 8px 12px; background: #fff; border: 1px solid #e5e7eb;
+    border-radius: 10px; font-size: 11px; font-weight: 700; color: #374151;
+    cursor: pointer; transition: all .15s; white-space: nowrap;
   }
+  @media (min-width: 640px) { .ch-action-btn { font-size: 12px; padding: 9px 14px; } }
   .ch-action-btn:hover { background: #fdf8f8; border-color: #f0c0c0; color: #7b1113; }
 
   /* ── Card ── */
@@ -163,68 +162,78 @@ const CSS = `
   }
   .ch-card-head {
     display: flex; align-items: center; justify-content: space-between;
-    padding: 12px 16px; border-bottom: 1px solid #f3f4f6;
+    padding: 11px 14px; border-bottom: 1px solid #f3f4f6;
   }
+  @media (min-width: 640px) { .ch-card-head { padding: 12px 16px; } }
   .ch-card-title {
-    font-size: 12px; font-weight: 800; color: #374151;
-    display: flex; align-items: center; gap: 7px;
+    font-size: 11px; font-weight: 800; color: #374151;
+    display: flex; align-items: center; gap: 6px;
     text-transform: uppercase; letter-spacing: .06em;
   }
+  @media (min-width: 640px) { .ch-card-title { font-size: 12px; gap: 7px; } }
   .ch-card-link {
     font-size: 11px; font-weight: 700; color: #7b1113;
-    background: none; border: none; cursor: pointer; opacity: .7; transition: opacity .15s;
+    background: none; border: none; cursor: pointer;
+    opacity: .7; transition: opacity .15s; white-space: nowrap;
   }
   .ch-card-link:hover { opacity: 1; text-decoration: underline; }
 
   /* ── Rows ── */
   .ch-row {
-    display: flex; align-items: center; gap: 11px;
-    padding: 10px 16px; border-bottom: 1px solid #f9fafb; transition: background .1s;
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 14px; border-bottom: 1px solid #f9fafb; transition: background .1s;
   }
+  @media (min-width: 640px) { .ch-row { gap: 11px; padding: 10px 16px; } }
   .ch-row:last-child { border-bottom: none; }
   .ch-row.clickable { cursor: pointer; }
   .ch-row.clickable:hover { background: #fafafa; }
   .ch-row-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
   .ch-row-icon {
-    width: 32px; height: 32px; border-radius: 8px;
+    width: 30px; height: 30px; border-radius: 8px;
     display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   }
+  @media (min-width: 640px) { .ch-row-icon { width: 32px; height: 32px; } }
   .ch-row-title {
-    font-size: 13px; font-weight: 600; color: #111827;
+    font-size: 12px; font-weight: 600; color: #111827;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
-  .ch-row-sub { font-size: 11px; color: #9ca3af; margin-top: 1px; }
+  @media (min-width: 640px) { .ch-row-title { font-size: 13px; } }
+  .ch-row-sub { font-size: 10px; color: #9ca3af; margin-top: 1px; }
+  @media (min-width: 640px) { .ch-row-sub { font-size: 11px; } }
   .ch-row-right { margin-left: auto; text-align: right; flex-shrink: 0; }
 
   /* ── Badge ── */
   .ch-badge {
-    font-size: 10px; font-weight: 700; padding: 3px 8px;
+    font-size: 9px; font-weight: 700; padding: 2px 7px;
     border-radius: 20px; display: inline-block; white-space: nowrap;
   }
+  @media (min-width: 640px) { .ch-badge { font-size: 10px; padding: 3px 8px; } }
 
   /* ── Progress bar ── */
   .ch-bar-track { height: 5px; background: #f3f4f6; border-radius: 99px; overflow: hidden; }
   .ch-bar-fill {
     height: 100%; border-radius: 99px;
-    background: linear-gradient(90deg, #7b1113, #b91c1c); transition: width .5s ease;
+    background: linear-gradient(90deg,#7b1113,#b91c1c); transition: width .5s ease;
   }
 
   /* ── Empty state ── */
   .ch-empty {
-    padding: 28px 18px; text-align: center; font-size: 12px; color: #9ca3af;
+    padding: 24px 16px; text-align: center; font-size: 12px; color: #9ca3af;
     display: flex; flex-direction: column; align-items: center; gap: 5px;
   }
 
-  /* ── Two-col grid ── */
-  .ch-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  /* ── Two-col grid — stacks on mobile ── */
+  .ch-grid-2 { display: grid; grid-template-columns: 1fr; gap: 0; }
+  @media (min-width: 768px) { .ch-grid-2 { grid-template-columns: 1fr 1fr; gap: 12px; } }
 
   /* ── Info box ── */
   .ch-infobox {
     background: #fdf8f8; border: 1px solid #f0e4e4; border-radius: 10px;
-    padding: 12px 14px; display: flex; align-items: center; justify-content: space-between;
+    padding: 11px 13px; display: flex; align-items: center; justify-content: space-between;
     font-size: 12px; font-weight: 600; color: #374151;
   }
-  .ch-infobox-val { font-size: 18px; font-weight: 800; color: #7b1113; }
+  .ch-infobox-val { font-size: 16px; font-weight: 800; color: #7b1113; }
+  @media (min-width: 640px) { .ch-infobox-val { font-size: 18px; } }
 `;
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -341,7 +350,6 @@ function ActionBtn({ icon, label, onClick }: {
 /* ─────────────────────────────────────────────────────────────────────────────
    CARDS
 ───────────────────────────────────────────────────────────────────────────── */
-
 function UpcomingDueCard({ assignments, now, courseId, onTabChange, isHead, headManagementView = false, currentUserId = "" }: {
   assignments: Assignment[]; now: Date; courseId: string;
   onTabChange: (t: string) => void; isHead: boolean;
@@ -389,11 +397,11 @@ function UpcomingDueCard({ assignments, now, courseId, onTabChange, isHead, head
               </div>
               <div className="ch-row-right">
                 {submitted ? (
-                  <span className="ch-badge" style={{ background: "#f0fdf4", color: "#15803d", border: "1px solid #bbf7d0" }}>✓ Submitted</span>
+                  <span className="ch-badge" style={{ background: "#f0fdf4", color: "#15803d", border: "1px solid #bbf7d0" }}>✓ Done</span>
                 ) : (
                   <>
                     <div style={{ fontSize: 11, fontWeight: 700, color: urgent ? "#b91c1c" : "#6b7280" }}>
-                      {daysLeft === 0 ? "Due today" : daysLeft === 1 ? "Tomorrow" : `${daysLeft}d left`}
+                      {daysLeft === 0 ? "Today" : daysLeft === 1 ? "Tomorrow" : `${daysLeft}d`}
                     </div>
                     <div style={{ fontSize: 10, color: "#9ca3af" }}>{fmtDue(a.dueDate)}</div>
                   </>
@@ -452,7 +460,7 @@ function MyProgressCard({ assignments, onTabChange }: {
         <span className="ch-card-title"><Icon.Chart /> My Progress</span>
         <button className="ch-card-link" onClick={() => onTabChange("Grades")}>View grades →</button>
       </div>
-      <div style={{ padding: "14px 16px" }}>
+      <div style={{ padding: "12px 14px" }}>
         <ProgressRow label="Submissions" current={submitted.length} total={assignments.length} />
         <ProgressRow label="Overall Grade" current={earnedPts} total={totalPts} unit=" pts" />
         {graded.length > 0 && (
@@ -495,11 +503,11 @@ function MyGroupsCard({ groups, courseId }: { groups: Group[]; courseId: string 
             <div className="ch-row-icon" style={{ background: "#fef2f2" }}>
               <span style={{ color: MAROON }}><Icon.People /></span>
             </div>
-            <div style={{ flex: 1 }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
               <div className="ch-row-title">{g.name}</div>
               <div className="ch-row-sub">{g.memberCount} member{g.memberCount !== 1 ? "s" : ""} · {g.groupSetName}</div>
             </div>
-            <span style={{ fontSize: 11, color: MAROON, fontWeight: 700 }}>Visit →</span>
+            <span style={{ fontSize: 11, color: MAROON, fontWeight: 700, flexShrink: 0 }}>Visit →</span>
           </div>
         ))
       )}
@@ -520,7 +528,7 @@ function UnitOverviewCard({ allAssignments, currentUserId, announcements, groups
       <div className="ch-card-head">
         <span className="ch-card-title"><Icon.Chart /> Unit Overview</span>
       </div>
-      <div style={{ padding: "14px 16px" }}>
+      <div style={{ padding: "12px 14px" }}>
         <ProgressRow label="My Assignments Published" current={myPublished} total={myTotal} />
         <div className="ch-infobox" style={{ marginTop: 10, marginBottom: groups.length > 0 ? 14 : 0 }}>
           <span>Total Announcements</span>
@@ -563,7 +571,7 @@ export default function CourseHomeTab({
   void membership;
   void canManageCourse;
 
-  const [headView, setHeadView] = useState<"admin" | "staff">("admin");
+  const [headView, setHeadView]           = useState<"admin" | "staff">("admin");
   const [assignments, setAssignments]     = useState<Assignment[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [peopleCount, setPeopleCount]     = useState(0);
@@ -586,22 +594,18 @@ export default function CourseHomeTab({
 
   const now = new Date();
 
-  // ── Only count assignments created by the current user for head's KPIs ──
   const myCreatedAssignments = assignments.filter((a) => a.createdById === currentUserId);
   const myPublishedCount     = myCreatedAssignments.filter((a) => a.status === "PUBLISHED").length;
-
-  const totalAssignments = assignments.length;
+  const totalAssignments     = assignments.length;
 
   const ungradedCount = myCreatedAssignments.filter((a) =>
     (a.submissions ?? []).some((s) => s.status === "SUBMITTED" && s.grade == null)
   ).length;
 
-  // ✅ FIX: Due This Week for head = only their own created assignments
   const dueThisWeekHead = myCreatedAssignments.filter((a) =>
     a.dueDate && new Date(a.dueDate) > now && new Date(a.dueDate) <= new Date(now.getTime() + 7 * 86400000)
   ).length;
 
-  // Due This Week for staff/student = all assignments in the unit
   const dueThisWeekAll = assignments.filter((a) =>
     a.dueDate && new Date(a.dueDate) > now && new Date(a.dueDate) <= new Date(now.getTime() + 7 * 86400000)
   ).length;
@@ -633,7 +637,7 @@ export default function CourseHomeTab({
           {/* Header */}
           <div className="ch-header">
             <div className="ch-header-top">
-              <div>
+              <div style={{ flex: 1, minWidth: 0 }}>
                 <h1 className="ch-course-name">{course.name}</h1>
                 <span className="ch-course-meta">{course.code}{course.term ? ` · ${course.term}` : ""}</span>
               </div>
@@ -658,7 +662,7 @@ export default function CourseHomeTab({
           {headView === "admin" && (
             <div className="ch-body">
               <p className="ch-section-title">Unit Overview</p>
-              <div className="ch-kpi-strip" style={{ gridTemplateColumns: "repeat(4, 1fr)" }}>
+              <div className="ch-kpi-strip">
                 <KpiCard
                   value={myCreatedAssignments.length}
                   label={`My Assignments (${myPublishedCount} published)`}
@@ -671,11 +675,11 @@ export default function CourseHomeTab({
               </div>
 
               <p className="ch-section-title">Quick Actions</p>
-              <div className="ch-actions" style={{ marginBottom: 20 }}>
+              <div className="ch-actions" style={{ marginBottom: 18 }}>
                 {canManageAnnouncements && <ActionBtn icon={<Icon.Announcement />} label="Post Announcement" onClick={() => onTabChange("Announcements")} />}
                 {canManageAssignments && <ActionBtn icon={<Icon.Assignment />} label="Create Assignment" onClick={() => onTabChange("Assignments")} />}
                 {canManageAssignments && <ActionBtn icon={<Icon.Form />} label="Create Form" onClick={() => onTabChange("Quizzes")} />}
-{canManageAssignments && <ActionBtn icon={<Icon.Form />} label="Create Form (Survey)" onClick={() => onTabChange("Forms")} />}
+                {canManageAssignments && <ActionBtn icon={<Icon.Form />} label="Create Form (Survey)" onClick={() => onTabChange("Forms")} />}
                 {canManagePeople && <ActionBtn icon={<Icon.People />} label="Manage People" onClick={() => onTabChange("People")} />}
                 <ActionBtn icon={<Icon.Settings />} label="Settings" onClick={() => onTabChange("Settings")} />
               </div>
@@ -710,7 +714,7 @@ export default function CourseHomeTab({
           {headView === "staff" && (
             <div className="ch-body">
               <p className="ch-section-title">My Status</p>
-              <div className="ch-kpi-strip" style={{ gridTemplateColumns: "repeat(4, 1fr)" }}>
+              <div className="ch-kpi-strip">
                 <KpiCard value={`${mySubmitted}/${totalAssignments}`} label="Submitted" icon={<Icon.Assignment />} />
                 <KpiCard value={`${myGradePct}%`} label="Current Grade" icon={<Icon.Chart />} />
                 <KpiCard value={unreadCount} label="Unread Announcements" icon={<Icon.Announcement />} urgent={unreadCount > 0} />
@@ -718,7 +722,7 @@ export default function CourseHomeTab({
               </div>
 
               <p className="ch-section-title">Quick Actions</p>
-              <div className="ch-actions" style={{ marginBottom: 20 }}>
+              <div className="ch-actions" style={{ marginBottom: 18 }}>
                 <ActionBtn icon={<Icon.Grade />} label="View My Grades" onClick={() => onTabChange("Grades")} />
                 <ActionBtn icon={<Icon.Announcement />} label="Announcements" onClick={() => onTabChange("Announcements")} />
                 <ActionBtn icon={<Icon.Assignment />} label="My Assignments" onClick={() => onTabChange("Assignments")} />
@@ -727,13 +731,7 @@ export default function CourseHomeTab({
               <p className="ch-section-title">At a Glance</p>
               <div className="ch-grid-2">
                 <div>
-                  <UpcomingDueCard
-                    assignments={assignments}
-                    now={now}
-                    courseId={courseId}
-                    onTabChange={onTabChange}
-                    isHead={true}
-                  />
+                  <UpcomingDueCard assignments={assignments} now={now} courseId={courseId} onTabChange={onTabChange} isHead={true} />
                   <AnnouncementsCard announcements={announcements} onTabChange={onTabChange} />
                 </div>
                 <div>
@@ -755,7 +753,7 @@ export default function CourseHomeTab({
       <div className="ch-root ch-fade">
         <div className="ch-header">
           <div className="ch-header-top">
-            <div>
+            <div style={{ flex: 1, minWidth: 0 }}>
               <h1 className="ch-course-name">{course.name}</h1>
               <span className="ch-course-meta">{course.code}{course.term ? ` · ${course.term}` : ""}</span>
             </div>
@@ -768,7 +766,7 @@ export default function CourseHomeTab({
 
         <div className="ch-body">
           <p className="ch-section-title">My Status</p>
-          <div className="ch-kpi-strip" style={{ gridTemplateColumns: "repeat(4, 1fr)" }}>
+          <div className="ch-kpi-strip">
             <KpiCard value={`${mySubmitted}/${totalAssignments}`} label="Submitted" icon={<Icon.Assignment />} />
             <KpiCard value={`${myGradePct}%`} label="Current Grade" icon={<Icon.Chart />} />
             <KpiCard value={unreadCount} label="Unread Announcements" icon={<Icon.Announcement />} urgent={unreadCount > 0} />
@@ -776,12 +774,12 @@ export default function CourseHomeTab({
           </div>
 
           <p className="ch-section-title">Quick Actions</p>
-          <div className="ch-actions" style={{ marginBottom: 20 }}>
-  <ActionBtn icon={<Icon.Grade />} label="View Grades" onClick={() => onTabChange("Grades")} />
-  <ActionBtn icon={<Icon.Announcement />} label="Announcements" onClick={() => onTabChange("Announcements")} />
-  <ActionBtn icon={<Icon.Assignment />} label="Assignments" onClick={() => onTabChange("Assignments")} />
-  <ActionBtn icon={<Icon.Form />} label="Form" onClick={() => onTabChange("Form")} />
-</div>
+          <div className="ch-actions" style={{ marginBottom: 18 }}>
+            <ActionBtn icon={<Icon.Grade />} label="View Grades" onClick={() => onTabChange("Grades")} />
+            <ActionBtn icon={<Icon.Announcement />} label="Announcements" onClick={() => onTabChange("Announcements")} />
+            <ActionBtn icon={<Icon.Assignment />} label="Assignments" onClick={() => onTabChange("Assignments")} />
+            <ActionBtn icon={<Icon.Form />} label="Form" onClick={() => onTabChange("Form")} />
+          </div>
 
           <p className="ch-section-title">At a Glance</p>
           <div className="ch-grid-2">

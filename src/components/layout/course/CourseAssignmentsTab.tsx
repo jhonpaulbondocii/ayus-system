@@ -230,11 +230,18 @@ export default function CourseAssignmentsTab({
 
   /* ── HEAD: EDIT ── */
   if (assignView === "edit" && viewTarget) {
+    const normalizedAssignment = {
+      ...viewTarget,
+      description: viewTarget.description ?? undefined,
+      dueDate: viewTarget.dueDate ?? undefined,
+      availableFrom: viewTarget.availableFrom ?? undefined,
+      availableUntil: viewTarget.availableUntil ?? undefined,
+    };
     return (
       <HeadCreateAssignment
         courseId={courseId}
         initialGroup={viewTarget.assignmentGroup}
-        existingAssignment={viewTarget}
+        existingAssignment={normalizedAssignment}
         onCancel={() => {
           setAssignView(viewTarget._assignmentRole === "manager" ? "detail" : "list");
           if (viewTarget._assignmentRole !== "manager") onNavDrillOut?.();

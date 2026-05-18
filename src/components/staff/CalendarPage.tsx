@@ -19,71 +19,86 @@ interface AssignmentType {
   group:       { id: string; name: string } | null;
 }
 
-// ── Color helpers ──────────────────────────────────────────────────────────
-function statusColor(status: string) {
-  switch (status) {
-    case "SUBMITTED": return "bg-blue-50 border-blue-300 text-blue-600";
-    case "GRADED":    return "bg-green-50 border-green-300 text-green-600";
-    case "OVERDUE":   return "bg-red-50 border-red-300 text-red-600";
-    default:          return "bg-amber-50 border-amber-300 text-amber-600";
-  }
+interface CalendarEvent {
+  id:         string;
+  title:      string;
+  date:       string;
+  color:      string;
+  sourceId:   string;
+  sourceName: string;
+  status:     string;
+  detail?:    string | null;
 }
 
+interface UndatedEvent {
+  id:         string;
+  title:      string;
+  color:      string;
+  sourceName: string;
+  sourceId:   string;
+  detail?:    string | null;
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────
 function fmtDate(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
 }
-
 function sameDay(a: Date, b: Date) {
   return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
 }
-
 function getDaysInMonth(y: number, m: number) { return new Date(y, m+1, 0).getDate(); }
 function getFirstDay(y: number, m: number)    { return new Date(y, m, 1).getDay(); }
 function getWeekStart(d: Date) {
-  const w = new Date(d); w.setDate(w.getDate()-w.getDay()); return w;
+  const w = new Date(d); w.setDate(w.getDate() - w.getDay()); return w;
+}
+
+function eventBgStyle(color: string) {
+  return { backgroundColor: color + "22", borderColor: color + "66", color };
 }
 
 // ── Mini Calendar ──────────────────────────────────────────────────────────
-function MiniCalendar({ year, month, today, selected, onPrev, onNext, onSelect, assignments }: {
+function MiniCalendar({ year, month, today, selected, onPrev, onNext, onSelect, events }: {
   year: number; month: number; today: Date; selected: Date;
   onPrev: () => void; onNext: () => void;
-  onSelect: (d: Date) => void; assignments: AssignmentType[];
+  onSelect: (d: Date) => void; events: CalendarEvent[];
 }) {
   const first = getFirstDay(year, month);
   const days  = getDaysInMonth(year, month);
   const cells: (number|null)[] = [...Array(first).fill(null), ...Array.from({length:days},(_,i)=>i+1)];
-  while (cells.length%7!==0) cells.push(null);
+  while (cells.length % 7 !== 0) cells.push(null);
 
-  const hasDue = (day: number|null) => {
+  const hasEvent = (day: number|null) => {
     if (!day) return false;
     const ds = `${year}-${String(month+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
-    return assignments.some(a => a.dueDate.startsWith(ds));
+    return events.some(e => e.date.startsWith(ds));
   };
 
   return (
     <div className="mb-5">
       <div className="flex items-center justify-between mb-2">
-        <button onClick={onPrev} className="text-gray-300 hover:text-gray-600 px-1">‹</button>
-        <span className="text-xs font-semibold text-gray-600">{MONTHS[month]} {year}</span>
-        <button onClick={onNext} className="text-gray-300 hover:text-gray-600 px-1">›</button>
+        <button onClick={onPrev} className="text-gray-400 hover:text-gray-700 px-1 text-lg leading-none">‹</button>
+        <span className="text-xs font-semibold text-gray-700">{MONTHS[month]} {year}</span>
+        <button onClick={onNext} className="text-gray-400 hover:text-gray-700 px-1 text-lg leading-none">›</button>
       </div>
       <div className="grid grid-cols-7 mb-1">
-        {DAYS_MINI.map((d,i) => <div key={i} className="text-center text-xs text-gray-300">{d}</div>)}
+        {DAYS_MINI.map((d,i) => (
+          <div key={i} className="text-center text-[10px] text-gray-400 font-medium">{d}</div>
+        ))}
       </div>
       <div className="grid grid-cols-7">
         {cells.map((day,i) => {
-          const isToday = day!==null && sameDay(new Date(year,month,day), today);
-          const isSel   = day!==null && sameDay(new Date(year,month,day), selected);
+          const isToday = day !== null && sameDay(new Date(year,month,day), today);
+          const isSel   = day !== null && sameDay(new Date(year,month,day), selected);
           return (
-            <div key={i} className="flex flex-col items-center">
+            <div key={i} className="flex flex-col items-center py-0.5">
               <button onClick={() => day && onSelect(new Date(year,month,day))}
-                className={`text-xs w-6 h-6 flex items-center justify-center rounded-full transition-colors
-                  ${!day?"invisible":"hover:bg-gray-100 cursor-pointer"}
-                  ${isToday?"border border-blue-400 text-blue-500 font-bold":"text-gray-600"}
-                  ${isSel&&!isToday?"bg-blue-500 text-white":""}`}>
-                {day||""}
+                className={`text-[11px] w-6 h-6 flex items-center justify-center rounded-full transition-colors
+                  ${!day ? "invisible" : "hover:bg-gray-100 cursor-pointer"}
+                  ${isToday ? "border border-blue-500 text-blue-600 font-bold" : "text-gray-600"}
+                  ${isSel && !isToday ? "bg-blue-500 text-white" : ""}`}>
+                {day || ""}
               </button>
-              {hasDue(day) && <div className="w-1 h-1 rounded-full bg-amber-400 mt-0.5"/>}
+              {hasEvent(day) && <div className="w-1 h-1 rounded-full bg-amber-400 mt-0.5"/>}
             </div>
           );
         })}
@@ -93,51 +108,69 @@ function MiniCalendar({ year, month, today, selected, onPrev, onNext, onSelect, 
 }
 
 // ── Month View ─────────────────────────────────────────────────────────────
-function MonthView({ year, month, today, assignments, onSelect }: {
+function MonthView({ year, month, today, events, hiddenSources, onSelectEvent }: {
   year: number; month: number; today: Date;
-  assignments: AssignmentType[]; onSelect: (a: AssignmentType) => void;
+  events: CalendarEvent[]; hiddenSources: Set<string>;
+  onSelectEvent: (e: CalendarEvent) => void;
 }) {
   const first = getFirstDay(year, month);
   const days  = getDaysInMonth(year, month);
   const cells: (number|null)[] = [...Array(first).fill(null), ...Array.from({length:days},(_,i)=>i+1)];
-  while (cells.length%7!==0) cells.push(null);
+  while (cells.length % 7 !== 0) cells.push(null);
 
   const forDay = (day: number|null) => {
     if (!day) return [];
     const ds = `${year}-${String(month+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
-    return assignments.filter(a => a.dueDate.startsWith(ds));
+    return events.filter(e => e.date.startsWith(ds) && !hiddenSources.has(e.sourceId));
   };
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
-      <div className="grid grid-cols-7 border-b border-gray-100 shrink-0">
-        {DAYS_SHORT.map(d => <div key={d} className="py-2 text-center text-xs font-medium text-gray-400">{d}</div>)}
+      <div className="grid grid-cols-7 border-b border-gray-200 shrink-0">
+        {DAYS_SHORT.map(d => (
+          <div key={d} className="py-2 text-center text-[10px] font-semibold text-gray-500 tracking-wide hidden sm:block">{d}</div>
+        ))}
+        {DAYS_MINI.map((d,i) => (
+          <div key={i} className="py-2 text-center text-[10px] font-semibold text-gray-500 sm:hidden">{d}</div>
+        ))}
       </div>
       <div className="flex-1 overflow-y-auto">
         <div className="grid grid-cols-7">
           {cells.map((day,idx) => {
-            const isToday = day!==null && sameDay(new Date(year,month,day),today);
+            const isToday = day !== null && sameDay(new Date(year,month,day), today);
             const items   = forDay(day);
             return (
               <div key={idx}
-                className={`border-b border-r border-gray-50 min-h-24 p-1
-                  ${!day?"bg-gray-50/30":"bg-white hover:bg-gray-50/50"}
-                  ${isToday?"bg-blue-50/30":""}`}>
+                className={`border-b border-r border-gray-100 min-h-16 sm:min-h-24 p-0.5 sm:p-1
+                  ${!day ? "bg-gray-50/40" : "bg-white hover:bg-gray-50/30"}
+                  ${isToday ? "bg-blue-50/20" : ""}`}>
                 {day && (
-                  <span className={`text-xs font-medium w-6 h-6 flex items-center justify-center rounded-full
-                    ${isToday?"bg-blue-500 text-white":"text-gray-600"}`}>
+                  <span className={`text-[10px] sm:text-xs font-medium w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center rounded-full mb-0.5 sm:mb-1
+                    ${isToday ? "bg-blue-500 text-white" : "text-gray-600"}`}>
                     {day}
                   </span>
                 )}
-                <div className="mt-1 space-y-0.5">
-                  {items.map(a => (
-                    <button key={a.id} onClick={() => onSelect(a)}
-                      className={`w-full text-left text-xs rounded border px-1.5 py-0.5 truncate leading-tight hover:shadow-sm transition-shadow
-                        ${statusColor(a.status)}
-                        ${(a.status==="GRADED"||a.status==="SUBMITTED")?"line-through opacity-60":""}`}>
-                      {new Date(a.dueDate).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})} {a.title}
+                {/* Mobile: dots only */}
+                <div className="flex flex-wrap gap-0.5 sm:hidden">
+                  {items.slice(0,3).map(ev => (
+                    <button key={ev.id} onClick={() => onSelectEvent(ev)}
+                      className="w-1.5 h-1.5 rounded-full shrink-0"
+                      style={{ backgroundColor: ev.color }}/>
+                  ))}
+                </div>
+                {/* Desktop: pills */}
+                <div className="hidden sm:block space-y-0.5">
+                  {items.slice(0,3).map(ev => (
+                    <button key={ev.id} onClick={() => onSelectEvent(ev)}
+                      className={`w-full text-left text-[11px] rounded px-1.5 py-0.5 truncate leading-tight hover:opacity-80 transition-opacity border
+                        ${(ev.status==="GRADED"||ev.status==="SUBMITTED") ? "line-through opacity-60" : ""}`}
+                      style={eventBgStyle(ev.color)}>
+                      {new Date(ev.date).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})} {ev.title}
                     </button>
                   ))}
+                  {items.length > 3 && (
+                    <p className="text-[10px] text-gray-400 px-1">{items.length - 3} more</p>
+                  )}
                 </div>
               </div>
             );
@@ -149,175 +182,399 @@ function MonthView({ year, month, today, assignments, onSelect }: {
 }
 
 // ── Week View ──────────────────────────────────────────────────────────────
-function WeekView({ weekStart, today, assignments }: {
-  weekStart: Date; today: Date; assignments: AssignmentType[];
+function WeekView({ weekStart, today, events, hiddenSources }: {
+  weekStart: Date; today: Date;
+  events: CalendarEvent[]; hiddenSources: Set<string>;
 }) {
-  const days = Array.from({length:7},(_,i) => { const d=new Date(weekStart); d.setDate(d.getDate()+i); return d; });
-  const forDay = (d: Date) => assignments.filter(a => a.dueDate.startsWith(fmtDate(d)));
+  const days = Array.from({length:7}, (_,i) => {
+    const d = new Date(weekStart); d.setDate(d.getDate() + i); return d;
+  });
+  const forDay = (d: Date) =>
+    events.filter(e => e.date.startsWith(fmtDate(d)) && !hiddenSources.has(e.sourceId));
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
-      <div className="grid grid-cols-8 border-b border-gray-100 shrink-0">
-        <div/>
+      <div className="grid grid-cols-8 border-b border-gray-200 shrink-0">
+        <div className="py-2 text-center text-[10px] text-gray-400 hidden sm:block">GMT+8</div>
+        <div className="sm:hidden"/>
         {days.map((d,i) => (
-          <div key={i} className={`py-2 text-center border-l border-gray-50 ${sameDay(d,today)?"border-t-2 border-t-blue-400":""}`}>
-            <div className="text-xs font-medium text-gray-500">{DAYS_SHORT[d.getDay()]} {d.getMonth()+1}/{d.getDate()}</div>
+          <div key={i} className={`py-2 text-center border-l border-gray-100 ${sameDay(d,today) ? "border-t-2 border-t-blue-500" : ""}`}>
+            <div className="text-[10px] font-semibold text-gray-400 uppercase hidden sm:block">{DAYS_SHORT[d.getDay()]}</div>
+            <div className="text-[9px] font-semibold text-gray-400 uppercase sm:hidden">{DAYS_MINI[d.getDay()]}</div>
+            <div className={`text-sm sm:text-lg font-bold mx-auto w-6 h-6 sm:w-9 sm:h-9 flex items-center justify-center rounded-full mt-0.5
+              ${sameDay(d,today) ? "bg-blue-500 text-white" : "text-gray-700"}`}>
+              {d.getDate()}
+            </div>
           </div>
         ))}
       </div>
-      <div className="flex-1 overflow-y-auto">
-        {HOURS.map(hour => (
-          <div key={hour} className="grid grid-cols-8 border-b border-gray-50" style={{minHeight:"40px"}}>
-            <div className="text-xs text-gray-300 text-right pr-2 pt-1">{hour}</div>
-            {days.map((d,i) => {
-              const items = forDay(d).filter(a => {
-                const h = new Date(a.dueDate).getHours();
-                const label = h===0?"12am":h<12?`${h}am`:h===12?"12pm":`${h-12}pm`;
-                return label===hour;
-              });
-              return (
-                <div key={i} className="border-l border-gray-50">
-                  {items.map(a => (
-                    <div key={a.id}
-                      className={`mx-0.5 mt-0.5 px-1 py-0.5 text-xs rounded border truncate
-                        ${statusColor(a.status)}
-                        ${(a.status==="GRADED"||a.status==="SUBMITTED")?"line-through opacity-60":""}`}>
-                      {a.title}
-                    </div>
-                  ))}
-                </div>
-              );
-            })}
-          </div>
-        ))}
+      <div className="flex-1 overflow-y-auto overflow-x-auto">
+        <div style={{ minWidth: 480 }}>
+          {HOURS.map(hour => (
+            <div key={hour} className="grid grid-cols-8 border-b border-gray-50" style={{minHeight:"48px"}}>
+              <div className="text-[10px] text-gray-300 text-right pr-2 pt-1 shrink-0">{hour}</div>
+              {days.map((d,i) => {
+                const items = forDay(d).filter(ev => {
+                  const h = new Date(ev.date).getHours();
+                  const label = h===0?"12am":h<12?`${h}am`:h===12?"12pm":`${h-12}pm`;
+                  return label === hour;
+                });
+                return (
+                  <div key={i} className="border-l border-gray-50">
+                    {items.map(ev => (
+                      <div key={ev.id}
+                        className="mx-0.5 mt-0.5 px-1.5 py-1 text-[11px] rounded border truncate cursor-pointer hover:opacity-80"
+                        style={eventBgStyle(ev.color)}>
+                        {ev.title}
+                      </div>
+                    ))}
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
 }
 
 // ── Agenda View ────────────────────────────────────────────────────────────
-function AgendaView({ startDate, assignments }: { startDate: Date; assignments: AssignmentType[] }) {
+function AgendaView({ startDate, events, hiddenSources, onSelectEvent }: {
+  startDate: Date; events: CalendarEvent[]; hiddenSources: Set<string>;
+  onSelectEvent: (e: CalendarEvent) => void;
+}) {
   const ds = fmtDate(startDate);
-  const upcoming = [...assignments]
-    .filter(a => a.dueDate >= ds)
-    .sort((a,b) => a.dueDate.localeCompare(b.dueDate));
+  const upcoming = [...events]
+    .filter(e => e.date >= ds && !hiddenSources.has(e.sourceId))
+    .sort((a,b) => a.date.localeCompare(b.date));
+
+  if (upcoming.length === 0) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <p className="text-sm text-gray-400">No upcoming assignments.</p>
+      </div>
+    );
+  }
+
+  const grouped: Record<string, CalendarEvent[]> = {};
+  for (const ev of upcoming) {
+    const key = ev.date.slice(0,10);
+    if (!grouped[key]) grouped[key] = [];
+    grouped[key].push(ev);
+  }
 
   return (
-    <div className="flex-1 overflow-y-auto p-6">
-      {upcoming.length===0 ? (
-        <p className="text-xs text-gray-400">No upcoming assignments.</p>
-      ) : (
-        <div className="space-y-2">
-          {upcoming.map(a => (
-            <div key={a.id}
-              className={`flex items-start gap-4 p-2.5 rounded border text-xs
-                ${statusColor(a.status)}
-                ${(a.status==="GRADED"||a.status==="SUBMITTED")?"line-through opacity-60":""}`}>
-              <span className="font-medium w-24 shrink-0">{a.dueDate.slice(0,10)}</span>
-              <span>{a.title} {a.course ? `· ${a.course.name}` : a.group ? `· ${a.group.name}` : ""}</span>
+    <div className="flex-1 overflow-y-auto px-3 sm:px-6">
+      {Object.entries(grouped).map(([date, evs]) => {
+        const d = new Date(date + "T00:00:00");
+        const dayName = `${DAYS_SHORT[d.getDay()].charAt(0)}${DAYS_SHORT[d.getDay()].slice(1).toLowerCase()}, ${MONTHS[d.getMonth()].slice(0,3)} ${d.getDate()}`;
+        return (
+          <div key={date}>
+            <div className="py-2 mt-2">
+              <span className="text-sm font-semibold text-gray-700">{dayName}</span>
             </div>
-          ))}
-        </div>
-      )}
+            {evs.map(ev => {
+              const isCompleted = ev.status==="GRADED" || ev.status==="SUBMITTED";
+              const timeFmt = new Date(ev.date).toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit", hour12:true });
+              return (
+                <button key={ev.id} onClick={() => onSelectEvent(ev)}
+                  className="w-full flex items-start gap-2 sm:gap-3 py-1.5 px-2 rounded hover:bg-gray-50 transition-colors text-left group">
+                  <svg className="w-4 h-4 shrink-0 mt-0.5" viewBox="0 0 16 16" fill="none"
+                    style={{ color: isCompleted ? "#aaa" : ev.color }}>
+                    <rect x="1.5" y="1.5" width="13" height="13" rx="2" stroke="currentColor" strokeWidth="1.5"/>
+                    <path d="M4.5 8.5l2.5 2.5 4.5-4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  <span className="text-xs text-gray-500 shrink-0 w-20 sm:w-24 pt-0.5">
+                    Due {timeFmt.toLowerCase()}
+                  </span>
+                  <span className={`text-sm font-medium leading-snug ${isCompleted ? "line-through text-gray-400" : ""}`}
+                    style={{ color: isCompleted ? undefined : ev.color }}>
+                    {ev.title}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        );
+      })}
     </div>
   );
 }
 
-// ── Assignment Modal ───────────────────────────────────────────────────────
-function AssignmentModal({ assignment, onClose }: { assignment: AssignmentType|null; onClose: () => void }) {
-  if (!assignment) return null;
+// ── Event Modal ────────────────────────────────────────────────────────────
+function EventModal({ event, onClose }: { event: CalendarEvent|null; onClose: () => void }) {
+  if (!event) return null;
+  const due = new Date(event.date);
+  const dueFmt = due.toLocaleString("en-US", { month:"short", day:"numeric", hour:"numeric", minute:"2-digit", hour12:true });
+  const isCompleted = event.status==="GRADED" || event.status==="SUBMITTED";
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 flex items-end sm:items-center justify-center z-50">
       <div className="absolute inset-0 bg-black/20" onClick={onClose}/>
-      <div className="relative bg-white rounded-lg shadow-xl w-full max-w-sm max-h-[90vh] overflow-y-auto z-10">
-        <div className="flex items-center justify-between p-5 border-b border-gray-100 sticky top-0 bg-white">
-          <h2 className="text-sm font-medium text-gray-600">Assignment</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl leading-none">×</button>
+      <div className="relative bg-white rounded-t-2xl sm:rounded shadow-xl w-full max-w-md z-10 overflow-hidden border border-gray-200">
+        {/* Mobile drag handle */}
+        <div className="flex justify-center pt-3 pb-1 sm:hidden">
+          <div className="w-10 h-1 rounded-full bg-gray-200"/>
         </div>
-        <div className="p-5 space-y-4">
-          <h1 className="text-lg font-semibold text-blue-600 leading-tight">{assignment.title}</h1>
-          <div className="space-y-1.5 text-sm">
-            <p className="text-gray-700"><strong>Due:</strong> {new Date(assignment.dueDate).toLocaleString()}</p>
-            {assignment.course && <p className="text-gray-700"><strong>Course:</strong> {assignment.course.name}</p>}
-            {assignment.group  && <p className="text-gray-700"><strong>Group:</strong>  {assignment.group.name}</p>}
+        <div className="flex items-center justify-between px-4 py-2 border-b border-gray-200 bg-white">
+          <span className="text-xs font-medium text-gray-500">Assignment</span>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-sm leading-none">✕</button>
+        </div>
+        <div className="px-5 py-4">
+          <h1 className={`text-lg font-semibold leading-snug mb-1 ${isCompleted ? "line-through text-gray-400" : ""}`}
+            style={{ color: isCompleted ? undefined : event.color }}>
+            {event.title}
+          </h1>
+          <p className="text-xs text-gray-500 mb-4">Due: {dueFmt}</p>
+          <div className="flex gap-3 mb-2 text-xs">
+            <span className="text-gray-500 w-28 shrink-0">Source Calendar</span>
+            <span className="font-medium" style={{ color: event.color }}>{event.sourceName}</span>
           </div>
-          {assignment.description && (
+          <div className="flex gap-3 mb-4 text-xs">
+            <span className="text-gray-500 w-28 shrink-0">Status</span>
+            <span className={`px-2 py-0.5 rounded text-xs font-medium
+              ${event.status==="GRADED" ? "bg-green-100 text-green-700"
+              : event.status==="SUBMITTED" ? "bg-blue-100 text-blue-700"
+              : event.status==="OVERDUE" ? "bg-red-100 text-red-700"
+              : "bg-amber-100 text-amber-700"}`}>
+              {event.status}
+            </span>
+          </div>
+          {event.detail && (
             <div className="border-t border-gray-100 pt-3">
-              <h3 className="font-semibold text-gray-800 mb-2 text-sm">Details</h3>
-              <p className="text-xs text-gray-600 leading-relaxed whitespace-pre-line">{assignment.description}</p>
+              <p className="text-xs font-semibold text-gray-600 mb-1">Details</p>
+              <p className="text-xs text-gray-600 leading-relaxed whitespace-pre-line"
+                dangerouslySetInnerHTML={{ __html: event.detail ?? "" }}/>
             </div>
           )}
-          <div className="bg-gray-50 p-3 rounded border border-gray-100">
-            <p className="text-xs text-gray-700">
-              <strong>Status:</strong>{" "}
-              <span className={`ml-2 px-2 py-0.5 rounded text-xs font-medium inline-block
-                ${assignment.status==="GRADED"?"bg-green-100 text-green-700":"bg-amber-100 text-amber-700"}`}>
-                {assignment.status}
-              </span>
-            </p>
-          </div>
         </div>
       </div>
     </div>
   );
 }
 
-// ── Color Picker ───────────────────────────────────────────────────────────
-const COLORS = [
-  {hex:"#BD3C14",bg:"bg-orange-600"},{hex:"#FF0000",bg:"bg-red-500"},{hex:"#FF1493",bg:"bg-pink-500"},
-  {hex:"#A020F0",bg:"bg-purple-600"},{hex:"#4B0082",bg:"bg-indigo-700"},{hex:"#0000FF",bg:"bg-blue-600"},
-  {hex:"#00CED1",bg:"bg-cyan-500"}, {hex:"#20B2AA",bg:"bg-teal-500"}, {hex:"#00AA00",bg:"bg-green-600"},
-  {hex:"#9ACD32",bg:"bg-lime-500"}, {hex:"#FFD700",bg:"bg-yellow-500"},{hex:"#FFA500",bg:"bg-orange-500"},
-  {hex:"#FFB6C1",bg:"bg-pink-300"},
-];
-
-function ColorPicker({ onClose, onApply }: { onClose:()=>void; onApply:(c:string)=>void }) {
-  const [sel, setSel] = useState(COLORS[0].hex);
+// ── Undated Modal ──────────────────────────────────────────────────────────
+function UndatedModal({ event, onClose }: { event: UndatedEvent|null; onClose: () => void }) {
+  if (!event) return null;
   return (
-    <div className="bg-white rounded-lg shadow-lg p-5 max-w-sm w-full border border-gray-200">
-      <div className="mb-4 flex items-center gap-2">
-        <div className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs font-mono font-semibold">{sel}</div>
-        <h2 className="text-sm font-medium text-gray-700">Course colour</h2>
-      </div>
-      <div className="grid grid-cols-5 gap-2 mb-4">
-        {COLORS.map(c => (
-          <button key={c.hex} onClick={() => setSel(c.hex)}
-            className={`w-10 h-10 rounded ${c.bg} ${sel===c.hex?"ring-2 ring-offset-1 ring-gray-400":""}`}/>
-        ))}
-      </div>
-      <input type="text" value={sel} onChange={e=>setSel(e.target.value.toUpperCase())}
-        className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none font-mono mb-4"/>
-      <div className="flex gap-2 justify-end">
-        <button onClick={onClose} className="px-4 py-2 border border-gray-300 rounded text-sm text-gray-600">Cancel</button>
-        <button onClick={() => { onApply(COLORS.find(c=>c.hex===sel)?.bg||sel); onClose(); }}
-          className="px-4 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">Apply</button>
+    <div className="fixed inset-0 flex items-end sm:items-center justify-center z-50">
+      <div className="absolute inset-0 bg-black/20" onClick={onClose}/>
+      <div className="relative bg-white rounded-t-2xl sm:rounded shadow-xl w-full max-w-md z-10 overflow-hidden border border-gray-200">
+        <div className="flex justify-center pt-3 pb-1 sm:hidden">
+          <div className="w-10 h-1 rounded-full bg-gray-200"/>
+        </div>
+        <div className="flex items-center justify-between px-4 py-2 border-b border-gray-200">
+          <span className="text-xs font-medium text-gray-500">Assignment</span>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-sm leading-none">✕</button>
+        </div>
+        <div className="px-5 py-4">
+          <h1 className="text-lg font-semibold leading-snug mb-1" style={{ color: event.color }}>{event.title}</h1>
+          <p className="text-xs text-gray-500 mb-4">No Due Date</p>
+          <div className="flex gap-3 mb-2 text-xs">
+            <span className="text-gray-500 w-28 shrink-0">Source Calendar</span>
+            <span className="font-medium" style={{ color: event.color }}>{event.sourceName}</span>
+          </div>
+          {event.detail && (
+            <div className="border-t border-gray-100 pt-3">
+              <p className="text-xs font-semibold text-gray-600 mb-1">Details</p>
+              <p className="text-xs text-gray-600 leading-relaxed whitespace-pre-line"
+                dangerouslySetInnerHTML={{ __html: event.detail ?? "" }}/>
+            </div>
+          )}
+        </div>
       </div>
     </div>
+  );
+}
+
+// ── Sidebar Content ────────────────────────────────────────────────────────
+function SidebarContent({
+  currentYear, currentMonth, today, selected,
+  prevMonth, nextMonth, handleSelect, events,
+  calendarsOpen, setCalendarsOpen,
+  undatedOpen, setUndatedOpen,
+  loading, calendarSources, hiddenSources, toggleSource,
+  undatedEvents, setSelectedUndated, openColorPicker,
+}: {
+  currentYear: number; currentMonth: number; today: Date; selected: Date;
+  prevMonth: () => void; nextMonth: () => void;
+  handleSelect: (d: Date) => void; events: CalendarEvent[];
+  calendarsOpen: boolean; setCalendarsOpen: (v: boolean) => void;
+  undatedOpen: boolean; setUndatedOpen: (v: boolean) => void;
+  loading: boolean;
+  calendarSources: { id: string; name: string; color: string }[];
+  hiddenSources: Set<string>; toggleSource: (id: string) => void;
+  undatedEvents: UndatedEvent[]; setSelectedUndated: (e: UndatedEvent) => void;
+  openColorPicker: (id: string, color: string) => void;
+}) {
+  return (
+    <>
+      <MiniCalendar
+        year={currentYear} month={currentMonth}
+        today={today} selected={selected}
+        onPrev={prevMonth} onNext={nextMonth}
+        onSelect={handleSelect} events={events}
+      />
+
+      {/* Calendars */}
+      <div className="mb-5">
+        <button
+          onClick={() => setCalendarsOpen(!calendarsOpen)}
+          className="flex items-center gap-1.5 mb-2.5 w-full text-left hover:opacity-70 transition-opacity">
+          <span className={`text-[10px] text-gray-400 transition-transform ${calendarsOpen ? "" : "-rotate-90"}`}>▼</span>
+          <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Calendars</h3>
+        </button>
+        {calendarsOpen && (loading ? (
+          <p className="text-xs text-gray-400">Loading...</p>
+        ) : calendarSources.length === 0 ? (
+          <p className="text-xs text-gray-400">No calendars yet.</p>
+        ) : (
+          <div className="space-y-1.5">
+            {calendarSources.map(src => (
+              <div key={src.id} className="flex items-center justify-between group">
+                <label className="flex items-center gap-2 cursor-pointer min-w-0" onClick={() => toggleSource(src.id)}>
+                  <div
+                    className="w-3 h-3 rounded-sm shrink-0 transition-opacity"
+                    style={{ backgroundColor: src.color, opacity: hiddenSources.has(src.id) ? 0.3 : 1 }}
+                  />
+                  <span className={`text-xs truncate transition-colors ${hiddenSources.has(src.id) ? "text-gray-300" : "text-gray-600"}`}>
+                    {src.name}
+                  </span>
+                </label>
+                <button
+                  onClick={() => openColorPicker(src.id, src.color)}
+                  className="text-gray-300 opacity-0 group-hover:opacity-100 text-xs hover:text-gray-600 shrink-0 ml-1"
+                  title="Change color">
+                  ⋮
+                </button>
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+
+      {/* Undated */}
+      <div>
+        <button
+          onClick={() => setUndatedOpen(!undatedOpen)}
+          className="flex items-center gap-1.5 mb-2.5 w-full text-left hover:opacity-70 transition-opacity">
+          <span className={`text-[10px] text-gray-400 transition-transform ${undatedOpen ? "" : "-rotate-90"}`}>▼</span>
+          <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Undated</h3>
+        </button>
+        {undatedOpen && (loading ? (
+          <p className="text-xs text-gray-400">Loading...</p>
+        ) : undatedEvents.length === 0 ? (
+          <p className="text-xs text-gray-400">No undated items.</p>
+        ) : (
+          <div className="space-y-1">
+            {undatedEvents.map(ev => (
+              <button key={ev.id} onClick={() => setSelectedUndated(ev)}
+                className="w-full flex items-center gap-1.5 px-1 py-0.5 rounded hover:bg-gray-50 transition-colors text-left">
+                <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 16 16" fill="none" style={{ color: ev.color }}>
+                  <rect x="1.5" y="1.5" width="13" height="13" rx="2" stroke="currentColor" strokeWidth="1.5"/>
+                  <path d="M4.5 8.5l2.5 2.5 4.5-4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <span className="text-xs truncate font-medium" style={{ color: ev.color }}>{ev.title}</span>
+              </button>
+            ))}
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-5 pt-4 border-t border-gray-100">
+        <button className="flex items-center gap-1.5 text-xs text-blue-600 hover:underline">
+          <span>📅</span> Calendar Feed
+        </button>
+      </div>
+    </>
   );
 }
 
 // ── Main ───────────────────────────────────────────────────────────────────
 export default function CalendarPage() {
   const today = new Date();
-  const [view,         setView]         = useState<"week"|"month"|"agenda">("month");
-  const [currentYear,  setCurrentYear]  = useState(today.getFullYear());
-  const [currentMonth, setCurrentMonth] = useState(today.getMonth());
-  const [selected,     setSelected]     = useState(today);
-  const [weekStart,    setWeekStart]    = useState(() => getWeekStart(today));
-  const [selectedA,    setSelectedA]    = useState<AssignmentType|null>(null);
-  const [colorOpen,    setColorOpen]    = useState<string|null>(null);
-  const [calColors,    setCalColors]    = useState<Record<string,string>>({});
-  const [assignments,  setAssignments]  = useState<AssignmentType[]>([]);
-  const [loading,      setLoading]      = useState(true);
-  const [, startTransition]             = useTransition();
+
+  const [view,          setView]          = useState<"week"|"month"|"agenda">("month");
+  const [currentYear,   setCurrentYear]   = useState(today.getFullYear());
+  const [currentMonth,  setCurrentMonth]  = useState(today.getMonth());
+  const [selected,      setSelected]      = useState(today);
+  const [weekStart,     setWeekStart]     = useState(() => getWeekStart(today));
+  const [selectedEv,    setSelectedEv]    = useState<CalendarEvent|null>(null);
+  const [selectedUndated, setSelectedUndated] = useState<UndatedEvent|null>(null);
+  const [hiddenSources, setHiddenSources] = useState<Set<string>>(new Set());
+  const [events,        setEvents]        = useState<CalendarEvent[]>([]);
+  const [undatedEvents, setUndatedEvents] = useState<UndatedEvent[]>([]);
+  const [loading,       setLoading]       = useState(true);
+  const [, startTransition]               = useTransition();
+
+  const [calendarsOpen, setCalendarsOpen] = useState(true);
+  const [undatedOpen,   setUndatedOpen]   = useState(true);
+  const [sidebarOpen,   setSidebarOpen]   = useState(false);
+
+  const [colorPickerId,    setColorPickerId]    = useState<string|null>(null);
+  const [colorPickerInput, setColorPickerInput] = useState("#efefef");
+  const [colorOverrides,   setColorOverrides]   = useState<Record<string,string>>({});
+
+  const PRESET_COLORS = [
+    "#e66000","#e02020","#c81e88","#7e3fa8","#5c4f99",
+    "#1d6ac4","#2185ce","#0086d0","#008879","#009688",
+    "#4da12b","#9c7a00","#e56b2c","#c53c00","#d84082",
+  ];
+
+  const openColorPicker = (id: string, currentColor: string) => {
+    setColorPickerId(id);
+    setColorPickerInput(currentColor);
+  };
+
+  const applyColor = () => {
+    if (!colorPickerId) return;
+    setColorOverrides(prev => ({ ...prev, [colorPickerId]: colorPickerInput }));
+    setEvents(prev => prev.map(e => e.sourceId === colorPickerId ? { ...e, color: colorPickerInput } : e));
+    setUndatedEvents(prev => prev.map(e => e.sourceId === colorPickerId ? { ...e, color: colorPickerInput } : e));
+    setColorPickerId(null);
+  };
 
   useEffect(() => {
     fetch("/api/assignments")
       .then(r => r.json())
       .then(d => startTransition(() => {
-  setAssignments((d.assignments ?? []).filter((a: AssignmentType) => !!a.dueDate));
-  setLoading(false);
-}))
+        const assignments: AssignmentType[] = (d.assignments ?? []).filter((a: AssignmentType) => !!a.dueDate || a.dueDate === null);
+
+        const allEvents: CalendarEvent[] = [];
+        const allUndated: UndatedEvent[] = [];
+
+        for (const a of assignments) {
+          const color      = a.course?.color ?? "#7b1113";
+          const sourceId   = a.course?.id ?? (a.group?.id ?? "unknown");
+          const sourceName = a.course?.name ?? a.group?.name ?? "Unknown";
+
+          if (!a.dueDate) {
+            allUndated.push({
+              id:         `undated-${a.id}`,
+              title:      a.title,
+              color,
+              sourceName,
+              sourceId,
+              detail:     a.description,
+            });
+          } else {
+            allEvents.push({
+              id:         `asgn-${a.id}`,
+              title:      a.title,
+              date:       a.dueDate,
+              color,
+              sourceId,
+              sourceName,
+              status:     a.status,
+              detail:     a.description,
+            });
+          }
+        }
+
+        setEvents(allEvents);
+        setUndatedEvents(allUndated);
+        setLoading(false);
+      }))
       .catch(() => startTransition(() => setLoading(false)));
   }, []);
 
@@ -325,8 +582,6 @@ export default function CalendarPage() {
   const nextMonth = () => currentMonth===11? (setCurrentMonth(0),  setCurrentYear(y=>y+1)) : setCurrentMonth(m=>m+1);
   const prevWeek  = () => { const d=new Date(weekStart); d.setDate(d.getDate()-7); setWeekStart(d); };
   const nextWeek  = () => { const d=new Date(weekStart); d.setDate(d.getDate()+7); setWeekStart(d); };
-  const prevDay   = () => { const d=new Date(selected);  d.setDate(d.getDate()-1); setSelected(d); };
-  const nextDay   = () => { const d=new Date(selected);  d.setDate(d.getDate()+1); setSelected(d); };
 
   const goToday = () => {
     setCurrentMonth(today.getMonth()); setCurrentYear(today.getFullYear());
@@ -337,115 +592,179 @@ export default function CalendarPage() {
     setSelected(d); setCurrentMonth(d.getMonth()); setCurrentYear(d.getFullYear()); setWeekStart(getWeekStart(d));
   };
 
-  const handlePrev = () => view==="month"?prevMonth():view==="week"?prevWeek():prevDay();
-  const handleNext = () => view==="month"?nextMonth():view==="week"?nextWeek():nextDay();
+  const handlePrev = () => {
+    if (view==="month") prevMonth();
+    else if (view==="week") prevWeek();
+    else { const d=new Date(selected); d.setDate(d.getDate()-1); setSelected(d); }
+  };
+  const handleNext = () => {
+    if (view==="month") nextMonth();
+    else if (view==="week") nextWeek();
+    else { const d=new Date(selected); d.setDate(d.getDate()+1); setSelected(d); }
+  };
 
   const headerLabel = () => {
     if (view==="month") return `${MONTHS[currentMonth]} ${currentYear}`;
     if (view==="week") {
-      const end=new Date(weekStart); end.setDate(end.getDate()+6);
+      const end = new Date(weekStart); end.setDate(end.getDate()+6);
       return `${MONTHS[weekStart.getMonth()]} ${weekStart.getDate()} – ${end.getDate()}, ${end.getFullYear()}`;
     }
     return `${MONTHS[selected.getMonth()]} ${selected.getDate()}, ${selected.getFullYear()}`;
   };
 
-  // Unique calendars from assignments
+  const toggleSource = (id: string) => {
+    setHiddenSources(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  // Build unique calendar sources from events
   const calendarSources = [
     ...new Map(
-      assignments
-        .filter(a => a.course)
-        .map(a => [a.course!.id, { id: a.course!.id, name: a.course!.name }])
+      events.map(e => [e.sourceId, { id: e.sourceId, name: e.sourceName, color: colorOverrides[e.sourceId] ?? e.color }])
     ).values()
   ];
 
-  const pendingAssignments = assignments.filter(a => a.status==="PENDING"||a.status==="OVERDUE");
+  const sidebarProps = {
+    currentYear, currentMonth, today, selected,
+    prevMonth, nextMonth, handleSelect, events,
+    calendarsOpen, setCalendarsOpen,
+    undatedOpen, setUndatedOpen,
+    loading, calendarSources, hiddenSources, toggleSource,
+    undatedEvents, setSelectedUndated,
+    openColorPicker,
+  };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-white">
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Toolbar */}
-        <div className="flex items-center gap-2 px-5 py-2.5 border-b border-gray-100 shrink-0">
-          <button onClick={goToday} className="px-3 py-1 border border-gray-200 rounded text-xs text-gray-600 hover:bg-gray-50">Today</button>
-          <button onClick={handlePrev} className="p-1 hover:bg-gray-100 rounded text-gray-400">←</button>
-          <button onClick={handleNext} className="p-1 hover:bg-gray-100 rounded text-gray-400">→</button>
-          <h2 className="text-sm font-semibold text-gray-700">{headerLabel()}</h2>
-          <div className="ml-auto flex items-center gap-0.5">
-            {(["Week","Month","Agenda"] as const).map(v => (
-              <button key={v} onClick={() => setView(v.toLowerCase() as "week"|"month"|"agenda")}
-                className={`px-3 py-1 text-xs border rounded transition-colors
-                  ${view===v.toLowerCase()?"bg-gray-700 text-white border-gray-700":"bg-white text-gray-500 border-gray-200 hover:bg-gray-50"}`}>
-                {v}
-              </button>
-            ))}
-          </div>
-        </div>
+    <div className="flex flex-col h-screen overflow-hidden bg-white">
 
-        {loading && (
-          <div className="flex-1 flex items-center justify-center">
-            <p className="text-xs text-gray-400">Loading calendar...</p>
-          </div>
-        )}
-        {!loading && view==="month"  && <MonthView  year={currentYear} month={currentMonth} today={today} assignments={assignments} onSelect={setSelectedA}/>}
-        {!loading && view==="week"   && <WeekView   weekStart={weekStart} today={today} assignments={assignments}/>}
-        {!loading && view==="agenda" && <AgendaView startDate={selected} assignments={assignments}/>}
+      {/* ── Toolbar ── */}
+      <div className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2.5 border-b border-gray-200 shrink-0 flex-wrap">
+        {/* Mobile sidebar toggle */}
+        <button
+          onClick={() => setSidebarOpen(o => !o)}
+          className="sm:hidden flex items-center justify-center w-8 h-8 border border-gray-200 rounded text-gray-500 hover:bg-gray-50 mr-1"
+          aria-label="Toggle sidebar">
+          ☰
+        </button>
+
+        <button onClick={goToday}
+          className="px-2.5 sm:px-3 py-1.5 border border-gray-300 rounded text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors">
+          Today
+        </button>
+        <button onClick={handlePrev}
+          className="w-7 h-7 flex items-center justify-center border border-gray-200 rounded hover:bg-gray-50 text-gray-500 text-sm">
+          ‹
+        </button>
+        <button onClick={handleNext}
+          className="w-7 h-7 flex items-center justify-center border border-gray-200 rounded hover:bg-gray-50 text-gray-500 text-sm">
+          ›
+        </button>
+        <h2 className="text-xs sm:text-sm font-semibold text-gray-800 ml-1 truncate">{headerLabel()}</h2>
+
+        <div className="ml-auto flex items-center border border-gray-200 rounded overflow-hidden">
+          {(["Week","Month","Agenda"] as const).map((v,i) => (
+            <button key={v}
+              onClick={() => setView(v.toLowerCase() as "week"|"month"|"agenda")}
+              className={`px-2.5 sm:px-4 py-1.5 text-xs font-medium transition-colors
+                ${i > 0 ? "border-l border-gray-200" : ""}
+                ${view===v.toLowerCase() ? "bg-[#7b1113] text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}>
+              <span className="sm:hidden">{v[0]}</span>
+              <span className="hidden sm:inline">{v}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Right sidebar */}
-      {colorOpen ? (
-        <div className="w-52 border-l border-gray-100 bg-white p-4 shrink-0">
-          <ColorPicker onClose={() => setColorOpen(null)}
-            onApply={c => { setCalColors(prev=>({...prev,[colorOpen!]:c})); setColorOpen(null); }}/>
+      {/* ── Body ── */}
+      <div className="flex flex-1 overflow-hidden relative">
+
+        {/* Mobile overlay */}
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 z-30 bg-black/30 sm:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
+        {/* Mobile sliding drawer */}
+        <div className={`
+          fixed top-0 left-0 h-full z-40 bg-white border-r border-gray-200 overflow-y-auto p-4 w-64
+          transition-transform duration-200 sm:hidden
+          ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
+        `}>
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Calendar</span>
+            <button onClick={() => setSidebarOpen(false)} className="text-gray-400 hover:text-gray-600 text-sm">✕</button>
+          </div>
+          <SidebarContent {...sidebarProps} />
         </div>
-      ) : (
-        <div className="w-52 border-l border-gray-100 bg-white overflow-y-auto p-4 shrink-0">
-          <MiniCalendar year={currentYear} month={currentMonth} today={today} selected={selected}
-            onPrev={prevMonth} onNext={nextMonth} onSelect={handleSelect} assignments={assignments}/>
 
-          {/* Calendars */}
-          {calendarSources.length > 0 && (
-            <div className="mb-4">
-              <div className="flex items-center gap-1 mb-2">
-                <span className="text-xs text-gray-300">▼</span>
-                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Calendars</h3>
-              </div>
-              <div className="space-y-1.5">
-                {calendarSources.map(cal => (
-                  <div key={cal.id} className="flex items-center justify-between group">
-                    <div className="flex items-center gap-2">
-                      <div className={`w-2.5 h-2.5 rounded-sm ${calColors[cal.id]||"bg-blue-500"}`}/>
-                      <span className="text-xs text-gray-600">{cal.name}</span>
-                    </div>
-                    <button onClick={() => setColorOpen(cal.id)}
-                      className="text-gray-300 opacity-0 group-hover:opacity-100 text-xs hover:text-gray-600">⋮</button>
-                  </div>
-                ))}
-              </div>
+        {/* Main calendar area */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {loading ? (
+            <div className="flex-1 flex items-center justify-center">
+              <p className="text-xs text-gray-400">Loading calendar...</p>
             </div>
+          ) : (
+            <>
+              {view==="month"  && <MonthView  year={currentYear} month={currentMonth} today={today} events={events} hiddenSources={hiddenSources} onSelectEvent={setSelectedEv}/>}
+              {view==="week"   && <WeekView   weekStart={weekStart} today={today} events={events} hiddenSources={hiddenSources}/>}
+              {view==="agenda" && <AgendaView startDate={selected} events={events} hiddenSources={hiddenSources} onSelectEvent={setSelectedEv}/>}
+            </>
           )}
+        </div>
 
-          {/* Pending */}
-          <div className="mb-4">
-            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Pending</h3>
-            {pendingAssignments.length===0 ? (
-              <p className="text-xs text-gray-400">No pending assignments</p>
-            ) : (
-              <div className="space-y-1.5">
-                {pendingAssignments.map(a => (
-                  <div key={a.id} className="flex items-start gap-1.5">
-                    <div className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-1 shrink-0"/>
-                    <div>
-                      <p className="text-xs text-gray-700 leading-snug">{a.title}</p>
-                      <p className="text-xs text-amber-500">{a.dueDate.slice(0,10)}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+        {/* Desktop right sidebar */}
+        <div className="hidden sm:block w-56 border-l border-gray-200 bg-white overflow-y-auto p-4 shrink-0">
+          <SidebarContent {...sidebarProps} />
+        </div>
+      </div>
+
+      {/* ── Modals ── */}
+      <EventModal event={selectedEv} onClose={() => setSelectedEv(null)}/>
+      <UndatedModal event={selectedUndated} onClose={() => setSelectedUndated(null)}/>
+
+      {/* ── Color Picker Popup ── */}
+      {colorPickerId && (
+        <div className="fixed inset-0 z-50" onClick={() => setColorPickerId(null)}>
+          <div
+            className="absolute right-4 sm:right-60 top-1/2 -translate-y-1/2 bg-white rounded-lg shadow-xl border border-gray-200 p-4 w-56"
+            onClick={e => e.stopPropagation()}>
+            <p className="text-xs font-semibold text-gray-700 mb-3">Select course colour</p>
+            <div className="grid grid-cols-5 gap-1.5 mb-3">
+              {PRESET_COLORS.map(c => (
+                <button key={c} onClick={() => setColorPickerInput(c)}
+                  className="w-8 h-8 rounded transition-transform hover:scale-110"
+                  style={{
+                    backgroundColor: c,
+                    outline: colorPickerInput === c ? "2px solid #333" : "none",
+                    outlineOffset: "2px",
+                  }}/>
+              ))}
+            </div>
+            <input
+              type="text"
+              value={colorPickerInput}
+              onChange={e => setColorPickerInput(e.target.value)}
+              className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs mb-3 font-mono"
+              placeholder="#efefef"
+            />
+            <div className="flex gap-2 justify-end">
+              <button onClick={() => setColorPickerId(null)}
+                className="px-3 py-1.5 text-xs text-gray-600 border border-gray-200 rounded hover:bg-gray-50">
+                Cancel
+              </button>
+              <button onClick={applyColor}
+                className="px-3 py-1.5 text-xs text-white rounded bg-[#7b1113] hover:opacity-90">
+                Apply
+              </button>
+            </div>
           </div>
         </div>
       )}
-
-      <AssignmentModal assignment={selectedA} onClose={() => setSelectedA(null)}/>
     </div>
   );
 }

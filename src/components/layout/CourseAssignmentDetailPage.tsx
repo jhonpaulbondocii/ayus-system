@@ -12,13 +12,21 @@ const MAROON_SOFT = "#fdf8f8";
 const MAROON_SOFT_BORDER = "#f0e4e4";
 const FONT = "'Plus Jakarta Sans', 'Helvetica Neue', Arial, sans-serif";
 
+// ── Device detection ──────────────────────────────────────────────────────────
+function isMobileOrTablet(): boolean {
+  if (typeof window === "undefined") return false;
+  return (
+    window.matchMedia("(hover: none) and (pointer: coarse)").matches ||
+    window.innerWidth < 1024
+  );
+}
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface SubmissionEntry {
   id: string | number;
   label?: string;
   required?: boolean;
   type?: string;
-  // API may return file restrictions under any of these field names
   allowedFileTypes?: unknown;
   allowedFileType?: unknown;
   fileTypes?: unknown;
@@ -68,7 +76,7 @@ interface EntryState {
   label: string;
   type: string;
   required: boolean;
-  allowedFileTypes: string[]; // always normalized string[]
+  allowedFileTypes: string[];
   maxFiles: number;
   file: File | null;
   fileUrl: string | null;
@@ -157,44 +165,23 @@ function inferFileTypesFromText(text: string | null | undefined): string[] {
   );
 }
 
-/** Known file extensions we care about */
-const KNOWN_EXTENSIONS = new Set([
-  "pdf","docx","doc","txt","xlsx","xls","csv","pptx","ppt",
-  "jpg","jpeg","png","gif","bmp","webp","svg",
-  "zip","rar","7z","tar","gz",
-  "mp4","mov","avi","mkv","webm",
-  "mp3","wav","m4a","ogg","flac",
-  "html","htm","css","js","ts","json","xml",
-]);
-
-/** Strip leading dot, lowercase, trim */
 function cleanExt(s: string): string {
   return s.replace(/^\.+/, "").trim().toLowerCase();
 }
 
-/**
- * Robustly normalize allowedFileTypes from ANY shape the API might return.
- * Handles: string[], object[], comma-string, dot-prefixed, nested JSON, etc.
- */
 function normalizeFileTypes(value: unknown): string[] {
   if (value === null || value === undefined) return [];
-
-  // ── String: "pdf" | "pdf,docx" | ".pdf .docx" | '["pdf","docx"]' ──────────
   if (typeof value === "string") {
     const s = value.trim();
     if (!s) return [];
-    // Could be a JSON array stored as a string
     if (s.startsWith("[")) {
       try {
         const parsed = JSON.parse(s) as unknown;
         return normalizeFileTypes(parsed);
       } catch { /* fall through */ }
     }
-    // Comma/space/semicolon separated
     return s.split(/[,;\s]+/).map(cleanExt).filter(Boolean);
   }
-
-  // ── Array ──────────────────────────────────────────────────────────────────
   if (Array.isArray(value)) {
     const results: string[] = [];
     for (const item of value) {
@@ -202,13 +189,11 @@ function normalizeFileTypes(value: unknown): string[] {
       if (typeof item === "string") {
         results.push(cleanExt(item));
       } else if (typeof item === "object") {
-        // {value:"pdf"} | {label:"PDF"} | {name:"pdf"} | {extension:".pdf"} | {type:"pdf"}
         const obj = item as Record<string, unknown>;
         const candidate =
           obj.value ?? obj.extension ?? obj.ext ?? obj.name ??
           obj.label ?? obj.type ?? obj.mimeType ?? null;
         if (typeof candidate === "string") {
-          // mimeType like "application/pdf" → extract "pdf"
           const ext = candidate.includes("/")
             ? candidate.split("/").pop()?.replace(/^x-/, "") ?? ""
             : candidate;
@@ -218,29 +203,19 @@ function normalizeFileTypes(value: unknown): string[] {
     }
     return results.filter(Boolean);
   }
-
-  // ── Plain object: {pdf: true, docx: false} | {types: [...]} ───────────────
   if (typeof value === "object") {
     const obj = value as Record<string, unknown>;
-    // Check for nested array fields
     const nested = obj.types ?? obj.allowedTypes ?? obj.extensions ?? obj.fileTypes ?? obj.list;
     if (nested) return normalizeFileTypes(nested);
-    // Treat truthy keys as extensions: {pdf: true, docx: true}
     return Object.entries(obj)
       .filter(([, v]) => v === true || v === 1 || v === "true")
       .map(([k]) => cleanExt(k))
       .filter(Boolean);
   }
-
   return [];
 }
 
-/**
- * Extract allowedFileTypes from a SubmissionEntry, checking every possible
- * field name the API/Prisma might use, with inference fallback.
- */
 function getAllowedFileTypes(entry: Record<string, unknown> & { label?: string; type?: string }): string[] {
-  // Try every field name the data might live under
   const candidates = [
     entry.allowedFileTypes,
     entry.allowedFileType,
@@ -251,19 +226,15 @@ function getAllowedFileTypes(entry: Record<string, unknown> & { label?: string; 
     entry.allowedExtensions,
     entry.extensions,
     entry.restrictions,
-    // Sometimes nested under metadata
     (entry.metadata as Record<string, unknown> | null)?.allowedFileTypes,
     (entry.config as Record<string, unknown> | null)?.allowedFileTypes,
     (entry.settings as Record<string, unknown> | null)?.allowedFileTypes,
   ];
-
   for (const candidate of candidates) {
     if (!candidate) continue;
     const result = normalizeFileTypes(candidate);
     if (result.length > 0) return result;
   }
-
-  // Last resort: infer from label/type text (e.g. "PDF Upload" → ["pdf"])
   const inferred = new Set([
     ...inferFileTypesFromText(entry.label),
     ...inferFileTypesFromText(entry.type),
@@ -280,11 +251,7 @@ function FileTypePills({ types }: { types: string[] }) {
         <span
           key={type}
           className="text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wide"
-          style={{
-            background: "#fef2f2",
-            color: MAROON,
-            border: "1px solid #f0c0c0",
-          }}
+          style={{ background: "#fef2f2", color: MAROON, border: "1px solid #f0c0c0" }}
         >
           {type.toUpperCase()}
         </span>
@@ -313,7 +280,7 @@ function parseStoredFileUrl(raw: string | null): {
 // ── RocketIllustration ────────────────────────────────────────────────────────
 function RocketIllustration() {
   return (
-    <svg viewBox="0 0 120 120" className="w-20 h-20 mx-auto" fill="none">
+    <svg viewBox="0 0 120 120" className="w-16 h-16 sm:w-20 sm:h-20 mx-auto" fill="none">
       <rect x="35" y="88" width="50" height="8" rx="2" fill="#e5e7eb"/>
       <rect x="30" y="92" width="60" height="4" rx="2" fill="#d1d5db"/>
       <path d="M48 88 L40 100" stroke="#9ca3af" strokeWidth="3" strokeLinecap="round"/>
@@ -434,11 +401,11 @@ function MediaRecordingTab({ onMediaReady }: { onMediaReady?: (file: File) => vo
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-xl shadow-2xl w-[380px] overflow-hidden border border-gray-100">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden border border-gray-100">
             <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
               <span className="text-sm font-bold text-gray-800" style={{ fontFamily: FONT }}>Studio Capture</span>
-              <button onClick={handleClose} className="text-gray-400 hover:text-gray-600">
+              <button onClick={handleClose} className="text-gray-400 hover:text-gray-600 p-1">
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 18L18 6M6 6l12 12" strokeLinecap="round"/></svg>
               </button>
             </div>
@@ -447,13 +414,13 @@ function MediaRecordingTab({ onMediaReady }: { onMediaReady?: (file: File) => vo
                 <button key={t} onClick={() => setStudioTab(t)}
                   className={`px-4 py-2 text-sm transition-colors flex-1 font-medium ${studioTab === t ? "border-b-2" : "text-gray-500 hover:bg-gray-50"}`}
                   style={studioTab === t ? { borderColor: MAROON, color: MAROON } : {}}>
-                  {t === "record" ? "Record Media" : "Upload Media"}
+                  {t === "record" ? "Record" : "Upload"}
                 </button>
               ))}
             </div>
             {studioTab === "record" && (
               <div>
-                <div className="relative bg-black" style={{ height: 200 }}>
+                <div className="relative bg-black" style={{ height: 180 }}>
                   {permError ? (
                     <div className="absolute inset-0 flex items-center justify-center p-4">
                       <p className="text-xs text-red-400 text-center">{permError}</p>
@@ -498,12 +465,12 @@ function MediaRecordingTab({ onMediaReady }: { onMediaReady?: (file: File) => vo
                 <div className="flex items-center gap-2">
                   <button onClick={() => audioFileRef.current?.click()}
                     className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 rounded-lg text-xs text-gray-700 hover:bg-gray-50">
-                    🎵 Select Audio
+                    🎵 Audio
                   </button>
                   <button onClick={() => videoFileRef.current?.click()}
                     className="flex items-center gap-1.5 px-3 py-2 border rounded-lg text-xs"
                     style={{ borderColor: MAROON, color: MAROON, background: MAROON_SOFT }}>
-                    🎥 Select Video
+                    🎥 Video
                   </button>
                 </div>
                 <input ref={audioFileRef} type="file" accept="audio/*" className="hidden"
@@ -531,7 +498,6 @@ function EntryForm({
   const [dragOver, setDragOver] = useState(false);
   const tab = entryTypeToTab(state.type);
 
-  // ✅ FIX: Use state.allowedFileTypes directly — already normalized at init time
   const allowedFileTypes = state.allowedFileTypes ?? [];
   const hasFileRestrictions = tab === "file_upload" && allowedFileTypes.length > 0;
   const acceptAttr = hasFileRestrictions
@@ -576,7 +542,6 @@ function EntryForm({
 
   return (
     <div className="space-y-2">
-      {/* ✅ Label row: name + Required/Optional badge + file type pills */}
       <div className="flex items-center gap-2 flex-wrap">
         <p className="text-sm font-bold text-gray-800">
           {state.label?.trim() || TAB_LABELS[tab] || state.type}
@@ -590,7 +555,6 @@ function EntryForm({
             Optional
           </span>
         )}
-        {/* ✅ File type pills — shown inline next to Required/Optional */}
         {tab === "file_upload" && <FileTypePills types={allowedFileTypes} />}
         {tab === "file_upload" && state.maxFiles > 1 && (
           <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 border border-gray-200">
@@ -616,7 +580,7 @@ function EntryForm({
                     <path d="M5 13l4 4L19 7" strokeLinecap="round" />
                   </svg>
                   <span className="text-xs text-green-700 font-medium truncate">{state.fileName}</span>
-                  <button onClick={() => onChange({ file: null, fileUrl: null, fileName: null, uploaded: false })} className="text-green-400 hover:text-red-500 ml-auto shrink-0">
+                  <button onClick={() => onChange({ file: null, fileUrl: null, fileName: null, uploaded: false })} className="text-green-400 hover:text-red-500 ml-auto shrink-0 p-1">
                     <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" /></svg>
                   </button>
                 </div>
@@ -638,7 +602,7 @@ function EntryForm({
                       </svg>
                       <span className="text-xs text-gray-700 truncate">{state.fileName}</span>
                     </div>
-                    <button onClick={() => onChange({ file: null, fileUrl: null, fileName: null, uploaded: false, error: "" })} className="text-gray-400 hover:text-red-500 shrink-0">
+                    <button onClick={() => onChange({ file: null, fileUrl: null, fileName: null, uploaded: false, error: "" })} className="text-gray-400 hover:text-red-500 shrink-0 p-1">
                       <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" /></svg>
                     </button>
                   </div>
@@ -648,7 +612,7 @@ function EntryForm({
                     <span className="text-sm text-gray-500">Uploading...</span>
                   </div>
                 ) : (
-                  <div className="flex flex-col items-center justify-center p-5 gap-2">
+                  <div className="flex flex-col items-center justify-center p-4 sm:p-5 gap-2">
                     <RocketIllustration />
                     <p className="text-sm text-gray-500">Drag a file here, or</p>
                     <button type="button" onClick={() => fileInputRef.current?.click()} className="text-sm font-semibold hover:underline" style={{ color: MAROON }}>
@@ -681,9 +645,9 @@ function EntryForm({
           <textarea
             value={state.textEntry}
             onChange={(event) => onChange({ textEntry: event.target.value })}
-            rows={8}
+            rows={6}
             placeholder="Type your response here..."
-            className="w-full p-4 text-sm text-gray-700 focus:outline-none resize-none bg-white"
+            className="w-full p-3 sm:p-4 text-sm text-gray-700 focus:outline-none resize-none bg-white"
             style={{ fontFamily: FONT }}
           />
           <div className="bg-gray-50 border-t border-gray-100 px-3 py-1 flex justify-end text-xs text-gray-400">
@@ -708,7 +672,7 @@ function EntryForm({
   );
 }
 
-// ── Submission Entries Panel (shown before starting) ──────────────────────────
+// ── Submission Entries Panel ──────────────────────────────────────────────────
 function SubmissionEntriesPanel({ entries }: { entries: SubmissionEntry[] }) {
   if (!entries || entries.length === 0) return null;
 
@@ -721,38 +685,31 @@ function SubmissionEntriesPanel({ entries }: { entries: SubmissionEntry[] }) {
 
   return (
     <div
-      className="rounded-xl border p-4 mb-5"
+      className="rounded-xl border p-3 sm:p-4 mb-4 sm:mb-5"
       style={{ borderColor: MAROON_SOFT_BORDER, background: MAROON_SOFT }}
     >
       <p className="text-xs font-black uppercase tracking-widest mb-3" style={{ color: MAROON }}>
         Submission Requirements
       </p>
-
       <div className="space-y-2">
         {entries.map((entry) => {
           const type = entry.type ?? "File Upload";
-          // ✅ Use the robust normalizer
           const allowedFileTypes = getAllowedFileTypes(entry as Record<string, unknown> & { label?: string; type?: string });
-
           return (
             <div
               key={entry.id}
-              className="flex items-center justify-between bg-white rounded-lg border px-3 py-2 gap-3"
+              className="flex items-center justify-between bg-white rounded-lg border px-3 py-2 gap-3 flex-wrap"
               style={{ borderColor: MAROON_SOFT_BORDER }}
             >
               <div className="flex items-center gap-2 min-w-0 flex-wrap">
                 <span className="text-sm shrink-0">{typeIcon[type] ?? "📄"}</span>
-                <span className="text-xs font-bold text-gray-800">
-                  {entry.label?.trim() || type}
-                </span>
-                {/* Required / Optional badge */}
+                <span className="text-xs font-bold text-gray-800">{entry.label?.trim() || type}</span>
                 <span
                   className="text-[10px] font-bold px-2 py-0.5 rounded-full text-white shrink-0"
                   style={{ background: entry.required ? MAROON : "#9ca3af" }}
                 >
                   {entry.required ? "Required" : "Optional"}
                 </span>
-                {/* ✅ File type pills */}
                 {type === "File Upload" && <FileTypePills types={allowedFileTypes} />}
                 {type === "File Upload" && allowedFileTypes.length === 0 && (
                   <span className="text-[10px] text-gray-400">All file types accepted</span>
@@ -762,7 +719,6 @@ function SubmissionEntriesPanel({ entries }: { entries: SubmissionEntry[] }) {
           );
         })}
       </div>
-
       <p className="text-[11px] text-gray-400 mt-2.5">
         {entries.filter((entry) => entry.required).length} required · {entries.filter((entry) => !entry.required).length} optional
       </p>
@@ -782,8 +738,8 @@ function SubmittedEntriesView({ fileUrl, textEntry, websiteUrl }: {
     return (
       <div className="space-y-3">
         {parsed.entries.map((entry, idx) => (
-          <div key={entry.entryId ?? idx} className="bg-white border border-gray-200 rounded-xl p-4">
-            <div className="flex items-center gap-2 mb-2">
+          <div key={entry.entryId ?? idx} className="bg-white border border-gray-200 rounded-xl p-3 sm:p-4">
+            <div className="flex items-center gap-2 mb-2 flex-wrap">
               <span className="text-xs font-black uppercase tracking-widest" style={{ color: MAROON }}>
                 {entry.label || entry.type || `Entry ${idx + 1}`}
               </span>
@@ -802,7 +758,7 @@ function SubmittedEntriesView({ fileUrl, textEntry, websiteUrl }: {
             ) : entry.textEntry ? (
               <div className="text-sm text-gray-700 leading-relaxed bg-gray-50 rounded-lg p-3" dangerouslySetInnerHTML={{ __html: entry.textEntry }}/>
             ) : entry.websiteUrl ? (
-              <a href={entry.websiteUrl} target="_blank" rel="noopener noreferrer" className="text-sm hover:underline" style={{ color: MAROON }}>
+              <a href={entry.websiteUrl} target="_blank" rel="noopener noreferrer" className="text-sm hover:underline break-all" style={{ color: MAROON }}>
                 {entry.websiteUrl}
               </a>
             ) : (
@@ -829,7 +785,7 @@ function SubmittedEntriesView({ fileUrl, textEntry, websiteUrl }: {
         <div className="text-sm text-gray-700 leading-relaxed bg-gray-50 rounded-lg p-3" dangerouslySetInnerHTML={{ __html: textEntry }}/>
       )}
       {websiteUrl && (
-        <a href={websiteUrl} target="_blank" rel="noopener noreferrer" className="text-sm hover:underline" style={{ color: MAROON }}>
+        <a href={websiteUrl} target="_blank" rel="noopener noreferrer" className="text-sm hover:underline break-all" style={{ color: MAROON }}>
           {websiteUrl}
         </a>
       )}
@@ -868,24 +824,24 @@ function SubmissionDetailsView({
 
   return (
     <div className="flex flex-col h-full" style={{ fontFamily: FONT }}>
-      <div className="flex items-center gap-2 px-1 py-3 text-sm border-b border-gray-100 mb-4 shrink-0">
+      <div className="flex items-center gap-2 px-1 py-3 text-sm border-b border-gray-100 mb-4 shrink-0 flex-wrap">
         <button onClick={onBack} className="flex items-center gap-1 hover:underline font-semibold" style={{ color: MAROON }}>
           <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M15 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
-          {assignment.title}
+          <span className="truncate max-w-[120px] sm:max-w-none">{assignment.title}</span>
         </button>
         <span className="text-gray-400">›</span>
-        <span className="text-gray-700">Submission Details</span>
+        <span className="text-gray-700">Details</span>
       </div>
 
-      <div className="flex items-start justify-between mb-4">
-        <div>
-          <h1 className="text-xl font-black text-gray-800" style={{ fontFamily: FONT }}>Submission Details</h1>
-          <h2 className="text-base text-gray-600 mt-0.5">{assignment.title}</h2>
+      <div className="flex items-start justify-between mb-4 gap-3 flex-wrap">
+        <div className="min-w-0">
+          <h1 className="text-lg sm:text-xl font-black text-gray-800" style={{ fontFamily: FONT }}>Submission Details</h1>
+          <h2 className="text-sm sm:text-base text-gray-600 mt-0.5">{assignment.title}</h2>
           <p className="text-xs text-gray-400 mt-0.5">Submitted {fmtDate(submission.submittedAt)}</p>
         </div>
-        <div className="flex items-center gap-2 shrink-0 ml-4">
+        <div className="flex items-center gap-2 shrink-0 flex-wrap">
           <span className="text-sm text-gray-600">
             Grade:{" "}
             <span className="font-black" style={{ color: MAROON }}>
@@ -895,23 +851,24 @@ function SubmissionDetailsView({
           <button
             onClick={onResubmit}
             disabled={!isAvailable || (attemptsLeft != null && attemptsLeft <= 0)}
-            className="px-4 py-1.5 text-white text-sm font-bold rounded-lg transition-colors disabled:opacity-40"
+            className="px-3 sm:px-4 py-1.5 text-white text-sm font-bold rounded-lg transition-colors disabled:opacity-40"
             style={{ background: MAROON }}
             onMouseEnter={e => (e.currentTarget.style.background = MAROON_DARK)}
             onMouseLeave={e => (e.currentTarget.style.background = MAROON)}>
-            Re-submit Assignment
+            Re-submit
           </button>
         </div>
       </div>
 
-      <div className="flex gap-5 flex-1 overflow-hidden">
-        <div className="flex-1 border border-gray-200 rounded-xl bg-gray-50 overflow-hidden">
+      {/* Stack on mobile, side-by-side on larger screens */}
+      <div className="flex flex-col lg:flex-row gap-4 sm:gap-5 flex-1 overflow-hidden">
+        <div className="flex-1 border border-gray-200 rounded-xl bg-gray-50 overflow-hidden min-h-[200px]">
           <div className="flex justify-end px-3 py-2 border-b border-gray-200 bg-white">
             <select className="text-xs border border-gray-300 rounded-lg px-2 py-1 bg-white text-gray-600 focus:outline-none">
               <option>Paper View</option><option>Preview</option>
             </select>
           </div>
-          <div className="p-6 min-h-48 overflow-y-auto">
+          <div className="p-4 sm:p-6 overflow-y-auto max-h-64 lg:max-h-none">
             <SubmittedEntriesView
               fileUrl={submission.fileUrl}
               textEntry={submission.textEntry}
@@ -920,7 +877,7 @@ function SubmissionDetailsView({
           </div>
         </div>
 
-        <div className="w-52 shrink-0">
+        <div className="w-full lg:w-52 shrink-0">
           <p className="text-sm font-black text-gray-700 mb-2">Add a Comment:</p>
           <textarea value={comment} onChange={e => setComment(e.target.value)} rows={4}
             className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-700 focus:outline-none resize-none mb-2"
@@ -966,6 +923,8 @@ export default function CourseAssignmentDetailPage({
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [comments,      setComments]      = useState("");
   const [entryStates,   setEntryStates]   = useState<EntryState[]>([]);
+  // Mobile sidebar drawer
+  const [showSidebarDrawer, setShowSidebarDrawer] = useState(false);
 
   // ── Fetch ───────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -976,25 +935,22 @@ export default function CourseAssignmentDetailPage({
         setAssignment(a);
         setAttemptCount(d.attemptCount ?? 0);
         setLoading(false);
-        // 🔍 DEBUG — remove after confirming pills work
+
         if (a?.submissionEntries?.length) {
           console.log("[Assignment] submissionEntries:", JSON.stringify(a?.submissionEntries));
-console.log("[Assignment] onlineEntryOptions:", JSON.stringify(a?.onlineEntryOptions));
+          console.log("[Assignment] onlineEntryOptions:", JSON.stringify(a?.onlineEntryOptions));
         }
 
         const entries: SubmissionEntry[] = a?.submissionEntries ?? [];
         if (entries.length > 0) {
           setEntryStates(entries.map(e => {
-            // ✅ FIX: Pass the full entry object so getAllowedFileTypes
-            // can check every possible field name the API might use
             const allowedFileTypes = getAllowedFileTypes(e as Record<string, unknown> & { label?: string; type?: string });
-
             return {
               entryId: String(e.id),
               label: e.label?.trim() || "File Upload",
               type: e.type ?? "File Upload",
               required: e.required ?? false,
-              allowedFileTypes, // pre-normalized — EntryForm uses this directly
+              allowedFileTypes,
               maxFiles: e.maxFiles ?? 1,
               file: null,
               fileUrl:   null,
@@ -1007,14 +963,13 @@ console.log("[Assignment] onlineEntryOptions:", JSON.stringify(a?.onlineEntryOpt
             };
           }));
         } else {
-          // Fallback: build from onlineEntryOptions
           const opts = a?.onlineEntryOptions ?? [];
           setEntryStates(opts.map((opt, idx) => ({
             entryId: `entry-${idx}`,
             label: TAB_LABELS[normalizeOpt(opt)] ?? opt,
             type: opt,
             required: false,
-            allowedFileTypes: [], // no restriction info in raw opts
+            allowedFileTypes: [],
             maxFiles: 1,
             file: null,
             fileUrl:   null,
@@ -1032,6 +987,19 @@ console.log("[Assignment] onlineEntryOptions:", JSON.stringify(a?.onlineEntryOpt
 
   const updateEntry = (idx: number, patch: Partial<EntryState>) => {
     setEntryStates(prev => prev.map((e, i) => i === idx ? { ...e, ...patch } : e));
+  };
+
+  // ── SpeedGrader navigation ──────────────────────────────────────────────────
+  const handleSpeedGrader = (studentId?: string) => {
+    const url = studentId
+      ? `/courses/${courseId}/assignments/${assignmentId}/speedgrader?student=${studentId}`
+      : `/courses/${courseId}/assignments/${assignmentId}/speedgrader`;
+
+    if (isMobileOrTablet()) {
+      router.push(url);
+    } else {
+      window.open(url, "_blank");
+    }
   };
 
   // ── Submit ──────────────────────────────────────────────────────────────────
@@ -1129,11 +1097,9 @@ console.log("[Assignment] onlineEntryOptions:", JSON.stringify(a?.onlineEntryOpt
 
   const entries: SubmissionEntry[] = assignment.submissionEntries ?? [];
 
-  // ── Build submitting label using pre-normalized entryStates ─────────────────
   const submittingLabel = entryStates.length > 0
     ? [...new Set(entryStates.map((entry) => {
         const tab = entryTypeToTab(entry.type);
-        // ✅ Use entry.allowedFileTypes directly (already normalized)
         if (tab === "file_upload" && entry.allowedFileTypes.length > 0) {
           return `File Upload (${entry.allowedFileTypes.map((t) => t.toUpperCase()).join(", ")})`;
         }
@@ -1143,63 +1109,160 @@ console.log("[Assignment] onlineEntryOptions:", JSON.stringify(a?.onlineEntryOpt
 
   if (showDetails && submission) {
     return (
-      <SubmissionDetailsView
-        assignment={assignment}
-        submission={submission}
-        onBack={() => setShowDetails(false)}
-        onResubmit={() => { setShowDetails(false); setStarted(true); setSubmitSuccess(false); }}
-        isAvailable={!!isAvailable}
-        attemptsLeft={attemptsLeft}
-      />
+      <div className="px-3 sm:px-6 lg:px-10 py-4 sm:py-6 lg:py-8 h-full overflow-y-auto" style={{ fontFamily: FONT }}>
+        <SubmissionDetailsView
+          assignment={assignment}
+          submission={submission}
+          onBack={() => setShowDetails(false)}
+          onResubmit={() => { setShowDetails(false); setStarted(true); setSubmitSuccess(false); }}
+          isAvailable={!!isAvailable}
+          attemptsLeft={attemptsLeft}
+        />
+      </div>
     );
   }
 
+  // ── Sidebar content (shared between drawer and panel) ──────────────────────
+  const SidebarContent = () => (
+    <>
+      <p className="font-black text-gray-800 mb-3 text-sm">Submission</p>
+      <div className="flex items-center gap-1.5 font-black text-sm mb-0.5"
+        style={{ color: isGraded ? MAROON : "#15803d" }}>
+        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+          <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+        {isGraded ? "Graded" : "Submitted!"}
+      </div>
+      <p className="text-xs text-gray-500 mb-2">{fmtDate(submission!.submittedAt, "short")}</p>
+      {isGraded && (
+        <p className="text-sm font-black mb-2" style={{ color: MAROON }}>
+          Grade: {submission!.grade} / {assignment.points}
+        </p>
+      )}
+      {(() => {
+        const parsed = parseStoredFileUrl(submission!.fileUrl);
+        if (parsed.isMulti) {
+          const fileEntries = parsed.entries.filter(e => e.fileUrl);
+          return fileEntries.length > 0 ? (
+            <div className="mb-3 space-y-1">
+              <p className="text-xs font-black text-gray-500 uppercase tracking-widest mb-1">Files</p>
+              {fileEntries.map((e, idx) => (
+                <a key={idx} href={e.fileUrl!} download target="_blank" rel="noopener noreferrer"
+                  className="block text-xs hover:underline truncate max-w-[180px]" style={{ color: MAROON }}>
+                  {e.fileName ?? e.fileUrl!.split("/").pop() ?? "File"}
+                </a>
+              ))}
+            </div>
+          ) : null;
+        }
+        return submission!.fileUrl ? (
+          <a href={submission!.fileUrl} download
+            className="block text-xs hover:underline truncate max-w-[180px] mb-3" style={{ color: MAROON }}>
+            {submission!.fileUrl.split("/").pop() ?? "Download"}
+          </a>
+        ) : null;
+      })()}
+
+      <button onClick={() => { setShowDetails(true); setShowSidebarDrawer(false); }}
+        className="text-xs hover:underline block mb-1 font-bold" style={{ color: MAROON }}>
+        Submission Details
+      </button>
+
+      {!started && (
+        <button
+          onClick={() => { setStarted(true); setSubmitSuccess(false); setShowSidebarDrawer(false); }}
+          disabled={!isAvailable || (attemptsLeft != null && attemptsLeft <= 0)}
+          className="w-full mt-2 px-3 py-2 border rounded-xl text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          style={{ borderColor: MAROON_SOFT_BORDER }}>
+          New Attempt
+        </button>
+      )}
+      {started && (
+        <button
+          onClick={() => { resetForm(); setShowSidebarDrawer(false); }}
+          className="w-full mt-2 px-3 py-2 border rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition-colors"
+          style={{ borderColor: "#e5e7eb" }}>
+          Cancel Attempt
+        </button>
+      )}
+
+      <div className="border-t border-gray-100 pt-4 mt-4">
+        <p className="font-black text-gray-700 mb-1 text-xs">Peer Reviews</p>
+        <p className="text-xs text-gray-400">None Assigned</p>
+      </div>
+      <div className="border-t border-gray-100 pt-4 mt-3">
+        <p className="font-black text-gray-700 mb-1 text-xs">Comments:</p>
+        <p className="text-xs text-gray-400">{submission!.comments ?? "No Comments"}</p>
+      </div>
+      {isGraded && submission!.feedback && (
+        <div className="border-t border-gray-100 pt-4 mt-3">
+          <p className="font-black text-gray-700 mb-1 text-xs">Feedback:</p>
+          <p className="text-xs text-gray-600">{submission!.feedback}</p>
+        </div>
+      )}
+    </>
+  );
+
   // ── Main layout ─────────────────────────────────────────────────────────────
   return (
-    <div className="flex h-full" style={{ fontFamily: FONT }}>
+    <div className="flex h-full relative" style={{ fontFamily: FONT }}>
 
       {/* ── Main content ── */}
-      <div className="flex-1 overflow-y-auto px-10 py-8">
+      <div className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-10 py-5 sm:py-6 lg:py-8">
 
         {/* Title + Start button */}
-        <div className="flex items-start justify-between mb-1">
-          <h1 className="text-2xl font-black text-gray-900 leading-tight pr-4" style={{ fontFamily: FONT }}>
+        <div className="flex items-start justify-between mb-1 gap-3">
+          <h1 className="text-xl sm:text-2xl font-black text-gray-900 leading-tight" style={{ fontFamily: FONT }}>
             {assignment.title}
           </h1>
-          {/* ✅ Show Start button only when not yet started, not submitted/graded, available, and attempts remain */}
-          {isAvailable && !started && !isSubmitted && !isGraded && (attemptsLeft == null || attemptsLeft > 0) && (
-            <button
-              onClick={() => setStarted(true)}
-              className="shrink-0 px-5 py-2 text-white text-sm font-black rounded-xl transition-colors"
-              style={{ background: MAROON }}
-              onMouseEnter={e => (e.currentTarget.style.background = MAROON_DARK)}
-              onMouseLeave={e => (e.currentTarget.style.background = MAROON)}>
-              Start Assignment
-            </button>
-          )}
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Mobile: show submission badge if exists */}
+            {submission && (
+              <button
+                onClick={() => setShowSidebarDrawer(true)}
+                className="lg:hidden flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-bold rounded-lg border"
+                style={{ color: isGraded ? MAROON : "#15803d", borderColor: isGraded ? "#f0c0c0" : "#86efac", background: isGraded ? "#fef2f2" : "#f0fdf4" }}
+              >
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                {isGraded ? "Graded" : "Submitted"}
+              </button>
+            )}
+            {isAvailable && !started && !isSubmitted && !isGraded && (attemptsLeft == null || attemptsLeft > 0) && (
+              <button
+                onClick={() => setStarted(true)}
+                className="shrink-0 px-4 sm:px-5 py-2 text-white text-sm font-black rounded-xl transition-colors"
+                style={{ background: MAROON }}
+                onMouseEnter={e => (e.currentTarget.style.background = MAROON_DARK)}
+                onMouseLeave={e => (e.currentTarget.style.background = MAROON)}>
+                Start Assignment
+              </button>
+            )}
+          </div>
         </div>
 
-        {/* Info strip */}
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-1 py-3 border-t border-b mb-5 text-sm text-gray-700"
-          style={{ borderColor: MAROON_SOFT_BORDER }}>
-          {assignment.dueDate && (
-            <div><span className="font-black" style={{ color: MAROON }}>Due</span> {fmtDue(assignment.dueDate)}</div>
-          )}
-          <div><span className="font-black" style={{ color: MAROON }}>Points</span> {assignment.points}</div>
-          <div><span className="font-black" style={{ color: MAROON }}>Submitting</span> {submittingLabel}</div>
-          <div><span className="font-black" style={{ color: MAROON }}>Attempts</span> {attemptCount}</div>
-          {maxAttempts != null && (
-            <div><span className="font-black" style={{ color: MAROON }}>Allowed</span> {maxAttempts}</div>
-          )}
-          {assignment.availableFrom && assignment.availableUntil && (
-            <div>
-              <span className="font-black" style={{ color: MAROON }}>Available</span>{" "}
-              {fmtDate(assignment.availableFrom)} – {fmtDate(assignment.availableUntil)}{" "}
-              <span className="text-gray-400 text-xs">
-                {diffHours(assignment.availableFrom, assignment.availableUntil)}
-              </span>
-            </div>
-          )}
+        {/* Info strip — scrollable on mobile */}
+        <div className="overflow-x-auto -mx-4 sm:mx-0">
+          <div className="flex items-center gap-x-4 sm:gap-x-5 gap-y-1 py-3 border-t border-b mb-4 sm:mb-5 text-sm text-gray-700 px-4 sm:px-0 min-w-max sm:min-w-0 sm:flex-wrap"
+            style={{ borderColor: MAROON_SOFT_BORDER }}>
+            {assignment.dueDate && (
+              <div className="shrink-0"><span className="font-black" style={{ color: MAROON }}>Due</span> {fmtDue(assignment.dueDate)}</div>
+            )}
+            <div className="shrink-0"><span className="font-black" style={{ color: MAROON }}>Points</span> {assignment.points}</div>
+            <div className="shrink-0"><span className="font-black" style={{ color: MAROON }}>Submitting</span> {submittingLabel}</div>
+            <div className="shrink-0"><span className="font-black" style={{ color: MAROON }}>Attempts</span> {attemptCount}</div>
+            {maxAttempts != null && (
+              <div className="shrink-0"><span className="font-black" style={{ color: MAROON }}>Allowed</span> {maxAttempts}</div>
+            )}
+            {assignment.availableFrom && assignment.availableUntil && (
+              <div className="shrink-0">
+                <span className="font-black" style={{ color: MAROON }}>Available</span>{" "}
+                {fmtDate(assignment.availableFrom)} – {fmtDate(assignment.availableUntil)}{" "}
+                <span className="text-gray-400 text-xs">{diffHours(assignment.availableFrom, assignment.availableUntil)}</span>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Status messages */}
@@ -1217,14 +1280,14 @@ console.log("[Assignment] onlineEntryOptions:", JSON.stringify(a?.onlineEntryOpt
         {/* Description */}
         {!isLocked && assignment.description && (
           <div
-            className="text-sm text-gray-700 leading-relaxed mb-6 max-w-3xl prose prose-sm"
+            className="text-sm text-gray-700 leading-relaxed mb-5 sm:mb-6 max-w-3xl prose prose-sm"
             dangerouslySetInnerHTML={{ __html: assignment.description }}
           />
         )}
 
         {/* Grade banner */}
         {isGraded && submission && (
-          <div className="rounded-xl border p-4 mb-6 max-w-xl"
+          <div className="rounded-xl border p-3 sm:p-4 mb-5 sm:mb-6 max-w-xl"
             style={{ background: MAROON_SOFT, borderColor: MAROON_SOFT_BORDER }}>
             <p className="text-sm font-black mb-1" style={{ color: MAROON }}>
               Grade: {submission.grade} / {assignment.points}
@@ -1235,7 +1298,7 @@ console.log("[Assignment] onlineEntryOptions:", JSON.stringify(a?.onlineEntryOpt
           </div>
         )}
 
-        {/* ✅ Submission requirements panel — shown before starting (not submitted/graded) */}
+        {/* Submission requirements panel */}
         {!started && !isSubmitted && !isGraded && entries.length > 0 && (
           <SubmissionEntriesPanel entries={entries}/>
         )}
@@ -1243,9 +1306,7 @@ console.log("[Assignment] onlineEntryOptions:", JSON.stringify(a?.onlineEntryOpt
         {/* ── Submission Form ── */}
         {started && isAvailable && (
           <div className="border rounded-2xl max-w-3xl overflow-hidden" style={{ borderColor: MAROON_SOFT_BORDER }}>
-
-            {/* Header */}
-            <div className="px-5 py-3 border-b" style={{ background: MAROON_SOFT, borderColor: MAROON_SOFT_BORDER }}>
+            <div className="px-4 sm:px-5 py-3 border-b" style={{ background: MAROON_SOFT, borderColor: MAROON_SOFT_BORDER }}>
               <p className="text-xs font-black uppercase tracking-widest" style={{ color: MAROON }}>
                 Submit Your Work
               </p>
@@ -1257,12 +1318,10 @@ console.log("[Assignment] onlineEntryOptions:", JSON.stringify(a?.onlineEntryOpt
               )}
             </div>
 
-            {/* Each entry as its own section */}
             <div className="divide-y divide-gray-100">
               {entryStates.length > 0 ? (
                 entryStates.map((entry, idx) => (
-                  <div key={entry.entryId} className="px-5 py-5">
-                    {/* ✅ EntryForm receives state with pre-normalized allowedFileTypes */}
+                  <div key={entry.entryId} className="px-4 sm:px-5 py-4 sm:py-5">
                     <EntryForm
                       state={entry}
                       onChange={patch => updateEntry(idx, patch)}
@@ -1270,14 +1329,13 @@ console.log("[Assignment] onlineEntryOptions:", JSON.stringify(a?.onlineEntryOpt
                   </div>
                 ))
               ) : (
-                <div className="px-5 py-5">
+                <div className="px-4 sm:px-5 py-5">
                   <p className="text-sm text-gray-500">No submission entries configured for this assignment.</p>
                 </div>
               )}
             </div>
 
-            {/* Comments + Submit */}
-            <div className="px-5 py-4 border-t" style={{ borderColor: MAROON_SOFT_BORDER, background: "#fafafa" }}>
+            <div className="px-4 sm:px-5 py-4 border-t" style={{ borderColor: MAROON_SOFT_BORDER, background: "#fafafa" }}>
               <div className="flex items-center gap-2 mb-3">
                 <input
                   value={comments}
@@ -1295,17 +1353,17 @@ console.log("[Assignment] onlineEntryOptions:", JSON.stringify(a?.onlineEntryOpt
 
               <div className="flex items-center gap-3">
                 <button onClick={resetForm}
-                  className="px-4 py-1.5 text-sm border border-gray-200 rounded-xl hover:bg-gray-50 text-gray-600">
+                  className="h-9 px-4 text-sm border border-gray-200 rounded-xl hover:bg-gray-50 text-gray-600">
                   Cancel
                 </button>
                 <button
                   onClick={handleSubmit}
                   disabled={submitting || entryStates.some(e => e.uploading)}
-                  className="px-5 py-1.5 text-sm text-white font-black rounded-xl disabled:opacity-60 transition-colors"
+                  className="h-9 px-4 sm:px-5 text-sm text-white font-black rounded-xl disabled:opacity-60 transition-colors"
                   style={{ background: MAROON }}
                   onMouseEnter={e => !submitting && (e.currentTarget.style.background = MAROON_DARK)}
                   onMouseLeave={e => (e.currentTarget.style.background = MAROON)}>
-                  {submitting ? "Submitting..." : "Submit Assignment"}
+                  {submitting ? "Submitting..." : "Submit"}
                 </button>
               </div>
             </div>
@@ -1313,95 +1371,39 @@ console.log("[Assignment] onlineEntryOptions:", JSON.stringify(a?.onlineEntryOpt
         )}
       </div>
 
-      {/* ── Right Sidebar ──
-          ✅ FIX: Sidebar is now ALWAYS shown when submission exists,
-          regardless of whether the form (started=true) is open.
-          This prevents the sidebar from disappearing when user clicks "Start Assignment" or "New Attempt".
-      ── */}
+      {/* ── Desktop Right Sidebar ── */}
       {submission && (
-        <div className="w-56 border-l border-gray-200 shrink-0 px-5 py-6 text-sm overflow-y-auto" style={{ fontFamily: FONT }}>
-          <p className="font-black text-gray-800 mb-3">Submission</p>
-
-          <div className="flex items-center gap-1.5 font-black text-sm mb-0.5"
-            style={{ color: isGraded ? MAROON : "#15803d" }}>
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            {isGraded ? "Graded" : "Submitted!"}
-          </div>
-
-          <p className="text-xs text-gray-500 mb-2">{fmtDate(submission.submittedAt, "short")}</p>
-
-          {isGraded && (
-            <p className="text-sm font-black mb-2" style={{ color: MAROON }}>
-              Grade: {submission.grade} / {assignment.points}
-            </p>
-          )}
-
-          {(() => {
-            const parsed = parseStoredFileUrl(submission.fileUrl);
-            if (parsed.isMulti) {
-              const fileEntries = parsed.entries.filter(e => e.fileUrl);
-              return fileEntries.length > 0 ? (
-                <div className="mb-3 space-y-1">
-                  <p className="text-xs font-black text-gray-500 uppercase tracking-widest mb-1">Files</p>
-                  {fileEntries.map((e, idx) => (
-                    <a key={idx} href={e.fileUrl!} download target="_blank" rel="noopener noreferrer"
-                      className="block text-xs hover:underline truncate max-w-[180px]" style={{ color: MAROON }}>
-                      {e.fileName ?? e.fileUrl!.split("/").pop() ?? "File"}
-                    </a>
-                  ))}
-                </div>
-              ) : null;
-            }
-            return submission.fileUrl ? (
-              <a href={submission.fileUrl} download
-                className="block text-xs hover:underline truncate max-w-[180px] mb-3" style={{ color: MAROON }}>
-                {submission.fileUrl.split("/").pop() ?? "Download"}
-              </a>
-            ) : null;
-          })()}
-
-          <button onClick={() => setShowDetails(true)}
-            className="text-xs hover:underline block mb-1 font-bold" style={{ color: MAROON }}>
-            Submission Details
-          </button>
-
-          {/* ✅ New Attempt button — shown even when form is open */}
-          {!started && (
-            <button
-              onClick={() => { setStarted(true); setSubmitSuccess(false); }}
-              disabled={!isAvailable || (attemptsLeft != null && attemptsLeft <= 0)}
-              className="w-full mt-2 px-3 py-1.5 border rounded-xl text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              style={{ borderColor: MAROON_SOFT_BORDER }}>
-              New Attempt
-            </button>
-          )}
-          {/* ✅ When form is open, show a cancel-form shortcut instead */}
-          {started && (
-            <button
-              onClick={resetForm}
-              className="w-full mt-2 px-3 py-1.5 border rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition-colors"
-              style={{ borderColor: "#e5e7eb" }}>
-              Cancel Attempt
-            </button>
-          )}
-
-          <div className="border-t border-gray-100 pt-4 mt-4">
-            <p className="font-black text-gray-700 mb-1 text-xs">Peer Reviews</p>
-            <p className="text-xs text-gray-400">None Assigned</p>
-          </div>
-          <div className="border-t border-gray-100 pt-4 mt-3">
-            <p className="font-black text-gray-700 mb-1 text-xs">Comments:</p>
-            <p className="text-xs text-gray-400">{submission.comments ?? "No Comments"}</p>
-          </div>
-          {isGraded && submission.feedback && (
-            <div className="border-t border-gray-100 pt-4 mt-3">
-              <p className="font-black text-gray-700 mb-1 text-xs">Feedback:</p>
-              <p className="text-xs text-gray-600">{submission.feedback}</p>
-            </div>
-          )}
+        <div className="hidden lg:block w-56 border-l border-gray-200 shrink-0 px-5 py-6 text-sm overflow-y-auto" style={{ fontFamily: FONT }}>
+          <SidebarContent />
         </div>
+      )}
+
+      {/* ── Mobile Sidebar Drawer ── */}
+      {submission && showSidebarDrawer && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="lg:hidden fixed inset-0 z-40 bg-black/30"
+            onClick={() => setShowSidebarDrawer(false)}
+          />
+          {/* Drawer */}
+          <div
+            className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl shadow-2xl border-t border-gray-200 px-5 pt-5 pb-safe-or-8 overflow-y-auto"
+            style={{ maxHeight: "70vh", fontFamily: FONT }}
+          >
+            {/* Drag handle */}
+            <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-4" />
+            <button
+              onClick={() => setShowSidebarDrawer(false)}
+              className="absolute top-4 right-4 w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 text-gray-500"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round"/>
+              </svg>
+            </button>
+            <SidebarContent />
+          </div>
+        </>
       )}
     </div>
   );

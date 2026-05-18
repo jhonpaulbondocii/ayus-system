@@ -1,26 +1,75 @@
 "use client";
 
 // src/components/layout/course/CourseAssignmentForm.tsx
-// Extracted from CourseAssignmentsTab.tsx (HeadCreateAssignment)
+// Fully responsive & mobile-friendly rewrite — fixed ESLint + Tailwind warnings
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { Plus, X, ChevronDown } from "lucide-react";
-import {
-  MAROON, FONT, TIME_OPTIONS,
-  isoToDate, isoToTime,
-  GRADE_OPTIONS, SUBMISSION_TYPES, SUBMISSION_ENTRY_TYPES,
-} from "./helpers";
-import type { Assignment, Section, AssignRow, SubmissionEntry, AssignmentGroupItem } from "./types";
+import { Plus, X, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   CONSTANTS / HELPERS
+───────────────────────────────────────────────────────────────────────────── */
+const MAROON = "#7b1113";
+const FONT = "system-ui, -apple-system, sans-serif";
+
+const TIME_OPTIONS: string[] = [];
+for (let h = 0; h < 24; h++) {
+  for (const m of [0, 30]) {
+    const hh = h % 12 === 0 ? 12 : h % 12;
+    const mm = m === 0 ? "00" : "30";
+    const ampm = h < 12 ? "AM" : "PM";
+    TIME_OPTIONS.push(`${hh}:${mm} ${ampm}`);
+  }
+}
+
+const GRADE_OPTIONS = ["Points", "Percentage", "Letter Grade", "GPA Scale", "Pass/Fail", "Not Graded"];
+const SUBMISSION_TYPES = ["Online", "On Paper", "External Tool", "No Submission"];
+const SUBMISSION_ENTRY_TYPES = ["File Upload", "Text Entry", "Website URL", "Media Recording", "Student Annotation"];
+
+function isoToDate(iso: string | null | undefined): string {
+  if (!iso) return "";
+  try { return iso.slice(0, 10); } catch { return ""; }
+}
+function isoToTime(iso: string | null | undefined): string {
+  if (!iso) return "";
+  try {
+    const d = new Date(iso);
+    const h = d.getHours(), m = d.getMinutes();
+    const hh = h % 12 === 0 ? 12 : h % 12;
+    const mm = m < 10 ? "0" + m : String(m);
+    return `${hh}:${mm} ${h < 12 ? "AM" : "PM"}`;
+  } catch { return ""; }
+}
 
 /* ─────────────────────────────────────────────────────────────────────────────
    TYPES
 ───────────────────────────────────────────────────────────────────────────── */
+interface Assignment {
+  id?: string | number;
+  title?: string;
+  description?: string;
+  points?: number;
+  assignmentGroup?: string;
+  submissionType?: string;
+  status?: string;
+  dueDate?: string | null;
+  availableFrom?: string | null;
+  availableUntil?: string | null;
+}
+interface Section { id: string | number; name: string; }
+interface AssignRow {
+  id: number; assignees: string[];
+  dueDate: string; dueTime: string;
+  availableFrom: string; availableFromTime: string;
+  until: string; untilTime: string;
+}
+interface SubmissionEntry { id: number; label: string; required: boolean; type: string; }
+interface AssignmentGroupItem { id: number; name: string; }
+
 type AssignmentWithRole = Assignment & {
   _assignmentRole?: "manager" | "submitter";
   _publisherName?: string | null;
-  _publisherImage?: string | null;
-  _publisherRole?: string | null;
-  _publisherId?: string | null;
+  submissionEntries?: SubmissionEntryExtended[];
 };
 
 interface SubmissionEntryExtended extends SubmissionEntry {
@@ -29,24 +78,216 @@ interface SubmissionEntryExtended extends SubmissionEntry {
 }
 
 const ALLOWED_FILE_TYPES = [
-  { value: "pdf", label: "PDF" },
-  { value: "docx", label: "DOCX" },
-  { value: "doc", label: "DOC" },
-  { value: "txt", label: "TXT" },
-  { value: "xlsx", label: "XLSX" },
-  { value: "csv", label: "CSV" },
-  { value: "pptx", label: "PPTX" },
-  { value: "jpg", label: "JPG" },
-  { value: "png", label: "PNG" },
+  { value: "pdf", label: "PDF" }, { value: "docx", label: "DOCX" }, { value: "doc", label: "DOC" },
+  { value: "txt", label: "TXT" }, { value: "xlsx", label: "XLSX" }, { value: "csv", label: "CSV" },
+  { value: "pptx", label: "PPTX" }, { value: "jpg", label: "JPG" }, { value: "png", label: "PNG" },
   { value: "zip", label: "ZIP" },
 ];
 
-function fmtDateLabel(date: string, time: string) {
-  if (!date) return "";
-  try {
-    const d = new Date(`${date}T00:00:00`);
-    return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" }) + " " + (time || "11:59 PM");
-  } catch { return ""; }
+/* ─────────────────────────────────────────────────────────────────────────────
+   COMPACT DATE PICKER
+───────────────────────────────────────────────────────────────────────────── */
+const DAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+const MONTHS = ["January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"];
+
+function parseLocalDate(str: string): Date | null {
+  if (!str) return null;
+  const [y, m, d] = str.split("-").map(Number);
+  if (!y || !m || !d) return null;
+  return new Date(y, m - 1, d);
+}
+function toLocalISO(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+function fmtDisplay(str: string): string {
+  const d = parseLocalDate(str);
+  if (!d) return "";
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
+interface DatePickerProps {
+  value: string;
+  onChange: (val: string) => void;
+  placeholder?: string;
+}
+
+function DatePicker({ value, onChange, placeholder = "Select date" }: DatePickerProps) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const today = new Date();
+  const selected = parseLocalDate(value);
+
+  // FIX: derive view from value directly instead of syncing via useEffect
+  // This avoids the react-hooks/set-state-in-effect ESLint error
+  const getInitialView = (sel: Date | null) =>
+    sel ? new Date(sel.getFullYear(), sel.getMonth(), 1) : new Date(today.getFullYear(), today.getMonth(), 1);
+
+  const [view, setView] = useState<Date>(() => getInitialView(selected));
+
+  // Only update view when the popover opens with a new selected value
+  const handleOpen = () => {
+    const sel = parseLocalDate(value);
+    if (sel) {
+      setView(new Date(sel.getFullYear(), sel.getMonth(), 1));
+    }
+    setOpen(true);
+  };
+
+  useEffect(() => {
+    if (!open) return;
+    const h = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, [open]);
+
+  const year = view.getFullYear();
+  const month = view.getMonth();
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const cells: (number | null)[] = [
+    ...Array(firstDay).fill(null),
+    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
+  ];
+  while (cells.length % 7 !== 0) cells.push(null);
+
+  const prev = () => setView(new Date(year, month - 1, 1));
+  const next = () => setView(new Date(year, month + 1, 1));
+
+  const isToday = (d: number) =>
+    today.getFullYear() === year && today.getMonth() === month && today.getDate() === d;
+  const isSelected = (d: number) =>
+    selected?.getFullYear() === year && selected?.getMonth() === month && selected?.getDate() === d;
+
+  return (
+    <div ref={ref} className="relative w-full">
+      <button
+        type="button"
+        onClick={() => open ? setOpen(false) : handleOpen()}
+        className="w-full h-8 flex items-center justify-between px-2.5 border border-gray-300 rounded-sm bg-white text-xs text-left focus:outline-none focus:border-[#7b1113] hover:border-gray-400 transition-colors"
+      >
+        <span className={value ? "text-gray-800" : "text-gray-400"}>
+          {value ? fmtDisplay(value) : placeholder}
+        </span>
+        <ChevronDown size={12} className="text-gray-400 shrink-0 ml-1" />
+      </button>
+
+      {open && (
+        <div
+          className="absolute z-200 mt-1 bg-white border border-gray-200 rounded-md shadow-xl"
+          style={{ width: 260, left: 0 }}
+          onMouseDown={e => e.stopPropagation()}
+        >
+          <div className="flex items-center justify-between px-3 py-2 border-b border-gray-100">
+            <button type="button" onClick={prev} className="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-100 text-gray-600">
+              <ChevronLeft size={14} />
+            </button>
+            <span className="text-xs font-semibold text-gray-800">{MONTHS[month]} {year}</span>
+            <button type="button" onClick={next} className="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-100 text-gray-600">
+              <ChevronRight size={14} />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-7 px-2 pt-2">
+            {DAYS.map(d => (
+              <div key={d} className="text-center text-[10px] font-semibold text-gray-400 py-0.5">{d}</div>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-7 px-2 pb-2 gap-y-0.5">
+            {cells.map((d, i) => {
+              if (!d) return <div key={i} />;
+              const sel = isSelected(d);
+              const tod = isToday(d);
+              return (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => { onChange(toLocalISO(new Date(year, month, d))); setOpen(false); }}
+                  className={`h-7 w-full flex items-center justify-center rounded text-xs font-medium transition-colors
+                    ${sel ? "text-white" : tod ? "font-bold" : "text-gray-700 hover:bg-gray-100"}
+                  `}
+                  style={sel ? { background: MAROON } : tod ? { color: MAROON } : {}}
+                >
+                  {d}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="flex items-center justify-between px-3 py-2 border-t border-gray-100">
+            <button type="button" onClick={() => { onChange(""); setOpen(false); }} className="text-xs hover:underline" style={{ color: MAROON }}>Clear</button>
+            <button type="button" onClick={() => {
+              onChange(toLocalISO(today));
+              setOpen(false);
+              setView(new Date(today.getFullYear(), today.getMonth(), 1));
+            }} className="text-xs font-semibold" style={{ color: MAROON }}>Today</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   COMPACT TIME SELECT — minimal on mobile
+───────────────────────────────────────────────────────────────────────────── */
+function TimePicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  return (
+    <div className="relative shrink-0">
+      <select
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        className="h-8 pl-2 pr-6 border border-gray-300 rounded-sm bg-white text-xs outline-none appearance-none focus:border-[#7b1113] hover:border-gray-400 transition-colors cursor-pointer"
+        style={{ minWidth: 88, maxWidth: 104 }}
+      >
+        <option value="">Time</option>
+        {TIME_OPTIONS.map(t => <option key={t} value={t}>{t}</option>)}
+      </select>
+      <ChevronDown size={11} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   DATE + TIME ROW
+───────────────────────────────────────────────────────────────────────────── */
+interface DateTimeRowProps {
+  label: string;
+  dateValue: string;
+  timeValue: string;
+  onDateChange: (v: string) => void;
+  onTimeChange: (v: string) => void;
+  onClear: () => void;
+  error?: string;
+}
+
+function DateTimeRow({ label, dateValue, timeValue, onDateChange, onTimeChange, onClear, error }: DateTimeRowProps) {
+  return (
+    <div>
+      <p className="text-xs font-medium text-gray-700 mb-1">{label}</p>
+      {/* Stack vertically on very small screens, side by side on sm+ */}
+      <div className="flex flex-col xs:flex-row gap-1.5 items-stretch xs:items-start">
+        <div className="flex-1 min-w-0">
+          <DatePicker value={dateValue} onChange={onDateChange} placeholder="mm/dd/yyyy" />
+        </div>
+        <TimePicker value={timeValue} onChange={onTimeChange} />
+      </div>
+      {error && <p className="text-[11px] text-red-500 mt-0.5">{error}</p>}
+      {(dateValue || timeValue) && (
+        <button type="button" onClick={onClear} className="text-[11px] mt-0.5 hover:underline" style={{ color: MAROON }}>
+          Clear
+        </button>
+      )}
+      {dateValue && (
+        <p className="text-[10px] text-gray-400 mt-0.5">
+          {fmtDisplay(dateValue)} {timeValue}
+        </p>
+      )}
+    </div>
+  );
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -387,7 +628,7 @@ function SubmissionEntryCard({ entry, index, canRemove, onRemove, onUpdate }: {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   MAIN EXPORT — HeadCreateAssignment
+   MAIN EXPORT
 ───────────────────────────────────────────────────────────────────────────── */
 interface Props {
   courseId: string;
@@ -419,7 +660,7 @@ export default function CourseAssignmentForm({ courseId, initialGroup = "", exis
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [submissionEntries, setSubmissionEntries] = useState<SubmissionEntryExtended[]>(() => {
-    const existing = (existingAssignment as (AssignmentWithRole & { submissionEntries?: SubmissionEntryExtended[] }) | null | undefined)?.submissionEntries;
+    const existing = existingAssignment?.submissionEntries;
     if (existing && Array.isArray(existing) && existing.length > 0) return existing;
     return [{ id: 1, label: "", required: false, type: "File Upload", allowedFileTypes: [], maxFiles: 1 }];
   });
@@ -467,11 +708,6 @@ export default function CourseAssignmentForm({ courseId, initialGroup = "", exis
   const removeAssignRow = (id: number) => setAssignRows(p => p.filter(r => r.id !== id));
   const updateAssignRow = (id: number, field: keyof AssignRow, value: string | string[]) =>
     setAssignRows(p => p.map(r => r.id === id ? { ...r, [field]: value } : r));
-
-  const handleDateChange = (id: number, dateField: "dueDate" | "availableFrom" | "until", timeField: "dueTime" | "availableFromTime" | "untilTime", value: string) => {
-    const defaultTime = dateField === "availableFrom" ? "12:00 AM" : "11:59 PM";
-    setAssignRows(p => p.map(r => r.id !== id ? r : { ...r, [dateField]: value, [timeField]: r[timeField] || (value ? defaultTime : "") }));
-  };
 
   const getDateErrors = (row: AssignRow) => {
     const errors: { until?: string; availableFrom?: string } = {};
@@ -524,35 +760,41 @@ export default function CourseAssignmentForm({ courseId, initialGroup = "", exis
   };
 
   const inp = "h-8 border border-gray-300 rounded-sm px-3 text-xs w-full outline-none focus:border-[#7b1113]";
-  const sel = "h-8 border border-gray-300 rounded-sm px-3 text-xs w-full bg-white outline-none focus:border-[#7b1113]";
+  const sel = "h-8 border border-gray-300 rounded-sm px-3 text-xs w-full bg-white outline-none focus:border-[#7b1113] appearance-none";
+
+  // Tab navigation helpers
+  const TAB_ORDER: LocalTabKey[] = ["details", "submission", "settings", "assign"];
+  const currentTabIdx = TAB_ORDER.indexOf(activeTab);
+  const prevTab = currentTabIdx > 0 ? TAB_ORDER[currentTabIdx - 1] : null;
+  const nextTab = currentTabIdx < TAB_ORDER.length - 1 ? TAB_ORDER[currentTabIdx + 1] : null;
 
   return (
     <div className="w-full h-full bg-white flex flex-col" style={{ fontFamily: FONT }}>
       {/* Top status bar */}
-      <div className="flex items-center justify-between px-5 py-2.5 border-b border-gray-200 bg-white shrink-0">
+      <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 border-b border-gray-200 bg-white shrink-0">
         <span className="text-sm font-bold text-gray-700">{isEdit ? "Edit Assignment" : "New Assignment"}</span>
         <div className="flex items-center gap-1.5 text-xs text-gray-600">
-          <span className="w-3 h-3 rounded-full border" style={published ? { background: "#22c55e", borderColor: "#22c55e" } : { borderColor: "#9ca3af" }} />
-          {published ? "Published" : "Not Published"}
+          <span className="w-3 h-3 rounded-full border shrink-0" style={published ? { background: "#22c55e", borderColor: "#22c55e" } : { borderColor: "#9ca3af" }} />
+          <span className="hidden xs:inline">{published ? "Published" : "Not Published"}</span>
         </div>
       </div>
 
       {/* Tab bar */}
-      <div className="flex items-end border-b border-gray-200 px-4 bg-white shrink-0 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
+      <div className="flex items-end border-b border-gray-200 px-2 sm:px-3 bg-white shrink-0 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
         {TABS.map(t => (
           <button key={t.key} onClick={() => setActiveTab(t.key)}
-            className={`px-4 py-2 text-xs border border-b-0 -mb-px mr-0.5 rounded-t transition-colors shrink-0 ${activeTab === t.key ? "bg-white border-gray-200 text-gray-900 font-medium" : "border-transparent text-gray-500 hover:text-gray-700"}`}>
+            className={`px-2.5 sm:px-3 py-2 text-xs border border-b-0 -mb-px mr-0.5 rounded-t transition-colors shrink-0 ${activeTab === t.key ? "bg-white border-gray-200 text-gray-900 font-medium" : "border-transparent text-gray-500 hover:text-gray-700"}`}>
             {t.label}
           </button>
         ))}
       </div>
 
       {/* Scrollable body */}
-      <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-5">
+      <div className="flex-1 overflow-y-auto px-3 sm:px-4 py-4">
 
         {/* ── DETAILS ── */}
         {activeTab === "details" && (
-          <div className="space-y-5 max-w-2xl">
+          <div className="space-y-4 max-w-2xl">
             <div>
               <label className="text-xs text-gray-500 block mb-1">Assignment Name <span className="text-red-500">*</span></label>
               <input value={name} onChange={e => setName(e.target.value)} placeholder="Assignment Name"
@@ -564,26 +806,36 @@ export default function CourseAssignmentForm({ courseId, initialGroup = "", exis
               <label className="text-xs text-gray-500 block mb-1">Description</label>
               <RichTextEditor value={description} onChange={setDescription} placeholder="Assignment description..." />
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-[160px_1fr] items-start gap-3">
-              <label className="text-xs text-gray-700 sm:text-right pt-2">Points</label>
-              <input type="number" min={0} value={points} onChange={e => setPoints(e.target.value)} className={inp} style={{ maxWidth: 320 }} />
-              <label className="text-xs text-gray-700 sm:text-right pt-2">Assignment Group</label>
-              <select value={group} onChange={e => { if (e.target.value === "__create__") { setNewGroupName(""); setGroupModalOpen(true); } else setGroup(e.target.value); }} className={sel} style={{ maxWidth: 320 }}>
-                {groups.map(g => <option key={g.id} value={g.name}>{g.name}</option>)}
-                <option value="__create__">[ Create Group ]</option>
-              </select>
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs text-gray-700 block mb-1">Points</label>
+                <input type="number" min={0} value={points} onChange={e => setPoints(e.target.value)} className={inp} style={{ maxWidth: 200 }} />
+              </div>
+              <div>
+                <label className="text-xs text-gray-700 block mb-1">Assignment Group</label>
+                <div className="relative" style={{ maxWidth: 320 }}>
+                  <select value={group} onChange={e => { if (e.target.value === "__create__") { setNewGroupName(""); setGroupModalOpen(true); } else setGroup(e.target.value); }} className={sel}>
+                    {groups.map(g => <option key={g.id} value={g.name}>{g.name}</option>)}
+                    <option value="__create__">[ Create Group ]</option>
+                  </select>
+                  <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                </div>
+              </div>
             </div>
           </div>
         )}
 
         {/* ── SUBMISSION ── */}
         {activeTab === "submission" && (
-          <div className="max-w-2xl space-y-5">
-            <div className="grid grid-cols-1 sm:grid-cols-[160px_1fr] items-start gap-3">
-              <label className="text-xs text-gray-700 sm:text-right pt-2">Submission Type</label>
-              <select value={submissionType} onChange={e => setSubmissionType(e.target.value)} className={sel} style={{ maxWidth: 320 }}>
-                {SUBMISSION_TYPES.map(o => <option key={o}>{o}</option>)}
-              </select>
+          <div className="max-w-2xl space-y-4">
+            <div>
+              <label className="text-xs text-gray-700 block mb-1">Submission Type</label>
+              <div className="relative" style={{ maxWidth: 320 }}>
+                <select value={submissionType} onChange={e => setSubmissionType(e.target.value)} className={sel}>
+                  {SUBMISSION_TYPES.map(o => <option key={o}>{o}</option>)}
+                </select>
+                <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+              </div>
             </div>
             {submissionType === "Online" && (
               <div>
@@ -600,7 +852,6 @@ export default function CourseAssignmentForm({ courseId, initialGroup = "", exis
                     <Plus size={13} /> Add Submission Entry
                   </button>
                 </div>
-                {/* Preview */}
                 {submissionEntries.length > 0 && (
                   <div className="rounded-md p-3 border text-xs mt-4" style={{ background: "#fef2f2", borderColor: "#f0c0c0" }}>
                     <p className="font-bold mb-2" style={{ color: MAROON }}>Submission Summary (Staff View)</p>
@@ -622,12 +873,15 @@ export default function CourseAssignmentForm({ courseId, initialGroup = "", exis
                 )}
               </div>
             )}
-            <div className="grid grid-cols-1 sm:grid-cols-[160px_1fr] items-start gap-3">
-              <label className="text-xs text-gray-700 sm:text-right pt-2">Attempts</label>
+            <div>
+              <label className="text-xs text-gray-700 block mb-1">Attempts</label>
               <div className="border border-gray-200 rounded-sm p-3 space-y-2" style={{ maxWidth: 320 }}>
-                <select value={submissionAttempts} onChange={e => setSubmissionAttempts(e.target.value)} className="h-8 border border-gray-300 rounded-sm px-3 text-xs w-full bg-white outline-none focus:border-[#7b1113]">
-                  <option>Unlimited</option><option>Limited</option>
-                </select>
+                <div className="relative">
+                  <select value={submissionAttempts} onChange={e => setSubmissionAttempts(e.target.value)} className={sel}>
+                    <option>Unlimited</option><option>Limited</option>
+                  </select>
+                  <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                </div>
                 {submissionAttempts === "Limited" && (
                   <div><p className="text-xs font-medium text-gray-700 mb-1">Number of Attempts</p><input type="number" min={1} value={allowedAttempts} onChange={e => setAllowedAttempts(parseInt(e.target.value) || 1)} className="h-8 w-24 border border-gray-300 rounded-sm px-2 text-xs outline-none focus:border-[#7b1113]" /></div>
                 )}
@@ -638,91 +892,128 @@ export default function CourseAssignmentForm({ courseId, initialGroup = "", exis
 
         {/* ── SETTINGS ── */}
         {activeTab === "settings" && (
-          <div className="grid grid-cols-1 sm:grid-cols-[160px_1fr] items-start gap-3 max-w-2xl">
-            <label className="text-xs text-gray-700 sm:text-right pt-2">Display Grade as</label>
-            <select value={displayGradeAs} onChange={e => setDisplayGradeAs(e.target.value)} className={sel} style={{ maxWidth: 320 }}>{GRADE_OPTIONS.map(o => <option key={o}>{o}</option>)}</select>
-            <div />
-            <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer"><input type="checkbox" checked={doNotCount} onChange={e => setDoNotCount(e.target.checked)} style={{ accentColor: MAROON }} />Do not count towards final grade</label>
-            <label className="text-xs text-gray-700 sm:text-right pt-2">Group Assignment</label>
-            <div className="border border-gray-200 rounded-sm p-3" style={{ maxWidth: 320 }}>
-              <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer"><input type="checkbox" checked={isGroupAssignment} onChange={e => setIsGroupAssignment(e.target.checked)} style={{ accentColor: MAROON }} />This is a Group Assignment</label>
+          <div className="space-y-3 max-w-2xl">
+            <div>
+              <label className="text-xs text-gray-700 block mb-1">Display Grade as</label>
+              <div className="relative" style={{ maxWidth: 320 }}>
+                <select value={displayGradeAs} onChange={e => setDisplayGradeAs(e.target.value)} className={sel}>
+                  {GRADE_OPTIONS.map(o => <option key={o}>{o}</option>)}
+                </select>
+                <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+              </div>
+            </div>
+            <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
+              <input type="checkbox" checked={doNotCount} onChange={e => setDoNotCount(e.target.checked)} style={{ accentColor: MAROON }} />
+              Do not count towards final grade
+            </label>
+            <div>
+              <label className="text-xs text-gray-700 block mb-1">Group Assignment</label>
+              <div className="border border-gray-200 rounded-sm p-3" style={{ maxWidth: 320 }}>
+                <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
+                  <input type="checkbox" checked={isGroupAssignment} onChange={e => setIsGroupAssignment(e.target.checked)} style={{ accentColor: MAROON }} />
+                  This is a Group Assignment
+                </label>
+              </div>
             </div>
           </div>
         )}
 
         {/* ── ASSIGN ── */}
         {activeTab === "assign" && (
-          <div className="grid grid-cols-1 sm:grid-cols-[160px_1fr] items-start gap-3 max-w-2xl">
-            <label className="text-xs text-gray-700 sm:text-right pt-2">Assign Access</label>
-            <div className="space-y-3">
-              {assignRows.map((row, idx) => {
-                const errs = getDateErrors(row);
-                const configs = [
-                  { label: "Due Date", dateField: "dueDate" as const, timeField: "dueTime" as const, err: undefined as string | undefined },
-                  { label: "Available from", dateField: "availableFrom" as const, timeField: "availableFromTime" as const, err: errs.availableFrom },
-                  { label: "Until", dateField: "until" as const, timeField: "untilTime" as const, err: errs.until },
-                ];
-                return (
-                  <div key={row.id} className="border border-gray-200 rounded-sm p-3 space-y-3 relative" style={{ maxWidth: 480 }}>
-                    {idx > 0 && <button type="button" onClick={() => removeAssignRow(row.id)} className="absolute top-2 right-2 text-gray-400 hover:text-red-500 text-xs">✕</button>}
-                    {/* Assignee dropdown */}
-                    <div className="relative" data-dropdown onMouseDown={e => e.stopPropagation()}>
-                      <p className="text-xs font-medium text-gray-700 mb-1">Assign To</p>
-                      <div onMouseDown={e => { e.stopPropagation(); setOpenDropdownId(openDropdownId === row.id ? null : row.id); setDropdownSearch(""); }}
-                        className="w-full min-h-7.5 border rounded-sm px-2 py-1 text-xs flex flex-wrap gap-1 items-center cursor-pointer bg-white select-none" style={{ borderColor: MAROON }}>
-                        {row.assignees.length > 0 ? row.assignees.map(a => (
-                          <span key={a} className="px-2 py-0.5 rounded text-xs flex items-center gap-1 text-white font-medium" style={{ background: MAROON }}>
-                            {a}<button type="button" onMouseDown={e => { e.stopPropagation(); toggleAssignee(row.id, a); }} className="hover:opacity-70 font-bold ml-0.5">×</button>
-                          </span>
-                        )) : <span className="text-gray-400">Start typing to search...</span>}
-                        <span className="ml-auto text-gray-400 text-[10px] pl-2 shrink-0">{openDropdownId === row.id ? "▲" : "▼"}</span>
-                      </div>
-                      {openDropdownId === row.id && (
-                        <div data-dropdown className="absolute z-50 w-full bg-white border border-gray-200 shadow-lg rounded-sm mt-0.5 max-h-52 overflow-y-auto" onMouseDown={e => e.stopPropagation()}>
-                          <div className="px-2 pt-2 pb-1 border-b border-gray-100 sticky top-0 bg-white"><input autoFocus value={dropdownSearch} onChange={e => setDropdownSearch(e.target.value)} placeholder="Search..." className="w-full h-6 px-2 text-xs border border-gray-200 rounded outline-none focus:border-[#7b1113]" /></div>
-                          {["Everyone"].filter(o => o.toLowerCase().includes(dropdownSearch.toLowerCase())).map(opt => (
-                            <button key={opt} type="button" onMouseDown={e => { e.preventDefault(); e.stopPropagation(); toggleAssignee(row.id, opt); }}
-                              className="w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-gray-50"
-                              style={{ color: row.assignees.includes(opt) ? MAROON : "#374151", fontWeight: row.assignees.includes(opt) ? 600 : 400 }}>
-                              {opt}{row.assignees.includes(opt) && <span style={{ color: MAROON }}>✓</span>}
-                            </button>
-                          ))}
-                          {sections.filter(s => s.name.toLowerCase().includes(dropdownSearch.toLowerCase())).length > 0 && (
-                            <><div className="px-3 pt-2 pb-1 text-[10px] font-bold text-gray-500 uppercase tracking-widest border-t border-gray-100 bg-gray-50">Sections</div>
-                              {sections.filter(s => s.name.toLowerCase().includes(dropdownSearch.toLowerCase())).map(s => (
-                                <button key={s.id} type="button" onMouseDown={e => { e.preventDefault(); e.stopPropagation(); toggleAssignee(row.id, s.name); }}
-                                  className="w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-gray-50"
-                                  style={{ color: row.assignees.includes(s.name) ? MAROON : "#374151", fontWeight: row.assignees.includes(s.name) ? 600 : 400 }}>
-                                  {s.name}{row.assignees.includes(s.name) && <span style={{ color: MAROON }}>✓</span>}
-                                </button>
-                              ))}</>
-                          )}
-                        </div>
-                      )}
+          <div className="max-w-2xl space-y-4">
+            <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Assign Access</p>
+            {assignRows.map((row, idx) => {
+              const errs = getDateErrors(row);
+              return (
+                <div key={row.id} className="border border-gray-200 rounded-md p-3 space-y-3 relative">
+                  {idx > 0 && (
+                    <button type="button" onClick={() => removeAssignRow(row.id)} className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded hover:bg-red-50 text-gray-400 hover:text-red-500">
+                      <X size={13} />
+                    </button>
+                  )}
+
+                  {/* Assignee dropdown */}
+                  <div className="relative" data-dropdown onMouseDown={e => e.stopPropagation()}>
+                    <p className="text-xs font-medium text-gray-700 mb-1">Assign To</p>
+                    <div
+                      onMouseDown={e => { e.stopPropagation(); setOpenDropdownId(openDropdownId === row.id ? null : row.id); setDropdownSearch(""); }}
+                      className="w-full min-h-7.5 border rounded-sm px-2 py-1 text-xs flex flex-wrap gap-1 items-center cursor-pointer bg-white select-none"
+                      style={{ borderColor: MAROON }}
+                    >
+                      {row.assignees.length > 0 ? row.assignees.map(a => (
+                        <span key={a} className="px-2 py-0.5 rounded text-xs flex items-center gap-1 text-white font-medium" style={{ background: MAROON }}>
+                          {a}
+                          <button type="button" onMouseDown={e => { e.stopPropagation(); toggleAssignee(row.id, a); }} className="hover:opacity-70 font-bold ml-0.5">×</button>
+                        </span>
+                      )) : <span className="text-gray-400">Start typing to search...</span>}
+                      <span className="ml-auto text-gray-400 text-[10px] pl-2 shrink-0">{openDropdownId === row.id ? "▲" : "▼"}</span>
                     </div>
-                    {/* Date rows */}
-                    {configs.map(c => (
-                      <div key={c.label}>
-                        <p className="text-xs font-medium text-gray-700 mb-1">{c.label}</p>
-                        <div className={`flex gap-0 border rounded-sm overflow-hidden ${c.err ? "border-red-500" : "border-gray-300"}`}>
-                          <input type="date" value={row[c.dateField]} onChange={e => handleDateChange(row.id, c.dateField, c.timeField, e.target.value)} className="flex-1 h-7 border-0 px-2 text-xs outline-none bg-white min-w-0" />
-                          <div className="w-px bg-gray-200 self-stretch" />
-                          <select value={row[c.timeField]} onChange={e => updateAssignRow(row.id, c.timeField, e.target.value)} className="h-7 border-0 px-2 text-xs bg-white outline-none w-28 shrink-0">
-                            <option value="">Time</option>{TIME_OPTIONS.map(t => <option key={t}>{t}</option>)}
-                          </select>
+                    {openDropdownId === row.id && (
+                      <div data-dropdown className="absolute z-50 w-full bg-white border border-gray-200 shadow-lg rounded-sm mt-0.5 max-h-52 overflow-y-auto" onMouseDown={e => e.stopPropagation()}>
+                        <div className="px-2 pt-2 pb-1 border-b border-gray-100 sticky top-0 bg-white">
+                          <input autoFocus value={dropdownSearch} onChange={e => setDropdownSearch(e.target.value)} placeholder="Search..." className="w-full h-6 px-2 text-xs border border-gray-200 rounded outline-none focus:border-[#7b1113]" />
                         </div>
-                        {c.err && <p className="text-xs text-red-500 mt-0.5">{c.err}</p>}
-                        <button type="button" onClick={() => { updateAssignRow(row.id, c.dateField, ""); updateAssignRow(row.id, c.timeField, ""); }} className="text-xs hover:underline mt-0.5" style={{ color: MAROON }}>Clear</button>
-                        {row[c.dateField] && <p className="text-[10px] text-gray-400 mt-0.5">{fmtDateLabel(row[c.dateField], row[c.timeField])}</p>}
+                        {["Everyone"].filter(o => o.toLowerCase().includes(dropdownSearch.toLowerCase())).map(opt => (
+                          <button key={opt} type="button" onMouseDown={e => { e.preventDefault(); e.stopPropagation(); toggleAssignee(row.id, opt); }}
+                            className="w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-gray-50"
+                            style={{ color: row.assignees.includes(opt) ? MAROON : "#374151", fontWeight: row.assignees.includes(opt) ? 600 : 400 }}>
+                            {opt}{row.assignees.includes(opt) && <span style={{ color: MAROON }}>✓</span>}
+                          </button>
+                        ))}
+                        {sections.filter(s => s.name.toLowerCase().includes(dropdownSearch.toLowerCase())).length > 0 && (
+                          <>
+                            <div className="px-3 pt-2 pb-1 text-[10px] font-bold text-gray-500 uppercase tracking-widest border-t border-gray-100 bg-gray-50">Sections</div>
+                            {sections.filter(s => s.name.toLowerCase().includes(dropdownSearch.toLowerCase())).map(s => (
+                              <button key={s.id} type="button" onMouseDown={e => { e.preventDefault(); e.stopPropagation(); toggleAssignee(row.id, s.name); }}
+                                className="w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-gray-50"
+                                style={{ color: row.assignees.includes(s.name) ? MAROON : "#374151", fontWeight: row.assignees.includes(s.name) ? 600 : 400 }}>
+                                {s.name}{row.assignees.includes(s.name) && <span style={{ color: MAROON }}>✓</span>}
+                              </button>
+                            ))}
+                          </>
+                        )}
                       </div>
-                    ))}
+                    )}
                   </div>
-                );
-              })}
-              <button type="button" onClick={addAssignRow} className="w-full max-w-sm h-8 border border-gray-300 bg-gray-50 text-xs text-gray-600 rounded-sm hover:bg-gray-100 flex items-center justify-center gap-1">+ Assign To</button>
-            </div>
-            <div />
-            <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer mt-1"><input type="checkbox" checked={notifyUsers} onChange={e => setNotifyUsers(e.target.checked)} style={{ accentColor: MAROON }} />Notify users that this content has changed</label>
+
+                  <DateTimeRow
+                    label="Due Date"
+                    dateValue={row.dueDate}
+                    timeValue={row.dueTime}
+                    onDateChange={v => updateAssignRow(row.id, "dueDate", v)}
+                    onTimeChange={v => updateAssignRow(row.id, "dueTime", v)}
+                    onClear={() => { updateAssignRow(row.id, "dueDate", ""); updateAssignRow(row.id, "dueTime", ""); }}
+                  />
+                  <DateTimeRow
+                    label="Available from"
+                    dateValue={row.availableFrom}
+                    timeValue={row.availableFromTime}
+                    onDateChange={v => updateAssignRow(row.id, "availableFrom", v)}
+                    onTimeChange={v => updateAssignRow(row.id, "availableFromTime", v)}
+                    onClear={() => { updateAssignRow(row.id, "availableFrom", ""); updateAssignRow(row.id, "availableFromTime", ""); }}
+                    error={errs.availableFrom}
+                  />
+                  <DateTimeRow
+                    label="Until"
+                    dateValue={row.until}
+                    timeValue={row.untilTime}
+                    onDateChange={v => updateAssignRow(row.id, "until", v)}
+                    onTimeChange={v => updateAssignRow(row.id, "untilTime", v)}
+                    onClear={() => { updateAssignRow(row.id, "until", ""); updateAssignRow(row.id, "untilTime", ""); }}
+                    error={errs.until}
+                  />
+                </div>
+              );
+            })}
+
+            <button type="button" onClick={addAssignRow} className="w-full h-8 border border-gray-300 bg-gray-50 text-xs text-gray-600 rounded-sm hover:bg-gray-100 flex items-center justify-center gap-1">
+              + Assign To
+            </button>
+
+            <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer mt-1">
+              <input type="checkbox" checked={notifyUsers} onChange={e => setNotifyUsers(e.target.checked)} style={{ accentColor: MAROON }} />
+              Notify users that this content has changed
+            </label>
           </div>
         )}
       </div>
@@ -730,12 +1021,15 @@ export default function CourseAssignmentForm({ courseId, initialGroup = "", exis
       {/* Add Group Modal */}
       {groupModalOpen && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/20 px-4">
-          <div className="w-full sm:w-115 bg-white shadow-xl border border-gray-200 rounded-t-2xl sm:rounded">
+          <div className="w-full sm:max-w-sm bg-white shadow-xl border border-gray-200 rounded-t-2xl sm:rounded">
             <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
               <div className="text-sm font-semibold text-gray-800">Add Assignment Group</div>
               <button onClick={() => setGroupModalOpen(false)} className="w-6 h-6 flex items-center justify-center border text-gray-700 rounded text-sm" style={{ borderColor: MAROON, color: MAROON }}>×</button>
             </div>
-            <div className="px-6 py-6"><div className="flex items-center gap-3 flex-wrap"><label className="text-xs text-gray-700">Group Name:</label><input value={newGroupName} onChange={e => setNewGroupName(e.target.value)} onKeyDown={e => e.key === "Enter" && saveGroup()} placeholder="e.g., Essay Group 1" className="flex-1 min-w-35 h-8 border border-gray-300 px-2 text-xs outline-none focus:border-[#7b1113] rounded-sm" /></div></div>
+            <div className="px-5 py-5">
+              <label className="text-xs text-gray-700 block mb-1.5">Group Name</label>
+              <input value={newGroupName} onChange={e => setNewGroupName(e.target.value)} onKeyDown={e => e.key === "Enter" && saveGroup()} placeholder="e.g., Essay Group 1" className="w-full h-8 border border-gray-300 px-2 text-xs outline-none focus:border-[#7b1113] rounded-sm" />
+            </div>
             <div className="bg-gray-50 border-t border-gray-200 px-4 py-3 flex justify-end gap-2">
               <button onClick={() => setGroupModalOpen(false)} className="h-8 px-4 border border-gray-300 bg-white text-xs text-gray-700 hover:bg-gray-50 rounded">Cancel</button>
               <button onClick={saveGroup} style={{ background: MAROON }} className="h-8 px-4 text-white text-xs rounded hover:opacity-90">Add Group</button>
@@ -744,25 +1038,81 @@ export default function CourseAssignmentForm({ courseId, initialGroup = "", exis
         </div>
       )}
 
-      {/* Bottom bar */}
-      <div className="shrink-0 border-t border-gray-200 bg-white px-4 sm:px-5 py-3 flex items-center justify-between flex-wrap gap-2">
-        <div>{saveError && <span className="text-xs text-red-600 font-medium">⚠ {saveError}</span>}</div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <button onClick={onCancel} disabled={saving} className="h-8 px-4 border border-gray-300 bg-white text-xs text-gray-700 rounded hover:bg-gray-50 disabled:opacity-50">Cancel</button>
-          {activeTab !== "details" && (
-            <button type="button" onClick={() => setActiveTab(activeTab === "submission" ? "details" : activeTab === "settings" ? "submission" : "settings")} className="h-8 px-4 border border-gray-300 bg-white text-xs text-gray-700 rounded hover:bg-gray-50">← Back</button>
+      {/* ── BOTTOM ACTION BAR ──
+          Mobile: two rows — error on top, buttons below (full-width on last tab)
+          Desktop: single row with error left, buttons right
+      */}
+      <div className="shrink-0 border-t border-gray-200 bg-white px-3 sm:px-4 py-3 safe-area-pb">
+        {/* Error message */}
+        {saveError && (
+          <p className="text-xs text-red-600 font-medium mb-2">⚠ {saveError}</p>
+        )}
+
+        {/* Button row */}
+        <div className="flex items-center gap-2 flex-wrap justify-end">
+          {/* Cancel — always visible */}
+          <button
+            onClick={onCancel}
+            disabled={saving}
+            className="h-9 px-4 border border-gray-300 bg-white text-xs text-gray-700 rounded hover:bg-gray-50 disabled:opacity-50 whitespace-nowrap"
+          >
+            Cancel
+          </button>
+
+          {/* Back — shown when not on first tab */}
+          {prevTab && (
+            <button
+              type="button"
+              onClick={() => setActiveTab(prevTab)}
+              className="h-9 px-4 border border-gray-300 bg-white text-xs text-gray-700 rounded hover:bg-gray-50 whitespace-nowrap"
+            >
+              ← Back
+            </button>
           )}
-          {activeTab !== "assign" && (
-            <button type="button" onClick={() => setActiveTab(activeTab === "details" ? "submission" : activeTab === "submission" ? "settings" : "assign")} className="h-8 px-4 border border-gray-300 bg-gray-50 text-xs text-gray-700 rounded hover:bg-gray-100">Next →</button>
+
+          {/* Next — shown when not on last tab */}
+          {nextTab && (
+            <button
+              type="button"
+              onClick={() => setActiveTab(nextTab)}
+              className="h-9 px-4 border border-gray-300 bg-gray-50 text-xs text-gray-700 rounded hover:bg-gray-100 whitespace-nowrap"
+            >
+              Next →
+            </button>
           )}
+
+          {/* Save & Publish + Save — only on last tab */}
           {activeTab === "assign" && (
             <>
-              <button onClick={() => handleSave(true)} disabled={saving} className="h-8 px-4 border border-gray-300 bg-gray-50 text-xs text-gray-700 rounded hover:bg-gray-100 disabled:opacity-50">{saving ? "Saving..." : "Save & Publish"}</button>
-              <button onClick={() => handleSave(false)} disabled={saving} style={{ background: MAROON }} className="h-8 px-4 text-white text-xs rounded hover:opacity-90 disabled:opacity-50">{saving ? "Saving..." : "Save"}</button>
+              <button
+                onClick={() => handleSave(true)}
+                disabled={saving}
+                className="h-9 px-4 border border-gray-300 bg-gray-50 text-xs text-gray-700 rounded hover:bg-gray-100 disabled:opacity-50 whitespace-nowrap"
+              >
+                {saving ? "Saving..." : "Save & Publish"}
+              </button>
+              <button
+                onClick={() => handleSave(false)}
+                disabled={saving}
+                style={{ background: MAROON }}
+                className="h-9 px-4 text-white text-xs rounded hover:opacity-90 disabled:opacity-50 whitespace-nowrap"
+              >
+                {saving ? "Saving..." : "Save"}
+              </button>
             </>
           )}
         </div>
       </div>
+
+      {/* Safe-area padding for iOS home bar */}
+      <style>{`
+        .safe-area-pb { padding-bottom: max(12px, env(safe-area-inset-bottom)); }
+        @media (max-width: 400px) {
+          .xs\\:flex-row { flex-direction: row; }
+          .xs\\:items-start { align-items: flex-start; }
+          .xs\\:inline { display: inline; }
+        }
+      `}</style>
     </div>
   );
 }

@@ -738,14 +738,10 @@ function CourseViewInner({ courseId }: { courseId: string }) {
       className="flex flex-col h-full bg-white overflow-hidden"
       style={{ fontFamily: FONT, fontSize: 13 }}
     >
-      {/* Desktop Navbar with breadcrumbs; hidden on mobile since we have MobileTopNav */}
-      <div className="hidden md:block shrink-0">
-        <Navbar breadcrumbs={breadcrumbs} />
-      </div>
-      {/* Mobile: Navbar without breadcrumbs (just logo/user) */}
-      <div className="md:hidden shrink-0">
-        <Navbar />
-      </div>
+      {/* Navbar with breadcrumbs — desktop only; mobile uses MobileTopNav below */}
+<div className="hidden md:block shrink-0">
+  <Navbar breadcrumbs={breadcrumbs} />
+</div>
 
       {/* ── Mobile nav (breadcrumb row + tab strip) ── */}
       {isMobile && (

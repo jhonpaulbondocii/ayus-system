@@ -1,26 +1,92 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import {
   LayoutDashboard, Calendar,
-  Inbox, ChevronLeft,
+  Inbox, Clock, BookOpen, Users,
 } from "lucide-react";
 import AccountMenu from "./AccountMenu";
 import { useGroups } from "./groups-panel";
 import { useCourses } from "./courses-panel";
 import { useHistory } from "./history-panel";
 
-const navItems = [
-  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Calendar",  href: "/calendar",  icon: Calendar         },
-  { label: "Inbox",     href: "/inbox",     icon: Inbox            },
-];
-
 const ACTIVE_CLS   = "bg-[#5a0d0f] text-white border-l-2 border-yellow-400";
-const INACTIVE_CLS = "text-red-200 hover:bg-[#5a0d0f] hover:text-white";
+const INACTIVE_CLS = "text-red-200 hover:bg-[#5a0d0f] hover:text-white border-l-2 border-transparent";
+const MAROON       = "#7b1113";
+const FONT         = "'Plus Jakarta Sans','Helvetica Neue',Arial,sans-serif";
 
-export default function IconBar() {
+/* ── Mobile primitives ───────────────────────────────────────────────────────── */
+
+function MobileNavBtn({
+  label, icon: Icon, active, onClick,
+}: {
+  label: string;
+  icon: React.ElementType;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        flex: 1, display: "flex", flexDirection: "column", alignItems: "center",
+        justifyContent: "center", padding: "6px 4px",
+        background: "none", border: "none", cursor: "pointer",
+        borderTop: active ? "2px solid #facc15" : "2px solid transparent",
+        minWidth: 44,
+      }}
+    >
+      <Icon size={20} color={active ? "#fff" : "rgba(255,255,255,0.65)"} />
+      <span style={{
+        fontSize: 9, marginTop: 3, fontFamily: FONT, fontWeight: 600,
+        color: active ? "#fff" : "rgba(255,255,255,0.65)",
+        whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+        maxWidth: "100%",
+      }}>
+        {label}
+      </span>
+    </button>
+  );
+}
+
+function MobileNavLink({
+  label, icon: Icon, href, active, onClick,
+}: {
+  label: string;
+  icon: React.ElementType;
+  href: string;
+  active: boolean;
+  onClick?: () => void;
+}) {
+  return (
+    <Link
+      href={href}
+      onClick={onClick}
+      style={{
+        flex: 1, display: "flex", flexDirection: "column", alignItems: "center",
+        justifyContent: "center", padding: "6px 4px", textDecoration: "none",
+        borderTop: active ? "2px solid #facc15" : "2px solid transparent",
+        minWidth: 44,
+      }}
+    >
+      <Icon size={20} color={active ? "#fff" : "rgba(255,255,255,0.65)"} />
+      <span style={{
+        fontSize: 9, marginTop: 3, fontFamily: FONT, fontWeight: 600,
+        color: active ? "#fff" : "rgba(255,255,255,0.65)",
+        whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+        maxWidth: "100%",
+      }}>
+        {label}
+      </span>
+    </Link>
+  );
+}
+
+/* ── Shared hook logic ───────────────────────────────────────────────────────── */
+
+function useNavLogic() {
   const pathname = usePathname();
 
   const {
@@ -41,6 +107,12 @@ export default function IconBar() {
   const pageIsActive = (href: string) => {
     if (coursesActive || groupsActive || historyActive) return false;
     return pathname === href;
+  };
+
+  const handlePageNavClick = () => {
+    if (coursesActive) closeCourses();
+    if (groupsActive)  closeGroups();
+    if (historyActive) closeHistory();
   };
 
   const handleCoursesClick = () => {
@@ -85,81 +157,199 @@ export default function IconBar() {
     }
   };
 
-  const handlePageNavClick = () => {
-    if (coursesActive) closeCourses();
-    if (groupsActive)  closeGroups();
-    if (historyActive) closeHistory();
+  return {
+    coursesActive, groupsActive, historyActive,
+    pageIsActive, handlePageNavClick,
+    handleCoursesClick, handleGroupsClick, handleHistoryClick,
   };
+}
+
+/* ── Desktop Sidebar ─────────────────────────────────────────────────────────── */
+
+function DesktopSidebar() {
+  const {
+    coursesActive, groupsActive, historyActive,
+    pageIsActive, handlePageNavClick,
+    handleCoursesClick, handleGroupsClick, handleHistoryClick,
+  } = useNavLogic();
 
   return (
-    <div className="w-16 bg-[#7b1113] text-white min-h-screen flex flex-col items-center py-2 shrink-0 relative z-200">
+    <div className="w-16 bg-[#7b1113] text-white h-full flex flex-col items-center py-0 shrink-0 z-[200] relative">
 
-      {/* Canvas logo — clickable, goes to dashboard */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <Link href="/dashboard" onClick={handlePageNavClick}>
-        <img src="/canvas-logo.png" alt="Canvas Logo" width={40} height={40}
-          style={{ objectFit: "contain", background: "transparent", mixBlendMode: "luminosity", marginBottom: "4px" }}
-        />
-      </Link>
-
-      <div className="flex flex-col items-center mb-1">
+      {/* Account */}
+      <div className="flex flex-col items-center w-full py-3 border-l-2 border-transparent">
         <AccountMenu />
         <span className="text-[10px] text-red-200 mt-1">Account</span>
       </div>
 
-      <div className="flex flex-col items-center w-full mt-1">
+      <div className="flex flex-col items-center w-full flex-1 overflow-y-auto">
 
-        {/* Courses */}
-        <button onClick={handleCoursesClick}
-          className={`flex flex-col items-center justify-center w-full py-2.5 px-1 transition-colors
-            ${coursesActive ? ACTIVE_CLS : INACTIVE_CLS}`}>
-          <svg className="w-4.25 h-4.25" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-          </svg>
+        {/* Offices */}
+        <button
+          onClick={handleCoursesClick}
+          className={`flex flex-col items-center justify-center w-full py-2.5 px-1 transition-colors ${coursesActive ? ACTIVE_CLS : INACTIVE_CLS}`}
+        >
+          <BookOpen size={18} />
           <span className="text-[10px] mt-1 text-center leading-tight">Offices</span>
         </button>
 
         {/* Groups */}
-        <button onClick={handleGroupsClick}
-          className={`flex flex-col items-center justify-center w-full py-2.5 px-1 transition-colors
-            ${groupsActive ? ACTIVE_CLS : INACTIVE_CLS}`}>
-          <svg className="w-4.25 h-4.25" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-          </svg>
+        <button
+          onClick={handleGroupsClick}
+          className={`flex flex-col items-center justify-center w-full py-2.5 px-1 transition-colors ${groupsActive ? ACTIVE_CLS : INACTIVE_CLS}`}
+        >
+          <Users size={18} />
           <span className="text-[10px] mt-1 text-center leading-tight">Groups</span>
         </button>
 
-        {/* Regular nav links */}
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          return (
-            <Link key={item.label} href={item.href} onClick={handlePageNavClick}
-              className={`flex flex-col items-center justify-center w-full py-2.5 px-1 transition-colors
-                ${pageIsActive(item.href) ? ACTIVE_CLS : INACTIVE_CLS}`}>
-              <Icon size={18} />
-              <span className="text-[10px] mt-1 text-center leading-tight">{item.label}</span>
-            </Link>
-          );
-        })}
+        {/* Dashboard */}
+        <Link
+          href="/dashboard"
+          onClick={handlePageNavClick}
+          className={`flex flex-col items-center justify-center w-full py-2.5 px-1 transition-colors ${pageIsActive("/dashboard") ? ACTIVE_CLS : INACTIVE_CLS}`}
+        >
+          <LayoutDashboard size={18} />
+          <span className="text-[10px] mt-1 text-center leading-tight">Dashboard</span>
+        </Link>
 
-        {/* History — panel toggle */}
-        <button onClick={handleHistoryClick}
-          className={`flex flex-col items-center justify-center w-full py-2.5 px-1 transition-colors
-            ${historyActive ? ACTIVE_CLS : INACTIVE_CLS}`}>
-          <svg className="w-4.25 h-4.25" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
+        {/* Calendar */}
+        <Link
+          href="/calendar"
+          onClick={handlePageNavClick}
+          className={`flex flex-col items-center justify-center w-full py-2.5 px-1 transition-colors ${pageIsActive("/calendar") ? ACTIVE_CLS : INACTIVE_CLS}`}
+        >
+          <Calendar size={18} />
+          <span className="text-[10px] mt-1 text-center leading-tight">Calendar</span>
+        </Link>
+
+        {/* Inbox */}
+        <Link
+          href="/inbox"
+          onClick={handlePageNavClick}
+          className={`flex flex-col items-center justify-center w-full py-2.5 px-1 transition-colors ${pageIsActive("/inbox") ? ACTIVE_CLS : INACTIVE_CLS}`}
+        >
+          <Inbox size={18} />
+          <span className="text-[10px] mt-1 text-center leading-tight">Inbox</span>
+        </Link>
+
+        {/* History */}
+        <button
+          onClick={handleHistoryClick}
+          className={`flex flex-col items-center justify-center w-full py-2.5 px-1 transition-colors ${historyActive ? ACTIVE_CLS : INACTIVE_CLS}`}
+        >
+          <Clock size={18} />
           <span className="text-[10px] mt-1 text-center leading-tight">History</span>
         </button>
 
       </div>
-
-      {/* Bottom */}
-      <div className="mt-auto flex flex-col items-center w-full">
-        <button className={`flex flex-col items-center justify-center w-full py-2.5 px-1 transition-colors ${INACTIVE_CLS}`}>
-          <ChevronLeft size={18} />
-        </button>
-      </div>
     </div>
   );
+}
+
+/* ── Mobile Bottom Nav ───────────────────────────────────────────────────────── */
+
+function MobileBottomNav() {
+  const {
+    coursesActive, groupsActive, historyActive,
+    pageIsActive, handlePageNavClick,
+    handleCoursesClick, handleGroupsClick, handleHistoryClick,
+  } = useNavLogic();
+
+  return (
+    <div
+      style={{
+        position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 300,
+        background: MAROON,
+        display: "flex", alignItems: "stretch",
+        borderTop: "1px solid #5a0d0f",
+        paddingBottom: "env(safe-area-inset-bottom)",
+        overflowX: "auto",
+        WebkitOverflowScrolling: "touch",
+      }}
+    >
+      {/* Account — uses the real AccountMenu, same as desktop */}
+      <div
+        style={{
+          flex: 1, display: "flex", flexDirection: "column", alignItems: "center",
+          justifyContent: "center", padding: "6px 4px",
+          borderTop: "2px solid transparent", minWidth: 44,
+        }}
+      >
+        <AccountMenu />
+        <span style={{
+          fontSize: 9, marginTop: 3, fontFamily: FONT, fontWeight: 600,
+          color: "rgba(255,255,255,0.65)",
+        }}>
+          Account
+        </span>
+      </div>
+
+      {/* Offices */}
+      <MobileNavBtn
+        label="Offices"
+        icon={BookOpen}
+        active={coursesActive}
+        onClick={handleCoursesClick}
+      />
+
+      {/* Groups */}
+      <MobileNavBtn
+        label="Groups"
+        icon={Users}
+        active={groupsActive}
+        onClick={handleGroupsClick}
+      />
+
+      {/* Dashboard */}
+      <MobileNavLink
+        label="Dashboard"
+        icon={LayoutDashboard}
+        href="/dashboard"
+        active={pageIsActive("/dashboard")}
+        onClick={handlePageNavClick}
+      />
+
+      {/* Calendar */}
+      <MobileNavLink
+        label="Calendar"
+        icon={Calendar}
+        href="/calendar"
+        active={pageIsActive("/calendar")}
+        onClick={handlePageNavClick}
+      />
+
+      {/* Inbox */}
+      <MobileNavLink
+        label="Inbox"
+        icon={Inbox}
+        href="/inbox"
+        active={pageIsActive("/inbox")}
+        onClick={handlePageNavClick}
+      />
+
+      {/* History */}
+      <MobileNavBtn
+        label="History"
+        icon={Clock}
+        active={historyActive}
+        onClick={handleHistoryClick}
+      />
+    </div>
+  );
+}
+
+/* ── Root export ─────────────────────────────────────────────────────────────── */
+
+export default function IconBar() {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  if (isMobile) return <MobileBottomNav />;
+  return <DesktopSidebar />;
 }

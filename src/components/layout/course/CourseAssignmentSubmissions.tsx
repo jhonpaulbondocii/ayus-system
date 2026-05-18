@@ -38,13 +38,22 @@ function GradeChip({ grade, points }: { grade?: number | null; points: number })
   );
 }
 
+/** Detect if the current device is mobile/tablet (no hover, touch screen) */
+function isMobileDevice(): boolean {
+  if (typeof window === "undefined") return false;
+  return window.matchMedia("(hover: none) and (pointer: coarse)").matches
+    || window.innerWidth < 1024;
+}
+
 interface Props {
   assignment: AssignmentWithRole;
   courseId: string;
   onBack: () => void;
+  /** Called when navigating to SpeedGrader on mobile (instead of new tab) */
+  onOpenSpeedGrader?: (studentId?: string) => void;
 }
 
-export default function CourseAssignmentSubmissions({ assignment, courseId, onBack }: Props) {
+export default function CourseAssignmentSubmissions({ assignment, courseId, onBack, onOpenSpeedGrader }: Props) {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -107,33 +116,47 @@ export default function CourseAssignmentSubmissions({ assignment, courseId, onBa
     }
   };
 
+  const handleSpeedGrader = (studentId?: string) => {
+    const url = studentId
+      ? `/courses/${courseId}/assignments/${assignment.id}/speedgrader?student=${studentId}`
+      : `/courses/${courseId}/assignments/${assignment.id}/speedgrader`;
+
+    if (isMobileDevice() && onOpenSpeedGrader) {
+      onOpenSpeedGrader(studentId);
+    } else if (isMobileDevice()) {
+      window.location.href = url;
+    } else {
+      window.open(url, "_blank");
+    }
+  };
+
   return (
     <div className="flex flex-col h-full bg-gray-50 overflow-hidden" style={{ fontFamily: FONT }}>
 
       {/* ── Top bar ── */}
-      <div className="bg-white border-b border-gray-200 px-4 sm:px-6 py-3 flex items-center justify-between gap-4 flex-wrap shrink-0">
-        <div className="flex items-center gap-3">
+      <div className="bg-white border-b border-gray-200 px-3 sm:px-6 py-3 flex items-center justify-between gap-2 flex-wrap shrink-0">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <button
             onClick={onBack}
-            className="flex items-center gap-1.5 text-sm font-semibold hover:underline"
+            className="flex items-center gap-1.5 text-sm font-semibold hover:underline shrink-0"
             style={{ color: MAROON }}
           >
             <ArrowLeft size={15} />
             <span className="hidden sm:inline">Back to Assignment</span>
             <span className="sm:hidden">Back</span>
           </button>
-          <div className="h-4 w-px bg-gray-200" />
-          <div>
+          <div className="h-4 w-px bg-gray-200 shrink-0" />
+          <div className="min-w-0">
             <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">Submissions</p>
-            <h1 className="text-sm font-black text-gray-900 leading-tight truncate max-w-xs">
+            <h1 className="text-sm font-black text-gray-900 leading-tight truncate max-w-40 sm:max-w-xs">
               {assignment.title}
             </h1>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap">
-          {/* Stats */}
-          <div className="hidden sm:flex items-center gap-3 px-3 py-1.5 rounded-lg border border-gray-200 bg-gray-50 text-xs">
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+          {/* Stats — hidden on very small screens */}
+          <div className="hidden md:flex items-center gap-3 px-3 py-1.5 rounded-lg border border-gray-200 bg-gray-50 text-xs">
             <span className="font-bold text-green-600">{submitted.length} submitted</span>
             <span className="text-gray-300">·</span>
             <span className="font-bold text-gray-400">{unsubmitted.length} missing</span>
@@ -143,32 +166,37 @@ export default function CourseAssignmentSubmissions({ assignment, courseId, onBa
           <button
             onClick={downloadAll}
             disabled={downloading || submitted.filter(s => s.fileUrl).length === 0}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg border border-gray-200 hover:border-gray-400 text-gray-600 disabled:opacity-40 transition-all"
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-bold rounded-lg border border-gray-200 hover:border-gray-400 text-gray-600 disabled:opacity-40 transition-all"
           >
             <Download size={13} />
-            {downloading ? "Preparing..." : "Download All"}
+            <span className="hidden sm:inline">{downloading ? "Preparing..." : "Download All"}</span>
           </button>
 
           {/* SpeedGrader */}
           <button
-            onClick={() =>
-              window.open(
-                `/courses/${courseId}/assignments/${assignment.id}/speedgrader`,
-                "_blank"
-              )
-            }
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg text-white transition-all hover:opacity-90"
+            onClick={() => handleSpeedGrader()}
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-bold rounded-lg text-white transition-all hover:opacity-90"
             style={{ background: MAROON }}
           >
             <ExternalLink size={13} />
-            SpeedGrader™
+            <span className="hidden xs:inline sm:inline">SpeedGrader™</span>
+            <span className="xs:hidden sm:hidden">Grade</span>
           </button>
         </div>
       </div>
 
+      {/* ── Mobile stats strip ── */}
+      <div className="md:hidden bg-white border-b border-gray-100 px-3 py-2 flex items-center gap-4 text-xs shrink-0">
+        <span className="font-bold text-green-600">{submitted.length} submitted</span>
+        <span className="text-gray-300">·</span>
+        <span className="font-bold text-gray-400">{unsubmitted.length} missing</span>
+        <span className="text-gray-300">·</span>
+        <span className="font-bold text-gray-500">{submissions.length} total</span>
+      </div>
+
       {/* ── Filters ── */}
-      <div className="bg-white border-b border-gray-200 px-4 sm:px-6 py-2.5 flex items-center gap-3 flex-wrap shrink-0">
-        <div className="relative flex-1 min-w-40 max-w-sm">
+      <div className="bg-white border-b border-gray-200 px-3 sm:px-6 py-2.5 flex items-center gap-2 sm:gap-3 flex-wrap shrink-0">
+        <div className="relative flex-1 min-w-0 max-w-xs">
           <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             value={search}
@@ -178,26 +206,27 @@ export default function CourseAssignmentSubmissions({ assignment, courseId, onBa
           />
         </div>
         <div className="flex items-center gap-1">
-          <Filter size={11} className="text-gray-400" />
+          <Filter size={11} className="text-gray-400 shrink-0" />
           {(["all", "submitted", "unsubmitted"] as const).map(f => (
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className="px-3 py-1 text-xs font-semibold rounded-full capitalize transition-all"
+              className="px-2 sm:px-3 py-1 text-xs font-semibold rounded-full capitalize transition-all"
               style={
                 filter === f
                   ? { background: MAROON, color: "#fff" }
                   : { background: "#f3f4f6", color: "#6b7280" }
               }
             >
-              {f}
+              {f === "unsubmitted" ? <span className="hidden sm:inline">unsubmitted</span> : f}
+              {f === "unsubmitted" ? <span className="sm:hidden">missing</span> : null}
             </button>
           ))}
         </div>
       </div>
 
-      {/* ── Table ── */}
-      <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-5">
+      {/* ── Table / Cards ── */}
+      <div className="flex-1 overflow-y-auto px-3 sm:px-6 py-4 sm:py-5">
         {loading ? (
           <div className="flex items-center justify-center py-24">
             <div
@@ -211,109 +240,184 @@ export default function CourseAssignmentSubmissions({ assignment, courseId, onBa
             <p className="text-sm font-semibold">No submissions found</p>
           </div>
         ) : (
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
-            {/* Header */}
-            <div
-              className="grid grid-cols-12 px-5 py-3 border-b border-gray-100 text-[10px] font-black uppercase tracking-widest text-gray-400"
-              style={{ background: "#fdf2f2" }}
-            >
-              <div className="col-span-4">Student</div>
-              <div className="col-span-3">Submitted</div>
-              <div className="col-span-2">File</div>
-              <div className="col-span-2">Grade</div>
-              <div className="col-span-1" />
+          <>
+            {/* Desktop table */}
+            <div className="hidden sm:block bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+              <div
+                className="grid grid-cols-12 px-5 py-3 border-b border-gray-100 text-[10px] font-black uppercase tracking-widest text-gray-400"
+                style={{ background: "#fdf2f2" }}
+              >
+                <div className="col-span-4">Student</div>
+                <div className="col-span-3">Submitted</div>
+                <div className="col-span-2">File</div>
+                <div className="col-span-2">Grade</div>
+                <div className="col-span-1" />
+              </div>
+
+              {filtered.map((sub, i) => (
+                <div
+                  key={`${sub.userId}-${i}`}
+                  className="grid grid-cols-12 px-5 py-4 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors items-center"
+                >
+                  <div className="col-span-4 flex items-center gap-2.5 min-w-0">
+                    <div
+                      className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-black shrink-0"
+                      style={{ background: MAROON }}
+                    >
+                      {(sub.userName ?? sub.userEmail).charAt(0).toUpperCase()}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-gray-900 truncate">{sub.userName ?? "Unknown"}</p>
+                      <p className="text-xs text-gray-400 truncate">{sub.userEmail}</p>
+                    </div>
+                  </div>
+
+                  <div className="col-span-3">
+                    {sub.submittedAt ? (
+                      <div className="flex items-center gap-1.5">
+                        <CheckCircle size={12} className="text-green-500 shrink-0" />
+                        <span className="text-xs text-gray-600">{fmtDate(sub.submittedAt)}</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1.5">
+                        <Clock size={12} className="text-gray-300 shrink-0" />
+                        <span className="text-xs text-gray-400 italic">Not submitted</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="col-span-2">
+                    {sub.fileUrl ? (
+                      <a
+                        href={sub.fileUrl.startsWith("/") || sub.fileUrl.startsWith("http")
+                          ? sub.fileUrl : `/uploads/submissions/${sub.fileUrl}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 text-xs font-semibold hover:underline truncate"
+                        style={{ color: MAROON }}
+                      >
+                        <FileText size={11} />
+                        <span className="truncate">{sub.fileName ?? "View"}</span>
+                      </a>
+                    ) : sub.onlineUrl ? (
+                      <a
+                        href={sub.onlineUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 text-xs font-semibold hover:underline"
+                        style={{ color: MAROON }}
+                      >
+                        <ExternalLink size={11} /> URL
+                      </a>
+                    ) : (
+                      <span className="text-xs text-gray-300">—</span>
+                    )}
+                  </div>
+
+                  <div className="col-span-2">
+                    <GradeChip
+                      grade={sub.grade != null ? Number(sub.grade) : sub.points ?? null}
+                      points={assignment.points ?? 100}
+                    />
+                  </div>
+
+                  <div className="col-span-1 flex justify-end">
+                    <button
+                      onClick={() => handleSpeedGrader(sub.userId)}
+                      className="text-[10px] font-bold hover:underline"
+                      style={{ color: MAROON }}
+                    >
+                      Grade
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
 
-            {/* Rows */}
-            {filtered.map((sub, i) => (
-              <div
-                key={`${sub.userId}-${i}`}
-                className="grid grid-cols-12 px-5 py-4 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors items-center"
-              >
-                {/* Student */}
-                <div className="col-span-4 flex items-center gap-2.5 min-w-0">
-                  <div
-                    className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-black shrink-0"
-                    style={{ background: MAROON }}
-                  >
-                    {(sub.userName ?? sub.userEmail).charAt(0).toUpperCase()}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-bold text-gray-900 truncate">{sub.userName ?? "Unknown"}</p>
-                    <p className="text-xs text-gray-400 truncate">{sub.userEmail}</p>
-                  </div>
-                </div>
-
-                {/* Submitted at */}
-                <div className="col-span-3">
-                  {sub.submittedAt ? (
-                    <div className="flex items-center gap-1.5">
-                      <CheckCircle size={12} className="text-green-500 shrink-0" />
-                      <span className="text-xs text-gray-600">{fmtDate(sub.submittedAt)}</span>
+            {/* Mobile cards */}
+            <div className="sm:hidden space-y-2">
+              {filtered.map((sub, i) => (
+                <div
+                  key={`${sub.userId}-mobile-${i}`}
+                  className="bg-white rounded-xl border border-gray-200 p-3.5 shadow-sm"
+                >
+                  <div className="flex items-start justify-between gap-2 mb-2.5">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div
+                        className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-black shrink-0"
+                        style={{ background: MAROON }}
+                      >
+                        {(sub.userName ?? sub.userEmail).charAt(0).toUpperCase()}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold text-gray-900 truncate">{sub.userName ?? "Unknown"}</p>
+                        <p className="text-xs text-gray-400 truncate">{sub.userEmail}</p>
+                      </div>
                     </div>
-                  ) : (
-                    <div className="flex items-center gap-1.5">
-                      <Clock size={12} className="text-gray-300 shrink-0" />
-                      <span className="text-xs text-gray-400 italic">Not submitted</span>
+                    <button
+                      onClick={() => handleSpeedGrader(sub.userId)}
+                      className="text-xs font-bold px-2.5 py-1 rounded-lg shrink-0"
+                      style={{ color: MAROON, background: "#fdf2f2", border: "1px solid #f0c0c0" }}
+                    >
+                      Grade
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-0.5">Status</p>
+                      {sub.submittedAt ? (
+                        <div className="flex items-center gap-1">
+                          <CheckCircle size={11} className="text-green-500 shrink-0" />
+                          <span className="text-gray-600 truncate">{fmtDate(sub.submittedAt)}</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1">
+                          <Clock size={11} className="text-gray-300 shrink-0" />
+                          <span className="text-gray-400 italic">Not submitted</span>
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-0.5">Grade</p>
+                      <GradeChip
+                        grade={sub.grade != null ? Number(sub.grade) : sub.points ?? null}
+                        points={assignment.points ?? 100}
+                      />
+                    </div>
+                  </div>
+
+                  {(sub.fileUrl || sub.onlineUrl) && (
+                    <div className="mt-2.5 pt-2.5 border-t border-gray-100">
+                      {sub.fileUrl ? (
+                        <a
+                          href={sub.fileUrl.startsWith("/") || sub.fileUrl.startsWith("http")
+                            ? sub.fileUrl : `/uploads/submissions/${sub.fileUrl}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1.5 text-xs font-semibold"
+                          style={{ color: MAROON }}
+                        >
+                          <FileText size={12} />
+                          <span className="truncate">{sub.fileName ?? "View file"}</span>
+                        </a>
+                      ) : sub.onlineUrl ? (
+                        <a
+                          href={sub.onlineUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1.5 text-xs font-semibold"
+                          style={{ color: MAROON }}
+                        >
+                          <ExternalLink size={12} /> View URL
+                        </a>
+                      ) : null}
                     </div>
                   )}
                 </div>
-
-                {/* File */}
-                <div className="col-span-2">
-                  {sub.fileUrl ? (
-                    <a
-                      href={sub.fileUrl.startsWith("/") || sub.fileUrl.startsWith("http")
-                        ? sub.fileUrl : `/uploads/submissions/${sub.fileUrl}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1 text-xs font-semibold hover:underline truncate"
-                      style={{ color: MAROON }}
-                    >
-                      <FileText size={11} />
-                      <span className="truncate">{sub.fileName ?? "View"}</span>
-                    </a>
-                  ) : sub.onlineUrl ? (
-                    <a
-                      href={sub.onlineUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1 text-xs font-semibold hover:underline"
-                      style={{ color: MAROON }}
-                    >
-                      <ExternalLink size={11} /> URL
-                    </a>
-                  ) : (
-                    <span className="text-xs text-gray-300">—</span>
-                  )}
-                </div>
-
-                {/* Grade */}
-                <div className="col-span-2">
-                  <GradeChip
-                    grade={sub.grade != null ? Number(sub.grade) : sub.points ?? null}
-                    points={assignment.points ?? 100}
-                  />
-                </div>
-
-                {/* Action */}
-                <div className="col-span-1 flex justify-end">
-                  <button
-                    onClick={() =>
-                      window.open(
-                        `/courses/${courseId}/assignments/${assignment.id}/speedgrader?student=${sub.userId}`,
-                        "_blank"
-                      )
-                    }
-                    className="text-[10px] font-bold hover:underline"
-                    style={{ color: MAROON }}
-                  >
-                    Grade
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
     </div>

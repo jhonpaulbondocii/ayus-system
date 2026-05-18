@@ -28,85 +28,46 @@ type AssignmentWithRole = Assignment & {
   allowedAttempts?: number | null;
 };
 
-interface EnrolledUser {
-  id: string;
-  name: string;
-  email?: string;
-  courseRole?: string;
-}
-
+interface EnrolledUser { id: string; name: string; email?: string; courseRole?: string; }
 interface Submission {
-  id?: string;
-  fileUrl: string | null;
-  fileName?: string | null;
-  userName: string | null;
-  userEmail: string;
-  userId: string;
-  submittedAt: string | null;
-  points?: number | null;
-  grade?: string | null;
-  textEntry?: string | null;
-  onlineUrl?: string | null;
-  feedback?: string | null;
-  status?: string | null;
-  daysLate?: number | null;
-  isLate?: boolean;
-  isMissing?: boolean;
+  id?: string; fileUrl: string | null; fileName?: string | null;
+  userName: string | null; userEmail: string; userId: string;
+  submittedAt: string | null; points?: number | null; grade?: string | null;
+  textEntry?: string | null; onlineUrl?: string | null; feedback?: string | null;
+  status?: string | null; daysLate?: number | null; isLate?: boolean; isMissing?: boolean;
 }
-
 interface AssignRow {
-  id: number;
-  assignees: { id: string; label: string }[];
-  dueDate: string;
-  dueTime: string;
-  availableFrom: string;
-  availableFromTime: string;
-  until: string;
-  untilTime: string;
+  id: number; assignees: { id: string; label: string }[];
+  dueDate: string; dueTime: string;
+  availableFrom: string; availableFromTime: string;
+  until: string; untilTime: string;
 }
-
 type ActiveTab = "overview" | "submissions";
 type FilterStatus = "all" | "submitted" | "graded" | "missing" | "late" | "excused";
 type SortType = "name" | "newest" | "oldest" | "grade";
 
-interface RawStaffUser {
-  id: string;
-  name?: string;
-  userName?: string;
-  email?: string;
-  courseRole?: string;
-}
-
+interface RawStaffUser { id: string; name?: string; userName?: string; email?: string; courseRole?: string; }
 interface AssignmentPatchResponse {
-  assignment?: {
-    dueDate?: string | null;
-    availableFrom?: string | null;
-    availableUntil?: string | null;
-    status?: string;
-  };
+  assignment?: { dueDate?: string | null; availableFrom?: string | null; availableUntil?: string | null; status?: string; };
 }
 
 // ── Rubric Types ───────────────────────────────────────────────────────────────
-interface RubricRating {
-  id?: string; points: number; name: string; description: string; order: number;
-}
+interface RubricRating { id?: string; points: number; name: string; description: string; order: number; }
 interface RubricCriterion {
   id?: string; name: string; description: string; points: number;
   enableRange: boolean; order: number; ratings: RubricRating[];
 }
 interface Rubric {
-  id?: string; title: string; type: string; ratingDisplay: string;
-  ratingOrder: string; scoring: string;
+  id?: string; title: string; type: string; ratingDisplay: string; ratingOrder: string; scoring: string;
   doNotPostToGradebook: boolean; useForGrading: boolean; hideScoreTotal: boolean;
-  pointsPossible: number;
-  criteria: RubricCriterion[];
+  pointsPossible: number; criteria: RubricCriterion[];
 }
 
 const DEFAULT_RATINGS: RubricRating[] = [
-  { points: 4, name: "Exceeds",     description: "", order: 0 },
-  { points: 3, name: "Mastery",     description: "", order: 1 },
-  { points: 2, name: "Near",        description: "", order: 2 },
-  { points: 1, name: "Below",       description: "", order: 3 },
+  { points: 4, name: "Exceeds", description: "", order: 0 },
+  { points: 3, name: "Mastery", description: "", order: 1 },
+  { points: 2, name: "Near", description: "", order: 2 },
+  { points: 1, name: "Below", description: "", order: 3 },
   { points: 0, name: "No Evidence", description: "", order: 4 },
 ];
 
@@ -145,15 +106,13 @@ function fmtLocalCourse(date: string, time: string) {
   const t = time || "11:59 PM";
   const d = new Date(`${date} ${t}`);
   if (isNaN(d.getTime())) return null;
-  return `Local: ${d.toLocaleDateString("en-US", {
-    weekday: "short", month: "short", day: "numeric", year: "numeric",
-  })}, ${d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`;
+  return `Local: ${d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}, ${d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`;
 }
 
 function fmtDateTime(iso: string) {
   const d = new Date(iso);
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) +
-    ", " + d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) + ", " +
+    d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
 }
 
 function resolveAssigneesLabel(assignees: string[], users: EnrolledUser[]): string {
@@ -163,25 +122,13 @@ function resolveAssigneesLabel(assignees: string[], users: EnrolledUser[]): stri
   return `${names.length} staff`;
 }
 
-function getAvailabilityStatus(assignment: AssignmentWithRole): {
-  canSubmit: boolean;
-  statusLabel: string;
-  statusColor: string;
-} {
+function getAvailabilityStatus(assignment: AssignmentWithRole): { canSubmit: boolean; statusLabel: string; statusColor: string; } {
   const now = new Date();
-  const isPublished = assignment.status === "PUBLISHED";
-  if (!isPublished)
-    return { canSubmit: false, statusLabel: "Not Published", statusColor: "#9ca3af" };
-  const availableFrom = assignment.availableFrom ? new Date(assignment.availableFrom) : null;
-  const availableUntil = assignment.availableUntil ? new Date(assignment.availableUntil) : null;
-  if (availableFrom && now < availableFrom)
-    return {
-      canSubmit: false,
-      statusLabel: `Available from ${fmtDate(assignment.availableFrom)}`,
-      statusColor: "#f59e0b",
-    };
-  if (availableUntil && now > availableUntil)
-    return { canSubmit: false, statusLabel: "Closed", statusColor: "#ef4444" };
+  if (assignment.status !== "PUBLISHED") return { canSubmit: false, statusLabel: "Not Published", statusColor: "#9ca3af" };
+  const from = assignment.availableFrom ? new Date(assignment.availableFrom) : null;
+  const until = assignment.availableUntil ? new Date(assignment.availableUntil) : null;
+  if (from && now < from) return { canSubmit: false, statusLabel: `Available from ${fmtDate(assignment.availableFrom)}`, statusColor: "#f59e0b" };
+  if (until && now > until) return { canSubmit: false, statusLabel: "Closed", statusColor: "#ef4444" };
   return { canSubmit: true, statusLabel: "Open for submissions", statusColor: "#22c55e" };
 }
 
@@ -206,15 +153,20 @@ function computeStats(submissions: Submission[], dueDate: string | null) {
   const submitted = submissions.filter(s => s.submittedAt != null);
   const missing   = submissions.filter(s => !s.submittedAt);
   const graded    = submissions.filter(s => (s.points != null || s.grade != null) && s.status !== "EXCUSED");
-  const late      = submitted.filter(s =>
-    s.status === "LATE" || s.isLate ||
-    (s.submittedAt && dueDate && new Date(s.submittedAt) > new Date(dueDate))
-  );
-  const scored = graded.filter(s => s.points != null);
-  const avgScore = scored.length > 0
-    ? Math.round(scored.reduce((a, s) => a + (s.points ?? 0), 0) / scored.length * 10) / 10
-    : null;
+  const late      = submitted.filter(s => s.status === "LATE" || s.isLate || (s.submittedAt && dueDate && new Date(s.submittedAt) > new Date(dueDate)));
+  const scored    = graded.filter(s => s.points != null);
+  const avgScore  = scored.length > 0 ? Math.round(scored.reduce((a, s) => a + (s.points ?? 0), 0) / scored.length * 10) / 10 : null;
   return { submitted, missing, graded, late, avgScore };
+}
+
+// ── SpeedGrader helper — opens new tab on desktop, navigates on mobile/tablet ──
+function openSpeedGrader(url: string) {
+  const isMobileOrTablet = /Mobi|Android|iPad|Tablet/i.test(navigator.userAgent) || window.innerWidth < 1024;
+  if (isMobileOrTablet) {
+    window.location.href = url;
+  } else {
+    window.open(url, "_blank");
+  }
 }
 
 // ── Role Badge ─────────────────────────────────────────────────────────────────
@@ -229,7 +181,7 @@ function RoleBadge({ role }: { role: string | null | undefined }) {
   };
   const style = styles[normalized] ?? { background: "#f3f4f6", color: "#374151", border: "1px solid #e5e7eb" };
   return (
-    <span style={{ ...style, fontSize: 9, fontWeight: 800, letterSpacing: "0.12em", padding: "1px 6px", borderRadius: 4, textTransform: "uppercase" }}>
+    <span style={{ ...style, fontSize: 9, fontWeight: 800, letterSpacing: "0.12em", padding: "1px 6px", borderRadius: 4, textTransform: "uppercase", whiteSpace: "nowrap" }}>
       {normalized}
     </span>
   );
@@ -240,10 +192,7 @@ function Avatar({ name, size = 36 }: { name: string; size?: number }) {
   const colors = ["#0e7490", "#1d4ed8", "#16a34a", "#ea580c", "#7c3aed", MAROON];
   const color = colors[(name.charCodeAt(0) ?? 0) % colors.length];
   return (
-    <div
-      className="rounded-full flex items-center justify-center text-white font-black shrink-0"
-      style={{ width: size, height: size, fontSize: size * 0.38, background: color }}
-    >
+    <div style={{ width: size, height: size, borderRadius: "50%", background: color, color: "#fff", fontWeight: 900, fontSize: size * 0.38, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
       {name.slice(0, 2).toUpperCase()}
     </div>
   );
@@ -252,19 +201,18 @@ function Avatar({ name, size = 36 }: { name: string; size?: number }) {
 // ── Status Badge ───────────────────────────────────────────────────────────────
 function StatusBadge({ sub, dueDate }: { sub: Submission; dueDate: string | null }) {
   const isExcused = sub.status === "EXCUSED";
-  const late = sub.status === "LATE" || sub.isLate ||
-    isLateCheck(sub.submittedAt, dueDate);
+  const late = sub.status === "LATE" || sub.isLate || isLateCheck(sub.submittedAt, dueDate);
   const graded = (sub.points != null || sub.grade != null) && !isExcused;
 
   if (!sub.submittedAt)
-    return <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "#fef2f2", color: MAROON, border: "1px solid #f0c0c0" }}><AlertCircle size={9} /> Missing</span>;
+    return <span style={{ display: "inline-flex", alignItems: "center", gap: 3, fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 999, background: "#fef2f2", color: MAROON, border: "1px solid #f0c0c0", whiteSpace: "nowrap" }}><AlertCircle size={9} /> Missing</span>;
   if (isExcused)
-    return <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "#f3f4f6", color: "#6b7280", border: "1px solid #e5e7eb" }}>Excused</span>;
+    return <span style={{ display: "inline-flex", alignItems: "center", gap: 3, fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 999, background: "#f3f4f6", color: "#6b7280", border: "1px solid #e5e7eb", whiteSpace: "nowrap" }}>Excused</span>;
   if (graded && !late)
-    return <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "#f0fdf4", color: "#15803d", border: "1px solid #bbf7d0" }}><Check size={9} /> Graded</span>;
+    return <span style={{ display: "inline-flex", alignItems: "center", gap: 3, fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 999, background: "#f0fdf4", color: "#15803d", border: "1px solid #bbf7d0", whiteSpace: "nowrap" }}><Check size={9} /> Graded</span>;
   if (late)
-    return <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "#fef2f2", color: "#dc2626", border: "1px solid #fecaca" }}>Late</span>;
-  return <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "#eff6ff", color: "#1d4ed8", border: "1px solid #bfdbfe" }}><Check size={9} /> Submitted</span>;
+    return <span style={{ display: "inline-flex", alignItems: "center", gap: 3, fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 999, background: "#fef2f2", color: "#dc2626", border: "1px solid #fecaca", whiteSpace: "nowrap" }}>Late</span>;
+  return <span style={{ display: "inline-flex", alignItems: "center", gap: 3, fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 999, background: "#eff6ff", color: "#1d4ed8", border: "1px solid #bfdbfe", whiteSpace: "nowrap" }}><Check size={9} /> Submitted</span>;
 }
 
 // ── Delete Confirm Modal ───────────────────────────────────────────────────────
@@ -272,22 +220,20 @@ function DeleteConfirmModal({ title, onConfirm, onCancel, deleting }: {
   title: string; onConfirm: () => void; onCancel: () => void; deleting: boolean;
 }) {
   return (
-    <div className="fixed inset-0 z-200 flex items-center justify-center bg-black/40 px-4" onClick={onCancel}>
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm border border-gray-200 overflow-hidden" onClick={e => e.stopPropagation()}>
-        <div className="px-5 py-4 border-b border-gray-100" style={{ background: "#fef2f2" }}>
-          <div className="flex items-center gap-2">
-            <Trash2 size={15} style={{ color: MAROON }} />
-            <span className="text-sm font-black" style={{ color: MAROON }}>Delete Assignment</span>
-          </div>
+    <div style={{ position: "fixed", inset: 0, zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,.4)", padding: "0 16px" }} onClick={onCancel}>
+      <div style={{ background: "#fff", borderRadius: 16, boxShadow: "0 20px 40px rgba(0,0,0,.2)", width: "100%", maxWidth: 400, overflow: "hidden", fontFamily: FONT }} onClick={e => e.stopPropagation()}>
+        <div style={{ padding: "16px 20px", borderBottom: "1px solid #fce8e8", background: "#fef2f2", display: "flex", alignItems: "center", gap: 8 }}>
+          <Trash2 size={15} style={{ color: MAROON }} />
+          <span style={{ fontSize: 14, fontWeight: 900, color: MAROON }}>Delete Assignment</span>
         </div>
-        <div className="px-5 py-5">
-          <p className="text-sm text-gray-700 leading-relaxed">
-            Are you sure you want to delete <span className="font-bold">&ldquo;{title}&rdquo;</span>? This action cannot be undone and all associated submissions will be permanently removed.
+        <div style={{ padding: "20px" }}>
+          <p style={{ fontSize: 13, color: "#374151", lineHeight: 1.6 }}>
+            Are you sure you want to delete <strong>&ldquo;{title}&rdquo;</strong>? This cannot be undone.
           </p>
         </div>
-        <div className="px-5 py-4 border-t border-gray-100 bg-gray-50 flex justify-end gap-2">
-          <button onClick={onCancel} disabled={deleting} className="h-9 px-4 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-100 disabled:opacity-50">Cancel</button>
-          <button onClick={onConfirm} disabled={deleting} className="h-9 px-4 rounded-xl text-sm font-black text-white disabled:opacity-60" style={{ background: MAROON }}>
+        <div style={{ padding: "12px 20px", borderTop: "1px solid #f3f4f6", background: "#f9fafb", display: "flex", justifyContent: "flex-end", gap: 8 }}>
+          <button onClick={onCancel} disabled={deleting} style={{ height: 36, padding: "0 16px", border: "1px solid #e5e7eb", borderRadius: 10, fontSize: 13, fontWeight: 600, color: "#374151", cursor: "pointer", background: "#fff" }}>Cancel</button>
+          <button onClick={onConfirm} disabled={deleting} style={{ height: 36, padding: "0 16px", borderRadius: 10, fontSize: 13, fontWeight: 900, color: "#fff", cursor: "pointer", background: MAROON, border: "none", opacity: deleting ? 0.6 : 1 }}>
             {deleting ? "Deleting..." : "Delete"}
           </button>
         </div>
@@ -298,9 +244,7 @@ function DeleteConfirmModal({ title, onConfirm, onCancel, deleting }: {
 
 // ── Grade Modal ────────────────────────────────────────────────────────────────
 function GradeModal({ sub, assignment, onClose, onSave }: {
-  sub: Submission;
-  assignment: AssignmentWithRole;
-  onClose: () => void;
+  sub: Submission; assignment: AssignmentWithRole; onClose: () => void;
   onSave: (userId: string, points: number | null, feedback: string, status: string) => Promise<void>;
 }) {
   const existing = sub.points ?? (sub.grade != null ? parseFloat(sub.grade) : null);
@@ -309,84 +253,62 @@ function GradeModal({ sub, assignment, onClose, onSave }: {
   const [status, setStatus] = useState(sub.status ?? "SUBMITTED");
   const [saving, setSaving] = useState(false);
   const maxPts = assignment.points;
-
-  const pct = score !== "" && !isNaN(parseFloat(score))
-    ? Math.round((parseFloat(score) / maxPts) * 100) : null;
+  const pct = score !== "" && !isNaN(parseFloat(score)) ? Math.round((parseFloat(score) / maxPts) * 100) : null;
 
   const handleSave = async () => {
     setSaving(true);
-    const gradeValue = score !== "" ? parseFloat(score) : null;
-    await onSave(sub.userId, gradeValue, feedback, status);
+    await onSave(sub.userId, score !== "" ? parseFloat(score) : null, feedback, status);
     setSaving(false);
     onClose();
   };
 
   return (
-    <div className="fixed inset-0 z-200 flex items-center justify-center bg-black/40 px-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden" onClick={e => e.stopPropagation()} style={{ fontFamily: FONT }}>
-        <div className="flex items-center gap-3 px-5 py-4" style={{ background: MAROON }}>
+    <div style={{ position: "fixed", inset: 0, zIndex: 200, display: "flex", alignItems: "flex-end", justifyContent: "center", background: "rgba(0,0,0,.4)", padding: "0" }} onClick={onClose}>
+      <div style={{ background: "#fff", borderRadius: "20px 20px 0 0", boxShadow: "0 -8px 32px rgba(0,0,0,.2)", width: "100%", maxWidth: 480, overflow: "hidden", fontFamily: FONT, maxHeight: "95dvh", display: "flex", flexDirection: "column" }} onClick={e => e.stopPropagation()}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "16px 20px", background: MAROON, flexShrink: 0 }}>
           <Avatar name={sub.userName ?? sub.userEmail} size={36} />
-          <div className="flex-1 min-w-0">
-            <p className="text-[10px] font-black uppercase tracking-widest text-white/60">Grading</p>
-            <p className="text-sm font-black text-white truncate">{sub.userName ?? sub.userEmail}</p>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ fontSize: 10, fontWeight: 900, color: "rgba(255,255,255,.6)", textTransform: "uppercase", letterSpacing: "0.08em", margin: 0 }}>Grading</p>
+            <p style={{ fontSize: 14, fontWeight: 900, color: "#fff", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{sub.userName ?? sub.userEmail}</p>
           </div>
-          <button onClick={onClose} className="text-white/60 hover:text-white"><X size={16} /></button>
+          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,.6)" }}><X size={16} /></button>
         </div>
-        <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100 bg-gray-50">
-          <p className="text-xs font-semibold text-gray-600">{assignment.title}</p>
-          <p className="text-xs font-black" style={{ color: MAROON }}>Max: {maxPts} pts</p>
-        </div>
-        <div className="px-5 py-4 space-y-4">
+        <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16, padding: "10px 14px", background: "#f9fafb", borderRadius: 10, border: "1px solid #f3f4f6" }}>
+            <p style={{ fontSize: 12, fontWeight: 600, color: "#6b7280", margin: 0 }}>{assignment.title}</p>
+            <p style={{ fontSize: 12, fontWeight: 900, color: MAROON, margin: 0 }}>Max: {maxPts} pts</p>
+          </div>
           {sub.submittedAt && (
-            <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg border border-gray-100">
-              <Clock size={12} className="text-gray-400" />
-              <p className="text-xs text-gray-500">Submitted: {fmtDateTime(sub.submittedAt)}</p>
-              {(sub.isLate || sub.status === "LATE") && (
-                <span className="ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "#fef2f2", color: "#dc2626", border: "1px solid #fecaca" }}>Late</span>
-              )}
+            <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", background: "#f9fafb", borderRadius: 10, border: "1px solid #f3f4f6", marginBottom: 16 }}>
+              <Clock size={12} style={{ color: "#9ca3af" }} />
+              <p style={{ fontSize: 12, color: "#6b7280", margin: 0 }}>Submitted: {fmtDateTime(sub.submittedAt)}</p>
             </div>
           )}
-          {sub.isMissing && (
-            <div className="flex items-center gap-2 px-3 py-2 rounded-lg border" style={{ background: "#fef2f2", borderColor: "#f0c0c0" }}>
-              <AlertCircle size={12} style={{ color: MAROON }} />
-              <p className="text-xs font-semibold" style={{ color: MAROON }}>No submission received</p>
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ fontSize: 10, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.08em", color: "#9ca3af", display: "block", marginBottom: 8 }}>Score</label>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
+              <input type="number" min={0} max={maxPts} value={score} onChange={e => setScore(e.target.value)} placeholder="—"
+                style={{ flex: 1, height: 48, textAlign: "center", fontSize: 20, fontWeight: 900, border: `2px solid ${score !== "" ? MAROON : "#e5e7eb"}`, borderRadius: 12, outline: "none", color: MAROON, fontFamily: FONT }} />
+              <span style={{ fontSize: 14, fontWeight: 700, color: "#9ca3af" }}>/ {maxPts}</span>
+              {pct !== null && <span style={{ fontSize: 14, fontWeight: 900, color: getGradeColor(parseFloat(score), maxPts) }}>{pct}%</span>}
             </div>
-          )}
-          <div>
-            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-2">Score</label>
-            <div className="flex items-center gap-3">
-              <input
-                type="number" min={0} max={maxPts}
-                value={score} onChange={e => setScore(e.target.value)}
-                placeholder="—"
-                className="flex-1 h-11 text-center text-lg font-black border-2 rounded-xl outline-none transition-colors"
-                style={{ borderColor: score !== "" ? MAROON : "#e5e7eb", color: MAROON }}
-              />
-              <span className="text-sm font-bold text-gray-400">/ {maxPts}</span>
-              {pct !== null && (
-                <span className="text-sm font-black shrink-0" style={{ color: getGradeColor(parseFloat(score), maxPts) }}>{pct}%</span>
-              )}
-            </div>
-            <div className="flex flex-wrap gap-1.5 mt-2">
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
               {[100, 90, 80, 70, 60, 0].map(p => {
                 const val = Math.round((p / 100) * maxPts);
                 const isActive = parseFloat(score) === val;
                 return (
                   <button key={p} type="button" onClick={() => setScore(String(val))}
-                    className="px-2.5 py-1 text-[11px] font-bold border rounded-lg transition-all"
-                    style={isActive
-                      ? { background: MAROON, color: "#fff", borderColor: MAROON }
-                      : { background: "#fff", color: "#6b7280", borderColor: "#e5e7eb" }}>
+                    style={{ padding: "4px 10px", fontSize: 11, fontWeight: 700, border: "1px solid", borderRadius: 8, cursor: "pointer", borderColor: isActive ? MAROON : "#e5e7eb", background: isActive ? MAROON : "#fff", color: isActive ? "#fff" : "#6b7280", transition: "all 0.15s" }}>
                     {p}% ({val})
                   </button>
                 );
               })}
             </div>
           </div>
-          <div>
-            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-1">Status</label>
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ fontSize: 10, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.08em", color: "#9ca3af", display: "block", marginBottom: 6 }}>Status</label>
             <select value={status} onChange={e => setStatus(e.target.value)}
-              className="w-full h-9 border border-gray-200 rounded-xl px-3 text-xs bg-white outline-none focus:border-gray-400 text-gray-700">
+              style={{ width: "100%", height: 38, border: "1px solid #e5e7eb", borderRadius: 10, padding: "0 12px", fontSize: 13, background: "#fff", outline: "none", fontFamily: FONT }}>
               <option value="SUBMITTED">Submitted</option>
               <option value="GRADED">Graded</option>
               <option value="LATE">Late</option>
@@ -395,19 +317,16 @@ function GradeModal({ sub, assignment, onClose, onSave }: {
             </select>
           </div>
           <div>
-            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-2">Feedback <span className="font-normal normal-case">(Optional)</span></label>
-            <textarea value={feedback} onChange={e => setFeedback(e.target.value)} rows={3}
-              placeholder="Write feedback for this student..."
-              className="w-full px-3 py-2.5 text-xs border border-gray-200 rounded-xl outline-none focus:border-gray-400 resize-none bg-white" />
+            <label style={{ fontSize: 10, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.08em", color: "#9ca3af", display: "block", marginBottom: 6 }}>Feedback (Optional)</label>
+            <textarea value={feedback} onChange={e => setFeedback(e.target.value)} rows={3} placeholder="Write feedback..."
+              style={{ width: "100%", padding: "10px 12px", fontSize: 12, border: "1px solid #e5e7eb", borderRadius: 10, outline: "none", resize: "none", fontFamily: FONT, boxSizing: "border-box" }} />
           </div>
         </div>
-        <div className="flex gap-2 px-5 py-4 border-t border-gray-100 bg-gray-50">
-          <button onClick={onClose} className="flex-1 h-10 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-100">Cancel</button>
+        <div style={{ display: "flex", gap: 8, padding: "12px 20px", borderTop: "1px solid #f3f4f6", background: "#f9fafb", flexShrink: 0 }}>
+          <button onClick={onClose} style={{ flex: 1, height: 40, border: "1px solid #e5e7eb", borderRadius: 12, fontSize: 14, fontWeight: 600, color: "#374151", cursor: "pointer", background: "#fff" }}>Cancel</button>
           <button onClick={handleSave} disabled={saving}
-            className="flex-1 h-10 rounded-xl text-sm font-black text-white flex items-center justify-center gap-2 disabled:opacity-60"
-            style={{ background: MAROON }}>
-            <Star size={13} />
-            {saving ? "Saving..." : "Save Grade"}
+            style={{ flex: 1, height: 40, borderRadius: 12, fontSize: 14, fontWeight: 900, color: "#fff", cursor: "pointer", background: MAROON, border: "none", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, opacity: saving ? 0.6 : 1 }}>
+            <Star size={13} />{saving ? "Saving..." : "Save Grade"}
           </button>
         </div>
       </div>
@@ -423,46 +342,46 @@ function FilePreviewModal({ sub, onClose }: { sub: Submission; onClose: () => vo
   const isImg = url ? isImage(url) : false;
 
   return (
-    <div className="fixed inset-0 z-300 flex items-center justify-center bg-black/60 px-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-4 py-3 shrink-0" style={{ background: MAROON }}>
-          <div className="flex items-center gap-2">
-            <FileText size={13} className="text-white/70" />
-            <span className="text-sm font-bold text-white truncate">{fileName}</span>
+    <div style={{ position: "fixed", inset: 0, zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,.6)", padding: "16px" }} onClick={onClose}>
+      <div style={{ background: "#fff", borderRadius: 16, boxShadow: "0 24px 48px rgba(0,0,0,.3)", width: "100%", maxWidth: 860, maxHeight: "90dvh", display: "flex", flexDirection: "column", overflow: "hidden" }} onClick={e => e.stopPropagation()}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", background: MAROON, flexShrink: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+            <FileText size={13} style={{ color: "rgba(255,255,255,.7)", flexShrink: 0 }} />
+            <span style={{ fontSize: 13, fontWeight: 700, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{fileName}</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
             {url && (
               <>
-                <a href={url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-[10px] font-bold text-white/70 hover:text-white transition-colors">
+                <a href={url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,.7)", display: "flex", alignItems: "center", gap: 4 }}>
                   <ExternalLink size={11} /> Open
                 </a>
-                <a href={url} download={fileName} className="flex items-center gap-1 text-[10px] font-bold text-white/70 hover:text-white transition-colors">
+                <a href={url} download={fileName} style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,.7)", display: "flex", alignItems: "center", gap: 4 }}>
                   <Download size={11} /> Download
                 </a>
               </>
             )}
-            <button onClick={onClose} className="text-white/60 hover:text-white ml-1"><X size={15} /></button>
+            <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,.6)" }}><X size={15} /></button>
           </div>
         </div>
-        <div className="flex-1 overflow-hidden bg-gray-100 min-h-80">
+        <div style={{ flex: 1, overflow: "hidden", background: "#f3f4f6", minHeight: 300 }}>
           {!url ? (
-            <div className="h-full overflow-y-auto px-8 py-6">
+            <div style={{ height: "100%", overflowY: "auto", padding: "24px 32px" }}>
               {sub.textEntry
-                ? <div className="prose prose-sm max-w-none text-sm text-gray-700" dangerouslySetInnerHTML={{ __html: sub.textEntry }} />
-                : <p className="text-sm text-gray-400 italic">No content to preview.</p>}
+                ? <div style={{ fontSize: 13, color: "#374151", lineHeight: 1.75 }} dangerouslySetInnerHTML={{ __html: sub.textEntry }} />
+                : <p style={{ fontSize: 13, color: "#9ca3af", fontStyle: "italic" }}>No content to preview.</p>}
             </div>
           ) : isImg ? (
-            <div className="h-full flex items-center justify-center p-6">
+            <div style={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={url} alt={fileName} className="max-w-full max-h-full object-contain rounded-lg shadow-lg" />
+              <img src={url} alt={fileName} style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain", borderRadius: 8, boxShadow: "0 4px 20px rgba(0,0,0,.15)" }} />
             </div>
           ) : isPdf(url) ? (
-            <iframe src={url} title={fileName} className="w-full h-full border-0" style={{ minHeight: 460 }} />
+            <iframe src={url} title={fileName} style={{ width: "100%", height: "100%", border: "none", minHeight: 400 }} />
           ) : (
-            <div className="flex flex-col items-center justify-center h-full gap-4 text-gray-400">
+            <div style={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16, color: "#9ca3af" }}>
               <FileText size={48} />
-              <p className="text-sm">Preview not available for this file type.</p>
-              <a href={url} download={fileName} className="flex items-center gap-2 text-sm font-bold px-4 py-2 rounded-lg text-white" style={{ background: MAROON }}>
+              <p style={{ fontSize: 13 }}>Preview not available.</p>
+              <a href={url} download={fileName} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 700, padding: "8px 16px", borderRadius: 10, color: "#fff", background: MAROON, textDecoration: "none" }}>
                 <Download size={13} /> Download to view
               </a>
             </div>
@@ -474,24 +393,20 @@ function FilePreviewModal({ sub, onClose }: { sub: Submission; onClose: () => vo
 }
 
 // ── Stats Bar ──────────────────────────────────────────────────────────────────
-function StatsBar({ submissions, dueDate, maxPoints }: {
-  submissions: Submission[];
-  dueDate: string | null;
-  maxPoints: number;
-}) {
+function StatsBar({ submissions, dueDate, maxPoints }: { submissions: Submission[]; dueDate: string | null; maxPoints: number; }) {
   const { submitted, graded, missing, late, avgScore } = computeStats(submissions, dueDate);
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-5">
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 8, marginBottom: 16 }}>
       {[
         { label: "Submitted", value: submitted.length, color: "#1d4ed8", bg: "#eff6ff", border: "#bfdbfe" },
         { label: "Graded",    value: graded.length,    color: "#15803d", bg: "#f0fdf4", border: "#bbf7d0" },
         { label: "Missing",   value: missing.length,   color: MAROON,   bg: "#fef2f2", border: "#f0c0c0" },
         { label: "Late",      value: late.length,      color: "#dc2626", bg: "#fef2f2", border: "#fecaca" },
-        { label: "Avg Score", value: avgScore != null ? `${avgScore}/${maxPoints}` : "—", color: "#6b7280", bg: "#f9fafb", border: "#e5e7eb" },
+        { label: "Avg",       value: avgScore != null ? `${avgScore}/${maxPoints}` : "—", color: "#6b7280", bg: "#f9fafb", border: "#e5e7eb" },
       ].map(stat => (
-        <div key={stat.label} className="rounded-xl border px-4 py-3 text-center" style={{ background: stat.bg, borderColor: stat.border }}>
-          <p className="text-xl font-black" style={{ color: stat.color }}>{stat.value}</p>
-          <p className="text-[10px] font-bold uppercase tracking-widest mt-0.5" style={{ color: stat.color }}>{stat.label}</p>
+        <div key={stat.label} style={{ borderRadius: 10, border: `1px solid ${stat.border}`, background: stat.bg, padding: "10px 6px", textAlign: "center" }}>
+          <p style={{ fontSize: "clamp(14px, 3vw, 20px)", fontWeight: 900, color: stat.color, margin: 0, lineHeight: 1 }}>{stat.value}</p>
+          <p style={{ fontSize: "clamp(8px, 2vw, 10px)", fontWeight: 800, color: stat.color, textTransform: "uppercase", letterSpacing: "0.08em", margin: "4px 0 0" }}>{stat.label}</p>
         </div>
       ))}
     </div>
@@ -500,92 +415,82 @@ function StatsBar({ submissions, dueDate, maxPoints }: {
 
 // ── Criterion Modal ────────────────────────────────────────────────────────────
 function CriterionModal({ initial, onSave, onClose }: {
-  initial?: RubricCriterion;
-  onSave: (c: RubricCriterion) => void;
-  onClose: () => void;
+  initial?: RubricCriterion; onSave: (c: RubricCriterion) => void; onClose: () => void;
 }) {
   const [name, setName]               = useState(initial?.name ?? "");
   const [desc, setDesc]               = useState(initial?.description ?? "");
   const [enableRange, setEnableRange] = useState(initial?.enableRange ?? false);
-  const [ratings, setRatings]         = useState<RubricRating[]>(
-    initial?.ratings?.length ? initial.ratings : [...DEFAULT_RATINGS.map(r => ({ ...r }))]
-  );
-
+  const [ratings, setRatings]         = useState<RubricRating[]>(initial?.ratings?.length ? initial.ratings : [...DEFAULT_RATINGS.map(r => ({ ...r }))]);
   const maxPts = Math.max(...ratings.map(r => r.points), 0);
 
   const updateRating = (i: number, field: keyof RubricRating, val: string | number) =>
     setRatings(p => p.map((r, idx) => idx === i ? { ...r, [field]: val } : r));
-
-  const addRating = () =>
-    setRatings(p => [...p, { points: 0, name: "", description: "", order: p.length }]);
-
-  const removeRating = (i: number) =>
-    setRatings(p => p.filter((_, idx) => idx !== i));
-
+  const addRating = () => setRatings(p => [...p, { points: 0, name: "", description: "", order: p.length }]);
+  const removeRating = (i: number) => setRatings(p => p.filter((_, idx) => idx !== i));
   const handleSave = () => {
     if (!name.trim()) { alert("Criterion name is required."); return; }
     const sorted = [...ratings].sort((a, b) => b.points - a.points).map((r, i) => ({ ...r, order: i }));
     onSave({ id: initial?.id, name: name.trim(), description: desc, points: maxPts, enableRange, order: initial?.order ?? 0, ratings: sorted });
   };
-
   const sortedForDisplay = [...ratings].sort((a, b) => b.points - a.points);
 
   return (
-    <div className="fixed inset-0 z-[400] flex items-center justify-center bg-black/50 px-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-          <h3 className="text-base font-black text-gray-900">{initial ? "Edit Criterion" : "Create New Criterion"}</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={16} /></button>
+    <div style={{ position: "fixed", inset: 0, zIndex: 400, display: "flex", alignItems: "flex-end", justifyContent: "center", background: "rgba(0,0,0,.5)", padding: 0 }} onClick={onClose}>
+      <div style={{ background: "#fff", borderRadius: "20px 20px 0 0", boxShadow: "0 -8px 32px rgba(0,0,0,.2)", width: "100%", maxWidth: 640, maxHeight: "90dvh", display: "flex", flexDirection: "column", overflow: "hidden", fontFamily: FONT }} onClick={e => e.stopPropagation()}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", borderBottom: "1px solid #f3f4f6", flexShrink: 0 }}>
+          <h3 style={{ fontSize: 15, fontWeight: 900, color: "#111827", margin: 0 }}>{initial ? "Edit Criterion" : "Create Criterion"}</h3>
+          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "#9ca3af" }}><X size={16} /></button>
         </div>
-        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
-          <div className="grid grid-cols-2 gap-4">
+        <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
             <div>
-              <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-1.5">Criterion Name</label>
-              <input value={name} onChange={e => setName(e.target.value)} placeholder="Enter the name"
-                className="w-full h-10 border-2 border-gray-200 rounded-xl px-3 text-sm outline-none focus:border-gray-400" />
+              <label style={{ fontSize: 10, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.08em", color: "#9ca3af", display: "block", marginBottom: 6 }}>Name</label>
+              <input value={name} onChange={e => setName(e.target.value)} placeholder="Criterion name"
+                style={{ width: "100%", height: 38, border: "1px solid #e5e7eb", borderRadius: 10, padding: "0 12px", fontSize: 13, outline: "none", fontFamily: FONT, boxSizing: "border-box" }} />
             </div>
             <div>
-              <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-1.5">Criterion Description</label>
-              <textarea value={desc} onChange={e => setDesc(e.target.value)} placeholder="Enter the description" rows={2}
-                className="w-full border-2 border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-gray-400 resize-none" />
+              <label style={{ fontSize: 10, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.08em", color: "#9ca3af", display: "block", marginBottom: 6 }}>Description</label>
+              <textarea value={desc} onChange={e => setDesc(e.target.value)} rows={2} placeholder="Optional"
+                style={{ width: "100%", border: "1px solid #e5e7eb", borderRadius: 10, padding: "8px 12px", fontSize: 12, outline: "none", resize: "none", fontFamily: FONT, boxSizing: "border-box" }} />
             </div>
           </div>
-          <div className="flex items-center justify-between">
-            <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none">
-              <input type="checkbox" checked={enableRange} onChange={e => setEnableRange(e.target.checked)} className="w-4 h-4" style={{ accentColor: MAROON }} />
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+            <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "#374151", cursor: "pointer" }}>
+              <input type="checkbox" checked={enableRange} onChange={e => setEnableRange(e.target.checked)} style={{ accentColor: MAROON }} />
               Enable Range
             </label>
-            <div className="flex items-center gap-2">
-              <span className="text-2xl font-black" style={{ color: MAROON }}>{maxPts}</span>
-              <span className="text-sm font-semibold text-gray-500">Points Possible</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <span style={{ fontSize: 22, fontWeight: 900, color: MAROON }}>{maxPts}</span>
+              <span style={{ fontSize: 12, fontWeight: 600, color: "#6b7280" }}>Points</span>
             </div>
           </div>
-          <div>
-            <div className="grid grid-cols-[48px_80px_1fr_1fr_32px] gap-2 mb-2 px-1">
-              {["Display", "Points", "Rating Name", "Rating Description", ""].map(h => (
-                <p key={h} className="text-[10px] font-black uppercase tracking-widest text-gray-400">{h}</p>
+          <div style={{ overflowX: "auto" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "48px 70px 1fr 1fr 28px", gap: 6, minWidth: 380 }}>
+              {["Disp", "Points", "Rating Name", "Description", ""].map(h => (
+                <p key={h} style={{ fontSize: 9, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.08em", color: "#9ca3af", margin: "0 0 6px" }}>{h}</p>
               ))}
-            </div>
-            <div className="space-y-2">
               {sortedForDisplay.map((r, i) => {
                 const realIdx = ratings.indexOf(r);
                 return (
-                  <div key={i} className="grid grid-cols-[48px_80px_1fr_1fr_32px] gap-2 items-center">
-                    <div className="flex items-center justify-center w-9 h-9 rounded-lg text-white text-sm font-black shrink-0" style={{ background: MAROON }}>{r.points}</div>
-                    <input type="number" min={0} value={r.points} onChange={e => updateRating(realIdx, "points", parseFloat(e.target.value) || 0)} className="h-9 border border-gray-200 rounded-lg px-2 text-sm text-center outline-none focus:border-gray-400" />
-                    <input value={r.name} onChange={e => updateRating(realIdx, "name", e.target.value)} placeholder="Rating Name" className="h-9 border border-gray-200 rounded-lg px-3 text-sm outline-none focus:border-gray-400" />
-                    <input value={r.description} onChange={e => updateRating(realIdx, "description", e.target.value)} placeholder="Description (optional)" className="h-9 border border-gray-200 rounded-lg px-3 text-sm outline-none focus:border-gray-400" />
-                    <button onClick={() => removeRating(realIdx)} className="text-gray-300 hover:text-red-400 flex items-center justify-center"><Trash2 size={14} /></button>
-                  </div>
+                  <>
+                    <div key={`d${i}`} style={{ width: 36, height: 36, borderRadius: 8, background: MAROON, color: "#fff", fontSize: 13, fontWeight: 900, display: "flex", alignItems: "center", justifyContent: "center" }}>{r.points}</div>
+                    <input key={`p${i}`} type="number" min={0} value={r.points} onChange={e => updateRating(realIdx, "points", parseFloat(e.target.value) || 0)}
+                      style={{ height: 36, border: "1px solid #e5e7eb", borderRadius: 8, padding: "0 8px", fontSize: 12, textAlign: "center", outline: "none" }} />
+                    <input key={`n${i}`} value={r.name} onChange={e => updateRating(realIdx, "name", e.target.value)} placeholder="Rating Name"
+                      style={{ height: 36, border: "1px solid #e5e7eb", borderRadius: 8, padding: "0 10px", fontSize: 12, outline: "none" }} />
+                    <input key={`desc${i}`} value={r.description} onChange={e => updateRating(realIdx, "description", e.target.value)} placeholder="Description"
+                      style={{ height: 36, border: "1px solid #e5e7eb", borderRadius: 8, padding: "0 10px", fontSize: 12, outline: "none" }} />
+                    <button key={`rm${i}`} onClick={() => removeRating(realIdx)} style={{ background: "none", border: "none", cursor: "pointer", color: "#d1d5db", display: "flex", alignItems: "center", justifyContent: "center" }}><Trash2 size={13} /></button>
+                  </>
                 );
               })}
             </div>
-            <button onClick={addRating} className="mt-3 flex items-center gap-1.5 text-xs font-bold hover:underline" style={{ color: MAROON }}>+ Add Rating</button>
+            <button onClick={addRating} style={{ marginTop: 10, fontSize: 12, fontWeight: 700, color: MAROON, background: "none", border: "none", cursor: "pointer" }}>+ Add Rating</button>
           </div>
         </div>
-        <div className="flex gap-2 px-6 py-4 border-t border-gray-100 bg-gray-50">
-          <button onClick={onClose} className="flex-1 h-10 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-100">Cancel</button>
-          <button onClick={handleSave} className="flex-1 h-10 rounded-xl text-sm font-black text-white" style={{ background: MAROON }}>Save Criterion</button>
+        <div style={{ display: "flex", gap: 8, padding: "12px 20px", borderTop: "1px solid #f3f4f6", background: "#f9fafb", flexShrink: 0 }}>
+          <button onClick={onClose} style={{ flex: 1, height: 40, border: "1px solid #e5e7eb", borderRadius: 12, fontSize: 14, fontWeight: 600, color: "#374151", cursor: "pointer", background: "#fff" }}>Cancel</button>
+          <button onClick={handleSave} style={{ flex: 1, height: 40, borderRadius: 12, fontSize: 14, fontWeight: 900, color: "#fff", cursor: "pointer", background: MAROON, border: "none" }}>Save Criterion</button>
         </div>
       </div>
     </div>
@@ -594,11 +499,11 @@ function CriterionModal({ initial, onSave, onClose }: {
 
 // ── Rubric Section ─────────────────────────────────────────────────────────────
 function RubricSection({ courseId, assignmentId }: { courseId: string; assignmentId: string }) {
-  const [rubric, setRubric]       = useState<Rubric | null>(null);
-  const [loading, setLoading]     = useState(true);
+  const [rubric, setRubric]   = useState<Rubric | null>(null);
+  const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [saving, setSaving]       = useState(false);
-  const [deleting, setDeleting]   = useState(false);
+  const [saving, setSaving]   = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [form, setForm] = useState<Omit<Rubric, "pointsPossible" | "criteria">>({
     title: "", type: "scale", ratingDisplay: "level", ratingOrder: "high_low", scoring: "scored",
     doNotPostToGradebook: false, useForGrading: false, hideScoreTotal: false,
@@ -608,9 +513,7 @@ function RubricSection({ courseId, assignmentId }: { courseId: string; assignmen
 
   useEffect(() => {
     fetch(`/api/courses/${courseId}/assignments/${assignmentId}/rubric`)
-      .then(r => r.json())
-      .then(d => { setRubric((d as { rubric?: Rubric }).rubric ?? null); setLoading(false); })
-      .catch(() => setLoading(false));
+      .then(r => r.json()).then(d => { setRubric((d as { rubric?: Rubric }).rubric ?? null); setLoading(false); }).catch(() => setLoading(false));
   }, [courseId, assignmentId]);
 
   const openCreate = () => {
@@ -625,11 +528,8 @@ function RubricSection({ courseId, assignmentId }: { courseId: string; assignmen
   };
 
   const handleSaveCriterion = (c: RubricCriterion) => {
-    if (criterionModal.index !== null) {
-      setCriteria(p => p.map((item, i) => i === criterionModal.index ? { ...c, order: i } : item));
-    } else {
-      setCriteria(p => [...p, { ...c, order: p.length }]);
-    }
+    if (criterionModal.index !== null) setCriteria(p => p.map((item, i) => i === criterionModal.index ? { ...c, order: i } : item));
+    else setCriteria(p => [...p, { ...c, order: p.length }]);
     setCriterionModal({ open: false, index: null });
   };
 
@@ -639,28 +539,22 @@ function RubricSection({ courseId, assignmentId }: { courseId: string; assignmen
     setSaving(true);
     try {
       const res = await fetch(`/api/courses/${courseId}/assignments/${assignmentId}/rubric`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, criteria }),
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...form, criteria }),
       });
       const d = await res.json();
-      if (!res.ok) { alert(`Error: ${(d as { error?: string }).error ?? "Failed to save rubric"}`); setSaving(false); return; }
+      if (!res.ok) { alert(`Error: ${(d as { error?: string }).error ?? "Failed"}`); setSaving(false); return; }
       setRubric((d as { rubric: Rubric }).rubric);
       setShowModal(false);
-      fetch(`/api/courses/${courseId}/assignments/${assignmentId}/rubric`)
-        .then(r => r.json())
-        .then(d => setRubric((d as { rubric?: Rubric }).rubric ?? null))
-        .catch(() => {});
-    } catch (err) { console.error(err); alert("Network error. Check console."); }
+      fetch(`/api/courses/${courseId}/assignments/${assignmentId}/rubric`).then(r => r.json()).then(d => setRubric((d as { rubric?: Rubric }).rubric ?? null)).catch(() => {});
+    } catch { alert("Network error."); }
     setSaving(false);
   };
 
   const handleDeleteRubric = async () => {
-    if (!confirm("Delete this rubric? This cannot be undone.")) return;
+    if (!confirm("Delete this rubric?")) return;
     setDeleting(true);
-    try {
-      await fetch(`/api/courses/${courseId}/assignments/${assignmentId}/rubric`, { method: "DELETE" });
-      setRubric(null);
-    } catch { alert("Failed to delete rubric."); }
+    try { await fetch(`/api/courses/${courseId}/assignments/${assignmentId}/rubric`, { method: "DELETE" }); setRubric(null); }
+    catch { alert("Failed to delete rubric."); }
     setDeleting(false);
   };
 
@@ -668,171 +562,141 @@ function RubricSection({ courseId, assignmentId }: { courseId: string; assignmen
   if (loading) return null;
 
   return (
-    <div className="mt-5">
+    <div style={{ marginTop: 20 }}>
       {rubric ? (
-        <div className="border border-gray-200 rounded-xl overflow-hidden">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100" style={{ background: "#fdf2f2" }}>
-            <div className="flex items-center gap-2 flex-wrap">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={MAROON} strokeWidth="2">
-                <rect x="3" y="3" width="18" height="18" rx="2"/>
-                <line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="9" x2="9" y2="21"/>
-              </svg>
-              <p className="text-xs font-black" style={{ color: MAROON }}>Rubric</p>
-              <span className="text-xs text-gray-500">— {rubric.title}</span>
-              {rubric.useForGrading && (
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "#f0fdf4", color: "#15803d", border: "1px solid #bbf7d0" }}>Used for grading</span>
-              )}
+        <div style={{ border: "1px solid #e5e7eb", borderRadius: 14, overflow: "hidden" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", borderBottom: "1px solid #fce8e8", background: "#fdf2f2", flexWrap: "wrap", gap: 8 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={MAROON} strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="9" x2="9" y2="21"/></svg>
+              <p style={{ fontSize: 12, fontWeight: 900, color: MAROON, margin: 0 }}>Rubric — {rubric.title}</p>
+              {rubric.useForGrading && <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 999, background: "#f0fdf4", color: "#15803d", border: "1px solid #bbf7d0" }}>Used for grading</span>}
             </div>
-            <div className="flex items-center gap-3 shrink-0">
-              <span className="text-xs font-black" style={{ color: MAROON }}>{rubric.pointsPossible} pts</span>
-              <button onClick={openCreate} className="text-xs font-bold hover:underline" style={{ color: MAROON }}>Edit</button>
-              <button onClick={handleDeleteRubric} disabled={deleting} className="text-xs font-bold text-red-400 hover:text-red-600 hover:underline disabled:opacity-50">
-                {deleting ? "Deleting…" : "Delete"}
-              </button>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <span style={{ fontSize: 12, fontWeight: 900, color: MAROON }}>{rubric.pointsPossible} pts</span>
+              <button onClick={openCreate} style={{ fontSize: 12, fontWeight: 700, color: MAROON, background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>Edit</button>
+              <button onClick={handleDeleteRubric} disabled={deleting} style={{ fontSize: 12, fontWeight: 700, color: "#ef4444", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>{deleting ? "Deleting…" : "Delete"}</button>
             </div>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs" style={{ minWidth: 500 }}>
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", fontSize: 12, borderCollapse: "collapse", minWidth: 400 }}>
               <thead>
-                <tr className="border-b border-gray-100 bg-gray-50">
-                  <th className="text-left px-4 py-2 font-black uppercase tracking-widest text-gray-400 text-[10px] w-40">Criteria</th>
+                <tr style={{ borderBottom: "1px solid #f3f4f6", background: "#f9fafb" }}>
+                  <th style={{ textAlign: "left", padding: "8px 14px", fontSize: 10, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.08em", color: "#9ca3af", width: 140 }}>Criteria</th>
                   {(rubric.criteria[0]?.ratings ?? []).slice().sort((a, b) => rubric.ratingOrder === "high_low" ? b.points - a.points : a.points - b.points).map((r, i) => (
-                    <th key={i} className="text-center px-3 py-2 font-black uppercase tracking-widest text-gray-400 text-[10px]">
-                      {r.name}
-                      {rubric.ratingDisplay === "points" && <span className="block font-black text-xs" style={{ color: MAROON }}>{r.points} pts</span>}
+                    <th key={i} style={{ textAlign: "center", padding: "8px 10px", fontSize: 10, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.08em", color: "#9ca3af" }}>
+                      {r.name}{rubric.ratingDisplay === "points" && <span style={{ display: "block", fontWeight: 900, fontSize: 12, color: MAROON }}>{r.points} pts</span>}
                     </th>
                   ))}
-                  <th className="text-center px-3 py-2 font-black uppercase tracking-widest text-gray-400 text-[10px]">Pts</th>
+                  <th style={{ textAlign: "center", padding: "8px 10px", fontSize: 10, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.08em", color: "#9ca3af" }}>Pts</th>
                 </tr>
               </thead>
               <tbody>
                 {rubric.criteria.map((c, ci) => {
                   const sorted = c.ratings.slice().sort((a, b) => rubric.ratingOrder === "high_low" ? b.points - a.points : a.points - b.points);
                   return (
-                    <tr key={ci} className={ci % 2 === 0 ? "bg-white" : "bg-gray-50/50"}>
-                      <td className="px-4 py-3 font-bold text-gray-800 text-xs align-top">
+                    <tr key={ci} style={{ background: ci % 2 === 0 ? "#fff" : "#fafafa" }}>
+                      <td style={{ padding: "10px 14px", fontWeight: 700, color: "#1f2937", fontSize: 12, verticalAlign: "top" }}>
                         {c.name}
-                        {c.description && <p className="text-[10px] text-gray-400 font-normal mt-0.5 leading-relaxed">{c.description}</p>}
+                        {c.description && <p style={{ fontSize: 10, color: "#9ca3af", fontWeight: 400, margin: "3px 0 0" }}>{c.description}</p>}
                       </td>
                       {sorted.map((r, ri) => (
-                        <td key={ri} className="px-3 py-3 text-center align-top border-l border-gray-100">
-                          <span className="text-[11px] font-semibold text-gray-600">{r.name}</span>
-                          {r.description && <p className="text-[10px] text-gray-400 mt-0.5 leading-relaxed">{r.description}</p>}
+                        <td key={ri} style={{ padding: "10px", textAlign: "center", verticalAlign: "top", borderLeft: "1px solid #f3f4f6" }}>
+                          <span style={{ fontSize: 11, fontWeight: 600, color: "#374151" }}>{r.name}</span>
+                          {r.description && <p style={{ fontSize: 10, color: "#9ca3af", margin: "3px 0 0" }}>{r.description}</p>}
                         </td>
                       ))}
-                      <td className="px-3 py-3 text-center font-black text-sm border-l border-gray-100" style={{ color: MAROON }}>{c.points}</td>
+                      <td style={{ padding: "10px", textAlign: "center", fontWeight: 900, fontSize: 13, color: MAROON, borderLeft: "1px solid #f3f4f6" }}>{c.points}</td>
                     </tr>
                   );
                 })}
               </tbody>
               <tfoot>
-                <tr className="border-t-2 border-gray-200 bg-gray-50">
-                  <td colSpan={99} className="px-4 py-2 text-right text-xs font-black" style={{ color: MAROON }}>Total: {rubric.pointsPossible} pts</td>
+                <tr style={{ borderTop: "2px solid #e5e7eb", background: "#f9fafb" }}>
+                  <td colSpan={99} style={{ padding: "8px 14px", textAlign: "right", fontSize: 12, fontWeight: 900, color: MAROON }}>Total: {rubric.pointsPossible} pts</td>
                 </tr>
               </tfoot>
             </table>
           </div>
         </div>
       ) : (
-        <div className="flex items-center gap-3">
-          <button onClick={openCreate} className="flex items-center gap-2 px-4 py-2 text-xs font-black border-2 rounded-xl hover:bg-red-50 transition-all" style={{ color: MAROON, borderColor: MAROON }}>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            Create Rubric
-          </button>
-          <button onClick={openCreate} className="flex items-center gap-2 px-4 py-2 text-xs font-semibold border border-gray-200 rounded-xl hover:bg-gray-50 text-gray-600 transition-all">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-            Find Rubric
-          </button>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <button onClick={openCreate} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", fontSize: 12, fontWeight: 900, color: MAROON, border: `2px solid ${MAROON}`, borderRadius: 10, cursor: "pointer", background: "#fef2f2" }}>+ Create Rubric</button>
+          <button onClick={openCreate} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", fontSize: 12, fontWeight: 600, color: "#374151", border: "1px solid #e5e7eb", borderRadius: 10, cursor: "pointer", background: "#fff" }}>Find Rubric</button>
         </div>
       )}
 
       {showModal && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 px-4" onClick={() => setShowModal(false)}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[92vh] flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-              <h2 className="text-base font-black text-gray-900">{rubric ? "Edit Rubric" : "Create Rubric"}</h2>
-              <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600"><X size={16} /></button>
+        <div style={{ position: "fixed", inset: 0, zIndex: 200, display: "flex", alignItems: "flex-end", justifyContent: "center", background: "rgba(0,0,0,.4)" }} onClick={() => setShowModal(false)}>
+          <div style={{ background: "#fff", borderRadius: "20px 20px 0 0", width: "100%", maxWidth: 640, maxHeight: "90dvh", display: "flex", flexDirection: "column", overflow: "hidden", fontFamily: FONT }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", borderBottom: "1px solid #f3f4f6", flexShrink: 0 }}>
+              <h2 style={{ fontSize: 15, fontWeight: 900, color: "#111827", margin: 0 }}>{rubric ? "Edit Rubric" : "Create Rubric"}</h2>
+              <button onClick={() => setShowModal(false)} style={{ background: "none", border: "none", cursor: "pointer", color: "#9ca3af" }}><X size={16} /></button>
             </div>
-            <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-                <div className="sm:col-span-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-1.5">Rubric Name *</label>
+            <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
+                <div style={{ gridColumn: "1/-1" }}>
+                  <label style={{ fontSize: 10, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.08em", color: "#9ca3af", display: "block", marginBottom: 5 }}>Rubric Name *</label>
                   <input value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} placeholder="Rubric name"
-                    className="w-full h-9 border-2 border-gray-200 rounded-xl px-3 text-sm outline-none focus:border-gray-400" />
+                    style={{ width: "100%", height: 38, border: "1px solid #e5e7eb", borderRadius: 10, padding: "0 12px", fontSize: 13, outline: "none", fontFamily: FONT, boxSizing: "border-box" }} />
                 </div>
                 {([
                   { label: "Type", key: "type", opts: [["scale","Scale"],["written_feedback","Written Feedback"]] },
                   { label: "Rating Display", key: "ratingDisplay", opts: [["level","Level"],["points","Points"]] },
-                  { label: "Rating Order", key: "ratingOrder", opts: [["high_low","High < Low"],["low_high","Low < High"]] },
+                  { label: "Rating Order", key: "ratingOrder", opts: [["high_low","High–Low"],["low_high","Low–High"]] },
                   { label: "Scoring", key: "scoring", opts: [["scored","Scored"],["unscored","Unscored"]] },
                 ] as { label: string; key: keyof typeof form; opts: [string, string][] }[]).map(({ label, key, opts }) => (
                   <div key={key}>
-                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-1.5">{label}</label>
+                    <label style={{ fontSize: 10, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.08em", color: "#9ca3af", display: "block", marginBottom: 5 }}>{label}</label>
                     <select value={form[key] as string} onChange={e => setForm(p => ({ ...p, [key]: e.target.value }))}
-                      className="w-full h-9 border border-gray-200 rounded-xl px-2 text-xs bg-white outline-none focus:border-gray-400">
+                      style={{ width: "100%", height: 36, border: "1px solid #e5e7eb", borderRadius: 10, padding: "0 10px", fontSize: 12, background: "#fff", outline: "none" }}>
                       {opts.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
                     </select>
                   </div>
                 ))}
               </div>
-              <div className="flex flex-wrap gap-5">
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 16 }}>
                 {([
-                  ["doNotPostToGradebook", "Don't post to Learning Mastery Gradebook"],
-                  ["useForGrading", "Use this rubric for assignment grading"],
-                  ["hideScoreTotal", "Hide rubric score total from students"],
+                  ["doNotPostToGradebook", "Don't post to Gradebook"],
+                  ["useForGrading", "Use for assignment grading"],
+                  ["hideScoreTotal", "Hide score total"],
                 ] as [keyof typeof form, string][]).map(([key, lbl]) => (
-                  <label key={key} className="flex items-center gap-2 text-xs text-gray-600 cursor-pointer select-none">
-                    <input type="checkbox" checked={form[key] as boolean} onChange={e => setForm(p => ({ ...p, [key]: e.target.checked }))} className="w-4 h-4" style={{ accentColor: MAROON }} />
+                  <label key={key} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "#374151", cursor: "pointer" }}>
+                    <input type="checkbox" checked={form[key] as boolean} onChange={e => setForm(p => ({ ...p, [key]: e.target.checked }))} style={{ accentColor: MAROON }} />
                     {lbl}
                   </label>
                 ))}
               </div>
               <div>
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-sm font-black text-gray-800">Criteria Builder</p>
-                  <p className="text-sm font-black" style={{ color: MAROON }}>{totalPts} Points Possible</p>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+                  <p style={{ fontSize: 13, fontWeight: 900, color: "#111827", margin: 0 }}>Criteria</p>
+                  <p style={{ fontSize: 13, fontWeight: 900, color: MAROON, margin: 0 }}>{totalPts} pts possible</p>
                 </div>
-                {criteria.length === 0 ? (
-                  <p className="text-xs text-gray-400 italic py-2">No criteria yet. Draft one below.</p>
-                ) : (
-                  <div className="space-y-2 mb-3">
-                    {criteria.map((c, i) => (
-                      <div key={i} className="flex items-center gap-3 px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 hover:border-gray-300 transition-all">
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-bold text-gray-800">{c.name}</p>
-                          {c.description && <p className="text-[11px] text-gray-400 truncate">{c.description}</p>}
-                          <p className="text-[10px] text-gray-400 mt-0.5">{c.ratings.length} rating{c.ratings.length !== 1 ? "s" : ""} · {c.points} pts</p>
-                        </div>
-                        <button onClick={() => setCriterionModal({ open: true, index: i })} className="text-xs font-bold hover:underline shrink-0" style={{ color: MAROON }}>Edit</button>
-                        <button onClick={() => setCriteria(p => p.filter((_, idx) => idx !== i))} className="text-gray-300 hover:text-red-400 shrink-0"><Trash2 size={13} /></button>
+                {criteria.length === 0 && <p style={{ fontSize: 12, color: "#9ca3af", fontStyle: "italic" }}>No criteria yet.</p>}
+                <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 10 }}>
+                  {criteria.map((c, i) => (
+                    <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", border: "1px solid #e5e7eb", borderRadius: 12, background: "#f9fafb" }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ fontSize: 13, fontWeight: 700, color: "#111827", margin: 0 }}>{c.name}</p>
+                        <p style={{ fontSize: 10, color: "#9ca3af", margin: "2px 0 0" }}>{c.ratings.length} ratings · {c.points} pts</p>
                       </div>
-                    ))}
-                  </div>
-                )}
-                <div className="flex items-center gap-2 pt-1">
-                  <span className="text-xs font-bold text-gray-400">{criteria.length + 1}.</span>
-                  <button onClick={() => setCriterionModal({ open: true, index: null })}
-                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-black border-2 rounded-xl hover:bg-red-50 transition-all"
-                    style={{ color: MAROON, borderColor: MAROON }}>
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                    Draft New Criterion
-                  </button>
+                      <button onClick={() => setCriterionModal({ open: true, index: i })} style={{ fontSize: 12, fontWeight: 700, color: MAROON, background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>Edit</button>
+                      <button onClick={() => setCriteria(p => p.filter((_, idx) => idx !== i))} style={{ background: "none", border: "none", cursor: "pointer", color: "#d1d5db" }}><Trash2 size={13} /></button>
+                    </div>
+                  ))}
                 </div>
+                <button onClick={() => setCriterionModal({ open: true, index: null })}
+                  style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", fontSize: 12, fontWeight: 900, color: MAROON, border: `2px solid ${MAROON}`, borderRadius: 10, cursor: "pointer", background: "#fef2f2" }}>+ Draft Criterion</button>
               </div>
             </div>
-            <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100 bg-gray-50">
-              <button onClick={() => setShowModal(false)} className="h-10 px-5 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-100">Cancel</button>
-              <div className="flex items-center gap-3">
-                <span className="text-xs text-gray-400">{criteria.length} criteri{criteria.length !== 1 ? "a" : "on"} · {totalPts} pts</span>
-                <button onClick={handleSaveRubric} disabled={saving} className="h-10 px-6 rounded-xl text-sm font-black text-white disabled:opacity-60" style={{ background: MAROON }}>
-                  {saving ? "Saving…" : rubric ? "Update Rubric" : "Create Rubric"}
-                </button>
-              </div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 20px", borderTop: "1px solid #f3f4f6", background: "#f9fafb", flexShrink: 0 }}>
+              <button onClick={() => setShowModal(false)} style={{ height: 38, padding: "0 16px", border: "1px solid #e5e7eb", borderRadius: 12, fontSize: 13, fontWeight: 600, color: "#374151", cursor: "pointer", background: "#fff" }}>Cancel</button>
+              <button onClick={handleSaveRubric} disabled={saving} style={{ height: 38, padding: "0 20px", borderRadius: 12, fontSize: 13, fontWeight: 900, color: "#fff", cursor: "pointer", background: MAROON, border: "none", opacity: saving ? 0.6 : 1 }}>
+                {saving ? "Saving…" : rubric ? "Update Rubric" : "Create Rubric"}
+              </button>
             </div>
           </div>
         </div>
       )}
-
       {criterionModal.open && (
         <CriterionModal
           initial={criterionModal.index !== null ? criteria[criterionModal.index] : undefined}
@@ -863,25 +727,25 @@ export default function CourseAssignmentDetail({
   assignment, courseId, sections: _sections, staff: _staff,
   currentUserId: _currentUserId, onBack, onEditFull, setAssignments,
 }: CourseAssignmentDetailProps) {
-  const [current, setCurrent] = useState<AssignmentWithRole>(assignment);
+  const [current, setCurrent]       = useState<AssignmentWithRole>(assignment);
   const [publishing, setPublishing] = useState(false);
   const [showAssignPanel, setShowAssignPanel] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [deleting, setDeleting] = useState(false);
+  const [deleting, setDeleting]     = useState(false);
   const [showDotMenu, setShowDotMenu] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [activeTab, setActiveTab] = useState<ActiveTab>("overview");
+  const [activeTab, setActiveTab]   = useState<ActiveTab>("overview");
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [enrolledUsers, setEnrolledUsers] = useState<EnrolledUser[]>([]);
-  const [gradingTarget, setGradingTarget] = useState<Submission | null>(null);
-  const [previewTarget, setPreviewTarget] = useState<Submission | null>(null);
-  const [search, setSearch] = useState("");
+  const [gradingTarget, setGradingTarget]   = useState<Submission | null>(null);
+  const [previewTarget, setPreviewTarget]   = useState<Submission | null>(null);
+  const [search, setSearch]         = useState("");
   const [filterStatus, setFilterStatus] = useState<FilterStatus>("all");
-  const [sort, setSort] = useState<SortType>("newest");
+  const [sort, setSort]             = useState<SortType>("newest");
   const [assignRows, setAssignRows] = useState<AssignRow[]>([]);
   const [savingAssign, setSavingAssign] = useState(false);
   const [dropSearch, setDropSearch] = useState<Record<number, string>>({});
-  const [openDrop, setOpenDrop] = useState<number | null>(null);
+  const [openDrop, setOpenDrop]     = useState<number | null>(null);
   const [downloading, setDownloading] = useState(false);
   const [justRefreshed, setJustRefreshed] = useState(false);
   const dotMenuRef = useRef<HTMLDivElement>(null);
@@ -921,19 +785,14 @@ export default function CourseAssignmentDetail({
 
   const handleRefresh = () => {
     setRefreshing(true);
-    fetchData().finally(() => {
-      setRefreshing(false);
-      setJustRefreshed(true);
-      setTimeout(() => setJustRefreshed(false), 3000);
-    });
+    fetchData().finally(() => { setRefreshing(false); setJustRefreshed(true); setTimeout(() => setJustRefreshed(false), 3000); });
   };
 
   const togglePublish = async () => {
     setPublishing(true);
     const newStatus = current.status === "PUBLISHED" ? "UNPUBLISHED" : "PUBLISHED";
     const res = await fetch(`/api/courses/${courseId}/assignments/${current.id}`, {
-      method: "PATCH", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: newStatus }),
+      method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: newStatus }),
     });
     const data = (await res.json()) as AssignmentPatchResponse;
     if (data.assignment) {
@@ -948,7 +807,7 @@ export default function CourseAssignmentDetail({
     try {
       const res = await fetch(`/api/courses/${courseId}/assignments/${current.id}`, { method: "DELETE" });
       if (res.ok) { setAssignments(prev => prev.filter(a => a.id !== current.id)); onBack(); }
-      else { alert("Failed to delete assignment."); setDeleting(false); setShowDeleteModal(false); }
+      else { alert("Failed to delete."); setDeleting(false); setShowDeleteModal(false); }
     } catch { alert("Network error."); setDeleting(false); setShowDeleteModal(false); }
   };
 
@@ -982,13 +841,7 @@ export default function CourseAssignmentDetail({
           const res = await fetch(s.fileUrl);
           const blob = await res.blob();
           zip.file(`${safeName}/${safeName}.${ext}`, blob);
-          zip.file(`${safeName}/grade_info.txt`, [
-            `Student: ${s.userName ?? s.userEmail}`,
-            `Email: ${s.userEmail}`,
-            `Submitted: ${s.submittedAt ? fmtDateTime(s.submittedAt) : "—"}`,
-            `Score: ${s.points != null ? `${s.points}/${current.points}` : "Not graded"}`,
-            `Feedback: ${s.feedback ?? "—"}`,
-          ].join("\n"));
+          zip.file(`${safeName}/grade_info.txt`, [`Student: ${s.userName ?? s.userEmail}`, `Email: ${s.userEmail}`, `Score: ${s.points != null ? `${s.points}/${current.points}` : "Not graded"}`, `Feedback: ${s.feedback ?? "—"}`].join("\n"));
         } catch { /* skip */ }
       }
       const blob = await zip.generateAsync({ type: "blob" });
@@ -1051,9 +904,11 @@ export default function CourseAssignmentDetail({
     setSavingAssign(false); setShowAssignPanel(false);
   };
 
-  const openSpeedGrader = (staffId?: string) => {
+  // SpeedGrader — opens new tab on desktop, navigates in-place on mobile/tablet
+  const handleSpeedGrader = (staffId?: string) => {
     const base = `/courses/${courseId}/assignments/${current.id}/speedgrader`;
-    window.open(staffId ? `${base}?staffId=${staffId}` : base, "_blank");
+    const url = staffId ? `${base}?staffId=${staffId}` : base;
+    openSpeedGrader(url);
   };
 
   const isPublished = current.status === "PUBLISHED";
@@ -1062,10 +917,8 @@ export default function CourseAssignmentDetail({
   const forLabel = resolveAssigneesLabel(current.assignees ?? [], enrolledUsers);
   const availability = getAvailabilityStatus(current);
   const isManager = current._assignmentRole === "manager";
-
   const { submitted } = computeStats(submissions, current.dueDate ?? null);
 
-  // ── Filtered & sorted submissions ──
   const filteredSubmissions = submissions
     .filter(s => {
       const q = search.trim().toLowerCase();
@@ -1087,7 +940,7 @@ export default function CourseAssignmentDetail({
     });
 
   return (
-    <div className="flex flex-col h-full bg-white" style={{ fontFamily: FONT }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "#fff", fontFamily: FONT }}>
 
       {/* Modals */}
       {showDeleteModal && <DeleteConfirmModal title={current.title} onConfirm={handleDelete} onCancel={() => { setShowDeleteModal(false); setShowDotMenu(false); }} deleting={deleting} />}
@@ -1096,67 +949,68 @@ export default function CourseAssignmentDetail({
 
       {/* ── Status banner ── */}
       {!isPublished && (
-        <div className="bg-amber-50 border-b border-amber-200 px-4 py-1.5 flex items-center gap-2">
+        <div style={{ background: "#fffbeb", borderBottom: "1px solid #fde68a", padding: "8px 16px", display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
           <svg width="13" height="13" viewBox="0 0 24 24" fill="#f59e0b"><path d="M12 2L1 21h22L12 2zm0 3.5L20.5 19h-17L12 5.5zM11 10v4h2v-4h-2zm0 6v2h2v-2h-2z" /></svg>
-          <p className="text-xs text-amber-800 font-medium">This assignment is <strong>unpublished</strong>. Staff cannot see it until you publish it.</p>
+          <p style={{ fontSize: 12, color: "#92400e", fontWeight: 500, margin: 0 }}>This assignment is <strong>unpublished</strong>. Staff cannot see it until published.</p>
         </div>
       )}
 
       {/* ── Tab bar + actions ── */}
-      <div className="flex items-center justify-between border-b border-gray-200 px-3 sm:px-5 bg-white shrink-0 overflow-x-auto">
-        <div className="flex items-end">
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid #e5e7eb", padding: "0 12px", background: "#fff", flexShrink: 0, flexWrap: "wrap", gap: 4, minHeight: 48 }}>
+        <div style={{ display: "flex", alignItems: "flex-end" }}>
           {(["overview", "submissions"] as ActiveTab[]).map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab)}
-              className="px-3 sm:px-4 py-2 text-xs -mb-px mr-0.5 rounded-t capitalize whitespace-nowrap flex items-center gap-1 transition-colors"
-              style={activeTab === tab
-                ? { border: "1px solid #e5e7eb", borderBottom: "1px solid white", background: "white", color: "#111827", fontWeight: 600 }
-                : { border: "1px solid transparent", color: "#6b7280" }}>
+              style={{ padding: "10px 14px", fontSize: 12, marginBottom: -1, marginRight: 2, borderRadius: "6px 6px 0 0", cursor: "pointer", display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap", textTransform: "capitalize", transition: "all 0.15s",
+                border: activeTab === tab ? "1px solid #e5e7eb" : "1px solid transparent",
+                borderBottom: activeTab === tab ? "1px solid #fff" : "1px solid transparent",
+                background: activeTab === tab ? "#fff" : "transparent",
+                color: activeTab === tab ? "#111827" : "#6b7280",
+                fontWeight: activeTab === tab ? 600 : 400 }}>
               {tab === "submissions" ? "Submissions" : "Overview"}
               {tab === "submissions" && submitted.length > 0 && (
-                <span className="inline-flex items-center justify-center w-4 h-4 rounded-full text-[10px] text-white" style={{ background: MAROON }}>{submitted.length}</span>
+                <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 18, height: 18, borderRadius: "50%", fontSize: 10, fontWeight: 900, color: "#fff", background: MAROON }}>{submitted.length}</span>
               )}
             </button>
           ))}
         </div>
 
-        <div className="flex items-center gap-1.5 sm:gap-2 py-1.5 flex-wrap justify-end">
+        <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", padding: "6px 0" }}>
           {isManager && (
             <button onClick={togglePublish} disabled={publishing}
-              className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 text-xs font-bold rounded-lg transition-all disabled:opacity-60"
-              style={isPublished
-                ? { background: "#f0fdf4", color: "#15803d", border: "1px solid #bbf7d0" }
-                : { background: "#f9fafb", color: "#6b7280", border: "1px solid #e5e7eb" }}>
-              {isPublished ? <CheckCircle size={13} style={{ color: "#15803d" }} /> : <Circle size={13} />}
-              <span className="hidden sm:inline">{isPublished ? "Published" : "Unpublished"}</span>
+              style={{ display: "flex", alignItems: "center", gap: 4, padding: "6px 10px", fontSize: 11, fontWeight: 700, borderRadius: 8, cursor: "pointer", transition: "all 0.15s", opacity: publishing ? 0.6 : 1, border: "1px solid",
+                background: isPublished ? "#f0fdf4" : "#f9fafb",
+                color: isPublished ? "#15803d" : "#6b7280",
+                borderColor: isPublished ? "#bbf7d0" : "#e5e7eb" }}>
+              {isPublished ? <CheckCircle size={12} style={{ color: "#15803d" }} /> : <Circle size={12} />}
+              <span style={{ display: "none" }} className="sm-inline">{isPublished ? "Published" : "Unpublished"}</span>
             </button>
           )}
           {isManager && (
             <button onClick={openAssignPanel}
-              className="flex items-center gap-1 sm:gap-1.5 text-xs font-bold px-2 sm:px-3 py-1.5 border border-gray-200 rounded-lg hover:border-gray-400 text-gray-600 transition-all">
-              <Users size={12} /><span className="hidden sm:inline">Assign To</span>
+              style={{ display: "flex", alignItems: "center", gap: 4, padding: "6px 10px", fontSize: 11, fontWeight: 700, borderRadius: 8, cursor: "pointer", border: "1px solid #e5e7eb", background: "#fff", color: "#374151" }}>
+              <Users size={12} /><span>Assign</span>
             </button>
           )}
           {isManager && (
             <button onClick={() => onEditFull(current)}
-              className="flex items-center gap-1 sm:gap-1.5 text-xs font-bold px-2 sm:px-3 py-1.5 border border-gray-200 rounded-lg hover:border-gray-400 text-gray-600 transition-all">
-              <Pencil size={12} /><span className="hidden sm:inline">Edit</span>
+              style={{ display: "flex", alignItems: "center", gap: 4, padding: "6px 10px", fontSize: 11, fontWeight: 700, borderRadius: 8, cursor: "pointer", border: "1px solid #e5e7eb", background: "#fff", color: "#374151" }}>
+              <Pencil size={12} /><span>Edit</span>
             </button>
           )}
-          <button onClick={() => openSpeedGrader()}
-            className="flex items-center gap-1 sm:gap-1.5 text-xs font-bold px-2 sm:px-3 py-1.5 rounded-lg text-white transition-all"
-            style={{ background: MAROON }}>
-            <Zap size={12} /><span className="hidden sm:inline">SpeedGrader™</span>
+          <button onClick={() => handleSpeedGrader()}
+            style={{ display: "flex", alignItems: "center", gap: 4, padding: "6px 10px", fontSize: 11, fontWeight: 700, borderRadius: 8, cursor: "pointer", border: "none", background: MAROON, color: "#fff" }}>
+            <Zap size={12} /><span>SpeedGrader™</span>
           </button>
           {isManager && (
-            <div className="relative" ref={dotMenuRef}>
+            <div style={{ position: "relative" }} ref={dotMenuRef}>
               <button onClick={() => setShowDotMenu(p => !p)}
-                className="w-8 h-8 flex items-center justify-center border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-500 transition-all">
+                style={{ width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid #e5e7eb", borderRadius: 8, cursor: "pointer", background: "#fff", color: "#6b7280" }}>
                 <MoreVertical size={15} />
               </button>
               {showDotMenu && (
-                <div className="absolute right-0 top-full mt-1 w-44 bg-white border border-gray-200 shadow-xl rounded-xl z-100 overflow-hidden py-1">
+                <div style={{ position: "absolute", right: 0, top: "100%", marginTop: 4, width: 180, background: "#fff", border: "1px solid #e5e7eb", borderRadius: 12, boxShadow: "0 8px 24px rgba(0,0,0,.12)", zIndex: 100, overflow: "hidden", padding: "4px 0" }}>
                   <button onClick={() => { setShowDotMenu(false); setShowDeleteModal(true); }}
-                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-red-600 hover:bg-red-50 transition-colors text-left">
+                    style={{ width: "100%", display: "flex", alignItems: "center", gap: 8, padding: "10px 16px", fontSize: 12, fontWeight: 600, color: "#ef4444", cursor: "pointer", background: "none", border: "none", textAlign: "left" }}>
                     <Trash2 size={13} /> Delete Assignment
                   </button>
                 </div>
@@ -1168,54 +1022,49 @@ export default function CourseAssignmentDetail({
 
       {/* ══ TAB CONTENT ══ */}
       {activeTab === "overview" ? (
-        <div className="flex flex-1 overflow-hidden">
-          <div className="flex-1 overflow-y-auto px-4 sm:px-8 py-6">
-            <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+        <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
+          {/* Main content */}
+          <div style={{ flex: 1, overflowY: "auto", padding: "20px 16px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 16, maxWidth: 720, margin: "0 auto" }}>
 
-              {/* ── Hero Banner (copied from admin) ── */}
-              <div style={{
-                background: `linear-gradient(135deg, ${MAROON} 0%, #5a0d0f 100%)`,
-                borderRadius: 16, padding: "24px 28px", position: "relative", overflow: "hidden",
-              }}>
-                <div style={{ position: "absolute", top: -30, right: -30, width: 120, height: 120, borderRadius: "50%", background: "rgba(255,255,255,0.04)" }} />
-                <div style={{ position: "absolute", bottom: -20, right: 60, width: 80, height: 80, borderRadius: "50%", background: "rgba(255,255,255,0.03)" }} />
-                <div style={{ display: "flex", alignItems: "flex-start", gap: 16, position: "relative" }}>
-                  <div style={{ width: 48, height: 48, borderRadius: 12, background: "rgba(255,255,255,0.12)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    <FileText size={22} color="#fff" />
+              {/* Hero */}
+              <div style={{ background: `linear-gradient(135deg, ${MAROON} 0%, #5a0d0f 100%)`, borderRadius: 14, padding: "20px", position: "relative", overflow: "hidden" }}>
+                <div style={{ position: "absolute", top: -24, right: -24, width: 100, height: 100, borderRadius: "50%", background: "rgba(255,255,255,.04)" }} />
+                <div style={{ display: "flex", alignItems: "flex-start", gap: 14, position: "relative", flexWrap: "wrap" }}>
+                  <div style={{ width: 44, height: 44, borderRadius: 11, background: "rgba(255,255,255,.12)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <FileText size={20} color="#fff" />
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" as const, marginBottom: 6 }}>
-                      <h1 style={{ fontSize: 22, fontWeight: 900, color: "#fff", margin: 0, letterSpacing: "-0.02em", lineHeight: 1.2 }}>
-                        {current.title}
-                      </h1>
-                      <span style={{ fontSize: 10, fontWeight: 800, padding: "3px 10px", borderRadius: 20, background: "rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.9)", letterSpacing: "0.06em", textTransform: "uppercase" as const }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 6 }}>
+                      <h1 style={{ fontSize: "clamp(16px, 4vw, 22px)", fontWeight: 900, color: "#fff", margin: 0, letterSpacing: "-0.02em", lineHeight: 1.2 }}>{current.title}</h1>
+                      <span style={{ fontSize: 10, fontWeight: 800, padding: "3px 10px", borderRadius: 20, background: "rgba(255,255,255,.15)", color: "rgba(255,255,255,.9)", letterSpacing: "0.06em", textTransform: "uppercase", whiteSpace: "nowrap" }}>
                         {current.assignmentGroup || "Assignment"}
                       </span>
                     </div>
                     {current._publisherName && (
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" as const }}>
-                        <div style={{ width: 24, height: 24, borderRadius: "50%", background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 900, color: "#fff", overflow: "hidden", flexShrink: 0 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                        <div style={{ width: 22, height: 22, borderRadius: "50%", background: "rgba(255,255,255,.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 900, color: "#fff", overflow: "hidden", flexShrink: 0 }}>
                           {current._publisherImage
                             // eslint-disable-next-line @next/next/no-img-element
                             ? <img src={current._publisherImage} alt={current._publisherName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                             : current._publisherName.charAt(0).toUpperCase()}
                         </div>
-                        <span style={{ fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.9)" }}>{current._publisherName}</span>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,.9)" }}>{current._publisherName}</span>
                         {current._publisherRole && <RoleBadge role={current._publisherRole} />}
                       </div>
                     )}
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.12)", borderRadius: 20, padding: "6px 12px", flexShrink: 0 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 5, background: "rgba(255,255,255,.12)", borderRadius: 20, padding: "5px 10px", flexShrink: 0 }}>
                     <div style={{ width: 7, height: 7, borderRadius: "50%", background: availability.statusColor }} />
-                    <span style={{ fontSize: 11, fontWeight: 800, color: "#fff" }}>{availability.statusLabel}</span>
+                    <span style={{ fontSize: 11, fontWeight: 800, color: "#fff", whiteSpace: "nowrap" }}>{availability.statusLabel}</span>
                   </div>
                 </div>
               </div>
 
-              {/* ── Description (copied from admin) ── */}
+              {/* Description */}
               {current.description ? (
-                <div style={{ background: "#fff", border: "1px solid #f0e4e4", borderLeft: `4px solid ${MAROON}`, borderRadius: "0 12px 12px 0", padding: "16px 20px" }}>
-                  <p style={{ fontSize: 10, fontWeight: 800, color: MAROON, textTransform: "uppercase" as const, letterSpacing: "0.1em", margin: "0 0 8px" }}>Description</p>
+                <div style={{ background: "#fff", border: "1px solid #f0e4e4", borderLeft: `4px solid ${MAROON}`, borderRadius: "0 12px 12px 0", padding: "14px 16px" }}>
+                  <p style={{ fontSize: 10, fontWeight: 800, color: MAROON, textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 8px" }}>Description</p>
                   <style>{`.assign-desc{font-size:13px;color:#374151;line-height:1.75;}.assign-desc p{margin:0 0 8px;}.assign-desc strong,.assign-desc b{font-weight:700;color:#111827}.assign-desc ul,.assign-desc ol{padding-left:20px;margin:0 0 6px}.assign-desc li{margin-bottom:3px}.assign-desc a{color:#7b1113;text-decoration:underline}`}</style>
                   <div className="assign-desc" dangerouslySetInnerHTML={{ __html: current.description }} />
                 </div>
@@ -1223,162 +1072,147 @@ export default function CourseAssignmentDetail({
                 <p style={{ fontSize: 13, color: "#9ca3af", fontStyle: "italic", margin: 0 }}>No description provided.</p>
               )}
 
-              {/* ── Stats Row (copied from admin, shown when submissions exist) ── */}
+              {/* Stats */}
               {submissions.length > 0 && (() => {
                 const { submitted: s, graded: g, missing: m, late: l, avgScore: a } = computeStats(submissions, current.dueDate ?? null);
                 return (
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 10 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 8 }}>
                     {[
                       { label: "Submitted", value: s.length, color: "#1d4ed8", bg: "#eff6ff", border: "#bfdbfe" },
                       { label: "Graded",    value: g.length, color: "#15803d", bg: "#f0fdf4", border: "#bbf7d0" },
                       { label: "Missing",   value: m.length, color: MAROON,    bg: "#fef2f2", border: "#f0c0c0" },
                       { label: "Late",      value: l.length, color: "#dc2626", bg: "#fef2f2", border: "#fecaca" },
-                      { label: "Avg Score", value: a != null ? `${a}/${current.points}` : "—", color: "#6b7280", bg: "#f9fafb", border: "#e5e7eb" },
+                      { label: "Avg",       value: a != null ? `${a}/${current.points}` : "—", color: "#6b7280", bg: "#f9fafb", border: "#e5e7eb" },
                     ].map(stat => (
-                      <div key={stat.label} style={{ background: stat.bg, border: `1px solid ${stat.border}`, borderRadius: 12, padding: "14px 10px", textAlign: "center" as const }}>
-                        <p style={{ fontSize: 22, fontWeight: 900, color: stat.color, margin: 0, lineHeight: 1 }}>{stat.value}</p>
-                        <p style={{ fontSize: 9, fontWeight: 800, color: stat.color, textTransform: "uppercase" as const, letterSpacing: "0.1em", margin: "4px 0 0" }}>{stat.label}</p>
+                      <div key={stat.label} style={{ background: stat.bg, border: `1px solid ${stat.border}`, borderRadius: 10, padding: "10px 6px", textAlign: "center" }}>
+                        <p style={{ fontSize: "clamp(14px, 3vw, 20px)", fontWeight: 900, color: stat.color, margin: 0, lineHeight: 1 }}>{stat.value}</p>
+                        <p style={{ fontSize: "clamp(7px, 2vw, 10px)", fontWeight: 800, color: stat.color, textTransform: "uppercase", letterSpacing: "0.06em", margin: "3px 0 0" }}>{stat.label}</p>
                       </div>
                     ))}
                   </div>
                 );
               })()}
 
-              {/* ── Details + Schedule (copied from admin, 2-column grid) ── */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-                {/* Details card */}
+              {/* Details + Schedule grid */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 12 }}>
+                {/* Details */}
                 <div style={{ background: "#fff", border: "1px solid #f0e4e4", borderRadius: 14, overflow: "hidden" }}>
-                  <div style={{ padding: "10px 18px", background: "linear-gradient(90deg, #fef2f2, #fff)", borderBottom: "1px solid #fce8e8", display: "flex", alignItems: "center", gap: 8 }}>
-                    <div style={{ width: 26, height: 26, borderRadius: 7, background: MAROON, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                  <div style={{ padding: "10px 16px", background: "linear-gradient(90deg,#fef2f2,#fff)", borderBottom: "1px solid #fce8e8", display: "flex", alignItems: "center", gap: 8 }}>
+                    <div style={{ width: 24, height: 24, borderRadius: 7, background: MAROON, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                     </div>
-                    <p style={{ fontSize: 10, fontWeight: 800, color: MAROON, textTransform: "uppercase" as const, letterSpacing: "0.1em", margin: 0 }}>Details</p>
+                    <p style={{ fontSize: 10, fontWeight: 800, color: MAROON, textTransform: "uppercase", letterSpacing: "0.1em", margin: 0 }}>Details</p>
                   </div>
-                  <div style={{ padding: "14px 18px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px 16px" }}>
+                  <div style={{ padding: "12px 16px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px 14px" }}>
                     {([
-                      ["Points",      `${current.points} pts`],
-                      ["Submission",  submittingLabel],
-                      ["Group",       current.assignmentGroup || "—"],
-                      ["Attempts",    current.allowedAttempts != null ? `${current.allowedAttempts}` : "Unlimited"],
-                      ["Status",      isPublished ? "Published" : "Unpublished"],
-                      ["Can Submit",  availability.canSubmit ? "Yes" : "No"],
+                      ["Points", `${current.points} pts`],
+                      ["Submission", submittingLabel],
+                      ["Group", current.assignmentGroup || "—"],
+                      ["Attempts", (current as AssignmentWithRole & { allowedAttempts?: number | null }).allowedAttempts != null ? String((current as AssignmentWithRole & { allowedAttempts?: number | null }).allowedAttempts) : "Unlimited"],
+                      ["Status", isPublished ? "Published" : "Unpublished"],
+                      ["Can Submit", availability.canSubmit ? "Yes" : "No"],
                     ] as [string, string][]).map(([k, v]) => (
                       <div key={k}>
-                        <p style={{ fontSize: 9, fontWeight: 800, color: "#9ca3af", textTransform: "uppercase" as const, letterSpacing: "0.1em", margin: "0 0 3px" }}>{k}</p>
-                        <p style={{ fontSize: 12, fontWeight: 700, color: "#111827", margin: 0 }}>{v}</p>
+                        <p style={{ fontSize: 9, fontWeight: 800, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 2px" }}>{k}</p>
+                        <p style={{ fontSize: 12, fontWeight: 700, color: "#111827", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{v}</p>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                {/* Schedule card */}
+                {/* Schedule */}
                 <div style={{ background: "#fff", border: "1px solid #f0e4e4", borderRadius: 14, overflow: "hidden" }}>
-                  <div style={{ padding: "10px 18px", background: "linear-gradient(90deg, #fef2f2, #fff)", borderBottom: "1px solid #fce8e8", display: "flex", alignItems: "center", gap: 8 }}>
-                    <div style={{ width: 26, height: 26, borderRadius: 7, background: MAROON, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  <div style={{ padding: "10px 16px", background: "linear-gradient(90deg,#fef2f2,#fff)", borderBottom: "1px solid #fce8e8", display: "flex", alignItems: "center", gap: 8 }}>
+                    <div style={{ width: 24, height: 24, borderRadius: 7, background: MAROON, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                     </div>
-                    <p style={{ fontSize: 10, fontWeight: 800, color: MAROON, textTransform: "uppercase" as const, letterSpacing: "0.1em", margin: 0 }}>Schedule</p>
+                    <p style={{ fontSize: 10, fontWeight: 800, color: MAROON, textTransform: "uppercase", letterSpacing: "0.1em", margin: 0 }}>Schedule</p>
                   </div>
-                  <div style={{ padding: "14px 18px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px 16px" }}>
+                  <div style={{ padding: "12px 16px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px 14px" }}>
                     {([
-                      ["Due Date",       fmtDue(current.dueDate) || "No due date"],
-                      ["Assigned To",    forLabel],
+                      ["Due Date", fmtDue(current.dueDate) || "No due date"],
+                      ["Assigned To", forLabel],
                       ["Available From", current.availableFrom ? fmtDate(current.availableFrom) : "—"],
-                      ["Until",          current.availableUntil ? fmtDate(current.availableUntil) : "—"],
+                      ["Until", current.availableUntil ? fmtDate(current.availableUntil) : "—"],
                     ] as [string, string][]).map(([k, v]) => (
                       <div key={k}>
-                        <p style={{ fontSize: 9, fontWeight: 800, color: "#9ca3af", textTransform: "uppercase" as const, letterSpacing: "0.1em", margin: "0 0 3px" }}>{k}</p>
-                        <p style={{ fontSize: 12, fontWeight: 700, color: "#111827", margin: 0 }}>{v}</p>
+                        <p style={{ fontSize: 9, fontWeight: 800, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 2px" }}>{k}</p>
+                        <p style={{ fontSize: 12, fontWeight: 700, color: "#111827", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{v}</p>
                       </div>
                     ))}
                   </div>
                 </div>
               </div>
 
-              {/* ── Rubric ── */}
+              {/* Rubric */}
               {isManager && <RubricSection courseId={courseId} assignmentId={current.id} />}
 
-              {/* ── Submissions CTA (copied from admin) ── */}
+              {/* Submissions CTA */}
               {submitted.length > 0 && (
-                <button
-                  onClick={() => setActiveTab("submissions")}
-                  style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", borderRadius: 14, border: "1px solid #f0c0c0", background: "linear-gradient(90deg, #fef2f2, #fff)", cursor: "pointer", fontFamily: FONT }}
-                  onMouseEnter={e => (e.currentTarget.style.boxShadow = "0 4px 16px rgba(123,17,19,0.1)")}
-                  onMouseLeave={e => (e.currentTarget.style.boxShadow = "none")}
-                >
-                  <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                    <div style={{ width: 40, height: 40, borderRadius: 10, background: MAROON, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                      <FileText size={18} color="#fff" />
+                <button onClick={() => setActiveTab("submissions")}
+                  style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 18px", borderRadius: 14, border: "1px solid #f0c0c0", background: "linear-gradient(90deg,#fef2f2,#fff)", cursor: "pointer", fontFamily: FONT }}
+                  onMouseEnter={e => (e.currentTarget.style.boxShadow = "0 4px 16px rgba(123,17,19,.1)")}
+                  onMouseLeave={e => (e.currentTarget.style.boxShadow = "none")}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <div style={{ width: 38, height: 38, borderRadius: 10, background: MAROON, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <FileText size={17} color="#fff" />
                     </div>
-                    <div style={{ textAlign: "left" as const }}>
-                      <p style={{ fontSize: 14, fontWeight: 900, color: MAROON, margin: 0 }}>
-                        {submitted.length} Submission{submitted.length !== 1 ? "s" : ""}
-                      </p>
+                    <div style={{ textAlign: "left" }}>
+                      <p style={{ fontSize: 14, fontWeight: 900, color: MAROON, margin: 0 }}>{submitted.length} Submission{submitted.length !== 1 ? "s" : ""}</p>
                       <p style={{ fontSize: 11, color: "#9ca3af", margin: "2px 0 0" }}>Click to view, grade, and download</p>
                     </div>
                   </div>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={MAROON} strokeWidth="2.5">
-                    <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={MAROON} strokeWidth="2.5"><path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round"/></svg>
                 </button>
               )}
             </div>
           </div>
 
-          {/* Right Sidebar */}
-          <div className="hidden sm:flex w-56 border-l border-gray-200 bg-white shrink-0 flex-col overflow-y-auto">
-            <div className="px-4 py-3 border-b border-gray-100" style={{ background: "#fdf2f2" }}>
-              <p className="text-[10px] font-black uppercase tracking-widest" style={{ color: MAROON }}>Related Items</p>
+          {/* Right Sidebar — hidden on mobile */}
+          <div style={{ width: 200, borderLeft: "1px solid #e5e7eb", background: "#fff", flexShrink: 0, flexDirection: "column", overflowY: "auto", display: "none" }} className="detail-sidebar">
+            <style>{`@media (min-width: 768px) { .detail-sidebar { display: flex !important; } }`}</style>
+            <div style={{ padding: "10px 14px", borderBottom: "1px solid #f3f4f6", background: "#fdf2f2" }}>
+              <p style={{ fontSize: 10, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.1em", color: MAROON, margin: 0 }}>Related Items</p>
             </div>
-            <div className="px-4 py-3 space-y-2.5">
-              <button onClick={() => openSpeedGrader()} className="w-full flex items-center gap-2 text-xs font-bold hover:underline text-left" style={{ color: MAROON }}><Zap size={13} /> SpeedGrader™</button>
-              <button onClick={() => setActiveTab("submissions")} className="w-full flex items-center gap-2 text-xs font-bold hover:underline text-left" style={{ color: MAROON }}><FileText size={13} /> View Submissions</button>
-              <button className="w-full flex items-center gap-2 text-xs font-bold text-left opacity-50 cursor-not-allowed" style={{ color: MAROON }} disabled><Upload size={13} /> Re-Upload Submissions</button>
+            <div style={{ padding: "12px 14px", display: "flex", flexDirection: "column", gap: 10 }}>
+              <button onClick={() => handleSpeedGrader()} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, color: MAROON, background: "none", border: "none", cursor: "pointer", textAlign: "left" }}><Zap size={12} /> SpeedGrader™</button>
+              <button onClick={() => setActiveTab("submissions")} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, color: MAROON, background: "none", border: "none", cursor: "pointer", textAlign: "left" }}><FileText size={12} /> View Submissions</button>
+              <button style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, color: MAROON, background: "none", border: "none", cursor: "not-allowed", textAlign: "left", opacity: 0.4 }} disabled><Upload size={12} /> Re-Upload Submissions</button>
             </div>
             {submissions.length > 0 && (() => {
               const { submitted: s, graded: g, missing: m, late: l, avgScore: a } = computeStats(submissions, current.dueDate ?? null);
               return (
-                <div className="px-4 pb-4 space-y-1 text-[11px] text-gray-500 border-t border-gray-100 pt-3">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Quick Stats</p>
-                  <div className="flex justify-between"><span>Submitted</span><span className="font-bold" style={{ color: MAROON }}>{s.length}</span></div>
-                  <div className="flex justify-between"><span>Graded</span><span className="font-bold text-green-600">{g.length}</span></div>
-                  <div className="flex justify-between"><span>Missing</span><span className="font-bold" style={{ color: MAROON }}>{m.length}</span></div>
-                  <div className="flex justify-between"><span>Late</span><span className="font-bold text-red-500">{l.length}</span></div>
-                  {a != null && <div className="flex justify-between"><span>Avg Score</span><span className="font-bold text-gray-700">{a}/{current.points}</span></div>}
+                <div style={{ padding: "10px 14px", borderTop: "1px solid #f3f4f6" }}>
+                  <p style={{ fontSize: 10, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.08em", color: "#9ca3af", margin: "0 0 8px" }}>Quick Stats</p>
+                  {[["Submitted", s.length, MAROON], ["Graded", g.length, "#16a34a"], ["Missing", m.length, MAROON], ["Late", l.length, "#dc2626"]].map(([lbl, val, col]) => (
+                    <div key={String(lbl)} style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                      <span style={{ fontSize: 11, color: "#6b7280" }}>{lbl}</span>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: String(col) }}>{val}</span>
+                    </div>
+                  ))}
+                  {a != null && <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}><span style={{ fontSize: 11, color: "#6b7280" }}>Avg Score</span><span style={{ fontSize: 11, fontWeight: 700, color: "#374151" }}>{a}/{current.points}</span></div>}
                 </div>
               );
             })()}
-            <div className="mx-4 mb-3 p-3 rounded-lg border border-gray-100 bg-gray-50">
-              <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Quick Info</p>
-              <div className="space-y-1.5">
-                {[["Points", current.points], ["Attempts", current.allowedAttempts != null ? current.allowedAttempts : "∞"], ["Status", isPublished ? "Published" : "Draft"]].map(([label, val]) => (
-                  <div key={String(label)} className="flex justify-between items-center">
-                    <span className="text-[11px] text-gray-500">{label}</span>
-                    <span className="text-[11px] font-bold" style={{ color: label === "Status" ? availability.statusColor : "#374151" }}>{val}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
           </div>
         </div>
       ) : (
         /* ══ SUBMISSIONS TAB ══ */
-        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-5" style={{ background: "#f8f8f7" }}>
+        <div style={{ flex: 1, overflowY: "auto", padding: "16px", background: "#f8f8f7" }}>
 
           {/* Action bar */}
-          <div className="flex items-center justify-end gap-2 mb-4 flex-wrap">
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
             {justRefreshed && (
-              <span className="flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-lg" style={{ background: "#f0fdf4", color: "#15803d", border: "1px solid #bbf7d0" }}>
+              <span style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 700, padding: "4px 10px", borderRadius: 8, background: "#f0fdf4", color: "#15803d", border: "1px solid #bbf7d0" }}>
                 <Check size={11} /> Updated
               </span>
             )}
             <button onClick={handleRefresh} disabled={refreshing}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-600 bg-white disabled:opacity-50">
-              <RefreshCw size={12} className={refreshing ? "animate-spin" : ""} /> Refresh
+              style={{ display: "flex", alignItems: "center", gap: 5, padding: "6px 12px", fontSize: 12, fontWeight: 600, border: "1px solid #e5e7eb", borderRadius: 8, cursor: "pointer", color: "#374151", background: "#fff", opacity: refreshing ? 0.6 : 1 }}>
+              <RefreshCw size={12} style={{ animation: refreshing ? "spin 1s linear infinite" : "none" }} /> Refresh
             </button>
-            <button onClick={() => openSpeedGrader()}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-black text-white rounded-lg hover:opacity-90"
-              style={{ background: MAROON }}>
+            <button onClick={() => handleSpeedGrader()}
+              style={{ display: "flex", alignItems: "center", gap: 5, padding: "6px 12px", fontSize: 12, fontWeight: 900, borderRadius: 8, cursor: "pointer", border: "none", background: MAROON, color: "#fff" }}>
               <Zap size={12} /> SpeedGrader™
             </button>
           </div>
@@ -1386,50 +1220,49 @@ export default function CourseAssignmentDetail({
           <StatsBar submissions={submissions} dueDate={current.dueDate ?? null} maxPoints={current.points} />
 
           {/* Filter + search */}
-          <div className="bg-white rounded-xl border border-gray-200 px-4 py-3 mb-4 flex flex-col sm:flex-row sm:items-center gap-3 shadow-sm flex-wrap">
-            <div className="relative flex-1 min-w-48 max-w-xs">
-              <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search students..."
-                className="w-full h-9 pl-8 pr-3 text-xs border border-gray-200 rounded-xl outline-none focus:border-gray-400 bg-white" />
-            </div>
-            <div className="flex items-center gap-1 flex-wrap">
-              {(["all", "submitted", "graded", "missing", "late", "excused"] as FilterStatus[]).map(f => (
-                <button key={f} onClick={() => setFilterStatus(f)}
-                  className="px-2.5 py-1.5 text-[10px] font-bold border rounded-lg transition-all capitalize whitespace-nowrap"
-                  style={filterStatus === f
-                    ? { background: MAROON, color: "#fff", borderColor: MAROON }
-                    : { background: "#fff", color: "#6b7280", borderColor: "#e5e7eb" }}>
-                  {f}
-                </button>
-              ))}
-            </div>
-            <div className="flex items-center gap-2 ml-auto flex-wrap">
+          <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e5e7eb", padding: "12px 14px", marginBottom: 12, display: "flex", flexDirection: "column", gap: 10, boxShadow: "0 1px 4px rgba(0,0,0,.05)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+              <div style={{ position: "relative", flex: 1, minWidth: 180, maxWidth: 280 }}>
+                <Search size={12} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "#9ca3af" }} />
+                <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search students..."
+                  style={{ width: "100%", height: 36, paddingLeft: 30, paddingRight: 12, fontSize: 12, border: "1px solid #e5e7eb", borderRadius: 10, outline: "none", fontFamily: FONT, boxSizing: "border-box" }} />
+              </div>
               <select value={sort} onChange={e => setSort(e.target.value as SortType)}
-                className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white outline-none cursor-pointer text-gray-600 h-9">
+                style={{ height: 36, border: "1px solid #e5e7eb", borderRadius: 10, padding: "0 10px", fontSize: 12, background: "#fff", outline: "none", fontFamily: FONT, cursor: "pointer" }}>
                 <option value="newest">Newest first</option>
                 <option value="oldest">Oldest first</option>
                 <option value="name">Name A–Z</option>
                 <option value="grade">Grade (high)</option>
               </select>
-              <span className="text-xs text-gray-400 whitespace-nowrap">{filteredSubmissions.length} shown</span>
+            </div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+              {(["all", "submitted", "graded", "missing", "late", "excused"] as FilterStatus[]).map(f => (
+                <button key={f} onClick={() => setFilterStatus(f)}
+                  style={{ padding: "5px 10px", fontSize: 10, fontWeight: 700, border: "1px solid", borderRadius: 8, cursor: "pointer", textTransform: "capitalize", whiteSpace: "nowrap", transition: "all 0.15s",
+                    background: filterStatus === f ? MAROON : "#fff",
+                    color: filterStatus === f ? "#fff" : "#6b7280",
+                    borderColor: filterStatus === f ? MAROON : "#e5e7eb" }}>
+                  {f}
+                </button>
+              ))}
+              <span style={{ fontSize: 11, color: "#9ca3af", display: "flex", alignItems: "center", marginLeft: 4 }}>{filteredSubmissions.length} shown</span>
             </div>
           </div>
 
           {/* Download bar */}
           {submitted.length > 0 && (
-            <div className="bg-white border border-gray-200 rounded-xl px-4 py-3 mb-4 flex items-center justify-between gap-3 shadow-sm flex-wrap">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "#fef2f2" }}>
+            <div style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 12, padding: "12px 14px", marginBottom: 12, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{ width: 34, height: 34, borderRadius: 10, background: "#fef2f2", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                   <PackageOpen size={14} style={{ color: MAROON }} />
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-gray-800">Download Submissions</p>
-                  <p className="text-xs text-gray-400">{submitted.filter(s => s.fileUrl).length} file{submitted.filter(s => s.fileUrl).length !== 1 ? "s" : ""} · Includes grade info + status</p>
+                  <p style={{ fontSize: 13, fontWeight: 700, color: "#111827", margin: 0 }}>Download Submissions</p>
+                  <p style={{ fontSize: 11, color: "#9ca3af", margin: "2px 0 0" }}>{submitted.filter(s => s.fileUrl).length} files · includes grade info</p>
                 </div>
               </div>
               <button onClick={handleDownloadAll} disabled={downloading}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold border rounded-lg hover:bg-red-50 disabled:opacity-50 whitespace-nowrap transition-all"
-                style={{ color: MAROON, borderColor: "#f0c0c0" }}>
+                style={{ display: "flex", alignItems: "center", gap: 5, padding: "6px 12px", fontSize: 12, fontWeight: 700, border: `1px solid #f0c0c0`, borderRadius: 8, cursor: "pointer", color: MAROON, background: "#fef2f2", whiteSpace: "nowrap", opacity: downloading ? 0.6 : 1 }}>
                 {downloading ? "Preparing…" : "Download All (.zip)"}
               </button>
             </div>
@@ -1437,107 +1270,93 @@ export default function CourseAssignmentDetail({
 
           {/* Submissions list */}
           {filteredSubmissions.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 gap-4">
-              <div className="w-16 h-16 rounded-full flex items-center justify-center" style={{ background: "#fef2f2" }}>
-                <FileText size={28} style={{ color: MAROON }} />
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "60px 20px", gap: 12 }}>
+              <div style={{ width: 56, height: 56, borderRadius: "50%", background: "#fef2f2", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <FileText size={24} style={{ color: MAROON }} />
               </div>
-              <div className="text-center">
-                <p className="text-sm font-bold text-gray-600 mb-1">{search || filterStatus !== "all" ? "No results found" : "No submissions yet"}</p>
-                <p className="text-xs text-gray-400">{search || filterStatus !== "all" ? "Try adjusting your filters" : "Submissions will appear here once students submit"}</p>
-              </div>
+              <p style={{ fontSize: 13, fontWeight: 700, color: "#374151", margin: 0 }}>{search || filterStatus !== "all" ? "No results found" : "No submissions yet"}</p>
+              <p style={{ fontSize: 12, color: "#9ca3af", margin: 0, textAlign: "center" }}>{search || filterStatus !== "all" ? "Try adjusting your filters" : "Submissions will appear here once staff submit"}</p>
               {(search || filterStatus !== "all") && (
-                <button onClick={() => { setSearch(""); setFilterStatus("all"); }} className="text-xs font-bold hover:underline transition-colors" style={{ color: MAROON }}>Clear filters</button>
+                <button onClick={() => { setSearch(""); setFilterStatus("all"); }} style={{ fontSize: 12, fontWeight: 700, color: MAROON, background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>Clear filters</button>
               )}
             </div>
           ) : (
-            <div className="space-y-3">
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {filteredSubmissions.map((sub, i) => {
                 const score = sub.points ?? (sub.grade != null ? parseFloat(sub.grade) : null);
                 const hasFile = !!(sub.fileUrl || sub.onlineUrl || sub.textEntry);
                 const late = sub.status === "LATE" || sub.isLate || isLateCheck(sub.submittedAt, current.dueDate ?? null);
 
                 return (
-                  <div key={`${sub.userId}-${i}`}
-                    className="bg-white border rounded-xl overflow-hidden hover:shadow-md transition-all"
-                    style={{ borderColor: late && sub.submittedAt ? "#fecaca" : "#e5e7eb" }}>
-
-                    <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-100">
-                      <Avatar name={sub.userName ?? sub.userEmail} size={36} />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-sm font-bold text-gray-800 truncate">{sub.userName ?? sub.userEmail}</span>
+                  <div key={`${sub.userId}-${i}`} style={{ background: "#fff", border: `1px solid ${late && sub.submittedAt ? "#fecaca" : "#e5e7eb"}`, borderRadius: 14, overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,.04)" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 14px", borderBottom: "1px solid #f3f4f6" }}>
+                      <Avatar name={sub.userName ?? sub.userEmail} size={34} />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                          <span style={{ fontSize: 13, fontWeight: 700, color: "#111827", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "calc(100% - 80px)" }}>{sub.userName ?? sub.userEmail}</span>
                           <StatusBadge sub={sub} dueDate={current.dueDate ?? null} />
                         </div>
-                        <p className="text-xs text-gray-400 truncate">{sub.userEmail}</p>
+                        <p style={{ fontSize: 11, color: "#9ca3af", margin: "2px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{sub.userEmail}</p>
                       </div>
                       {score != null && sub.status !== "EXCUSED" ? (
-                        <div className="text-right shrink-0">
-                          <span className="text-lg font-black" style={{ color: MAROON }}>{score}</span>
-                          <span className="text-sm text-gray-400 font-semibold">/{current.points}</span>
+                        <div style={{ textAlign: "right", flexShrink: 0 }}>
+                          <span style={{ fontSize: "clamp(16px, 4vw, 20px)", fontWeight: 900, color: MAROON }}>{score}</span>
+                          <span style={{ fontSize: 12, color: "#9ca3af", fontWeight: 600 }}>/{current.points}</span>
                         </div>
                       ) : sub.status === "EXCUSED" ? (
-                        <span className="text-xs font-bold text-gray-400 shrink-0">Excused</span>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: "#9ca3af", flexShrink: 0 }}>Excused</span>
                       ) : sub.submittedAt ? (
-                        <span className="text-sm text-gray-300 shrink-0">—/{current.points}</span>
+                        <span style={{ fontSize: 12, color: "#d1d5db", flexShrink: 0 }}>—/{current.points}</span>
                       ) : null}
                     </div>
 
-                    <div className="px-4 py-3 space-y-2">
+                    <div style={{ padding: "10px 14px", display: "flex", flexDirection: "column", gap: 6 }}>
                       {sub.submittedAt ? (
                         <>
-                          <div className="flex items-center gap-2 text-xs text-gray-500">
-                            <Clock size={10} className="shrink-0" />
-                            <span>{fmtDateTime(sub.submittedAt)}</span>
-                            {late && <span className="font-bold text-red-500">· Late</span>}
-                            {sub.daysLate && sub.daysLate > 0 && (
-                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "#fef2f2", color: "#dc2626", border: "1px solid #fecaca" }}>{sub.daysLate}d late</span>
-                            )}
+                          <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                            <Clock size={10} style={{ color: "#9ca3af", flexShrink: 0 }} />
+                            <span style={{ fontSize: 11, color: "#6b7280" }}>{fmtDateTime(sub.submittedAt)}</span>
+                            {late && <span style={{ fontSize: 11, fontWeight: 700, color: "#dc2626" }}>· Late</span>}
                           </div>
                           {sub.fileUrl && sub.fileName && (
-                            <div className="flex items-center gap-2">
-                              <FileText size={11} style={{ color: MAROON }} className="shrink-0" />
-                              <button onClick={() => setPreviewTarget(sub)} className="text-xs font-semibold truncate hover:underline text-left" style={{ color: MAROON }}>{sub.fileName}</button>
-                              <a href={sub.fileUrl} download={sub.fileName} target="_blank" rel="noopener noreferrer" className="ml-auto shrink-0 text-gray-400 hover:text-gray-600"><Download size={11} /></a>
+                            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                              <FileText size={11} style={{ color: MAROON, flexShrink: 0 }} />
+                              <button onClick={() => setPreviewTarget(sub)} style={{ fontSize: 11, fontWeight: 600, color: MAROON, background: "none", border: "none", cursor: "pointer", textDecoration: "underline", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "calc(100% - 40px)", textAlign: "left" }}>{sub.fileName}</button>
+                              <a href={sub.fileUrl} download={sub.fileName} target="_blank" rel="noopener noreferrer" style={{ marginLeft: "auto", flexShrink: 0, color: "#9ca3af" }}><Download size={11} /></a>
                             </div>
                           )}
                           {sub.onlineUrl && (
-                            <div className="flex items-center gap-2">
-                              <ExternalLink size={11} className="shrink-0 text-gray-400" />
-                              <a href={sub.onlineUrl} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold truncate hover:underline" style={{ color: MAROON }}>{sub.onlineUrl}</a>
+                            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                              <ExternalLink size={11} style={{ flexShrink: 0, color: "#9ca3af" }} />
+                              <a href={sub.onlineUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, fontWeight: 600, color: MAROON, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{sub.onlineUrl}</a>
                             </div>
                           )}
-                          {sub.textEntry && (
-                            <p className="text-xs text-gray-600 italic leading-relaxed line-clamp-2 pl-1 border-l-2" style={{ borderColor: "#e5e7eb" }}>&ldquo;{sub.textEntry}&rdquo;</p>
-                          )}
                           {sub.feedback && (
-                            <div className="rounded-lg p-2.5 text-xs text-gray-600 leading-relaxed" style={{ background: "#fdf8f8", borderLeft: `3px solid ${MAROON}` }}>
-                              <span className="text-[10px] font-black uppercase tracking-widest block mb-1" style={{ color: MAROON }}>Feedback</span>
+                            <div style={{ borderRadius: 8, padding: "8px 10px", fontSize: 11, color: "#374151", lineHeight: 1.6, background: "#fdf8f8", borderLeft: `3px solid ${MAROON}` }}>
+                              <span style={{ fontSize: 9, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 3, color: MAROON }}>Feedback</span>
                               {sub.feedback}
                             </div>
                           )}
                         </>
                       ) : (
-                        <div className="flex items-center gap-2 text-xs text-gray-400 italic"><AlertCircle size={11} />No submission received</div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: "#9ca3af", fontStyle: "italic" }}><AlertCircle size={11} />No submission received</div>
                       )}
                     </div>
 
-                    <div className="flex items-center gap-2 px-4 py-2.5 border-t border-gray-100 bg-gray-50 flex-wrap">
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", borderTop: "1px solid #f3f4f6", background: "#f9fafb", flexWrap: "wrap" }}>
                       {hasFile && sub.submittedAt && (
                         <button onClick={() => setPreviewTarget(sub)}
-                          className="flex items-center gap-1 text-[10px] font-bold px-2.5 py-1.5 rounded-lg border transition-all hover:border-gray-400"
-                          style={{ color: "#6b7280", borderColor: "#e5e7eb" }}>
+                          style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 10, fontWeight: 700, padding: "5px 10px", borderRadius: 8, border: "1px solid #e5e7eb", cursor: "pointer", color: "#6b7280", background: "#fff" }}>
                           <Eye size={10} /> Preview
                         </button>
                       )}
                       <button onClick={() => setGradingTarget(sub)}
-                        className="flex items-center gap-1 text-[10px] font-bold px-2.5 py-1.5 rounded-lg border transition-all ml-auto"
-                        style={{ color: MAROON, borderColor: "#f0c0c0", background: "#fef2f2" }}>
+                        style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 10, fontWeight: 700, padding: "5px 10px", borderRadius: 8, border: `1px solid #f0c0c0`, cursor: "pointer", color: MAROON, background: "#fef2f2", marginLeft: "auto" }}>
                         <Star size={10} /> {score != null ? "Edit Grade" : "Grade"}
                       </button>
                       {sub.submittedAt && (
-                        <button onClick={() => openSpeedGrader(sub.userId)}
-                          className="flex items-center gap-1 text-[10px] font-bold px-2.5 py-1.5 rounded-lg border transition-all hover:border-gray-400"
-                          style={{ color: "#6b7280", borderColor: "#e5e7eb" }}>
+                        <button onClick={() => handleSpeedGrader(sub.userId)}
+                          style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 10, fontWeight: 700, padding: "5px 10px", borderRadius: 8, border: "1px solid #e5e7eb", cursor: "pointer", color: "#6b7280", background: "#fff" }}>
                           <Zap size={10} /> SpeedGrader
                         </button>
                       )}
@@ -1549,114 +1368,95 @@ export default function CourseAssignmentDetail({
           )}
 
           {submitted.length > 0 && (
-            <div className="mt-6 flex items-center justify-center pb-4">
-              <button onClick={() => openSpeedGrader()} className="flex items-center gap-2 text-xs font-bold hover:underline transition-colors" style={{ color: MAROON }}>
+            <div style={{ marginTop: 20, display: "flex", justifyContent: "center", paddingBottom: 16 }}>
+              <button onClick={() => handleSpeedGrader()} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, color: MAROON, background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>
                 <Zap size={13} /> Open SpeedGrader™ for all submissions
               </button>
             </div>
           )}
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
         </div>
       )}
 
-      {/* Assign To Side Panel */}
+      {/* ── Assign To Side Panel ── */}
       {showAssignPanel && (
         <>
-          <div className="fixed inset-0 z-40 bg-black/20" onClick={() => setShowAssignPanel(false)} />
-          <div className="fixed right-0 top-0 h-full w-full sm:w-85 bg-white border-l border-gray-200 shadow-2xl z-50 flex flex-col" style={{ fontFamily: FONT }}>
-            <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100" style={{ background: MAROON }}>
-              <div className="min-w-0">
-                <p className="text-[10px] font-black uppercase tracking-widest text-white/70">Assign To</p>
-                <p className="text-sm font-bold text-white truncate mt-0.5">{current.title}</p>
+          <div style={{ position: "fixed", inset: 0, zIndex: 40, background: "rgba(0,0,0,.2)" }} onClick={() => setShowAssignPanel(false)} />
+          <div style={{ position: "fixed", right: 0, top: 0, height: "100%", width: "min(100%, 360px)", background: "#fff", borderLeft: "1px solid #e5e7eb", boxShadow: "0 0 32px rgba(0,0,0,.15)", zIndex: 50, display: "flex", flexDirection: "column", fontFamily: FONT }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", background: MAROON, flexShrink: 0 }}>
+              <div style={{ minWidth: 0 }}>
+                <p style={{ fontSize: 10, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.08em", color: "rgba(255,255,255,.7)", margin: 0 }}>Assign To</p>
+                <p style={{ fontSize: 14, fontWeight: 700, color: "#fff", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{current.title}</p>
               </div>
-              <button onClick={() => setShowAssignPanel(false)} className="text-white/60 hover:text-white transition-colors ml-2"><X size={16} /></button>
+              <button onClick={() => setShowAssignPanel(false)} style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,.7)" }}><X size={16} /></button>
             </div>
-            <div className="px-4 py-2 border-b border-gray-100 bg-gray-50">
-              <p className="text-[10px] font-semibold text-gray-500">Assignment · {current.points} pts</p>
-            </div>
-            <div className="mx-4 mt-3 mb-1 flex gap-2.5 rounded-xl px-3 py-2 border" style={{ background: "#eff6ff", borderColor: "#bfdbfe" }}>
-              <svg className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" /></svg>
-              <p className="text-xs text-blue-700 leading-relaxed font-medium">Select who should be assigned and set due dates.</p>
-            </div>
-            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-5">
+            <div style={{ flex: 1, overflowY: "auto", padding: "14px 16px" }}>
               {assignRows.map((row, idx) => (
-                <div key={row.id} className="space-y-3">
+                <div key={row.id} style={{ marginBottom: 16 }}>
                   {idx > 0 && (
-                    <div className="flex justify-between items-center pt-1">
-                      <div className="h-px flex-1 bg-gray-100" />
-                      <button onClick={() => removeAssignRow(row.id)} className="mx-3 text-xs font-bold text-red-400 hover:text-red-600">Remove</button>
-                      <div className="h-px flex-1 bg-gray-100" />
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                      <div style={{ flex: 1, height: 1, background: "#f3f4f6" }} />
+                      <button onClick={() => removeAssignRow(row.id)} style={{ fontSize: 11, fontWeight: 700, color: "#ef4444", background: "none", border: "none", cursor: "pointer" }}>Remove</button>
+                      <div style={{ flex: 1, height: 1, background: "#f3f4f6" }} />
                     </div>
                   )}
-                  <div>
-                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-1.5">Assign To</label>
-                    <div className="relative" onBlur={e => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setOpenDrop(null); }}>
-                      <div className="min-h-9 border-2 rounded-xl px-2 py-1.5 flex flex-wrap gap-1 items-center cursor-text bg-white"
-                        style={{ borderColor: openDrop === row.id ? MAROON : "#e5e7eb" }}
+                  <div style={{ marginBottom: 12 }}>
+                    <label style={{ fontSize: 10, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.08em", color: "#9ca3af", display: "block", marginBottom: 6 }}>Assign To</label>
+                    <div style={{ position: "relative" }} onBlur={e => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setOpenDrop(null); }}>
+                      <div style={{ minHeight: 36, border: `2px solid ${openDrop === row.id ? MAROON : "#e5e7eb"}`, borderRadius: 10, padding: "6px 8px", display: "flex", flexWrap: "wrap", gap: 4, alignItems: "center", cursor: "text", background: "#fff" }}
                         onClick={() => setOpenDrop(row.id)}>
                         {row.assignees.map(a => (
-                          <span key={a.id} className="flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full text-white" style={{ background: MAROON }}>
+                          <span key={a.id} style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, fontWeight: 700, padding: "2px 8px", borderRadius: 999, color: "#fff", background: MAROON }}>
                             {a.label}
-                            <button type="button" tabIndex={-1} onClick={e => { e.stopPropagation(); if (a.id === "everyone") return; toggleAssignee(row.id, a); }} className="opacity-70 hover:opacity-100 leading-none font-black">×</button>
+                            <button type="button" tabIndex={-1} onClick={e => { e.stopPropagation(); if (a.id === "everyone") return; toggleAssignee(row.id, a); }} style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,.7)", fontWeight: 900, lineHeight: 1, fontSize: 14 }}>×</button>
                           </span>
                         ))}
                         <input value={dropSearch[row.id] ?? ""} onChange={e => { setDropSearch(p => ({ ...p, [row.id]: e.target.value })); setOpenDrop(row.id); }}
                           onFocus={() => setOpenDrop(row.id)} placeholder={row.assignees.length ? "" : "Search..."}
-                          className="flex-1 min-w-20 text-xs outline-none bg-transparent py-0.5 text-gray-700 placeholder:text-gray-400" />
-                        <ChevronDown size={13} className="text-gray-400 shrink-0" />
+                          style={{ flex: 1, minWidth: 80, fontSize: 12, outline: "none", background: "transparent", border: "none", fontFamily: FONT }} />
+                        <ChevronDown size={13} style={{ color: "#9ca3af", flexShrink: 0 }} />
                       </div>
                       {openDrop === row.id && (
-                        <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 shadow-xl rounded-xl z-200 max-h-48 overflow-y-auto">
+                        <div style={{ position: "absolute", left: 0, right: 0, top: "100%", marginTop: 4, background: "#fff", border: "1px solid #e5e7eb", borderRadius: 12, boxShadow: "0 8px 24px rgba(0,0,0,.12)", zIndex: 200, maxHeight: 200, overflowY: "auto" }}>
                           {("everyone".includes((dropSearch[row.id] ?? "").toLowerCase()) || !(dropSearch[row.id] ?? "")) && (
-                            <button type="button" tabIndex={0}
-                              onMouseDown={e => { e.preventDefault(); selectEveryone(row.id); setDropSearch(p => ({ ...p, [row.id]: "" })); }}
-                              className="w-full text-left px-3 py-2.5 text-xs font-semibold flex items-center justify-between hover:bg-red-50 transition-colors"
-                              style={row.assignees.some(a => a.id === "everyone") ? { color: MAROON } : { color: "#374151" }}>
-                              Everyone
-                              {row.assignees.some(a => a.id === "everyone") && <Check size={12} style={{ color: MAROON }} />}
+                            <button type="button" onMouseDown={e => { e.preventDefault(); selectEveryone(row.id); setDropSearch(p => ({ ...p, [row.id]: "" })); }}
+                              style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer", background: "none", border: "none", textAlign: "left", color: row.assignees.some(a => a.id === "everyone") ? MAROON : "#374151" }}>
+                              Everyone {row.assignees.some(a => a.id === "everyone") && <Check size={12} style={{ color: MAROON }} />}
                             </button>
                           )}
                           {enrolledUsers.filter(u => u.name.toLowerCase().includes((dropSearch[row.id] ?? "").toLowerCase())).map(u => (
-                            <button type="button" key={u.id} tabIndex={0}
-                              onMouseDown={e => { e.preventDefault(); toggleAssignee(row.id, { id: u.id, label: u.name }); setDropSearch(p => ({ ...p, [row.id]: "" })); }}
-                              className="w-full text-left px-3 py-2.5 text-xs font-semibold flex items-center justify-between hover:bg-red-50 transition-colors"
-                              style={row.assignees.some(a => a.id === u.id) ? { color: MAROON } : { color: "#374151" }}>
-                              <span>{u.name}{u.courseRole && <span className="ml-1 text-gray-400 font-normal">({u.courseRole})</span>}</span>
+                            <button type="button" key={u.id} onMouseDown={e => { e.preventDefault(); toggleAssignee(row.id, { id: u.id, label: u.name }); setDropSearch(p => ({ ...p, [row.id]: "" })); }}
+                              style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer", background: "none", border: "none", textAlign: "left", color: row.assignees.some(a => a.id === u.id) ? MAROON : "#374151" }}>
+                              <span>{u.name}{u.courseRole && <span style={{ color: "#9ca3af", fontWeight: 400 }}> ({u.courseRole})</span>}</span>
                               {row.assignees.some(a => a.id === u.id) && <Check size={12} style={{ color: MAROON }} />}
                             </button>
                           ))}
-                          {enrolledUsers.filter(u => u.name.toLowerCase().includes((dropSearch[row.id] ?? "").toLowerCase())).length === 0 && !("everyone".includes((dropSearch[row.id] ?? "").toLowerCase())) && (
-                            <div className="px-3 py-3 text-xs text-gray-400 text-center">No results</div>
-                          )}
                         </div>
                       )}
                     </div>
                   </div>
                   {([ ["Due Date", "dueDate", "dueTime"], ["Available From", "availableFrom", "availableFromTime"], ["Until", "until", "untilTime"] ] as const).map(([label, dateField, timeField]) => (
-                    <div key={label}>
-                      <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-1.5">{label}</label>
-                      <div className="flex flex-col sm:flex-row gap-2">
+                    <div key={label} style={{ marginBottom: 12 }}>
+                      <label style={{ fontSize: 10, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.08em", color: "#9ca3af", display: "block", marginBottom: 5 }}>{label}</label>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                         <input type="date" value={row[dateField]} onChange={e => updateAssignRow(row.id, dateField, e.target.value)}
-                          className="flex-1 h-8 border border-gray-200 rounded-lg px-2 text-xs outline-none focus:border-gray-400 bg-white" />
-                        <div className="flex items-center gap-1">
-                          <select value={row[timeField]} onChange={e => updateAssignRow(row.id, timeField, e.target.value)}
-                            className="h-8 border border-gray-200 rounded-lg px-1.5 text-xs bg-white outline-none focus:border-gray-400 w-full sm:w-28">
-                            {ASSIGN_TIMES.map(t => <option key={t}>{t}</option>)}
-                          </select>
-                          <button onClick={() => updateAssignRow(row.id, dateField, "")} className="text-[10px] font-bold hover:underline shrink-0 transition-colors" style={{ color: MAROON }}>Clear</button>
-                        </div>
+                          style={{ flex: 1, minWidth: 120, height: 34, border: "1px solid #e5e7eb", borderRadius: 8, padding: "0 8px", fontSize: 12, outline: "none" }} />
+                        <select value={row[timeField]} onChange={e => updateAssignRow(row.id, timeField, e.target.value)}
+                          style={{ height: 34, border: "1px solid #e5e7eb", borderRadius: 8, padding: "0 8px", fontSize: 12, background: "#fff", outline: "none", minWidth: 100 }}>
+                          {ASSIGN_TIMES.map(t => <option key={t}>{t}</option>)}
+                        </select>
+                        <button onClick={() => updateAssignRow(row.id, dateField, "")} style={{ fontSize: 11, fontWeight: 700, color: MAROON, background: "none", border: "none", cursor: "pointer" }}>Clear</button>
                       </div>
-                      {row[dateField] && <p className="text-[10px] text-gray-400 mt-1">{fmtLocalCourse(row[dateField], row[timeField])}</p>}
+                      {row[dateField] && <p style={{ fontSize: 10, color: "#9ca3af", margin: "3px 0 0" }}>{fmtLocalCourse(row[dateField], row[timeField])}</p>}
                     </div>
                   ))}
                 </div>
               ))}
-              <button onClick={addAssignRow} className="flex items-center gap-1.5 text-xs font-bold hover:underline transition-colors" style={{ color: MAROON }}>
-                <span className="text-base leading-none">+</span> Add Row
-              </button>
+              <button onClick={addAssignRow} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 700, color: MAROON, background: "none", border: "none", cursor: "pointer" }}>+ Add Row</button>
             </div>
-            <div className="flex gap-2 px-4 py-3 border-t border-gray-100 bg-gray-50">
-              <button onClick={() => setShowAssignPanel(false)} className="flex-1 h-9 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-100 transition-all">Cancel</button>
-              <button onClick={saveAssignTo} disabled={savingAssign} className="flex-1 h-9 rounded-xl text-sm font-black text-white disabled:opacity-60 transition-all" style={{ background: MAROON }}>
+            <div style={{ display: "flex", gap: 8, padding: "12px 16px", borderTop: "1px solid #f3f4f6", background: "#f9fafb", flexShrink: 0 }}>
+              <button onClick={() => setShowAssignPanel(false)} style={{ flex: 1, height: 40, border: "1px solid #e5e7eb", borderRadius: 12, fontSize: 14, fontWeight: 600, color: "#374151", cursor: "pointer", background: "#fff" }}>Cancel</button>
+              <button onClick={saveAssignTo} disabled={savingAssign} style={{ flex: 1, height: 40, borderRadius: 12, fontSize: 14, fontWeight: 900, color: "#fff", cursor: "pointer", background: MAROON, border: "none", opacity: savingAssign ? 0.6 : 1 }}>
                 {savingAssign ? "Saving..." : "Save"}
               </button>
             </div>

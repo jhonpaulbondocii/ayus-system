@@ -16,7 +16,7 @@ export default async function Page({ params }: Props) {
           </div>
         }
       >
-        <CreateAssignmentPage courseId={id} />
+        <CreateAssignmentPage />
       </Suspense>
     </CourseLayout>
   );

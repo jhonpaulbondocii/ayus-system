@@ -34,6 +34,67 @@ type AssignmentWithRole = Assignment & {
 const DEFAULT_GROUP = "Assignments";
 
 /* ─────────────────────────────────────────────────────────────────────────────
+   DEVICE DETECTION
+───────────────────────────────────────────────────────────────────────────── */
+function useIsDesktop(breakpoint = 1024) {
+  const [isDesktop, setIsDesktop] = useState(false);
+  useEffect(() => {
+    const check = () => setIsDesktop(window.innerWidth >= breakpoint);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, [breakpoint]);
+  return isDesktop;
+}
+
+function useIsMobile(breakpoint = 640) {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < breakpoint);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, [breakpoint]);
+  return isMobile;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   SPEEDGRADER BUTTON — opens new tab on desktop, navigates in-app on mobile
+───────────────────────────────────────────────────────────────────────────── */
+function SpeedGraderButton({ courseId, assignmentId }: { courseId: string; assignmentId: string | number }) {
+  const isDesktop = useIsDesktop();
+  const href = `/courses/${courseId}/gradebook/speed_grader?assignment_id=${assignmentId}`;
+
+  const handleClick = (e: React.MouseEvent) => {
+    if (isDesktop) {
+      e.preventDefault();
+      window.open(href, "_blank", "noopener,noreferrer");
+    }
+    // on mobile/tablet: default anchor navigation (no new tab)
+  };
+
+  return (
+    <a
+      href={href}
+      onClick={handleClick}
+      title="SpeedGrader"
+      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold border transition-colors hover:opacity-90 active:opacity-75 whitespace-nowrap"
+      style={{ color: MAROON, borderColor: "#f0c0c0", background: "#fef2f2" }}
+    >
+      <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+      </svg>
+      SpeedGrader
+      {isDesktop && (
+        <svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} className="opacity-50">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+        </svg>
+      )}
+    </a>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
    SEEN / NEW BADGE HELPERS
 ───────────────────────────────────────────────────────────────────────────── */
 const SEEN_KEY = (courseId: string) => `seen_assignments_${courseId}`;
@@ -112,14 +173,14 @@ function PublisherAvatar({ name, image, size = 20 }: { name?: string | null; ima
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   PUBLISHER CHIP (inline in rows)
+   PUBLISHER CHIP
 ───────────────────────────────────────────────────────────────────────────── */
 function PublisherChip({ name, image, role }: { name?: string | null; image?: string | null; role?: string | null }) {
   if (!name) return null;
   return (
-    <span className="flex items-center gap-1 text-[11px] text-gray-500">
+    <span className="flex items-center gap-1 text-[11px] text-gray-500 flex-wrap">
       <PublisherAvatar name={name} image={image} size={18} />
-      <span className="truncate max-w-25">{name}</span>
+      <span className="truncate max-w-[100px]">{name}</span>
       {role && (
         <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase" style={{ background: "#eff6ff", color: "#1d6fa4", border: "1px solid #bfdbfe" }}>{role}</span>
       )}
@@ -135,7 +196,7 @@ function AuthorBadge({ name, role }: { name: string; role: string }) {
     <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full border"
       style={{ background: "#fdf8f8", color: MAROON, borderColor: "#f0c0c0" }}>
       <span className="w-1.5 h-1.5 rounded-full" style={{ background: MAROON }} />
-      {name} · {role}
+      <span className="truncate max-w-[120px]">{name} · {role}</span>
     </span>
   );
 }
@@ -146,7 +207,7 @@ function AuthorBadge({ name, role }: { name: string; role: string }) {
 function PublishToggle({ published, onToggle }: { published: boolean; onToggle: () => void }) {
   return (
     <button type="button" onClick={onToggle} title={published ? "Published — click to unpublish" : "Unpublished — click to publish"}
-      style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", padding: 2 }}>
+      className="flex items-center p-1 rounded hover:bg-gray-100 active:bg-gray-200 transition-colors touch-manipulation">
       {published ? (
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
           <circle cx="10" cy="10" r="9" fill="#16a34a" />
@@ -175,19 +236,21 @@ function AssignmentIcon() {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   ROW 3-DOT MENU (portal)
+   ROW 3-DOT MENU (portal) — positions above on mobile to avoid off-screen
 ───────────────────────────────────────────────────────────────────────────── */
-type DropdownAction = "edit" | "duplicate" | "assignTo" | "delete";
+type DropdownAction = "edit" | "duplicate" | "assignTo" | "delete" | "speedgrader";
 
-function AssignmentRowMenu({ assignment, onAction, isManager }: {
+function AssignmentRowMenu({ assignment, onAction, isManager, courseId }: {
   assignment: AssignmentWithRole;
   onAction: (action: DropdownAction, a: AssignmentWithRole) => void;
   isManager: boolean;
+  courseId: string;
 }) {
   const [open, setOpen] = useState(false);
   const [menuStyle, setMenuStyle] = useState<React.CSSProperties>({});
   const btnRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const isDesktop = useIsDesktop();
 
   useEffect(() => {
     if (!open) return;
@@ -202,18 +265,23 @@ function AssignmentRowMenu({ assignment, onAction, isManager }: {
   const handleOpen = () => {
     if (!btnRef.current) return;
     const rect = btnRef.current.getBoundingClientRect();
-    const itemCount = isManager ? 4 : 0;
+    const itemCount = isManager ? 5 : 1; // speedgrader always shown
     const h = itemCount * 38 + 8;
-    const w = 180;
-    const top = window.innerHeight - rect.bottom >= h ? rect.bottom + 4 : rect.top - h - 4;
+    const w = 190;
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const top = spaceBelow >= h ? rect.bottom + 4 : rect.top - h - 4;
     const left = Math.min(rect.right - w, window.innerWidth - w - 8);
-    setMenuStyle({ position: "fixed", top, left, zIndex: 9999, background: "#fff", border: "1px solid #e5e7eb", borderRadius: 8, boxShadow: "0 4px 16px rgba(0,0,0,.12)", minWidth: w, overflow: "hidden" });
+    setMenuStyle({
+      position: "fixed", top: Math.max(8, top), left: Math.max(8, left),
+      zIndex: 9999, background: "#fff", border: "1px solid #e5e7eb",
+      borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,.14)", minWidth: w, overflow: "hidden",
+    });
     setOpen(v => !v);
   };
 
-  if (!isManager) return null;
+  const speedgraderHref = `/courses/${courseId}/gradebook/speed_grader?assignment_id=${assignment.id}`;
 
-  const items: { label: string; action: DropdownAction; danger?: boolean; icon: React.ReactNode }[] = [
+  const managerItems: { label: string; action: DropdownAction; danger?: boolean; icon: React.ReactNode }[] = [
     { label: "Edit", action: "edit", icon: <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" strokeLinecap="round" /><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" strokeLinecap="round" /></svg> },
     { label: "Duplicate", action: "duplicate", icon: <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" /></svg> },
     { label: "Assign To…", action: "assignTo", icon: <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" strokeLinecap="round" /><circle cx="12" cy="7" r="4" /></svg> },
@@ -223,16 +291,37 @@ function AssignmentRowMenu({ assignment, onAction, isManager }: {
   return (
     <>
       <button ref={btnRef} type="button" onClick={e => { e.stopPropagation(); handleOpen(); }}
-        className="w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 text-gray-500">
+        className="w-9 h-9 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 active:bg-gray-200 text-gray-500 transition-colors touch-manipulation">
         <MoreVertical size={16} />
       </button>
       {open && typeof document !== "undefined" && createPortal(
         <div ref={menuRef} style={menuStyle} onClick={e => e.stopPropagation()}>
-          {items.map((item, i) => (
+          {/* SpeedGrader — always visible */}
+          {isDesktop ? (
+            <button
+              type="button"
+              onClick={() => { setOpen(false); window.open(speedgraderHref, "_blank", "noopener,noreferrer"); }}
+              className="w-full text-left px-4 py-2.5 text-xs flex items-center gap-2 text-gray-700 hover:bg-gray-50"
+            >
+              <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+              SpeedGrader
+              <svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} className="ml-auto opacity-40"><path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+            </button>
+          ) : (
+            <a
+              href={speedgraderHref}
+              onClick={() => setOpen(false)}
+              className="w-full text-left px-4 py-2.5 text-xs flex items-center gap-2 text-gray-700 hover:bg-gray-50"
+            >
+              <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+              SpeedGrader
+            </a>
+          )}
+          {isManager && managerItems.map((item, i) => (
             <button key={item.action} type="button"
               onClick={() => { setOpen(false); onAction(item.action, assignment); }}
-              className={`w-full text-left px-4 py-2 text-xs flex items-center gap-2 ${item.danger ? "text-red-600 hover:bg-red-50" : "text-gray-700 hover:bg-gray-50"}`}
-              style={i > 0 ? { borderTop: "1px solid #f3f4f6" } : {}}>
+              className={`w-full text-left px-4 py-2.5 text-xs flex items-center gap-2 ${item.danger ? "text-red-600 hover:bg-red-50" : "text-gray-700 hover:bg-gray-50"}`}
+              style={{ borderTop: "1px solid #f3f4f6" }}>
               {item.icon}{item.label}
             </button>
           ))}
@@ -269,26 +358,26 @@ function GroupMenu({ onEdit, onDelete, isLastGroup }: { onEdit: () => void; onDe
     const w = 160;
     const top = window.innerHeight - rect.bottom >= h ? rect.bottom + 4 : rect.top - h - 4;
     const left = Math.min(rect.right - w, window.innerWidth - w - 8);
-    setMenuStyle({ position: "fixed", top, left, zIndex: 9999, background: "#fff", border: "1px solid #e5e7eb", borderRadius: 8, boxShadow: "0 4px 16px rgba(0,0,0,.12)", minWidth: w, overflow: "hidden" });
+    setMenuStyle({ position: "fixed", top, left, zIndex: 9999, background: "#fff", border: "1px solid #e5e7eb", borderRadius: 10, boxShadow: "0 4px 16px rgba(0,0,0,.12)", minWidth: w, overflow: "hidden" });
     setOpen(v => !v);
   };
 
   return (
     <>
       <button ref={btnRef} type="button" onClick={e => { e.stopPropagation(); handleOpen(); }}
-        className="w-7 h-7 flex items-center justify-center rounded hover:bg-gray-200 text-gray-400">
+        className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-200 active:bg-gray-300 text-gray-400 transition-colors touch-manipulation">
         <MoreVertical size={15} />
       </button>
       {open && typeof document !== "undefined" && createPortal(
         <div ref={menuRef} style={menuStyle}>
           <button type="button" onClick={() => { setOpen(false); onEdit(); }}
-            className="w-full text-left px-4 py-2 text-xs flex items-center gap-2 text-gray-700 hover:bg-gray-50">
+            className="w-full text-left px-4 py-2.5 text-xs flex items-center gap-2 text-gray-700 hover:bg-gray-50">
             <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" strokeLinecap="round" /><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" strokeLinecap="round" /></svg>
             Edit
           </button>
           {!isLastGroup && (
             <button type="button" onClick={() => { setOpen(false); onDelete(); }}
-              className="w-full text-left px-4 py-2 text-xs flex items-center gap-2 text-red-600 hover:bg-red-50"
+              className="w-full text-left px-4 py-2.5 text-xs flex items-center gap-2 text-red-600 hover:bg-red-50"
               style={{ borderTop: "1px solid #f3f4f6" }}>
               <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6" strokeLinecap="round" /><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" strokeLinecap="round" /><path d="M10 11v6M14 11v6" strokeLinecap="round" /><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2" strokeLinecap="round" /></svg>
               Delete
@@ -302,30 +391,53 @@ function GroupMenu({ onEdit, onDelete, isLastGroup }: { onEdit: () => void; onDe
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
+   SHARED MODAL SHELL — bottom sheet on mobile, centered on desktop
+───────────────────────────────────────────────────────────────────────────── */
+function ModalShell({ onClose, children, maxWidth = 420 }: {
+  onClose: () => void;
+  children: React.ReactNode;
+  maxWidth?: number;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/30 px-0 sm:px-4"
+      onClick={onClose}>
+      <div
+        className="bg-white w-full rounded-t-2xl sm:rounded-xl shadow-2xl border border-gray-200 overflow-hidden"
+        style={{ maxWidth: `min(100%, ${maxWidth}px)` }}
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Mobile drag handle */}
+        <div className="sm:hidden flex justify-center pt-2.5 pb-1">
+          <div className="w-9 h-1 rounded-full bg-gray-200" />
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
    DELETE ASSIGNMENT MODAL
 ───────────────────────────────────────────────────────────────────────────── */
 function DeleteAssignmentModal({ assignment, onClose, onConfirm, deleting }: {
   assignment: AssignmentWithRole; onClose: () => void; onConfirm: () => void; deleting: boolean;
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/30 px-4" onClick={onClose}>
-      <div className="bg-white rounded-t-2xl sm:rounded-lg shadow-2xl w-full sm:max-w-105 border border-gray-200 overflow-hidden"
-        onClick={e => e.stopPropagation()} style={{ fontFamily: FONT }}>
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
-          <span className="text-sm font-bold text-gray-800">Delete Assignment</span>
-          <button onClick={onClose} className="w-7 h-7 flex items-center justify-center border border-gray-300 rounded text-gray-500 hover:bg-gray-100"><X size={14} /></button>
-        </div>
-        <div className="px-6 py-5">
-          <p className="text-sm text-gray-700">Are you sure you want to delete <strong>&ldquo;{assignment.title}&rdquo;</strong>? This action cannot be undone.</p>
-        </div>
-        <div className="flex items-center justify-end gap-2 px-5 py-3.5 bg-gray-50 border-t border-gray-200">
-          <button onClick={onClose} disabled={deleting} className="h-9 px-4 border border-gray-300 text-sm text-gray-600 rounded hover:bg-gray-100 disabled:opacity-50">Cancel</button>
-          <button onClick={onConfirm} disabled={deleting} className="h-9 px-4 text-sm text-white rounded hover:opacity-90 disabled:opacity-50" style={{ background: "#dc2626" }}>
-            {deleting ? "Deleting..." : "Delete"}
-          </button>
-        </div>
+    <ModalShell onClose={onClose} maxWidth={420}>
+      <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
+        <span className="text-sm font-bold text-gray-800">Delete Assignment</span>
+        <button onClick={onClose} className="w-7 h-7 flex items-center justify-center border border-gray-300 rounded-lg text-gray-500 hover:bg-gray-100"><X size={14} /></button>
       </div>
-    </div>
+      <div className="px-5 py-5">
+        <p className="text-sm text-gray-700">Are you sure you want to delete <strong>&ldquo;{assignment.title}&rdquo;</strong>? This action cannot be undone.</p>
+      </div>
+      <div className="flex items-center justify-end gap-2 px-5 py-3.5 bg-gray-50 border-t border-gray-200">
+        <button onClick={onClose} disabled={deleting} className="h-9 px-4 border border-gray-300 text-sm text-gray-600 rounded-lg hover:bg-gray-100 disabled:opacity-50">Cancel</button>
+        <button onClick={onConfirm} disabled={deleting} className="h-9 px-4 text-sm text-white rounded-lg hover:opacity-90 disabled:opacity-50" style={{ background: "#dc2626" }}>
+          {deleting ? "Deleting..." : "Delete"}
+        </button>
+      </div>
+    </ModalShell>
   );
 }
 
@@ -335,57 +447,51 @@ function DeleteAssignmentModal({ assignment, onClose, onConfirm, deleting }: {
 function AddGroupModal({ onClose, onSave, saving }: { onClose: () => void; onSave: (name: string) => void; saving: boolean }) {
   const [name, setName] = useState("");
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/30 px-4" onClick={onClose}>
-      <div className="bg-white rounded-t-2xl sm:rounded-lg shadow-2xl w-full sm:max-w-105 border border-gray-200 overflow-hidden" onClick={e => e.stopPropagation()} style={{ fontFamily: FONT }}>
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
-          <span className="text-sm font-bold text-gray-800">Add Assignment Group</span>
-          <button onClick={onClose} className="w-7 h-7 flex items-center justify-center border rounded hover:bg-gray-100" style={{ borderColor: MAROON, color: MAROON }}><X size={14} /></button>
-        </div>
-        <div className="px-6 py-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
-            <label className="text-sm text-gray-700 shrink-0">Group Name:</label>
-            <input autoFocus value={name} onChange={e => setName(e.target.value)} onKeyDown={e => e.key === "Enter" && name.trim() && onSave(name.trim())}
-              placeholder="e.g., Essay Group 1" className="flex-1 w-full h-9 border border-gray-300 rounded px-3 text-sm outline-none"
-              onFocus={e => (e.currentTarget.style.borderColor = MAROON)} onBlur={e => (e.currentTarget.style.borderColor = "#d1d5db")} />
-          </div>
-        </div>
-        <div className="flex items-center justify-end gap-2 px-5 py-3.5 bg-gray-50 border-t border-gray-200">
-          <button onClick={onClose} disabled={saving} className="h-9 px-4 border border-gray-300 text-sm text-gray-600 rounded hover:bg-gray-100 disabled:opacity-50">Cancel</button>
-          <button onClick={() => name.trim() && onSave(name.trim())} disabled={saving || !name.trim()} className="h-9 px-4 text-sm text-white rounded hover:opacity-90 disabled:opacity-50" style={{ background: MAROON }}>
-            {saving ? "Saving..." : "Save"}
-          </button>
+    <ModalShell onClose={onClose}>
+      <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
+        <span className="text-sm font-bold text-gray-800">Add Assignment Group</span>
+        <button onClick={onClose} className="w-7 h-7 flex items-center justify-center border rounded-lg hover:bg-gray-100" style={{ borderColor: MAROON, color: MAROON }}><X size={14} /></button>
+      </div>
+      <div className="px-5 py-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
+          <label className="text-sm text-gray-700 shrink-0">Group Name:</label>
+          <input autoFocus value={name} onChange={e => setName(e.target.value)} onKeyDown={e => e.key === "Enter" && name.trim() && onSave(name.trim())}
+            placeholder="e.g., Essay Group 1" className="flex-1 w-full h-10 border border-gray-300 rounded-lg px-3 text-sm outline-none focus:border-[#7b1113] transition-colors" />
         </div>
       </div>
-    </div>
+      <div className="flex items-center justify-end gap-2 px-5 py-3.5 bg-gray-50 border-t border-gray-200">
+        <button onClick={onClose} disabled={saving} className="h-9 px-4 border border-gray-300 text-sm text-gray-600 rounded-lg hover:bg-gray-100 disabled:opacity-50">Cancel</button>
+        <button onClick={() => name.trim() && onSave(name.trim())} disabled={saving || !name.trim()} className="h-9 px-4 text-sm text-white rounded-lg hover:opacity-90 disabled:opacity-50" style={{ background: MAROON }}>
+          {saving ? "Saving..." : "Save"}
+        </button>
+      </div>
+    </ModalShell>
   );
 }
 
 function EditGroupModal({ groupName, onClose, onSave, saving }: { groupName: string; onClose: () => void; onSave: (n: string) => void; saving: boolean }) {
   const [name, setName] = useState(groupName);
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/30 px-4" onClick={onClose}>
-      <div className="bg-white rounded-t-2xl sm:rounded-lg shadow-2xl w-full sm:max-w-105 border border-gray-200 overflow-hidden" onClick={e => e.stopPropagation()} style={{ fontFamily: FONT }}>
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
-          <span className="text-sm font-bold text-gray-800">Edit Assignment Group</span>
-          <button onClick={onClose} className="w-7 h-7 flex items-center justify-center border rounded hover:bg-gray-100" style={{ borderColor: MAROON, color: MAROON }}><X size={14} /></button>
-        </div>
-        <div className="px-6 py-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
-            <label className="text-sm text-gray-700 shrink-0">Group Name:</label>
-            <input autoFocus value={name} onChange={e => setName(e.target.value)} onKeyDown={e => e.key === "Enter" && name.trim() && onSave(name.trim())}
-              className="flex-1 w-full h-9 border border-gray-300 rounded px-3 text-sm outline-none"
-              onFocus={e => (e.currentTarget.style.borderColor = MAROON)} onBlur={e => (e.currentTarget.style.borderColor = "#d1d5db")} />
-          </div>
-        </div>
-        <div className="flex items-center justify-end gap-2 px-5 py-3.5 bg-gray-50 border-t border-gray-200">
-          <button onClick={onClose} disabled={saving} className="h-9 px-4 border border-gray-300 text-sm text-gray-600 rounded hover:bg-gray-100 disabled:opacity-50">Cancel</button>
-          <button onClick={() => name.trim() && onSave(name.trim())} disabled={saving || !name.trim() || name.trim() === groupName}
-            className="h-9 px-4 text-sm text-white rounded hover:opacity-90 disabled:opacity-50" style={{ background: MAROON }}>
-            {saving ? "Saving..." : "Save"}
-          </button>
+    <ModalShell onClose={onClose}>
+      <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
+        <span className="text-sm font-bold text-gray-800">Edit Assignment Group</span>
+        <button onClick={onClose} className="w-7 h-7 flex items-center justify-center border rounded-lg hover:bg-gray-100" style={{ borderColor: MAROON, color: MAROON }}><X size={14} /></button>
+      </div>
+      <div className="px-5 py-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
+          <label className="text-sm text-gray-700 shrink-0">Group Name:</label>
+          <input autoFocus value={name} onChange={e => setName(e.target.value)} onKeyDown={e => e.key === "Enter" && name.trim() && onSave(name.trim())}
+            className="flex-1 w-full h-10 border border-gray-300 rounded-lg px-3 text-sm outline-none focus:border-[#7b1113] transition-colors" />
         </div>
       </div>
-    </div>
+      <div className="flex items-center justify-end gap-2 px-5 py-3.5 bg-gray-50 border-t border-gray-200">
+        <button onClick={onClose} disabled={saving} className="h-9 px-4 border border-gray-300 text-sm text-gray-600 rounded-lg hover:bg-gray-100 disabled:opacity-50">Cancel</button>
+        <button onClick={() => name.trim() && onSave(name.trim())} disabled={saving || !name.trim() || name.trim() === groupName}
+          className="h-9 px-4 text-sm text-white rounded-lg hover:opacity-90 disabled:opacity-50" style={{ background: MAROON }}>
+          {saving ? "Saving..." : "Save"}
+        </button>
+      </div>
+    </ModalShell>
   );
 }
 
@@ -396,36 +502,34 @@ function DeleteGroupModal({ groupName, assignmentCount, otherGroups, onClose, on
   const [choice, setChoice] = useState<"delete" | "move">("delete");
   const [targetGroup, setTargetGroup] = useState(otherGroups[0] ?? "");
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/30 px-4" onClick={onClose}>
-      <div className="bg-white rounded-t-2xl sm:rounded-lg shadow-2xl w-full sm:max-w-115 border border-gray-200 overflow-hidden" onClick={e => e.stopPropagation()} style={{ fontFamily: FONT }}>
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
-          <span className="text-sm font-bold text-gray-800">Delete Assignment Group</span>
-          <button onClick={onClose} className="w-7 h-7 flex items-center justify-center border border-gray-300 rounded text-gray-500 hover:bg-gray-100"><X size={14} /></button>
-        </div>
-        <div className="px-6 py-5 space-y-4">
-          <p className="text-sm text-gray-700">You are about to delete <strong>{groupName}</strong>, which has <strong>{assignmentCount}</strong> assignment{assignmentCount !== 1 ? "s" : ""} in it.</p>
-          <p className="text-sm text-gray-700">Would you like to:</p>
-          <label className="flex items-center gap-2 cursor-pointer"><input type="radio" checked={choice === "delete"} onChange={() => setChoice("delete")} className="accent-[#7b1113]" /><span className="text-sm text-gray-700">Delete its assignments</span></label>
-          <div className="space-y-2">
-            <label className="flex items-center gap-2 cursor-pointer"><input type="radio" checked={choice === "move"} onChange={() => setChoice("move")} disabled={otherGroups.length === 0} className="accent-[#7b1113]" /><span className={`text-sm ${otherGroups.length === 0 ? "text-gray-400" : "text-gray-700"}`}>Move its assignments to</span></label>
-            {choice === "move" && otherGroups.length > 0 && (
-              <div className="ml-6 relative">
-                <select value={targetGroup} onChange={e => setTargetGroup(e.target.value)} className="w-52 h-9 border border-gray-300 rounded px-3 text-sm bg-white outline-none appearance-none pr-8 focus:border-[#7b1113]">
-                  <option value="">[ Select a Group ]</option>
-                  {otherGroups.map(g => <option key={g} value={g}>{g}</option>)}
-                </select>
-                <ChevronDown size={13} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-              </div>
-            )}
-          </div>
-        </div>
-        <div className="flex items-center justify-end gap-2 px-5 py-3.5 bg-gray-50 border-t border-gray-200">
-          <button onClick={onClose} className="h-9 px-4 border border-gray-300 text-sm text-gray-600 rounded hover:bg-gray-100">Cancel</button>
-          <button onClick={() => onDelete(choice, choice === "move" ? targetGroup : undefined)} disabled={choice === "move" && !targetGroup}
-            className="h-9 px-4 text-sm text-white rounded hover:opacity-90 disabled:opacity-50" style={{ background: MAROON }}>Delete Group</button>
+    <ModalShell onClose={onClose} maxWidth={460}>
+      <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
+        <span className="text-sm font-bold text-gray-800">Delete Assignment Group</span>
+        <button onClick={onClose} className="w-7 h-7 flex items-center justify-center border border-gray-300 rounded-lg text-gray-500 hover:bg-gray-100"><X size={14} /></button>
+      </div>
+      <div className="px-5 py-5 space-y-4">
+        <p className="text-sm text-gray-700">You are about to delete <strong>{groupName}</strong>, which has <strong>{assignmentCount}</strong> assignment{assignmentCount !== 1 ? "s" : ""} in it.</p>
+        <p className="text-sm text-gray-700">Would you like to:</p>
+        <label className="flex items-center gap-2 cursor-pointer"><input type="radio" checked={choice === "delete"} onChange={() => setChoice("delete")} className="accent-[#7b1113]" /><span className="text-sm text-gray-700">Delete its assignments</span></label>
+        <div className="space-y-2">
+          <label className="flex items-center gap-2 cursor-pointer"><input type="radio" checked={choice === "move"} onChange={() => setChoice("move")} disabled={otherGroups.length === 0} className="accent-[#7b1113]" /><span className={`text-sm ${otherGroups.length === 0 ? "text-gray-400" : "text-gray-700"}`}>Move its assignments to</span></label>
+          {choice === "move" && otherGroups.length > 0 && (
+            <div className="ml-6 relative">
+              <select value={targetGroup} onChange={e => setTargetGroup(e.target.value)} className="w-full sm:w-52 h-9 border border-gray-300 rounded-lg px-3 text-sm bg-white outline-none appearance-none pr-8 focus:border-[#7b1113]">
+                <option value="">[ Select a Group ]</option>
+                {otherGroups.map(g => <option key={g} value={g}>{g}</option>)}
+              </select>
+              <ChevronDown size={13} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            </div>
+          )}
         </div>
       </div>
-    </div>
+      <div className="flex items-center justify-end gap-2 px-5 py-3.5 bg-gray-50 border-t border-gray-200">
+        <button onClick={onClose} className="h-9 px-4 border border-gray-300 text-sm text-gray-600 rounded-lg hover:bg-gray-100">Cancel</button>
+        <button onClick={() => onDelete(choice, choice === "move" ? targetGroup : undefined)} disabled={choice === "move" && !targetGroup}
+          className="h-9 px-4 text-sm text-white rounded-lg hover:opacity-90 disabled:opacity-50" style={{ background: MAROON }}>Delete Group</button>
+      </div>
+    </ModalShell>
   );
 }
 
@@ -453,62 +557,56 @@ function QuickEditModal({ assignment, onClose, onSave, onMoreOptions }: {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/30 px-4 sm:px-0" onClick={onClose}>
-      <div className="bg-white rounded-t-2xl sm:rounded-lg shadow-2xl w-full sm:max-w-120 border border-gray-200 overflow-hidden" onClick={e => e.stopPropagation()} style={{ fontFamily: FONT }}>
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
-          <span className="text-sm font-bold text-gray-800">Edit Assignment</span>
-          <button onClick={onClose} className="w-7 h-7 flex items-center justify-center border border-gray-300 rounded text-gray-500 hover:bg-gray-100"><X size={14} /></button>
+    <ModalShell onClose={onClose} maxWidth={480}>
+      <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
+        <span className="text-sm font-bold text-gray-800">Edit Assignment</span>
+        <button onClick={onClose} className="w-7 h-7 flex items-center justify-center border border-gray-300 rounded-lg text-gray-500 hover:bg-gray-100"><X size={14} /></button>
+      </div>
+      <div className="px-5 py-5 space-y-4 max-h-[60vh] overflow-y-auto">
+        <div>
+          <label className="text-xs font-medium text-gray-700 block mb-1">Name <span className="text-red-500">*</span></label>
+          <input autoFocus value={name} onChange={e => setName(e.target.value)} className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm outline-none focus:border-[#7b1113] transition-colors" />
         </div>
-        <div className="px-5 sm:px-6 py-5 space-y-4">
-          <div>
-            <label className="text-xs font-medium text-gray-700 block mb-1">Name <span className="text-red-500">*</span></label>
-            <input autoFocus value={name} onChange={e => setName(e.target.value)} className="w-full h-9 border border-gray-300 rounded px-3 text-sm outline-none"
-              onFocus={e => (e.currentTarget.style.borderColor = MAROON)} onBlur={e => (e.currentTarget.style.borderColor = "#d1d5db")} />
-          </div>
-          <div>
-            <label className="text-xs font-medium text-gray-700 block mb-2">Due at</label>
-            <div className="flex flex-col sm:flex-row gap-2">
-              <div className="flex-1">
-                <label className="text-[10px] text-gray-500 block mb-0.5">Date</label>
-                <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} className="w-full h-9 border border-gray-300 rounded px-3 text-xs outline-none"
-                  onFocus={e => (e.currentTarget.style.borderColor = MAROON)} onBlur={e => (e.currentTarget.style.borderColor = "#d1d5db")} />
-              </div>
-              <div>
-                <label className="text-[10px] text-gray-500 block mb-0.5">Time</label>
-                <div className="relative">
-                  <select value={dueTime} onChange={e => setDueTime(e.target.value)} className="h-9 border border-gray-300 rounded px-3 text-xs bg-white outline-none appearance-none pr-7 w-full sm:w-auto" style={{ minWidth: 120 }}
-                    onFocus={e => (e.currentTarget.style.borderColor = MAROON)} onBlur={e => (e.currentTarget.style.borderColor = "#d1d5db")}>
-                    {TIME_OPTIONS.map(t => <option key={t}>{t}</option>)}
-                  </select>
-                  <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-                </div>
+        <div>
+          <label className="text-xs font-medium text-gray-700 block mb-2">Due at</label>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <div className="flex-1">
+              <label className="text-[10px] text-gray-500 block mb-0.5">Date</label>
+              <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} className="w-full h-10 border border-gray-300 rounded-lg px-3 text-xs outline-none focus:border-[#7b1113] transition-colors" />
+            </div>
+            <div>
+              <label className="text-[10px] text-gray-500 block mb-0.5">Time</label>
+              <div className="relative">
+                <select value={dueTime} onChange={e => setDueTime(e.target.value)} className="h-10 border border-gray-300 rounded-lg px-3 text-xs bg-white outline-none appearance-none pr-8 w-full sm:w-auto focus:border-[#7b1113] transition-colors" style={{ minWidth: 130 }}>
+                  {TIME_OPTIONS.map(t => <option key={t}>{t}</option>)}
+                </select>
+                <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
               </div>
             </div>
-            {dateLabel && <p className="text-xs mt-1.5 font-medium" style={{ color: MAROON }}>{dateLabel}</p>}
           </div>
-          <div>
-            <label className="text-xs font-medium text-gray-700 block mb-1">Points</label>
-            <input type="number" min={0} value={points} onChange={e => setPoints(e.target.value)} className="w-32 h-9 border border-gray-300 rounded px-3 text-sm outline-none"
-              onFocus={e => (e.currentTarget.style.borderColor = MAROON)} onBlur={e => (e.currentTarget.style.borderColor = "#d1d5db")} />
-          </div>
-          {error && <p className="text-xs text-red-600">⚠ {error}</p>}
+          {dateLabel && <p className="text-xs mt-1.5 font-medium" style={{ color: MAROON }}>{dateLabel}</p>}
         </div>
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 px-5 py-3.5 bg-gray-50 border-t border-gray-200">
-          <button onClick={onMoreOptions} className="h-8 px-4 border border-gray-300 text-xs text-gray-600 rounded hover:bg-white">More Options</button>
-          <div className="flex items-center gap-2 justify-end">
-            <button onClick={onClose} disabled={saving} className="h-8 px-4 border border-gray-300 text-xs text-gray-600 rounded hover:bg-gray-100 disabled:opacity-50">Cancel</button>
-            <button onClick={handleSave} disabled={saving || !name.trim()} className="h-8 px-5 text-xs text-white rounded hover:opacity-90 disabled:opacity-50" style={{ background: MAROON }}>
-              {saving ? "Saving..." : "Save"}
-            </button>
-          </div>
+        <div>
+          <label className="text-xs font-medium text-gray-700 block mb-1">Points</label>
+          <input type="number" min={0} value={points} onChange={e => setPoints(e.target.value)} className="w-full sm:w-32 h-10 border border-gray-300 rounded-lg px-3 text-sm outline-none focus:border-[#7b1113] transition-colors" />
+        </div>
+        {error && <p className="text-xs text-red-600">⚠ {error}</p>}
+      </div>
+      <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-2 px-5 py-3.5 bg-gray-50 border-t border-gray-200">
+        <button onClick={onMoreOptions} className="h-9 px-4 border border-gray-300 text-xs text-gray-600 rounded-lg hover:bg-white transition-colors">More Options</button>
+        <div className="flex items-center gap-2 justify-end">
+          <button onClick={onClose} disabled={saving} className="h-9 px-4 border border-gray-300 text-xs text-gray-600 rounded-lg hover:bg-gray-100 disabled:opacity-50 transition-colors">Cancel</button>
+          <button onClick={handleSave} disabled={saving || !name.trim()} className="h-9 px-5 text-xs text-white rounded-lg hover:opacity-90 disabled:opacity-50 transition-opacity" style={{ background: MAROON }}>
+            {saving ? "Saving..." : "Save"}
+          </button>
         </div>
       </div>
-    </div>
+    </ModalShell>
   );
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   ASSIGN TO PANEL
+   ASSIGN TO PANEL — full-screen sheet on mobile, side panel on desktop
 ───────────────────────────────────────────────────────────────────────────── */
 interface AssignRow {
   id: number; assignees: string[];
@@ -530,6 +628,7 @@ function AssignToPanel({ assignment, courseId, sections, staff, onClose, onSave 
   const [saving, setSaving] = useState(false);
   const [openDropId, setOpenDropId] = useState<number | null>(null);
   const [dropSearch, setDropSearch] = useState("");
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (openDropId === null) return;
@@ -537,6 +636,12 @@ function AssignToPanel({ assignment, courseId, sections, staff, onClose, onSave 
     document.addEventListener("mousedown", h);
     return () => document.removeEventListener("mousedown", h);
   }, [openDropId]);
+
+  // Lock body scroll when open
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
 
   const updateRow = (id: number, field: keyof AssignRow, value: string | string[]) =>
     setRows(p => p.map(r => r.id === id ? { ...r, [field]: value } : r));
@@ -574,12 +679,12 @@ function AssignToPanel({ assignment, courseId, sections, staff, onClose, onSave 
         <div className="grid grid-cols-2 gap-2">
           <div>
             <p className="text-[10px] text-gray-500 mb-0.5">Date</p>
-            <input type="date" value={dateVal} onChange={e => onDateChange(e.target.value)} className="w-full h-8 border border-gray-300 rounded px-2 text-xs outline-none" />
+            <input type="date" value={dateVal} onChange={e => onDateChange(e.target.value)} className="w-full h-9 border border-gray-300 rounded-lg px-2 text-xs outline-none focus:border-[#7b1113] transition-colors" />
           </div>
           <div>
             <p className="text-[10px] text-gray-500 mb-0.5">Time</p>
             <div className="relative">
-              <select value={timeVal} onChange={e => onTimeChange(e.target.value)} className="w-full h-8 border border-gray-300 rounded px-2 text-xs bg-white outline-none appearance-none pr-6">
+              <select value={timeVal} onChange={e => onTimeChange(e.target.value)} className="w-full h-9 border border-gray-300 rounded-lg px-2 text-xs bg-white outline-none appearance-none pr-6 focus:border-[#7b1113] transition-colors">
                 {TIME_OPTIONS.map(t => <option key={t}>{t}</option>)}
               </select>
               <ChevronDown size={11} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
@@ -595,48 +700,67 @@ function AssignToPanel({ assignment, courseId, sections, staff, onClose, onSave 
   return (
     <>
       <div className="fixed inset-0 z-40 bg-black/20" onClick={onClose} />
-      <div className="fixed top-0 right-0 h-full z-50 bg-white shadow-2xl border-l border-gray-200 flex flex-col w-full sm:w-95" style={{ fontFamily: FONT }}>
+      <div
+        className="fixed z-50 bg-white shadow-2xl border-t sm:border-t-0 sm:border-l border-gray-200 flex flex-col"
+        style={{
+          // Mobile: slide up from bottom, full width, ~85vh
+          // Desktop: side panel from right, full height, 380px wide
+          ...(isMobile
+            ? { bottom: 0, left: 0, right: 0, maxHeight: "88dvh", borderRadius: "16px 16px 0 0" }
+            : { top: 0, right: 0, bottom: 0, width: 380 }),
+          fontFamily: FONT,
+        }}
+      >
+        {/* Mobile drag handle */}
+        {isMobile && (
+          <div className="flex justify-center pt-2.5 pb-1 shrink-0">
+            <div className="w-9 h-1 rounded-full bg-gray-200" />
+          </div>
+        )}
+
         <div className="flex items-start justify-between px-5 py-4 border-b border-gray-200 shrink-0">
           <div>
             <div className="flex items-center gap-2 mb-0.5">
               <AssignmentIcon />
-              <span className="text-sm font-bold text-gray-800">{assignment.title}</span>
+              <span className="text-sm font-bold text-gray-800 truncate max-w-[200px]">{assignment.title}</span>
             </div>
             <p className="text-xs text-gray-500 ml-6">Assignment | {assignment.points} pts</p>
           </div>
-          <button onClick={onClose} className="w-7 h-7 flex items-center justify-center border border-gray-300 rounded text-gray-400 hover:bg-gray-100 shrink-0 mt-0.5"><X size={14} /></button>
+          <button onClick={onClose} className="w-7 h-7 flex items-center justify-center border border-gray-300 rounded-lg text-gray-400 hover:bg-gray-100 shrink-0 mt-0.5"><X size={14} /></button>
         </div>
-        <div className="mx-4 mt-3 flex items-start gap-2 bg-blue-50 border border-blue-200 rounded p-3 shrink-0">
+
+        <div className="mx-4 mt-3 flex items-start gap-2 bg-blue-50 border border-blue-200 rounded-lg p-3 shrink-0">
           <div className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5" style={{ background: "#1d6fa4" }}>
             <span className="text-white text-[10px] font-bold">i</span>
           </div>
           <p className="text-xs text-blue-800 leading-relaxed">Select who should be assigned and use the drop-down menus or manually enter your date and time.</p>
         </div>
-        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-5">
+
+        <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-4 space-y-5">
           {rows.map((row, idx) => (
-            <div key={row.id} className="border border-gray-200 rounded-md p-3 space-y-4 relative">
-              {idx > 0 && <button onClick={() => removeRow(row.id)} className="absolute top-2 right-2 text-gray-400 hover:text-red-500"><X size={13} /></button>}
+            <div key={row.id} className="border border-gray-200 rounded-xl p-3 space-y-4 relative">
+              {idx > 0 && <button onClick={() => removeRow(row.id)} className="absolute top-2 right-2 text-gray-400 hover:text-red-500 transition-colors"><X size={13} /></button>}
               <div>
                 <p className="text-xs font-semibold text-gray-700 mb-1">Assign To</p>
                 <div className="relative" data-assigndrop>
                   <div onMouseDown={e => { e.stopPropagation(); setOpenDropId(openDropId === row.id ? null : row.id); setDropSearch(""); }}
-                    className="w-full min-h-8.5 border border-gray-300 rounded px-2 py-1 flex flex-wrap gap-1 items-center cursor-pointer bg-white">
+                    className="w-full min-h-9 border border-gray-300 rounded-lg px-2 py-1 flex flex-wrap gap-1 items-center cursor-pointer bg-white">
                     {row.assignees.map(a => (
-                      <span key={a} className="flex items-center gap-1 px-2 py-0.5 rounded text-xs text-white font-medium" style={{ background: MAROON }}>
-                        {a}<button onMouseDown={e => { e.stopPropagation(); toggleAssignee(row.id, a); }} className="hover:opacity-70 font-bold text-sm leading-none">×</button>
+                      <span key={a} className="flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs text-white font-medium" style={{ background: MAROON }}>
+                        {a}<button onMouseDown={e => { e.stopPropagation(); toggleAssignee(row.id, a); }} className="hover:opacity-70 font-bold text-sm leading-none ml-0.5">×</button>
                       </span>
                     ))}
-                    <input readOnly placeholder={row.assignees.length ? "" : "Start typing to search..."} className="flex-1 min-w-15 text-xs outline-none bg-transparent text-gray-400 cursor-pointer" />
+                    <input readOnly placeholder={row.assignees.length ? "" : "Start typing to search..."} className="flex-1 min-w-[60px] text-xs outline-none bg-transparent text-gray-400 cursor-pointer" />
                     <ChevronDown size={12} className="text-gray-400 shrink-0" style={{ transform: openDropId === row.id ? "rotate(180deg)" : "none", transition: "transform 0.15s" }} />
                   </div>
                   {openDropId === row.id && (
-                    <div data-assigndrop className="absolute z-50 w-full bg-white border border-gray-200 shadow-xl rounded mt-0.5 max-h-60 overflow-y-auto" onMouseDown={e => e.stopPropagation()}>
+                    <div data-assigndrop className="absolute z-50 w-full bg-white border border-gray-200 shadow-xl rounded-lg mt-1 max-h-56 overflow-y-auto" onMouseDown={e => e.stopPropagation()}>
                       <div className="px-2 pt-2 pb-1 border-b border-gray-100 sticky top-0 bg-white">
-                        <input autoFocus value={dropSearch} onChange={e => setDropSearch(e.target.value)} placeholder="Start typing to search..." className="w-full h-7 px-2 text-xs border border-gray-200 rounded outline-none focus:border-[#7b1113]" />
+                        <input autoFocus value={dropSearch} onChange={e => setDropSearch(e.target.value)} placeholder="Search..." className="w-full h-8 px-2 text-xs border border-gray-200 rounded-lg outline-none focus:border-[#7b1113]" />
                       </div>
                       {["Everyone"].filter(o => o.toLowerCase().includes(dropSearch.toLowerCase())).map(opt => (
                         <button key={opt} onMouseDown={e => { e.preventDefault(); e.stopPropagation(); toggleAssignee(row.id, opt); }}
-                          className="w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-gray-50"
+                          className="w-full text-left px-3 py-2.5 text-xs flex items-center justify-between hover:bg-gray-50 active:bg-gray-100"
                           style={{ color: row.assignees.includes(opt) ? MAROON : "#374151", fontWeight: row.assignees.includes(opt) ? 600 : 400 }}>
                           {opt}{row.assignees.includes(opt) && <span style={{ color: MAROON }}>✓</span>}
                         </button>
@@ -646,7 +770,7 @@ function AssignToPanel({ assignment, courseId, sections, staff, onClose, onSave 
                           <div className="px-3 pt-2 pb-1 text-[10px] font-bold text-gray-500 uppercase tracking-widest bg-gray-50 border-t border-gray-100">Sections</div>
                           {sections.filter(s => s.name.toLowerCase().includes(dropSearch.toLowerCase())).map(s => (
                             <button key={s.id} onMouseDown={e => { e.preventDefault(); e.stopPropagation(); toggleAssignee(row.id, s.name); }}
-                              className="w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-gray-50"
+                              className="w-full text-left px-3 py-2.5 text-xs flex items-center justify-between hover:bg-gray-50 active:bg-gray-100"
                               style={{ color: row.assignees.includes(s.name) ? MAROON : "#374151", fontWeight: row.assignees.includes(s.name) ? 600 : 400 }}>
                               {s.name}{row.assignees.includes(s.name) && <span style={{ color: MAROON }}>✓</span>}
                             </button>
@@ -658,7 +782,7 @@ function AssignToPanel({ assignment, courseId, sections, staff, onClose, onSave 
                           <div className="px-3 pt-2 pb-1 text-[10px] font-bold text-gray-500 uppercase tracking-widest bg-gray-50 border-t border-gray-100">Staff</div>
                           {staff.filter(s => s.name.toLowerCase().includes(dropSearch.toLowerCase())).map(s => (
                             <button key={s.id} onMouseDown={e => { e.preventDefault(); e.stopPropagation(); toggleAssignee(row.id, s.name); }}
-                              className="w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-gray-50"
+                              className="w-full text-left px-3 py-2.5 text-xs flex items-center justify-between hover:bg-gray-50 active:bg-gray-100"
                               style={{ color: row.assignees.includes(s.name) ? MAROON : "#374151", fontWeight: row.assignees.includes(s.name) ? 600 : 400 }}>
                               {s.name}{row.assignees.includes(s.name) && <span style={{ color: MAROON }}>✓</span>}
                             </button>
@@ -676,12 +800,15 @@ function AssignToPanel({ assignment, courseId, sections, staff, onClose, onSave 
           ))}
           <button onClick={addRow} className="flex items-center gap-1.5 text-xs font-medium hover:underline" style={{ color: MAROON }}><Plus size={13} /> Add</button>
         </div>
+
         <div className="shrink-0 border-t border-gray-200 px-4 py-3 flex items-center justify-end gap-2 bg-gray-50">
-          <button onClick={onClose} className="h-8 px-4 border border-gray-300 text-xs text-gray-600 rounded hover:bg-white">Cancel</button>
-          <button onClick={handleSave} disabled={saving} className="h-8 px-5 text-xs text-white rounded hover:opacity-90 disabled:opacity-50 font-medium" style={{ background: MAROON }}>
+          <button onClick={onClose} className="h-9 px-4 border border-gray-300 text-xs text-gray-600 rounded-lg hover:bg-white transition-colors">Cancel</button>
+          <button onClick={handleSave} disabled={saving} className="h-9 px-5 text-xs text-white rounded-lg hover:opacity-90 disabled:opacity-50 font-medium transition-opacity" style={{ background: MAROON }}>
             {saving ? "Saving..." : "Save"}
           </button>
         </div>
+        {/* iOS safe area */}
+        <div className="sm:hidden h-[env(safe-area-inset-bottom)] shrink-0" />
       </div>
     </>
   );
@@ -690,8 +817,9 @@ function AssignToPanel({ assignment, courseId, sections, staff, onClose, onSave 
 /* ─────────────────────────────────────────────────────────────────────────────
    MINE ASSIGNMENT ROW
 ───────────────────────────────────────────────────────────────────────────── */
-function MineAssignmentRow({ a, currentUserName, currentUserRole, seenIds, onView, onEdit, onDuplicate, onAssignTo, onDelete, onTogglePublish }: {
+function MineAssignmentRow({ a, courseId, currentUserName, currentUserRole, seenIds, onView, onEdit, onDuplicate, onAssignTo, onDelete, onTogglePublish }: {
   a: AssignmentWithRole;
+  courseId: string;
   currentUserName?: string | null;
   currentUserRole?: string | null;
   seenIds: Set<string>;
@@ -717,31 +845,51 @@ function MineAssignmentRow({ a, currentUserName, currentUserRole, seenIds, onVie
   };
 
   return (
-    <div className="flex items-start sm:items-center gap-3 px-3 sm:px-4 py-4 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-0 relative cursor-pointer"
+    <div
+      className="flex items-start gap-2 sm:gap-3 px-3 sm:px-4 py-3.5 sm:py-4 hover:bg-gray-50 active:bg-gray-100 transition-colors border-b border-gray-100 last:border-0 relative cursor-pointer"
       style={{ background: "#fff" }}
-      onClick={() => onView(a)}>
+      onClick={() => onView(a)}
+    >
       <div className="absolute left-0 top-0 bottom-0 w-0.5 rounded-full" style={{ background: MAROON }} />
-      <div className="shrink-0 mt-0.5 sm:mt-0 pl-2" onClick={e => e.stopPropagation()}>
+
+      {/* Publish toggle */}
+      <div className="shrink-0 mt-0 pl-2" onClick={e => e.stopPropagation()}>
         <PublishToggle published={a.status === "PUBLISHED"} onToggle={() => onTogglePublish(a)} />
       </div>
-      <div className="shrink-0"><AssignmentIcon /></div>
+
+      <div className="shrink-0 hidden xs:block mt-0.5"><AssignmentIcon /></div>
+
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 flex-wrap">
-          <h3 className="text-sm font-semibold truncate max-w-full hover:underline" style={{ color: MAROON }}>{a.title}</h3>
+        {/* Title row */}
+        <div className="flex items-start gap-2 flex-wrap">
+          <h3 className="text-sm font-semibold hover:underline leading-snug" style={{ color: MAROON }}>{a.title}</h3>
           {!seenIds.has(String(a.id)) && <NewBadge />}
-          {a.status === "UNPUBLISHED" && <span className="text-[10px] text-amber-600 font-medium">Not Published</span>}
-          {isClosed && <span className="text-[10px] text-gray-500 font-medium">Closed</span>}
+          {a.status === "UNPUBLISHED" && <span className="text-[10px] text-amber-600 font-medium shrink-0">Not Published</span>}
+          {isClosed && <span className="text-[10px] text-gray-500 font-medium shrink-0">Closed</span>}
         </div>
+
+        {/* Meta row */}
         <div className="flex items-center gap-2 mt-1.5 flex-wrap">
           {authorName && <AuthorBadge name={authorName} role={authorRole} />}
-          <div className="flex items-center gap-2 text-xs text-gray-500 flex-wrap">
+          <div className="flex items-center gap-1.5 text-xs text-gray-500 flex-wrap">
             <span>{a.points} pts</span>
-            {due && <><span>•</span><span>Due: {due}</span></>}
+            {due && <><span>·</span><span>Due: {due}</span></>}
           </div>
         </div>
+
+        {/* SpeedGrader button (mobile/tablet shows here inline) */}
+        <div className="mt-2 sm:hidden" onClick={e => e.stopPropagation()}>
+          <SpeedGraderButton courseId={courseId} assignmentId={a.id} />
+        </div>
       </div>
-      <div className="shrink-0" onClick={e => e.stopPropagation()}>
-        <AssignmentRowMenu assignment={a} onAction={handleAction} isManager={true} />
+
+      {/* Right actions */}
+      <div className="shrink-0 flex items-center gap-1" onClick={e => e.stopPropagation()}>
+        {/* SpeedGrader — desktop inline */}
+        <div className="hidden sm:block">
+          <SpeedGraderButton courseId={courseId} assignmentId={a.id} />
+        </div>
+        <AssignmentRowMenu assignment={a} onAction={handleAction} isManager={true} courseId={courseId} />
       </div>
     </div>
   );
@@ -750,8 +898,9 @@ function MineAssignmentRow({ a, currentUserName, currentUserRole, seenIds, onVie
 /* ─────────────────────────────────────────────────────────────────────────────
    OTHERS ASSIGNMENT ROW
 ───────────────────────────────────────────────────────────────────────────── */
-function OthersAssignmentRow({ a, seenIds, onView }: {
+function OthersAssignmentRow({ a, courseId, seenIds, onView }: {
   a: AssignmentWithRole;
+  courseId: string;
   seenIds: Set<string>;
   onView: (a: AssignmentWithRole) => void;
 }) {
@@ -762,26 +911,31 @@ function OthersAssignmentRow({ a, seenIds, onView }: {
   const due = fmtDue(a.dueDate);
 
   return (
-    <div className="flex items-start sm:items-center gap-3 px-3 sm:px-4 py-4 hover:bg-blue-50/30 transition-colors border-b border-gray-100 last:border-0 relative cursor-pointer"
+    <div
+      className="flex items-start gap-2 sm:gap-3 px-3 sm:px-4 py-3.5 sm:py-4 hover:bg-blue-50/30 active:bg-blue-50 transition-colors border-b border-gray-100 last:border-0 relative cursor-pointer"
       style={{ background: "#fafcff" }}
-      onClick={() => onView(a)}>
+      onClick={() => onView(a)}
+    >
       <div className="absolute left-0 top-0 bottom-0 w-0.5 rounded-full" style={{ background: "#60a5fa" }} />
-      <div className="shrink-0 ml-2"><AssignmentIcon /></div>
+      <div className="shrink-0 ml-2 hidden xs:block mt-0.5"><AssignmentIcon /></div>
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 flex-wrap">
-          <h3 className="text-sm font-semibold truncate hover:underline" style={{ color: "#1d4ed8" }}>{a.title}</h3>
+        <div className="flex items-start gap-2 flex-wrap">
+          <h3 className="text-sm font-semibold hover:underline leading-snug" style={{ color: "#1d4ed8" }}>{a.title}</h3>
           {!seenIds.has(String(a.id)) && <NewBadge />}
-          {isClosed && <span className="text-[10px] text-gray-500 font-medium">Closed</span>}
-          {isLocked && <span className="text-[10px] text-amber-600 font-medium">Not yet open</span>}
+          {isClosed && <span className="text-[10px] text-gray-500 font-medium shrink-0">Closed</span>}
+          {isLocked && <span className="text-[10px] text-amber-600 font-medium shrink-0">Not yet open</span>}
         </div>
         <div className="flex items-center gap-2 mt-1.5 flex-wrap">
           <PublisherChip name={a._publisherName} image={a._publisherImage} role={a._publisherRole} />
-          <div className="flex items-center gap-2 text-xs text-gray-500 flex-wrap">
+          <div className="flex items-center gap-1.5 text-xs text-gray-500 flex-wrap">
             <span>{a.points} pts</span>
-            {due && <><span>•</span><span>Due: {due}</span></>}
-            {sub?.submittedAt && <><span>•</span><span className="text-green-600 font-semibold flex items-center gap-1"><CheckCircle size={11} /> Submitted</span></>}
+            {due && <><span>·</span><span>Due: {due}</span></>}
+            {sub?.submittedAt && <><span>·</span><span className="text-green-600 font-semibold flex items-center gap-1"><CheckCircle size={11} /> Submitted</span></>}
           </div>
         </div>
+      </div>
+      <div className="shrink-0" onClick={e => e.stopPropagation()}>
+        <AssignmentRowMenu assignment={a} onAction={() => {}} isManager={false} courseId={courseId} />
       </div>
     </div>
   );
@@ -790,8 +944,9 @@ function OthersAssignmentRow({ a, seenIds, onView }: {
 /* ─────────────────────────────────────────────────────────────────────────────
    MINE GROUP SECTION
 ───────────────────────────────────────────────────────────────────────────── */
-function MineGroupSection({ title, items, currentUserName, currentUserRole, seenIds, onAddAssignment, onView, onEdit, onDuplicate, onAssignTo, onDelete, onTogglePublish, onEditGroup, onDeleteGroup, isLastGroup }: {
+function MineGroupSection({ title, items, courseId, currentUserName, currentUserRole, seenIds, onAddAssignment, onView, onEdit, onDuplicate, onAssignTo, onDelete, onTogglePublish, onEditGroup, onDeleteGroup, isLastGroup }: {
   title: string; items: AssignmentWithRole[];
+  courseId: string;
   currentUserName?: string | null; currentUserRole?: string | null;
   seenIds: Set<string>;
   onAddAssignment: (group: string) => void;
@@ -810,31 +965,31 @@ function MineGroupSection({ title, items, currentUserName, currentUserRole, seen
 
   return (
     <div className="mb-3">
-      <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-t select-none">
-        <div className="flex items-center gap-2 cursor-pointer" onClick={() => setCollapsed(c => !c)}>
+      <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-t-lg select-none">
+        <div className="flex items-center gap-2 cursor-pointer flex-1 min-w-0" onClick={() => setCollapsed(c => !c)}>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2.5"
-            style={{ transform: collapsed ? "rotate(-90deg)" : "rotate(0deg)", transition: "transform 0.15s" }}>
+            style={{ transform: collapsed ? "rotate(-90deg)" : "rotate(0deg)", transition: "transform 0.15s", flexShrink: 0 }}>
             <path d="M6 9l6 6 6-6" />
           </svg>
-          <span className="text-sm font-semibold text-gray-700">{title}</span>
-          <span className="text-xs text-gray-400 ml-1">({items.length})</span>
+          <span className="text-sm font-semibold text-gray-700 truncate">{title}</span>
+          <span className="text-xs text-gray-400 ml-1 shrink-0">({items.length})</span>
           {newCount > 0 && (
-            <span className="ml-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold text-white" style={{ background: "#dc2626" }}>
+            <span className="ml-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold text-white shrink-0" style={{ background: "#dc2626" }}>
               {newCount}
             </span>
           )}
         </div>
-        <div className="flex items-center gap-1">
-          <button onClick={() => onAddAssignment(title)} className="p-1.5 text-gray-400 hover:bg-gray-200 rounded transition-colors" title="Add assignment"><Plus size={15} /></button>
+        <div className="flex items-center gap-1 shrink-0">
+          <button onClick={() => onAddAssignment(title)} className="p-1.5 text-gray-400 hover:bg-gray-200 active:bg-gray-300 rounded-lg transition-colors touch-manipulation" title="Add assignment"><Plus size={15} /></button>
           <GroupMenu onEdit={() => onEditGroup(title)} onDelete={() => onDeleteGroup(title)} isLastGroup={isLastGroup} />
         </div>
       </div>
       {!collapsed && (
-        <div className="border border-t-0 border-gray-200 rounded-b overflow-hidden">
+        <div className="border border-t-0 border-gray-200 rounded-b-lg overflow-hidden">
           {items.length === 0
             ? <div className="px-6 py-4 text-sm text-gray-400 text-center">No assignments in this group.</div>
             : items.map(a => (
-              <MineAssignmentRow key={a.id} a={a} currentUserName={currentUserName} currentUserRole={currentUserRole}
+              <MineAssignmentRow key={a.id} a={a} courseId={courseId} currentUserName={currentUserName} currentUserRole={currentUserRole}
                 seenIds={seenIds}
                 onView={onView} onEdit={onEdit} onDuplicate={onDuplicate} onAssignTo={onAssignTo} onDelete={onDelete} onTogglePublish={onTogglePublish} />
             ))}
@@ -847,14 +1002,14 @@ function MineGroupSection({ title, items, currentUserName, currentUserRole, seen
 /* ─────────────────────────────────────────────────────────────────────────────
    OTHERS AUTHOR SECTION
 ───────────────────────────────────────────────────────────────────────────── */
-function OthersAuthorSection({ authorName, authorRole, authorImage, items, seenIds, onView }: {
+function OthersAuthorSection({ authorName, authorRole, authorImage, items, courseId, seenIds, onView }: {
   authorName: string; authorRole?: string | null; authorImage?: string | null;
-  items: AssignmentWithRole[]; seenIds: Set<string>; onView: (a: AssignmentWithRole) => void;
+  items: AssignmentWithRole[]; courseId: string; seenIds: Set<string>; onView: (a: AssignmentWithRole) => void;
 }) {
   const [collapsed, setCollapsed] = useState(false);
   return (
     <div className="mb-4">
-      <div className="flex items-center gap-2 px-4 py-2.5 border select-none cursor-pointer rounded-t"
+      <div className="flex items-center gap-2 px-3 sm:px-4 py-2.5 border select-none cursor-pointer rounded-t-lg"
         style={{ background: "#eff6ff", borderColor: "#bfdbfe" }}
         onClick={() => setCollapsed(c => !c)}>
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1d6fa4" strokeWidth="2.5"
@@ -862,15 +1017,15 @@ function OthersAuthorSection({ authorName, authorRole, authorImage, items, seenI
           <path d="M6 9l6 6 6-6" />
         </svg>
         <PublisherAvatar name={authorName} image={authorImage} size={22} />
-        <span className="text-sm font-semibold" style={{ color: "#1d4ed8" }}>{authorName}</span>
+        <span className="text-sm font-semibold truncate" style={{ color: "#1d4ed8" }}>{authorName}</span>
         {authorRole && (
-          <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase" style={{ background: "#eff6ff", color: "#1d6fa4", border: "1px solid #bfdbfe" }}>{authorRole}</span>
+          <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase shrink-0" style={{ background: "#eff6ff", color: "#1d6fa4", border: "1px solid #bfdbfe" }}>{authorRole}</span>
         )}
-        <span className="text-xs text-blue-400 ml-1">({items.length})</span>
+        <span className="text-xs text-blue-400 ml-1 shrink-0">({items.length})</span>
       </div>
       {!collapsed && (
-        <div className="border border-t-0 rounded-b overflow-hidden" style={{ borderColor: "#bfdbfe" }}>
-          {items.map(a => <OthersAssignmentRow key={a.id} a={a} seenIds={seenIds} onView={onView} />)}
+        <div className="border border-t-0 rounded-b-lg overflow-hidden" style={{ borderColor: "#bfdbfe" }}>
+          {items.map(a => <OthersAssignmentRow key={a.id} a={a} courseId={courseId} seenIds={seenIds} onView={onView} />)}
         </div>
       )}
     </div>
@@ -880,25 +1035,25 @@ function OthersAuthorSection({ authorName, authorRole, authorImage, items, seenI
 /* ─────────────────────────────────────────────────────────────────────────────
    OTHERS GROUP SECTION
 ───────────────────────────────────────────────────────────────────────────── */
-function OthersGroupSection({ title, items, seenIds, onView }: {
-  title: string; items: AssignmentWithRole[]; seenIds: Set<string>; onView: (a: AssignmentWithRole) => void;
+function OthersGroupSection({ title, items, courseId, seenIds, onView }: {
+  title: string; items: AssignmentWithRole[]; courseId: string; seenIds: Set<string>; onView: (a: AssignmentWithRole) => void;
 }) {
   const [collapsed, setCollapsed] = useState(false);
   return (
     <div className="mb-4">
-      <div className="flex items-center gap-2 px-4 py-2.5 border select-none cursor-pointer rounded-t"
+      <div className="flex items-center gap-2 px-3 sm:px-4 py-2.5 border select-none cursor-pointer rounded-t-lg"
         style={{ background: "#f0f9ff", borderColor: "#bae6fd" }}
         onClick={() => setCollapsed(c => !c)}>
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#0369a1" strokeWidth="2.5"
           style={{ transform: collapsed ? "rotate(-90deg)" : "rotate(0deg)", transition: "transform .15s", flexShrink: 0 }}>
           <path d="M6 9l6 6 6-6" />
         </svg>
-        <span className="text-sm font-semibold" style={{ color: "#0369a1" }}>{title}</span>
-        <span className="text-xs text-blue-400 ml-1">({items.length})</span>
+        <span className="text-sm font-semibold truncate" style={{ color: "#0369a1" }}>{title}</span>
+        <span className="text-xs text-blue-400 ml-1 shrink-0">({items.length})</span>
       </div>
       {!collapsed && (
-        <div className="border border-t-0 rounded-b overflow-hidden" style={{ borderColor: "#bae6fd" }}>
-          {items.map(a => <OthersAssignmentRow key={a.id} a={a} seenIds={seenIds} onView={onView} />)}
+        <div className="border border-t-0 rounded-b-lg overflow-hidden" style={{ borderColor: "#bae6fd" }}>
+          {items.map(a => <OthersAssignmentRow key={a.id} a={a} courseId={courseId} seenIds={seenIds} onView={onView} />)}
         </div>
       )}
     </div>
@@ -1093,18 +1248,22 @@ export default function CourseAssignmentsList({
         <span className="text-xs font-extrabold tracking-widest uppercase">Published by You</span>
       </div>
 
+      {/* Section 1 toolbar */}
       <div className="flex items-center justify-between px-3 sm:px-8 py-3 border-b border-gray-100 gap-2 flex-wrap">
-        <div className="relative">
+        <div className="relative flex-1 sm:flex-none">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
           <input value={mySearch} onChange={e => setMySearch(e.target.value)} placeholder="Search your assignments..."
-            className="pl-9 pr-4 py-1.5 border rounded text-sm w-44 sm:w-56 focus:outline-none" style={{ borderColor: "#d1d5db" }} />
+            className="pl-9 pr-4 py-2 border rounded-lg text-sm w-full sm:w-56 focus:outline-none focus:border-[#7b1113] transition-colors" style={{ borderColor: "#d1d5db" }} />
         </div>
-        <div className="flex items-center gap-2">
-          <button onClick={() => setShowGroupModal(true)} className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium border rounded-lg hover:bg-gray-50" style={{ borderColor: "#d1d5db", color: "#374151" }}>
-            <Plus size={14} /><span className="hidden sm:inline">Group</span>
+        <div className="flex items-center gap-2 shrink-0">
+          <button onClick={() => setShowGroupModal(true)} className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium border rounded-lg hover:bg-gray-50 active:bg-gray-100 transition-colors" style={{ borderColor: "#d1d5db", color: "#374151" }}>
+            <Plus size={14} />
+            <span className="hidden sm:inline">Group</span>
           </button>
-          <button onClick={() => onCreateNew()} className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium text-white rounded-lg hover:opacity-90" style={{ background: MAROON }}>
-            <Plus size={14} /><span className="hidden sm:inline">Assignment</span><span className="sm:hidden">New</span>
+          <button onClick={() => onCreateNew()} className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-white rounded-lg hover:opacity-90 active:opacity-80 transition-opacity" style={{ background: MAROON }}>
+            <Plus size={14} />
+            <span className="hidden sm:inline">Assignment</span>
+            <span className="sm:hidden">New</span>
           </button>
         </div>
       </div>
@@ -1113,6 +1272,7 @@ export default function CourseAssignmentsList({
         {localGroups.length > 0 ? (
           Object.entries(myGrouped).map(([grp, items]) => (
             <MineGroupSection key={grp} title={grp} items={items}
+              courseId={courseId}
               currentUserName={currentUserName} currentUserRole={currentUserRole}
               seenIds={seenIds}
               onAddAssignment={g => onCreateNew(g)}
@@ -1143,16 +1303,17 @@ export default function CourseAssignmentsList({
         {otherAssignments.length > 0 && <span className="ml-1 font-normal normal-case text-blue-400 text-xs">({otherAssignments.length})</span>}
       </div>
 
+      {/* Section 2 toolbar */}
       <div className="flex items-center justify-between px-3 sm:px-8 py-3 border-b border-gray-100 gap-2 flex-wrap">
-        <div className="relative">
+        <div className="relative flex-1 sm:flex-none">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
           <input value={othersSearch} onChange={e => setOthersSearch(e.target.value)} placeholder="Search others' assignments..."
-            className="pl-9 pr-4 py-1.5 border rounded text-sm w-44 sm:w-56 focus:outline-none" style={{ borderColor: "#d1d5db" }} />
+            className="pl-9 pr-4 py-2 border rounded-lg text-sm w-full sm:w-56 focus:outline-none focus:border-[#7b1113] transition-colors" style={{ borderColor: "#d1d5db" }} />
         </div>
-        <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden">
+        <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden shrink-0">
           {(["author", "group"] as const).map(mode => (
             <button key={mode} onClick={() => setOthersViewMode(mode)}
-              className="px-3 py-1.5 text-xs font-bold border-none transition-colors whitespace-nowrap"
+              className="px-3 py-2 text-xs font-bold border-none transition-colors whitespace-nowrap"
               style={othersViewMode === mode ? { background: MAROON, color: "#fff" } : { background: "transparent", color: "#6b7280" }}>
               By {mode === "author" ? "Author" : "Group"}
             </button>
@@ -1170,16 +1331,16 @@ export default function CourseAssignmentsList({
           <p className="text-sm text-gray-400 text-center py-6">No results for &ldquo;{othersSearch}&rdquo;</p>
         ) : othersViewMode === "author" ? (
           Object.entries(othersByAuthor).map(([author, { role, image, items }]) => (
-            <OthersAuthorSection key={author} authorName={author} authorRole={role} authorImage={image} items={items} seenIds={seenIds} onView={handleView} />
+            <OthersAuthorSection key={author} authorName={author} authorRole={role} authorImage={image} items={items} courseId={courseId} seenIds={seenIds} onView={handleView} />
           ))
         ) : (
           Object.entries(othersByGroup).map(([grp, items]) => (
-            <OthersGroupSection key={grp} title={grp} items={items} seenIds={seenIds} onView={handleView} />
+            <OthersGroupSection key={grp} title={grp} items={items} courseId={courseId} seenIds={seenIds} onView={handleView} />
           ))
         )}
       </div>
 
-      {/* Modals */}
+      {/* ── Modals ── */}
       {showGroupModal && <AddGroupModal onClose={() => setShowGroupModal(false)} onSave={handleSaveGroup} saving={savingEditGroup} />}
       {quickEditTarget && (
         <QuickEditModal assignment={quickEditTarget} onClose={() => setQuickEditTarget(null)} onSave={handleQuickEditSave}

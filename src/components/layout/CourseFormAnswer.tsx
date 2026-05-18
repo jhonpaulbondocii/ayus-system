@@ -57,7 +57,6 @@ interface Form {
   _publisherId?: string | null;
 }
 
-// Answers map: questionId → value
 type AnswerValue = string | string[] | Record<string, string>;
 type Answers = Record<string, AnswerValue>;
 
@@ -100,6 +99,276 @@ function fmtDue(date?: string | null, time?: string | null): string {
   );
 }
 
+// ── Responsive CSS ─────────────────────────────────────────────────────────────
+const ANSWER_CSS = `
+  .cfa-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 20px;
+    border-bottom: 1px solid #e5e7eb;
+    background: #fff;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .cfa-publisher-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 20px;
+    border-bottom: 1px solid #e5e7eb;
+    background: #fafafa;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+  }
+  .cfa-content {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .cfa-inner {
+    max-width: 720px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 28px 20px 100px;
+  }
+  .cfa-header-card {
+    background: #fff;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border-top: 6px solid ${MAROON};
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06);
+    overflow: hidden;
+  }
+  .cfa-header-card-body {
+    padding: 20px 24px;
+  }
+  .cfa-meta-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .cfa-question-card {
+    background: #fff;
+    border-radius: 8px;
+    padding: 20px 24px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 1px 3px rgba(0,0,0,.05);
+    transition: border-color .2s, box-shadow .2s;
+  }
+  .cfa-question-card.error {
+    border-color: #fca5a5;
+    box-shadow: 0 0 0 2px #fee2e2;
+  }
+  .cfa-question-header {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    margin-bottom: 14px;
+  }
+  .cfa-question-num {
+    min-width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: ${MAROON};
+    color: #fff;
+    font-size: 11px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .cfa-scale-wrap {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .cfa-scale-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all .15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #d1d5db;
+    background: #fff;
+    color: #374151;
+    flex-shrink: 0;
+  }
+  .cfa-grid-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .cfa-grid-table {
+    border-collapse: collapse;
+    font-size: 13px;
+    min-width: 280px;
+    width: 100%;
+  }
+  .cfa-option-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid #e5e7eb;
+    background: #fff;
+    transition: all .15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .cfa-option-label.selected {
+    border-color: ${MAROON};
+    background: #fef2f2;
+  }
+  .cfa-radio-dot {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid #d1d5db;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all .15s;
+  }
+  .cfa-radio-dot.selected {
+    border-color: ${MAROON};
+    background: ${MAROON};
+  }
+  .cfa-checkbox-dot {
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    border: 2px solid #d1d5db;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all .15s;
+  }
+  .cfa-checkbox-dot.selected {
+    border-color: ${MAROON};
+    background: ${MAROON};
+  }
+  .cfa-input {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 14px;
+    outline: none;
+    font-family: ${FONT};
+    color: #111827;
+    background: #fff;
+    transition: border-color .15s;
+    -webkit-appearance: none;
+  }
+  .cfa-input:focus {
+    border-color: ${MAROON};
+  }
+  .cfa-textarea {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 14px;
+    outline: none;
+    font-family: ${FONT};
+    color: #111827;
+    background: #fff;
+    transition: border-color .15s;
+    resize: vertical;
+    line-height: 1.6;
+    min-height: 100px;
+  }
+  .cfa-textarea:focus {
+    border-color: ${MAROON};
+  }
+  .cfa-submit-btn {
+    padding: 11px 32px;
+    border-radius: 8px;
+    border: none;
+    background: ${MAROON};
+    color: #fff;
+    font-size: 14px;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(123,17,19,.25);
+    transition: background .15s, opacity .15s;
+    -webkit-tap-highlight-color: transparent;
+    min-height: 44px;
+  }
+  .cfa-submit-btn:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+  }
+  .cfa-back-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: ${MAROON};
+    font-size: 14px;
+    font-weight: 700;
+    padding: 0;
+    min-height: 44px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .cfa-confirmation {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 16px;
+  }
+  @media (max-width: 640px) {
+    .cfa-topbar {
+      padding: 10px 14px;
+    }
+    .cfa-publisher-bar {
+      padding: 8px 14px;
+    }
+    .cfa-inner {
+      padding: 16px 12px 100px;
+    }
+    .cfa-header-card-body {
+      padding: 16px;
+    }
+    .cfa-question-card {
+      padding: 16px;
+    }
+    .cfa-scale-btn {
+      width: 36px;
+      height: 36px;
+      font-size: 12px;
+    }
+    .cfa-input, .cfa-textarea {
+      font-size: 16px; /* prevents iOS zoom */
+    }
+    .cfa-option-label {
+      padding: 10px 12px; /* easier tap target */
+    }
+  }
+`;
+
 // ── Publisher Bar ─────────────────────────────────────────────────────────────
 function PublisherBar({
   name, image, publisherId, currentUserId,
@@ -110,11 +379,7 @@ function PublisherBar({
   if (!name) return null;
   if (publisherId && currentUserId && publisherId === currentUserId) return null;
   return (
-    <div style={{
-      display: "flex", alignItems: "center", gap: 10,
-      padding: "10px 20px", borderBottom: "1px solid #e5e7eb",
-      background: "#fafafa", flexShrink: 0,
-    }}>
+    <div className="cfa-publisher-bar">
       <div style={{
         width: 28, height: 28, borderRadius: "50%", overflow: "hidden",
         border: "1px solid #e5e7eb", background: "#f3f4f6",
@@ -124,7 +389,7 @@ function PublisherBar({
           ? <Image src={image} alt={name} width={28} height={28} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
           : <span style={{ fontSize: 11, fontWeight: 700, color: "#6b7280" }}>{name.charAt(0).toUpperCase()}</span>}
       </div>
-      <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "#6b7280" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "#6b7280", flexWrap: "wrap" }}>
         <span style={{ fontWeight: 600, color: "#1f2937" }}>{name}</span>
         <span style={{
           padding: "1px 6px", borderRadius: 4, fontSize: 10, fontWeight: 700,
@@ -164,10 +429,11 @@ function SectionDivider({ q }: { q: FormQuestion }) {
   return (
     <div style={{
       borderTop: `4px solid ${MAROON}`, borderRadius: 8,
-      background: "#fff", padding: "18px 24px",
+      background: "#fff", padding: "18px 20px",
       boxShadow: "0 1px 4px rgba(0,0,0,.06)",
+      border: "1px solid #e5e7eb",
     }}>
-      <div style={{ fontSize: 18, fontWeight: 800, color: "#111827" }}>
+      <div style={{ fontSize: 17, fontWeight: 800, color: "#111827" }}>
         {q.sectionTitle || "Section"}
       </div>
       {q.sectionDescription && (
@@ -191,14 +457,6 @@ function QuestionCard({
   const arrAnswer = Array.isArray(answer) ? answer : [];
   const gridAnswer = (typeof answer === "object" && !Array.isArray(answer)) ? answer as Record<string, string> : {};
 
-  const inputStyle: React.CSSProperties = {
-    width: "100%", boxSizing: "border-box",
-    border: "1px solid #d1d5db", borderRadius: 6,
-    padding: "8px 12px", fontSize: 13, outline: "none",
-    fontFamily: FONT, color: "#111827", background: "#fff",
-    transition: "border-color .15s",
-  };
-
   const renderInput = () => {
     switch (question.type) {
       case "short_answer":
@@ -208,9 +466,7 @@ function QuestionCard({
             value={strAnswer}
             onChange={e => onChange(e.target.value)}
             placeholder="Your answer"
-            style={inputStyle}
-            onFocus={e => (e.target.style.borderColor = MAROON)}
-            onBlur={e => (e.target.style.borderColor = "#d1d5db")}
+            className="cfa-input"
           />
         );
 
@@ -221,9 +477,7 @@ function QuestionCard({
             onChange={e => onChange(e.target.value)}
             placeholder="Your answer"
             rows={4}
-            style={{ ...inputStyle, resize: "vertical", lineHeight: 1.6 }}
-            onFocus={e => (e.target.style.borderColor = MAROON)}
-            onBlur={e => (e.target.style.borderColor = "#d1d5db")}
+            className="cfa-textarea"
           />
         );
 
@@ -233,20 +487,8 @@ function QuestionCard({
             {(question.options ?? []).map((opt, i) => {
               const checked = strAnswer === opt;
               return (
-                <label key={i} style={{
-                  display: "flex", alignItems: "center", gap: 10,
-                  cursor: "pointer", padding: "8px 12px", borderRadius: 6,
-                  border: `1px solid ${checked ? MAROON : "#e5e7eb"}`,
-                  background: checked ? "#fef2f2" : "#fff",
-                  transition: "all .15s",
-                }}>
-                  <div style={{
-                    width: 18, height: 18, borderRadius: "50%",
-                    border: `2px solid ${checked ? MAROON : "#d1d5db"}`,
-                    background: checked ? MAROON : "#fff",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    flexShrink: 0, transition: "all .15s",
-                  }}>
+                <label key={i} className={`cfa-option-label${checked ? " selected" : ""}`}>
+                  <div className={`cfa-radio-dot${checked ? " selected" : ""}`}>
                     {checked && <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#fff" }} />}
                   </div>
                   <input
@@ -270,20 +512,8 @@ function QuestionCard({
             {(question.options ?? []).map((opt, i) => {
               const checked = arrAnswer.includes(opt);
               return (
-                <label key={i} style={{
-                  display: "flex", alignItems: "center", gap: 10,
-                  cursor: "pointer", padding: "8px 12px", borderRadius: 6,
-                  border: `1px solid ${checked ? MAROON : "#e5e7eb"}`,
-                  background: checked ? "#fef2f2" : "#fff",
-                  transition: "all .15s",
-                }}>
-                  <div style={{
-                    width: 18, height: 18, borderRadius: 4,
-                    border: `2px solid ${checked ? MAROON : "#d1d5db"}`,
-                    background: checked ? MAROON : "#fff",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    flexShrink: 0, transition: "all .15s",
-                  }}>
+                <label key={i} className={`cfa-option-label${checked ? " selected" : ""}`}>
+                  <div className={`cfa-checkbox-dot${checked ? " selected" : ""}`}>
                     {checked && (
                       <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
                         <path d="M2 6l3 3 5-5" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -310,21 +540,23 @@ function QuestionCard({
 
       case "dropdown":
         return (
-          <select
-            value={strAnswer}
-            onChange={e => onChange(e.target.value)}
-            style={{
-              ...inputStyle, width: "auto", minWidth: 220,
-              appearance: "none", cursor: "pointer",
-              background: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 10px center #fff`,
-              paddingRight: 32,
-            }}
-          >
-            <option value="">Choose...</option>
-            {(question.options ?? []).map((opt, i) => (
-              <option key={i} value={opt}>{opt}</option>
-            ))}
-          </select>
+          <div style={{ position: "relative", display: "inline-block", minWidth: 220, maxWidth: "100%" }}>
+            <select
+              value={strAnswer}
+              onChange={e => onChange(e.target.value)}
+              className="cfa-input"
+              style={{ appearance: "none", WebkitAppearance: "none", paddingRight: 32, cursor: "pointer" }}
+            >
+              <option value="">Choose...</option>
+              {(question.options ?? []).map((opt, i) => (
+                <option key={i} value={opt}>{opt}</option>
+              ))}
+            </select>
+            <svg style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}
+              width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2">
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </div>
         );
 
       case "linear_scale": {
@@ -333,9 +565,9 @@ function QuestionCard({
         const range = Array.from({ length: max - min + 1 }, (_, i) => i + min);
         return (
           <div>
-            <div style={{ display: "flex", alignItems: "center", gap: 0, flexWrap: "wrap" }}>
+            <div className="cfa-scale-wrap">
               {question.scaleMinLabel && (
-                <span style={{ fontSize: 11, color: "#6b7280", marginRight: 8 }}>{question.scaleMinLabel}</span>
+                <span style={{ fontSize: 11, color: "#6b7280", marginRight: 4 }}>{question.scaleMinLabel}</span>
               )}
               {range.map(n => {
                 const sel = strAnswer === String(n);
@@ -344,19 +576,17 @@ function QuestionCard({
                     key={n}
                     type="button"
                     onClick={() => onChange(String(n))}
+                    className="cfa-scale-btn"
                     style={{
-                      width: 40, height: 40, borderRadius: "50%",
-                      border: `2px solid ${sel ? MAROON : "#d1d5db"}`,
+                      borderColor: sel ? MAROON : "#d1d5db",
                       background: sel ? MAROON : "#fff",
                       color: sel ? "#fff" : "#374151",
-                      fontSize: 13, fontWeight: 700, cursor: "pointer",
-                      transition: "all .15s", margin: "0 3px",
                     }}
                   >{n}</button>
                 );
               })}
               {question.scaleMaxLabel && (
-                <span style={{ fontSize: 11, color: "#6b7280", marginLeft: 8 }}>{question.scaleMaxLabel}</span>
+                <span style={{ fontSize: 11, color: "#6b7280", marginLeft: 4 }}>{question.scaleMaxLabel}</span>
               )}
             </div>
           </div>
@@ -369,15 +599,15 @@ function QuestionCard({
         const cols = question.columns ?? [];
         const isMulti = question.type === "checkbox_grid";
         return (
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ borderCollapse: "collapse", fontSize: 13, minWidth: 300 }}>
+          <div className="cfa-grid-wrap">
+            <table className="cfa-grid-table">
               <thead>
                 <tr>
-                  <th style={{ padding: "6px 12px", textAlign: "left", width: 120 }} />
+                  <th style={{ padding: "6px 10px", textAlign: "left", minWidth: 90 }} />
                   {cols.map((col, ci) => (
                     <th key={ci} style={{
-                      padding: "6px 16px", textAlign: "center",
-                      fontSize: 12, color: "#6b7280", fontWeight: 600,
+                      padding: "6px 12px", textAlign: "center",
+                      fontSize: 12, color: "#6b7280", fontWeight: 600, minWidth: 60,
                     }}>{col}</th>
                   ))}
                 </tr>
@@ -385,8 +615,8 @@ function QuestionCard({
               <tbody>
                 {rows.map((row, ri) => (
                   <tr key={ri} style={{ borderTop: "1px solid #f3f4f6" }}>
-                    <td style={{ padding: "8px 12px", fontSize: 13, color: "#374151", fontWeight: 500 }}>{row}</td>
-                    {cols.map((col, ci) => {
+                    <td style={{ padding: "8px 10px", fontSize: 13, color: "#374151", fontWeight: 500 }}>{row}</td>
+                    {cols.map((_, ci) => {
                       const cellKey = `${ri}`;
                       const colKey = `${ci}`;
                       const cellVal = gridAnswer[cellKey];
@@ -394,7 +624,7 @@ function QuestionCard({
                         ? (cellVal ?? "").split(",").includes(colKey)
                         : cellVal === colKey;
                       return (
-                        <td key={ci} style={{ padding: "8px 16px", textAlign: "center" }}>
+                        <td key={ci} style={{ padding: "8px 12px", textAlign: "center" }}>
                           <button
                             type="button"
                             onClick={() => {
@@ -412,12 +642,13 @@ function QuestionCard({
                               onChange(next);
                             }}
                             style={{
-                              width: 20, height: 20,
+                              width: 22, height: 22,
                               borderRadius: isMulti ? 4 : "50%",
                               border: `2px solid ${checked ? MAROON : "#d1d5db"}`,
                               background: checked ? MAROON : "#fff",
                               cursor: "pointer", transition: "all .15s",
                               display: "inline-flex", alignItems: "center", justifyContent: "center",
+                              minWidth: 22, flexShrink: 0,
                             }}
                           >
                             {checked && (
@@ -443,9 +674,8 @@ function QuestionCard({
             type="date"
             value={strAnswer}
             onChange={e => onChange(e.target.value)}
-            style={{ ...inputStyle, width: "auto", minWidth: 180 }}
-            onFocus={e => (e.target.style.borderColor = MAROON)}
-            onBlur={e => (e.target.style.borderColor = "#d1d5db")}
+            className="cfa-input"
+            style={{ width: "auto", minWidth: 180, maxWidth: "100%" }}
           />
         );
 
@@ -455,9 +685,8 @@ function QuestionCard({
             type="time"
             value={strAnswer}
             onChange={e => onChange(e.target.value)}
-            style={{ ...inputStyle, width: "auto", minWidth: 140 }}
-            onFocus={e => (e.target.style.borderColor = MAROON)}
-            onBlur={e => (e.target.style.borderColor = "#d1d5db")}
+            className="cfa-input"
+            style={{ width: "auto", minWidth: 140, maxWidth: "100%" }}
           />
         );
 
@@ -466,9 +695,10 @@ function QuestionCard({
           <div>
             <label style={{
               display: "inline-flex", alignItems: "center", gap: 8,
-              padding: "8px 16px", borderRadius: 6, cursor: "pointer",
+              padding: "10px 16px", borderRadius: 6, cursor: "pointer",
               border: `1px dashed ${MAROON}`, color: MAROON,
               fontSize: 13, fontWeight: 600, background: "#fef2f2",
+              minHeight: 44,
             }}>
               <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                 <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" strokeLinecap="round" strokeLinejoin="round" />
@@ -495,58 +725,43 @@ function QuestionCard({
   };
 
   return (
-    <div style={{
-      background: "#fff", borderRadius: 8, padding: "20px 24px",
-      border: `1px solid ${error ? "#fca5a5" : "#e5e7eb"}`,
-      boxShadow: error ? "0 0 0 2px #fee2e2" : "0 1px 3px rgba(0,0,0,.05)",
-      transition: "border-color .2s, box-shadow .2s",
-    }}>
-      {/* Question header */}
-      <div style={{ marginBottom: 14 }}>
-        <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
-          <span style={{
-            minWidth: 22, height: 22, borderRadius: "50%",
-            background: MAROON, color: "#fff",
-            fontSize: 11, fontWeight: 800,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            flexShrink: 0, marginTop: 1,
-          }}>{qIndex}</span>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: "#111827", lineHeight: 1.4 }}>
-              {question.question || <em style={{ color: "#9ca3af" }}>Untitled question</em>}
-              {question.required && (
-                <span style={{ color: MAROON, marginLeft: 4, fontWeight: 900 }}>*</span>
-              )}
-            </div>
-            {question.description && (
-              <div style={{ fontSize: 12, color: "#6b7280", marginTop: 4, lineHeight: 1.5 }}>
-                {question.description}
-              </div>
+    <div className={`cfa-question-card${error ? " error" : ""}`}>
+      <div className="cfa-question-header">
+        <span className="cfa-question-num">{qIndex}</span>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: "#111827", lineHeight: 1.4, wordBreak: "break-word" }}>
+            {question.question || <em style={{ color: "#9ca3af" }}>Untitled question</em>}
+            {question.required && (
+              <span style={{ color: MAROON, marginLeft: 4, fontWeight: 900 }}>*</span>
             )}
           </div>
-          {question.points > 0 && (
-            <span style={{
-              fontSize: 11, fontWeight: 700, color: "#6b7280",
-              background: "#f9fafb", border: "1px solid #e5e7eb",
-              borderRadius: 99, padding: "2px 8px", flexShrink: 0,
-            }}>{question.points} pt{question.points !== 1 ? "s" : ""}</span>
+          {question.description && (
+            <div style={{ fontSize: 12, color: "#6b7280", marginTop: 4, lineHeight: 1.5 }}>
+              {question.description}
+            </div>
           )}
         </div>
-        {error && (
-          <div style={{
-            display: "flex", alignItems: "center", gap: 6,
-            marginTop: 8, padding: "6px 10px", borderRadius: 6,
-            background: "#fef2f2", border: "1px solid #fca5a5",
-            fontSize: 12, color: "#b91c1c", fontWeight: 600,
-          }}>
-            <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
-            </svg>
-            This question is required.
-          </div>
+        {question.points > 0 && (
+          <span style={{
+            fontSize: 11, fontWeight: 700, color: "#6b7280",
+            background: "#f9fafb", border: "1px solid #e5e7eb",
+            borderRadius: 99, padding: "2px 8px", flexShrink: 0, whiteSpace: "nowrap",
+          }}>{question.points} pt{question.points !== 1 ? "s" : ""}</span>
         )}
       </div>
-      {/* Answer input */}
+      {error && (
+        <div style={{
+          display: "flex", alignItems: "center", gap: 6,
+          marginBottom: 12, padding: "6px 10px", borderRadius: 6,
+          background: "#fef2f2", border: "1px solid #fca5a5",
+          fontSize: 12, color: "#b91c1c", fontWeight: 600,
+        }}>
+          <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
+          This question is required.
+        </div>
+      )}
       {renderInput()}
     </div>
   );
@@ -560,14 +775,11 @@ function ConfirmationScreen({
   onSubmitAnother: () => void; onBack: () => void;
 }) {
   return (
-    <div style={{
-      flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
-      padding: 32,
-    }}>
+    <div className="cfa-confirmation">
       <div style={{
         background: "#fff", borderRadius: 12, border: "1px solid #e5e7eb",
         boxShadow: "0 4px 24px rgba(0,0,0,.08)",
-        padding: "40px 36px", textAlign: "center", maxWidth: 420, width: "100%",
+        padding: "40px 28px", textAlign: "center", maxWidth: 420, width: "100%",
       }}>
         <div style={{
           width: 64, height: 64, borderRadius: "50%",
@@ -585,15 +797,15 @@ function ConfirmationScreen({
         <p style={{ fontSize: 14, color: "#6b7280", lineHeight: 1.6, marginBottom: 24 }}>
           {message || "Thank you for completing this form."}
         </p>
-        <div style={{ display: "flex", flexDirection: "column", gap: 10, alignItems: "center" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {allowMultiple && (
             <button
               type="button"
               onClick={onSubmitAnother}
               style={{
-                padding: "10px 24px", borderRadius: 8, border: `2px solid ${MAROON}`,
+                padding: "12px 24px", borderRadius: 8, border: `2px solid ${MAROON}`,
                 color: MAROON, background: "#fff", fontSize: 13, fontWeight: 700,
-                cursor: "pointer", width: "100%",
+                cursor: "pointer", width: "100%", minHeight: 44,
               }}
             >Submit another response</button>
           )}
@@ -601,9 +813,9 @@ function ConfirmationScreen({
             type="button"
             onClick={onBack}
             style={{
-              padding: "10px 24px", borderRadius: 8, border: "none",
+              padding: "12px 24px", borderRadius: 8, border: "none",
               color: "#fff", background: MAROON, fontSize: 13, fontWeight: 700,
-              cursor: "pointer", width: "100%",
+              cursor: "pointer", width: "100%", minHeight: 44,
             }}
           >Back to Forms</button>
         </div>
@@ -630,10 +842,8 @@ export default function CourseFormAnswer({
   const [submitError, setSubmitError] = useState<string | null>(null);
   const topRef = useRef<HTMLDivElement>(null);
 
-  // Only non-section questions are answerable
   const answerableQuestions = form.questions.filter(q => q.type !== "section");
 
-  // Count answered (non-empty)
   const answeredCount = answerableQuestions.filter(q => {
     const val = answers[q.id];
     if (val === undefined || val === null) return false;
@@ -662,31 +872,18 @@ export default function CourseFormAnswer({
   };
 
   const handleSubmit = async () => {
-    if (!validate()) {
-      // Scroll to first error
-      const firstErr = answerableQuestions.find(q => errors.has(q.id));
-      if (firstErr) {
-        document.getElementById(`q-${firstErr.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
-      }
-      return;
-    }
+    if (!validate()) return;
     setSubmitting(true);
     setSubmitError(null);
     try {
-      // Build structured answers array for the API
       const answersPayload = Object.entries(answers).map(([questionId, value]) => ({
         questionId,
         value: typeof value === "object" ? JSON.stringify(value) : value,
       }));
-
-      // WITH THIS:
       const res = await fetch(`/api/courses/${courseId}/forms/${form.id}/submissions`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId: currentUserId,
-          answers: answersPayload,
-        }),
+        body: JSON.stringify({ userId: currentUserId, answers: answersPayload }),
       });
       if (res.status === 409) {
         setSubmitError("You have already submitted a response to this form.");
@@ -710,7 +907,6 @@ export default function CourseFormAnswer({
     topRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  // Validate on submit re-run after errors set
   useEffect(() => {
     if (errors.size > 0) {
       const firstErrId = answerableQuestions.find(q => errors.has(q.id))?.id;
@@ -726,213 +922,185 @@ export default function CourseFormAnswer({
   const isClosed = !!availableUntilDate && now > availableUntilDate;
 
   return (
-    <div ref={topRef} style={{
-      display: "flex", flexDirection: "column", height: "100%",
-      background: "#f9fafb", fontFamily: FONT,
-    }}>
-      {/* Top bar */}
-      <div style={{
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "10px 20px", borderBottom: "1px solid #e5e7eb",
-        background: "#fff", flexShrink: 0, flexWrap: "wrap", gap: 8,
+    <>
+      <style>{ANSWER_CSS}</style>
+      <div ref={topRef} style={{
+        display: "flex", flexDirection: "column", height: "100%",
+        background: "#f9fafb", fontFamily: FONT,
       }}>
-        <button
-          onClick={onBack}
-          style={{
-            display: "flex", alignItems: "center", gap: 6,
-            background: "none", border: "none", cursor: "pointer",
-            color: MAROON, fontSize: 14, fontWeight: 700, padding: 0,
-          }}
-        >
-          <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-          </svg>
-          Back to Forms &amp; Quizzes
-        </button>
-        {!submitted && !isClosed && (
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={submitting}
-            style={{
-              padding: "8px 20px", borderRadius: 8, border: "none",
-              background: submitting ? "#9ca3af" : MAROON,
-              color: "#fff", fontSize: 13, fontWeight: 800,
-              cursor: submitting ? "not-allowed" : "pointer",
-              transition: "background .15s",
-            }}
-          >
-            {submitting ? "Submitting..." : "Submit"}
+        {/* Top bar */}
+        <div className="cfa-topbar">
+          <button onClick={onBack} className="cfa-back-btn">
+            <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+            <span>Back to Forms &amp; Quizzes</span>
           </button>
-        )}
-      </div>
+          {!submitted && !isClosed && (
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={submitting}
+              className="cfa-submit-btn"
+            >
+              {submitting ? "Submitting..." : "Submit"}
+            </button>
+          )}
+        </div>
 
-      {/* Publisher bar */}
-      <PublisherBar
-        name={form._publisherName}
-        image={form._publisherImage}
-        publisherId={form._publisherId}
-        currentUserId={currentUserId}
-      />
-
-      {submitted ? (
-        <ConfirmationScreen
-          message={form.confirmationMessage}
-          allowMultiple={form.allowMultipleResponses}
-          onSubmitAnother={handleSubmitAnother}
-          onBack={onBack}
+        {/* Publisher bar */}
+        <PublisherBar
+          name={form._publisherName}
+          image={form._publisherImage}
+          publisherId={form._publisherId}
+          currentUserId={currentUserId}
         />
-      ) : (
-        <div style={{ flex: 1, overflowY: "auto" }}>
-          <div style={{ maxWidth: 720, width: "100%", margin: "0 auto", padding: "28px 20px 80px" }}>
 
-            {/* Form header card */}
-            <div style={{
-              background: "#fff", borderRadius: 8, marginBottom: 20,
-              borderTop: `6px solid ${MAROON}`,
-              border: "1px solid #e5e7eb",
-              boxShadow: "0 1px 4px rgba(0,0,0,.06)",
-              overflow: "hidden",
-            }}>
-              <div style={{ padding: "20px 24px" }}>
-                <h1 style={{ fontSize: 22, fontWeight: 900, color: "#111827", marginBottom: 10 }}>
-                  {form.title}
-                </h1>
-                {/* Meta row */}
-                <div style={{ display: "flex", gap: 16, flexWrap: "wrap", marginBottom: form.description ? 14 : 0 }}>
-                  <span style={{
-                    display: "inline-flex", alignItems: "center", gap: 5,
-                    padding: "3px 10px", borderRadius: 99, fontSize: 11, fontWeight: 700,
-                    color: "#fff", background: TYPE_COLORS[form.formType] ?? MAROON,
-                  }}>{form.formType}</span>
-                  {form.formType === "Graded Assessment" && (
-                    <span style={{ fontSize: 12, color: "#374151", display: "flex", alignItems: "center", gap: 3 }}>
-                      <strong>{form.points}</strong> points
-                    </span>
-                  )}
-                  {answerableQuestions.length > 0 && (
-                    <span style={{ fontSize: 12, color: "#6b7280" }}>
-                      {answerableQuestions.length} question{answerableQuestions.length !== 1 ? "s" : ""}
-                    </span>
-                  )}
-                  {form.dueDate && (
-                    <span style={{ fontSize: 12, color: "#6b7280" }}>
-                      Due <strong style={{ color: "#374151" }}>{fmtDue(form.dueDate, form.dueTime)}</strong>
-                    </span>
+        {submitted ? (
+          <ConfirmationScreen
+            message={form.confirmationMessage}
+            allowMultiple={form.allowMultipleResponses}
+            onSubmitAnother={handleSubmitAnother}
+            onBack={onBack}
+          />
+        ) : (
+          <div className="cfa-content">
+            <div className="cfa-inner">
+              {/* Form header card */}
+              <div className="cfa-header-card">
+                <div className="cfa-header-card-body">
+                  <h1 style={{ fontSize: 20, fontWeight: 900, color: "#111827", marginBottom: 10, wordBreak: "break-word" }}>
+                    {form.title}
+                  </h1>
+                  <div className="cfa-meta-row">
+                    <span style={{
+                      display: "inline-flex", alignItems: "center", gap: 5,
+                      padding: "3px 10px", borderRadius: 99, fontSize: 11, fontWeight: 700,
+                      color: "#fff", background: TYPE_COLORS[form.formType] ?? MAROON,
+                      whiteSpace: "nowrap",
+                    }}>{form.formType}</span>
+                    {form.formType === "Graded Assessment" && (
+                      <span style={{ fontSize: 12, color: "#374151", display: "flex", alignItems: "center", gap: 3 }}>
+                        <strong>{form.points}</strong> points
+                      </span>
+                    )}
+                    {answerableQuestions.length > 0 && (
+                      <span style={{ fontSize: 12, color: "#6b7280" }}>
+                        {answerableQuestions.length} question{answerableQuestions.length !== 1 ? "s" : ""}
+                      </span>
+                    )}
+                    {form.dueDate && (
+                      <span style={{ fontSize: 12, color: "#6b7280" }}>
+                        Due <strong style={{ color: "#374151" }}>{fmtDue(form.dueDate, form.dueTime)}</strong>
+                      </span>
+                    )}
+                  </div>
+                  {form.description && (
+                    <div
+                      style={{ fontSize: 13, color: "#374151", lineHeight: 1.7 }}
+                      dangerouslySetInnerHTML={{ __html: form.description }}
+                    />
                   )}
                 </div>
-                {form.description && (
-                  <div
-                    style={{ fontSize: 13, color: "#374151", lineHeight: 1.7 }}
-                    dangerouslySetInnerHTML={{ __html: form.description }}
-                  />
+                {answerableQuestions.length > 0 && (
+                  <div style={{ padding: "0 20px 16px" }}>
+                    <ProgressBar answered={answeredCount} total={answerableQuestions.length} />
+                  </div>
                 )}
               </div>
-              {/* Progress */}
-              {answerableQuestions.length > 0 && (
-                <div style={{ padding: "0 24px 16px" }}>
-                  <ProgressBar answered={answeredCount} total={answerableQuestions.length} />
+
+              {/* Closed banner */}
+              {isClosed && (
+                <div style={{
+                  display: "flex", alignItems: "center", gap: 8,
+                  padding: "12px 16px", borderRadius: 8, marginBottom: 16,
+                  background: "#f3f4f6", border: "1px solid #d1d5db",
+                  fontSize: 13, fontWeight: 600, color: "#6b7280",
+                }}>
+                  <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <rect x="3" y="11" width="18" height="11" rx="2" />
+                    <path d="M7 11V7a5 5 0 0110 0v4" />
+                  </svg>
+                  This form is closed. Submissions are no longer accepted.
+                </div>
+              )}
+
+              {/* Submit error */}
+              {submitError && (
+                <div style={{
+                  display: "flex", alignItems: "center", gap: 8,
+                  padding: "10px 14px", borderRadius: 8, marginBottom: 16,
+                  background: "#fef2f2", border: "1px solid #fca5a5",
+                  fontSize: 13, fontWeight: 600, color: "#b91c1c",
+                }}>
+                  <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+                  </svg>
+                  {submitError}
+                </div>
+              )}
+
+              {/* Required note */}
+              {answerableQuestions.some(q => q.required) && (
+                <p style={{ fontSize: 12, color: "#6b7280", marginBottom: 16 }}>
+                  <span style={{ color: MAROON, fontWeight: 900 }}>*</span> Required
+                </p>
+              )}
+
+              {/* No questions fallback */}
+              {form.questions.length === 0 && (
+                <div style={{
+                  background: "#fff", borderRadius: 8, border: "1px solid #e5e7eb",
+                  padding: "48px 24px", textAlign: "center",
+                }}>
+                  <div style={{ fontSize: 32, marginBottom: 12 }}>📋</div>
+                  <p style={{ fontSize: 14, color: "#9ca3af" }}>This form has no questions yet.</p>
+                </div>
+              )}
+
+              {/* Questions */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                {(() => {
+                  let qIndex = 0;
+                  return form.questions.map(q => {
+                    if (q.type === "section") {
+                      return <SectionDivider key={q.id} q={q} />;
+                    }
+                    qIndex += 1;
+                    const idx = qIndex;
+                    return (
+                      <div key={q.id} id={`q-${q.id}`}>
+                        <QuestionCard
+                          question={q}
+                          answer={answers[q.id] ?? ""}
+                          onChange={val => setAnswer(q.id, val)}
+                          error={errors.has(q.id)}
+                          qIndex={idx}
+                        />
+                      </div>
+                    );
+                  });
+                })()}
+              </div>
+
+              {/* Bottom submit button */}
+              {!isClosed && form.questions.length > 0 && (
+                <div style={{ marginTop: 28, display: "flex", justifyContent: "flex-end" }}>
+                  <button
+                    type="button"
+                    onClick={handleSubmit}
+                    disabled={submitting}
+                    className="cfa-submit-btn"
+                    style={{ width: "100%", maxWidth: 200 }}
+                  >
+                    {submitting ? "Submitting..." : "Submit"}
+                  </button>
                 </div>
               )}
             </div>
-
-            {/* Closed banner */}
-            {isClosed && (
-              <div style={{
-                display: "flex", alignItems: "center", gap: 8,
-                padding: "12px 16px", borderRadius: 8, marginBottom: 16,
-                background: "#f3f4f6", border: "1px solid #d1d5db",
-                fontSize: 13, fontWeight: 600, color: "#6b7280",
-              }}>
-                <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                  <rect x="3" y="11" width="18" height="11" rx="2" />
-                  <path d="M7 11V7a5 5 0 0110 0v4" />
-                </svg>
-                This form is closed. Submissions are no longer accepted.
-              </div>
-            )}
-
-            {/* Submit error */}
-            {submitError && (
-              <div style={{
-                display: "flex", alignItems: "center", gap: 8,
-                padding: "10px 14px", borderRadius: 8, marginBottom: 16,
-                background: "#fef2f2", border: "1px solid #fca5a5",
-                fontSize: 13, fontWeight: 600, color: "#b91c1c",
-              }}>
-                <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                  <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
-                </svg>
-                {submitError}
-              </div>
-            )}
-
-            {/* Required note */}
-            {answerableQuestions.some(q => q.required) && (
-              <p style={{ fontSize: 12, color: "#6b7280", marginBottom: 16 }}>
-                <span style={{ color: MAROON, fontWeight: 900 }}>*</span> Required
-              </p>
-            )}
-
-            {/* No questions fallback */}
-            {form.questions.length === 0 && (
-              <div style={{
-                background: "#fff", borderRadius: 8, border: "1px solid #e5e7eb",
-                padding: "48px 24px", textAlign: "center",
-              }}>
-                <div style={{ fontSize: 32, marginBottom: 12 }}>📋</div>
-                <p style={{ fontSize: 14, color: "#9ca3af" }}>This form has no questions yet.</p>
-              </div>
-            )}
-
-            {/* Questions */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              {(() => {
-                let qIndex = 0;
-                return form.questions.map(q => {
-                  if (q.type === "section") {
-                    return <SectionDivider key={q.id} q={q} />;
-                  }
-                  qIndex += 1;
-                  const idx = qIndex;
-                  return (
-                    <div key={q.id} id={`q-${q.id}`}>
-                      <QuestionCard
-                        question={q}
-                        answer={answers[q.id] ?? ""}
-                        onChange={val => setAnswer(q.id, val)}
-                        error={errors.has(q.id)}
-                        qIndex={idx}
-                      />
-                    </div>
-                  );
-                });
-              })()}
-            </div>
-
-            {/* Bottom submit button */}
-            {!isClosed && form.questions.length > 0 && (
-              <div style={{ marginTop: 28, display: "flex", justifyContent: "flex-end" }}>
-                <button
-                  type="button"
-                  onClick={handleSubmit}
-                  disabled={submitting}
-                  style={{
-                    padding: "11px 32px", borderRadius: 8, border: "none",
-                    background: submitting ? "#9ca3af" : MAROON,
-                    color: "#fff", fontSize: 14, fontWeight: 800,
-                    cursor: submitting ? "not-allowed" : "pointer",
-                    boxShadow: "0 2px 8px rgba(123,17,19,.25)",
-                    transition: "background .15s",
-                  }}
-                >
-                  {submitting ? "Submitting..." : "Submit"}
-                </button>
-              </div>
-            )}
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+    </>
   );
 }

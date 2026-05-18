@@ -20,14 +20,14 @@ function RoleBadge({ role }: { role?: string | null }) {
   if (!role) return null;
   const normalized = role.toUpperCase();
   const styles: Record<string, React.CSSProperties> = {
-    ADMIN: { background: "#fef2f2", color: MAROON, border: "1px solid #fecaca" },
-    HEAD: { background: "#fff7ed", color: "#c2410c", border: "1px solid #fed7aa" },
-    STAFF: { background: "#eff6ff", color: "#1d4ed8", border: "1px solid #bfdbfe" },
+    ADMIN:   { background: "#fef2f2", color: MAROON,    border: "1px solid #fecaca" },
+    HEAD:    { background: "#fff7ed", color: "#c2410c", border: "1px solid #fed7aa" },
+    STAFF:   { background: "#eff6ff", color: "#1d4ed8", border: "1px solid #bfdbfe" },
     TEACHER: { background: "#f5f3ff", color: "#6d28d9", border: "1px solid #ddd6fe" },
   };
   const style = styles[normalized] ?? { background: "#f3f4f6", color: "#374151", border: "1px solid #e5e7eb" };
   return (
-    <span style={{ ...style, fontSize: 9, fontWeight: 800, letterSpacing: "0.12em", padding: "1px 6px", borderRadius: 4, textTransform: "uppercase" }}>
+    <span style={{ ...style, fontSize: 9, fontWeight: 800, letterSpacing: "0.12em", padding: "1px 6px", borderRadius: 4, textTransform: "uppercase", whiteSpace: "nowrap" }}>
       {normalized}
     </span>
   );
@@ -37,14 +37,14 @@ function RoleBadge({ role }: { role?: string | null }) {
 function PublisherChip({ name, image, role }: { name?: string | null; image?: string | null; role?: string | null }) {
   if (!name) return null;
   return (
-    <span className="flex items-center gap-1.5">
-      <span className="w-5 h-5 rounded-full overflow-hidden border border-gray-200 bg-gray-100 flex items-center justify-center shrink-0 text-[9px] font-black text-white" style={{ background: MAROON }}>
+    <span style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
+      <span style={{ width: 20, height: 20, borderRadius: "50%", overflow: "hidden", border: "1px solid #e5e7eb", background: "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 9, fontWeight: 900, color: "#fff", backgroundColor: MAROON }}>
         {image
           // eslint-disable-next-line @next/next/no-img-element
-          ? <img src={image} alt={name} className="w-full h-full object-cover" />
+          ? <img src={image} alt={name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
           : name.charAt(0).toUpperCase()}
       </span>
-      <span className="text-xs font-semibold text-gray-700 truncate max-w-30">{name}</span>
+      <span style={{ fontSize: 11, fontWeight: 600, color: "#374151", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 100 }}>{name}</span>
       <RoleBadge role={role} />
     </span>
   );
@@ -75,71 +75,64 @@ function AssignmentRow({
 
   return (
     <div
-      className="flex items-start sm:items-center gap-3 px-4 sm:px-5 py-3.5 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-0 relative cursor-pointer group"
+      style={{ position: "relative", cursor: "pointer", borderBottom: "1px solid #f3f4f6", padding: "14px 16px 14px 20px", display: "flex", alignItems: "flex-start", gap: 12 }}
       onClick={() => onSelect(a)}
+      onMouseEnter={e => (e.currentTarget.style.background = "#f9fafb")}
+      onMouseLeave={e => (e.currentTarget.style.background = "")}
     >
       {/* Left accent bar */}
-      <div className="absolute left-0 top-0 bottom-0 w-0.5 rounded-full" style={{ background: MAROON }} />
+      <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 3, borderRadius: 9, background: MAROON }} />
 
-      {/* Submitted check or doc icon */}
-      <div className="shrink-0 mt-0.5">
+      {/* Icon */}
+      <div style={{ flexShrink: 0, marginTop: 1 }}>
         {sub?.submittedAt
-          ? <CheckCircle size={18} className="text-green-500" />
+          ? <CheckCircle size={18} style={{ color: "#22c55e" }} />
           : <AssignmentIcon className="w-5 h-5 text-gray-400" />}
       </div>
 
-      <div className="flex-1 min-w-0">
+      <div style={{ flex: 1, minWidth: 0 }}>
         {/* Title */}
-        <p
-          className="text-sm font-semibold truncate group-hover:underline"
-          style={{ color: MAROON, fontFamily: FONT }}
-        >
+        <p style={{ fontSize: 13, fontWeight: 700, color: MAROON, fontFamily: FONT, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           {a.title}
         </p>
 
-        {/* Meta row */}
-        <div className="flex items-center gap-2 mt-1 flex-wrap text-xs text-gray-500">
-          {/* Availability status */}
+        {/* Meta row — wraps on mobile */}
+        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "4px 8px", marginTop: 5 }}>
           {isLocked && (
-            <span className="font-medium text-amber-600">Opens {fmtDate(a.availableFrom)}</span>
+            <span style={{ fontSize: 11, fontWeight: 600, color: "#d97706" }}>Opens {fmtDate(a.availableFrom)}</span>
           )}
           {isClosed && !isLocked && (
-            <span className="font-medium text-gray-500">Closed</span>
+            <span style={{ fontSize: 11, fontWeight: 600, color: "#6b7280" }}>Closed</span>
           )}
           {!isLocked && !isClosed && a.availableFrom && a.availableUntil && (
-            <span className="font-medium text-gray-600">Available {fmtAvail(a.availableFrom, a.availableUntil)}</span>
+            <span style={{ fontSize: 11, fontWeight: 600, color: "#374151" }}>Available {fmtAvail(a.availableFrom, a.availableUntil)}</span>
           )}
 
-          {/* Due date */}
           {a.dueDate && (
             <>
-              <span className="text-gray-300">·</span>
-              <span>
-                <span className="font-medium text-gray-700">Due</span>{" "}
-                {fmtDate(a.dueDate)}
+              <span style={{ color: "#d1d5db", fontSize: 11 }}>·</span>
+              <span style={{ fontSize: 11, color: "#6b7280" }}>
+                <span style={{ fontWeight: 600, color: "#374151" }}>Due</span>{" "}{fmtDate(a.dueDate)}
               </span>
             </>
           )}
 
-          {/* Points */}
-          <span className="text-gray-300">·</span>
-          <span className={sub?.grade != null ? "font-bold text-gray-800" : ""}>
+          <span style={{ color: "#d1d5db", fontSize: 11 }}>·</span>
+          <span style={{ fontSize: 11, color: sub?.grade != null ? "#111827" : "#6b7280", fontWeight: sub?.grade != null ? 700 : 400 }}>
             {sub?.grade != null ? `${sub.grade} / ${a.points} pts` : `- / ${a.points} pts`}
           </span>
 
-          {/* Publisher */}
           {a._publisherName && (
             <>
-              <span className="text-gray-300">·</span>
+              <span style={{ color: "#d1d5db", fontSize: 11 }}>·</span>
               <PublisherChip name={a._publisherName} image={a._publisherImage} role={a._publisherRole} />
             </>
           )}
 
-          {/* Submitted badge */}
           {sub?.submittedAt && (
             <>
-              <span className="text-gray-300">·</span>
-              <span className="font-semibold text-green-600 flex items-center gap-1">
+              <span style={{ color: "#d1d5db", fontSize: 11 }}>·</span>
+              <span style={{ fontSize: 11, fontWeight: 700, color: "#16a34a", display: "flex", alignItems: "center", gap: 3 }}>
                 <CheckCircle size={11} /> Submitted
               </span>
             </>
@@ -152,33 +145,21 @@ function AssignmentRow({
 
 /* ─── Collapsible Section ────────────────────────────────────────────────── */
 function AssignmentSection({
-  title,
-  count,
-  items,
-  onSelect,
+  title, count, items, onSelect,
 }: {
-  title: string;
-  count: number;
-  items: AssignmentWithRole[];
-  onSelect: (a: AssignmentWithRole) => void;
+  title: string; count: number; items: AssignmentWithRole[]; onSelect: (a: AssignmentWithRole) => void;
 }) {
   const [collapsed, setCollapsed] = useState(false);
   return (
-    <div className="mb-1">
-      {/* Section header — matches Head UI style */}
+    <div style={{ marginBottom: 4 }}>
       <div
-        className="flex items-center gap-2 px-4 sm:px-5 py-2.5 cursor-pointer select-none border-b border-gray-200"
-        style={{ background: "#fafafa" }}
+        style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 16px", cursor: "pointer", userSelect: "none", borderBottom: "1px solid #e5e7eb", background: "#fafafa" }}
         onClick={() => setCollapsed(c => !c)}
       >
-        <span
-          className="text-[10px] transition-transform inline-block text-gray-400"
-          style={{ transform: collapsed ? "rotate(-90deg)" : "rotate(0deg)" }}
-        >▼</span>
-        <span className="text-sm font-bold text-gray-700">{title}</span>
-        <span className="text-xs text-gray-400 ml-0.5">({count})</span>
+        <span style={{ fontSize: 10, color: "#9ca3af", transition: "transform 0.15s", display: "inline-block", transform: collapsed ? "rotate(-90deg)" : "rotate(0deg)" }}>▼</span>
+        <span style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>{title}</span>
+        <span style={{ fontSize: 11, color: "#9ca3af" }}>({count})</span>
       </div>
-
       {!collapsed && (
         <div>
           {items.map(a => (
@@ -190,50 +171,34 @@ function AssignmentSection({
   );
 }
 
-/* ─── Publisher Group (for "By Author" view) ─────────────────────────────── */
+/* ─── Publisher Group ─────────────────────────────────────────────────────── */
 function PublisherGroup({
-  publisherName,
-  publisherImage,
-  publisherRole,
-  items,
-  onSelect,
+  publisherName, publisherImage, publisherRole, items, onSelect,
 }: {
-  publisherName: string;
-  publisherImage?: string | null;
-  publisherRole?: string | null;
-  items: AssignmentWithRole[];
-  onSelect: (a: AssignmentWithRole) => void;
+  publisherName: string; publisherImage?: string | null; publisherRole?: string | null;
+  items: AssignmentWithRole[]; onSelect: (a: AssignmentWithRole) => void;
 }) {
   const [collapsed, setCollapsed] = useState(false);
   return (
-    <div className="border border-gray-200 rounded-xl overflow-hidden mb-3">
-      {/* Group header */}
+    <div style={{ border: "1px solid #e5e7eb", borderRadius: 12, overflow: "hidden", marginBottom: 12 }}>
       <div
-        className="flex items-center gap-3 px-4 py-3 cursor-pointer select-none"
-        style={{ background: "#f0f4ff" }}
+        style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 16px", cursor: "pointer", userSelect: "none", background: "#eff6ff" }}
         onClick={() => setCollapsed(c => !c)}
       >
-        <span
-          className="text-[10px] transition-transform inline-block text-gray-400"
-          style={{ transform: collapsed ? "rotate(-90deg)" : "rotate(0deg)" }}
-        >▼</span>
-        <div className="w-7 h-7 rounded-full overflow-hidden border-2 border-white shadow shrink-0 flex items-center justify-center text-xs font-black text-white" style={{ background: MAROON }}>
+        <span style={{ fontSize: 10, color: "#9ca3af", transition: "transform 0.15s", display: "inline-block", transform: collapsed ? "rotate(-90deg)" : "rotate(0deg)" }}>▼</span>
+        <div style={{ width: 28, height: 28, borderRadius: "50%", overflow: "hidden", border: "2px solid #fff", boxShadow: "0 1px 4px rgba(0,0,0,.12)", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 900, color: "#fff", background: MAROON }}>
           {publisherImage
             // eslint-disable-next-line @next/next/no-img-element
-            ? <img src={publisherImage} alt={publisherName} className="w-full h-full object-cover" />
+            ? <img src={publisherImage} alt={publisherName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             : publisherName.charAt(0).toUpperCase()}
         </div>
-        <span className="text-sm font-bold text-gray-800">{publisherName}</span>
+        <span style={{ fontSize: 13, fontWeight: 700, color: "#1e3a8a", flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{publisherName}</span>
         {publisherRole && <RoleBadge role={publisherRole} />}
-        <span className="text-xs text-gray-400 ml-auto">({items.length})</span>
+        <span style={{ fontSize: 11, color: "#93c5fd", marginLeft: "auto" }}>({items.length})</span>
       </div>
-
-      {/* Items */}
       {!collapsed && (
-        <div className="border-t border-gray-100">
-          {items.map(a => (
-            <AssignmentRow key={a.id} a={a} onSelect={onSelect} />
-          ))}
+        <div style={{ borderTop: "1px solid #e5e7eb" }}>
+          {items.map(a => <AssignmentRow key={a.id} a={a} onSelect={onSelect} />)}
         </div>
       )}
     </div>
@@ -257,7 +222,6 @@ export default function CourseAssignmentsStaffList({ assignments, courseId, onSe
     a.title.toLowerCase().includes(search.toLowerCase())
   );
 
-  // ── By Name groups ─────────────────────────────────────────────────────────
   const upcoming: AssignmentWithRole[] = [];
   const undated: AssignmentWithRole[] = [];
   const past: AssignmentWithRole[] = [];
@@ -267,18 +231,10 @@ export default function CourseAssignmentsStaffList({ assignments, courseId, onSe
     else past.push(a);
   });
 
-  // ── By Author groups ────────────────────────────────────────────────────────
-  const authorMap = new Map<string, {
-    name: string;
-    image?: string | null;
-    role?: string | null;
-    items: AssignmentWithRole[];
-  }>();
+  const authorMap = new Map<string, { name: string; image?: string | null; role?: string | null; items: AssignmentWithRole[] }>();
   filtered.forEach(a => {
     const key = a._publisherName ?? "Unknown";
-    if (!authorMap.has(key)) {
-      authorMap.set(key, { name: key, image: a._publisherImage, role: a._publisherRole, items: [] });
-    }
+    if (!authorMap.has(key)) authorMap.set(key, { name: key, image: a._publisherImage, role: a._publisherRole, items: [] });
     authorMap.get(key)!.items.push(a);
   });
 
@@ -289,30 +245,24 @@ export default function CourseAssignmentsStaffList({ assignments, courseId, onSe
   return (
     <div style={{ fontFamily: FONT }}>
       {/* ── Toolbar ── */}
-      <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-b border-gray-200 gap-2 flex-wrap bg-white">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", borderBottom: "1px solid #e5e7eb", background: "#fff", flexWrap: "wrap", gap: 8 }}>
+        <div style={{ position: "relative" }}>
+          <Search style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", width: 13, height: 13, color: "#9ca3af" }} />
           <input
             placeholder="Search assignments..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="pl-9 pr-4 py-1.5 border rounded-lg text-sm w-48 sm:w-60 focus:outline-none focus:border-gray-400 transition-colors"
-            style={{ borderColor: "#d1d5db", fontFamily: FONT }}
+            style={{ paddingLeft: 32, paddingRight: 14, paddingTop: 6, paddingBottom: 6, border: "1px solid #d1d5db", borderRadius: 8, fontSize: 13, width: "min(200px, calc(100vw - 200px))", outline: "none", fontFamily: FONT }}
           />
         </div>
-
-        {/* View toggle — matches Head UI */}
-        <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden">
+        <div style={{ display: "flex", border: "1px solid #e5e7eb", borderRadius: 8, overflow: "hidden" }}>
           {(["name", "author"] as const).map(mode => (
             <button
               key={mode}
               onClick={() => setViewMode(mode)}
-              className="px-3 py-1.5 text-xs font-bold transition-colors whitespace-nowrap"
-              style={viewMode === mode
-                ? { background: MAROON, color: "#fff" }
-                : { background: "transparent", color: "#6b7280" }}
+              style={{ padding: "6px 12px", fontSize: 11, fontWeight: 700, cursor: "pointer", border: "none", whiteSpace: "nowrap", background: viewMode === mode ? MAROON : "transparent", color: viewMode === mode ? "#fff" : "#6b7280", transition: "background 0.15s" }}
             >
-              {mode === "name" ? "Show by Name" : "By Author"}
+              {mode === "name" ? "By Name" : "By Author"}
             </button>
           ))}
         </div>
@@ -320,11 +270,11 @@ export default function CourseAssignmentsStaffList({ assignments, courseId, onSe
 
       {/* ── Empty state ── */}
       {filtered.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-20 text-gray-400">
-          <svg className="w-10 h-10 mb-3 opacity-30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "60px 20px", color: "#9ca3af" }}>
+          <svg style={{ width: 40, height: 40, marginBottom: 12, opacity: 0.3 }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
             <rect x="4" y="3" width="14" height="18" rx="2" /><path d="M8 8h8M8 12h8M8 16h5" strokeLinecap="round" />
           </svg>
-          <p className="text-sm font-semibold">
+          <p style={{ fontSize: 13, fontWeight: 600 }}>
             {search ? `No assignments found for "${search}".` : "No assignments yet."}
           </p>
         </div>
@@ -332,37 +282,16 @@ export default function CourseAssignmentsStaffList({ assignments, courseId, onSe
 
       {/* ── By Name view ── */}
       {filtered.length > 0 && viewMode === "name" && (
-        <div className="py-2">
-          {upcoming.length > 0 && (
-            <AssignmentSection
-              title="Upcoming Assignments"
-              count={upcoming.length}
-              items={upcoming}
-              onSelect={handleSelect}
-            />
-          )}
-          {undated.length > 0 && (
-            <AssignmentSection
-              title="Undated Assignments"
-              count={undated.length}
-              items={undated}
-              onSelect={handleSelect}
-            />
-          )}
-          {past.length > 0 && (
-            <AssignmentSection
-              title="Past Assignments"
-              count={past.length}
-              items={past}
-              onSelect={handleSelect}
-            />
-          )}
+        <div style={{ paddingTop: 8, paddingBottom: 8 }}>
+          {upcoming.length > 0 && <AssignmentSection title="Upcoming" count={upcoming.length} items={upcoming} onSelect={handleSelect} />}
+          {undated.length > 0 && <AssignmentSection title="Undated" count={undated.length} items={undated} onSelect={handleSelect} />}
+          {past.length > 0 && <AssignmentSection title="Past" count={past.length} items={past} onSelect={handleSelect} />}
         </div>
       )}
 
       {/* ── By Author view ── */}
       {filtered.length > 0 && viewMode === "author" && (
-        <div className="px-4 sm:px-5 py-4 space-y-3">
+        <div style={{ padding: "16px" }}>
           {Array.from(authorMap.values()).map(group => (
             <PublisherGroup
               key={group.name}

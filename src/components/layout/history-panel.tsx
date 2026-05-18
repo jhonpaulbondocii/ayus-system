@@ -97,16 +97,16 @@ function routeToLabel(p: string): { title: string; subtitle: string; type: strin
     if (parts.length >= 3) {
       const sectionMap: Record<string, { title: string; type: string }> = {
         assignments:   { title: "Assignments",    type: "assignment"   },
-        quizzes:       { title: "Quizzes",         type: "quiz"         },
-        announcements: { title: "Announcements",   type: "announcement" },
-        discussions:   { title: "Discussions",     type: "discussion"   },
-        people:        { title: "People",          type: "people"       },
-        grades:        { title: "Grades",          type: "grades"       },
-        modules:       { title: "Modules",         type: "module"       },
-        files:         { title: "Files",           type: "file"         },
-        pages:         { title: "Pages",           type: "page"         },
-        forms:         { title: "Forms",           type: "form"         },
-        settings:      { title: "Course Settings", type: "settings"     },
+        quizzes:       { title: "Quizzes",        type: "quiz"         },
+        announcements: { title: "Announcements",  type: "announcement" },
+        discussions:   { title: "Discussions",    type: "discussion"   },
+        people:        { title: "People",         type: "people"       },
+        grades:        { title: "Grades",         type: "grades"       },
+        modules:       { title: "Modules",        type: "module"       },
+        files:         { title: "Files",          type: "file"         },
+        pages:         { title: "Pages",          type: "page"         },
+        forms:         { title: "Forms",          type: "form"         },
+        settings:      { title: "Course Settings",type: "settings"     },
       };
       const mapped = sectionMap[parts[2]];
       if (mapped) return { title: mapped.title, subtitle: "Course", type: mapped.type };
@@ -227,7 +227,7 @@ function ItemIcon({ type }: { type: string }) {
   );
   if (type === "group") return (
     <svg className={cls} style={{ color: "#1D4ED8" }} fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0112 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/>
     </svg>
   );
   if (type === "form") return (
@@ -248,14 +248,71 @@ function ItemIcon({ type }: { type: string }) {
   );
 }
 
+// ── Shared History Row ─────────────────────────────────────────────────────
+function HistoryRow({
+  item,
+  onRemove,
+  closePanel,
+  compact = false,
+}: {
+  item: HistoryItem;
+  onRemove: (id: string) => void;
+  closePanel: () => void;
+  compact?: boolean;
+}) {
+  return (
+    <div className="flex items-start gap-3 px-4 py-2.5 hover:bg-gray-50 active:bg-gray-100 transition-colors group border-b border-gray-50 last:border-0">
+      <div className={`relative shrink-0 ${compact ? "mt-0" : "mt-0.5"}`}>
+        <ItemIcon type={item.type} />
+        {item.courseColor && (
+          <span
+            className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-white"
+            style={{ background: item.courseColor }}
+          />
+        )}
+      </div>
+      <div className="flex-1 min-w-0">
+        <Link
+          href={item.href}
+          onClick={closePanel}
+          className="text-xs font-medium leading-snug truncate block hover:underline"
+          style={{ color: "#0770a2" }}
+        >
+          {item.title}
+        </Link>
+        {item.subtitle && (
+          <p className="text-[11px] text-gray-400 truncate mt-0.5">{item.subtitle}</p>
+        )}
+        <p className="text-[10px] text-gray-300 mt-0.5">{timeAgo(item.time)}</p>
+      </div>
+      {/* Remove button — always visible on touch devices, hover-only on desktop */}
+      <button
+        onClick={() => onRemove(item.id)}
+        title="Remove"
+        className="
+          opacity-100 sm:opacity-0 sm:group-hover:opacity-100
+          w-7 h-7 sm:w-5 sm:h-5
+          flex items-center justify-center rounded
+          text-gray-300 hover:text-red-500 hover:bg-red-50
+          active:bg-red-100 transition-all shrink-0 mt-0.5
+        "
+      >
+        <svg className="w-3.5 h-3.5 sm:w-3 sm:h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+          <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round"/>
+        </svg>
+      </button>
+    </div>
+  );
+}
+
 // ── Panel ──────────────────────────────────────────────────────────────────
 export default function HistoryPanel() {
   const { isOpen, isActive, close, closePanel } = useHistory();
   const [items, setItems]       = useState<HistoryItem[]>([]);
   const [tick,  setTick]        = useState(0);
+  const [search, setSearch]     = useState("");
   const [, startTransition]     = useTransition();
 
-  // FIX: wrap all setState calls in startTransition to avoid sync setState in effect
   useEffect(() => {
     if (!isActive) return;
     const loaded = loadHistory();
@@ -269,7 +326,7 @@ export default function HistoryPanel() {
     return () => clearInterval(iv);
   }, []);
 
-  // Real-time update kapag may bagong na-track
+  // Real-time update on new history:meta event
   useEffect(() => {
     const handler = () => {
       setTimeout(() => {
@@ -282,6 +339,16 @@ export default function HistoryPanel() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Lock body scroll when mobile sheet is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [isOpen]);
+
   const removeItem = (id: string) => {
     const updated = items.filter(i => i.id !== id);
     saveHistory(updated);
@@ -293,88 +360,175 @@ export default function HistoryPanel() {
     startTransition(() => setItems([]));
   };
 
+  const filtered = search.trim()
+    ? items.filter(i =>
+        i.title.toLowerCase().includes(search.toLowerCase()) ||
+        i.subtitle.toLowerCase().includes(search.toLowerCase()) ||
+        i.href.toLowerCase().includes(search.toLowerCase())
+      )
+    : items;
+
   if (!isActive) return null;
 
   return (
     <>
       {isOpen && (
-        // FIX: z-110 (canonical Tailwind class, not z-[110])
-        <div className="fixed top-0 bottom-0 left-16 w-64 bg-white border-r border-gray-200 shadow-xl z-110 flex flex-col">
-          {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3.5 border-b border-gray-100 shrink-0">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: "#7B1113" }}>
-                <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                  <circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3" strokeLinecap="round"/>
-                </svg>
-              </div>
-              <h1 className="text-sm font-semibold text-gray-800">Recent History</h1>
-            </div>
-            <button onClick={close}
-              className="w-6 h-6 flex items-center justify-center rounded-md text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors text-xs">
-              ✕
-            </button>
-          </div>
+        <>
+          {/*
+           * ── Backdrop (mobile only) ───────────────────────────────────────
+           * On sm+ the side panel is beside the sidebar so no backdrop needed.
+           * On mobile (<sm) it overlays the whole screen so we add a dimmer.
+           */}
+          <div
+            className="fixed inset-0 bg-black/30 z-[109] sm:hidden"
+            onClick={close}
+            aria-hidden="true"
+          />
 
-          {/* List */}
-          <div className="flex-1 overflow-y-auto">
-            {items.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 gap-2 px-5">
-                <svg className="w-8 h-8 text-gray-200" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-                  <circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3" strokeLinecap="round"/>
-                </svg>
-                <p className="text-xs text-gray-400 text-center">
-                  No history yet. Pages you visit will appear here.
-                </p>
+          {/*
+           * ── Panel container ──────────────────────────────────────────────
+           *
+           * Mobile  (<sm):  bottom sheet — full width, slides up from bottom,
+           *                 max-height 85dvh, rounded top corners.
+           * Desktop (sm+):  side panel — fixed left beside the 64px sidebar,
+           *                 full height, 256px wide (w-64), flat top/bottom.
+           */}
+          <div
+            className="
+              fixed z-[110] bg-white flex flex-col
+
+              /* ── mobile: bottom sheet ── */
+              bottom-0 left-0 right-0
+              max-h-[85dvh]
+              rounded-t-2xl
+              shadow-[0_-4px_24px_rgba(0,0,0,0.12)]
+              sm:rounded-none sm:shadow-xl
+
+              /* ── desktop: side panel ── */
+              sm:top-0 sm:bottom-0
+              sm:left-16
+              sm:w-64
+              sm:max-h-none
+              sm:border-r sm:border-gray-200
+            "
+          >
+            {/* ── Drag handle (mobile only) ── */}
+            <div className="sm:hidden flex justify-center pt-2.5 pb-1 shrink-0">
+              <div className="w-9 h-1 rounded-full bg-gray-200" />
+            </div>
+
+            {/* ── Header ── */}
+            <div className="flex items-center justify-between px-4 py-3 sm:py-3.5 border-b border-gray-100 shrink-0">
+              <div className="flex items-center gap-2">
+                <div
+                  className="w-6 h-6 rounded-md flex items-center justify-center"
+                  style={{ background: "#7B1113" }}
+                >
+                  <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3" strokeLinecap="round"/>
+                  </svg>
+                </div>
+                <h1 className="text-sm font-semibold text-gray-800">Recent History</h1>
               </div>
-            ) : (
-              items.map(item => (
-                <div key={item.id}
-                  className="flex items-start gap-3 px-4 py-2.5 hover:bg-gray-50 transition-colors group border-b border-gray-50 last:border-0">
-                  <div className="mt-0.5 relative shrink-0">
-                    <ItemIcon type={item.type} />
-                    {item.courseColor && (
-                      <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-white"
-                        style={{ background: item.courseColor }} />
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <Link href={item.href} onClick={closePanel}
-                      className="text-xs font-medium leading-snug truncate block hover:underline"
-                      style={{ color: "#0770a2" }}>
-                      {item.title}
-                    </Link>
-                    {item.subtitle && (
-                      <p className="text-[11px] text-gray-400 truncate mt-0.5">{item.subtitle}</p>
-                    )}
-                    <p className="text-[10px] text-gray-300 mt-0.5">{timeAgo(item.time)}</p>
-                  </div>
+              <button
+                onClick={close}
+                className="w-7 h-7 flex items-center justify-center rounded-md text-gray-400 hover:bg-gray-100 hover:text-gray-600 active:bg-gray-200 transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round"/>
+                </svg>
+              </button>
+            </div>
+
+            {/* ── Search bar ── */}
+            <div className="px-3 py-2 shrink-0 border-b border-gray-50">
+              <div className="relative">
+                <svg
+                  className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+                  fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"
+                >
+                  <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35" strokeLinecap="round"/>
+                </svg>
+                <input
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  placeholder="Search history…"
+                  className="
+                    w-full pl-8 pr-3 h-8
+                    border border-gray-200 rounded-lg
+                    text-xs text-gray-700 bg-white
+                    outline-none focus:border-gray-400
+                    placeholder:text-gray-300
+                    transition-colors
+                  "
+                />
+                {search && (
                   <button
-                    onClick={() => removeItem(item.id)}
-                    title="Remove"
-                    className="opacity-0 group-hover:opacity-100 w-5 h-5 flex items-center justify-center rounded text-gray-300 hover:text-red-500 hover:bg-red-50 transition-all shrink-0 mt-0.5">
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    onClick={() => setSearch("")}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-500"
+                  >
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
                       <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round"/>
                     </svg>
                   </button>
-                </div>
-              ))
-            )}
-          </div>
-
-          {/* Footer */}
-          {items.length > 0 && (
-            <div className="border-t border-gray-100 px-4 py-2.5 shrink-0 flex items-center justify-between">
-              <span className="text-[11px] text-gray-300">
-                {items.length} page{items.length !== 1 ? "s" : ""}
-              </span>
-              <button onClick={clearHistory}
-                className="text-[11px] text-gray-400 hover:text-red-500 transition-colors font-medium">
-                Clear all
-              </button>
+                )}
+              </div>
             </div>
-          )}
-        </div>
+
+            {/* ── List ── */}
+            <div className="flex-1 overflow-y-auto overscroll-contain">
+              {filtered.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 gap-2 px-5">
+                  <svg className="w-8 h-8 text-gray-200" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3" strokeLinecap="round"/>
+                  </svg>
+                  <p className="text-xs text-gray-400 text-center">
+                    {search
+                      ? "No results found."
+                      : "No history yet. Pages you visit will appear here."}
+                  </p>
+                  {search && (
+                    <button
+                      onClick={() => setSearch("")}
+                      className="text-xs text-gray-400 hover:text-gray-600 hover:underline mt-1"
+                    >
+                      Clear search
+                    </button>
+                  )}
+                </div>
+              ) : (
+                filtered.map(item => (
+                  <HistoryRow
+                    key={item.id}
+                    item={item}
+                    onRemove={removeItem}
+                    closePanel={closePanel}
+                  />
+                ))
+              )}
+            </div>
+
+            {/* ── Footer ── */}
+            {items.length > 0 && (
+              <div className="border-t border-gray-100 px-4 py-2.5 shrink-0 flex items-center justify-between">
+                <span className="text-[11px] text-gray-300">
+                  {filtered.length !== items.length
+                    ? `${filtered.length} of ${items.length} page${items.length !== 1 ? "s" : ""}`
+                    : `${items.length} page${items.length !== 1 ? "s" : ""}`}
+                </span>
+                <button
+                  onClick={clearHistory}
+                  className="text-[11px] text-gray-400 hover:text-red-500 active:text-red-600 transition-colors font-medium"
+                >
+                  Clear all
+                </button>
+              </div>
+            )}
+
+            {/* ── Safe-area spacer (iOS home bar) ── */}
+            <div className="sm:hidden h-[env(safe-area-inset-bottom)] shrink-0" />
+          </div>
+        </>
       )}
     </>
   );
