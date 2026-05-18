@@ -172,6 +172,7 @@ model User {
   quizAttempts             QuizAttempt[]
   quizzesCreated           Quiz[]                    @relation("QuizAuthor")
   formsCreated             Form[]                    @relation("FormAuthor")
+  gradedSubmissions        Submission[]              @relation("GradedSubmissions")
 
   @@map("users")
 }
@@ -334,10 +335,13 @@ model Submission {
   feedback     String?          @db.Text
   submittedAt  DateTime?
    daysLate     Int?
+  gradedById   String?
+  gradedAt     DateTime?
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
 
   user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gradedBy       User?           @relation("GradedSubmissions", fields: [gradedById], references: [id], onDelete: SetNull)
   assignment     Assignment      @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
   repositoryFile RepositoryFile?
 

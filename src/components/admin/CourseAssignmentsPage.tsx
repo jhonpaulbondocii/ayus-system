@@ -30,27 +30,128 @@ const GLOBAL_CSS = `
   /* Tap highlight */
   button, [role="button"] { -webkit-tap-highlight-color: transparent; }
 
-  /* AssignTo panel full-width on mobile */
+  /* ── Mobile overrides ── */
   @media (max-width: 639px) {
-    .asgn-assign-panel { width: 100% !important; }
-    .asgn-modal { border-radius: 20px 20px 0 0 !important; }
-    .asgn-modal-footer { flex-direction: column !important; gap: 8px !important; }
-    .asgn-modal-footer button { width: 100% !important; height: 44px !important; font-size: 14px !important; border-radius: 10px !important; }
-    .asgn-row-meta { flex-direction: column !important; align-items: flex-start !important; gap: 4px !important; }
-    .asgn-date-grid { grid-template-columns: 1fr !important; }
-    .asgn-toolbar { flex-wrap: wrap; row-gap: 8px; }
-    .asgn-search-input { width: 100% !important; }
-    .asgn-toolbar-right { width: 100%; justify-content: flex-end; }
-  }
 
-  @media (max-width: 400px) {
+    /* AssignTo side panel: full-width bottom sheet */
+    .asgn-assign-panel {
+      width: 100% !important;
+      top: auto !important;
+      bottom: 0 !important;
+      height: 92dvh !important;
+      border-left: none !important;
+      border-top: 1px solid #e5e7eb !important;
+      border-radius: 20px 20px 0 0 !important;
+      box-shadow: 0 -8px 40px rgba(0,0,0,0.18) !important;
+    }
+
+    /* Modal bottom-sheet style */
+    .asgn-modal {
+      border-radius: 20px 20px 0 0 !important;
+      max-height: 92dvh !important;
+      overflow-y: auto !important;
+    }
+    .asgn-modal-footer {
+      flex-direction: column !important;
+      gap: 8px !important;
+      padding: 12px 16px !important;
+    }
+    .asgn-modal-footer button {
+      width: 100% !important;
+      height: 46px !important;
+      font-size: 14px !important;
+      border-radius: 10px !important;
+    }
+    /* Reorder footer buttons so primary action is on top on mobile */
+    .asgn-modal-footer-primary { order: -1; }
+
+    /* Assignment row metadata stacks vertically */
+    .asgn-row-meta {
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      gap: 4px !important;
+    }
+
+    /* Date picker grid: single column on very small screens */
+    .asgn-date-grid {
+      grid-template-columns: 1fr !important;
+    }
+
+    /* Toolbar: search takes full width, actions wrap below */
+    .asgn-toolbar {
+      flex-direction: column !important;
+      align-items: stretch !important;
+      gap: 8px !important;
+      padding: 10px 12px !important;
+    }
+    .asgn-toolbar-search {
+      max-width: 100% !important;
+      width: 100% !important;
+    }
+    .asgn-toolbar-right {
+      width: 100%;
+      justify-content: flex-end;
+    }
+
+    /* Section label font */
     .asgn-section-label { font-size: 10px !important; }
+
+    /* Group header: make title truncate gracefully */
+    .asgn-group-title { max-width: calc(100vw - 120px) !important; }
+
+    /* Assignment row: tighter padding on mobile */
+    .asgn-row { padding: 11px 10px 11px 14px !important; }
+
+    /* Assignment title: allow wrap instead of truncate on tiny screens */
+    .asgn-row-title {
+      white-space: normal !important;
+      overflow: visible !important;
+      text-overflow: unset !important;
+      word-break: break-word !important;
+    }
+
+    /* Dots menu button: bigger tap target */
+    .asgn-dots-btn {
+      width: 40px !important;
+      height: 40px !important;
+    }
+
+    /* Points + due inline — collapse separator dot */
+    .asgn-meta-dot { display: none !important; }
+    .asgn-meta-due { display: block !important; }
   }
 
-  /* Safe area */
+  /* 360px and below: even tighter */
+  @media (max-width: 380px) {
+    .asgn-toolbar-right button span { display: none; }
+    .asgn-toolbar-right button { padding: 0 10px !important; }
+  }
+
+  /* Safe area insets */
   @supports (padding-bottom: env(safe-area-inset-bottom)) {
-    .asgn-assign-panel-footer { padding-bottom: calc(12px + env(safe-area-inset-bottom)) !important; }
-    .asgn-modal-footer { padding-bottom: calc(14px + env(safe-area-inset-bottom)) !important; }
+    .asgn-assign-panel-footer {
+      padding-bottom: calc(12px + env(safe-area-inset-bottom)) !important;
+    }
+    .asgn-modal-footer {
+      padding-bottom: calc(12px + env(safe-area-inset-bottom)) !important;
+    }
+  }
+
+  /* Desktop: modal centered */
+  @media (min-width: 640px) {
+    .asgn-modal {
+      border-radius: 12px !important;
+      margin: auto !important;
+      max-height: 90vh !important;
+    }
+    .asgn-modal-footer { flex-direction: row !important; }
+    .asgn-modal-footer button { width: auto !important; height: 36px !important; font-size: 13px !important; }
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
   }
 `;
 
@@ -114,6 +215,7 @@ function NewBadge() {
       padding: "1px 6px", borderRadius: 4,
       fontSize: 9, fontWeight: 800, letterSpacing: "0.08em",
       textTransform: "uppercase", color: "#fff", background: "#dc2626",
+      flexShrink: 0,
     }}>
       NEW
     </span>
@@ -190,9 +292,9 @@ function PublisherChip({ name, image, role }: { name?: string | null; image?: st
   return (
     <span style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: "#6b7280" }}>
       <PublisherAvatar name={name} image={image} size={18} />
-      <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 100 }}>{name}</span>
+      <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 120 }}>{name}</span>
       {role && (
-        <span style={{ padding: "1px 5px", borderRadius: 4, fontSize: 9, fontWeight: 700, textTransform: "uppercase", background: "#eff6ff", color: "#1d6fa4", border: "1px solid #bfdbfe" }}>
+        <span style={{ padding: "1px 5px", borderRadius: 4, fontSize: 9, fontWeight: 700, textTransform: "uppercase", background: "#eff6ff", color: "#1d6fa4", border: "1px solid #bfdbfe", flexShrink: 0 }}>
           {role}
         </span>
       )}
@@ -219,7 +321,7 @@ function PublishToggle({ published, onToggle }: { published: boolean; onToggle: 
   return (
     <button type="button" onClick={onToggle}
       title={published ? "Published — click to unpublish" : "Unpublished — click to publish"}
-      style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", padding: 4, touchAction: "manipulation" }}>
+      style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", padding: 4, touchAction: "manipulation", minWidth: 30, minHeight: 30 }}>
       {published ? (
         <svg width="22" height="22" viewBox="0 0 20 20" fill="none">
           <circle cx="10" cy="10" r="9" fill="#16a34a" />
@@ -269,7 +371,7 @@ function AssignmentRowMenu({ assignment, onAction }: {
   const handleOpen = () => {
     if (!btnRef.current) return;
     const rect = btnRef.current.getBoundingClientRect();
-    const w = 180, h = 170;
+    const w = 190, h = 210;
     const top = window.innerHeight - rect.bottom >= h ? rect.bottom + 4 : rect.top - h - 4;
     const left = Math.min(rect.right - w, window.innerWidth - w - 8);
     setMenuStyle({
@@ -291,6 +393,7 @@ function AssignmentRowMenu({ assignment, onAction }: {
   return (
     <>
       <button ref={btnRef} type="button" onClick={e => { e.stopPropagation(); handleOpen(); }}
+        className="asgn-dots-btn"
         style={{ width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 8, background: "none", border: "none", cursor: "pointer", color: "#9ca3af", touchAction: "manipulation" }}
         onMouseEnter={e => (e.currentTarget.style.background = "#f3f4f6")}
         onMouseLeave={e => (e.currentTarget.style.background = "none")}>
@@ -302,12 +405,12 @@ function AssignmentRowMenu({ assignment, onAction }: {
             <button key={item.action} type="button"
               onClick={() => { setOpen(false); onAction(item.action, assignment); }}
               style={{
-                width: "100%", textAlign: "left", padding: "10px 14px",
-                fontSize: 13, display: "flex", alignItems: "center", gap: 8,
+                width: "100%", textAlign: "left", padding: "11px 14px",
+                fontSize: 13, display: "flex", alignItems: "center", gap: 9,
                 background: "none", border: "none", cursor: "pointer",
                 color: item.danger ? "#dc2626" : "#374151",
                 borderTop: i > 0 ? "1px solid #f3f4f6" : "none",
-                minHeight: 42,
+                minHeight: 44,
               }}
               onMouseEnter={e => (e.currentTarget.style.background = item.danger ? "#fef2f2" : "#f9fafb")}
               onMouseLeave={e => (e.currentTarget.style.background = "none")}>
@@ -353,7 +456,7 @@ function GroupMenu({ onEdit, onDelete, isLastGroup }: {
   return (
     <>
       <button ref={btnRef} type="button" onClick={e => { e.stopPropagation(); handleOpen(); }}
-        style={{ width: 30, height: 30, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 6, background: "none", border: "none", cursor: "pointer", color: "#9ca3af", touchAction: "manipulation" }}
+        style={{ width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 6, background: "none", border: "none", cursor: "pointer", color: "#9ca3af", touchAction: "manipulation" }}
         onMouseEnter={e => (e.currentTarget.style.background = "#e5e7eb")}
         onMouseLeave={e => (e.currentTarget.style.background = "none")}>
         <MoreVertical size={14} />
@@ -361,7 +464,7 @@ function GroupMenu({ onEdit, onDelete, isLastGroup }: {
       {open && typeof document !== "undefined" && createPortal(
         <div ref={menuRef} style={menuStyle}>
           <button type="button" onClick={() => { setOpen(false); onEdit(); }}
-            style={{ width: "100%", textAlign: "left", padding: "10px 14px", fontSize: 13, display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", cursor: "pointer", color: "#374151", minHeight: 42 }}
+            style={{ width: "100%", textAlign: "left", padding: "11px 14px", fontSize: 13, display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", cursor: "pointer", color: "#374151", minHeight: 44 }}
             onMouseEnter={e => (e.currentTarget.style.background = "#f9fafb")}
             onMouseLeave={e => (e.currentTarget.style.background = "none")}>
             <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" strokeLinecap="round" /><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" strokeLinecap="round" /></svg>
@@ -369,7 +472,7 @@ function GroupMenu({ onEdit, onDelete, isLastGroup }: {
           </button>
           {!isLastGroup && (
             <button type="button" onClick={() => { setOpen(false); onDelete(); }}
-              style={{ width: "100%", textAlign: "left", padding: "10px 14px", fontSize: 13, display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", cursor: "pointer", color: "#dc2626", borderTop: "1px solid #f3f4f6", minHeight: 42 }}
+              style={{ width: "100%", textAlign: "left", padding: "11px 14px", fontSize: 13, display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", cursor: "pointer", color: "#dc2626", borderTop: "1px solid #f3f4f6", minHeight: 44 }}
               onMouseEnter={e => (e.currentTarget.style.background = "#fef2f2")}
               onMouseLeave={e => (e.currentTarget.style.background = "none")}>
               <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6" strokeLinecap="round" /><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" strokeLinecap="round" /><path d="M10 11v6M14 11v6" strokeLinecap="round" /><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2" strokeLinecap="round" /></svg>
@@ -388,48 +491,76 @@ function ModalShell({ title, onClose, children, footer }: {
   title: string; onClose: () => void;
   children: React.ReactNode; footer: React.ReactNode;
 }) {
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, []);
+
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "flex-end", justifyContent: "center", background: "rgba(0,0,0,0.32)", padding: 0 }}
-      onClick={onClose}>
-      <div className="asgn-modal" style={{ background: "#fff", width: "100%", maxWidth: 480, boxShadow: "0 24px 60px rgba(0,0,0,0.18)", overflow: "hidden", fontFamily: FONT }}
-        onClick={e => e.stopPropagation()}>
+    <div
+      style={{
+        position: "fixed", inset: 0, zIndex: 50,
+        display: "flex", alignItems: "flex-end", justifyContent: "center",
+        background: "rgba(0,0,0,0.36)",
+        padding: 0,
+      }}
+      onClick={onClose}
+    >
+      <div
+        className="asgn-modal"
+        style={{
+          background: "#fff", width: "100%", maxWidth: 480,
+          boxShadow: "0 24px 60px rgba(0,0,0,0.18)",
+          overflow: "hidden", fontFamily: FONT,
+          animation: "slideUp 0.22s ease",
+        }}
+        onClick={e => e.stopPropagation()}
+      >
         {/* Drag handle */}
         <div style={{ display: "flex", justifyContent: "center", padding: "10px 0 4px" }}>
           <div style={{ width: 36, height: 4, borderRadius: 2, background: "#d1d5db" }} />
         </div>
         {/* Header */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 18px", borderBottom: "1px solid #e5e7eb" }}>
-          <span style={{ fontSize: 14, fontWeight: 700, color: "#111827" }}>{title}</span>
-          <button onClick={onClose} style={{ width: 30, height: 30, display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid #e5e7eb", borderRadius: 7, background: "none", cursor: "pointer", color: "#6b7280" }}>
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: "12px 18px", borderBottom: "1px solid #e5e7eb",
+        }}>
+          <span style={{ fontSize: 15, fontWeight: 700, color: "#111827" }}>{title}</span>
+          <button onClick={onClose} style={{
+            width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center",
+            border: "1px solid #e5e7eb", borderRadius: 7, background: "none", cursor: "pointer", color: "#6b7280",
+          }}>
             <X size={14} />
           </button>
         </div>
         {/* Body */}
-        <div style={{ padding: "18px", overflowY: "auto", maxHeight: "65vh" }} className="asgn-scroll">
+        <div
+          style={{ padding: "18px", overflowY: "auto", maxHeight: "55vh" }}
+          className="asgn-scroll"
+        >
           {children}
         </div>
         {/* Footer */}
-        <div className="asgn-modal-footer" style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 8, padding: "12px 18px", background: "#fafafa", borderTop: "1px solid #e5e7eb" }}>
+        <div
+          className="asgn-modal-footer"
+          style={{
+            display: "flex", alignItems: "center", justifyContent: "flex-end",
+            gap: 8, padding: "12px 18px",
+            background: "#fafafa", borderTop: "1px solid #e5e7eb",
+          }}
+        >
           {footer}
         </div>
       </div>
-
-      {/* Centered on larger screens */}
-      <style>{`
-        @media (min-width: 640px) {
-          .asgn-modal {
-            border-radius: 12px !important;
-            margin: auto !important;
-          }
-        }
-      `}</style>
     </div>
   );
 }
 
-function BtnPrimary({ onClick, disabled, children }: { onClick?: () => void; disabled?: boolean; children: React.ReactNode }) {
+function BtnPrimary({ onClick, disabled, children, className }: { onClick?: () => void; disabled?: boolean; children: React.ReactNode; className?: string }) {
   return (
-    <button type="button" onClick={onClick} disabled={disabled}
+    <button type="button" onClick={onClick} disabled={disabled} className={className}
       style={{ height: 36, padding: "0 20px", fontFamily: FONT, fontSize: 13, fontWeight: 700, borderRadius: 8, border: "none", color: "#fff", background: disabled ? "#d1d5db" : MAROON, cursor: disabled ? "not-allowed" : "pointer", opacity: disabled ? 0.6 : 1, whiteSpace: "nowrap", touchAction: "manipulation" }}>
       {children}
     </button>
@@ -458,7 +589,7 @@ function StyledInput({ value, onChange, placeholder, type = "text", onFocus, onB
     <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} autoFocus={autoFocus}
       onFocus={e => { e.currentTarget.style.borderColor = MAROON; e.currentTarget.style.boxShadow = `0 0 0 3px rgba(123,17,19,0.08)`; onFocus?.(); }}
       onBlur={e => { e.currentTarget.style.borderColor = "#d1d5db"; e.currentTarget.style.boxShadow = "none"; onBlur?.(); }}
-      style={{ width: "100%", height: 40, border: "1px solid #d1d5db", borderRadius: 8, padding: "0 12px", fontFamily: FONT, color: "#111827", background: "#fafafa", outline: "none", transition: "border-color 0.15s" }} />
+      style={{ width: "100%", height: 42, border: "1px solid #d1d5db", borderRadius: 8, padding: "0 12px", fontFamily: FONT, color: "#111827", background: "#fafafa", outline: "none", transition: "border-color 0.15s" }} />
   );
 }
 function StyledSelect({ value, onChange, children, style }: {
@@ -467,7 +598,7 @@ function StyledSelect({ value, onChange, children, style }: {
   return (
     <div style={{ position: "relative" }}>
       <select value={value} onChange={e => onChange(e.target.value)}
-        style={{ width: "100%", height: 40, border: "1px solid #d1d5db", borderRadius: 8, padding: "0 32px 0 12px", fontFamily: FONT, color: "#111827", background: "#fafafa", outline: "none", appearance: "none", cursor: "pointer", ...style }}>
+        style={{ width: "100%", height: 42, border: "1px solid #d1d5db", borderRadius: 8, padding: "0 32px 0 12px", fontFamily: FONT, color: "#111827", background: "#fafafa", outline: "none", appearance: "none", cursor: "pointer", ...style }}>
         {children}
       </select>
       <ChevronDown size={13} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", color: "#9ca3af", pointerEvents: "none" }} />
@@ -484,11 +615,12 @@ function DeleteAssignmentModal({ assignment, onClose, onConfirm, deleting }: {
       footer={<>
         <BtnSecondary onClick={onClose} disabled={deleting}>Cancel</BtnSecondary>
         <button type="button" onClick={onConfirm} disabled={deleting}
-          style={{ height: 36, padding: "0 20px", fontFamily: FONT, fontSize: 13, fontWeight: 700, borderRadius: 8, border: "none", color: "#fff", background: "#dc2626", cursor: deleting ? "not-allowed" : "pointer", opacity: deleting ? 0.6 : 1 }}>
+          className="asgn-modal-footer-primary"
+          style={{ height: 36, padding: "0 20px", fontFamily: FONT, fontSize: 13, fontWeight: 700, borderRadius: 8, border: "none", color: "#fff", background: "#dc2626", cursor: deleting ? "not-allowed" : "pointer", opacity: deleting ? 0.6 : 1, touchAction: "manipulation" }}>
           {deleting ? "Deleting…" : "Delete"}
         </button>
       </>}>
-      <p style={{ fontSize: 14, color: "#374151", lineHeight: 1.6 }}>
+      <p style={{ fontSize: 14, color: "#374151", lineHeight: 1.6, margin: 0 }}>
         Are you sure you want to delete <strong>&ldquo;{assignment.title}&rdquo;</strong>? This action cannot be undone.
       </p>
     </ModalShell>
@@ -524,12 +656,13 @@ function QuickEditModal({ assignment, courseId, onClose, onSave, onMoreOptions }
   return (
     <ModalShell title="Edit Assignment" onClose={onClose}
       footer={<>
+        {/* Mobile: primary on top via CSS order; desktop: row order preserved */}
         <BtnSecondary onClick={onMoreOptions}>More Options</BtnSecondary>
         <div style={{ flex: 1 }} />
         <BtnSecondary onClick={onClose} disabled={saving}>Cancel</BtnSecondary>
-        <BtnPrimary onClick={handleSave} disabled={saving || !name.trim()}>{saving ? "Saving…" : "Save"}</BtnPrimary>
+        <BtnPrimary onClick={handleSave} disabled={saving || !name.trim()} className="asgn-modal-footer-primary">{saving ? "Saving…" : "Save"}</BtnPrimary>
       </>}>
-      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
         <div>
           <FieldLabel required>Name</FieldLabel>
           <StyledInput value={name} onChange={setName} autoFocus />
@@ -540,7 +673,7 @@ function QuickEditModal({ assignment, courseId, onClose, onSave, onMoreOptions }
             <div>
               <label style={{ fontSize: 11, color: "#9ca3af", display: "block", marginBottom: 4 }}>Date</label>
               <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)}
-                style={{ width: "100%", height: 40, border: "1px solid #d1d5db", borderRadius: 8, padding: "0 10px", fontFamily: FONT, color: "#111827", background: "#fafafa", outline: "none" }} />
+                style={{ width: "100%", height: 42, border: "1px solid #d1d5db", borderRadius: 8, padding: "0 10px", fontFamily: FONT, color: "#111827", background: "#fafafa", outline: "none" }} />
             </div>
             <div>
               <label style={{ fontSize: 11, color: "#9ca3af", display: "block", marginBottom: 4 }}>Time</label>
@@ -549,14 +682,14 @@ function QuickEditModal({ assignment, courseId, onClose, onSave, onMoreOptions }
               </StyledSelect>
             </div>
           </div>
-          {dateLabel && <p style={{ fontSize: 12, color: MAROON, fontWeight: 600, marginTop: 6 }}>{dateLabel}</p>}
+          {dateLabel && <p style={{ fontSize: 12, color: MAROON, fontWeight: 600, marginTop: 6, marginBottom: 0 }}>{dateLabel}</p>}
         </div>
         <div>
           <FieldLabel>Points</FieldLabel>
           <input type="number" min={0} value={points} onChange={e => setPoints(e.target.value)}
-            style={{ width: 120, height: 40, border: "1px solid #d1d5db", borderRadius: 8, padding: "0 12px", fontFamily: FONT, color: "#111827", background: "#fafafa", outline: "none" }} />
+            style={{ width: "100%", maxWidth: 140, height: 42, border: "1px solid #d1d5db", borderRadius: 8, padding: "0 12px", fontFamily: FONT, color: "#111827", background: "#fafafa", outline: "none" }} />
         </div>
-        {error && <p style={{ fontSize: 12, color: "#dc2626" }}>⚠ {error}</p>}
+        {error && <p style={{ fontSize: 12, color: "#dc2626", margin: 0 }}>⚠ {error}</p>}
       </div>
     </ModalShell>
   );
@@ -573,7 +706,7 @@ function GroupNameModal({ title, initialValue, onClose, onSave, saving, saveLabe
     <ModalShell title={title} onClose={onClose}
       footer={<>
         <BtnSecondary onClick={onClose} disabled={saving}>Cancel</BtnSecondary>
-        <BtnPrimary onClick={() => name.trim() && onSave(name.trim())} disabled={saving || !name.trim() || unchanged}>
+        <BtnPrimary onClick={() => name.trim() && onSave(name.trim())} disabled={saving || !name.trim() || unchanged} className="asgn-modal-footer-primary">
           {saving ? "Saving…" : saveLabel}
         </BtnPrimary>
       </>}>
@@ -597,29 +730,28 @@ function DeleteGroupModal({ groupName, assignmentCount, otherGroups, onClose, on
         <BtnSecondary onClick={onClose}>Cancel</BtnSecondary>
         <button type="button" onClick={() => onDelete(choice, choice === "move" ? targetGroup : undefined)}
           disabled={choice === "move" && !targetGroup}
-          style={{ height: 36, padding: "0 20px", fontFamily: FONT, fontSize: 13, fontWeight: 700, borderRadius: 8, border: "none", color: "#fff", background: "#dc2626", cursor: "pointer", opacity: choice === "move" && !targetGroup ? 0.4 : 1 }}>
+          className="asgn-modal-footer-primary"
+          style={{ height: 36, padding: "0 20px", fontFamily: FONT, fontSize: 13, fontWeight: 700, borderRadius: 8, border: "none", color: "#fff", background: "#dc2626", cursor: "pointer", opacity: choice === "move" && !targetGroup ? 0.4 : 1, touchAction: "manipulation" }}>
           Delete Group
         </button>
       </>}>
-      <div style={{ display: "flex", flexDirection: "column", gap: 14, fontSize: 14, color: "#374151" }}>
-        <p>You are about to delete <strong>{groupName}</strong>, which has <strong>{assignmentCount}</strong> assignment{assignmentCount !== 1 ? "s" : ""}.</p>
-        <p style={{ color: "#6b7280", fontSize: 13 }}>Would you like to:</p>
-        <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
-          <input type="radio" checked={choice === "delete"} onChange={() => setChoice("delete")} style={{ accentColor: MAROON, width: 16, height: 16 }} />
+      <div style={{ display: "flex", flexDirection: "column", gap: 16, fontSize: 14, color: "#374151" }}>
+        <p style={{ margin: 0 }}>You are about to delete <strong>{groupName}</strong>, which has <strong>{assignmentCount}</strong> assignment{assignmentCount !== 1 ? "s" : ""}.</p>
+        <p style={{ color: "#6b7280", fontSize: 13, margin: 0 }}>What would you like to do with its assignments?</p>
+        <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", padding: "10px 12px", border: `1.5px solid ${choice === "delete" ? MAROON : "#e5e7eb"}`, borderRadius: 8, background: choice === "delete" ? "#fdf8f8" : "#fff" }}>
+          <input type="radio" checked={choice === "delete"} onChange={() => setChoice("delete")} style={{ accentColor: MAROON, width: 16, height: 16, flexShrink: 0 }} />
           Delete its assignments
         </label>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
-            <input type="radio" checked={choice === "move"} onChange={() => setChoice("move")} disabled={otherGroups.length === 0} style={{ accentColor: MAROON, width: 16, height: 16 }} />
-            <span style={{ color: otherGroups.length === 0 ? "#9ca3af" : "#374151" }}>Move its assignments to</span>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", padding: "10px 12px", border: `1.5px solid ${choice === "move" ? MAROON : "#e5e7eb"}`, borderRadius: 8, background: choice === "move" ? "#fdf8f8" : "#fff", opacity: otherGroups.length === 0 ? 0.4 : 1 }}>
+            <input type="radio" checked={choice === "move"} onChange={() => setChoice("move")} disabled={otherGroups.length === 0} style={{ accentColor: MAROON, width: 16, height: 16, flexShrink: 0 }} />
+            <span style={{ color: otherGroups.length === 0 ? "#9ca3af" : "#374151" }}>Move its assignments to…</span>
           </label>
           {choice === "move" && otherGroups.length > 0 && (
-            <div style={{ marginLeft: 26 }}>
-              <StyledSelect value={targetGroup} onChange={setTargetGroup} style={{ width: 220 }}>
-                <option value="">[ Select a Group ]</option>
-                {otherGroups.map(g => <option key={g} value={g}>{g}</option>)}
-              </StyledSelect>
-            </div>
+            <StyledSelect value={targetGroup} onChange={setTargetGroup}>
+              <option value="">[ Select a Group ]</option>
+              {otherGroups.map(g => <option key={g} value={g}>{g}</option>)}
+            </StyledSelect>
           )}
         </div>
       </div>
@@ -647,6 +779,13 @@ function AssignToPanel({ assignment, courseId, onClose, onSave }: {
   const [saving, setSaving] = useState(false);
   const [openDropId, setOpenDropId] = useState<number | null>(null);
   const [dropSearch, setDropSearch] = useState("");
+
+  // Lock body scroll
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, []);
 
   useEffect(() => {
     if (openDropId === null) return;
@@ -695,19 +834,19 @@ function AssignToPanel({ assignment, courseId, onClose, onSave }: {
         <p style={{ fontSize: 13, fontWeight: 600, color: "#374151", margin: 0 }}>{label}</p>
         <div className="asgn-date-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
           <div>
-            <p style={{ fontSize: 10, color: "#9ca3af", marginBottom: 4 }}>Date</p>
+            <p style={{ fontSize: 10, color: "#9ca3af", marginBottom: 4, marginTop: 0 }}>Date</p>
             <input type="date" value={dateVal} onChange={e => onDateChange(e.target.value)}
-              style={{ width: "100%", height: 38, border: "1px solid #d1d5db", borderRadius: 7, padding: "0 10px", fontFamily: FONT, fontSize: 13, color: "#111827", background: "#fff", outline: "none" }} />
+              style={{ width: "100%", height: 40, border: "1px solid #d1d5db", borderRadius: 7, padding: "0 10px", fontFamily: FONT, fontSize: 13, color: "#111827", background: "#fff", outline: "none" }} />
           </div>
           <div>
-            <p style={{ fontSize: 10, color: "#9ca3af", marginBottom: 4 }}>Time</p>
+            <p style={{ fontSize: 10, color: "#9ca3af", marginBottom: 4, marginTop: 0 }}>Time</p>
             <StyledSelect value={timeVal} onChange={onTimeChange}>
               {TIME_OPTIONS.map(t => <option key={t}>{t}</option>)}
             </StyledSelect>
           </div>
         </div>
         {localLabel && <p style={{ fontSize: 11, color: "#6b7280", margin: 0 }}>{localLabel}</p>}
-        <button onClick={onClear} style={{ fontSize: 11, fontWeight: 600, color: MAROON, background: "none", border: "none", padding: 0, cursor: "pointer", textAlign: "left", textDecoration: "underline" }}>
+        <button onClick={onClear} style={{ fontSize: 11, fontWeight: 600, color: MAROON, background: "none", border: "none", padding: 0, cursor: "pointer", textAlign: "left", textDecoration: "underline", alignSelf: "flex-start" }}>
           Clear
         </button>
       </div>
@@ -716,35 +855,44 @@ function AssignToPanel({ assignment, courseId, onClose, onSave }: {
 
   return (
     <>
-      <div style={{ position: "fixed", inset: 0, zIndex: 40, background: "rgba(0,0,0,0.2)" }} onClick={onClose} />
-      <div className="asgn-assign-panel" style={{
-        position: "fixed", top: 0, right: 0, height: "100%", zIndex: 50,
-        width: "min(380px, 100vw)", background: "#fff",
-        boxShadow: "-4px 0 32px rgba(0,0,0,0.15)", borderLeft: "1px solid #e5e7eb",
-        display: "flex", flexDirection: "column", fontFamily: FONT,
-      }}>
+      <div style={{ position: "fixed", inset: 0, zIndex: 40, background: "rgba(0,0,0,0.25)" }} onClick={onClose} />
+      <div
+        className="asgn-assign-panel"
+        style={{
+          position: "fixed", top: 0, right: 0, height: "100%", zIndex: 50,
+          width: "min(400px, 100vw)", background: "#fff",
+          boxShadow: "-4px 0 32px rgba(0,0,0,0.15)", borderLeft: "1px solid #e5e7eb",
+          display: "flex", flexDirection: "column", fontFamily: FONT,
+          animation: "slideUp 0.22s ease",
+        }}
+      >
+        {/* Drag handle (visible on mobile bottom sheet) */}
+        <div style={{ display: "flex", justifyContent: "center", paddingTop: 10, flexShrink: 0 }}>
+          <div style={{ width: 36, height: 4, borderRadius: 2, background: "#d1d5db" }} />
+        </div>
+
         {/* Header */}
-        <div style={{ padding: "14px 16px", borderBottom: "1px solid #e5e7eb", flexShrink: 0 }}>
+        <div style={{ padding: "12px 16px 14px", borderBottom: "1px solid #e5e7eb", flexShrink: 0 }}>
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10 }}>
-            <div style={{ minWidth: 0 }}>
+            <div style={{ minWidth: 0, flex: 1 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 2 }}>
                 <AssignmentIcon />
                 <span style={{ fontSize: 14, fontWeight: 700, color: "#111827", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{assignment.title}</span>
               </div>
               <p style={{ fontSize: 12, color: "#6b7280", margin: 0, marginLeft: 26 }}>Assignment · {assignment.points} pts</p>
             </div>
-            <button onClick={onClose} style={{ width: 30, height: 30, display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid #e5e7eb", borderRadius: 7, background: "none", cursor: "pointer", color: "#6b7280", flexShrink: 0 }}>
+            <button onClick={onClose} style={{ width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid #e5e7eb", borderRadius: 7, background: "none", cursor: "pointer", color: "#6b7280", flexShrink: 0 }}>
               <X size={14} />
             </button>
           </div>
         </div>
 
         {/* Info banner */}
-        <div style={{ margin: "12px 14px 0", display: "flex", gap: 10, background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 8, padding: "10px 12px" }}>
+        <div style={{ margin: "12px 14px 0", display: "flex", gap: 10, background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 8, padding: "10px 12px", flexShrink: 0 }}>
           <div style={{ width: 20, height: 20, borderRadius: "50%", background: "#1d6fa4", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
             <span style={{ color: "#fff", fontSize: 10, fontWeight: 700 }}>i</span>
           </div>
-          <p style={{ fontSize: 12, color: "#1e40af", lineHeight: 1.5, margin: 0 }}>Select who should be assigned and use the drop-down menus or manually enter your date and time.</p>
+          <p style={{ fontSize: 12, color: "#1e40af", lineHeight: 1.5, margin: 0 }}>Select who should be assigned and set date and time using the fields below.</p>
         </div>
 
         {/* Rows */}
@@ -753,20 +901,20 @@ function AssignToPanel({ assignment, courseId, onClose, onSave }: {
             {rows.map((row, idx) => (
               <div key={row.id} style={{ border: "1px solid #e5e7eb", borderRadius: 10, padding: "14px", display: "flex", flexDirection: "column", gap: 16, position: "relative" }}>
                 {idx > 0 && (
-                  <button onClick={() => removeRow(row.id)} style={{ position: "absolute", top: 8, right: 8, background: "none", border: "none", cursor: "pointer", color: "#9ca3af", display: "flex" }}>
+                  <button onClick={() => removeRow(row.id)} style={{ position: "absolute", top: 8, right: 8, background: "none", border: "none", cursor: "pointer", color: "#9ca3af", display: "flex", padding: 4 }}>
                     <X size={13} />
                   </button>
                 )}
                 {/* Assign to dropdown */}
                 <div>
-                  <p style={{ fontSize: 13, fontWeight: 600, color: "#374151", marginBottom: 6 }}>Assign To</p>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: "#374151", marginBottom: 6, marginTop: 0 }}>Assign To</p>
                   <div style={{ position: "relative" }} data-assigndrop>
                     <div onMouseDown={e => { e.stopPropagation(); setOpenDropId(openDropId === row.id ? null : row.id); setDropSearch(""); }}
-                      style={{ minHeight: 40, border: "1px solid #d1d5db", borderRadius: 8, padding: "6px 10px", display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center", cursor: "pointer", background: "#fafafa" }}>
+                      style={{ minHeight: 42, border: "1px solid #d1d5db", borderRadius: 8, padding: "6px 10px", display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center", cursor: "pointer", background: "#fafafa" }}>
                       {row.assignees.map(a => (
                         <span key={a} style={{ display: "flex", alignItems: "center", gap: 5, padding: "2px 8px", borderRadius: 20, fontSize: 12, fontWeight: 600, color: "#fff", background: MAROON }}>
                           {a}
-                          <button onMouseDown={e => { e.stopPropagation(); toggleAssignee(row.id, a); }} style={{ background: "none", border: "none", cursor: "pointer", color: "#fff", fontSize: 14, lineHeight: 1, padding: 0 }}>×</button>
+                          <button onMouseDown={e => { e.stopPropagation(); toggleAssignee(row.id, a); }} style={{ background: "none", border: "none", cursor: "pointer", color: "#fff", fontSize: 14, lineHeight: 1, padding: 0, minWidth: 18, minHeight: 18 }}>×</button>
                         </span>
                       ))}
                       <input readOnly placeholder={row.assignees.length ? "" : "Start typing to search…"}
@@ -778,11 +926,11 @@ function AssignToPanel({ assignment, courseId, onClose, onSave }: {
                         onMouseDown={e => e.stopPropagation()}>
                         <div style={{ padding: "8px 10px 6px", borderBottom: "1px solid #f3f4f6", position: "sticky", top: 0, background: "#fff" }}>
                           <input autoFocus value={dropSearch} onChange={e => setDropSearch(e.target.value)} placeholder="Search…"
-                            style={{ width: "100%", height: 32, border: "1px solid #e5e7eb", borderRadius: 6, padding: "0 10px", fontSize: 13, fontFamily: FONT, outline: "none" }} />
+                            style={{ width: "100%", height: 34, border: "1px solid #e5e7eb", borderRadius: 6, padding: "0 10px", fontSize: 13, fontFamily: FONT, outline: "none" }} />
                         </div>
                         {["Everyone"].filter(o => o.toLowerCase().includes(dropSearch.toLowerCase())).map(opt => (
                           <button key={opt} onMouseDown={e => { e.preventDefault(); e.stopPropagation(); toggleAssignee(row.id, opt); }}
-                            style={{ width: "100%", textAlign: "left", padding: "10px 14px", fontSize: 13, display: "flex", alignItems: "center", justifyContent: "space-between", background: "none", border: "none", cursor: "pointer", color: row.assignees.includes(opt) ? MAROON : "#374151", fontWeight: row.assignees.includes(opt) ? 700 : 400, minHeight: 40 }}>
+                            style={{ width: "100%", textAlign: "left", padding: "11px 14px", fontSize: 13, display: "flex", alignItems: "center", justifyContent: "space-between", background: "none", border: "none", cursor: "pointer", color: row.assignees.includes(opt) ? MAROON : "#374151", fontWeight: row.assignees.includes(opt) ? 700 : 400, minHeight: 44 }}>
                             {opt}{row.assignees.includes(opt) && <span style={{ color: MAROON }}>✓</span>}
                           </button>
                         ))}
@@ -801,7 +949,7 @@ function AssignToPanel({ assignment, courseId, onClose, onSave }: {
                   onClear={() => { updateRow(row.id, "until", ""); updateRow(row.id, "untilTime", "11:59 PM"); }} />
               </div>
             ))}
-            <button onClick={addRow} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 600, color: MAROON, background: "none", border: "none", cursor: "pointer", padding: "4px 0" }}>
+            <button onClick={addRow} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 600, color: MAROON, background: "none", border: "none", cursor: "pointer", padding: "6px 0", touchAction: "manipulation" }}>
               <Plus size={14} /> Add
             </button>
           </div>
@@ -860,56 +1008,77 @@ function AssignmentRow({
   };
 
   return (
-    <div onClick={handleClick} style={{
-      display: "flex", alignItems: "flex-start", gap: 10,
-      padding: "14px 14px 14px 16px",
-      background: variant === "mine" ? "#fff" : "#fafcff",
-      borderBottom: "1px solid #f3f4f6",
-      cursor: "pointer", position: "relative",
-      transition: "background 0.1s",
-    }}
+    <div
+      onClick={handleClick}
+      className="asgn-row"
+      style={{
+        display: "flex", alignItems: "flex-start", gap: 8,
+        padding: "14px 12px 14px 16px",
+        background: variant === "mine" ? "#fff" : "#fafcff",
+        borderBottom: "1px solid #f3f4f6",
+        cursor: "pointer", position: "relative",
+        transition: "background 0.1s",
+      }}
       onMouseEnter={e => (e.currentTarget.style.background = "#fdf8f8")}
-      onMouseLeave={e => (e.currentTarget.style.background = variant === "mine" ? "#fff" : "#fafcff")}>
+      onMouseLeave={e => (e.currentTarget.style.background = variant === "mine" ? "#fff" : "#fafcff")}
+    >
       {/* Left accent bar */}
       <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 3, borderRadius: "0 2px 2px 0", background: accentColor }} />
 
       {/* Publish toggle */}
-      <div onClick={e => e.stopPropagation()} style={{ flexShrink: 0, marginTop: 1 }}>
+      <div onClick={e => e.stopPropagation()} style={{ flexShrink: 0, marginTop: 0 }}>
         <PublishToggle published={a.status === "PUBLISHED"} onToggle={() => onTogglePublish(a)} />
       </div>
 
-      <div style={{ flexShrink: 0, marginTop: 3 }}>
+      <div style={{ flexShrink: 0, marginTop: 5 }}>
         <AssignmentIcon />
       </div>
 
       {/* Content */}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap", marginBottom: 5 }}>
-          <span style={{ fontSize: 13, fontWeight: 700, color: MAROON, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "100%" }}>
+        {/* Title row */}
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 6, flexWrap: "wrap", marginBottom: 5 }}>
+          <span
+            className="asgn-row-title"
+            style={{
+              fontSize: 13, fontWeight: 700, color: MAROON,
+              overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+              maxWidth: "100%",
+            }}
+          >
             {a.title}
           </span>
           {isNew && <NewBadge />}
           {a.status === "UNPUBLISHED" && (
-            <span style={{ fontSize: 10, color: "#d97706", fontWeight: 600 }}>Not Published</span>
+            <span style={{ fontSize: 10, color: "#d97706", fontWeight: 600, flexShrink: 0 }}>Not Published</span>
           )}
           {isClosed && (
-            <span style={{ fontSize: 10, color: "#9ca3af", fontWeight: 600 }}>Closed</span>
+            <span style={{ fontSize: 10, color: "#9ca3af", fontWeight: 600, flexShrink: 0 }}>Closed</span>
           )}
         </div>
-        <div className="asgn-row-meta" style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+        {/* Meta row — stacks on mobile via CSS */}
+        <div
+          className="asgn-row-meta"
+          style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}
+        >
           {variant === "mine" && authorDisplayName && (
             <AuthorBadge name={authorDisplayName} role={authorRole ?? "Admin"} />
           )}
           {variant === "others" && (
             <PublisherChip name={authorDisplayName} image={a.publisherImage} role={authorRole} />
           )}
-          <span style={{ fontSize: 12, color: "#6b7280" }}>{a.points} pts</span>
-          {due && <><span style={{ color: "#d1d5db" }}>·</span><span style={{ fontSize: 12, color: "#6b7280" }}>Due: {due}</span></>}
+          <span style={{ fontSize: 12, color: "#6b7280", flexShrink: 0 }}>{a.points} pts</span>
+          {due && (
+            <>
+              <span className="asgn-meta-dot" style={{ color: "#d1d5db", flexShrink: 0 }}>·</span>
+              <span className="asgn-meta-due" style={{ fontSize: 12, color: "#6b7280" }}>Due: {due}</span>
+            </>
+          )}
         </div>
       </div>
 
       {/* 3-dot menu */}
-      <div onClick={e => e.stopPropagation()} style={{ flexShrink: 0 }}>
+      <div onClick={e => e.stopPropagation()} style={{ flexShrink: 0, marginLeft: 2 }}>
         <AssignmentRowMenu assignment={a} onAction={handleAction} />
       </div>
     </div>
@@ -941,27 +1110,34 @@ function AssignmentGroupSection({
       {/* Group header */}
       <div style={{
         display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "10px 14px", background: "#f9fafb",
+        padding: "10px 12px", background: "#f9fafb",
         border: "1px solid #e5e7eb", borderRadius: collapsed ? 8 : "8px 8px 0 0",
       }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", flex: 1, minWidth: 0 }}
-          onClick={() => setCollapsed(c => !c)}>
+        <div
+          style={{ display: "flex", alignItems: "center", gap: 7, cursor: "pointer", flex: 1, minWidth: 0 }}
+          onClick={() => setCollapsed(c => !c)}
+        >
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2.5"
             style={{ flexShrink: 0, transform: collapsed ? "rotate(-90deg)" : "none", transition: "transform 0.15s" }}>
             <path d="M6 9l6 6 6-6" />
           </svg>
-          <span style={{ fontSize: 13, fontWeight: 700, color: "#374151", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{title}</span>
-          <span style={{ fontSize: 12, color: "#9ca3af" }}>({items.length})</span>
+          <span
+            className="asgn-group-title"
+            style={{ fontSize: 13, fontWeight: 700, color: "#374151", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+          >
+            {title}
+          </span>
+          <span style={{ fontSize: 12, color: "#9ca3af", flexShrink: 0 }}>({items.length})</span>
           {newCount > 0 && (
-            <span style={{ padding: "1px 6px", borderRadius: 20, fontSize: 9, fontWeight: 800, color: "#fff", background: "#dc2626" }}>
+            <span style={{ padding: "1px 6px", borderRadius: 20, fontSize: 9, fontWeight: 800, color: "#fff", background: "#dc2626", flexShrink: 0 }}>
               {newCount}
             </span>
           )}
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 2, flexShrink: 0 }}>
           {rowVariant === "mine" && (
             <button onClick={() => onAddAssignment(title)}
-              style={{ width: 30, height: 30, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 6, background: "none", border: "none", cursor: "pointer", color: "#9ca3af", touchAction: "manipulation" }}
+              style={{ width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 6, background: "none", border: "none", cursor: "pointer", color: "#9ca3af", touchAction: "manipulation" }}
               onMouseEnter={e => (e.currentTarget.style.background = "#e5e7eb")}
               onMouseLeave={e => (e.currentTarget.style.background = "none")}>
               <Plus size={15} />
@@ -974,7 +1150,7 @@ function AssignmentGroupSection({
       {!collapsed && (
         <div style={{ border: "1px solid #e5e7eb", borderTop: "none", borderRadius: "0 0 8px 8px", overflow: "hidden" }}>
           {items.length === 0 ? (
-            <div style={{ padding: "18px 16px", fontSize: 13, color: "#9ca3af", textAlign: "center" }}>
+            <div style={{ padding: "20px 16px", fontSize: 13, color: "#9ca3af", textAlign: "center" }}>
               No assignments in this group.
             </div>
           ) : (
@@ -1010,21 +1186,21 @@ function OthersAuthorSection({
   return (
     <div style={{ marginBottom: 12 }}>
       <div onClick={() => setCollapsed(c => !c)}
-        style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: collapsed ? 8 : "8px 8px 0 0", cursor: "pointer" }}>
+        style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 12px", background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: collapsed ? 8 : "8px 8px 0 0", cursor: "pointer" }}>
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1d6fa4" strokeWidth="2.5"
           style={{ flexShrink: 0, transform: collapsed ? "rotate(-90deg)" : "none", transition: "transform 0.15s" }}>
           <path d="M6 9l6 6 6-6" />
         </svg>
         <PublisherAvatar name={authorName} image={authorImage} size={22} />
-        <span style={{ fontSize: 13, fontWeight: 700, color: "#1d4ed8" }}>{authorName}</span>
+        <span style={{ fontSize: 13, fontWeight: 700, color: "#1d4ed8", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0, flex: 1 }}>{authorName}</span>
         {authorRole && (
-          <span style={{ padding: "1px 6px", borderRadius: 4, fontSize: 9, fontWeight: 700, textTransform: "uppercase", background: "#eff6ff", color: "#1d6fa4", border: "1px solid #bfdbfe" }}>
+          <span style={{ padding: "1px 6px", borderRadius: 4, fontSize: 9, fontWeight: 700, textTransform: "uppercase", background: "#eff6ff", color: "#1d6fa4", border: "1px solid #bfdbfe", flexShrink: 0 }}>
             {authorRole}
           </span>
         )}
-        <span style={{ fontSize: 12, color: "#93c5fd" }}>({items.length})</span>
+        <span style={{ fontSize: 12, color: "#93c5fd", flexShrink: 0 }}>({items.length})</span>
         {newCount > 0 && (
-          <span style={{ padding: "1px 6px", borderRadius: 20, fontSize: 9, fontWeight: 800, color: "#fff", background: "#dc2626" }}>
+          <span style={{ padding: "1px 6px", borderRadius: 20, fontSize: 9, fontWeight: 800, color: "#fff", background: "#dc2626", flexShrink: 0 }}>
             {newCount}
           </span>
         )}
@@ -1060,15 +1236,15 @@ function OthersGroupSection({
   return (
     <div style={{ marginBottom: 12 }}>
       <div onClick={() => setCollapsed(c => !c)}
-        style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", background: "#f0f9ff", border: "1px solid #bae6fd", borderRadius: collapsed ? 8 : "8px 8px 0 0", cursor: "pointer" }}>
+        style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 12px", background: "#f0f9ff", border: "1px solid #bae6fd", borderRadius: collapsed ? 8 : "8px 8px 0 0", cursor: "pointer" }}>
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#0369a1" strokeWidth="2.5"
           style={{ flexShrink: 0, transform: collapsed ? "rotate(-90deg)" : "none", transition: "transform 0.15s" }}>
           <path d="M6 9l6 6 6-6" />
         </svg>
-        <span style={{ fontSize: 13, fontWeight: 700, color: "#0369a1" }}>{title}</span>
-        <span style={{ fontSize: 12, color: "#7dd3fc" }}>({items.length})</span>
+        <span style={{ fontSize: 13, fontWeight: 700, color: "#0369a1", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0, flex: 1 }}>{title}</span>
+        <span style={{ fontSize: 12, color: "#7dd3fc", flexShrink: 0 }}>({items.length})</span>
         {newCount > 0 && (
-          <span style={{ padding: "1px 6px", borderRadius: 20, fontSize: 9, fontWeight: 800, color: "#fff", background: "#dc2626" }}>
+          <span style={{ padding: "1px 6px", borderRadius: 20, fontSize: 9, fontWeight: 800, color: "#fff", background: "#dc2626", flexShrink: 0 }}>
             {newCount}
           </span>
         )}
@@ -1092,13 +1268,27 @@ function Toolbar({ search, onSearch, right }: {
   search: string; onSearch: (v: string) => void; right: React.ReactNode;
 }) {
   return (
-    <div className="asgn-toolbar" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", borderBottom: "1px solid #f3f4f6", gap: 10 }}>
-      <div style={{ position: "relative", flex: 1, maxWidth: 280 }}>
+    <div
+      className="asgn-toolbar"
+      style={{
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        padding: "10px 12px", borderBottom: "1px solid #f3f4f6", gap: 8,
+      }}
+    >
+      {/* Search */}
+      <div className="asgn-toolbar-search" style={{ position: "relative", flex: 1, maxWidth: 280 }}>
         <Search size={14} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "#9ca3af", pointerEvents: "none" }} />
-        <input className="asgn-search-input" value={search} onChange={e => onSearch(e.target.value)} placeholder="Search…"
-          style={{ width: "100%", height: 36, border: "1px solid #e5e7eb", borderRadius: 8, paddingLeft: 32, paddingRight: 10, fontFamily: FONT, fontSize: 13, color: "#374151", background: "#fafafa", outline: "none" }} />
+        <input
+          value={search} onChange={e => onSearch(e.target.value)} placeholder="Search assignments…"
+          style={{
+            width: "100%", height: 38, border: "1px solid #e5e7eb", borderRadius: 8,
+            paddingLeft: 32, paddingRight: 10, fontFamily: FONT, fontSize: 13,
+            color: "#374151", background: "#fafafa", outline: "none",
+          }}
+        />
       </div>
-      <div className="asgn-toolbar-right" style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+      {/* Right actions */}
+      <div className="asgn-toolbar-right" style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
         {right}
       </div>
     </div>
@@ -1107,8 +1297,17 @@ function Toolbar({ search, onSearch, right }: {
 
 function SectionLabel({ children, color, bg, border }: { children: React.ReactNode; color: string; bg: string; border: string }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", padding: "8px 14px", background: bg, borderBottom: `1px solid ${border}`, borderTop: `1px solid ${border}` }}>
-      <span className="asgn-section-label" style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", color }}>{children}</span>
+    <div style={{
+      display: "flex", alignItems: "center",
+      padding: "8px 14px",
+      background: bg, borderBottom: `1px solid ${border}`, borderTop: `1px solid ${border}`,
+    }}>
+      <span
+        className="asgn-section-label"
+        style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", color }}
+      >
+        {children}
+      </span>
     </div>
   );
 }
@@ -1338,13 +1537,24 @@ export default function CourseAssignmentsPage({
       <Toolbar search={mySearch} onSearch={setMySearch}
         right={<>
           <button onClick={() => setShowGroupModal(true)}
-            style={{ display: "flex", alignItems: "center", gap: 6, height: 36, padding: "0 12px", fontFamily: FONT, fontSize: 13, fontWeight: 600, border: "1px solid #e5e7eb", borderRadius: 8, background: "#fff", color: "#374151", cursor: "pointer", touchAction: "manipulation" }}>
+            style={{
+              display: "flex", alignItems: "center", gap: 5,
+              height: 38, padding: "0 12px", fontFamily: FONT,
+              fontSize: 13, fontWeight: 600,
+              border: "1px solid #e5e7eb", borderRadius: 8,
+              background: "#fff", color: "#374151", cursor: "pointer", touchAction: "manipulation",
+            }}>
             <Plus size={14} />
-            <span style={{ display: "none" }} className="asgn-btn-text-lg">Group</span>
-            Group
+            <span>Group</span>
           </button>
           <button onClick={() => router.push(`/admin/courses/${courseId}/assignments/new`)}
-            style={{ display: "flex", alignItems: "center", gap: 6, height: 36, padding: "0 14px", fontFamily: FONT, fontSize: 13, fontWeight: 700, border: "none", borderRadius: 8, background: MAROON, color: "#fff", cursor: "pointer", touchAction: "manipulation" }}>
+            style={{
+              display: "flex", alignItems: "center", gap: 5,
+              height: 38, padding: "0 14px", fontFamily: FONT,
+              fontSize: 13, fontWeight: 700,
+              border: "none", borderRadius: 8,
+              background: MAROON, color: "#fff", cursor: "pointer", touchAction: "manipulation",
+            }}>
             <Plus size={14} />
             <span>New</span>
           </button>
@@ -1394,15 +1604,22 @@ export default function CourseAssignmentsPage({
           <div style={{ display: "flex", border: "1px solid #e5e7eb", borderRadius: 8, overflow: "hidden" }}>
             {(["author", "group"] as const).map(mode => (
               <button key={mode} onClick={() => setOthersViewMode(mode)}
-                style={{ padding: "0 12px", height: 36, fontFamily: FONT, fontSize: 12, fontWeight: 700, border: "none", cursor: "pointer", whiteSpace: "nowrap", background: othersViewMode === mode ? MAROON : "transparent", color: othersViewMode === mode ? "#fff" : "#6b7280", transition: "all 0.15s", touchAction: "manipulation" }}>
-                By {mode === "author" ? "Author" : "Group"}
+                style={{
+                  padding: "0 12px", height: 38, fontFamily: FONT,
+                  fontSize: 12, fontWeight: 700, border: "none", cursor: "pointer",
+                  whiteSpace: "nowrap",
+                  background: othersViewMode === mode ? MAROON : "transparent",
+                  color: othersViewMode === mode ? "#fff" : "#6b7280",
+                  transition: "all 0.15s", touchAction: "manipulation",
+                }}>
+                {mode === "author" ? "By Author" : "By Group"}
               </button>
             ))}
           </div>
         }
       />
 
-      <div style={{ padding: "12px 12px 20px" }}>
+      <div style={{ padding: "12px 12px 24px" }}>
         {otherAssignments.length === 0 ? (
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 20px", gap: 10 }}>
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" strokeWidth="1.5">

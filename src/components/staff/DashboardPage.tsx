@@ -622,14 +622,12 @@ export default function DashboardPage() {
         }}>
           <div style={{ display: "flex", gap: isBottom ? 18 : 20, minWidth: "max-content" }}>
             {[
-              { label: "Total",        value: courses.length },
-              { label: "Published",    value: published.length,    color: "#15803d" },
-              { label: "Academic",     value: academic.length },
-              { label: "Non-Academic", value: nonAcademic.length },
-              { label: "Unpublished",  value: unpublished.length,  color: "#9ca3af" },
-            ].map(s => (
-              <div key={s.label} style={{ display: "flex", flexDirection: "column", flexShrink: 0 }}>
-                <span style={{ fontSize: isBottom ? 17 : 18, fontWeight: 900, color: s.color ?? MAROON, lineHeight: 1 }}>
+  { label: "Total",        value: courses.length },
+  { label: "Academic",     value: academic.length },
+  { label: "Non-Academic", value: nonAcademic.length },
+].map(s => (
+  <div key={s.label} style={{ display: "flex", flexDirection: "column", flexShrink: 0 }}>
+    <span style={{ fontSize: isBottom ? 17 : 18, fontWeight: 900, color: MAROON, lineHeight: 1 }}>
                   {s.value}
                 </span>
                 <span style={{ fontSize: 10, color: "#9ca3af", fontWeight: 600, marginTop: 2, whiteSpace: "nowrap" }}>

@@ -18,22 +18,30 @@ export async function PATCH(
   const validStatuses = ["PENDING", "SUBMITTED", "GRADED", "OVERDUE", "LATE", "MISSING", "EXCUSED"];
   const safeStatus = status && validStatuses.includes(status) ? status : undefined;
 
+  const isGrading = grade !== undefined || feedback !== undefined;
+
   const submission = await prisma.submission.update({
-  where: { id: submissionId },
-  data: {
-    ...(grade    !== undefined && { grade:    grade    }),
-    ...(feedback !== undefined && { feedback: feedback }),
-    ...(safeStatus !== undefined && { status: safeStatus as never }),
-    ...(daysLate !== undefined && daysLate !== null && { daysLate: daysLate }),
-  },
-  select: {
-    id:       true,
-    grade:    true,
-    feedback: true,
-    status:   true,
-    daysLate: true,
-  },
-});
+    where: { id: submissionId },
+    data: {
+      ...(grade      !== undefined && { grade                       }),
+      ...(feedback   !== undefined && { feedback                    }),
+      ...(safeStatus !== undefined && { status: safeStatus as never }),
+      ...(daysLate   !== undefined && daysLate !== null && { daysLate }),
+      ...(isGrading  && {
+        gradedById: session.user.id,
+        gradedAt:   new Date(),
+      }),
+    },
+    select: {
+      id:        true,
+      grade:     true,
+      feedback:  true,
+      status:    true,
+      daysLate:  true,
+      gradedById: true,
+      gradedAt:   true,
+    },
+  });
 
   return NextResponse.json({ submission });
 }

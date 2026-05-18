@@ -70,6 +70,7 @@ function useOnClickOutside<T extends HTMLElement>(
 }
 
 // ─── DateTimeRow ──────────────────────────────────────────────────────────────
+// FIXED: stacked layout on mobile, no overflow
 function DateTimeRow({
   label, date, time, onDateChange, onTimeChange, onClear, error,
 }: {
@@ -78,22 +79,21 @@ function DateTimeRow({
   onClear: () => void; error?: string;
 }) {
   return (
-    <div>
+    <div className="w-full">
       <p className="text-xs font-medium text-gray-700 mb-1">{label}</p>
-      <div className={`flex border rounded-sm overflow-hidden ${error ? "border-red-500" : "border-gray-300"}`}>
+      {/* Stack vertically on mobile, horizontal on sm+ */}
+      <div className={`flex flex-col gap-1.5 sm:flex-row sm:gap-0 border rounded-sm overflow-hidden ${error ? "border-red-500" : "border-gray-300"}`}>
         <input
           type="date"
           value={date}
           onChange={(e) => onDateChange(e.target.value)}
-          className="flex-1 h-9 border-0 px-2 text-xs outline-none bg-white min-w-0"
+          className="w-full h-9 border-0 px-2 text-xs outline-none bg-white sm:border-r sm:border-gray-200"
           style={{ minWidth: 0 }}
         />
-        <div className="w-px bg-gray-200 self-stretch" />
         <select
           value={time}
           onChange={(e) => onTimeChange(e.target.value)}
-          className="h-9 border-0 px-2 text-xs bg-white outline-none shrink-0"
-          style={{ minWidth: 90, maxWidth: 110 }}
+          className="w-full h-9 border-0 border-t border-gray-200 sm:border-t-0 px-2 text-xs bg-white outline-none sm:w-auto sm:min-w-[110px]"
         >
           <option value="">Time</option>
           {TIME_OPTIONS.map((t) => <option key={t}>{t}</option>)}
@@ -533,10 +533,8 @@ function RichTextEditor({ valueHtml, onChangeHtml, onChangeText, placeholder = "
         {/* Menu bar — scrollable on small screens */}
         <div
           data-menubar
-          className="flex items-center gap-0.5 px-1 py-0.5 bg-[#f7f9fb] border-b border-gray-200 select-none overflow-x-auto"
-          style={{ scrollbarWidth: "none" }}
+          className="rte-menubar flex items-center gap-0.5 px-1 py-0.5 bg-[#f7f9fb] border-b border-gray-200 select-none overflow-x-auto"
         >
-          <style>{`.rte-menubar::-webkit-scrollbar{display:none}`}</style>
           {menuDefs.map(m => (
             <div key={m.label} className="relative shrink-0">
               <button
@@ -603,6 +601,7 @@ function RichTextEditor({ valueHtml, onChangeHtml, onChangeText, placeholder = "
       </div>
 
       <style>{`
+        .rte-menubar::-webkit-scrollbar{display:none}
         [data-placeholder]:empty::before{content:attr(data-placeholder);color:#9ca3af;pointer-events:none;}
         [contenteditable] table{border-collapse:collapse;width:100%;margin:8px 0;}
         [contenteditable] td,[contenteditable] th{border:1px solid #dee2e6;padding:6px 10px;min-width:40px;}
@@ -1176,7 +1175,8 @@ export function AnnouncementCreateView(props: {
   } = props;
 
   return (
-    <div className="px-3 sm:px-6 lg:px-8 py-4 sm:py-6 max-w-4xl mx-auto">
+    // FIXED: added pb-safe for mobile nav bar clearance; max-w constrains width
+    <div className="px-3 sm:px-6 lg:px-8 py-4 sm:py-6 max-w-4xl mx-auto pb-6">
       <div className="flex items-center gap-6 border-b border-gray-200 mb-6">
         <div className="text-sm font-medium py-3 border-b-2 -mb-px" style={{ borderColor: MAROON, color: "#374151" }}>Details</div>
       </div>
@@ -1223,20 +1223,32 @@ export function AnnouncementCreateView(props: {
         </label>
       </div>
 
-      {/* Scheduling */}
+      {/* Scheduling — FIXED: stacked on mobile, no overflow */}
       <div className="mb-8 border border-gray-200 rounded-lg p-4 bg-gray-50">
         <div className="text-sm font-medium text-gray-800 mb-4">Scheduling</div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-          <div>
+        {/* Always stack on mobile; side-by-side only on sm+ */}
+        <div className="flex flex-col gap-5 sm:grid sm:grid-cols-2 sm:gap-6">
+          <div className="w-full min-w-0">
             <div className="text-sm font-medium text-gray-800 mb-2">Available From</div>
-            <DateTimeRow label="Date & Time" date={availableFromDate} time={availableFromTime}
-              onDateChange={setAvailableFromDate} onTimeChange={setAvailableFromTime}
-              onClear={() => { setAvailableFromDate(""); setAvailableFromTime(""); }} />
+            <DateTimeRow
+              label="Date & Time"
+              date={availableFromDate}
+              time={availableFromTime}
+              onDateChange={setAvailableFromDate}
+              onTimeChange={setAvailableFromTime}
+              onClear={() => { setAvailableFromDate(""); setAvailableFromTime(""); }}
+            />
           </div>
-          <div>
+          <div className="w-full min-w-0">
             <div className="text-sm font-medium text-gray-800 mb-2">Until</div>
-            <DateTimeRow label="Date & Time" date={untilDate} time={untilTime}
-              onDateChange={setUntilDate} onTimeChange={setUntilTime} onClear={onResetUntil} />
+            <DateTimeRow
+              label="Date & Time"
+              date={untilDate}
+              time={untilTime}
+              onDateChange={setUntilDate}
+              onTimeChange={setUntilTime}
+              onClear={onResetUntil}
+            />
           </div>
         </div>
       </div>

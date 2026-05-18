@@ -19,10 +19,10 @@ import {
   type DisplayGradeAs,
 } from "@/lib/gradeDisplay";
 
-const MAROON      = "#7b1113";
-const MAROON_LIGHT= "#fef2f2";
-const MAROON_DARK = "#5a0d0f";
-const FONT        = "'Plus Jakarta Sans','Helvetica Neue',Arial,sans-serif";
+const MAROON       = "#7b1113";
+const MAROON_LIGHT = "#fef2f2";
+const MAROON_DARK  = "#5a0d0f";
+const FONT         = "'Plus Jakarta Sans','Helvetica Neue',Arial,sans-serif";
 
 /* ─────────────────────────────────────────────────────────────────────────────
    TYPES
@@ -144,6 +144,20 @@ function getScoreBg(score: number | null, max: number): string {
   if (pct >= 0.5) return "#fff7ed";
   return "#fef2f2";
 }
+function getPctColor(pct: number | null): string {
+  if (pct === null) return "#9ca3af";
+  if (pct >= 90) return "#15803d";
+  if (pct >= 70) return "#b45309";
+  if (pct >= 50) return "#c2410c";
+  return "#b91c1c";
+}
+function getPctBg(pct: number | null): string {
+  if (pct === null) return "#f3f4f6";
+  if (pct >= 90) return "#f0fdf4";
+  if (pct >= 70) return "#fffbeb";
+  if (pct >= 50) return "#fff7ed";
+  return "#fef2f2";
+}
 function getInitials(name: string): string {
   return name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
 }
@@ -177,10 +191,10 @@ function recalcStaff(
   forms: GradeColumn[] = [],
   updatedFormGrades?: FormGrade[]
 ): StaffRow {
-  const safeAssignments  = assignments ?? [];
-  const safeForms        = forms ?? [];
-  const safeGrades       = updatedAssignmentGrades ?? [];
-  const safeFormGrades   = updatedFormGrades ?? staff.formGrades ?? [];
+  const safeAssignments = assignments ?? [];
+  const safeForms       = forms ?? [];
+  const safeGrades      = updatedAssignmentGrades ?? [];
+  const safeFormGrades  = updatedFormGrades ?? staff.formGrades ?? [];
 
   const earnedFromAssignments = safeGrades.reduce((sum, g) => {
     const col = safeAssignments.find((a) => a.id === g.assignmentId);
@@ -231,7 +245,7 @@ function ArrowBtn({ onOpenPanel }: { onOpenPanel: () => void }) {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   FILTER PANEL  (full-screen bottom-sheet on mobile)
+   FILTER PANEL
 ───────────────────────────────────────────────────────────────────────────── */
 interface FilterPanelProps {
   open: boolean;
@@ -263,7 +277,7 @@ function FilterPanel({
   }, [open]);
 
   useEffect(() => {
-    if (isMobile) return; // mobile uses overlay backdrop
+    if (isMobile) return;
     const handler = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) onClose();
     };
@@ -276,7 +290,7 @@ function FilterPanel({
   const statusOptions     = ["Late", "Missing", "Resubmitted", "Dropped", "Excused"];
   const submissionOptions = ["Has Ungraded Submissions", "Has Submissions", "Has No Submissions", "Has Unposted Grades"];
 
-  const isActive   = (type: ActiveFilter["type"], value: string) =>
+  const isActive = (type: ActiveFilter["type"], value: string) =>
     activeFilters.some(f => f.type === type && f.value === value);
 
   const toggleFilter = (type: ActiveFilter["type"], value: string) => {
@@ -484,7 +498,7 @@ function FilterPresetsModal({
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/30 p-0 sm:p-4">
       <div ref={ref}
-        className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl border border-gray-200 w-full sm:w-105 max-h-[80vh] flex flex-col"
+        className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl border border-gray-200 w-full sm:max-w-md max-h-[80vh] flex flex-col"
         style={{ fontFamily: FONT }}>
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
           <div className="flex items-center gap-2">
@@ -578,7 +592,7 @@ function FilterChip({ filter, onRemove, onChangeStatus, statusOptions }: FilterC
   const typeLabel = (() => {
     switch (filter.type) {
       case "assignmentGroup": return "Group";
-      case "studentGroup":    return "Student";
+      case "studentGroup":    return "Staff";
       case "status":          return "Status";
       case "submissions":     return "Sub";
       case "dateRange":       return "Date";
@@ -589,14 +603,14 @@ function FilterChip({ filter, onRemove, onChangeStatus, statusOptions }: FilterC
   return (
     <div ref={ref} className="relative">
       <button onClick={() => canChange ? setOpen(o => !o) : undefined}
-        className="flex items-center gap-1.5 h-8 px-2.5 rounded-full border text-xs font-semibold transition-all"
+        className="flex items-center gap-1.5 h-7 px-2 rounded-full border text-xs font-semibold transition-all"
         style={{ background: chipStyle.bg, borderColor: chipStyle.border, color: chipStyle.color }}>
-        <span className="text-[9px] font-black opacity-60 uppercase">{typeLabel}:</span>
-        <span>{filter.label}</span>
-        {canChange && <ChevronDown size={11} />}
+        <span className="text-[9px] font-black opacity-60 uppercase hidden sm:inline">{typeLabel}:</span>
+        <span className="max-w-[80px] truncate">{filter.label}</span>
+        {canChange && <ChevronDown size={10} />}
         <span onClick={e => { e.stopPropagation(); onRemove(); }}
-          className="ml-0.5 w-4 h-4 flex items-center justify-center rounded-full hover:bg-black/10 transition-colors cursor-pointer">
-          <X size={9} />
+          className="ml-0.5 w-3.5 h-3.5 flex items-center justify-center rounded-full hover:bg-black/10 transition-colors cursor-pointer">
+          <X size={8} />
         </span>
       </button>
       {open && canChange && statusOptions && (
@@ -620,7 +634,7 @@ function FilterChip({ filter, onRemove, onChangeStatus, statusOptions }: FilterC
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   GRADE PANEL  (bottom-sheet on mobile, right-side drawer on desktop)
+   GRADE PANEL
 ───────────────────────────────────────────────────────────────────────────── */
 function GradePanel({
   panel, onClose, onSave, onOpenSpeedgrader, isMobile,
@@ -712,7 +726,7 @@ function GradePanel({
   const panelContent = (
     <>
       {/* Header */}
-      <div className="flex items-center justify-between px-5 py-3 border-b border-gray-200 shrink-0" style={{ background: MAROON }}>
+      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 shrink-0" style={{ background: MAROON }}>
         <div className="flex items-center gap-3 min-w-0">
           {panel.staffImage
             ? <Image src={panel.staffImage} alt={panel.staffName} width={32} height={32} className="rounded-full object-cover shrink-0 ring-2 ring-white/30" />
@@ -726,8 +740,8 @@ function GradePanel({
         <div className="flex items-center gap-2 shrink-0">
           {panel.grade.submissionId && (
             <button onClick={() => onOpenSpeedgrader(panel.staffId, panel.assignmentId, panel.grade.submissionId!)}
-              className="flex items-center gap-1 h-7 px-2.5 rounded-lg text-[11px] font-black text-white bg-white/15 hover:bg-white/25 transition-all">
-              <Eye size={10} /> SpeedGrader
+              className="flex items-center gap-1 h-7 px-2 rounded-lg text-[10px] font-black text-white bg-white/15 hover:bg-white/25 transition-all">
+              <Eye size={10} /> <span className="hidden sm:inline">SpeedGrader</span>
             </button>
           )}
           <button onClick={onClose} className="w-7 h-7 flex items-center justify-center rounded-lg bg-white/15 hover:bg-white/25 text-white transition-all">
@@ -737,14 +751,14 @@ function GradePanel({
       </div>
 
       {/* Assignment title bar */}
-      <div className="px-5 py-2.5 border-b border-gray-100 shrink-0 bg-gray-50 flex items-center justify-between">
+      <div className="px-4 py-2 border-b border-gray-100 shrink-0 bg-gray-50 flex items-center justify-between">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1 mb-0.5">
             <button className="w-5 h-5 flex items-center justify-center rounded border border-gray-200 text-gray-400 hover:bg-gray-100"><ChevronLeft size={11} /></button>
             <p className="text-xs font-black text-gray-800 truncate flex-1 text-center">{panel.assignmentTitle}</p>
             <button className="w-5 h-5 flex items-center justify-center rounded border border-gray-200 text-gray-400 hover:bg-gray-100"><ChevronRight size={11} /></button>
           </div>
-          <div className="flex items-center gap-1.5 mt-0.5 justify-center">
+          <div className="flex items-center gap-1.5 mt-0.5 justify-center flex-wrap">
             <span className="text-[10px] text-gray-400">{panel.maxPoints} pts max</span>
             {panel.grade.submittedAt && (
               <span className="text-[10px] text-gray-400">
@@ -755,7 +769,7 @@ function GradePanel({
         </div>
         {panel.grade.submissionId && (
           <button onClick={() => onOpenSpeedgrader(panel.staffId, panel.assignmentId, panel.grade.submissionId!)}
-            className="ml-2 flex items-center gap-1 h-7 px-2.5 rounded-lg text-[10px] font-black border shrink-0 transition-all hover:opacity-80"
+            className="ml-2 flex items-center gap-1 h-7 px-2 rounded-lg text-[10px] font-black border shrink-0 transition-all hover:opacity-80"
             style={{ borderColor: MAROON, color: MAROON, background: MAROON_LIGHT }}>
             <Eye size={10} /> SpeedGrader
           </button>
@@ -764,7 +778,7 @@ function GradePanel({
 
       {/* Body */}
       <div className="flex-1 overflow-y-auto">
-        <div className="px-5 py-4 border-b border-gray-100">
+        <div className="px-4 py-4 border-b border-gray-100">
           <p className="text-[10px] font-black uppercase tracking-widest mb-3" style={{ color: MAROON }}>{gradeLabelForHeader}</p>
           {isNG && (
             <div className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-center">
@@ -830,7 +844,7 @@ function GradePanel({
         </div>
 
         {!isNG && (
-          <div className="px-5 py-4 border-b border-gray-100">
+          <div className="px-4 py-4 border-b border-gray-100">
             <p className="text-[10px] font-black uppercase tracking-widest mb-3" style={{ color: MAROON }}>Status</p>
             <div className="space-y-2">
               {(["None", "Late", "Missing", "Excused"] as SubmissionStatus[]).map(s => {
@@ -838,7 +852,7 @@ function GradePanel({
                 const isSelected = statusInput === s;
                 return (
                   <label key={s}
-                    className="flex items-center gap-3 px-3 py-3 rounded-lg cursor-pointer transition-all border"
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all border"
                     style={{ background: isSelected ? sc.bg : "white", borderColor: isSelected ? sc.border : "#e5e7eb", color: isSelected ? sc.color : "#6b7280" }}>
                     <input type="radio" name="status" value={s} checked={isSelected}
                       onChange={() => { setStatusInput(s); if (s !== "Late") setDaysLate(""); }}
@@ -865,7 +879,7 @@ function GradePanel({
         )}
 
         {(panel.grade.fileUrl || panel.grade.textEntry || panel.grade.websiteUrl) && (
-          <div className="px-5 py-4 border-b border-gray-100">
+          <div className="px-4 py-4 border-b border-gray-100">
             <p className="text-[10px] font-black uppercase tracking-widest mb-2" style={{ color: MAROON }}>Submission</p>
             {panel.grade.fileUrl && (
               <button onClick={() => panel.grade.submissionId && onOpenSpeedgrader(panel.staffId, panel.assignmentId, panel.grade.submissionId!)}
@@ -892,10 +906,10 @@ function GradePanel({
           </div>
         )}
 
-        <div className="px-5 py-4">
+        <div className="px-4 py-4">
           <p className="text-[10px] font-black uppercase tracking-widest mb-2" style={{ color: MAROON }}>Comments</p>
           <textarea value={feedback} onChange={e => setFeedback(e.target.value)}
-            placeholder="Add comments or feedback…" rows={4}
+            placeholder="Add comments or feedback…" rows={3}
             className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-700 outline-none resize-none leading-relaxed"
             style={{ fontFamily: FONT }}
             onFocus={e => (e.currentTarget.style.borderColor = MAROON)}
@@ -904,14 +918,14 @@ function GradePanel({
       </div>
 
       {/* Footer */}
-      <div className="shrink-0 border-t border-gray-200 px-5 py-4 bg-gray-50 flex items-center justify-between gap-3">
+      <div className="shrink-0 border-t border-gray-200 px-4 py-3 bg-gray-50 flex items-center justify-between gap-3">
         <button onClick={onClose}
-          className="h-11 px-4 border border-gray-200 rounded-lg text-sm font-semibold text-gray-600 hover:bg-white transition-colors">
+          className="h-10 px-4 border border-gray-200 rounded-lg text-sm font-semibold text-gray-600 hover:bg-white transition-colors">
           Cancel
         </button>
         {!isNG && (
           <button onClick={handleSave} disabled={saving}
-            className="flex-1 h-11 rounded-lg text-sm font-black text-white transition-all disabled:opacity-60 flex items-center justify-center gap-2"
+            className="flex-1 h-10 rounded-lg text-sm font-black text-white transition-all disabled:opacity-60 flex items-center justify-center gap-2"
             style={{ background: saved ? "#15803d" : MAROON }}>
             {saving ? <><RotateCcw size={12} className="animate-spin" /> Saving…</>
              : saved  ? <><CheckCircle2 size={12} /> Saved!</>
@@ -927,7 +941,7 @@ function GradePanel({
       <>
         <div className="fixed inset-0 z-40 bg-black/30" onClick={onClose} />
         <div className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl shadow-2xl flex flex-col overflow-hidden"
-          style={{ maxHeight: "92vh", fontFamily: FONT }}>
+          style={{ maxHeight: "92dvh", fontFamily: FONT }}>
           {panelContent}
         </div>
       </>
@@ -938,7 +952,7 @@ function GradePanel({
     <>
       <div className="fixed inset-0 z-40 bg-black/20" onClick={onClose} />
       <div className="fixed right-0 top-0 h-full z-50 bg-white shadow-2xl border-l border-gray-200 flex flex-col overflow-hidden"
-        style={{ width: 400, fontFamily: FONT }}>
+        style={{ width: "min(400px, 95vw)", fontFamily: FONT }}>
         {panelContent}
       </div>
     </>
@@ -946,7 +960,7 @@ function GradePanel({
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   FORM RESPONSE PANEL  (bottom-sheet on mobile)
+   FORM RESPONSE PANEL
 ───────────────────────────────────────────────────────────────────────────── */
 interface FetchedAnswer { questionId: string; question: string; type: string; answer: string | string[] | null; }
 
@@ -1004,7 +1018,7 @@ function FormResponsePanel({
 
   const panelContent = (
     <>
-      <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 shrink-0" style={{ background: MAROON }}>
+      <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200 shrink-0" style={{ background: MAROON }}>
         <div className="flex items-center gap-3 min-w-0">
           {panel.staffImage
             ? <Image src={panel.staffImage} alt={panel.staffName} width={32} height={32} className="rounded-full object-cover shrink-0 ring-2 ring-white/30" />
@@ -1023,9 +1037,9 @@ function FormResponsePanel({
         </button>
       </div>
 
-      <div className="px-5 py-3 border-b border-gray-100 shrink-0 bg-gray-50">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4 text-xs">
+      <div className="px-4 py-3 border-b border-gray-100 shrink-0 bg-gray-50">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-4 text-xs flex-wrap">
             <div>
               <span className="text-gray-400 font-medium">Submitted</span>
               <p className="font-bold text-gray-700 mt-0.5">
@@ -1047,7 +1061,7 @@ function FormResponsePanel({
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
+      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
         <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-3">Responses</p>
         {loadingAnswers ? (
           <div className="flex items-center justify-center py-10 gap-2 text-gray-400">
@@ -1097,17 +1111,17 @@ function FormResponsePanel({
         </div>
       </div>
 
-      <div className="shrink-0 border-t border-gray-200 px-5 py-4 bg-gray-50 flex items-center gap-3">
-        <button onClick={onClose} className="h-11 px-4 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-white transition-colors">Close</button>
+      <div className="shrink-0 border-t border-gray-200 px-4 py-3 bg-gray-50 flex items-center gap-2 flex-wrap">
+        <button onClick={onClose} className="h-10 px-4 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-white transition-colors shrink-0">Close</button>
         {panel.formGrade.hasSubmission && (
           <button onClick={onViewResponses}
-            className="h-11 px-4 rounded-xl text-sm font-black border-2 transition-all flex items-center gap-1.5"
+            className="h-10 px-3 rounded-xl text-sm font-black border-2 transition-all flex items-center gap-1.5 shrink-0"
             style={{ borderColor: MAROON, color: MAROON, background: "white" }}>
             <Eye size={12} /> Full Page
           </button>
         )}
         <button onClick={handleSave} disabled={saving}
-          className="flex-1 h-11 rounded-xl text-sm font-black text-white transition-all disabled:opacity-60 flex items-center justify-center gap-2"
+          className="flex-1 h-10 rounded-xl text-sm font-black text-white transition-all disabled:opacity-60 flex items-center justify-center gap-2 min-w-[100px]"
           style={{ background: saved ? "#15803d" : MAROON }}>
           {saving ? <><RotateCcw size={12} className="animate-spin" /> Saving…</> : saved ? <><CheckCircle2 size={12} /> Saved!</> : "Save Score"}
         </button>
@@ -1120,7 +1134,7 @@ function FormResponsePanel({
       <>
         <div className="fixed inset-0 z-40 bg-black/30" onClick={onClose} />
         <div className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl shadow-2xl flex flex-col overflow-hidden"
-          style={{ maxHeight: "92vh", fontFamily: FONT }}>
+          style={{ maxHeight: "92dvh", fontFamily: FONT }}>
           {panelContent}
         </div>
       </>
@@ -1131,7 +1145,7 @@ function FormResponsePanel({
     <>
       <div className="fixed inset-0 z-40 bg-black/20" onClick={onClose} />
       <div className="fixed right-0 top-0 h-full z-50 bg-white shadow-2xl border-l border-gray-200 flex flex-col"
-        style={{ width: 460, fontFamily: FONT }}>
+        style={{ width: "min(460px, 95vw)", fontFamily: FONT }}>
         {panelContent}
       </div>
     </>
@@ -1144,13 +1158,13 @@ function FormResponsePanel({
 function CellDisplay({ col, score, status, hasSubmission, isSaving }: {
   col: GradeColumn; score: number | null; status: string | null; hasSubmission: boolean; isSaving: boolean;
 }) {
-  const dga  = col.displayGradeAs ?? "Points";
-  const isNG = dga === "Not Graded";
-  const isCI = dga === "Complete/Incomplete";
+  const dga   = col.displayGradeAs ?? "Points";
+  const isNG  = dga === "Not Graded";
+  const isCI  = dga === "Complete/Incomplete";
   const isPct = dga === "Percentage";
 
-  if (isSaving)         return <RotateCcw size={10} className="animate-spin text-gray-400" />;
-  if (isNG)             return <span className="text-xs text-gray-400">-</span>;
+  if (isSaving)             return <RotateCcw size={10} className="animate-spin text-gray-400" />;
+  if (isNG)                 return <span className="text-xs text-gray-400">-</span>;
   if (status === "EXCUSED") return <span className="text-xs font-bold text-amber-600">EX</span>;
   if (status === "MISSING") return <AlertCircle size={14} className="text-red-400" />;
 
@@ -1195,8 +1209,8 @@ function CellEditor({ col, score, onSave, onOpenPanel, onDismiss }: {
   const dga   = col.displayGradeAs ?? "Points";
   const isCI  = dga === "Complete/Incomplete";
   const isPct = dga === "Percentage";
-  const inputRef      = useRef<HTMLInputElement>(null);
-  const committedRef  = useRef(false);
+  const inputRef     = useRef<HTMLInputElement>(null);
+  const committedRef = useRef(false);
   const [ciVal, setCiVal] = useState<string>(
     score === col.points ? "complete" : score === 0 ? "incomplete" : ""
   );
@@ -1204,8 +1218,8 @@ function CellEditor({ col, score, onSave, onOpenPanel, onDismiss }: {
   const commitPct = useCallback(async () => {
     if (committedRef.current) return;
     committedRef.current = true;
-    const val  = inputRef.current?.value.trim() ?? "";
-    const pct  = parseFloat(val);
+    const val   = inputRef.current?.value.trim() ?? "";
+    const pct   = parseFloat(val);
     const grade = !val || isNaN(pct) ? null : Math.round((pct / 100) * col.points * 10) / 10;
     await onSave(grade); onDismiss();
   }, [col.points, onSave, onDismiss]);
@@ -1294,7 +1308,7 @@ function CellEditor({ col, score, onSave, onOpenPanel, onDismiss }: {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   MOBILE STAFF GRADE CARD  — used instead of table rows on small screens
+   MOBILE STAFF GRADE CARD
 ───────────────────────────────────────────────────────────────────────────── */
 function MobileStaffCard({
   staff, filteredColumns, onOpenGradePanel, onOpenFormPanel, savingCells,
@@ -1307,87 +1321,143 @@ function MobileStaffCard({
 }) {
   const [expanded, setExpanded] = useState(false);
 
-  const pctColor = staff.percentage === null ? "#9ca3af"
-    : staff.percentage >= 90 ? "#15803d"
-    : staff.percentage >= 70 ? "#b45309"
-    : staff.percentage >= 50 ? "#c2410c"
-    : "#b91c1c";
+  const pctColor = getPctColor(staff.percentage);
+  const pctBg    = getPctBg(staff.percentage);
+  const letter   = getLetterGrade(staff.percentage);
 
   return (
-    <div className="border border-gray-200 rounded-xl overflow-hidden" style={{ fontFamily: FONT }}>
+    <div className="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm" style={{ fontFamily: FONT }}>
       {/* Card header */}
       <button
         onClick={() => setExpanded(e => !e)}
-        className="w-full flex items-center gap-3 px-4 py-3.5 bg-white hover:bg-gray-50 transition-colors text-left"
+        className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50/80 active:bg-gray-100 transition-colors text-left"
       >
         {staff.image
-          ? <Image src={staff.image} alt={staff.name} width={36} height={36} className="rounded-full object-cover shrink-0" />
-          : <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-black shrink-0"
+          ? <Image src={staff.image} alt={staff.name} width={40} height={40} className="rounded-full object-cover shrink-0 ring-2 ring-gray-100" />
+          : <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-xs font-black shrink-0"
               style={{ background: MAROON }}>{getInitials(staff.name)}</div>}
+
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-bold text-gray-900 truncate">{staff.name}</p>
-          <p className="text-[11px] text-gray-400 truncate">{staff.position ?? staff.courseRole}</p>
+          <p className="text-sm font-bold text-gray-900 truncate leading-tight">{staff.name}</p>
+          <p className="text-[11px] text-gray-400 truncate mt-0.5">{staff.position ?? staff.courseRole}</p>
         </div>
+
         <div className="flex items-center gap-2 shrink-0">
-          {staff.percentage !== null && (
-            <span className="text-sm font-black" style={{ color: pctColor }}>{staff.percentage}%</span>
+          {staff.percentage !== null ? (
+            <div className="flex flex-col items-center justify-center min-w-[52px] h-[44px] rounded-xl px-2"
+              style={{ background: pctBg, border: `1.5px solid ${pctColor}20` }}>
+              <span className="text-sm font-black leading-tight" style={{ color: pctColor }}>{staff.percentage}%</span>
+              <span className="text-[9px] font-bold leading-none" style={{ color: pctColor }}>{letter}</span>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center min-w-[52px] h-[44px] rounded-xl px-2 bg-gray-50 border border-gray-100">
+              <span className="text-sm text-gray-300 font-bold">—</span>
+            </div>
           )}
-          <ChevronRight size={16} className={`text-gray-400 transition-transform ${expanded ? "rotate-90" : ""}`} />
+          <ChevronRight size={16} className={`text-gray-300 transition-transform duration-200 ${expanded ? "rotate-90" : ""}`} />
         </div>
       </button>
 
+      {/* Progress bar */}
+      {staff.totalPossible > 0 && (
+        <div className="flex items-center gap-3 px-4 pb-3 -mt-1">
+          <div className="flex-1 h-1.5 rounded-full bg-gray-100 overflow-hidden">
+            <div className="h-full rounded-full transition-all duration-300"
+              style={{ width: `${Math.min(staff.percentage ?? 0, 100)}%`, background: pctColor }} />
+          </div>
+          <span className="text-[10px] font-semibold text-gray-400 shrink-0 tabular-nums">
+            {staff.totalEarned}/{staff.totalPossible} pts
+          </span>
+        </div>
+      )}
+
       {/* Expanded assignments list */}
       {expanded && (
-        <div className="border-t border-gray-100 bg-gray-50 divide-y divide-gray-100">
+        <div className="border-t border-gray-100 bg-gray-50/50 divide-y divide-gray-100">
           {filteredColumns.length === 0 ? (
             <p className="px-4 py-3 text-xs text-gray-400 italic">No assignments</p>
           ) : filteredColumns.map(col => {
             const score: number | null = col.type === "form"
               ? (staff.formGrades?.find(g => g.formId === col.id)?.score ?? null)
               : (staff.assignmentGrades?.find(g => g.assignmentId === col.id)?.grade ?? null);
-            const gradeEntry = col.type === "assignment"
-              ? staff.assignmentGrades?.find(g => g.assignmentId === col.id) : null;
-            const formEntry  = col.type === "form"
-              ? staff.formGrades?.find(g => g.formId === col.id) : null;
-            const status       = gradeEntry?.status ?? null;
+            const gradeEntry    = col.type === "assignment" ? staff.assignmentGrades?.find(g => g.assignmentId === col.id) : null;
+            const formEntry     = col.type === "form" ? staff.formGrades?.find(g => g.formId === col.id) : null;
+            const status        = gradeEntry?.status ?? null;
             const hasSubmission = gradeEntry?.hasSubmission ?? formEntry?.hasSubmission ?? false;
-            const cellKey      = `${staff.id}_${col.id}`;
-            const isSaving     = savingCells.has(cellKey);
-            const isNG         = col.displayGradeAs === "Not Graded";
+            const cellKey       = `${staff.id}_${col.id}`;
+            const isSaving      = savingCells.has(cellKey);
+            const isNG          = col.displayGradeAs === "Not Graded";
+            const isPct         = col.displayGradeAs === "Percentage";
+
+            const displayScore = (() => {
+              if (score === null) return null;
+              if (isPct && col.points > 0) return Math.round((score / col.points) * 100);
+              return score;
+            })();
 
             const handleTap = () => {
               if (isNG) return;
-              if (col.type === "form" && formEntry) {
-                onOpenFormPanel(staff, col);
-              } else if (gradeEntry) {
-                onOpenGradePanel(staff, col);
-              }
+              if (col.type === "form" && formEntry) { onOpenFormPanel(staff, col); }
+              else if (gradeEntry)                  { onOpenGradePanel(staff, col); }
             };
 
             return (
               <button key={col.id} onClick={handleTap}
-                className={`w-full flex items-center justify-between px-4 py-3 text-left transition-colors ${isNG ? "opacity-50 cursor-default" : "hover:bg-white active:bg-white"}`}>
-                <div className="flex items-center gap-2 min-w-0 flex-1">
+                className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${isNG ? "opacity-40 cursor-default" : "hover:bg-white active:bg-white"}`}>
+                <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
+                  style={{ background: col.type === "form" ? MAROON_LIGHT : "#eff6ff" }}>
                   {col.type === "form"
-                    ? <ClipboardList size={12} className="text-gray-400 shrink-0" />
-                    : <BookOpen size={12} className="text-gray-400 shrink-0" />}
-                  <div className="min-w-0">
-                    <p className="text-xs font-semibold text-gray-700 truncate">{col.title}</p>
-                    <p className="text-[10px] text-gray-400">{col.assignmentGroup}</p>
-                  </div>
+                    ? <ClipboardList size={12} style={{ color: MAROON }} />
+                    : <BookOpen size={12} className="text-blue-600" />}
                 </div>
-                <div className="flex items-center gap-2 shrink-0 ml-3">
-                  <div className="flex items-center justify-center w-16">
-                    {isSaving
-                      ? <RotateCcw size={12} className="animate-spin text-gray-400" />
-                      : <CellDisplay col={col} score={score} status={status} hasSubmission={hasSubmission} isSaving={false} />
-                    }
-                  </div>
-                  {!isNG && <ChevronRight size={13} className="text-gray-300" />}
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-gray-800 truncate leading-tight">{col.title}</p>
+                  <p className="text-[10px] text-gray-400 mt-0.5">{col.assignmentGroup} · {col.points} pts</p>
+                </div>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {isSaving ? (
+                    <RotateCcw size={12} className="animate-spin text-gray-400" />
+                  ) : displayScore !== null ? (
+                    <div className="flex flex-col items-end">
+                      <span className="text-sm font-black tabular-nums" style={{ color: getScoreColor(score, col.points) }}>
+                        {isPct ? `${displayScore}%` : displayScore}
+                      </span>
+                      {!isPct && col.points > 0 && (
+                        <span className="text-[9px] text-gray-400 leading-none">/{col.points}</span>
+                      )}
+                    </div>
+                  ) : status === "EXCUSED" ? (
+                    <span className="text-xs font-bold text-amber-500">EX</span>
+                  ) : status === "MISSING" ? (
+                    <AlertCircle size={13} className="text-red-400" />
+                  ) : hasSubmission ? (
+                    <span className="text-[10px] font-bold" style={{ color: MAROON }}>Ungraded</span>
+                  ) : (
+                    <span className="text-xs text-gray-300">—</span>
+                  )}
+                  {!isNG && <ChevronRight size={12} className="text-gray-300" />}
                 </div>
               </button>
             );
           })}
+
+          {/* Footer total */}
+          {staff.totalPossible > 0 && (
+            <div className="flex items-center justify-between px-4 py-3 bg-white/80">
+              <span className="text-xs font-black text-gray-500 uppercase tracking-wider">Overall</span>
+              <div className="flex items-center gap-2 flex-wrap justify-end">
+                <span className="text-xs font-semibold text-gray-500 tabular-nums">
+                  {staff.totalEarned}/{staff.totalPossible} pts
+                </span>
+                {staff.percentage !== null && (
+                  <span className="text-sm font-black tabular-nums px-2 py-0.5 rounded-lg"
+                    style={{ color: pctColor, background: pctBg }}>
+                    {staff.percentage}% · {letter}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -1417,12 +1487,12 @@ export default function CourseGradesPage({ courseId }: { courseId: string }) {
   const [filterPresets,   setFilterPresets]   = useState<FilterPreset[]>([]);
   const filterBtnRef = useRef<HTMLDivElement>(null);
 
-  // Responsive
+  // Mobile below 1024px
   const [isMobile,       setIsMobile]       = useState(false);
   const [searchExpanded, setSearchExpanded] = useState(false);
 
   useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 768);
+    const check = () => setIsMobile(window.innerWidth < 1024);
     check();
     window.addEventListener("resize", check);
     return () => window.removeEventListener("resize", check);
@@ -1507,7 +1577,7 @@ export default function CourseGradesPage({ courseId }: { courseId: string }) {
     } finally { setSavingCells(p => { const n = new Set(p); n.delete(key); return n; }); }
   };
 
-  /* ── Loading / Error states ── */
+  /* ── Loading / Error ── */
   if (loading) return (
     <div className="flex items-center justify-center h-64 gap-3 text-gray-400" style={{ fontFamily: FONT }}>
       <RotateCcw size={16} className="animate-spin" />
@@ -1601,25 +1671,25 @@ export default function CourseGradesPage({ courseId }: { courseId: string }) {
   const totalPending = (data.staff ?? []).reduce((sum, s) =>
     sum + (s.assignmentGrades ?? []).filter(g => g.hasSubmission && g.status !== "GRADED").length, 0);
 
-  const addFilter    = (f: ActiveFilter)   => setActiveFilters(p => [...p, f]);
-  const removeFilter = (idx: number)       => setActiveFilters(p => p.filter((_, i) => i !== idx));
-  const clearAllFilters = ()               => setActiveFilters([]);
+  const addFilter       = (f: ActiveFilter)  => setActiveFilters(p => [...p, f]);
+  const removeFilter    = (idx: number)      => setActiveFilters(p => p.filter((_, i) => i !== idx));
+  const clearAllFilters = ()                 => setActiveFilters([]);
   const changeFilterStatus = (idx: number, value: string) =>
     setActiveFilters(p => p.map((f, i) => i === idx ? { ...f, label: value, value } : f));
 
-  const savePreset   = (name: string)          => {
+  const savePreset   = (name: string)         => {
     const preset: FilterPreset = { id: Date.now().toString(), name, filters: [...activeFilters] };
     setFilterPresets(p => [...p, preset]);
   };
-  const loadPreset   = (preset: FilterPreset)  => setActiveFilters([...preset.filters]);
-  const deletePreset = (id: string)            => setFilterPresets(p => p.filter(pr => pr.id !== id));
+  const loadPreset   = (preset: FilterPreset) => setActiveFilters([...preset.filters]);
+  const deletePreset = (id: string)           => setFilterPresets(p => p.filter(pr => pr.id !== id));
 
-  /* ── Column widths for desktop table ── */
-  const COL_W   = 120;
-  const STAFF_W = 240;
-  const TOTAL_W = 120;
+  /* ── Column widths ── */
+  const COL_W   = 88;
+  const STAFF_W = 180;
+  const TOTAL_W = 100;
 
-  /* ── Helpers for mobile panel openers ── */
+  /* ── Mobile panel helpers ── */
   const openGradePanelForStaff = (staff: StaffRow, col: GradeColumn) => {
     const gradeEntry = staff.assignmentGrades?.find(g => g.assignmentId === col.id);
     if (gradeEntry) {
@@ -1648,32 +1718,29 @@ export default function CourseGradesPage({ courseId }: { courseId: string }) {
     <div className="flex flex-col h-full bg-white" style={{ fontFamily: FONT }}>
 
       {/* ── TOP HEADER ── */}
-      <div className="border-b border-gray-200 px-4 py-2.5 flex items-center justify-between shrink-0" style={{ background: MAROON }}>
-        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+      <div className="border-b border-gray-200 px-3 py-2 flex items-center justify-between shrink-0 gap-2" style={{ background: MAROON }}>
+        <div className="flex items-center gap-2 min-w-0 flex-1">
           <div className="flex items-center gap-1.5 shrink-0">
-            <GraduationCap size={15} className="text-white" />
-            <span className="text-sm font-black text-white hidden sm:inline">Gradebook</span>
-            <span className="text-sm font-black text-white sm:hidden">Grades</span>
-            <ChevronDown size={13} className="text-white/60" />
+            <GraduationCap size={14} className="text-white" />
+            <span className="text-sm font-black text-white">Gradebook</span>
           </div>
           <span className="text-white/30 hidden sm:inline">|</span>
-          <span className="text-xs text-white/70 font-medium hidden sm:inline">
-            {filteredStaff.length} staff member{filteredStaff.length !== 1 ? "s" : ""}
+          <span className="text-xs text-white/70 font-medium hidden sm:inline truncate">
+            {filteredStaff.length} member{filteredStaff.length !== 1 ? "s" : ""}
           </span>
           {totalPending > 0 && (
             <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black text-white bg-white/20 shrink-0">
-              <Clock size={9} />{totalPending} pending
+              <Clock size={9} />{totalPending}
+              <span className="hidden sm:inline"> pending</span>
             </span>
           )}
         </div>
-        <div className="flex items-center gap-2 shrink-0">
-          {/* Mobile search toggle */}
-          {isMobile && (
-            <button onClick={() => setSearchExpanded(e => !e)}
-              className="w-8 h-8 flex items-center justify-center text-white/70 hover:text-white border border-white/20 rounded-lg hover:bg-white/10 transition-all">
-              <Search size={14} />
-            </button>
-          )}
+        <div className="flex items-center gap-1.5 shrink-0">
+          {/* Mobile: search toggle */}
+          <button onClick={() => setSearchExpanded(e => !e)}
+            className={`w-8 h-8 flex items-center justify-center border border-white/20 rounded-lg transition-all lg:hidden ${searchExpanded ? "bg-white/20 text-white" : "text-white/70 hover:text-white hover:bg-white/10"}`}>
+            <Search size={14} />
+          </button>
           <button onClick={fetchGrades}
             className="w-8 h-8 flex items-center justify-center text-white/70 hover:text-white border border-white/20 rounded-lg hover:bg-white/10 transition-all"
             title="Refresh">
@@ -1682,48 +1749,45 @@ export default function CourseGradesPage({ courseId }: { courseId: string }) {
         </div>
       </div>
 
-      {/* ── SEARCH + FILTER BAR ── */}
-      <div className={`bg-white border-b border-gray-200 px-4 py-3 shrink-0 ${isMobile && !searchExpanded ? "hidden" : ""}`}>
-        <div className="flex items-start gap-2 sm:gap-3 flex-wrap sm:flex-nowrap">
-          <div className="w-full sm:flex-1">
-            <p className="text-[10px] font-black text-gray-600 mb-1.5 uppercase tracking-wider">Staff Names</p>
-            <div className="relative">
-              <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input value={staffSearch} onChange={e => setStaffSearch(e.target.value)} placeholder="Search Staff…"
-                className="w-full pl-8 pr-3 h-10 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none text-gray-700"
-                style={{ fontFamily: FONT }}
-                onFocus={e => (e.currentTarget.style.borderColor = "#6b7280")}
-                onBlur={e  => (e.currentTarget.style.borderColor = "#e5e7eb")} />
-            </div>
+      {/* ── SEARCH + FILTER BAR ──
+          Mobile: collapsed by default, toggle via search icon.
+          Desktop (lg+): always visible.
+      ── */}
+      <div className={`bg-white border-b border-gray-200 px-3 py-3 shrink-0 ${isMobile && !searchExpanded ? "hidden" : "block"}`}>
+        {/* Search row */}
+        <div className="flex items-center gap-2">
+          <div className="flex-1 relative">
+            <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            <input value={staffSearch} onChange={e => setStaffSearch(e.target.value)} placeholder="Search staff…"
+              className="w-full pl-8 pr-3 h-9 border border-gray-200 rounded-lg text-xs bg-white focus:outline-none text-gray-700"
+              style={{ fontFamily: FONT }}
+              onFocus={e => (e.currentTarget.style.borderColor = "#6b7280")}
+              onBlur={e  => (e.currentTarget.style.borderColor = "#e5e7eb")} />
           </div>
-          <div className="w-full sm:flex-1">
-            <p className="text-[10px] font-black text-gray-600 mb-1.5 uppercase tracking-wider">Assignment Names</p>
-            <div className="relative">
-              <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input value={assignSearch} onChange={e => setAssignSearch(e.target.value)} placeholder="Search Assignments…"
-                className="w-full pl-8 pr-3 h-10 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none text-gray-700"
-                style={{ fontFamily: FONT }}
-                onFocus={e => (e.currentTarget.style.borderColor = "#6b7280")}
-                onBlur={e  => (e.currentTarget.style.borderColor = "#e5e7eb")} />
-            </div>
+          <div className="flex-1 relative">
+            <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            <input value={assignSearch} onChange={e => setAssignSearch(e.target.value)} placeholder="Search assignments…"
+              className="w-full pl-8 pr-3 h-9 border border-gray-200 rounded-lg text-xs bg-white focus:outline-none text-gray-700"
+              style={{ fontFamily: FONT }}
+              onFocus={e => (e.currentTarget.style.borderColor = "#6b7280")}
+              onBlur={e  => (e.currentTarget.style.borderColor = "#e5e7eb")} />
           </div>
         </div>
 
-        <div className="flex items-center gap-2 mt-3 flex-wrap">
-          <div ref={filterBtnRef} className="relative">
+        {/* Filter row */}
+        <div className="flex items-center gap-2 mt-2 flex-wrap">
+          <div ref={filterBtnRef} className="relative shrink-0">
             <button onClick={() => setFilterPanelOpen(o => !o)}
-              className="flex items-center gap-2 h-9 px-3 rounded-lg border text-sm font-semibold transition-colors bg-white"
+              className="flex items-center gap-1.5 h-8 px-2.5 rounded-lg border text-xs font-semibold transition-colors bg-white"
               style={{
                 fontFamily: FONT,
                 borderColor: activeFilters.length > 0 ? MAROON : "#d1d5db",
                 color: activeFilters.length > 0 ? MAROON : "#374151",
               }}>
-              <SlidersHorizontal size={13} className={activeFilters.length > 0 ? "" : "text-gray-500"}
-                style={activeFilters.length > 0 ? { color: MAROON } : {}} />
-              <span className="hidden sm:inline">Apply Filters</span>
-              <span className="sm:hidden">Filter</span>
+              <SlidersHorizontal size={12} style={activeFilters.length > 0 ? { color: MAROON } : { color: "#6b7280" }} />
+              <span>Filters</span>
               {activeFilters.length > 0 && (
-                <span className="w-5 h-5 rounded-full text-[9px] font-black text-white flex items-center justify-center"
+                <span className="w-4 h-4 rounded-full text-[9px] font-black text-white flex items-center justify-center"
                   style={{ background: MAROON }}>{activeFilters.length}</span>
               )}
             </button>
@@ -1743,7 +1807,8 @@ export default function CourseGradesPage({ courseId }: { courseId: string }) {
             )}
           </div>
 
-          <div className="flex items-center gap-1.5 flex-wrap flex-1 min-w-0">
+          {/* Active filter chips — horizontal scroll on mobile */}
+          <div className="flex items-center gap-1.5 flex-1 overflow-x-auto min-w-0" style={{ scrollbarWidth: "none" }}>
             {activeFilters.map((f, idx) => (
               <FilterChip key={idx} filter={f} onRemove={() => removeFilter(idx)}
                 onChangeStatus={f.type === "status" ? (val) => changeFilterStatus(idx, val) : undefined}
@@ -1756,13 +1821,13 @@ export default function CourseGradesPage({ courseId }: { courseId: string }) {
             <button onClick={clearAllFilters}
               className="text-xs font-semibold hover:underline transition-colors shrink-0"
               style={{ color: MAROON }}>
-              Clear All
+              Clear
             </button>
           )}
         </div>
       </div>
 
-      {/* ── MOBILE: Filter panel as bottom-sheet ── */}
+      {/* Mobile Filter Panel (bottom-sheet) */}
       {isMobile && (
         <FilterPanel
           open={filterPanelOpen}
@@ -1795,14 +1860,11 @@ export default function CourseGradesPage({ courseId }: { courseId: string }) {
             )}
           </div>
         ) : isMobile ? (
-          /* ────────── MOBILE: Card list ────────── */
-          <div className="p-3 space-y-2">
-            {/* Summary row */}
-            <div className="flex items-center justify-between px-1 py-1">
-              <p className="text-xs font-bold text-gray-500">
-                {filteredStaff.length} member{filteredStaff.length !== 1 ? "s" : ""} · {filteredColumns.length} assignment{filteredColumns.length !== 1 ? "s" : ""}
-              </p>
-            </div>
+          /* ──── MOBILE: Card list ──── */
+          <div className="p-3 space-y-2 pb-6">
+            <p className="text-xs font-bold text-gray-400 px-1 pt-1">
+              {filteredStaff.length} member{filteredStaff.length !== 1 ? "s" : ""} · {filteredColumns.length} assignment{filteredColumns.length !== 1 ? "s" : ""}
+            </p>
             {filteredStaff.map(staff => (
               <MobileStaffCard
                 key={staff.id}
@@ -1815,205 +1877,222 @@ export default function CourseGradesPage({ courseId }: { courseId: string }) {
             ))}
           </div>
         ) : (
-          /* ────────── DESKTOP: Table ────────── */
-          <table className="border-collapse"
-            style={{ width: STAFF_W + filteredColumns.length * COL_W + (visibleGroups.length * TOTAL_W) + TOTAL_W }}>
-            <thead>
-              <tr>
-                <th className="sticky left-0 z-20 bg-white border-b-2 border-r border-gray-200 text-left px-4 py-3"
-                  style={{ width: STAFF_W, minWidth: STAFF_W, borderBottomColor: "#d1d5db" }}>
-                  <span className="text-xs font-bold text-gray-700">Staff Name</span>
-                </th>
-
-                {filteredColumns.map(col => {
-                  const dga  = col.displayGradeAs ?? "Points";
-                  const isNG  = dga === "Not Graded";
-                  const isCI  = dga === "Complete/Incomplete";
-                  const isPct = dga === "Percentage";
-                  const subLabel   = isNG ? "not graded" : isPct ? "percentage" : isCI ? "complete or incomplete" : "points";
-                  const outOfLabel = isNG ? "UNGRADED" : `Out of ${col.points}`;
-                  const needsGrading = col.type === "assignment"
-                    ? (data.staff ?? []).filter(s => {
-                        const g = (s.assignmentGrades ?? []).find(g => g.assignmentId === col.id);
-                        return g?.hasSubmission && g.status !== "GRADED";
-                      }).length
-                    : 0;
-
-                  return (
-                    <th key={col.id}
-                      className="border-b-2 border-r border-gray-200 px-2 py-0 align-bottom text-center"
-                      style={{ width: COL_W, minWidth: COL_W, borderBottomColor: "#d1d5db", background: "white" }}>
-                      <div className="flex flex-col items-center justify-end pb-2 pt-2 gap-0.5">
-                        <div className="flex items-center gap-1 mb-0.5">
-                          {col.type === "form"
-                            ? <ClipboardList size={9} className="text-gray-400" />
-                            : <BookOpen size={9} className="text-gray-400" />}
-                          <span className="text-[10px] font-semibold text-gray-600 truncate max-w-22" title={col.title}>{col.title}</span>
-                        </div>
-                        <span className="text-[10px] text-gray-500 font-normal">{subLabel}</span>
-                        <span className="text-[10px] font-bold text-gray-600">{outOfLabel}</span>
-                        {needsGrading > 0 && (
-                          <span className="text-[8px] font-black px-1 py-0.5 rounded-full text-white mt-0.5"
-                            style={{ background: "#b45309" }}>{needsGrading} missing</span>
-                        )}
-                        {col.doNotCount && <span className="text-[8px] text-gray-300 italic">not counted</span>}
-                      </div>
-                    </th>
-                  );
-                })}
-
-                {visibleGroups.map(group => (
-                  <th key={`group-total-${group}`}
-                    className="border-b-2 border-r border-l border-gray-200 px-2 py-0 text-center align-bottom"
-                    style={{ width: TOTAL_W, minWidth: TOTAL_W, borderBottomColor: "#d1d5db", background: "#f9fafb" }}>
-                    <div className="pb-2 pt-2">
-                      <p className="text-[10px] font-black text-gray-500 truncate max-w-25 mx-auto" title={group}>{group}</p>
-                      <p className="text-[10px] text-gray-400 font-normal">UNGRADED AS 0</p>
-                    </div>
+          /* ──── DESKTOP: Scrollable table ──── */
+          <div className="w-full h-full overflow-auto">
+            <table className="border-collapse"
+              style={{ width: STAFF_W + filteredColumns.length * COL_W + visibleGroups.length * TOTAL_W + TOTAL_W }}>
+              <thead>
+                <tr>
+                  {/* Sticky staff name column */}
+                  <th className="sticky left-0 z-20 bg-white border-b-2 border-r border-gray-200 text-left px-3 py-2.5"
+                    style={{ width: STAFF_W, minWidth: STAFF_W, borderBottomColor: "#d1d5db" }}>
+                    <span className="text-xs font-bold text-gray-700">Staff Name</span>
                   </th>
-                ))}
-
-                <th className="sticky right-0 z-20 border-b-2 border-l border-gray-200 px-4 py-0 text-center bg-gray-50 align-bottom"
-                  style={{ width: TOTAL_W, minWidth: TOTAL_W, borderBottomColor: "#d1d5db" }}>
-                  <div className="pb-2 pt-2">
-                    <p className="text-xs font-bold text-gray-700">Total</p>
-                    <p className="text-[10px] text-gray-500 font-normal">UNGRADED AS 0</p>
-                  </div>
-                </th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {filteredStaff.map((staff, si) => (
-                <tr key={staff.id} className="group hover:bg-blue-50/30 transition-colors border-b border-gray-100">
-                  <td className="sticky left-0 z-10 bg-white group-hover:bg-blue-50/30 border-r border-gray-200 px-4 py-2.5 transition-colors"
-                    style={{ width: STAFF_W }}>
-                    <div className="flex items-center gap-2.5">
-                      {staff.image
-                        ? <Image src={staff.image} alt={staff.name} width={28} height={28} className="rounded-full object-cover shrink-0" />
-                        : <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[9px] font-black shrink-0"
-                            style={{ background: MAROON, opacity: 0.7 + (si % 3) * 0.1 }}>
-                            {getInitials(staff.name)}
-                          </div>}
-                      <div className="min-w-0">
-                        <p className="text-xs font-bold truncate" style={{ color: "#0770A3" }}>{staff.name}</p>
-                        <p className="text-[10px] text-gray-400 truncate">{staff.position ?? staff.courseRole}</p>
-                      </div>
-                    </div>
-                  </td>
 
                   {filteredColumns.map(col => {
                     const dga   = col.displayGradeAs ?? "Points";
                     const isNG  = dga === "Not Graded";
-                    const score: number | null = col.type === "form"
-                      ? (staff.formGrades?.find(g => g.formId === col.id)?.score ?? null)
-                      : (staff.assignmentGrades?.find(g => g.assignmentId === col.id)?.grade ?? null);
-                    const gradeEntry    = col.type === "assignment" ? staff.assignmentGrades?.find(g => g.assignmentId === col.id) : null;
-                    const formEntry     = col.type === "form" ? staff.formGrades?.find(g => g.formId === col.id) : null;
-                    const status        = gradeEntry?.status ?? null;
-                    const hasSubmission = gradeEntry?.hasSubmission ?? formEntry?.hasSubmission ?? false;
-                    const cellKey       = `${staff.id}_${col.id}`;
-                    const isActive      = activeCell?.staffId === staff.id && activeCell?.colId === col.id;
-                    const isSaving      = savingCells.has(cellKey);
-
-                    const openPanel = () => {
-                      if (col.type === "form" && formEntry) {
-                        setFormResponsePanel({
-                          staffId: staff.id, staffName: staff.name, staffImage: staff.image,
-                          formId: col.id, formTitle: col.title, maxPoints: col.points, formGrade: formEntry,
-                        });
-                        return;
-                      }
-                      if (gradeEntry) {
-                        setGradePanel({
-                          staffId: staff.id, staffName: staff.name, staffEmail: staff.email, staffImage: staff.image,
-                          assignmentId: col.id, assignmentTitle: col.title, maxPoints: col.points,
-                          displayGradeAs: dga, grade: gradeEntry,
-                        });
-                      }
-                    };
-
-                    const handleCellClick = () => {
-                      if (isNG) return;
-                      if (col.type === "form" && formEntry) {
-                        setFormResponsePanel({
-                          staffId: staff.id, staffName: staff.name, staffImage: staff.image,
-                          formId: col.id, formTitle: col.title, maxPoints: col.points, formGrade: formEntry,
-                        });
-                        return;
-                      }
-                      setActiveCell(isActive ? null : { staffId: staff.id, colId: col.id });
-                    };
+                    const isCI  = dga === "Complete/Incomplete";
+                    const isPct = dga === "Percentage";
+                    const subLabel   = isNG ? "—" : isPct ? "%" : isCI ? "✓/✗" : "pts";
+                    const outOfLabel = isNG ? "—" : isPct ? "100%" : `/${col.points}`;
+                    const needsGrading = col.type === "assignment"
+                      ? (data.staff ?? []).filter(s => {
+                          const g = (s.assignmentGrades ?? []).find(g => g.assignmentId === col.id);
+                          return g?.hasSubmission && g.status !== "GRADED";
+                        }).length : 0;
 
                     return (
-                      <td key={col.id} data-grade-cell
-                        className="border-r border-gray-200 px-0 py-0 relative group/cell"
-                        style={{ width: COL_W, minWidth: COL_W, background: isActive ? "#e0f2fe" : "transparent" }}>
-                        {isActive ? (
-                          <CellEditor col={col} score={score}
-                            onSave={async (grade) => { await saveGrade(staff.id, col.id, grade); }}
-                            onOpenPanel={openPanel}
-                            onDismiss={() => setActiveCell(null)}
-                          />
-                        ) : (
-                          <div className="flex items-center justify-center w-full h-9 cursor-pointer relative"
-                            onClick={handleCellClick}>
-                            <div className="flex items-center justify-center h-9 text-xs font-semibold px-1">
-                              <CellDisplay col={col} score={score} status={status} hasSubmission={hasSubmission} isSaving={isSaving} />
-                            </div>
-                            {!isNG && (
-                              <button
-                                onMouseDown={e => { e.preventDefault(); e.stopPropagation(); }}
-                                onClick={openPanel}
-                                className="absolute right-0 top-0 bottom-0 w-5 flex items-center justify-center text-white text-[9px] font-black opacity-0 group-hover/cell:opacity-100 transition-opacity"
-                                style={{ background: MAROON }}
-                                title="Open grade panel">
-                                →
-                              </button>
-                            )}
+                      <th key={col.id}
+                        className="border-b-2 border-r border-gray-200 px-1 py-0 align-bottom text-center"
+                        style={{ width: COL_W, minWidth: COL_W, borderBottomColor: "#d1d5db", background: "white" }}>
+                        <div className="flex flex-col items-center justify-end pb-2 pt-2 gap-0.5 px-1">
+                          <div className="flex items-center gap-0.5 mb-0.5 w-full justify-center">
+                            {col.type === "form"
+                              ? <ClipboardList size={8} className="text-gray-400 shrink-0" />
+                              : <BookOpen size={8} className="text-gray-400 shrink-0" />}
+                            <span className="text-[9px] font-semibold text-gray-600 truncate max-w-[72px]" title={col.title}>{col.title}</span>
                           </div>
+                          <div className="flex items-center gap-1">
+                            <span className="text-[8px] text-gray-400">{subLabel}</span>
+                            <span className="text-[9px] font-bold text-gray-600">{outOfLabel}</span>
+                          </div>
+                          {needsGrading > 0 && (
+                            <span className="text-[7px] font-black px-1 py-0.5 rounded-full text-white mt-0.5"
+                              style={{ background: "#b45309" }}>{needsGrading}</span>
+                          )}
+                          {col.doNotCount && <span className="text-[7px] text-gray-300 italic">skip</span>}
+                        </div>
+                      </th>
+                    );
+                  })}
+
+                  {visibleGroups.map(group => (
+                    <th key={`group-total-${group}`}
+                      className="border-b-2 border-r border-l border-gray-200 px-2 py-0 text-center align-bottom"
+                      style={{ width: TOTAL_W, minWidth: TOTAL_W, borderBottomColor: "#d1d5db", background: "#f9fafb" }}>
+                      <div className="pb-2 pt-2">
+                        <p className="text-[9px] font-black text-gray-500 truncate max-w-[80px] mx-auto" title={group}>{group}</p>
+                        <p className="text-[8px] text-gray-400 font-normal">0 if ungraded</p>
+                      </div>
+                    </th>
+                  ))}
+
+                  {/* Sticky total column */}
+                  <th className="sticky right-0 z-20 border-b-2 border-l border-gray-200 px-3 py-0 text-center align-bottom"
+                    style={{ width: TOTAL_W, minWidth: TOTAL_W, borderBottomColor: "#d1d5db", background: "#f9fafb" }}>
+                    <div className="pb-2 pt-2">
+                      <p className="text-xs font-black text-gray-700">Total</p>
+                      <p className="text-[8px] text-gray-400 font-normal">0 if ungraded</p>
+                    </div>
+                  </th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {filteredStaff.map((staff, si) => {
+                  const pctColor = getPctColor(staff.percentage);
+                  const pctBg    = getPctBg(staff.percentage);
+
+                  return (
+                    <tr key={staff.id} className="group hover:bg-blue-50/30 transition-colors border-b border-gray-100">
+                      {/* Sticky staff name */}
+                      <td className="sticky left-0 z-10 bg-white group-hover:bg-blue-50/30 border-r border-gray-200 px-3 py-2 transition-colors"
+                        style={{ width: STAFF_W }}>
+                        <div className="flex items-center gap-2">
+                          {staff.image
+                            ? <Image src={staff.image} alt={staff.name} width={26} height={26} className="rounded-full object-cover shrink-0" />
+                            : <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[8px] font-black shrink-0"
+                                style={{ background: MAROON, opacity: 0.7 + (si % 3) * 0.1 }}>
+                                {getInitials(staff.name)}
+                              </div>}
+                          <div className="min-w-0">
+                            <p className="text-xs font-bold truncate" style={{ color: "#0770A3" }}>{staff.name}</p>
+                            <p className="text-[9px] text-gray-400 truncate">{staff.position ?? staff.courseRole}</p>
+                          </div>
+                        </div>
+                      </td>
+
+                      {filteredColumns.map(col => {
+                        const dga   = col.displayGradeAs ?? "Points";
+                        const isNG  = dga === "Not Graded";
+                        const score: number | null = col.type === "form"
+                          ? (staff.formGrades?.find(g => g.formId === col.id)?.score ?? null)
+                          : (staff.assignmentGrades?.find(g => g.assignmentId === col.id)?.grade ?? null);
+                        const gradeEntry    = col.type === "assignment" ? staff.assignmentGrades?.find(g => g.assignmentId === col.id) : null;
+                        const formEntry     = col.type === "form" ? staff.formGrades?.find(g => g.formId === col.id) : null;
+                        const status        = gradeEntry?.status ?? null;
+                        const hasSubmission = gradeEntry?.hasSubmission ?? formEntry?.hasSubmission ?? false;
+                        const cellKey       = `${staff.id}_${col.id}`;
+                        const isActive      = activeCell?.staffId === staff.id && activeCell?.colId === col.id;
+                        const isSaving      = savingCells.has(cellKey);
+
+                        const openPanel = () => {
+                          if (col.type === "form" && formEntry) {
+                            setFormResponsePanel({
+                              staffId: staff.id, staffName: staff.name, staffImage: staff.image,
+                              formId: col.id, formTitle: col.title, maxPoints: col.points, formGrade: formEntry,
+                            });
+                            return;
+                          }
+                          if (gradeEntry) {
+                            setGradePanel({
+                              staffId: staff.id, staffName: staff.name, staffEmail: staff.email, staffImage: staff.image,
+                              assignmentId: col.id, assignmentTitle: col.title, maxPoints: col.points,
+                              displayGradeAs: dga, grade: gradeEntry,
+                            });
+                          }
+                        };
+
+                        const handleCellClick = () => {
+                          if (isNG) return;
+                          if (col.type === "form" && formEntry) {
+                            setFormResponsePanel({
+                              staffId: staff.id, staffName: staff.name, staffImage: staff.image,
+                              formId: col.id, formTitle: col.title, maxPoints: col.points, formGrade: formEntry,
+                            });
+                            return;
+                          }
+                          setActiveCell(isActive ? null : { staffId: staff.id, colId: col.id });
+                        };
+
+                        return (
+                          <td key={col.id} data-grade-cell
+                            className="border-r border-gray-200 px-0 py-0 relative group/cell"
+                            style={{ width: COL_W, minWidth: COL_W, background: isActive ? "#e0f2fe" : "transparent" }}>
+                            {isActive ? (
+                              <CellEditor col={col} score={score}
+                                onSave={async (grade) => { await saveGrade(staff.id, col.id, grade); }}
+                                onOpenPanel={openPanel}
+                                onDismiss={() => setActiveCell(null)}
+                              />
+                            ) : (
+                              <div className="flex items-center justify-center w-full h-9 cursor-pointer relative"
+                                onClick={handleCellClick}>
+                                <div className="flex items-center justify-center h-9 text-xs font-semibold px-1">
+                                  <CellDisplay col={col} score={score} status={status} hasSubmission={hasSubmission} isSaving={isSaving} />
+                                </div>
+                                {!isNG && (
+                                  <button
+                                    onMouseDown={e => { e.preventDefault(); e.stopPropagation(); }}
+                                    onClick={openPanel}
+                                    className="absolute right-0 top-0 bottom-0 w-5 flex items-center justify-center text-white text-[9px] font-black opacity-0 group-hover/cell:opacity-100 transition-opacity"
+                                    style={{ background: MAROON }}
+                                    title="Open grade panel">
+                                    →
+                                  </button>
+                                )}
+                              </div>
+                            )}
+                          </td>
+                        );
+                      })}
+
+                      {visibleGroups.map(group => {
+                        const groupCols = allColumns.filter(c =>
+                          (c.assignmentGroup || "Ungrouped") === group && !c.doNotCount && c.displayGradeAs !== "Not Graded"
+                        );
+                        const groupEarned = groupCols.reduce((sum, col) => {
+                          if (col.type === "form") return sum + (staff.formGrades?.find(g => g.formId === col.id)?.score ?? 0);
+                          return sum + (staff.assignmentGrades?.find(g => g.assignmentId === col.id)?.grade ?? 0);
+                        }, 0);
+                        const groupPossible = groupCols.reduce((sum, col) => sum + col.points, 0);
+                        const groupPct      = groupPossible > 0 ? Math.round((groupEarned / groupPossible) * 100) : null;
+                        return (
+                          <td key={`group-total-${group}`}
+                            className="border-r border-l border-gray-200 px-3 py-2 text-center"
+                            style={{ width: TOTAL_W, background: "#f9fafb" }}>
+                            {groupPct !== null
+                              ? <span className="text-sm font-semibold" style={{ color: getPctColor(groupPct) }}>{groupPct}%</span>
+                              : <span className="text-sm text-gray-400">—</span>}
+                          </td>
+                        );
+                      })}
+
+                      {/* Sticky total */}
+                      <td className="sticky right-0 z-10 border-l border-gray-200 px-3 py-2 text-center transition-colors"
+                        style={{ width: TOTAL_W, background: staff.percentage !== null ? pctBg : "#f9fafb" }}>
+                        {staff.percentage !== null ? (
+                          <div className="flex flex-col items-center">
+                            <span className="text-sm font-black tabular-nums" style={{ color: pctColor }}>{staff.percentage}%</span>
+                            <span className="text-[9px] font-bold leading-none" style={{ color: pctColor }}>{getLetterGrade(staff.percentage)}</span>
+                          </div>
+                        ) : (
+                          <span className="text-sm text-gray-400">—</span>
                         )}
                       </td>
-                    );
-                  })}
-
-                  {visibleGroups.map(group => {
-                    const groupCols   = allColumns.filter(c =>
-                      (c.assignmentGroup || "Ungrouped") === group && !c.doNotCount && c.displayGradeAs !== "Not Graded"
-                    );
-                    const groupEarned = groupCols.reduce((sum, col) => {
-                      if (col.type === "form") return sum + (staff.formGrades?.find(g => g.formId === col.id)?.score ?? 0);
-                      return sum + (staff.assignmentGrades?.find(g => g.assignmentId === col.id)?.grade ?? 0);
-                    }, 0);
-                    const groupPossible = groupCols.reduce((sum, col) => sum + col.points, 0);
-                    const groupPct      = groupPossible > 0 ? Math.round((groupEarned / groupPossible) * 100) : null;
-                    return (
-                      <td key={`group-total-${group}`}
-                        className="border-r border-l border-gray-200 px-4 py-2.5 text-center"
-                        style={{ width: TOTAL_W, background: "#f9fafb" }}>
-                        {groupPct !== null
-                          ? <span className="text-sm font-semibold text-gray-700">{groupPct}%</span>
-                          : <span className="text-sm text-gray-400">—</span>}
-                      </td>
-                    );
-                  })}
-
-                  <td className="sticky right-0 z-10 bg-white group-hover:bg-blue-50/30 border-l border-gray-200 px-4 py-2.5 text-center transition-colors"
-                    style={{ width: TOTAL_W }}>
-                    {staff.percentage !== null
-                      ? <span className="text-sm font-semibold text-gray-700">{staff.percentage}%</span>
-                      : <span className="text-sm text-gray-400">—</span>}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
       {/* ── STATUS BAR (desktop only) ── */}
       {!isMobile && (
-        <div className="border-t border-gray-200 px-5 py-2 flex items-center gap-4 shrink-0 bg-gray-50">
+        <div className="border-t border-gray-200 px-4 py-2 flex items-center gap-4 shrink-0 bg-gray-50 flex-wrap">
           <div className="flex items-center gap-1.5">
             <Eye size={10} className="text-gray-400" />
             <span className="text-[10px] font-medium text-gray-400">Click cell to edit · Enter or click away to save · Esc to cancel</span>

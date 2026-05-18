@@ -3732,6 +3732,7 @@ export namespace Prisma {
     quizAttempts: number
     quizzesCreated: number
     formsCreated: number
+    gradedSubmissions: number
   }
 
   export type UserCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -3749,6 +3750,7 @@ export namespace Prisma {
     quizAttempts?: boolean | UserCountOutputTypeCountQuizAttemptsArgs
     quizzesCreated?: boolean | UserCountOutputTypeCountQuizzesCreatedArgs
     formsCreated?: boolean | UserCountOutputTypeCountFormsCreatedArgs
+    gradedSubmissions?: boolean | UserCountOutputTypeCountGradedSubmissionsArgs
   }
 
   // Custom InputTypes
@@ -3858,6 +3860,13 @@ export namespace Prisma {
    */
   export type UserCountOutputTypeCountFormsCreatedArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: FormWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountGradedSubmissionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SubmissionWhereInput
   }
 
 
@@ -8529,6 +8538,7 @@ export namespace Prisma {
     quizAttempts?: boolean | User$quizAttemptsArgs<ExtArgs>
     quizzesCreated?: boolean | User$quizzesCreatedArgs<ExtArgs>
     formsCreated?: boolean | User$formsCreatedArgs<ExtArgs>
+    gradedSubmissions?: boolean | User$gradedSubmissionsArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["user"]>
 
@@ -8587,6 +8597,7 @@ export namespace Prisma {
     quizAttempts?: boolean | User$quizAttemptsArgs<ExtArgs>
     quizzesCreated?: boolean | User$quizzesCreatedArgs<ExtArgs>
     formsCreated?: boolean | User$formsCreatedArgs<ExtArgs>
+    gradedSubmissions?: boolean | User$gradedSubmissionsArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type UserIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -8608,6 +8619,7 @@ export namespace Prisma {
       quizAttempts: Prisma.$QuizAttemptPayload<ExtArgs>[]
       quizzesCreated: Prisma.$QuizPayload<ExtArgs>[]
       formsCreated: Prisma.$FormPayload<ExtArgs>[]
+      gradedSubmissions: Prisma.$SubmissionPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -9005,6 +9017,7 @@ export namespace Prisma {
     quizAttempts<T extends User$quizAttemptsArgs<ExtArgs> = {}>(args?: Subset<T, User$quizAttemptsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$QuizAttemptPayload<ExtArgs>, T, "findMany"> | Null>
     quizzesCreated<T extends User$quizzesCreatedArgs<ExtArgs> = {}>(args?: Subset<T, User$quizzesCreatedArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$QuizPayload<ExtArgs>, T, "findMany"> | Null>
     formsCreated<T extends User$formsCreatedArgs<ExtArgs> = {}>(args?: Subset<T, User$formsCreatedArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$FormPayload<ExtArgs>, T, "findMany"> | Null>
+    gradedSubmissions<T extends User$gradedSubmissionsArgs<ExtArgs> = {}>(args?: Subset<T, User$gradedSubmissionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SubmissionPayload<ExtArgs>, T, "findMany"> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -9642,6 +9655,26 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: FormScalarFieldEnum | FormScalarFieldEnum[]
+  }
+
+  /**
+   * User.gradedSubmissions
+   */
+  export type User$gradedSubmissionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Submission
+     */
+    select?: SubmissionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SubmissionInclude<ExtArgs> | null
+    where?: SubmissionWhereInput
+    orderBy?: SubmissionOrderByWithRelationInput | SubmissionOrderByWithRelationInput[]
+    cursor?: SubmissionWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: SubmissionScalarFieldEnum | SubmissionScalarFieldEnum[]
   }
 
   /**
@@ -17223,6 +17256,8 @@ export namespace Prisma {
     feedback: string | null
     submittedAt: Date | null
     daysLate: number | null
+    gradedById: string | null
+    gradedAt: Date | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -17240,6 +17275,8 @@ export namespace Prisma {
     feedback: string | null
     submittedAt: Date | null
     daysLate: number | null
+    gradedById: string | null
+    gradedAt: Date | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -17257,6 +17294,8 @@ export namespace Prisma {
     feedback: number
     submittedAt: number
     daysLate: number
+    gradedById: number
+    gradedAt: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -17286,6 +17325,8 @@ export namespace Prisma {
     feedback?: true
     submittedAt?: true
     daysLate?: true
+    gradedById?: true
+    gradedAt?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -17303,6 +17344,8 @@ export namespace Prisma {
     feedback?: true
     submittedAt?: true
     daysLate?: true
+    gradedById?: true
+    gradedAt?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -17320,6 +17363,8 @@ export namespace Prisma {
     feedback?: true
     submittedAt?: true
     daysLate?: true
+    gradedById?: true
+    gradedAt?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -17424,6 +17469,8 @@ export namespace Prisma {
     feedback: string | null
     submittedAt: Date | null
     daysLate: number | null
+    gradedById: string | null
+    gradedAt: Date | null
     createdAt: Date
     updatedAt: Date
     _count: SubmissionCountAggregateOutputType | null
@@ -17460,9 +17507,12 @@ export namespace Prisma {
     feedback?: boolean
     submittedAt?: boolean
     daysLate?: boolean
+    gradedById?: boolean
+    gradedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
+    gradedBy?: boolean | Submission$gradedByArgs<ExtArgs>
     assignment?: boolean | AssignmentDefaultArgs<ExtArgs>
     repositoryFile?: boolean | Submission$repositoryFileArgs<ExtArgs>
   }, ExtArgs["result"]["submission"]>
@@ -17480,9 +17530,12 @@ export namespace Prisma {
     feedback?: boolean
     submittedAt?: boolean
     daysLate?: boolean
+    gradedById?: boolean
+    gradedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
+    gradedBy?: boolean | Submission$gradedByArgs<ExtArgs>
     assignment?: boolean | AssignmentDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["submission"]>
 
@@ -17499,17 +17552,21 @@ export namespace Prisma {
     feedback?: boolean
     submittedAt?: boolean
     daysLate?: boolean
+    gradedById?: boolean
+    gradedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
   export type SubmissionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     user?: boolean | UserDefaultArgs<ExtArgs>
+    gradedBy?: boolean | Submission$gradedByArgs<ExtArgs>
     assignment?: boolean | AssignmentDefaultArgs<ExtArgs>
     repositoryFile?: boolean | Submission$repositoryFileArgs<ExtArgs>
   }
   export type SubmissionIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     user?: boolean | UserDefaultArgs<ExtArgs>
+    gradedBy?: boolean | Submission$gradedByArgs<ExtArgs>
     assignment?: boolean | AssignmentDefaultArgs<ExtArgs>
   }
 
@@ -17517,6 +17574,7 @@ export namespace Prisma {
     name: "Submission"
     objects: {
       user: Prisma.$UserPayload<ExtArgs>
+      gradedBy: Prisma.$UserPayload<ExtArgs> | null
       assignment: Prisma.$AssignmentPayload<ExtArgs>
       repositoryFile: Prisma.$RepositoryFilePayload<ExtArgs> | null
     }
@@ -17533,6 +17591,8 @@ export namespace Prisma {
       feedback: string | null
       submittedAt: Date | null
       daysLate: number | null
+      gradedById: string | null
+      gradedAt: Date | null
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["submission"]>
@@ -17900,6 +17960,7 @@ export namespace Prisma {
   export interface Prisma__SubmissionClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     user<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    gradedBy<T extends Submission$gradedByArgs<ExtArgs> = {}>(args?: Subset<T, Submission$gradedByArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
     assignment<T extends AssignmentDefaultArgs<ExtArgs> = {}>(args?: Subset<T, AssignmentDefaultArgs<ExtArgs>>): Prisma__AssignmentClient<$Result.GetResult<Prisma.$AssignmentPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
     repositoryFile<T extends Submission$repositoryFileArgs<ExtArgs> = {}>(args?: Subset<T, Submission$repositoryFileArgs<ExtArgs>>): Prisma__RepositoryFileClient<$Result.GetResult<Prisma.$RepositoryFilePayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
     /**
@@ -17943,6 +18004,8 @@ export namespace Prisma {
     readonly feedback: FieldRef<"Submission", 'String'>
     readonly submittedAt: FieldRef<"Submission", 'DateTime'>
     readonly daysLate: FieldRef<"Submission", 'Int'>
+    readonly gradedById: FieldRef<"Submission", 'String'>
+    readonly gradedAt: FieldRef<"Submission", 'DateTime'>
     readonly createdAt: FieldRef<"Submission", 'DateTime'>
     readonly updatedAt: FieldRef<"Submission", 'DateTime'>
   }
@@ -18260,6 +18323,21 @@ export namespace Prisma {
      * Filter which Submissions to delete
      */
     where?: SubmissionWhereInput
+  }
+
+  /**
+   * Submission.gradedBy
+   */
+  export type Submission$gradedByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    where?: UserWhereInput
   }
 
   /**
@@ -38375,6 +38453,8 @@ export namespace Prisma {
     feedback: 'feedback',
     submittedAt: 'submittedAt',
     daysLate: 'daysLate',
+    gradedById: 'gradedById',
+    gradedAt: 'gradedAt',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -39257,6 +39337,7 @@ export namespace Prisma {
     quizAttempts?: QuizAttemptListRelationFilter
     quizzesCreated?: QuizListRelationFilter
     formsCreated?: FormListRelationFilter
+    gradedSubmissions?: SubmissionListRelationFilter
   }
 
   export type UserOrderByWithRelationInput = {
@@ -39291,6 +39372,7 @@ export namespace Prisma {
     quizAttempts?: QuizAttemptOrderByRelationAggregateInput
     quizzesCreated?: QuizOrderByRelationAggregateInput
     formsCreated?: FormOrderByRelationAggregateInput
+    gradedSubmissions?: SubmissionOrderByRelationAggregateInput
   }
 
   export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -39328,6 +39410,7 @@ export namespace Prisma {
     quizAttempts?: QuizAttemptListRelationFilter
     quizzesCreated?: QuizListRelationFilter
     formsCreated?: FormListRelationFilter
+    gradedSubmissions?: SubmissionListRelationFilter
   }, "id" | "email">
 
   export type UserOrderByWithAggregationInput = {
@@ -40046,9 +40129,12 @@ export namespace Prisma {
     feedback?: StringNullableFilter<"Submission"> | string | null
     submittedAt?: DateTimeNullableFilter<"Submission"> | Date | string | null
     daysLate?: IntNullableFilter<"Submission"> | number | null
+    gradedById?: StringNullableFilter<"Submission"> | string | null
+    gradedAt?: DateTimeNullableFilter<"Submission"> | Date | string | null
     createdAt?: DateTimeFilter<"Submission"> | Date | string
     updatedAt?: DateTimeFilter<"Submission"> | Date | string
     user?: XOR<UserRelationFilter, UserWhereInput>
+    gradedBy?: XOR<UserNullableRelationFilter, UserWhereInput> | null
     assignment?: XOR<AssignmentRelationFilter, AssignmentWhereInput>
     repositoryFile?: XOR<RepositoryFileNullableRelationFilter, RepositoryFileWhereInput> | null
   }
@@ -40066,9 +40152,12 @@ export namespace Prisma {
     feedback?: SortOrderInput | SortOrder
     submittedAt?: SortOrderInput | SortOrder
     daysLate?: SortOrderInput | SortOrder
+    gradedById?: SortOrderInput | SortOrder
+    gradedAt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     user?: UserOrderByWithRelationInput
+    gradedBy?: UserOrderByWithRelationInput
     assignment?: AssignmentOrderByWithRelationInput
     repositoryFile?: RepositoryFileOrderByWithRelationInput
   }
@@ -40090,9 +40179,12 @@ export namespace Prisma {
     feedback?: StringNullableFilter<"Submission"> | string | null
     submittedAt?: DateTimeNullableFilter<"Submission"> | Date | string | null
     daysLate?: IntNullableFilter<"Submission"> | number | null
+    gradedById?: StringNullableFilter<"Submission"> | string | null
+    gradedAt?: DateTimeNullableFilter<"Submission"> | Date | string | null
     createdAt?: DateTimeFilter<"Submission"> | Date | string
     updatedAt?: DateTimeFilter<"Submission"> | Date | string
     user?: XOR<UserRelationFilter, UserWhereInput>
+    gradedBy?: XOR<UserNullableRelationFilter, UserWhereInput> | null
     assignment?: XOR<AssignmentRelationFilter, AssignmentWhereInput>
     repositoryFile?: XOR<RepositoryFileNullableRelationFilter, RepositoryFileWhereInput> | null
   }, "id" | "userId_assignmentId">
@@ -40110,6 +40202,8 @@ export namespace Prisma {
     feedback?: SortOrderInput | SortOrder
     submittedAt?: SortOrderInput | SortOrder
     daysLate?: SortOrderInput | SortOrder
+    gradedById?: SortOrderInput | SortOrder
+    gradedAt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: SubmissionCountOrderByAggregateInput
@@ -40135,6 +40229,8 @@ export namespace Prisma {
     feedback?: StringNullableWithAggregatesFilter<"Submission"> | string | null
     submittedAt?: DateTimeNullableWithAggregatesFilter<"Submission"> | Date | string | null
     daysLate?: IntNullableWithAggregatesFilter<"Submission"> | number | null
+    gradedById?: StringNullableWithAggregatesFilter<"Submission"> | string | null
+    gradedAt?: DateTimeNullableWithAggregatesFilter<"Submission"> | Date | string | null
     createdAt?: DateTimeWithAggregatesFilter<"Submission"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Submission"> | Date | string
   }
@@ -42125,6 +42221,7 @@ export namespace Prisma {
     quizAttempts?: QuizAttemptCreateNestedManyWithoutUserInput
     quizzesCreated?: QuizCreateNestedManyWithoutAuthorInput
     formsCreated?: FormCreateNestedManyWithoutAuthorInput
+    gradedSubmissions?: SubmissionCreateNestedManyWithoutGradedByInput
   }
 
   export type UserUncheckedCreateInput = {
@@ -42159,6 +42256,7 @@ export namespace Prisma {
     quizAttempts?: QuizAttemptUncheckedCreateNestedManyWithoutUserInput
     quizzesCreated?: QuizUncheckedCreateNestedManyWithoutAuthorInput
     formsCreated?: FormUncheckedCreateNestedManyWithoutAuthorInput
+    gradedSubmissions?: SubmissionUncheckedCreateNestedManyWithoutGradedByInput
   }
 
   export type UserUpdateInput = {
@@ -42193,6 +42291,7 @@ export namespace Prisma {
     quizAttempts?: QuizAttemptUpdateManyWithoutUserNestedInput
     quizzesCreated?: QuizUpdateManyWithoutAuthorNestedInput
     formsCreated?: FormUpdateManyWithoutAuthorNestedInput
+    gradedSubmissions?: SubmissionUpdateManyWithoutGradedByNestedInput
   }
 
   export type UserUncheckedUpdateInput = {
@@ -42227,6 +42326,7 @@ export namespace Prisma {
     quizAttempts?: QuizAttemptUncheckedUpdateManyWithoutUserNestedInput
     quizzesCreated?: QuizUncheckedUpdateManyWithoutAuthorNestedInput
     formsCreated?: FormUncheckedUpdateManyWithoutAuthorNestedInput
+    gradedSubmissions?: SubmissionUncheckedUpdateManyWithoutGradedByNestedInput
   }
 
   export type UserCreateManyInput = {
@@ -43032,9 +43132,11 @@ export namespace Prisma {
     feedback?: string | null
     submittedAt?: Date | string | null
     daysLate?: number | null
+    gradedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     user: UserCreateNestedOneWithoutSubmissionsInput
+    gradedBy?: UserCreateNestedOneWithoutGradedSubmissionsInput
     assignment: AssignmentCreateNestedOneWithoutSubmissionsInput
     repositoryFile?: RepositoryFileCreateNestedOneWithoutSubmissionInput
   }
@@ -43052,6 +43154,8 @@ export namespace Prisma {
     feedback?: string | null
     submittedAt?: Date | string | null
     daysLate?: number | null
+    gradedById?: string | null
+    gradedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     repositoryFile?: RepositoryFileUncheckedCreateNestedOneWithoutSubmissionInput
@@ -43068,9 +43172,11 @@ export namespace Prisma {
     feedback?: NullableStringFieldUpdateOperationsInput | string | null
     submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     daysLate?: NullableIntFieldUpdateOperationsInput | number | null
+    gradedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     user?: UserUpdateOneRequiredWithoutSubmissionsNestedInput
+    gradedBy?: UserUpdateOneWithoutGradedSubmissionsNestedInput
     assignment?: AssignmentUpdateOneRequiredWithoutSubmissionsNestedInput
     repositoryFile?: RepositoryFileUpdateOneWithoutSubmissionNestedInput
   }
@@ -43088,6 +43194,8 @@ export namespace Prisma {
     feedback?: NullableStringFieldUpdateOperationsInput | string | null
     submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     daysLate?: NullableIntFieldUpdateOperationsInput | number | null
+    gradedById?: NullableStringFieldUpdateOperationsInput | string | null
+    gradedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     repositoryFile?: RepositoryFileUncheckedUpdateOneWithoutSubmissionNestedInput
@@ -43106,6 +43214,8 @@ export namespace Prisma {
     feedback?: string | null
     submittedAt?: Date | string | null
     daysLate?: number | null
+    gradedById?: string | null
+    gradedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -43121,6 +43231,7 @@ export namespace Prisma {
     feedback?: NullableStringFieldUpdateOperationsInput | string | null
     submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     daysLate?: NullableIntFieldUpdateOperationsInput | number | null
+    gradedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -43138,6 +43249,8 @@ export namespace Prisma {
     feedback?: NullableStringFieldUpdateOperationsInput | string | null
     submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     daysLate?: NullableIntFieldUpdateOperationsInput | number | null
+    gradedById?: NullableStringFieldUpdateOperationsInput | string | null
+    gradedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -46076,6 +46189,11 @@ export namespace Prisma {
     not?: NestedFloatNullableFilter<$PrismaModel> | number | null
   }
 
+  export type UserNullableRelationFilter = {
+    is?: UserWhereInput | null
+    isNot?: UserWhereInput | null
+  }
+
   export type AssignmentRelationFilter = {
     is?: AssignmentWhereInput
     isNot?: AssignmentWhereInput
@@ -46104,6 +46222,8 @@ export namespace Prisma {
     feedback?: SortOrder
     submittedAt?: SortOrder
     daysLate?: SortOrder
+    gradedById?: SortOrder
+    gradedAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -46126,6 +46246,8 @@ export namespace Prisma {
     feedback?: SortOrder
     submittedAt?: SortOrder
     daysLate?: SortOrder
+    gradedById?: SortOrder
+    gradedAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -46143,6 +46265,8 @@ export namespace Prisma {
     feedback?: SortOrder
     submittedAt?: SortOrder
     daysLate?: SortOrder
+    gradedById?: SortOrder
+    gradedAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -46552,11 +46676,6 @@ export namespace Prisma {
     in?: $Enums.QuizType[] | ListEnumQuizTypeFieldRefInput<$PrismaModel>
     notIn?: $Enums.QuizType[] | ListEnumQuizTypeFieldRefInput<$PrismaModel>
     not?: NestedEnumQuizTypeFilter<$PrismaModel> | $Enums.QuizType
-  }
-
-  export type UserNullableRelationFilter = {
-    is?: UserWhereInput | null
-    isNot?: UserWhereInput | null
   }
 
   export type QuizQuestionListRelationFilter = {
@@ -47715,6 +47834,13 @@ export namespace Prisma {
     connect?: FormWhereUniqueInput | FormWhereUniqueInput[]
   }
 
+  export type SubmissionCreateNestedManyWithoutGradedByInput = {
+    create?: XOR<SubmissionCreateWithoutGradedByInput, SubmissionUncheckedCreateWithoutGradedByInput> | SubmissionCreateWithoutGradedByInput[] | SubmissionUncheckedCreateWithoutGradedByInput[]
+    connectOrCreate?: SubmissionCreateOrConnectWithoutGradedByInput | SubmissionCreateOrConnectWithoutGradedByInput[]
+    createMany?: SubmissionCreateManyGradedByInputEnvelope
+    connect?: SubmissionWhereUniqueInput | SubmissionWhereUniqueInput[]
+  }
+
   export type AccountUncheckedCreateNestedManyWithoutUserInput = {
     create?: XOR<AccountCreateWithoutUserInput, AccountUncheckedCreateWithoutUserInput> | AccountCreateWithoutUserInput[] | AccountUncheckedCreateWithoutUserInput[]
     connectOrCreate?: AccountCreateOrConnectWithoutUserInput | AccountCreateOrConnectWithoutUserInput[]
@@ -47811,6 +47937,13 @@ export namespace Prisma {
     connectOrCreate?: FormCreateOrConnectWithoutAuthorInput | FormCreateOrConnectWithoutAuthorInput[]
     createMany?: FormCreateManyAuthorInputEnvelope
     connect?: FormWhereUniqueInput | FormWhereUniqueInput[]
+  }
+
+  export type SubmissionUncheckedCreateNestedManyWithoutGradedByInput = {
+    create?: XOR<SubmissionCreateWithoutGradedByInput, SubmissionUncheckedCreateWithoutGradedByInput> | SubmissionCreateWithoutGradedByInput[] | SubmissionUncheckedCreateWithoutGradedByInput[]
+    connectOrCreate?: SubmissionCreateOrConnectWithoutGradedByInput | SubmissionCreateOrConnectWithoutGradedByInput[]
+    createMany?: SubmissionCreateManyGradedByInputEnvelope
+    connect?: SubmissionWhereUniqueInput | SubmissionWhereUniqueInput[]
   }
 
   export type EnumRoleFieldUpdateOperationsInput = {
@@ -48017,6 +48150,20 @@ export namespace Prisma {
     deleteMany?: FormScalarWhereInput | FormScalarWhereInput[]
   }
 
+  export type SubmissionUpdateManyWithoutGradedByNestedInput = {
+    create?: XOR<SubmissionCreateWithoutGradedByInput, SubmissionUncheckedCreateWithoutGradedByInput> | SubmissionCreateWithoutGradedByInput[] | SubmissionUncheckedCreateWithoutGradedByInput[]
+    connectOrCreate?: SubmissionCreateOrConnectWithoutGradedByInput | SubmissionCreateOrConnectWithoutGradedByInput[]
+    upsert?: SubmissionUpsertWithWhereUniqueWithoutGradedByInput | SubmissionUpsertWithWhereUniqueWithoutGradedByInput[]
+    createMany?: SubmissionCreateManyGradedByInputEnvelope
+    set?: SubmissionWhereUniqueInput | SubmissionWhereUniqueInput[]
+    disconnect?: SubmissionWhereUniqueInput | SubmissionWhereUniqueInput[]
+    delete?: SubmissionWhereUniqueInput | SubmissionWhereUniqueInput[]
+    connect?: SubmissionWhereUniqueInput | SubmissionWhereUniqueInput[]
+    update?: SubmissionUpdateWithWhereUniqueWithoutGradedByInput | SubmissionUpdateWithWhereUniqueWithoutGradedByInput[]
+    updateMany?: SubmissionUpdateManyWithWhereWithoutGradedByInput | SubmissionUpdateManyWithWhereWithoutGradedByInput[]
+    deleteMany?: SubmissionScalarWhereInput | SubmissionScalarWhereInput[]
+  }
+
   export type AccountUncheckedUpdateManyWithoutUserNestedInput = {
     create?: XOR<AccountCreateWithoutUserInput, AccountUncheckedCreateWithoutUserInput> | AccountCreateWithoutUserInput[] | AccountUncheckedCreateWithoutUserInput[]
     connectOrCreate?: AccountCreateOrConnectWithoutUserInput | AccountCreateOrConnectWithoutUserInput[]
@@ -48211,6 +48358,20 @@ export namespace Prisma {
     update?: FormUpdateWithWhereUniqueWithoutAuthorInput | FormUpdateWithWhereUniqueWithoutAuthorInput[]
     updateMany?: FormUpdateManyWithWhereWithoutAuthorInput | FormUpdateManyWithWhereWithoutAuthorInput[]
     deleteMany?: FormScalarWhereInput | FormScalarWhereInput[]
+  }
+
+  export type SubmissionUncheckedUpdateManyWithoutGradedByNestedInput = {
+    create?: XOR<SubmissionCreateWithoutGradedByInput, SubmissionUncheckedCreateWithoutGradedByInput> | SubmissionCreateWithoutGradedByInput[] | SubmissionUncheckedCreateWithoutGradedByInput[]
+    connectOrCreate?: SubmissionCreateOrConnectWithoutGradedByInput | SubmissionCreateOrConnectWithoutGradedByInput[]
+    upsert?: SubmissionUpsertWithWhereUniqueWithoutGradedByInput | SubmissionUpsertWithWhereUniqueWithoutGradedByInput[]
+    createMany?: SubmissionCreateManyGradedByInputEnvelope
+    set?: SubmissionWhereUniqueInput | SubmissionWhereUniqueInput[]
+    disconnect?: SubmissionWhereUniqueInput | SubmissionWhereUniqueInput[]
+    delete?: SubmissionWhereUniqueInput | SubmissionWhereUniqueInput[]
+    connect?: SubmissionWhereUniqueInput | SubmissionWhereUniqueInput[]
+    update?: SubmissionUpdateWithWhereUniqueWithoutGradedByInput | SubmissionUpdateWithWhereUniqueWithoutGradedByInput[]
+    updateMany?: SubmissionUpdateManyWithWhereWithoutGradedByInput | SubmissionUpdateManyWithWhereWithoutGradedByInput[]
+    deleteMany?: SubmissionScalarWhereInput | SubmissionScalarWhereInput[]
   }
 
   export type UserCreateNestedOneWithoutResetTokensInput = {
@@ -48971,6 +49132,12 @@ export namespace Prisma {
     connect?: UserWhereUniqueInput
   }
 
+  export type UserCreateNestedOneWithoutGradedSubmissionsInput = {
+    create?: XOR<UserCreateWithoutGradedSubmissionsInput, UserUncheckedCreateWithoutGradedSubmissionsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutGradedSubmissionsInput
+    connect?: UserWhereUniqueInput
+  }
+
   export type AssignmentCreateNestedOneWithoutSubmissionsInput = {
     create?: XOR<AssignmentCreateWithoutSubmissionsInput, AssignmentUncheckedCreateWithoutSubmissionsInput>
     connectOrCreate?: AssignmentCreateOrConnectWithoutSubmissionsInput
@@ -49007,6 +49174,16 @@ export namespace Prisma {
     upsert?: UserUpsertWithoutSubmissionsInput
     connect?: UserWhereUniqueInput
     update?: XOR<XOR<UserUpdateToOneWithWhereWithoutSubmissionsInput, UserUpdateWithoutSubmissionsInput>, UserUncheckedUpdateWithoutSubmissionsInput>
+  }
+
+  export type UserUpdateOneWithoutGradedSubmissionsNestedInput = {
+    create?: XOR<UserCreateWithoutGradedSubmissionsInput, UserUncheckedCreateWithoutGradedSubmissionsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutGradedSubmissionsInput
+    upsert?: UserUpsertWithoutGradedSubmissionsInput
+    disconnect?: UserWhereInput | boolean
+    delete?: UserWhereInput | boolean
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutGradedSubmissionsInput, UserUpdateWithoutGradedSubmissionsInput>, UserUncheckedUpdateWithoutGradedSubmissionsInput>
   }
 
   export type AssignmentUpdateOneRequiredWithoutSubmissionsNestedInput = {
@@ -50630,6 +50807,7 @@ export namespace Prisma {
     quizAttempts?: QuizAttemptCreateNestedManyWithoutUserInput
     quizzesCreated?: QuizCreateNestedManyWithoutAuthorInput
     formsCreated?: FormCreateNestedManyWithoutAuthorInput
+    gradedSubmissions?: SubmissionCreateNestedManyWithoutGradedByInput
   }
 
   export type UserUncheckedCreateWithoutConversationParticipantsInput = {
@@ -50663,6 +50841,7 @@ export namespace Prisma {
     quizAttempts?: QuizAttemptUncheckedCreateNestedManyWithoutUserInput
     quizzesCreated?: QuizUncheckedCreateNestedManyWithoutAuthorInput
     formsCreated?: FormUncheckedCreateNestedManyWithoutAuthorInput
+    gradedSubmissions?: SubmissionUncheckedCreateNestedManyWithoutGradedByInput
   }
 
   export type UserCreateOrConnectWithoutConversationParticipantsInput = {
@@ -50743,6 +50922,7 @@ export namespace Prisma {
     quizAttempts?: QuizAttemptUpdateManyWithoutUserNestedInput
     quizzesCreated?: QuizUpdateManyWithoutAuthorNestedInput
     formsCreated?: FormUpdateManyWithoutAuthorNestedInput
+    gradedSubmissions?: SubmissionUpdateManyWithoutGradedByNestedInput
   }
 
   export type UserUncheckedUpdateWithoutConversationParticipantsInput = {
@@ -50776,6 +50956,7 @@ export namespace Prisma {
     quizAttempts?: QuizAttemptUncheckedUpdateManyWithoutUserNestedInput
     quizzesCreated?: QuizUncheckedUpdateManyWithoutAuthorNestedInput
     formsCreated?: FormUncheckedUpdateManyWithoutAuthorNestedInput
+    gradedSubmissions?: SubmissionUncheckedUpdateManyWithoutGradedByNestedInput
   }
 
   export type ConversationCreateWithoutMessagesInput = {
@@ -50834,6 +51015,7 @@ export namespace Prisma {
     quizAttempts?: QuizAttemptCreateNestedManyWithoutUserInput
     quizzesCreated?: QuizCreateNestedManyWithoutAuthorInput
     formsCreated?: FormCreateNestedManyWithoutAuthorInput
+    gradedSubmissions?: SubmissionCreateNestedManyWithoutGradedByInput
   }
 
   export type UserUncheckedCreateWithoutSentMessagesInput = {
@@ -50867,6 +51049,7 @@ export namespace Prisma {
     quizAttempts?: QuizAttemptUncheckedCreateNestedManyWithoutUserInput
     quizzesCreated?: QuizUncheckedCreateNestedManyWithoutAuthorInput
     formsCreated?: FormUncheckedCreateNestedManyWithoutAuthorInput
+    gradedSubmissions?: SubmissionUncheckedCreateNestedManyWithoutGradedByInput
   }
 
   export type UserCreateOrConnectWithoutSentMessagesInput = {
@@ -50975,6 +51158,7 @@ export namespace Prisma {
     quizAttempts?: QuizAttemptUpdateManyWithoutUserNestedInput
     quizzesCreated?: QuizUpdateManyWithoutAuthorNestedInput
     formsCreated?: FormUpdateManyWithoutAuthorNestedInput
+    gradedSubmissions?: SubmissionUpdateManyWithoutGradedByNestedInput
   }
 
   export type UserUncheckedUpdateWithoutSentMessagesInput = {
@@ -51008,6 +51192,7 @@ export namespace Prisma {
     quizAttempts?: QuizAttemptUncheckedUpdateManyWithoutUserNestedInput
     quizzesCreated?: QuizUncheckedUpdateManyWithoutAuthorNestedInput
     formsCreated?: FormUncheckedUpdateManyWithoutAuthorNestedInput
+    gradedSubmissions?: SubmissionUncheckedUpdateManyWithoutGradedByNestedInput
   }
 
   export type MessageAttachmentUpsertWithWhereUniqueWithoutMessageInput = {
@@ -51214,8 +51399,10 @@ export namespace Prisma {
     feedback?: string | null
     submittedAt?: Date | string | null
     daysLate?: number | null
+    gradedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    gradedBy?: UserCreateNestedOneWithoutGradedSubmissionsInput
     assignment: AssignmentCreateNestedOneWithoutSubmissionsInput
     repositoryFile?: RepositoryFileCreateNestedOneWithoutSubmissionInput
   }
@@ -51232,6 +51419,8 @@ export namespace Prisma {
     feedback?: string | null
     submittedAt?: Date | string | null
     daysLate?: number | null
+    gradedById?: string | null
+    gradedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     repositoryFile?: RepositoryFileUncheckedCreateNestedOneWithoutSubmissionInput
@@ -51605,6 +51794,54 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type SubmissionCreateWithoutGradedByInput = {
+    id?: string
+    status?: $Enums.AssignmentStatus
+    fileUrl?: string | null
+    textEntry?: string | null
+    websiteUrl?: string | null
+    comments?: string | null
+    grade?: number | null
+    feedback?: string | null
+    submittedAt?: Date | string | null
+    daysLate?: number | null
+    gradedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    user: UserCreateNestedOneWithoutSubmissionsInput
+    assignment: AssignmentCreateNestedOneWithoutSubmissionsInput
+    repositoryFile?: RepositoryFileCreateNestedOneWithoutSubmissionInput
+  }
+
+  export type SubmissionUncheckedCreateWithoutGradedByInput = {
+    id?: string
+    userId: string
+    assignmentId: string
+    status?: $Enums.AssignmentStatus
+    fileUrl?: string | null
+    textEntry?: string | null
+    websiteUrl?: string | null
+    comments?: string | null
+    grade?: number | null
+    feedback?: string | null
+    submittedAt?: Date | string | null
+    daysLate?: number | null
+    gradedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    repositoryFile?: RepositoryFileUncheckedCreateNestedOneWithoutSubmissionInput
+  }
+
+  export type SubmissionCreateOrConnectWithoutGradedByInput = {
+    where: SubmissionWhereUniqueInput
+    create: XOR<SubmissionCreateWithoutGradedByInput, SubmissionUncheckedCreateWithoutGradedByInput>
+  }
+
+  export type SubmissionCreateManyGradedByInputEnvelope = {
+    data: SubmissionCreateManyGradedByInput | SubmissionCreateManyGradedByInput[]
+    skipDuplicates?: boolean
+  }
+
   export type AccountUpsertWithWhereUniqueWithoutUserInput = {
     where: AccountWhereUniqueInput
     update: XOR<AccountUpdateWithoutUserInput, AccountUncheckedUpdateWithoutUserInput>
@@ -51753,6 +51990,8 @@ export namespace Prisma {
     feedback?: StringNullableFilter<"Submission"> | string | null
     submittedAt?: DateTimeNullableFilter<"Submission"> | Date | string | null
     daysLate?: IntNullableFilter<"Submission"> | number | null
+    gradedById?: StringNullableFilter<"Submission"> | string | null
+    gradedAt?: DateTimeNullableFilter<"Submission"> | Date | string | null
     createdAt?: DateTimeFilter<"Submission"> | Date | string
     updatedAt?: DateTimeFilter<"Submission"> | Date | string
   }
@@ -52041,6 +52280,22 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"Form"> | Date | string
   }
 
+  export type SubmissionUpsertWithWhereUniqueWithoutGradedByInput = {
+    where: SubmissionWhereUniqueInput
+    update: XOR<SubmissionUpdateWithoutGradedByInput, SubmissionUncheckedUpdateWithoutGradedByInput>
+    create: XOR<SubmissionCreateWithoutGradedByInput, SubmissionUncheckedCreateWithoutGradedByInput>
+  }
+
+  export type SubmissionUpdateWithWhereUniqueWithoutGradedByInput = {
+    where: SubmissionWhereUniqueInput
+    data: XOR<SubmissionUpdateWithoutGradedByInput, SubmissionUncheckedUpdateWithoutGradedByInput>
+  }
+
+  export type SubmissionUpdateManyWithWhereWithoutGradedByInput = {
+    where: SubmissionScalarWhereInput
+    data: XOR<SubmissionUpdateManyMutationInput, SubmissionUncheckedUpdateManyWithoutGradedByInput>
+  }
+
   export type UserCreateWithoutResetTokensInput = {
     id?: string
     name: string
@@ -52072,6 +52327,7 @@ export namespace Prisma {
     quizAttempts?: QuizAttemptCreateNestedManyWithoutUserInput
     quizzesCreated?: QuizCreateNestedManyWithoutAuthorInput
     formsCreated?: FormCreateNestedManyWithoutAuthorInput
+    gradedSubmissions?: SubmissionCreateNestedManyWithoutGradedByInput
   }
 
   export type UserUncheckedCreateWithoutResetTokensInput = {
@@ -52105,6 +52361,7 @@ export namespace Prisma {
     quizAttempts?: QuizAttemptUncheckedCreateNestedManyWithoutUserInput
     quizzesCreated?: QuizUncheckedCreateNestedManyWithoutAuthorInput
     formsCreated?: FormUncheckedCreateNestedManyWithoutAuthorInput
+    gradedSubmissions?: SubmissionUncheckedCreateNestedManyWithoutGradedByInput
   }
 
   export type UserCreateOrConnectWithoutResetTokensInput = {
@@ -52154,6 +52411,7 @@ export namespace Prisma {
     quizAttempts?: QuizAttemptUpdateManyWithoutUserNestedInput
     quizzesCreated?: QuizUpdateManyWithoutAuthorNestedInput
     formsCreated?: FormUpdateManyWithoutAuthorNestedInput
+    gradedSubmissions?: SubmissionUpdateManyWithoutGradedByNestedInput
   }
 
   export type UserUncheckedUpdateWithoutResetTokensInput = {
@@ -52187,6 +52445,7 @@ export namespace Prisma {
     quizAttempts?: QuizAttemptUncheckedUpdateManyWithoutUserNestedInput
     quizzesCreated?: QuizUncheckedUpdateManyWithoutAuthorNestedInput
     formsCreated?: FormUncheckedUpdateManyWithoutAuthorNestedInput
+    gradedSubmissions?: SubmissionUncheckedUpdateManyWithoutGradedByNestedInput
   }
 
   export type CourseEnrollmentCreateWithoutCourseInput = {
@@ -52849,6 +53108,7 @@ export namespace Prisma {
     quizAttempts?: QuizAttemptCreateNestedManyWithoutUserInput
     quizzesCreated?: QuizCreateNestedManyWithoutAuthorInput
     formsCreated?: FormCreateNestedManyWithoutAuthorInput
+    gradedSubmissions?: SubmissionCreateNestedManyWithoutGradedByInput
   }
 
   export type UserUncheckedCreateWithoutEnrollmentsInput = {
@@ -52882,6 +53142,7 @@ export namespace Prisma {
     quizAttempts?: QuizAttemptUncheckedCreateNestedManyWithoutUserInput
     quizzesCreated?: QuizUncheckedCreateNestedManyWithoutAuthorInput
     formsCreated?: FormUncheckedCreateNestedManyWithoutAuthorInput
+    gradedSubmissions?: SubmissionUncheckedCreateNestedManyWithoutGradedByInput
   }
 
   export type UserCreateOrConnectWithoutEnrollmentsInput = {
@@ -52980,6 +53241,7 @@ export namespace Prisma {
     quizAttempts?: QuizAttemptUpdateManyWithoutUserNestedInput
     quizzesCreated?: QuizUpdateManyWithoutAuthorNestedInput
     formsCreated?: FormUpdateManyWithoutAuthorNestedInput
+    gradedSubmissions?: SubmissionUpdateManyWithoutGradedByNestedInput
   }
 
   export type UserUncheckedUpdateWithoutEnrollmentsInput = {
@@ -53013,6 +53275,7 @@ export namespace Prisma {
     quizAttempts?: QuizAttemptUncheckedUpdateManyWithoutUserNestedInput
     quizzesCreated?: QuizUncheckedUpdateManyWithoutAuthorNestedInput
     formsCreated?: FormUncheckedUpdateManyWithoutAuthorNestedInput
+    gradedSubmissions?: SubmissionUncheckedUpdateManyWithoutGradedByNestedInput
   }
 
   export type CourseUpsertWithoutEnrollmentsInput = {
@@ -53565,6 +53828,7 @@ export namespace Prisma {
     quizAttempts?: QuizAttemptCreateNestedManyWithoutUserInput
     quizzesCreated?: QuizCreateNestedManyWithoutAuthorInput
     formsCreated?: FormCreateNestedManyWithoutAuthorInput
+    gradedSubmissions?: SubmissionCreateNestedManyWithoutGradedByInput
   }
 
   export type UserUncheckedCreateWithoutGroupMembersInput = {
@@ -53598,6 +53862,7 @@ export namespace Prisma {
     quizAttempts?: QuizAttemptUncheckedCreateNestedManyWithoutUserInput
     quizzesCreated?: QuizUncheckedCreateNestedManyWithoutAuthorInput
     formsCreated?: FormUncheckedCreateNestedManyWithoutAuthorInput
+    gradedSubmissions?: SubmissionUncheckedCreateNestedManyWithoutGradedByInput
   }
 
   export type UserCreateOrConnectWithoutGroupMembersInput = {
@@ -53672,6 +53937,7 @@ export namespace Prisma {
     quizAttempts?: QuizAttemptUpdateManyWithoutUserNestedInput
     quizzesCreated?: QuizUpdateManyWithoutAuthorNestedInput
     formsCreated?: FormUpdateManyWithoutAuthorNestedInput
+    gradedSubmissions?: SubmissionUpdateManyWithoutGradedByNestedInput
   }
 
   export type UserUncheckedUpdateWithoutGroupMembersInput = {
@@ -53705,6 +53971,7 @@ export namespace Prisma {
     quizAttempts?: QuizAttemptUncheckedUpdateManyWithoutUserNestedInput
     quizzesCreated?: QuizUncheckedUpdateManyWithoutAuthorNestedInput
     formsCreated?: FormUncheckedUpdateManyWithoutAuthorNestedInput
+    gradedSubmissions?: SubmissionUncheckedUpdateManyWithoutGradedByNestedInput
   }
 
   export type GroupUpsertWithoutMembersInput = {
@@ -53823,9 +54090,11 @@ export namespace Prisma {
     feedback?: string | null
     submittedAt?: Date | string | null
     daysLate?: number | null
+    gradedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     user: UserCreateNestedOneWithoutSubmissionsInput
+    gradedBy?: UserCreateNestedOneWithoutGradedSubmissionsInput
     repositoryFile?: RepositoryFileCreateNestedOneWithoutSubmissionInput
   }
 
@@ -53841,6 +54110,8 @@ export namespace Prisma {
     feedback?: string | null
     submittedAt?: Date | string | null
     daysLate?: number | null
+    gradedById?: string | null
+    gradedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     repositoryFile?: RepositoryFileUncheckedCreateNestedOneWithoutSubmissionInput
@@ -54129,6 +54400,7 @@ export namespace Prisma {
     quizAttempts?: QuizAttemptCreateNestedManyWithoutUserInput
     quizzesCreated?: QuizCreateNestedManyWithoutAuthorInput
     formsCreated?: FormCreateNestedManyWithoutAuthorInput
+    gradedSubmissions?: SubmissionCreateNestedManyWithoutGradedByInput
   }
 
   export type UserUncheckedCreateWithoutSubmissionsInput = {
@@ -54162,11 +54434,85 @@ export namespace Prisma {
     quizAttempts?: QuizAttemptUncheckedCreateNestedManyWithoutUserInput
     quizzesCreated?: QuizUncheckedCreateNestedManyWithoutAuthorInput
     formsCreated?: FormUncheckedCreateNestedManyWithoutAuthorInput
+    gradedSubmissions?: SubmissionUncheckedCreateNestedManyWithoutGradedByInput
   }
 
   export type UserCreateOrConnectWithoutSubmissionsInput = {
     where: UserWhereUniqueInput
     create: XOR<UserCreateWithoutSubmissionsInput, UserUncheckedCreateWithoutSubmissionsInput>
+  }
+
+  export type UserCreateWithoutGradedSubmissionsInput = {
+    id?: string
+    name: string
+    email: string
+    emailVerified?: Date | string | null
+    password?: string | null
+    image?: string | null
+    role?: $Enums.Role
+    status?: $Enums.ApprovalStatus
+    department?: string | null
+    position?: string | null
+    pronouns?: string | null
+    bio?: string | null
+    contactNumber?: string | null
+    employmentStatus?: string | null
+    accountType?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    accounts?: AccountCreateNestedManyWithoutUserInput
+    sessions?: SessionCreateNestedManyWithoutUserInput
+    enrollments?: CourseEnrollmentCreateNestedManyWithoutUserInput
+    groupMembers?: GroupMemberCreateNestedManyWithoutUserInput
+    submissions?: SubmissionCreateNestedManyWithoutUserInput
+    formSubmissions?: FormSubmissionCreateNestedManyWithoutUserInput
+    resetTokens?: PasswordResetTokenCreateNestedManyWithoutUserInput
+    repositoryFiles?: RepositoryFileCreateNestedManyWithoutUserInput
+    activityLogs?: ActivityLogCreateNestedManyWithoutUserInput
+    conversationParticipants?: ConversationParticipantCreateNestedManyWithoutUserInput
+    sentMessages?: MessageCreateNestedManyWithoutSenderInput
+    quizAttempts?: QuizAttemptCreateNestedManyWithoutUserInput
+    quizzesCreated?: QuizCreateNestedManyWithoutAuthorInput
+    formsCreated?: FormCreateNestedManyWithoutAuthorInput
+  }
+
+  export type UserUncheckedCreateWithoutGradedSubmissionsInput = {
+    id?: string
+    name: string
+    email: string
+    emailVerified?: Date | string | null
+    password?: string | null
+    image?: string | null
+    role?: $Enums.Role
+    status?: $Enums.ApprovalStatus
+    department?: string | null
+    position?: string | null
+    pronouns?: string | null
+    bio?: string | null
+    contactNumber?: string | null
+    employmentStatus?: string | null
+    accountType?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
+    sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
+    enrollments?: CourseEnrollmentUncheckedCreateNestedManyWithoutUserInput
+    groupMembers?: GroupMemberUncheckedCreateNestedManyWithoutUserInput
+    submissions?: SubmissionUncheckedCreateNestedManyWithoutUserInput
+    formSubmissions?: FormSubmissionUncheckedCreateNestedManyWithoutUserInput
+    resetTokens?: PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
+    repositoryFiles?: RepositoryFileUncheckedCreateNestedManyWithoutUserInput
+    activityLogs?: ActivityLogUncheckedCreateNestedManyWithoutUserInput
+    conversationParticipants?: ConversationParticipantUncheckedCreateNestedManyWithoutUserInput
+    sentMessages?: MessageUncheckedCreateNestedManyWithoutSenderInput
+    quizAttempts?: QuizAttemptUncheckedCreateNestedManyWithoutUserInput
+    quizzesCreated?: QuizUncheckedCreateNestedManyWithoutAuthorInput
+    formsCreated?: FormUncheckedCreateNestedManyWithoutAuthorInput
+  }
+
+  export type UserCreateOrConnectWithoutGradedSubmissionsInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutGradedSubmissionsInput, UserUncheckedCreateWithoutGradedSubmissionsInput>
   }
 
   export type AssignmentCreateWithoutSubmissionsInput = {
@@ -54309,6 +54655,7 @@ export namespace Prisma {
     quizAttempts?: QuizAttemptUpdateManyWithoutUserNestedInput
     quizzesCreated?: QuizUpdateManyWithoutAuthorNestedInput
     formsCreated?: FormUpdateManyWithoutAuthorNestedInput
+    gradedSubmissions?: SubmissionUpdateManyWithoutGradedByNestedInput
   }
 
   export type UserUncheckedUpdateWithoutSubmissionsInput = {
@@ -54333,6 +54680,86 @@ export namespace Prisma {
     sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
     enrollments?: CourseEnrollmentUncheckedUpdateManyWithoutUserNestedInput
     groupMembers?: GroupMemberUncheckedUpdateManyWithoutUserNestedInput
+    formSubmissions?: FormSubmissionUncheckedUpdateManyWithoutUserNestedInput
+    resetTokens?: PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
+    repositoryFiles?: RepositoryFileUncheckedUpdateManyWithoutUserNestedInput
+    activityLogs?: ActivityLogUncheckedUpdateManyWithoutUserNestedInput
+    conversationParticipants?: ConversationParticipantUncheckedUpdateManyWithoutUserNestedInput
+    sentMessages?: MessageUncheckedUpdateManyWithoutSenderNestedInput
+    quizAttempts?: QuizAttemptUncheckedUpdateManyWithoutUserNestedInput
+    quizzesCreated?: QuizUncheckedUpdateManyWithoutAuthorNestedInput
+    formsCreated?: FormUncheckedUpdateManyWithoutAuthorNestedInput
+    gradedSubmissions?: SubmissionUncheckedUpdateManyWithoutGradedByNestedInput
+  }
+
+  export type UserUpsertWithoutGradedSubmissionsInput = {
+    update: XOR<UserUpdateWithoutGradedSubmissionsInput, UserUncheckedUpdateWithoutGradedSubmissionsInput>
+    create: XOR<UserCreateWithoutGradedSubmissionsInput, UserUncheckedCreateWithoutGradedSubmissionsInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutGradedSubmissionsInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutGradedSubmissionsInput, UserUncheckedUpdateWithoutGradedSubmissionsInput>
+  }
+
+  export type UserUpdateWithoutGradedSubmissionsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    password?: NullableStringFieldUpdateOperationsInput | string | null
+    image?: NullableStringFieldUpdateOperationsInput | string | null
+    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    status?: EnumApprovalStatusFieldUpdateOperationsInput | $Enums.ApprovalStatus
+    department?: NullableStringFieldUpdateOperationsInput | string | null
+    position?: NullableStringFieldUpdateOperationsInput | string | null
+    pronouns?: NullableStringFieldUpdateOperationsInput | string | null
+    bio?: NullableStringFieldUpdateOperationsInput | string | null
+    contactNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    employmentStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    accountType?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    accounts?: AccountUpdateManyWithoutUserNestedInput
+    sessions?: SessionUpdateManyWithoutUserNestedInput
+    enrollments?: CourseEnrollmentUpdateManyWithoutUserNestedInput
+    groupMembers?: GroupMemberUpdateManyWithoutUserNestedInput
+    submissions?: SubmissionUpdateManyWithoutUserNestedInput
+    formSubmissions?: FormSubmissionUpdateManyWithoutUserNestedInput
+    resetTokens?: PasswordResetTokenUpdateManyWithoutUserNestedInput
+    repositoryFiles?: RepositoryFileUpdateManyWithoutUserNestedInput
+    activityLogs?: ActivityLogUpdateManyWithoutUserNestedInput
+    conversationParticipants?: ConversationParticipantUpdateManyWithoutUserNestedInput
+    sentMessages?: MessageUpdateManyWithoutSenderNestedInput
+    quizAttempts?: QuizAttemptUpdateManyWithoutUserNestedInput
+    quizzesCreated?: QuizUpdateManyWithoutAuthorNestedInput
+    formsCreated?: FormUpdateManyWithoutAuthorNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutGradedSubmissionsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    password?: NullableStringFieldUpdateOperationsInput | string | null
+    image?: NullableStringFieldUpdateOperationsInput | string | null
+    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    status?: EnumApprovalStatusFieldUpdateOperationsInput | $Enums.ApprovalStatus
+    department?: NullableStringFieldUpdateOperationsInput | string | null
+    position?: NullableStringFieldUpdateOperationsInput | string | null
+    pronouns?: NullableStringFieldUpdateOperationsInput | string | null
+    bio?: NullableStringFieldUpdateOperationsInput | string | null
+    contactNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    employmentStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    accountType?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
+    sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
+    enrollments?: CourseEnrollmentUncheckedUpdateManyWithoutUserNestedInput
+    groupMembers?: GroupMemberUncheckedUpdateManyWithoutUserNestedInput
+    submissions?: SubmissionUncheckedUpdateManyWithoutUserNestedInput
     formSubmissions?: FormSubmissionUncheckedUpdateManyWithoutUserNestedInput
     resetTokens?: PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
     repositoryFiles?: RepositoryFileUncheckedUpdateManyWithoutUserNestedInput
@@ -54734,9 +55161,11 @@ export namespace Prisma {
     feedback?: string | null
     submittedAt?: Date | string | null
     daysLate?: number | null
+    gradedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     user: UserCreateNestedOneWithoutSubmissionsInput
+    gradedBy?: UserCreateNestedOneWithoutGradedSubmissionsInput
     assignment: AssignmentCreateNestedOneWithoutSubmissionsInput
   }
 
@@ -54753,6 +55182,8 @@ export namespace Prisma {
     feedback?: string | null
     submittedAt?: Date | string | null
     daysLate?: number | null
+    gradedById?: string | null
+    gradedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -54793,6 +55224,7 @@ export namespace Prisma {
     quizAttempts?: QuizAttemptCreateNestedManyWithoutUserInput
     quizzesCreated?: QuizCreateNestedManyWithoutAuthorInput
     formsCreated?: FormCreateNestedManyWithoutAuthorInput
+    gradedSubmissions?: SubmissionCreateNestedManyWithoutGradedByInput
   }
 
   export type UserUncheckedCreateWithoutRepositoryFilesInput = {
@@ -54826,6 +55258,7 @@ export namespace Prisma {
     quizAttempts?: QuizAttemptUncheckedCreateNestedManyWithoutUserInput
     quizzesCreated?: QuizUncheckedCreateNestedManyWithoutAuthorInput
     formsCreated?: FormUncheckedCreateNestedManyWithoutAuthorInput
+    gradedSubmissions?: SubmissionUncheckedCreateNestedManyWithoutGradedByInput
   }
 
   export type UserCreateOrConnectWithoutRepositoryFilesInput = {
@@ -54886,9 +55319,11 @@ export namespace Prisma {
     feedback?: NullableStringFieldUpdateOperationsInput | string | null
     submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     daysLate?: NullableIntFieldUpdateOperationsInput | number | null
+    gradedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     user?: UserUpdateOneRequiredWithoutSubmissionsNestedInput
+    gradedBy?: UserUpdateOneWithoutGradedSubmissionsNestedInput
     assignment?: AssignmentUpdateOneRequiredWithoutSubmissionsNestedInput
   }
 
@@ -54905,6 +55340,8 @@ export namespace Prisma {
     feedback?: NullableStringFieldUpdateOperationsInput | string | null
     submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     daysLate?: NullableIntFieldUpdateOperationsInput | number | null
+    gradedById?: NullableStringFieldUpdateOperationsInput | string | null
+    gradedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -54951,6 +55388,7 @@ export namespace Prisma {
     quizAttempts?: QuizAttemptUpdateManyWithoutUserNestedInput
     quizzesCreated?: QuizUpdateManyWithoutAuthorNestedInput
     formsCreated?: FormUpdateManyWithoutAuthorNestedInput
+    gradedSubmissions?: SubmissionUpdateManyWithoutGradedByNestedInput
   }
 
   export type UserUncheckedUpdateWithoutRepositoryFilesInput = {
@@ -54984,6 +55422,7 @@ export namespace Prisma {
     quizAttempts?: QuizAttemptUncheckedUpdateManyWithoutUserNestedInput
     quizzesCreated?: QuizUncheckedUpdateManyWithoutAuthorNestedInput
     formsCreated?: FormUncheckedUpdateManyWithoutAuthorNestedInput
+    gradedSubmissions?: SubmissionUncheckedUpdateManyWithoutGradedByNestedInput
   }
 
   export type RepositoryCreateWithoutLogsInput = {
@@ -55042,6 +55481,7 @@ export namespace Prisma {
     quizAttempts?: QuizAttemptCreateNestedManyWithoutUserInput
     quizzesCreated?: QuizCreateNestedManyWithoutAuthorInput
     formsCreated?: FormCreateNestedManyWithoutAuthorInput
+    gradedSubmissions?: SubmissionCreateNestedManyWithoutGradedByInput
   }
 
   export type UserUncheckedCreateWithoutActivityLogsInput = {
@@ -55075,6 +55515,7 @@ export namespace Prisma {
     quizAttempts?: QuizAttemptUncheckedCreateNestedManyWithoutUserInput
     quizzesCreated?: QuizUncheckedCreateNestedManyWithoutAuthorInput
     formsCreated?: FormUncheckedCreateNestedManyWithoutAuthorInput
+    gradedSubmissions?: SubmissionUncheckedCreateNestedManyWithoutGradedByInput
   }
 
   export type UserCreateOrConnectWithoutActivityLogsInput = {
@@ -55155,6 +55596,7 @@ export namespace Prisma {
     quizAttempts?: QuizAttemptUpdateManyWithoutUserNestedInput
     quizzesCreated?: QuizUpdateManyWithoutAuthorNestedInput
     formsCreated?: FormUpdateManyWithoutAuthorNestedInput
+    gradedSubmissions?: SubmissionUpdateManyWithoutGradedByNestedInput
   }
 
   export type UserUncheckedUpdateWithoutActivityLogsInput = {
@@ -55188,6 +55630,7 @@ export namespace Prisma {
     quizAttempts?: QuizAttemptUncheckedUpdateManyWithoutUserNestedInput
     quizzesCreated?: QuizUncheckedUpdateManyWithoutAuthorNestedInput
     formsCreated?: FormUncheckedUpdateManyWithoutAuthorNestedInput
+    gradedSubmissions?: SubmissionUncheckedUpdateManyWithoutGradedByNestedInput
   }
 
   export type CourseCreateWithoutAnnouncementsInput = {
@@ -55470,6 +55913,7 @@ export namespace Prisma {
     quizAttempts?: QuizAttemptCreateNestedManyWithoutUserInput
     quizzesCreated?: QuizCreateNestedManyWithoutAuthorInput
     formsCreated?: FormCreateNestedManyWithoutAuthorInput
+    gradedSubmissions?: SubmissionCreateNestedManyWithoutGradedByInput
   }
 
   export type UserUncheckedCreateWithoutAccountsInput = {
@@ -55503,6 +55947,7 @@ export namespace Prisma {
     quizAttempts?: QuizAttemptUncheckedCreateNestedManyWithoutUserInput
     quizzesCreated?: QuizUncheckedCreateNestedManyWithoutAuthorInput
     formsCreated?: FormUncheckedCreateNestedManyWithoutAuthorInput
+    gradedSubmissions?: SubmissionUncheckedCreateNestedManyWithoutGradedByInput
   }
 
   export type UserCreateOrConnectWithoutAccountsInput = {
@@ -55552,6 +55997,7 @@ export namespace Prisma {
     quizAttempts?: QuizAttemptUpdateManyWithoutUserNestedInput
     quizzesCreated?: QuizUpdateManyWithoutAuthorNestedInput
     formsCreated?: FormUpdateManyWithoutAuthorNestedInput
+    gradedSubmissions?: SubmissionUpdateManyWithoutGradedByNestedInput
   }
 
   export type UserUncheckedUpdateWithoutAccountsInput = {
@@ -55585,6 +56031,7 @@ export namespace Prisma {
     quizAttempts?: QuizAttemptUncheckedUpdateManyWithoutUserNestedInput
     quizzesCreated?: QuizUncheckedUpdateManyWithoutAuthorNestedInput
     formsCreated?: FormUncheckedUpdateManyWithoutAuthorNestedInput
+    gradedSubmissions?: SubmissionUncheckedUpdateManyWithoutGradedByNestedInput
   }
 
   export type UserCreateWithoutSessionsInput = {
@@ -55618,6 +56065,7 @@ export namespace Prisma {
     quizAttempts?: QuizAttemptCreateNestedManyWithoutUserInput
     quizzesCreated?: QuizCreateNestedManyWithoutAuthorInput
     formsCreated?: FormCreateNestedManyWithoutAuthorInput
+    gradedSubmissions?: SubmissionCreateNestedManyWithoutGradedByInput
   }
 
   export type UserUncheckedCreateWithoutSessionsInput = {
@@ -55651,6 +56099,7 @@ export namespace Prisma {
     quizAttempts?: QuizAttemptUncheckedCreateNestedManyWithoutUserInput
     quizzesCreated?: QuizUncheckedCreateNestedManyWithoutAuthorInput
     formsCreated?: FormUncheckedCreateNestedManyWithoutAuthorInput
+    gradedSubmissions?: SubmissionUncheckedCreateNestedManyWithoutGradedByInput
   }
 
   export type UserCreateOrConnectWithoutSessionsInput = {
@@ -55700,6 +56149,7 @@ export namespace Prisma {
     quizAttempts?: QuizAttemptUpdateManyWithoutUserNestedInput
     quizzesCreated?: QuizUpdateManyWithoutAuthorNestedInput
     formsCreated?: FormUpdateManyWithoutAuthorNestedInput
+    gradedSubmissions?: SubmissionUpdateManyWithoutGradedByNestedInput
   }
 
   export type UserUncheckedUpdateWithoutSessionsInput = {
@@ -55733,6 +56183,7 @@ export namespace Prisma {
     quizAttempts?: QuizAttemptUncheckedUpdateManyWithoutUserNestedInput
     quizzesCreated?: QuizUncheckedUpdateManyWithoutAuthorNestedInput
     formsCreated?: FormUncheckedUpdateManyWithoutAuthorNestedInput
+    gradedSubmissions?: SubmissionUncheckedUpdateManyWithoutGradedByNestedInput
   }
 
   export type CourseCreateWithoutQuizzesInput = {
@@ -55815,6 +56266,7 @@ export namespace Prisma {
     sentMessages?: MessageCreateNestedManyWithoutSenderInput
     quizAttempts?: QuizAttemptCreateNestedManyWithoutUserInput
     formsCreated?: FormCreateNestedManyWithoutAuthorInput
+    gradedSubmissions?: SubmissionCreateNestedManyWithoutGradedByInput
   }
 
   export type UserUncheckedCreateWithoutQuizzesCreatedInput = {
@@ -55848,6 +56300,7 @@ export namespace Prisma {
     sentMessages?: MessageUncheckedCreateNestedManyWithoutSenderInput
     quizAttempts?: QuizAttemptUncheckedCreateNestedManyWithoutUserInput
     formsCreated?: FormUncheckedCreateNestedManyWithoutAuthorInput
+    gradedSubmissions?: SubmissionUncheckedCreateNestedManyWithoutGradedByInput
   }
 
   export type UserCreateOrConnectWithoutQuizzesCreatedInput = {
@@ -56016,6 +56469,7 @@ export namespace Prisma {
     sentMessages?: MessageUpdateManyWithoutSenderNestedInput
     quizAttempts?: QuizAttemptUpdateManyWithoutUserNestedInput
     formsCreated?: FormUpdateManyWithoutAuthorNestedInput
+    gradedSubmissions?: SubmissionUpdateManyWithoutGradedByNestedInput
   }
 
   export type UserUncheckedUpdateWithoutQuizzesCreatedInput = {
@@ -56049,6 +56503,7 @@ export namespace Prisma {
     sentMessages?: MessageUncheckedUpdateManyWithoutSenderNestedInput
     quizAttempts?: QuizAttemptUncheckedUpdateManyWithoutUserNestedInput
     formsCreated?: FormUncheckedUpdateManyWithoutAuthorNestedInput
+    gradedSubmissions?: SubmissionUncheckedUpdateManyWithoutGradedByNestedInput
   }
 
   export type QuizQuestionUpsertWithWhereUniqueWithoutQuizInput = {
@@ -56604,6 +57059,7 @@ export namespace Prisma {
     sentMessages?: MessageCreateNestedManyWithoutSenderInput
     quizzesCreated?: QuizCreateNestedManyWithoutAuthorInput
     formsCreated?: FormCreateNestedManyWithoutAuthorInput
+    gradedSubmissions?: SubmissionCreateNestedManyWithoutGradedByInput
   }
 
   export type UserUncheckedCreateWithoutQuizAttemptsInput = {
@@ -56637,6 +57093,7 @@ export namespace Prisma {
     sentMessages?: MessageUncheckedCreateNestedManyWithoutSenderInput
     quizzesCreated?: QuizUncheckedCreateNestedManyWithoutAuthorInput
     formsCreated?: FormUncheckedCreateNestedManyWithoutAuthorInput
+    gradedSubmissions?: SubmissionUncheckedCreateNestedManyWithoutGradedByInput
   }
 
   export type UserCreateOrConnectWithoutQuizAttemptsInput = {
@@ -56767,6 +57224,7 @@ export namespace Prisma {
     sentMessages?: MessageUpdateManyWithoutSenderNestedInput
     quizzesCreated?: QuizUpdateManyWithoutAuthorNestedInput
     formsCreated?: FormUpdateManyWithoutAuthorNestedInput
+    gradedSubmissions?: SubmissionUpdateManyWithoutGradedByNestedInput
   }
 
   export type UserUncheckedUpdateWithoutQuizAttemptsInput = {
@@ -56800,6 +57258,7 @@ export namespace Prisma {
     sentMessages?: MessageUncheckedUpdateManyWithoutSenderNestedInput
     quizzesCreated?: QuizUncheckedUpdateManyWithoutAuthorNestedInput
     formsCreated?: FormUncheckedUpdateManyWithoutAuthorNestedInput
+    gradedSubmissions?: SubmissionUncheckedUpdateManyWithoutGradedByNestedInput
   }
 
   export type CourseCreateWithoutFormsInput = {
@@ -56882,6 +57341,7 @@ export namespace Prisma {
     sentMessages?: MessageCreateNestedManyWithoutSenderInput
     quizAttempts?: QuizAttemptCreateNestedManyWithoutUserInput
     quizzesCreated?: QuizCreateNestedManyWithoutAuthorInput
+    gradedSubmissions?: SubmissionCreateNestedManyWithoutGradedByInput
   }
 
   export type UserUncheckedCreateWithoutFormsCreatedInput = {
@@ -56915,6 +57375,7 @@ export namespace Prisma {
     sentMessages?: MessageUncheckedCreateNestedManyWithoutSenderInput
     quizAttempts?: QuizAttemptUncheckedCreateNestedManyWithoutUserInput
     quizzesCreated?: QuizUncheckedCreateNestedManyWithoutAuthorInput
+    gradedSubmissions?: SubmissionUncheckedCreateNestedManyWithoutGradedByInput
   }
 
   export type UserCreateOrConnectWithoutFormsCreatedInput = {
@@ -57097,6 +57558,7 @@ export namespace Prisma {
     sentMessages?: MessageUpdateManyWithoutSenderNestedInput
     quizAttempts?: QuizAttemptUpdateManyWithoutUserNestedInput
     quizzesCreated?: QuizUpdateManyWithoutAuthorNestedInput
+    gradedSubmissions?: SubmissionUpdateManyWithoutGradedByNestedInput
   }
 
   export type UserUncheckedUpdateWithoutFormsCreatedInput = {
@@ -57130,6 +57592,7 @@ export namespace Prisma {
     sentMessages?: MessageUncheckedUpdateManyWithoutSenderNestedInput
     quizAttempts?: QuizAttemptUncheckedUpdateManyWithoutUserNestedInput
     quizzesCreated?: QuizUncheckedUpdateManyWithoutAuthorNestedInput
+    gradedSubmissions?: SubmissionUncheckedUpdateManyWithoutGradedByNestedInput
   }
 
   export type FormQuestionUpsertWithWhereUniqueWithoutFormInput = {
@@ -57439,6 +57902,7 @@ export namespace Prisma {
     quizAttempts?: QuizAttemptCreateNestedManyWithoutUserInput
     quizzesCreated?: QuizCreateNestedManyWithoutAuthorInput
     formsCreated?: FormCreateNestedManyWithoutAuthorInput
+    gradedSubmissions?: SubmissionCreateNestedManyWithoutGradedByInput
   }
 
   export type UserUncheckedCreateWithoutFormSubmissionsInput = {
@@ -57472,6 +57936,7 @@ export namespace Prisma {
     quizAttempts?: QuizAttemptUncheckedCreateNestedManyWithoutUserInput
     quizzesCreated?: QuizUncheckedCreateNestedManyWithoutAuthorInput
     formsCreated?: FormUncheckedCreateNestedManyWithoutAuthorInput
+    gradedSubmissions?: SubmissionUncheckedCreateNestedManyWithoutGradedByInput
   }
 
   export type UserCreateOrConnectWithoutFormSubmissionsInput = {
@@ -57598,6 +58063,7 @@ export namespace Prisma {
     quizAttempts?: QuizAttemptUpdateManyWithoutUserNestedInput
     quizzesCreated?: QuizUpdateManyWithoutAuthorNestedInput
     formsCreated?: FormUpdateManyWithoutAuthorNestedInput
+    gradedSubmissions?: SubmissionUpdateManyWithoutGradedByNestedInput
   }
 
   export type UserUncheckedUpdateWithoutFormSubmissionsInput = {
@@ -57631,6 +58097,7 @@ export namespace Prisma {
     quizAttempts?: QuizAttemptUncheckedUpdateManyWithoutUserNestedInput
     quizzesCreated?: QuizUncheckedUpdateManyWithoutAuthorNestedInput
     formsCreated?: FormUncheckedUpdateManyWithoutAuthorNestedInput
+    gradedSubmissions?: SubmissionUncheckedUpdateManyWithoutGradedByNestedInput
   }
 
   export type AssignmentCreateWithoutRubricInput = {
@@ -58195,6 +58662,8 @@ export namespace Prisma {
     feedback?: string | null
     submittedAt?: Date | string | null
     daysLate?: number | null
+    gradedById?: string | null
+    gradedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -58328,6 +58797,24 @@ export namespace Prisma {
     updatedAt?: Date | string
   }
 
+  export type SubmissionCreateManyGradedByInput = {
+    id?: string
+    userId: string
+    assignmentId: string
+    status?: $Enums.AssignmentStatus
+    fileUrl?: string | null
+    textEntry?: string | null
+    websiteUrl?: string | null
+    comments?: string | null
+    grade?: number | null
+    feedback?: string | null
+    submittedAt?: Date | string | null
+    daysLate?: number | null
+    gradedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
   export type AccountUpdateWithoutUserInput = {
     id?: StringFieldUpdateOperationsInput | string
     type?: StringFieldUpdateOperationsInput | string
@@ -58447,8 +58934,10 @@ export namespace Prisma {
     feedback?: NullableStringFieldUpdateOperationsInput | string | null
     submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     daysLate?: NullableIntFieldUpdateOperationsInput | number | null
+    gradedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    gradedBy?: UserUpdateOneWithoutGradedSubmissionsNestedInput
     assignment?: AssignmentUpdateOneRequiredWithoutSubmissionsNestedInput
     repositoryFile?: RepositoryFileUpdateOneWithoutSubmissionNestedInput
   }
@@ -58465,6 +58954,8 @@ export namespace Prisma {
     feedback?: NullableStringFieldUpdateOperationsInput | string | null
     submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     daysLate?: NullableIntFieldUpdateOperationsInput | number | null
+    gradedById?: NullableStringFieldUpdateOperationsInput | string | null
+    gradedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     repositoryFile?: RepositoryFileUncheckedUpdateOneWithoutSubmissionNestedInput
@@ -58482,6 +58973,8 @@ export namespace Prisma {
     feedback?: NullableStringFieldUpdateOperationsInput | string | null
     submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     daysLate?: NullableIntFieldUpdateOperationsInput | number | null
+    gradedById?: NullableStringFieldUpdateOperationsInput | string | null
+    gradedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -58879,6 +59372,62 @@ export namespace Prisma {
     availableUntil?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     availableUntilTime?: NullableStringFieldUpdateOperationsInput | string | null
     published?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SubmissionUpdateWithoutGradedByInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    status?: EnumAssignmentStatusFieldUpdateOperationsInput | $Enums.AssignmentStatus
+    fileUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    textEntry?: NullableStringFieldUpdateOperationsInput | string | null
+    websiteUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    comments?: NullableStringFieldUpdateOperationsInput | string | null
+    grade?: NullableFloatFieldUpdateOperationsInput | number | null
+    feedback?: NullableStringFieldUpdateOperationsInput | string | null
+    submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    daysLate?: NullableIntFieldUpdateOperationsInput | number | null
+    gradedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    user?: UserUpdateOneRequiredWithoutSubmissionsNestedInput
+    assignment?: AssignmentUpdateOneRequiredWithoutSubmissionsNestedInput
+    repositoryFile?: RepositoryFileUpdateOneWithoutSubmissionNestedInput
+  }
+
+  export type SubmissionUncheckedUpdateWithoutGradedByInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    assignmentId?: StringFieldUpdateOperationsInput | string
+    status?: EnumAssignmentStatusFieldUpdateOperationsInput | $Enums.AssignmentStatus
+    fileUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    textEntry?: NullableStringFieldUpdateOperationsInput | string | null
+    websiteUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    comments?: NullableStringFieldUpdateOperationsInput | string | null
+    grade?: NullableFloatFieldUpdateOperationsInput | number | null
+    feedback?: NullableStringFieldUpdateOperationsInput | string | null
+    submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    daysLate?: NullableIntFieldUpdateOperationsInput | number | null
+    gradedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    repositoryFile?: RepositoryFileUncheckedUpdateOneWithoutSubmissionNestedInput
+  }
+
+  export type SubmissionUncheckedUpdateManyWithoutGradedByInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    assignmentId?: StringFieldUpdateOperationsInput | string
+    status?: EnumAssignmentStatusFieldUpdateOperationsInput | $Enums.AssignmentStatus
+    fileUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    textEntry?: NullableStringFieldUpdateOperationsInput | string | null
+    websiteUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    comments?: NullableStringFieldUpdateOperationsInput | string | null
+    grade?: NullableFloatFieldUpdateOperationsInput | number | null
+    feedback?: NullableStringFieldUpdateOperationsInput | string | null
+    submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    daysLate?: NullableIntFieldUpdateOperationsInput | number | null
+    gradedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -59711,6 +60260,8 @@ export namespace Prisma {
     feedback?: string | null
     submittedAt?: Date | string | null
     daysLate?: number | null
+    gradedById?: string | null
+    gradedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -59726,9 +60277,11 @@ export namespace Prisma {
     feedback?: NullableStringFieldUpdateOperationsInput | string | null
     submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     daysLate?: NullableIntFieldUpdateOperationsInput | number | null
+    gradedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     user?: UserUpdateOneRequiredWithoutSubmissionsNestedInput
+    gradedBy?: UserUpdateOneWithoutGradedSubmissionsNestedInput
     repositoryFile?: RepositoryFileUpdateOneWithoutSubmissionNestedInput
   }
 
@@ -59744,6 +60297,8 @@ export namespace Prisma {
     feedback?: NullableStringFieldUpdateOperationsInput | string | null
     submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     daysLate?: NullableIntFieldUpdateOperationsInput | number | null
+    gradedById?: NullableStringFieldUpdateOperationsInput | string | null
+    gradedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     repositoryFile?: RepositoryFileUncheckedUpdateOneWithoutSubmissionNestedInput
@@ -59761,6 +60316,8 @@ export namespace Prisma {
     feedback?: NullableStringFieldUpdateOperationsInput | string | null
     submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     daysLate?: NullableIntFieldUpdateOperationsInput | number | null
+    gradedById?: NullableStringFieldUpdateOperationsInput | string | null
+    gradedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }

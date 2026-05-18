@@ -291,6 +291,8 @@ exports.Prisma.SubmissionScalarFieldEnum = {
   feedback: 'feedback',
   submittedAt: 'submittedAt',
   daysLate: 'daysLate',
+  gradedById: 'gradedById',
+  gradedAt: 'gradedAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
