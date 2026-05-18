@@ -24,12 +24,72 @@ const PRESET_COLORS = [
   "#37474f","#546e7a","#78909c","#5d4037",
 ];
 
-const PAGE_ITEMS = [
-  { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
-  { label: "Users",     href: "/admin/users",     icon: Users            },
-  { label: "Inbox",     href: "/admin/inbox",     icon: Inbox            },
-  { label: "Calendar",  href: "/admin/calendar",  icon: CalendarDays     },
-];
+/* ── Mobile nav primitives ── declared at module level to avoid ESLint error ── */
+
+function MobileNavBtn({
+  label, icon: Icon, active, onClick,
+}: {
+  label: string;
+  icon: React.ElementType;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        flex: 1, display: "flex", flexDirection: "column", alignItems: "center",
+        justifyContent: "center", padding: "6px 4px",
+        background: "none", border: "none", cursor: "pointer",
+        borderTop: active ? "2px solid #facc15" : "2px solid transparent",
+        minWidth: 44,
+      }}
+    >
+      <Icon size={20} color={active ? "#fff" : "rgba(255,255,255,0.65)"} />
+      <span style={{
+        fontSize: 9, marginTop: 3, fontFamily: FONT, fontWeight: 600,
+        color: active ? "#fff" : "rgba(255,255,255,0.65)",
+        whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+        maxWidth: "100%",
+      }}>
+        {label}
+      </span>
+    </button>
+  );
+}
+
+function MobileNavLink({
+  label, icon: Icon, href, active, onClick,
+}: {
+  label: string;
+  icon: React.ElementType;
+  href: string;
+  active: boolean;
+  onClick?: () => void;
+}) {
+  return (
+    <Link
+      href={href}
+      onClick={onClick}
+      style={{
+        flex: 1, display: "flex", flexDirection: "column", alignItems: "center",
+        justifyContent: "center", padding: "6px 4px", textDecoration: "none",
+        borderTop: active ? "2px solid #facc15" : "2px solid transparent",
+        minWidth: 44,
+      }}
+    >
+      <Icon size={20} color={active ? "#fff" : "rgba(255,255,255,0.65)"} />
+      <span style={{
+        fontSize: 9, marginTop: 3, fontFamily: FONT, fontWeight: 600,
+        color: active ? "#fff" : "rgba(255,255,255,0.65)",
+        whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+        maxWidth: "100%",
+      }}>
+        {label}
+      </span>
+    </Link>
+  );
+}
 
 /* ── Create Course Modal ─────────────────────────────────────────────────────── */
 function CreateCourseModal({
@@ -122,6 +182,7 @@ function CreateCourseModal({
 }
 
 /* ── Desktop Sidebar ─────────────────────────────────────────────────────────── */
+// Order: Logo → Dashboard → Offices → Groups → Users → Inbox → Calendar → History → Logout
 function AdminSidebar({
   groupsPanelOpen,
   onGroupsClick,
@@ -162,9 +223,15 @@ function AdminSidebar({
 
   const handlePageNavClick = () => { if (coursesActive) closeCourses(); };
 
+  const handleHistoryClick = () => {
+    handlePageNavClick();
+    if (historyIsOpen) closeHistoryPanel(); else openHistory();
+  };
+
   return (
     <div className="w-16 bg-[#7b1113] text-white h-full flex flex-col items-center py-0 shrink-0 z-200 relative">
-      {/* Logo/Account */}
+
+      {/* 1. Logo / Account */}
       <Link href="/admin/dashboard" onClick={handlePageNavClick}
         className="flex flex-col items-center justify-center w-full py-3 hover:bg-[#5a0d0f] transition-colors border-l-2 border-transparent">
         <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center overflow-hidden">
@@ -175,39 +242,60 @@ function AdminSidebar({
         <span className="text-[10px] mt-1 text-red-200">Account</span>
       </Link>
 
-      {/* Nav items */}
       <div className="flex flex-col items-center w-full flex-1 overflow-y-auto">
+
+        {/* 2. Dashboard */}
+        <Link href="/admin/dashboard" onClick={handlePageNavClick}
+          className={`flex flex-col items-center justify-center w-full py-2.5 px-1 transition-colors ${pageIsActive("/admin/dashboard") ? ACTIVE_CLS : INACTIVE_CLS}`}>
+          <LayoutDashboard size={18} />
+          <span className="text-[10px] mt-1 text-center leading-tight">Dashboard</span>
+        </Link>
+
+        {/* 3. Offices */}
         <button onClick={handleCoursesClick}
           className={`flex flex-col items-center justify-center w-full py-2.5 px-1 transition-colors ${coursesActive ? ACTIVE_CLS : INACTIVE_CLS}`}>
           <BookOpen size={18} />
           <span className="text-[10px] mt-1 text-center leading-tight">Offices</span>
         </button>
 
+        {/* 4. Groups */}
         <button onClick={onGroupsClick}
           className={`flex flex-col items-center justify-center w-full py-2.5 px-1 transition-colors ${groupsActive ? ACTIVE_CLS : INACTIVE_CLS}`}>
           <FolderKanban size={18} />
           <span className="text-[10px] mt-1 text-center leading-tight">Groups</span>
         </button>
 
-        <button onClick={() => { handlePageNavClick(); if (historyIsOpen) { closeHistoryPanel(); } else { openHistory(); } }}
+        {/* 5. Users */}
+        <Link href="/admin/users" onClick={handlePageNavClick}
+          className={`flex flex-col items-center justify-center w-full py-2.5 px-1 transition-colors ${pageIsActive("/admin/users") ? ACTIVE_CLS : INACTIVE_CLS}`}>
+          <Users size={18} />
+          <span className="text-[10px] mt-1 text-center leading-tight">Users</span>
+        </Link>
+
+        {/* 6. Inbox */}
+        <Link href="/admin/inbox" onClick={handlePageNavClick}
+          className={`flex flex-col items-center justify-center w-full py-2.5 px-1 transition-colors ${pageIsActive("/admin/inbox") ? ACTIVE_CLS : INACTIVE_CLS}`}>
+          <Inbox size={18} />
+          <span className="text-[10px] mt-1 text-center leading-tight">Inbox</span>
+        </Link>
+
+        {/* 7. Calendar */}
+        <Link href="/admin/calendar" onClick={handlePageNavClick}
+          className={`flex flex-col items-center justify-center w-full py-2.5 px-1 transition-colors ${pageIsActive("/admin/calendar") ? ACTIVE_CLS : INACTIVE_CLS}`}>
+          <CalendarDays size={18} />
+          <span className="text-[10px] mt-1 text-center leading-tight">Calendar</span>
+        </Link>
+
+        {/* 8. History */}
+        <button onClick={handleHistoryClick}
           className={`flex flex-col items-center justify-center w-full py-2.5 px-1 transition-colors ${historyIsOpen ? ACTIVE_CLS : INACTIVE_CLS}`}>
           <Clock size={18} />
           <span className="text-[10px] mt-1 text-center leading-tight">History</span>
         </button>
 
-        {PAGE_ITEMS.map(item => {
-          const Icon = item.icon;
-          return (
-            <Link key={item.label} href={item.href} onClick={handlePageNavClick}
-              className={`flex flex-col items-center justify-center w-full py-2.5 px-1 transition-colors ${pageIsActive(item.href) ? ACTIVE_CLS : INACTIVE_CLS}`}>
-              <Icon size={18} />
-              <span className="text-[10px] mt-1 text-center leading-tight">{item.label}</span>
-            </Link>
-          );
-        })}
       </div>
 
-      {/* Logout */}
+      {/* 9. Logout */}
       <div className="mt-auto mb-2 w-full">
         <button onClick={() => signOut({ callbackUrl: "/admin/login" })}
           className={`flex flex-col items-center justify-center w-full py-2.5 px-1 transition-colors ${INACTIVE_CLS}`}>
@@ -215,11 +303,13 @@ function AdminSidebar({
           <span className="text-[10px] mt-1">Logout</span>
         </button>
       </div>
+
     </div>
   );
 }
 
 /* ── Mobile Bottom Nav ───────────────────────────────────────────────────────── */
+// Order: Logo → Dashboard → Offices → Groups → Users → Inbox → Calendar → History → Logout
 function MobileBottomNav({
   groupsPanelOpen,
   onGroupsClick,
@@ -237,6 +327,8 @@ function MobileBottomNav({
     close:    closeCourses,
     closePanel,
   } = useAdminCourses();
+
+  const { isOpen: historyIsOpen, open: openHistory, closePanel: closeHistoryPanel } = useHistory();
 
   const pageIsActive = (href: string) => {
     if (coursesActive)   return false;
@@ -258,11 +350,10 @@ function MobileBottomNav({
 
   const handlePageNavClick = () => { if (coursesActive) closeCourses(); };
 
-  const mobileItems = [
-    { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
-    { label: "Inbox",     href: "/admin/inbox",     icon: Inbox            },
-    { label: "Calendar",  href: "/admin/calendar",  icon: CalendarDays     },
-  ];
+  const handleHistoryClick = () => {
+    handlePageNavClick();
+    if (historyIsOpen) closeHistoryPanel(); else openHistory();
+  };
 
   return (
     <div
@@ -272,73 +363,105 @@ function MobileBottomNav({
         display: "flex", alignItems: "stretch",
         borderTop: "1px solid #5a0d0f",
         paddingBottom: "env(safe-area-inset-bottom)",
+        overflowX: "auto",
+        WebkitOverflowScrolling: "touch",
       }}
     >
-      <button
-        onClick={handleCoursesClick}
+      {/* 1. Logo / Account */}
+      <Link
+        href="/admin/dashboard"
+        onClick={handlePageNavClick}
         style={{
           flex: 1, display: "flex", flexDirection: "column", alignItems: "center",
-          justifyContent: "center", padding: "8px 4px", background: "none", border: "none",
-          cursor: "pointer",
-          borderTop: coursesActive ? "2px solid #facc15" : "2px solid transparent",
+          justifyContent: "center", padding: "6px 4px", textDecoration: "none",
+          borderTop: "2px solid transparent", minWidth: 44,
         }}
       >
-        <BookOpen size={20} color={coursesActive ? "#fff" : "rgba(255,255,255,0.65)"} />
-        <span style={{ fontSize: 9, marginTop: 3, color: coursesActive ? "#fff" : "rgba(255,255,255,0.65)", fontFamily: FONT, fontWeight: 600 }}>
-          Courses
-        </span>
-      </button>
-
-      <button
-        onClick={onGroupsClick}
-        style={{
-          flex: 1, display: "flex", flexDirection: "column", alignItems: "center",
-          justifyContent: "center", padding: "8px 4px", background: "none", border: "none",
-          cursor: "pointer",
-          borderTop: groupsActive ? "2px solid #facc15" : "2px solid transparent",
-        }}
-      >
-        <FolderKanban size={20} color={groupsActive ? "#fff" : "rgba(255,255,255,0.65)"} />
-        <span style={{ fontSize: 9, marginTop: 3, color: groupsActive ? "#fff" : "rgba(255,255,255,0.65)", fontFamily: FONT, fontWeight: 600 }}>
-          Groups
-        </span>
-      </button>
-
-      {mobileItems.map(item => {
-        const Icon  = item.icon;
-        const active = pageIsActive(item.href);
-        return (
-          <Link
-            key={item.label}
-            href={item.href}
-            onClick={handlePageNavClick}
-            style={{
-              flex: 1, display: "flex", flexDirection: "column", alignItems: "center",
-              justifyContent: "center", padding: "8px 4px", textDecoration: "none",
-              borderTop: active ? "2px solid #facc15" : "2px solid transparent",
-            }}
-          >
-            <Icon size={20} color={active ? "#fff" : "rgba(255,255,255,0.65)"} />
-            <span style={{ fontSize: 9, marginTop: 3, color: active ? "#fff" : "rgba(255,255,255,0.65)", fontFamily: FONT, fontWeight: 600 }}>
-              {item.label}
-            </span>
-          </Link>
-        );
-      })}
-
-      <button
-        onClick={() => signOut({ callbackUrl: "/admin/login" })}
-        style={{
-          flex: 1, display: "flex", flexDirection: "column", alignItems: "center",
-          justifyContent: "center", padding: "8px 4px", background: "none", border: "none",
-          cursor: "pointer", borderTop: "2px solid transparent",
-        }}
-      >
-        <LogOut size={20} color="rgba(255,255,255,0.65)" />
+        <div style={{
+          width: 22, height: 22, borderRadius: "50%",
+          background: "rgba(255,255,255,0.2)", overflow: "hidden",
+          display: "flex", alignItems: "center", justifyContent: "center",
+        }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/psu-logo.png"
+            alt="PSU"
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+          />
+        </div>
         <span style={{ fontSize: 9, marginTop: 3, color: "rgba(255,255,255,0.65)", fontFamily: FONT, fontWeight: 600 }}>
-          Logout
+          Account
         </span>
-      </button>
+      </Link>
+
+      {/* 2. Dashboard */}
+      <MobileNavLink
+        label="Dashboard"
+        icon={LayoutDashboard}
+        href="/admin/dashboard"
+        active={pageIsActive("/admin/dashboard")}
+        onClick={handlePageNavClick}
+      />
+
+      {/* 3. Offices */}
+      <MobileNavBtn
+        label="Offices"
+        icon={BookOpen}
+        active={coursesActive}
+        onClick={handleCoursesClick}
+      />
+
+      {/* 4. Groups */}
+      <MobileNavBtn
+        label="Groups"
+        icon={FolderKanban}
+        active={groupsActive}
+        onClick={onGroupsClick}
+      />
+
+      {/* 5. Users */}
+      <MobileNavLink
+        label="Users"
+        icon={Users}
+        href="/admin/users"
+        active={pageIsActive("/admin/users")}
+        onClick={handlePageNavClick}
+      />
+
+      {/* 6. Inbox */}
+      <MobileNavLink
+        label="Inbox"
+        icon={Inbox}
+        href="/admin/inbox"
+        active={pageIsActive("/admin/inbox")}
+        onClick={handlePageNavClick}
+      />
+
+      {/* 7. Calendar */}
+      <MobileNavLink
+        label="Calendar"
+        icon={CalendarDays}
+        href="/admin/calendar"
+        active={pageIsActive("/admin/calendar")}
+        onClick={handlePageNavClick}
+      />
+
+      {/* 8. History */}
+      <MobileNavBtn
+        label="History"
+        icon={Clock}
+        active={historyIsOpen}
+        onClick={handleHistoryClick}
+      />
+
+      {/* 9. Logout */}
+      <MobileNavBtn
+        label="Logout"
+        icon={LogOut}
+        active={false}
+        onClick={() => signOut({ callbackUrl: "/admin/login" })}
+      />
     </div>
   );
 }
@@ -404,7 +527,7 @@ function AdminInner({ children }: { children: React.ReactNode }) {
       <div className="flex-1 flex overflow-hidden">
         <main
           className="flex-1 overflow-y-auto"
-          style={{ paddingBottom: isMobile ? 64 : 0 }}
+          style={{ paddingBottom: isMobile ? 72 : 0 }}
         >
           {children}
         </main>

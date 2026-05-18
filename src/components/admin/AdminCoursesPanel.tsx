@@ -192,15 +192,7 @@ export function AllCoursesFullScreen({
                     <p className="text-[11px] text-gray-400 font-mono">{c.code}</p>
                     {c.term && <p className="text-[10px] text-gray-400 mt-0.5">{c.term}</p>}
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span
-                      className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full
-                        ${c.status === "PUBLISHED"
-                          ? "bg-emerald-50 text-emerald-700"
-                          : "bg-gray-100 text-gray-500"}`}
-                    >
-                      {c.status === "PUBLISHED" ? "Live" : "Draft"}
-                    </span>
+                  <div className="flex items-center shrink-0">
                     <ChevronRight className="w-3.5 h-3.5 text-gray-300" />
                   </div>
                 </button>
@@ -369,15 +361,7 @@ export default function AdminCoursesPanel({ onNewCourse }: { onNewCourse: () => 
             left: isMobile ? 0 : 64,
           }}
         >
-          {/* Close button for fullscreen on mobile */}
-          {isMobile && (
-            <button
-              onClick={handleXClose}
-              className="absolute top-4 right-4 z-10 w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-400 hover:text-gray-700"
-            >
-              <X size={14} />
-            </button>
-          )}
+        
           <AllCoursesFullScreen onNewCourse={handleNewCourse} onNavigate={handleNavigate} />
         </div>
       )}

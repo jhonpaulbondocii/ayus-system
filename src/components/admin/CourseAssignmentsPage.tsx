@@ -9,6 +9,51 @@ import { Search, Plus, MoreVertical, X, ChevronDown } from "lucide-react";
 const MAROON = "#7b1113";
 const FONT = "'Plus Jakarta Sans','Helvetica Neue',Arial,sans-serif";
 
+// ── Responsive global CSS ──────────────────────────────────────────────────────
+const GLOBAL_CSS = `
+  *, *::before, *::after { box-sizing: border-box; }
+
+  /* Prevent iOS input zoom */
+  @media (max-width: 767px) {
+    input, textarea, select { font-size: 16px !important; }
+  }
+
+  /* Smooth native scroll */
+  .asgn-scroll { -webkit-overflow-scrolling: touch; }
+  .asgn-scroll::-webkit-scrollbar { width: 3px; }
+  .asgn-scroll::-webkit-scrollbar-thumb { background: #f0c0c0; border-radius: 2px; }
+
+  /* Hide scrollbar on tab strip */
+  .asgn-tabstrip { scrollbar-width: none; }
+  .asgn-tabstrip::-webkit-scrollbar { display: none; }
+
+  /* Tap highlight */
+  button, [role="button"] { -webkit-tap-highlight-color: transparent; }
+
+  /* AssignTo panel full-width on mobile */
+  @media (max-width: 639px) {
+    .asgn-assign-panel { width: 100% !important; }
+    .asgn-modal { border-radius: 20px 20px 0 0 !important; }
+    .asgn-modal-footer { flex-direction: column !important; gap: 8px !important; }
+    .asgn-modal-footer button { width: 100% !important; height: 44px !important; font-size: 14px !important; border-radius: 10px !important; }
+    .asgn-row-meta { flex-direction: column !important; align-items: flex-start !important; gap: 4px !important; }
+    .asgn-date-grid { grid-template-columns: 1fr !important; }
+    .asgn-toolbar { flex-wrap: wrap; row-gap: 8px; }
+    .asgn-search-input { width: 100% !important; }
+    .asgn-toolbar-right { width: 100%; justify-content: flex-end; }
+  }
+
+  @media (max-width: 400px) {
+    .asgn-section-label { font-size: 10px !important; }
+  }
+
+  /* Safe area */
+  @supports (padding-bottom: env(safe-area-inset-bottom)) {
+    .asgn-assign-panel-footer { padding-bottom: calc(12px + env(safe-area-inset-bottom)) !important; }
+    .asgn-modal-footer { padding-bottom: calc(14px + env(safe-area-inset-bottom)) !important; }
+  }
+`;
+
 function buildTimes() {
   const list: string[] = [];
   for (let h = 0; h < 24; h++)
@@ -20,6 +65,7 @@ function buildTimes() {
 }
 const TIME_OPTIONS = buildTimes();
 
+// ── Types ──────────────────────────────────────────────────────────────────────
 interface Assignment {
   id: string;
   title: string;
@@ -45,18 +91,14 @@ interface Props {
   currentUserRole?: string | null;
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   SEEN / NEW BADGE HELPERS
-───────────────────────────────────────────────────────────────────────────── */
+// ── Seen/New badge helpers ─────────────────────────────────────────────────────
 const SEEN_KEY = (courseId: string) => `seen_assignments_${courseId}`;
-
 function getSeenIds(courseId: string): Set<string> {
   try {
     const raw = localStorage.getItem(SEEN_KEY(courseId));
     return new Set(raw ? JSON.parse(raw) : []);
   } catch { return new Set(); }
 }
-
 function markSeen(courseId: string, id: string) {
   try {
     const seen = getSeenIds(courseId);
@@ -67,18 +109,18 @@ function markSeen(courseId: string, id: string) {
 
 function NewBadge() {
   return (
-    <span
-      className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase tracking-wide text-white"
-      style={{ background: "#dc2626", letterSpacing: "0.08em" }}
-    >
+    <span style={{
+      display: "inline-flex", alignItems: "center",
+      padding: "1px 6px", borderRadius: 4,
+      fontSize: 9, fontWeight: 800, letterSpacing: "0.08em",
+      textTransform: "uppercase", color: "#fff", background: "#dc2626",
+    }}>
       NEW
     </span>
   );
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   DATE / TIME HELPERS
-───────────────────────────────────────────────────────────────────────────── */
+// ── Date/time helpers ──────────────────────────────────────────────────────────
 function fmtDue(iso: string | null) {
   if (!iso) return null;
   const d = new Date(iso);
@@ -88,17 +130,14 @@ function fmtDue(iso: string | null) {
     d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }).toLowerCase()
   );
 }
-
 function isoToDate(iso: string | null) {
   if (!iso) return "";
   return new Date(iso).toISOString().split("T")[0];
 }
-
 function isoToTime(iso: string | null) {
   if (!iso) return "11:59 PM";
   return new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
 }
-
 function fmtDateLabel(date: string, time: string) {
   if (!date) return "";
   try {
@@ -110,43 +149,37 @@ function fmtDateLabel(date: string, time: string) {
   } catch { return ""; }
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   GROUP PERSISTENCE
-───────────────────────────────────────────────────────────────────────────── */
-function groupsStorageKey(courseId: string) { return `assignment_groups_${courseId}`; }
+// ── Group persistence ──────────────────────────────────────────────────────────
+function groupsKey(courseId: string) { return `assignment_groups_${courseId}`; }
 function loadPersistedGroups(courseId: string): string[] {
   try {
-    const raw = localStorage.getItem(groupsStorageKey(courseId));
+    const raw = localStorage.getItem(groupsKey(courseId));
     if (!raw) return [];
-    const p = JSON.parse(raw);
-    const arr = Array.isArray(p) ? p : [];
-    return arr.includes("Assignments") ? arr : ["Assignments", ...arr];
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? (arr.includes("Assignments") ? arr : ["Assignments", ...arr]) : [];
   } catch { return []; }
 }
 function persistGroups(courseId: string, groups: string[]) {
-  try { localStorage.setItem(groupsStorageKey(courseId), JSON.stringify(groups)); } catch { }
+  try { localStorage.setItem(groupsKey(courseId), JSON.stringify(groups)); } catch { }
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   AVATAR
-───────────────────────────────────────────────────────────────────────────── */
+// ── Avatar ─────────────────────────────────────────────────────────────────────
 function PublisherAvatar({ name, image, size = 20 }: { name?: string | null; image?: string | null; size?: number }) {
   const [imgError, setImgError] = useState(false);
   const initial = name ? name.charAt(0).toUpperCase() : "?";
   if (image && !imgError) {
     return (
-      <Image
-        src={image}
-        alt={name ?? "Publisher"}
-        width={size}
-        height={size}
+      <Image src={image} alt={name ?? "Publisher"} width={size} height={size}
         onError={() => setImgError(true)}
-        style={{ width: size, height: size, borderRadius: "50%", objectFit: "cover", flexShrink: 0, border: "1.5px solid #bfdbfe" }}
-      />
+        style={{ width: size, height: size, borderRadius: "50%", objectFit: "cover", flexShrink: 0, border: "1.5px solid #bfdbfe" }} />
     );
   }
   return (
-    <span style={{ width: size, height: size, borderRadius: "50%", background: "#1d6fa4", color: "#fff", fontSize: size * 0.42, fontWeight: 700, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+    <span style={{
+      width: size, height: size, borderRadius: "50%", background: "#1d6fa4", color: "#fff",
+      fontSize: size * 0.42, fontWeight: 700, display: "inline-flex", alignItems: "center",
+      justifyContent: "center", flexShrink: 0,
+    }}>
       {initial}
     </span>
   );
@@ -155,11 +188,11 @@ function PublisherAvatar({ name, image, size = 20 }: { name?: string | null; ima
 function PublisherChip({ name, image, role }: { name?: string | null; image?: string | null; role?: string | null }) {
   if (!name) return null;
   return (
-    <span className="flex items-center gap-1 text-[11px] text-gray-500">
+    <span style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: "#6b7280" }}>
       <PublisherAvatar name={name} image={image} size={18} />
-      <span className="truncate max-w-25">{name}</span>
+      <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 100 }}>{name}</span>
       {role && (
-        <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase" style={{ background: "#eff6ff", color: "#1d6fa4", border: "1px solid #bfdbfe" }}>
+        <span style={{ padding: "1px 5px", borderRadius: 4, fontSize: 9, fontWeight: 700, textTransform: "uppercase", background: "#eff6ff", color: "#1d6fa4", border: "1px solid #bfdbfe" }}>
           {role}
         </span>
       )}
@@ -169,34 +202,31 @@ function PublisherChip({ name, image, role }: { name?: string | null; image?: st
 
 function AuthorBadge({ name, role }: { name: string; role: string }) {
   return (
-    <span
-      className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full border"
-      style={{ background: "#fdf8f8", color: MAROON, borderColor: "#f0c0c0" }}
-    >
-      <span className="w-1.5 h-1.5 rounded-full" style={{ background: MAROON }} />
+    <span style={{
+      display: "inline-flex", alignItems: "center", gap: 4,
+      fontSize: 10, fontWeight: 600, padding: "2px 8px",
+      borderRadius: 20, border: "1px solid #f0c0c0",
+      background: "#fdf8f8", color: MAROON, flexShrink: 0,
+    }}>
+      <span style={{ width: 5, height: 5, borderRadius: "50%", background: MAROON, flexShrink: 0 }} />
       {name} · {role}
     </span>
   );
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   PUBLISH TOGGLE
-───────────────────────────────────────────────────────────────────────────── */
+// ── Publish toggle ─────────────────────────────────────────────────────────────
 function PublishToggle({ published, onToggle }: { published: boolean; onToggle: () => void }) {
   return (
-    <button
-      type="button"
-      onClick={onToggle}
+    <button type="button" onClick={onToggle}
       title={published ? "Published — click to unpublish" : "Unpublished — click to publish"}
-      style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", padding: 2 }}
-    >
+      style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", padding: 4, touchAction: "manipulation" }}>
       {published ? (
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <svg width="22" height="22" viewBox="0 0 20 20" fill="none">
           <circle cx="10" cy="10" r="9" fill="#16a34a" />
           <path d="M5.5 10.5l3 3 6-6" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       ) : (
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <svg width="22" height="22" viewBox="0 0 20 20" fill="none">
           <circle cx="10" cy="10" r="9" stroke="#9ca3af" strokeWidth="1.5" fill="none" />
           <line x1="6" y1="14" x2="14" y2="6" stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round" />
         </svg>
@@ -205,27 +235,19 @@ function PublishToggle({ published, onToggle }: { published: boolean; onToggle: 
   );
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   ASSIGNMENT ICON
-───────────────────────────────────────────────────────────────────────────── */
 function AssignmentIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="1.5" style={{ flexShrink: 0 }}>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.5" style={{ flexShrink: 0 }}>
       <rect x="4" y="3" width="14" height="18" rx="2" />
       <path d="M8 8h8M8 12h8M8 16h5" strokeLinecap="round" />
     </svg>
   );
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   ROW 3-DOT MENU
-───────────────────────────────────────────────────────────────────────────── */
+// ── 3-dot row menu ─────────────────────────────────────────────────────────────
 type DropdownAction = "edit" | "speedgrader" | "duplicate" | "assignTo" | "delete";
 
-function AssignmentRowMenu({
-  assignment,
-  onAction,
-}: {
+function AssignmentRowMenu({ assignment, onAction }: {
   assignment: Assignment;
   onAction: (action: DropdownAction, a: Assignment) => void;
 }) {
@@ -237,10 +259,8 @@ function AssignmentRowMenu({
   useEffect(() => {
     if (!open) return;
     const h = (e: MouseEvent) => {
-      if (
-        menuRef.current && !menuRef.current.contains(e.target as Node) &&
-        btnRef.current && !btnRef.current.contains(e.target as Node)
-      ) setOpen(false);
+      if (menuRef.current && !menuRef.current.contains(e.target as Node) &&
+        btnRef.current && !btnRef.current.contains(e.target as Node)) setOpen(false);
     };
     document.addEventListener("mousedown", h);
     return () => document.removeEventListener("mousedown", h);
@@ -249,13 +269,13 @@ function AssignmentRowMenu({
   const handleOpen = () => {
     if (!btnRef.current) return;
     const rect = btnRef.current.getBoundingClientRect();
-    const w = 180, h = 165;
+    const w = 180, h = 170;
     const top = window.innerHeight - rect.bottom >= h ? rect.bottom + 4 : rect.top - h - 4;
     const left = Math.min(rect.right - w, window.innerWidth - w - 8);
     setMenuStyle({
       position: "fixed", top, left, zIndex: 9999, background: "#fff",
-      border: "1px solid #e5e7eb", borderRadius: 8,
-      boxShadow: "0 4px 16px rgba(0,0,0,.12)", minWidth: w, overflow: "hidden",
+      border: "1px solid #e5e7eb", borderRadius: 10,
+      boxShadow: "0 8px 24px rgba(0,0,0,0.13)", minWidth: w, overflow: "hidden",
     });
     setOpen(v => !v);
   };
@@ -270,26 +290,28 @@ function AssignmentRowMenu({
 
   return (
     <>
-      <button
-        ref={btnRef}
-        type="button"
-        onClick={(e) => { e.stopPropagation(); handleOpen(); }}
-        className="w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 text-gray-500"
-      >
+      <button ref={btnRef} type="button" onClick={e => { e.stopPropagation(); handleOpen(); }}
+        style={{ width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 8, background: "none", border: "none", cursor: "pointer", color: "#9ca3af", touchAction: "manipulation" }}
+        onMouseEnter={e => (e.currentTarget.style.background = "#f3f4f6")}
+        onMouseLeave={e => (e.currentTarget.style.background = "none")}>
         <MoreVertical size={16} />
       </button>
       {open && typeof document !== "undefined" && createPortal(
-        <div ref={menuRef} style={menuStyle} onClick={(e) => e.stopPropagation()}>
+        <div ref={menuRef} style={menuStyle} onClick={e => e.stopPropagation()}>
           {items.map((item, i) => (
-            <button
-              key={item.action}
-              type="button"
+            <button key={item.action} type="button"
               onClick={() => { setOpen(false); onAction(item.action, assignment); }}
-              className={`w-full text-left px-4 py-2 text-xs flex items-center gap-2 ${item.danger ? "text-red-600 hover:bg-red-50" : "text-gray-700 hover:bg-gray-50"}`}
-              style={i > 0 ? { borderTop: "1px solid #f3f4f6" } : {}}
-            >
-              {item.icon}
-              {item.label}
+              style={{
+                width: "100%", textAlign: "left", padding: "10px 14px",
+                fontSize: 13, display: "flex", alignItems: "center", gap: 8,
+                background: "none", border: "none", cursor: "pointer",
+                color: item.danger ? "#dc2626" : "#374151",
+                borderTop: i > 0 ? "1px solid #f3f4f6" : "none",
+                minHeight: 42,
+              }}
+              onMouseEnter={e => (e.currentTarget.style.background = item.danger ? "#fef2f2" : "#f9fafb")}
+              onMouseLeave={e => (e.currentTarget.style.background = "none")}>
+              {item.icon}{item.label}
             </button>
           ))}
         </div>,
@@ -299,17 +321,9 @@ function AssignmentRowMenu({
   );
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   GROUP 3-DOT MENU
-───────────────────────────────────────────────────────────────────────────── */
-function GroupMenu({
-  onEdit,
-  onDelete,
-  isLastGroup,
-}: {
-  onEdit: () => void;
-  onDelete: () => void;
-  isLastGroup?: boolean;
+// ── Group 3-dot menu ───────────────────────────────────────────────────────────
+function GroupMenu({ onEdit, onDelete, isLastGroup }: {
+  onEdit: () => void; onDelete: () => void; isLastGroup?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [menuStyle, setMenuStyle] = useState<React.CSSProperties>({});
@@ -319,10 +333,8 @@ function GroupMenu({
   useEffect(() => {
     if (!open) return;
     const h = (e: MouseEvent) => {
-      if (
-        menuRef.current && !menuRef.current.contains(e.target as Node) &&
-        btnRef.current && !btnRef.current.contains(e.target as Node)
-      ) setOpen(false);
+      if (menuRef.current && !menuRef.current.contains(e.target as Node) &&
+        btnRef.current && !btnRef.current.contains(e.target as Node)) setOpen(false);
     };
     document.addEventListener("mousedown", h);
     return () => document.removeEventListener("mousedown", h);
@@ -334,50 +346,33 @@ function GroupMenu({
     const w = 160, h = isLastGroup ? 44 : 88;
     const top = window.innerHeight - rect.bottom >= h ? rect.bottom + 4 : rect.top - h - 4;
     const left = Math.min(rect.right - w, window.innerWidth - w - 8);
-    setMenuStyle({
-      position: "fixed", top, left, zIndex: 9999, background: "#fff",
-      border: "1px solid #e5e7eb", borderRadius: 8,
-      boxShadow: "0 4px 16px rgba(0,0,0,.12)", minWidth: w, overflow: "hidden",
-    });
+    setMenuStyle({ position: "fixed", top, left, zIndex: 9999, background: "#fff", border: "1px solid #e5e7eb", borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.13)", minWidth: w, overflow: "hidden" });
     setOpen(v => !v);
   };
 
   return (
     <>
-      <button
-        ref={btnRef}
-        type="button"
-        onClick={(e) => { e.stopPropagation(); handleOpen(); }}
-        className="w-7 h-7 flex items-center justify-center rounded hover:bg-gray-200 text-gray-400"
-      >
-        <MoreVertical size={15} />
+      <button ref={btnRef} type="button" onClick={e => { e.stopPropagation(); handleOpen(); }}
+        style={{ width: 30, height: 30, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 6, background: "none", border: "none", cursor: "pointer", color: "#9ca3af", touchAction: "manipulation" }}
+        onMouseEnter={e => (e.currentTarget.style.background = "#e5e7eb")}
+        onMouseLeave={e => (e.currentTarget.style.background = "none")}>
+        <MoreVertical size={14} />
       </button>
       {open && typeof document !== "undefined" && createPortal(
         <div ref={menuRef} style={menuStyle}>
-          <button
-            type="button"
-            onClick={() => { setOpen(false); onEdit(); }}
-            className="w-full text-left px-4 py-2 text-xs flex items-center gap-2 text-gray-700 hover:bg-gray-50"
-          >
-            <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-              <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" strokeLinecap="round" />
-              <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" strokeLinecap="round" />
-            </svg>
+          <button type="button" onClick={() => { setOpen(false); onEdit(); }}
+            style={{ width: "100%", textAlign: "left", padding: "10px 14px", fontSize: 13, display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", cursor: "pointer", color: "#374151", minHeight: 42 }}
+            onMouseEnter={e => (e.currentTarget.style.background = "#f9fafb")}
+            onMouseLeave={e => (e.currentTarget.style.background = "none")}>
+            <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" strokeLinecap="round" /><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" strokeLinecap="round" /></svg>
             Edit
           </button>
           {!isLastGroup && (
-            <button
-              type="button"
-              onClick={() => { setOpen(false); onDelete(); }}
-              className="w-full text-left px-4 py-2 text-xs flex items-center gap-2 text-red-600 hover:bg-red-50"
-              style={{ borderTop: "1px solid #f3f4f6" }}
-            >
-              <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-                <polyline points="3 6 5 6 21 6" strokeLinecap="round" />
-                <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" strokeLinecap="round" />
-                <path d="M10 11v6M14 11v6" strokeLinecap="round" />
-                <path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2" strokeLinecap="round" />
-              </svg>
+            <button type="button" onClick={() => { setOpen(false); onDelete(); }}
+              style={{ width: "100%", textAlign: "left", padding: "10px 14px", fontSize: 13, display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", cursor: "pointer", color: "#dc2626", borderTop: "1px solid #f3f4f6", minHeight: 42 }}
+              onMouseEnter={e => (e.currentTarget.style.background = "#fef2f2")}
+              onMouseLeave={e => (e.currentTarget.style.background = "none")}>
+              <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6" strokeLinecap="round" /><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" strokeLinecap="round" /><path d="M10 11v6M14 11v6" strokeLinecap="round" /><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2" strokeLinecap="round" /></svg>
               Delete
             </button>
           )}
@@ -388,39 +383,119 @@ function GroupMenu({
   );
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   DELETE ASSIGNMENT MODAL
-───────────────────────────────────────────────────────────────────────────── */
-function DeleteAssignmentModal({ assignment, onClose, onConfirm, deleting }: {
-  assignment: Assignment; onClose: () => void; onConfirm: () => void; deleting: boolean;
+// ── Modal shell ────────────────────────────────────────────────────────────────
+function ModalShell({ title, onClose, children, footer }: {
+  title: string; onClose: () => void;
+  children: React.ReactNode; footer: React.ReactNode;
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/30 px-4" onClick={onClose}>
-      <div className="bg-white rounded-t-2xl sm:rounded-lg shadow-2xl w-full sm:max-w-105 border border-gray-200 overflow-hidden"
-        onClick={(e) => e.stopPropagation()} style={{ fontFamily: FONT }}>
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
-          <span className="text-sm font-bold text-gray-800">Delete Assignment</span>
-          <button onClick={onClose} className="w-7 h-7 flex items-center justify-center border border-gray-300 rounded text-gray-500 hover:bg-gray-100"><X size={14} /></button>
+    <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "flex-end", justifyContent: "center", background: "rgba(0,0,0,0.32)", padding: 0 }}
+      onClick={onClose}>
+      <div className="asgn-modal" style={{ background: "#fff", width: "100%", maxWidth: 480, boxShadow: "0 24px 60px rgba(0,0,0,0.18)", overflow: "hidden", fontFamily: FONT }}
+        onClick={e => e.stopPropagation()}>
+        {/* Drag handle */}
+        <div style={{ display: "flex", justifyContent: "center", padding: "10px 0 4px" }}>
+          <div style={{ width: 36, height: 4, borderRadius: 2, background: "#d1d5db" }} />
         </div>
-        <div className="px-6 py-5">
-          <p className="text-sm text-gray-700">
-            Are you sure you want to delete <strong>&ldquo;{assignment.title}&rdquo;</strong>? This action cannot be undone.
-          </p>
-        </div>
-        <div className="flex items-center justify-end gap-2 px-5 py-3.5 bg-gray-50 border-t border-gray-200">
-          <button onClick={onClose} disabled={deleting} className="h-9 px-4 border border-gray-300 text-sm text-gray-600 rounded hover:bg-gray-100 disabled:opacity-50">Cancel</button>
-          <button onClick={onConfirm} disabled={deleting} className="h-9 px-4 text-sm text-white rounded hover:opacity-90 disabled:opacity-50" style={{ background: "#dc2626" }}>
-            {deleting ? "Deleting..." : "Delete"}
+        {/* Header */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 18px", borderBottom: "1px solid #e5e7eb" }}>
+          <span style={{ fontSize: 14, fontWeight: 700, color: "#111827" }}>{title}</span>
+          <button onClick={onClose} style={{ width: 30, height: 30, display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid #e5e7eb", borderRadius: 7, background: "none", cursor: "pointer", color: "#6b7280" }}>
+            <X size={14} />
           </button>
         </div>
+        {/* Body */}
+        <div style={{ padding: "18px", overflowY: "auto", maxHeight: "65vh" }} className="asgn-scroll">
+          {children}
+        </div>
+        {/* Footer */}
+        <div className="asgn-modal-footer" style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 8, padding: "12px 18px", background: "#fafafa", borderTop: "1px solid #e5e7eb" }}>
+          {footer}
+        </div>
       </div>
+
+      {/* Centered on larger screens */}
+      <style>{`
+        @media (min-width: 640px) {
+          .asgn-modal {
+            border-radius: 12px !important;
+            margin: auto !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   QUICK EDIT MODAL
-───────────────────────────────────────────────────────────────────────────── */
+function BtnPrimary({ onClick, disabled, children }: { onClick?: () => void; disabled?: boolean; children: React.ReactNode }) {
+  return (
+    <button type="button" onClick={onClick} disabled={disabled}
+      style={{ height: 36, padding: "0 20px", fontFamily: FONT, fontSize: 13, fontWeight: 700, borderRadius: 8, border: "none", color: "#fff", background: disabled ? "#d1d5db" : MAROON, cursor: disabled ? "not-allowed" : "pointer", opacity: disabled ? 0.6 : 1, whiteSpace: "nowrap", touchAction: "manipulation" }}>
+      {children}
+    </button>
+  );
+}
+function BtnSecondary({ onClick, disabled, children }: { onClick?: () => void; disabled?: boolean; children: React.ReactNode }) {
+  return (
+    <button type="button" onClick={onClick} disabled={disabled}
+      style={{ height: 36, padding: "0 16px", fontFamily: FONT, fontSize: 13, fontWeight: 500, borderRadius: 8, border: "1px solid #d1d5db", color: "#374151", background: "#fff", cursor: disabled ? "not-allowed" : "pointer", opacity: disabled ? 0.5 : 1, whiteSpace: "nowrap", touchAction: "manipulation" }}>
+      {children}
+    </button>
+  );
+}
+function FieldLabel({ children, required }: { children: React.ReactNode; required?: boolean }) {
+  return (
+    <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 6 }}>
+      {children}{required && <span style={{ color: MAROON, marginLeft: 2 }}>*</span>}
+    </label>
+  );
+}
+function StyledInput({ value, onChange, placeholder, type = "text", onFocus, onBlur, autoFocus }: {
+  value: string; onChange: (v: string) => void; placeholder?: string;
+  type?: string; onFocus?: () => void; onBlur?: () => void; autoFocus?: boolean;
+}) {
+  return (
+    <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} autoFocus={autoFocus}
+      onFocus={e => { e.currentTarget.style.borderColor = MAROON; e.currentTarget.style.boxShadow = `0 0 0 3px rgba(123,17,19,0.08)`; onFocus?.(); }}
+      onBlur={e => { e.currentTarget.style.borderColor = "#d1d5db"; e.currentTarget.style.boxShadow = "none"; onBlur?.(); }}
+      style={{ width: "100%", height: 40, border: "1px solid #d1d5db", borderRadius: 8, padding: "0 12px", fontFamily: FONT, color: "#111827", background: "#fafafa", outline: "none", transition: "border-color 0.15s" }} />
+  );
+}
+function StyledSelect({ value, onChange, children, style }: {
+  value: string; onChange: (v: string) => void; children: React.ReactNode; style?: React.CSSProperties;
+}) {
+  return (
+    <div style={{ position: "relative" }}>
+      <select value={value} onChange={e => onChange(e.target.value)}
+        style={{ width: "100%", height: 40, border: "1px solid #d1d5db", borderRadius: 8, padding: "0 32px 0 12px", fontFamily: FONT, color: "#111827", background: "#fafafa", outline: "none", appearance: "none", cursor: "pointer", ...style }}>
+        {children}
+      </select>
+      <ChevronDown size={13} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", color: "#9ca3af", pointerEvents: "none" }} />
+    </div>
+  );
+}
+
+// ── Delete Assignment Modal ────────────────────────────────────────────────────
+function DeleteAssignmentModal({ assignment, onClose, onConfirm, deleting }: {
+  assignment: Assignment; onClose: () => void; onConfirm: () => void; deleting: boolean;
+}) {
+  return (
+    <ModalShell title="Delete Assignment" onClose={onClose}
+      footer={<>
+        <BtnSecondary onClick={onClose} disabled={deleting}>Cancel</BtnSecondary>
+        <button type="button" onClick={onConfirm} disabled={deleting}
+          style={{ height: 36, padding: "0 20px", fontFamily: FONT, fontSize: 13, fontWeight: 700, borderRadius: 8, border: "none", color: "#fff", background: "#dc2626", cursor: deleting ? "not-allowed" : "pointer", opacity: deleting ? 0.6 : 1 }}>
+          {deleting ? "Deleting…" : "Delete"}
+        </button>
+      </>}>
+      <p style={{ fontSize: 14, color: "#374151", lineHeight: 1.6 }}>
+        Are you sure you want to delete <strong>&ldquo;{assignment.title}&rdquo;</strong>? This action cannot be undone.
+      </p>
+    </ModalShell>
+  );
+}
+
+// ── Quick Edit Modal ───────────────────────────────────────────────────────────
 function QuickEditModal({ assignment, courseId, onClose, onSave, onMoreOptions }: {
   assignment: Assignment; courseId: string; onClose: () => void;
   onSave: (updated: Partial<Assignment> & { dueTime?: string }) => Promise<void>;
@@ -442,89 +517,122 @@ function QuickEditModal({ assignment, courseId, onClose, onSave, onMoreOptions }
     try {
       await onSave({ title: name.trim(), points: parseFloat(points) || 0, dueDate: dueDate || null, dueTime });
       onClose();
-    } catch {
-      setError("Failed to save. Please try again.");
-    } finally { setSaving(false); }
+    } catch { setError("Failed to save. Please try again."); }
+    finally { setSaving(false); }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/30 px-4 sm:px-0" onClick={onClose}>
-      <div className="bg-white rounded-t-2xl sm:rounded-lg shadow-2xl w-full sm:max-w-120 border border-gray-200 overflow-hidden"
-        onClick={(e) => e.stopPropagation()} style={{ fontFamily: FONT }}>
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
-          <span className="text-sm font-bold text-gray-800">Edit Assignment</span>
-          <button onClick={onClose} className="w-7 h-7 flex items-center justify-center border border-gray-300 rounded text-gray-500 hover:bg-gray-100"><X size={14} /></button>
+    <ModalShell title="Edit Assignment" onClose={onClose}
+      footer={<>
+        <BtnSecondary onClick={onMoreOptions}>More Options</BtnSecondary>
+        <div style={{ flex: 1 }} />
+        <BtnSecondary onClick={onClose} disabled={saving}>Cancel</BtnSecondary>
+        <BtnPrimary onClick={handleSave} disabled={saving || !name.trim()}>{saving ? "Saving…" : "Save"}</BtnPrimary>
+      </>}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        <div>
+          <FieldLabel required>Name</FieldLabel>
+          <StyledInput value={name} onChange={setName} autoFocus />
         </div>
-        <div className="px-5 sm:px-6 py-5 space-y-4">
-          <div>
-            <label className="text-xs font-medium text-gray-700 block mb-1">Name <span className="text-red-500">*</span></label>
-            <input autoFocus value={name} onChange={(e) => setName(e.target.value)}
-              className="w-full h-9 border border-gray-300 rounded px-3 text-sm outline-none transition-all"
-              onFocus={(e) => (e.currentTarget.style.borderColor = MAROON)}
-              onBlur={(e) => (e.currentTarget.style.borderColor = "#d1d5db")} />
-          </div>
-          <div>
-            <label className="text-xs font-medium text-gray-700 block mb-2">Due at</label>
-            <div className="flex flex-col sm:flex-row gap-2">
-              <div className="flex-1">
-                <label className="text-[10px] text-gray-500 block mb-0.5">Date</label>
-                <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)}
-                  className="w-full h-9 border border-gray-300 rounded px-3 text-xs outline-none transition-all"
-                  onFocus={(e) => (e.currentTarget.style.borderColor = MAROON)}
-                  onBlur={(e) => (e.currentTarget.style.borderColor = "#d1d5db")} />
-              </div>
-              <div>
-                <label className="text-[10px] text-gray-500 block mb-0.5">Time</label>
-                <div className="relative">
-                  <select value={dueTime} onChange={(e) => setDueTime(e.target.value)}
-                    className="h-9 border border-gray-300 rounded px-3 text-xs bg-white outline-none appearance-none pr-7 transition-all w-full sm:w-auto"
-                    style={{ minWidth: 120 }}
-                    onFocus={(e) => (e.currentTarget.style.borderColor = MAROON)}
-                    onBlur={(e) => (e.currentTarget.style.borderColor = "#d1d5db")}>
-                    {TIME_OPTIONS.map((t) => <option key={t}>{t}</option>)}
-                  </select>
-                  <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-                </div>
-              </div>
+        <div>
+          <FieldLabel>Due at</FieldLabel>
+          <div className="asgn-date-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <div>
+              <label style={{ fontSize: 11, color: "#9ca3af", display: "block", marginBottom: 4 }}>Date</label>
+              <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)}
+                style={{ width: "100%", height: 40, border: "1px solid #d1d5db", borderRadius: 8, padding: "0 10px", fontFamily: FONT, color: "#111827", background: "#fafafa", outline: "none" }} />
             </div>
-            {dateLabel && <p className="text-xs mt-1.5 font-medium" style={{ color: MAROON }}>{dateLabel}</p>}
+            <div>
+              <label style={{ fontSize: 11, color: "#9ca3af", display: "block", marginBottom: 4 }}>Time</label>
+              <StyledSelect value={dueTime} onChange={setDueTime}>
+                {TIME_OPTIONS.map(t => <option key={t}>{t}</option>)}
+              </StyledSelect>
+            </div>
           </div>
-          <div>
-            <label className="text-xs font-medium text-gray-700 block mb-1">Points</label>
-            <input type="number" min={0} value={points} onChange={(e) => setPoints(e.target.value)}
-              className="w-32 h-9 border border-gray-300 rounded px-3 text-sm outline-none transition-all"
-              onFocus={(e) => (e.currentTarget.style.borderColor = MAROON)}
-              onBlur={(e) => (e.currentTarget.style.borderColor = "#d1d5db")} />
-          </div>
-          {error && <p className="text-xs text-red-600">⚠ {error}</p>}
+          {dateLabel && <p style={{ fontSize: 12, color: MAROON, fontWeight: 600, marginTop: 6 }}>{dateLabel}</p>}
         </div>
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 px-5 py-3.5 bg-gray-50 border-t border-gray-200">
-          <button onClick={onMoreOptions} className="h-8 px-4 border border-gray-300 text-xs text-gray-600 rounded hover:bg-white transition-all">More Options</button>
-          <div className="flex items-center gap-2 justify-end">
-            <button onClick={onClose} disabled={saving} className="h-8 px-4 border border-gray-300 text-xs text-gray-600 rounded hover:bg-gray-100 disabled:opacity-50">Cancel</button>
-            <button onClick={handleSave} disabled={saving || !name.trim()} className="h-8 px-5 text-xs text-white rounded hover:opacity-90 disabled:opacity-50" style={{ background: MAROON }}>
-              {saving ? "Saving..." : "Save"}
-            </button>
-          </div>
+        <div>
+          <FieldLabel>Points</FieldLabel>
+          <input type="number" min={0} value={points} onChange={e => setPoints(e.target.value)}
+            style={{ width: 120, height: 40, border: "1px solid #d1d5db", borderRadius: 8, padding: "0 12px", fontFamily: FONT, color: "#111827", background: "#fafafa", outline: "none" }} />
         </div>
+        {error && <p style={{ fontSize: 12, color: "#dc2626" }}>⚠ {error}</p>}
       </div>
-      <style>{`input[type="date"]::-webkit-calendar-picker-indicator{cursor:pointer;opacity:0.6;}input[type="date"]::-webkit-calendar-picker-indicator:hover{opacity:1;}`}</style>
-    </div>
+    </ModalShell>
   );
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   ASSIGN TO PANEL
-───────────────────────────────────────────────────────────────────────────── */
+// ── Add / Edit / Delete Group Modals ──────────────────────────────────────────
+function GroupNameModal({ title, initialValue, onClose, onSave, saving, saveLabel }: {
+  title: string; initialValue?: string; onClose: () => void;
+  onSave: (name: string) => void; saving: boolean; saveLabel: string;
+}) {
+  const [name, setName] = useState(initialValue ?? "");
+  const unchanged = name.trim() === (initialValue ?? "").trim();
+  return (
+    <ModalShell title={title} onClose={onClose}
+      footer={<>
+        <BtnSecondary onClick={onClose} disabled={saving}>Cancel</BtnSecondary>
+        <BtnPrimary onClick={() => name.trim() && onSave(name.trim())} disabled={saving || !name.trim() || unchanged}>
+          {saving ? "Saving…" : saveLabel}
+        </BtnPrimary>
+      </>}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <FieldLabel>Group Name</FieldLabel>
+        <StyledInput value={name} onChange={setName} placeholder="e.g. Essay Group 1" autoFocus />
+      </div>
+    </ModalShell>
+  );
+}
+
+function DeleteGroupModal({ groupName, assignmentCount, otherGroups, onClose, onDelete }: {
+  groupName: string; assignmentCount: number; otherGroups: string[];
+  onClose: () => void; onDelete: (action: "delete" | "move", targetGroup?: string) => void;
+}) {
+  const [choice, setChoice] = useState<"delete" | "move">("delete");
+  const [targetGroup, setTargetGroup] = useState(otherGroups[0] ?? "");
+  return (
+    <ModalShell title="Delete Assignment Group" onClose={onClose}
+      footer={<>
+        <BtnSecondary onClick={onClose}>Cancel</BtnSecondary>
+        <button type="button" onClick={() => onDelete(choice, choice === "move" ? targetGroup : undefined)}
+          disabled={choice === "move" && !targetGroup}
+          style={{ height: 36, padding: "0 20px", fontFamily: FONT, fontSize: 13, fontWeight: 700, borderRadius: 8, border: "none", color: "#fff", background: "#dc2626", cursor: "pointer", opacity: choice === "move" && !targetGroup ? 0.4 : 1 }}>
+          Delete Group
+        </button>
+      </>}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 14, fontSize: 14, color: "#374151" }}>
+        <p>You are about to delete <strong>{groupName}</strong>, which has <strong>{assignmentCount}</strong> assignment{assignmentCount !== 1 ? "s" : ""}.</p>
+        <p style={{ color: "#6b7280", fontSize: 13 }}>Would you like to:</p>
+        <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
+          <input type="radio" checked={choice === "delete"} onChange={() => setChoice("delete")} style={{ accentColor: MAROON, width: 16, height: 16 }} />
+          Delete its assignments
+        </label>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
+            <input type="radio" checked={choice === "move"} onChange={() => setChoice("move")} disabled={otherGroups.length === 0} style={{ accentColor: MAROON, width: 16, height: 16 }} />
+            <span style={{ color: otherGroups.length === 0 ? "#9ca3af" : "#374151" }}>Move its assignments to</span>
+          </label>
+          {choice === "move" && otherGroups.length > 0 && (
+            <div style={{ marginLeft: 26 }}>
+              <StyledSelect value={targetGroup} onChange={setTargetGroup} style={{ width: 220 }}>
+                <option value="">[ Select a Group ]</option>
+                {otherGroups.map(g => <option key={g} value={g}>{g}</option>)}
+              </StyledSelect>
+            </div>
+          )}
+        </div>
+      </div>
+    </ModalShell>
+  );
+}
+
+// ── Assign To Side Panel ───────────────────────────────────────────────────────
 interface AssignRow {
-  id: number;
-  assignees: string[];
-  dueDate: string;
-  dueTime: string;
-  availableFrom: string;
-  availableFromTime: string;
-  until: string;
-  untilTime: string;
+  id: number; assignees: string[];
+  dueDate: string; dueTime: string;
+  availableFrom: string; availableFromTime: string;
+  until: string; untilTime: string;
 }
 
 function AssignToPanel({ assignment, courseId, onClose, onSave }: {
@@ -556,9 +664,9 @@ function AssignToPanel({ assignment, courseId, onClose, onSave }: {
     setRows(p => p.map(r => {
       if (r.id !== rowId) return r;
       if (name === "Everyone") return { ...r, assignees: ["Everyone"] };
-      const withoutEveryone = r.assignees.filter(a => a !== "Everyone");
-      const has = withoutEveryone.includes(name);
-      const next = has ? withoutEveryone.filter(a => a !== name) : [...withoutEveryone, name];
+      const without = r.assignees.filter(a => a !== "Everyone");
+      const has = without.includes(name);
+      const next = has ? without.filter(a => a !== name) : [...without, name];
       return { ...r, assignees: next.length ? next : ["Everyone"] };
     }));
 
@@ -583,265 +691,147 @@ function AssignToPanel({ assignment, courseId, onClose, onSave }: {
   }) {
     const localLabel = fmtDateLabel(dateVal, timeVal);
     return (
-      <div className="space-y-1">
-        <p className="text-xs font-semibold text-gray-700">{label}</p>
-        <div className="grid grid-cols-2 gap-2">
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <p style={{ fontSize: 13, fontWeight: 600, color: "#374151", margin: 0 }}>{label}</p>
+        <div className="asgn-date-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
           <div>
-            <p className="text-[10px] text-gray-500 mb-0.5">Date</p>
-            <div className="relative flex items-center border border-gray-300 rounded h-8 px-2 bg-white">
-              <input type="date" value={dateVal} onChange={(e) => onDateChange(e.target.value)} className="flex-1 text-xs outline-none bg-transparent" />
-            </div>
+            <p style={{ fontSize: 10, color: "#9ca3af", marginBottom: 4 }}>Date</p>
+            <input type="date" value={dateVal} onChange={e => onDateChange(e.target.value)}
+              style={{ width: "100%", height: 38, border: "1px solid #d1d5db", borderRadius: 7, padding: "0 10px", fontFamily: FONT, fontSize: 13, color: "#111827", background: "#fff", outline: "none" }} />
           </div>
           <div>
-            <p className="text-[10px] text-gray-500 mb-0.5">Time</p>
-            <div className="relative">
-              <select value={timeVal} onChange={(e) => onTimeChange(e.target.value)} className="w-full h-8 border border-gray-300 rounded px-2 text-xs bg-white outline-none appearance-none pr-6">
-                {TIME_OPTIONS.map(t => <option key={t}>{t}</option>)}
-              </select>
-              <ChevronDown size={11} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-            </div>
+            <p style={{ fontSize: 10, color: "#9ca3af", marginBottom: 4 }}>Time</p>
+            <StyledSelect value={timeVal} onChange={onTimeChange}>
+              {TIME_OPTIONS.map(t => <option key={t}>{t}</option>)}
+            </StyledSelect>
           </div>
         </div>
-        {localLabel && <p className="text-[10px] text-gray-500">Local: {localLabel}</p>}
-        <button onClick={onClear} className="text-[11px] hover:underline" style={{ color: MAROON }}>Clear</button>
+        {localLabel && <p style={{ fontSize: 11, color: "#6b7280", margin: 0 }}>{localLabel}</p>}
+        <button onClick={onClear} style={{ fontSize: 11, fontWeight: 600, color: MAROON, background: "none", border: "none", padding: 0, cursor: "pointer", textAlign: "left", textDecoration: "underline" }}>
+          Clear
+        </button>
       </div>
     );
   }
 
   return (
     <>
-      <div className="fixed inset-0 z-40 bg-black/20" onClick={onClose} />
-      <div className="fixed top-0 right-0 h-full z-50 bg-white shadow-2xl border-l border-gray-200 flex flex-col w-full sm:w-95" style={{ fontFamily: FONT }}>
-        <div className="flex items-start justify-between px-5 py-4 border-b border-gray-200 shrink-0">
-          <div>
-            <div className="flex items-center gap-2 mb-0.5">
-              <AssignmentIcon />
-              <span className="text-sm font-bold text-gray-800">{assignment.title}</span>
-            </div>
-            <p className="text-xs text-gray-500 ml-6">Assignment | {assignment.points} pts</p>
-          </div>
-          <button onClick={onClose} className="w-7 h-7 flex items-center justify-center border border-gray-300 rounded text-gray-400 hover:bg-gray-100 shrink-0 mt-0.5"><X size={14} /></button>
-        </div>
-        <div className="mx-4 mt-3 flex items-start gap-2 bg-blue-50 border border-blue-200 rounded p-3 shrink-0">
-          <div className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5" style={{ background: "#1d6fa4" }}>
-            <span className="text-white text-[10px] font-bold">i</span>
-          </div>
-          <p className="text-xs text-blue-800 leading-relaxed">Select who should be assigned and use the drop-down menus or manually enter your date and time.</p>
-        </div>
-        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-5">
-          {rows.map((row, idx) => (
-            <div key={row.id} className="border border-gray-200 rounded-md p-3 space-y-4 relative">
-              {idx > 0 && (
-                <button onClick={() => removeRow(row.id)} className="absolute top-2 right-2 text-gray-400 hover:text-red-500"><X size={13} /></button>
-              )}
-              <div>
-                <p className="text-xs font-semibold text-gray-700 mb-1">Assign To</p>
-                <div className="relative" data-assigndrop>
-                  <div onMouseDown={(e) => { e.stopPropagation(); setOpenDropId(openDropId === row.id ? null : row.id); setDropSearch(""); }}
-                    className="w-full min-h-8.5 border border-gray-300 rounded px-2 py-1 flex flex-wrap gap-1 items-center cursor-pointer bg-white">
-                    {row.assignees.map(a => (
-                      <span key={a} className="flex items-center gap-1 px-2 py-0.5 rounded text-xs text-white font-medium" style={{ background: MAROON }}>
-                        {a}
-                        <button onMouseDown={(e) => { e.stopPropagation(); toggleAssignee(row.id, a); }} className="hover:opacity-70 font-bold text-sm leading-none">×</button>
-                      </span>
-                    ))}
-                    <input readOnly placeholder={row.assignees.length ? "" : "Start typing to search..."}
-                      className="flex-1 min-w-15 text-xs outline-none bg-transparent text-gray-400 cursor-pointer" />
-                    <ChevronDown size={12} className="text-gray-400 shrink-0" style={{ transform: openDropId === row.id ? "rotate(180deg)" : "none", transition: "transform 0.15s" }} />
-                  </div>
-                  {openDropId === row.id && (
-                    <div data-assigndrop className="absolute z-50 w-full bg-white border border-gray-200 shadow-xl rounded mt-0.5 max-h-60 overflow-y-auto" onMouseDown={(e) => e.stopPropagation()}>
-                      <div className="px-2 pt-2 pb-1 border-b border-gray-100 sticky top-0 bg-white">
-                        <input autoFocus value={dropSearch} onChange={(e) => setDropSearch(e.target.value)} placeholder="Start typing to search..."
-                          className="w-full h-7 px-2 text-xs border border-gray-200 rounded outline-none focus:border-[#7b1113]" />
-                      </div>
-                      {["Everyone"].filter(o => o.toLowerCase().includes(dropSearch.toLowerCase())).map(opt => (
-                        <button key={opt} onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); toggleAssignee(row.id, opt); }}
-                          className="w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-gray-50"
-                          style={{ color: row.assignees.includes(opt) ? MAROON : "#374151", fontWeight: row.assignees.includes(opt) ? 600 : 400 }}>
-                          {opt}{row.assignees.includes(opt) && <span style={{ color: MAROON }}>✓</span>}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
+      <div style={{ position: "fixed", inset: 0, zIndex: 40, background: "rgba(0,0,0,0.2)" }} onClick={onClose} />
+      <div className="asgn-assign-panel" style={{
+        position: "fixed", top: 0, right: 0, height: "100%", zIndex: 50,
+        width: "min(380px, 100vw)", background: "#fff",
+        boxShadow: "-4px 0 32px rgba(0,0,0,0.15)", borderLeft: "1px solid #e5e7eb",
+        display: "flex", flexDirection: "column", fontFamily: FONT,
+      }}>
+        {/* Header */}
+        <div style={{ padding: "14px 16px", borderBottom: "1px solid #e5e7eb", flexShrink: 0 }}>
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10 }}>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 2 }}>
+                <AssignmentIcon />
+                <span style={{ fontSize: 14, fontWeight: 700, color: "#111827", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{assignment.title}</span>
               </div>
-              <DateRow label="Due Date" dateVal={row.dueDate} timeVal={row.dueTime}
-                onDateChange={(v) => updateRow(row.id, "dueDate", v)} onTimeChange={(v) => updateRow(row.id, "dueTime", v)}
-                onClear={() => { updateRow(row.id, "dueDate", ""); updateRow(row.id, "dueTime", "11:59 PM"); }} />
-              <DateRow label="Available from" dateVal={row.availableFrom} timeVal={row.availableFromTime}
-                onDateChange={(v) => updateRow(row.id, "availableFrom", v)} onTimeChange={(v) => updateRow(row.id, "availableFromTime", v)}
-                onClear={() => { updateRow(row.id, "availableFrom", ""); updateRow(row.id, "availableFromTime", "12:00 AM"); }} />
-              <DateRow label="Until" dateVal={row.until} timeVal={row.untilTime}
-                onDateChange={(v) => updateRow(row.id, "until", v)} onTimeChange={(v) => updateRow(row.id, "untilTime", v)}
-                onClear={() => { updateRow(row.id, "until", ""); updateRow(row.id, "untilTime", "11:59 PM"); }} />
+              <p style={{ fontSize: 12, color: "#6b7280", margin: 0, marginLeft: 26 }}>Assignment · {assignment.points} pts</p>
             </div>
-          ))}
-          <button onClick={addRow} className="flex items-center gap-1.5 text-xs font-medium hover:underline" style={{ color: MAROON }}>
-            <Plus size={13} /> Add
-          </button>
+            <button onClick={onClose} style={{ width: 30, height: 30, display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid #e5e7eb", borderRadius: 7, background: "none", cursor: "pointer", color: "#6b7280", flexShrink: 0 }}>
+              <X size={14} />
+            </button>
+          </div>
         </div>
-        <div className="shrink-0 border-t border-gray-200 px-4 py-3 flex items-center justify-end gap-2 bg-gray-50">
-          <button onClick={onClose} className="h-8 px-4 border border-gray-300 text-xs text-gray-600 rounded hover:bg-white transition-all">Cancel</button>
-          <button onClick={handleSave} disabled={saving} className="h-8 px-5 text-xs text-white rounded hover:opacity-90 disabled:opacity-50 font-medium" style={{ background: MAROON }}>
-            {saving ? "Saving..." : "Save"}
-          </button>
+
+        {/* Info banner */}
+        <div style={{ margin: "12px 14px 0", display: "flex", gap: 10, background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 8, padding: "10px 12px" }}>
+          <div style={{ width: 20, height: 20, borderRadius: "50%", background: "#1d6fa4", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <span style={{ color: "#fff", fontSize: 10, fontWeight: 700 }}>i</span>
+          </div>
+          <p style={{ fontSize: 12, color: "#1e40af", lineHeight: 1.5, margin: 0 }}>Select who should be assigned and use the drop-down menus or manually enter your date and time.</p>
+        </div>
+
+        {/* Rows */}
+        <div className="asgn-scroll" style={{ flex: 1, overflowY: "auto", padding: "14px" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            {rows.map((row, idx) => (
+              <div key={row.id} style={{ border: "1px solid #e5e7eb", borderRadius: 10, padding: "14px", display: "flex", flexDirection: "column", gap: 16, position: "relative" }}>
+                {idx > 0 && (
+                  <button onClick={() => removeRow(row.id)} style={{ position: "absolute", top: 8, right: 8, background: "none", border: "none", cursor: "pointer", color: "#9ca3af", display: "flex" }}>
+                    <X size={13} />
+                  </button>
+                )}
+                {/* Assign to dropdown */}
+                <div>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: "#374151", marginBottom: 6 }}>Assign To</p>
+                  <div style={{ position: "relative" }} data-assigndrop>
+                    <div onMouseDown={e => { e.stopPropagation(); setOpenDropId(openDropId === row.id ? null : row.id); setDropSearch(""); }}
+                      style={{ minHeight: 40, border: "1px solid #d1d5db", borderRadius: 8, padding: "6px 10px", display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center", cursor: "pointer", background: "#fafafa" }}>
+                      {row.assignees.map(a => (
+                        <span key={a} style={{ display: "flex", alignItems: "center", gap: 5, padding: "2px 8px", borderRadius: 20, fontSize: 12, fontWeight: 600, color: "#fff", background: MAROON }}>
+                          {a}
+                          <button onMouseDown={e => { e.stopPropagation(); toggleAssignee(row.id, a); }} style={{ background: "none", border: "none", cursor: "pointer", color: "#fff", fontSize: 14, lineHeight: 1, padding: 0 }}>×</button>
+                        </span>
+                      ))}
+                      <input readOnly placeholder={row.assignees.length ? "" : "Start typing to search…"}
+                        style={{ flex: 1, minWidth: 60, fontSize: 13, border: "none", outline: "none", background: "transparent", color: "#9ca3af", cursor: "pointer" }} />
+                      <ChevronDown size={13} style={{ color: "#9ca3af", flexShrink: 0, transform: openDropId === row.id ? "rotate(180deg)" : "none", transition: "transform 0.15s" }} />
+                    </div>
+                    {openDropId === row.id && (
+                      <div data-assigndrop style={{ position: "absolute", zIndex: 50, width: "100%", background: "#fff", border: "1px solid #e5e7eb", borderRadius: 8, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", marginTop: 2, maxHeight: 200, overflowY: "auto" }}
+                        onMouseDown={e => e.stopPropagation()}>
+                        <div style={{ padding: "8px 10px 6px", borderBottom: "1px solid #f3f4f6", position: "sticky", top: 0, background: "#fff" }}>
+                          <input autoFocus value={dropSearch} onChange={e => setDropSearch(e.target.value)} placeholder="Search…"
+                            style={{ width: "100%", height: 32, border: "1px solid #e5e7eb", borderRadius: 6, padding: "0 10px", fontSize: 13, fontFamily: FONT, outline: "none" }} />
+                        </div>
+                        {["Everyone"].filter(o => o.toLowerCase().includes(dropSearch.toLowerCase())).map(opt => (
+                          <button key={opt} onMouseDown={e => { e.preventDefault(); e.stopPropagation(); toggleAssignee(row.id, opt); }}
+                            style={{ width: "100%", textAlign: "left", padding: "10px 14px", fontSize: 13, display: "flex", alignItems: "center", justifyContent: "space-between", background: "none", border: "none", cursor: "pointer", color: row.assignees.includes(opt) ? MAROON : "#374151", fontWeight: row.assignees.includes(opt) ? 700 : 400, minHeight: 40 }}>
+                            {opt}{row.assignees.includes(opt) && <span style={{ color: MAROON }}>✓</span>}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <DateRow label="Due Date" dateVal={row.dueDate} timeVal={row.dueTime}
+                  onDateChange={v => updateRow(row.id, "dueDate", v)} onTimeChange={v => updateRow(row.id, "dueTime", v)}
+                  onClear={() => { updateRow(row.id, "dueDate", ""); updateRow(row.id, "dueTime", "11:59 PM"); }} />
+                <DateRow label="Available from" dateVal={row.availableFrom} timeVal={row.availableFromTime}
+                  onDateChange={v => updateRow(row.id, "availableFrom", v)} onTimeChange={v => updateRow(row.id, "availableFromTime", v)}
+                  onClear={() => { updateRow(row.id, "availableFrom", ""); updateRow(row.id, "availableFromTime", "12:00 AM"); }} />
+                <DateRow label="Until" dateVal={row.until} timeVal={row.untilTime}
+                  onDateChange={v => updateRow(row.id, "until", v)} onTimeChange={v => updateRow(row.id, "untilTime", v)}
+                  onClear={() => { updateRow(row.id, "until", ""); updateRow(row.id, "untilTime", "11:59 PM"); }} />
+              </div>
+            ))}
+            <button onClick={addRow} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 600, color: MAROON, background: "none", border: "none", cursor: "pointer", padding: "4px 0" }}>
+              <Plus size={14} /> Add
+            </button>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="asgn-assign-panel-footer" style={{ flexShrink: 0, borderTop: "1px solid #e5e7eb", padding: "12px 14px", display: "flex", justifyContent: "flex-end", gap: 8, background: "#fafafa" }}>
+          <BtnSecondary onClick={onClose}>Cancel</BtnSecondary>
+          <BtnPrimary onClick={handleSave} disabled={saving}>{saving ? "Saving…" : "Save"}</BtnPrimary>
         </div>
       </div>
     </>
   );
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   ADD / EDIT / DELETE GROUP MODALS
-───────────────────────────────────────────────────────────────────────────── */
-function AddGroupModal({ onClose, onSave, saving }: { onClose: () => void; onSave: (name: string) => void; saving: boolean }) {
-  const [name, setName] = useState("");
-  return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/30 px-4" onClick={onClose}>
-      <div className="bg-white rounded-t-2xl sm:rounded-lg shadow-2xl w-full sm:max-w-105 border border-gray-200 overflow-hidden" onClick={(e) => e.stopPropagation()} style={{ fontFamily: FONT }}>
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
-          <span className="text-sm font-bold text-gray-800">Add Assignment Group</span>
-          <button onClick={onClose} className="w-7 h-7 flex items-center justify-center border rounded hover:bg-gray-100" style={{ borderColor: MAROON, color: MAROON }}><X size={14} /></button>
-        </div>
-        <div className="px-6 py-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
-            <label className="text-sm text-gray-700 shrink-0">Group Name:</label>
-            <input autoFocus value={name} onChange={(e) => setName(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && name.trim() && onSave(name.trim())}
-              placeholder="e.g., Essay Group 1"
-              className="flex-1 w-full h-9 border border-gray-300 rounded px-3 text-sm outline-none transition-all"
-              onFocus={(e) => (e.currentTarget.style.borderColor = MAROON)}
-              onBlur={(e) => (e.currentTarget.style.borderColor = "#d1d5db")} />
-          </div>
-        </div>
-        <div className="flex items-center justify-end gap-2 px-5 py-3.5 bg-gray-50 border-t border-gray-200">
-          <button onClick={onClose} disabled={saving} className="h-9 px-4 border border-gray-300 text-sm text-gray-600 rounded hover:bg-gray-100 disabled:opacity-50">Cancel</button>
-          <button onClick={() => name.trim() && onSave(name.trim())} disabled={saving || !name.trim()} className="h-9 px-4 text-sm text-white rounded hover:opacity-90 disabled:opacity-50" style={{ background: MAROON }}>
-            {saving ? "Saving..." : "Save"}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function EditGroupModal({ groupName, onClose, onSave, saving }: {
-  groupName: string; onClose: () => void; onSave: (newName: string) => void; saving: boolean;
-}) {
-  const [name, setName] = useState(groupName);
-  return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/30 px-4" onClick={onClose}>
-      <div className="bg-white rounded-t-2xl sm:rounded-lg shadow-2xl w-full sm:max-w-105 border border-gray-200 overflow-hidden" onClick={(e) => e.stopPropagation()} style={{ fontFamily: FONT }}>
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
-          <span className="text-sm font-bold text-gray-800">Edit Assignment Group</span>
-          <button onClick={onClose} className="w-7 h-7 flex items-center justify-center border rounded hover:bg-gray-100" style={{ borderColor: MAROON, color: MAROON }}><X size={14} /></button>
-        </div>
-        <div className="px-6 py-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
-            <label className="text-sm text-gray-700 shrink-0">Group Name:</label>
-            <input autoFocus value={name} onChange={(e) => setName(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && name.trim() && onSave(name.trim())}
-              className="flex-1 w-full h-9 border border-gray-300 rounded px-3 text-sm outline-none transition-all"
-              onFocus={(e) => (e.currentTarget.style.borderColor = MAROON)}
-              onBlur={(e) => (e.currentTarget.style.borderColor = "#d1d5db")} />
-          </div>
-        </div>
-        <div className="flex items-center justify-end gap-2 px-5 py-3.5 bg-gray-50 border-t border-gray-200">
-          <button onClick={onClose} disabled={saving} className="h-9 px-4 border border-gray-300 text-sm text-gray-600 rounded hover:bg-gray-100 disabled:opacity-50">Cancel</button>
-          <button onClick={() => name.trim() && onSave(name.trim())} disabled={saving || !name.trim() || name.trim() === groupName}
-            className="h-9 px-4 text-sm text-white rounded hover:opacity-90 disabled:opacity-50" style={{ background: MAROON }}>
-            {saving ? "Saving..." : "Save"}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function DeleteGroupModal({ groupName, assignmentCount, otherGroups, onClose, onDelete }: {
-  groupName: string; assignmentCount: number; otherGroups: string[];
-  onClose: () => void; onDelete: (action: "delete" | "move", targetGroup?: string) => void;
-}) {
-  const [choice, setChoice] = useState<"delete" | "move">("delete");
-  const [targetGroup, setTargetGroup] = useState(otherGroups[0] ?? "");
-  return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/30 px-4" onClick={onClose}>
-      <div className="bg-white rounded-t-2xl sm:rounded-lg shadow-2xl w-full sm:max-w-115 border border-gray-200 overflow-hidden" onClick={(e) => e.stopPropagation()} style={{ fontFamily: FONT }}>
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
-          <span className="text-sm font-bold text-gray-800">Delete Assignment Group</span>
-          <button onClick={onClose} className="w-7 h-7 flex items-center justify-center border border-gray-300 rounded text-gray-500 hover:bg-gray-100"><X size={14} /></button>
-        </div>
-        <div className="px-6 py-5 space-y-4">
-          <p className="text-sm text-gray-700">You are about to delete <strong>{groupName}</strong>, which has <strong>{assignmentCount}</strong> assignment{assignmentCount !== 1 ? "s" : ""} in it.</p>
-          <p className="text-sm text-gray-700">Would you like to:</p>
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input type="radio" checked={choice === "delete"} onChange={() => setChoice("delete")} className="accent-[#7b1113]" />
-            <span className="text-sm text-gray-700">Delete its assignments</span>
-          </label>
-          <div className="space-y-2">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="radio" checked={choice === "move"} onChange={() => setChoice("move")} disabled={otherGroups.length === 0} className="accent-[#7b1113]" />
-              <span className={`text-sm ${otherGroups.length === 0 ? "text-gray-400" : "text-gray-700"}`}>Move its assignments to</span>
-            </label>
-            {choice === "move" && otherGroups.length > 0 && (
-              <div className="ml-6 relative">
-                <select value={targetGroup} onChange={(e) => setTargetGroup(e.target.value)}
-                  className="w-52 h-9 border border-gray-300 rounded px-3 text-sm bg-white outline-none appearance-none pr-8 focus:border-[#7b1113]">
-                  <option value="">[ Select a Group ]</option>
-                  {otherGroups.map(g => <option key={g} value={g}>{g}</option>)}
-                </select>
-                <ChevronDown size={13} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-              </div>
-            )}
-          </div>
-        </div>
-        <div className="flex items-center justify-end gap-2 px-5 py-3.5 bg-gray-50 border-t border-gray-200">
-          <button onClick={onClose} className="h-9 px-4 border border-gray-300 text-sm text-gray-600 rounded hover:bg-gray-100">Cancel</button>
-          <button onClick={() => onDelete(choice, choice === "move" ? targetGroup : undefined)}
-            disabled={choice === "move" && !targetGroup}
-            className="h-9 px-4 text-sm text-white rounded hover:opacity-90 disabled:opacity-50" style={{ background: MAROON }}>
-            Delete Group
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ─────────────────────────────────────────────────────────────────────────────
-   ASSIGNMENT ROW  (now receives seenIds + onView for mark-seen logic)
-───────────────────────────────────────────────────────────────────────────── */
+// ── Assignment Row ─────────────────────────────────────────────────────────────
 function AssignmentRow({
-  a,
-  courseId,
-  router,
-  variant,
-  currentUserName,
-  currentUserRole,
-  seenIds,
-  onView,
-  onEdit,
-  onDuplicate,
-  onAssignTo,
-  onSpeedGrader,
-  onDelete,
-  onTogglePublish,
+  a, courseId, router, variant,
+  currentUserName, currentUserRole,
+  seenIds, onView,
+  onEdit, onDuplicate, onAssignTo, onSpeedGrader, onDelete, onTogglePublish,
 }: {
-  a: Assignment;
-  courseId: string;
-  router: ReturnType<typeof useRouter>;
+  a: Assignment; courseId: string; router: ReturnType<typeof useRouter>;
   variant: "mine" | "others";
-  currentUserName?: string | null;
-  currentUserRole?: string | null;
+  currentUserName?: string | null; currentUserRole?: string | null;
   seenIds: Set<string>;
   onView: (a: Assignment) => void;
-  onEdit: (a: Assignment) => void;
-  onDuplicate: (a: Assignment) => void;
-  onAssignTo: (a: Assignment) => void;
-  onSpeedGrader: (a: Assignment) => void;
-  onDelete: (a: Assignment) => void;
-  onTogglePublish: (a: Assignment) => void;
+  onEdit: (a: Assignment) => void; onDuplicate: (a: Assignment) => void;
+  onAssignTo: (a: Assignment) => void; onSpeedGrader: (a: Assignment) => void;
+  onDelete: (a: Assignment) => void; onTogglePublish: (a: Assignment) => void;
 }) {
   const accentColor = variant === "mine" ? MAROON : "#60a5fa";
   const now = new Date();
@@ -870,55 +860,63 @@ function AssignmentRow({
   };
 
   return (
-    <div
-      className="flex items-start sm:items-center gap-3 px-3 sm:px-4 py-4 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-0 relative cursor-pointer"
-      style={{ background: variant === "mine" ? "#fff" : "#fafcff" }}
-      onClick={handleClick}
-    >
-      <div className="absolute left-0 top-0 bottom-0 w-0.5 rounded-full" style={{ background: accentColor }} />
-      <div className="shrink-0 mt-0.5 sm:mt-0 pl-2" onClick={(e) => e.stopPropagation()}>
+    <div onClick={handleClick} style={{
+      display: "flex", alignItems: "flex-start", gap: 10,
+      padding: "14px 14px 14px 16px",
+      background: variant === "mine" ? "#fff" : "#fafcff",
+      borderBottom: "1px solid #f3f4f6",
+      cursor: "pointer", position: "relative",
+      transition: "background 0.1s",
+    }}
+      onMouseEnter={e => (e.currentTarget.style.background = "#fdf8f8")}
+      onMouseLeave={e => (e.currentTarget.style.background = variant === "mine" ? "#fff" : "#fafcff")}>
+      {/* Left accent bar */}
+      <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 3, borderRadius: "0 2px 2px 0", background: accentColor }} />
+
+      {/* Publish toggle */}
+      <div onClick={e => e.stopPropagation()} style={{ flexShrink: 0, marginTop: 1 }}>
         <PublishToggle published={a.status === "PUBLISHED"} onToggle={() => onTogglePublish(a)} />
       </div>
-      <div className="shrink-0">
+
+      <div style={{ flexShrink: 0, marginTop: 3 }}>
         <AssignmentIcon />
       </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 flex-wrap">
-          <h3 className="text-sm font-semibold truncate max-w-full hover:underline" style={{ color: MAROON }}>
+
+      {/* Content */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap", marginBottom: 5 }}>
+          <span style={{ fontSize: 13, fontWeight: 700, color: MAROON, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "100%" }}>
             {a.title}
-          </h3>
-          {/* ── NEW badge ── */}
+          </span>
           {isNew && <NewBadge />}
           {a.status === "UNPUBLISHED" && (
-            <span className="text-[10px] text-amber-600 font-medium">Not Published</span>
+            <span style={{ fontSize: 10, color: "#d97706", fontWeight: 600 }}>Not Published</span>
           )}
           {isClosed && (
-            <span className="text-[10px] text-gray-500 font-medium">Closed</span>
+            <span style={{ fontSize: 10, color: "#9ca3af", fontWeight: 600 }}>Closed</span>
           )}
         </div>
-        <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+        <div className="asgn-row-meta" style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
           {variant === "mine" && authorDisplayName && (
             <AuthorBadge name={authorDisplayName} role={authorRole ?? "Admin"} />
           )}
           {variant === "others" && (
             <PublisherChip name={authorDisplayName} image={a.publisherImage} role={authorRole} />
           )}
-          <div className="flex items-center gap-2 text-xs text-gray-500 flex-wrap">
-            <span>{a.points} pts</span>
-            {due && (<><span>•</span><span>Due: {due}</span></>)}
-          </div>
+          <span style={{ fontSize: 12, color: "#6b7280" }}>{a.points} pts</span>
+          {due && <><span style={{ color: "#d1d5db" }}>·</span><span style={{ fontSize: 12, color: "#6b7280" }}>Due: {due}</span></>}
         </div>
       </div>
-      <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
+
+      {/* 3-dot menu */}
+      <div onClick={e => e.stopPropagation()} style={{ flexShrink: 0 }}>
         <AssignmentRowMenu assignment={a} onAction={handleAction} />
       </div>
     </div>
   );
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   ASSIGNMENT GROUP SECTION  (now shows new-count dot on collapsed header)
-───────────────────────────────────────────────────────────────────────────── */
+// ── Group Section ──────────────────────────────────────────────────────────────
 function AssignmentGroupSection({
   title, items, courseId, router, currentUserName, currentUserRole,
   seenIds, onView,
@@ -927,8 +925,7 @@ function AssignmentGroupSection({
 }: {
   title: string; items: Assignment[]; courseId: string; router: ReturnType<typeof useRouter>;
   currentUserName?: string | null; currentUserRole?: string | null;
-  seenIds: Set<string>;
-  onView: (a: Assignment) => void;
+  seenIds: Set<string>; onView: (a: Assignment) => void;
   onAddAssignment: (group: string) => void;
   onEdit: (a: Assignment) => void; onDuplicate: (a: Assignment) => void;
   onAssignTo: (a: Assignment) => void; onSpeedGrader: (a: Assignment) => void;
@@ -937,54 +934,56 @@ function AssignmentGroupSection({
   isLastGroup?: boolean; rowVariant?: "mine" | "others";
 }) {
   const [collapsed, setCollapsed] = useState(false);
-  // Count unseen assignments in this group
   const newCount = items.filter(a => !seenIds.has(String(a.id))).length;
 
   return (
-    <div className="mb-3">
-      <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-t select-none">
-        <div className="flex items-center gap-2 cursor-pointer" onClick={() => setCollapsed(c => !c)}>
+    <div style={{ marginBottom: 12 }}>
+      {/* Group header */}
+      <div style={{
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        padding: "10px 14px", background: "#f9fafb",
+        border: "1px solid #e5e7eb", borderRadius: collapsed ? 8 : "8px 8px 0 0",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", flex: 1, minWidth: 0 }}
+          onClick={() => setCollapsed(c => !c)}>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2.5"
-            style={{ transform: collapsed ? "rotate(-90deg)" : "rotate(0deg)", transition: "transform 0.15s" }}>
+            style={{ flexShrink: 0, transform: collapsed ? "rotate(-90deg)" : "none", transition: "transform 0.15s" }}>
             <path d="M6 9l6 6 6-6" />
           </svg>
-          <span className="text-sm font-semibold text-gray-700">{title}</span>
-          <span className="text-xs text-gray-400 ml-1">({items.length})</span>
-          {/* ── New-count dot on collapsed group ── */}
+          <span style={{ fontSize: 13, fontWeight: 700, color: "#374151", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{title}</span>
+          <span style={{ fontSize: 12, color: "#9ca3af" }}>({items.length})</span>
           {newCount > 0 && (
-            <span
-              className="ml-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold text-white"
-              style={{ background: "#dc2626" }}
-            >
+            <span style={{ padding: "1px 6px", borderRadius: 20, fontSize: 9, fontWeight: 800, color: "#fff", background: "#dc2626" }}>
               {newCount}
             </span>
           )}
         </div>
-        <div className="flex items-center gap-1">
+        <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
           {rowVariant === "mine" && (
-            <button onClick={() => onAddAssignment(title)} className="p-1.5 text-gray-400 hover:bg-gray-200 rounded transition-colors" title="Add assignment">
+            <button onClick={() => onAddAssignment(title)}
+              style={{ width: 30, height: 30, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 6, background: "none", border: "none", cursor: "pointer", color: "#9ca3af", touchAction: "manipulation" }}
+              onMouseEnter={e => (e.currentTarget.style.background = "#e5e7eb")}
+              onMouseLeave={e => (e.currentTarget.style.background = "none")}>
               <Plus size={15} />
             </button>
           )}
           <GroupMenu onEdit={() => onEditGroup(title)} onDelete={() => onDeleteGroup(title)} isLastGroup={isLastGroup} />
         </div>
       </div>
+
       {!collapsed && (
-        <div className="border border-t-0 border-gray-200 rounded-b overflow-hidden">
+        <div style={{ border: "1px solid #e5e7eb", borderTop: "none", borderRadius: "0 0 8px 8px", overflow: "hidden" }}>
           {items.length === 0 ? (
-            <div className="px-6 py-4 text-sm text-gray-400 text-center">No assignments in this group.</div>
+            <div style={{ padding: "18px 16px", fontSize: 13, color: "#9ca3af", textAlign: "center" }}>
+              No assignments in this group.
+            </div>
           ) : (
             items.map(a => (
-              <AssignmentRow
-                key={a.id} a={a} courseId={courseId} router={router}
-                variant={rowVariant}
-                currentUserName={currentUserName}
-                currentUserRole={currentUserRole}
-                seenIds={seenIds}
-                onView={onView}
+              <AssignmentRow key={a.id} a={a} courseId={courseId} router={router}
+                variant={rowVariant} currentUserName={currentUserName} currentUserRole={currentUserRole}
+                seenIds={seenIds} onView={onView}
                 onEdit={onEdit} onDuplicate={onDuplicate} onAssignTo={onAssignTo}
-                onSpeedGrader={onSpeedGrader} onDelete={onDelete} onTogglePublish={onTogglePublish}
-              />
+                onSpeedGrader={onSpeedGrader} onDelete={onDelete} onTogglePublish={onTogglePublish} />
             ))
           )}
         </div>
@@ -993,18 +992,14 @@ function AssignmentGroupSection({
   );
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   OTHERS AUTHOR SECTION
-───────────────────────────────────────────────────────────────────────────── */
+// ── Others Author Section ──────────────────────────────────────────────────────
 function OthersAuthorSection({
   authorName, authorRole, authorImage, items, courseId, router,
-  seenIds, onView,
-  onEdit, onDuplicate, onAssignTo, onSpeedGrader, onDelete, onTogglePublish,
+  seenIds, onView, onEdit, onDuplicate, onAssignTo, onSpeedGrader, onDelete, onTogglePublish,
 }: {
   authorName: string; authorRole?: string | null; authorImage?: string | null;
   items: Assignment[]; courseId: string; router: ReturnType<typeof useRouter>;
-  seenIds: Set<string>;
-  onView: (a: Assignment) => void;
+  seenIds: Set<string>; onView: (a: Assignment) => void;
   onEdit: (a: Assignment) => void; onDuplicate: (a: Assignment) => void;
   onAssignTo: (a: Assignment) => void; onSpeedGrader: (a: Assignment) => void;
   onDelete: (a: Assignment) => void; onTogglePublish: (a: Assignment) => void;
@@ -1013,34 +1008,29 @@ function OthersAuthorSection({
   const newCount = items.filter(a => !seenIds.has(String(a.id))).length;
 
   return (
-    <div className="mb-4">
-      <div className="flex items-center gap-2 px-4 py-2.5 border select-none cursor-pointer rounded-t"
-        style={{ background: "#eff6ff", borderColor: "#bfdbfe" }}
-        onClick={() => setCollapsed(c => !c)}>
+    <div style={{ marginBottom: 12 }}>
+      <div onClick={() => setCollapsed(c => !c)}
+        style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: collapsed ? 8 : "8px 8px 0 0", cursor: "pointer" }}>
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1d6fa4" strokeWidth="2.5"
-          style={{ transform: collapsed ? "rotate(-90deg)" : "rotate(0deg)", transition: "transform .15s", flexShrink: 0 }}>
+          style={{ flexShrink: 0, transform: collapsed ? "rotate(-90deg)" : "none", transition: "transform 0.15s" }}>
           <path d="M6 9l6 6 6-6" />
         </svg>
         <PublisherAvatar name={authorName} image={authorImage} size={22} />
-        <span className="text-sm font-semibold" style={{ color: "#1d4ed8" }}>{authorName}</span>
+        <span style={{ fontSize: 13, fontWeight: 700, color: "#1d4ed8" }}>{authorName}</span>
         {authorRole && (
-          <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase" style={{ background: "#eff6ff", color: "#1d6fa4", border: "1px solid #bfdbfe" }}>
+          <span style={{ padding: "1px 6px", borderRadius: 4, fontSize: 9, fontWeight: 700, textTransform: "uppercase", background: "#eff6ff", color: "#1d6fa4", border: "1px solid #bfdbfe" }}>
             {authorRole}
           </span>
         )}
-        <span className="text-xs text-blue-400 ml-1">({items.length})</span>
-        {/* ── New-count dot ── */}
+        <span style={{ fontSize: 12, color: "#93c5fd" }}>({items.length})</span>
         {newCount > 0 && (
-          <span
-            className="ml-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold text-white"
-            style={{ background: "#dc2626" }}
-          >
+          <span style={{ padding: "1px 6px", borderRadius: 20, fontSize: 9, fontWeight: 800, color: "#fff", background: "#dc2626" }}>
             {newCount}
           </span>
         )}
       </div>
       {!collapsed && (
-        <div className="border border-t-0 rounded-b overflow-hidden" style={{ borderColor: "#bfdbfe" }}>
+        <div style={{ border: "1px solid #bfdbfe", borderTop: "none", borderRadius: "0 0 8px 8px", overflow: "hidden" }}>
           {items.map(a => (
             <AssignmentRow key={a.id} a={a} courseId={courseId} router={router} variant="others"
               seenIds={seenIds} onView={onView}
@@ -1053,17 +1043,13 @@ function OthersAuthorSection({
   );
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   OTHERS GROUP SECTION
-───────────────────────────────────────────────────────────────────────────── */
+// ── Others Group Section ───────────────────────────────────────────────────────
 function OthersGroupSection({
   title, items, courseId, router,
-  seenIds, onView,
-  onEdit, onDuplicate, onAssignTo, onSpeedGrader, onDelete, onTogglePublish,
+  seenIds, onView, onEdit, onDuplicate, onAssignTo, onSpeedGrader, onDelete, onTogglePublish,
 }: {
   title: string; items: Assignment[]; courseId: string; router: ReturnType<typeof useRouter>;
-  seenIds: Set<string>;
-  onView: (a: Assignment) => void;
+  seenIds: Set<string>; onView: (a: Assignment) => void;
   onEdit: (a: Assignment) => void; onDuplicate: (a: Assignment) => void;
   onAssignTo: (a: Assignment) => void; onSpeedGrader: (a: Assignment) => void;
   onDelete: (a: Assignment) => void; onTogglePublish: (a: Assignment) => void;
@@ -1072,28 +1058,23 @@ function OthersGroupSection({
   const newCount = items.filter(a => !seenIds.has(String(a.id))).length;
 
   return (
-    <div className="mb-4">
-      <div className="flex items-center gap-2 px-4 py-2.5 border select-none cursor-pointer rounded-t"
-        style={{ background: "#f0f9ff", borderColor: "#bae6fd" }}
-        onClick={() => setCollapsed(c => !c)}>
+    <div style={{ marginBottom: 12 }}>
+      <div onClick={() => setCollapsed(c => !c)}
+        style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", background: "#f0f9ff", border: "1px solid #bae6fd", borderRadius: collapsed ? 8 : "8px 8px 0 0", cursor: "pointer" }}>
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#0369a1" strokeWidth="2.5"
-          style={{ transform: collapsed ? "rotate(-90deg)" : "rotate(0deg)", transition: "transform .15s", flexShrink: 0 }}>
+          style={{ flexShrink: 0, transform: collapsed ? "rotate(-90deg)" : "none", transition: "transform 0.15s" }}>
           <path d="M6 9l6 6 6-6" />
         </svg>
-        <span className="text-sm font-semibold" style={{ color: "#0369a1" }}>{title}</span>
-        <span className="text-xs text-blue-400 ml-1">({items.length})</span>
-        {/* ── New-count dot ── */}
+        <span style={{ fontSize: 13, fontWeight: 700, color: "#0369a1" }}>{title}</span>
+        <span style={{ fontSize: 12, color: "#7dd3fc" }}>({items.length})</span>
         {newCount > 0 && (
-          <span
-            className="ml-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold text-white"
-            style={{ background: "#dc2626" }}
-          >
+          <span style={{ padding: "1px 6px", borderRadius: 20, fontSize: 9, fontWeight: 800, color: "#fff", background: "#dc2626" }}>
             {newCount}
           </span>
         )}
       </div>
       {!collapsed && (
-        <div className="border border-t-0 rounded-b overflow-hidden" style={{ borderColor: "#bae6fd" }}>
+        <div style={{ border: "1px solid #bae6fd", borderTop: "none", borderRadius: "0 0 8px 8px", overflow: "hidden" }}>
           {items.map(a => (
             <AssignmentRow key={a.id} a={a} courseId={courseId} router={router} variant="others"
               seenIds={seenIds} onView={onView}
@@ -1106,14 +1087,37 @@ function OthersGroupSection({
   );
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════════
-   MAIN PAGE
-═══════════════════════════════════════════════════════════════════════════════ */
+// ── Toolbar ────────────────────────────────────────────────────────────────────
+function Toolbar({ search, onSearch, right }: {
+  search: string; onSearch: (v: string) => void; right: React.ReactNode;
+}) {
+  return (
+    <div className="asgn-toolbar" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", borderBottom: "1px solid #f3f4f6", gap: 10 }}>
+      <div style={{ position: "relative", flex: 1, maxWidth: 280 }}>
+        <Search size={14} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "#9ca3af", pointerEvents: "none" }} />
+        <input className="asgn-search-input" value={search} onChange={e => onSearch(e.target.value)} placeholder="Search…"
+          style={{ width: "100%", height: 36, border: "1px solid #e5e7eb", borderRadius: 8, paddingLeft: 32, paddingRight: 10, fontFamily: FONT, fontSize: 13, color: "#374151", background: "#fafafa", outline: "none" }} />
+      </div>
+      <div className="asgn-toolbar-right" style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+        {right}
+      </div>
+    </div>
+  );
+}
+
+function SectionLabel({ children, color, bg, border }: { children: React.ReactNode; color: string; bg: string; border: string }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", padding: "8px 14px", background: bg, borderBottom: `1px solid ${border}`, borderTop: `1px solid ${border}` }}>
+      <span className="asgn-section-label" style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", color }}>{children}</span>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// MAIN PAGE
+// ═══════════════════════════════════════════════════════════════════════════════
 export default function CourseAssignmentsPage({
-  courseId,
-  currentUserId,
-  currentUserName,
-  currentUserRole,
+  courseId, currentUserId, currentUserName, currentUserRole,
 }: Props) {
   const router = useRouter();
   const [assignments, setAssignments] = useState<Assignment[]>([]);
@@ -1130,17 +1134,14 @@ export default function CourseAssignmentsPage({
   const [editGroupTarget, setEditGroupTarget] = useState<string | null>(null);
   const [deleteGroupTarget, setDeleteGroupTarget] = useState<string | null>(null);
   const [savingEditGroup, setSavingEditGroup] = useState(false);
-
   const [deleteAssignmentTarget, setDeleteAssignmentTarget] = useState<Assignment | null>(null);
   const [deletingAssignment, setDeletingAssignment] = useState(false);
 
   const [resolvedUserId, setResolvedUserId] = useState<string | null | undefined>(currentUserId);
   const [resolvedUserName, setResolvedUserName] = useState<string | null | undefined>(currentUserName);
 
-  /* ── NEW/SEEN STATE ── */
   const [seenIds, setSeenIds] = useState<Set<string>>(() => getSeenIds(courseId));
 
-  /* Mark an assignment as seen and refresh the seenIds state */
   const handleView = useCallback((a: Assignment) => {
     markSeen(courseId, String(a.id));
     setSeenIds(getSeenIds(courseId));
@@ -1155,6 +1156,14 @@ export default function CourseAssignmentsPage({
     }
   }, [currentUserId]);
 
+  function isMyAssignment(a: Assignment, userId?: string | null, userName?: string | null): boolean {
+    if (a._isMine || a.isCreator) return true;
+    if (userId && a.createdById && a.createdById === userId) return true;
+    if (userName && a.createdBy && a.createdBy === userName) return true;
+    if (userName && a.publisherName && a.publisherName === userName) return true;
+    return false;
+  }
+
   const loadAssignments = useCallback(() => {
     if (!courseId) return;
     fetch(`/api/admin/courses/${courseId}/assignments`)
@@ -1162,11 +1171,9 @@ export default function CourseAssignmentsPage({
       .then(d => {
         const list: Assignment[] = d.assignments ?? [];
         setAssignments(list);
-        /* Refresh seenIds so newly loaded assignments evaluate correctly */
         setSeenIds(getSeenIds(courseId));
         const apiGroups = [...new Set(
-          list
-            .filter(a => isMyAssignment(a, resolvedUserId, resolvedUserName))
+          list.filter(a => isMyAssignment(a, resolvedUserId, resolvedUserName))
             .map(a => a.assignmentGroup || "Assignments")
         )];
         setLocalGroups(prev => {
@@ -1177,6 +1184,7 @@ export default function CourseAssignmentsPage({
       })
       .catch(() => { })
       .finally(() => setLoading(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [courseId, resolvedUserId, resolvedUserName]);
 
   useEffect(() => {
@@ -1186,20 +1194,11 @@ export default function CourseAssignmentsPage({
     loadAssignments();
   }, [courseId, loadAssignments]);
 
-  function isMyAssignment(a: Assignment, userId?: string | null, userName?: string | null): boolean {
-    if (a._isMine || a.isCreator) return true;
-    if (userId && a.createdById && a.createdById === userId) return true;
-    if (userName && a.createdBy && a.createdBy === userName) return true;
-    if (userName && a.publisherName && a.publisherName === userName) return true;
-    return false;
-  }
-
   const handleTogglePublish = async (a: Assignment) => {
     const newStatus = a.status === "PUBLISHED" ? "UNPUBLISHED" : "PUBLISHED";
     setAssignments(prev => prev.map(x => x.id === a.id ? { ...x, status: newStatus } : x));
     await fetch(`/api/admin/courses/${courseId}/assignments/${a.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
+      method: "PATCH", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status: newStatus }),
     }).catch(() => { });
   };
@@ -1221,17 +1220,10 @@ export default function CourseAssignmentsPage({
     setSavingEditGroup(true);
     try {
       const oldName = editGroupTarget;
-      setLocalGroups(prev => {
-        const next = prev.map(g => g === oldName ? newName : g);
-        persistGroups(courseId, next);
-        return next;
-      });
+      setLocalGroups(prev => { const next = prev.map(g => g === oldName ? newName : g); persistGroups(courseId, next); return next; });
       setAssignments(prev => prev.map(a => a.assignmentGroup === oldName ? { ...a, assignmentGroup: newName } : a));
       assignments.filter(a => a.assignmentGroup === oldName).forEach(a => {
-        fetch(`/api/admin/courses/${courseId}/assignments/${a.id}`, {
-          method: "PATCH", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ assignmentGroup: newName }),
-        }).catch(() => { });
+        fetch(`/api/admin/courses/${courseId}/assignments/${a.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ assignmentGroup: newName }) }).catch(() => { });
       });
       setEditGroupTarget(null);
     } finally { setSavingEditGroup(false); }
@@ -1241,26 +1233,17 @@ export default function CourseAssignmentsPage({
     if (!deleteGroupTarget) return;
     const groupName = deleteGroupTarget;
     if (action === "delete") {
-      const toDelete = assignments.filter(a => (a.assignmentGroup || "Assignments") === groupName);
-      toDelete.forEach(a => {
+      assignments.filter(a => (a.assignmentGroup || "Assignments") === groupName).forEach(a => {
         fetch(`/api/admin/courses/${courseId}/assignments/${a.id}`, { method: "DELETE" }).catch(() => { });
       });
       setAssignments(prev => prev.filter(a => (a.assignmentGroup || "Assignments") !== groupName));
     } else if (action === "move" && targetGroup) {
       setAssignments(prev => prev.map(a => (a.assignmentGroup || "Assignments") === groupName ? { ...a, assignmentGroup: targetGroup } : a));
       assignments.filter(a => (a.assignmentGroup || "Assignments") === groupName).forEach(a => {
-        fetch(`/api/admin/courses/${courseId}/assignments/${a.id}`, {
-          method: "PATCH", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ assignmentGroup: targetGroup }),
-        }).catch(() => { });
+        fetch(`/api/admin/courses/${courseId}/assignments/${a.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ assignmentGroup: targetGroup }) }).catch(() => { });
       });
     }
-    setLocalGroups(prev => {
-      if (prev.length <= 1) return prev;
-      const next = prev.filter(g => g !== groupName);
-      persistGroups(courseId, next);
-      return next;
-    });
+    setLocalGroups(prev => { if (prev.length <= 1) return prev; const next = prev.filter(g => g !== groupName); persistGroups(courseId, next); return next; });
     setDeleteGroupTarget(null);
   };
 
@@ -1274,18 +1257,14 @@ export default function CourseAssignmentsPage({
   };
 
   const handleDuplicate = async (a: Assignment) => {
-    try {
-      const res = await fetch(`/api/admin/courses/${courseId}/assignments`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: `${a.title} Copy`, points: a.points, status: "UNPUBLISHED", assignmentGroup: a.assignmentGroup, dueDate: a.dueDate, availableFrom: a.availableFrom, availableUntil: a.availableUntil }),
-      });
-      if (res.ok) loadAssignments();
-    } catch { /* ignore */ }
+    const res = await fetch(`/api/admin/courses/${courseId}/assignments`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: `${a.title} Copy`, points: a.points, status: "UNPUBLISHED", assignmentGroup: a.assignmentGroup, dueDate: a.dueDate, availableFrom: a.availableFrom, availableUntil: a.availableUntil }),
+    }).catch(() => null);
+    if (res?.ok) loadAssignments();
   };
 
-  const handleSpeedGrader = (a: Assignment) => {
-    window.open(`/admin/courses/${courseId}/assignments/${a.id}/speedgrader`, "_blank");
-  };
+  const handleSpeedGrader = (a: Assignment) => window.open(`/admin/courses/${courseId}/assignments/${a.id}/speedgrader`, "_blank");
 
   const handleDeleteAssignment = async () => {
     if (!deleteAssignmentTarget) return;
@@ -1297,7 +1276,7 @@ export default function CourseAssignmentsPage({
     } finally { setDeletingAssignment(false); }
   };
 
-  /* ── Derived lists ── */
+  // Derived
   const myAssignments = assignments.filter(a => isMyAssignment(a, resolvedUserId, resolvedUserName));
   const otherAssignments = assignments.filter(a => !isMyAssignment(a, resolvedUserId, resolvedUserName));
   const myFiltered = myAssignments.filter(a => a.title.toLowerCase().includes(mySearch.toLowerCase()));
@@ -1325,7 +1304,6 @@ export default function CourseAssignmentsPage({
     othersByGroup[g].push(a);
   }
 
-  /* Shared row action handlers */
   const rowHandlers = {
     onEdit: (a: Assignment) => setQuickEditTarget(a),
     onDuplicate: handleDuplicate,
@@ -1337,69 +1315,59 @@ export default function CourseAssignmentsPage({
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20 text-gray-400 text-sm gap-2" style={{ fontFamily: FONT }}>
-        <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "60px 20px", gap: 10, color: "#9ca3af", fontSize: 13, fontFamily: FONT }}>
+        <svg style={{ animation: "spin 1s linear infinite", width: 18, height: 18 }} viewBox="0 0 24 24" fill="none">
+          <circle style={{ opacity: 0.25 }} cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+          <path style={{ opacity: 0.75 }} fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
         </svg>
-        Loading assignments...
+        Loading assignments…
+        <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
       </div>
     );
   }
 
   return (
-    <div className="bg-white" style={{ fontFamily: FONT }}>
+    <div style={{ background: "#fff", fontFamily: FONT }}>
+      <style>{GLOBAL_CSS}</style>
 
-      {/* ── SECTION 1: Published by You ── */}
-      <div className="flex items-center gap-2 px-4 sm:px-8 py-2.5 border-b"
-        style={{ color: MAROON, background: "#fef2f2", borderColor: "#f0c0c0" }}>
-        <span className="text-xs font-extrabold tracking-widest uppercase">Published by You</span>
-      </div>
+      {/* ── Section 1: Published by You ── */}
+      <SectionLabel color={MAROON} bg="#fef2f2" border="#f0c0c0">
+        Published by You
+      </SectionLabel>
 
-      <div className="flex items-center justify-between px-3 sm:px-8 py-3 border-b border-gray-100 gap-2 flex-wrap">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
-          <input value={mySearch} onChange={e => setMySearch(e.target.value)}
-            placeholder="Search your assignments..."
-            className="pl-9 pr-4 py-1.5 border rounded text-sm w-44 sm:w-56 focus:outline-none"
-            style={{ borderColor: "#d1d5db" }} />
-        </div>
-        <div className="flex items-center gap-2">
+      <Toolbar search={mySearch} onSearch={setMySearch}
+        right={<>
           <button onClick={() => setShowGroupModal(true)}
-            className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium border rounded-lg hover:bg-gray-50 transition-colors"
-            style={{ borderColor: "#d1d5db", color: "#374151" }}>
-            <Plus size={14} /><span className="hidden sm:inline">Group</span>
+            style={{ display: "flex", alignItems: "center", gap: 6, height: 36, padding: "0 12px", fontFamily: FONT, fontSize: 13, fontWeight: 600, border: "1px solid #e5e7eb", borderRadius: 8, background: "#fff", color: "#374151", cursor: "pointer", touchAction: "manipulation" }}>
+            <Plus size={14} />
+            <span style={{ display: "none" }} className="asgn-btn-text-lg">Group</span>
+            Group
           </button>
           <button onClick={() => router.push(`/admin/courses/${courseId}/assignments/new`)}
-            className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium text-white rounded-lg hover:opacity-90 transition-colors"
-            style={{ background: MAROON }}>
-            <Plus size={14} /><span className="hidden sm:inline">Assignment</span><span className="sm:hidden">New</span>
+            style={{ display: "flex", alignItems: "center", gap: 6, height: 36, padding: "0 14px", fontFamily: FONT, fontSize: 13, fontWeight: 700, border: "none", borderRadius: 8, background: MAROON, color: "#fff", cursor: "pointer", touchAction: "manipulation" }}>
+            <Plus size={14} />
+            <span>New</span>
           </button>
-        </div>
-      </div>
+        </>}
+      />
 
-      <div className="px-3 sm:px-5 py-4 border-b-2 border-gray-200 space-y-3">
+      <div style={{ padding: "12px 12px 4px" }}>
         {myFiltered.length === 0 && mySearch ? (
-          <p className="text-sm text-gray-400 text-center py-6">No results for &ldquo;{mySearch}&rdquo;</p>
+          <div style={{ padding: "32px 16px", textAlign: "center", fontSize: 13, color: "#9ca3af" }}>
+            No results for &ldquo;{mySearch}&rdquo;
+          </div>
         ) : (
           Object.entries(myGrouped).map(([grp, items]) => (
             <AssignmentGroupSection
               key={grp} title={grp} items={items} courseId={courseId} router={router}
-              rowVariant="mine"
-              currentUserName={resolvedUserName}
-              currentUserRole={currentUserRole}
-              seenIds={seenIds}
-              onView={handleView}
-              onAddAssignment={(g) => router.push(`/admin/courses/${courseId}/assignments/new?group=${encodeURIComponent(g)}`)}
-              onEditGroup={(g) => setEditGroupTarget(g)}
-              onDeleteGroup={(g) => {
+              rowVariant="mine" currentUserName={resolvedUserName} currentUserRole={currentUserRole}
+              seenIds={seenIds} onView={handleView}
+              onAddAssignment={g => router.push(`/admin/courses/${courseId}/assignments/new?group=${encodeURIComponent(g)}`)}
+              onEditGroup={g => setEditGroupTarget(g)}
+              onDeleteGroup={g => {
                 const count = assignments.filter(a => (a.assignmentGroup || "Assignments") === g).length;
                 if (count === 0) {
-                  setLocalGroups(prev => {
-                    const next = prev.filter(grp => grp !== g);
-                    persistGroups(courseId, next);
-                    return next;
-                  });
+                  setLocalGroups(prev => { const next = prev.filter(x => x !== g); persistGroups(courseId, next); return next; });
                 } else {
                   setDeleteGroupTarget(g);
                 }
@@ -1411,81 +1379,74 @@ export default function CourseAssignmentsPage({
         )}
       </div>
 
-      {/* ── SECTION 2: Published by Others ── */}
-      <div className="flex items-center gap-2 px-4 sm:px-8 py-2.5 border-b border-t"
-        style={{ color: "#1d6fa4", background: "#eff6ff", borderColor: "#bfdbfe" }}>
-        <span className="text-xs font-extrabold tracking-widest uppercase" style={{ color: "#1d6fa4" }}>
-          Published by Others
-        </span>
+      {/* ── Section 2: Published by Others ── */}
+      <SectionLabel color="#1d6fa4" bg="#eff6ff" border="#bfdbfe">
+        Published by Others
         {otherAssignments.length > 0 && (
-          <span className="ml-1 font-normal normal-case text-blue-400 text-xs">({otherAssignments.length})</span>
+          <span style={{ marginLeft: 6, fontWeight: 500, color: "#93c5fd", fontSize: 11 }}>
+            ({otherAssignments.length})
+          </span>
         )}
-      </div>
+      </SectionLabel>
 
-      <div className="flex items-center justify-between px-3 sm:px-8 py-3 border-b border-gray-100 gap-2 flex-wrap">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
-          <input value={othersSearch} onChange={e => setOthersSearch(e.target.value)}
-            placeholder="Search others' assignments..."
-            className="pl-9 pr-4 py-1.5 border rounded text-sm w-44 sm:w-56 focus:outline-none"
-            style={{ borderColor: "#d1d5db" }} />
-        </div>
-        <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden">
-          {(["author", "group"] as const).map(mode => (
-            <button key={mode} onClick={() => setOthersViewMode(mode)}
-              className="px-3 py-1.5 text-xs font-bold border-none transition-colors whitespace-nowrap"
-              style={othersViewMode === mode ? { background: MAROON, color: "#fff" } : { background: "transparent", color: "#6b7280" }}>
-              By {mode === "author" ? "Author" : "Group"}
-            </button>
-          ))}
-        </div>
-      </div>
+      <Toolbar search={othersSearch} onSearch={setOthersSearch}
+        right={
+          <div style={{ display: "flex", border: "1px solid #e5e7eb", borderRadius: 8, overflow: "hidden" }}>
+            {(["author", "group"] as const).map(mode => (
+              <button key={mode} onClick={() => setOthersViewMode(mode)}
+                style={{ padding: "0 12px", height: 36, fontFamily: FONT, fontSize: 12, fontWeight: 700, border: "none", cursor: "pointer", whiteSpace: "nowrap", background: othersViewMode === mode ? MAROON : "transparent", color: othersViewMode === mode ? "#fff" : "#6b7280", transition: "all 0.15s", touchAction: "manipulation" }}>
+                By {mode === "author" ? "Author" : "Group"}
+              </button>
+            ))}
+          </div>
+        }
+      />
 
-      <div className="px-3 sm:px-5 py-4">
+      <div style={{ padding: "12px 12px 20px" }}>
         {otherAssignments.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-10 gap-2">
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 20px", gap: 10 }}>
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" strokeWidth="1.5">
-              <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
-              <circle cx="12" cy="7" r="4" />
+              <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" /><circle cx="12" cy="7" r="4" />
             </svg>
-            <p className="text-sm text-gray-400">No assignments published by others yet.</p>
+            <p style={{ fontSize: 13, color: "#9ca3af", margin: 0 }}>No assignments published by others yet.</p>
           </div>
         ) : othersFiltered.length === 0 ? (
-          <p className="text-sm text-gray-400 text-center py-6">No results for &ldquo;{othersSearch}&rdquo;</p>
+          <div style={{ padding: "32px 16px", textAlign: "center", fontSize: 13, color: "#9ca3af" }}>
+            No results for &ldquo;{othersSearch}&rdquo;
+          </div>
         ) : othersViewMode === "author" ? (
           Object.entries(othersByAuthor).map(([author, { role, image, items }]) => (
             <OthersAuthorSection key={author} authorName={author} authorRole={role} authorImage={image}
               items={items} courseId={courseId} router={router}
-              seenIds={seenIds} onView={handleView}
-              {...rowHandlers} />
+              seenIds={seenIds} onView={handleView} {...rowHandlers} />
           ))
         ) : (
           Object.entries(othersByGroup).map(([grp, items]) => (
             <OthersGroupSection key={grp} title={grp} items={items} courseId={courseId} router={router}
-              seenIds={seenIds} onView={handleView}
-              {...rowHandlers} />
+              seenIds={seenIds} onView={handleView} {...rowHandlers} />
           ))
         )}
       </div>
 
       {/* ── Modals ── */}
       {showGroupModal && (
-        <AddGroupModal onClose={() => setShowGroupModal(false)} onSave={handleSaveGroup} saving={false} />
+        <GroupNameModal title="Add Assignment Group" onClose={() => setShowGroupModal(false)}
+          onSave={handleSaveGroup} saving={false} saveLabel="Save" />
       )}
       {quickEditTarget && (
         <QuickEditModal assignment={quickEditTarget} courseId={courseId}
           onClose={() => setQuickEditTarget(null)}
           onSave={handleQuickEditSave}
-          onMoreOptions={() => {
-            router.push(`/admin/courses/${courseId}/assignments/${quickEditTarget.id}/edit`);
-            setQuickEditTarget(null);
-          }} />
+          onMoreOptions={() => { router.push(`/admin/courses/${courseId}/assignments/${quickEditTarget.id}/edit`); setQuickEditTarget(null); }} />
       )}
       {assignToTarget && (
-        <AssignToPanel assignment={assignToTarget} courseId={courseId} onClose={() => setAssignToTarget(null)} onSave={loadAssignments} />
+        <AssignToPanel assignment={assignToTarget} courseId={courseId}
+          onClose={() => setAssignToTarget(null)} onSave={loadAssignments} />
       )}
       {editGroupTarget && (
-        <EditGroupModal groupName={editGroupTarget} onClose={() => setEditGroupTarget(null)} onSave={handleEditGroupSave} saving={savingEditGroup} />
+        <GroupNameModal title="Edit Assignment Group" initialValue={editGroupTarget}
+          onClose={() => setEditGroupTarget(null)} onSave={handleEditGroupSave}
+          saving={savingEditGroup} saveLabel="Save" />
       )}
       {deleteGroupTarget && (
         <DeleteGroupModal

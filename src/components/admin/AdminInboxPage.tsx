@@ -5,7 +5,7 @@ import {
   Pencil, Reply, ReplyAll, Download, Trash2,
   MoreVertical, Search, ChevronDown, X, Send,
   Inbox, MailOpen, Clock, ArrowUpRight, Bell, Archive, UserRound,
-  ArrowLeft, RefreshCw, ChevronRight,
+  ArrowLeft, RefreshCw, ChevronRight, Menu,
 } from "lucide-react";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -121,20 +121,60 @@ const GLOBAL_CSS = `
   from { opacity: 0; transform: translateX(12px) }
   to   { opacity: 1; transform: translateX(0) }
 }
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-100%) }
+  to   { opacity: 1; transform: translateX(0) }
+}
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(100%) }
+  to   { opacity: 1; transform: translateX(0) }
+}
+@keyframes fadeInModal {
+  from { opacity: 0; transform: scale(0.97) }
+  to   { opacity: 1; transform: scale(1) }
+}
 @keyframes pulse {
   0%, 100% { opacity: 1 }
   50%       { opacity: 0.5 }
 }
+@keyframes spin { to { transform: rotate(360deg) } }
 
-* { box-sizing: border-box; }
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body { 
+  margin: 0; padding: 0;
+  -webkit-text-size-adjust: 100%;
+  touch-action: manipulation;
+}
+
+/* Prevent zoom on input focus on iOS */
+input, textarea, select {
+  font-size: 16px !important;
+}
+@media (min-width: 600px) {
+  input, textarea, select {
+    font-size: 13px !important;
+  }
+}
 
 .ibx-root {
   display: flex;
   flex-direction: column;
   height: 100%;
+  min-height: 0;
   font-family: ${FONT};
   background: ${C.bg};
   color: ${C.text};
+  position: relative;
+}
+
+/* ── Layout ── */
+.ibx-body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  position: relative;
+  min-height: 0;
 }
 
 /* ── Sidebar ── */
@@ -146,6 +186,8 @@ const GLOBAL_CSS = `
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
+  z-index: 100;
 }
 
 /* ── List panel ── */
@@ -157,6 +199,7 @@ const GLOBAL_CSS = `
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
 }
 
 /* ── Thread panel ── */
@@ -167,6 +210,7 @@ const GLOBAL_CSS = `
   overflow: hidden;
   background: ${C.surface};
   animation: slideIn 0.2s ease;
+  min-width: 0;
 }
 
 /* ── Scrollbars ── */
@@ -177,6 +221,7 @@ const GLOBAL_CSS = `
 /* ── Convo row hover ── */
 .ibx-convo-row { transition: background 0.12s; }
 .ibx-convo-row:hover { background: ${C.maroonBg} !important; }
+.ibx-convo-row:active { background: ${C.maroonMid} !important; }
 
 /* ── Shimmer skeleton ── */
 .ibx-shimmer {
@@ -197,14 +242,16 @@ const GLOBAL_CSS = `
   font-family: ${FONT};
   transition: all 0.12s;
   white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 .ibx-btn:disabled { cursor: default; opacity: 0.4; }
 
 /* ── Icon button ── */
 .ibx-icon-btn {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
   background: none;
   border: 1px solid ${C.border};
   color: ${C.textLight};
@@ -213,6 +260,9 @@ const GLOBAL_CSS = `
   border-color: ${C.maroon};
   color: ${C.maroon};
   background: ${C.maroonBg};
+}
+.ibx-icon-btn:active:not(:disabled) {
+  background: ${C.maroonMid};
 }
 
 /* ── Dropdown ── */
@@ -243,17 +293,63 @@ const GLOBAL_CSS = `
   color: ${C.maroon};
 }
 
-/* ── Mobile responsive ── */
-@media (max-width: 900px) {
-  .ibx-sidebar { display: none !important; }
-  .ibx-list-panel { width: 100% !important; border-right: none !important; }
-  .ibx-thread-panel {
-    position: fixed !important;
-    inset: 0 !important;
-    z-index: 200 !important;
-  }
+/* ── Overlay ── */
+.ibx-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 90;
+  animation: fadeIn 0.2s ease;
 }
-@media (max-width: 600px) {
+.ibx-overlay.visible { display: block; }
+
+/* ── MOBILE LAYOUT (< 768px) ── */
+@media (max-width: 767px) {
+  .ibx-sidebar {
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    transform: translateX(-100%);
+    z-index: 200;
+    box-shadow: 4px 0 24px rgba(0,0,0,0.15);
+  }
+  .ibx-sidebar.open {
+    transform: translateX(0);
+    animation: slideInLeft 0.25s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  .ibx-list-panel {
+    width: 100% !important;
+    border-right: none;
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+  }
+  .ibx-list-panel.hidden-mobile {
+    transform: translateX(-100%);
+    pointer-events: none;
+  }
+
+  .ibx-thread-panel {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    transform: translateX(100%);
+    transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+    animation: none;
+  }
+  .ibx-thread-panel.visible-mobile {
+    transform: translateX(0);
+    animation: none;
+  }
+
+  .ibx-topbar-actions { display: none !important; }
+  .ibx-compose-btn-text { display: none !important; }
+  .ibx-compose-btn { width: 42px !important; padding: 0 !important; border-radius: 12px !important; }
+  
+  .ibx-search-wrap { flex: 1 !important; }
+
   .ibx-compose-modal {
     max-width: 100% !important;
     width: 100% !important;
@@ -261,8 +357,66 @@ const GLOBAL_CSS = `
     max-height: 100% !important;
     border-radius: 0 !important;
   }
-  .ibx-compose-overlay { padding: 0 !important; align-items: stretch !important; }
-  .ibx-msg-bubble { max-width: 90% !important; }
+  .ibx-compose-overlay { 
+    padding: 0 !important; 
+    align-items: stretch !important;
+  }
+
+  .ibx-msg-bubble { max-width: 88% !important; }
+  
+  .ibx-dropdown {
+    position: fixed !important;
+    top: auto !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    max-height: 70vh;
+    border-radius: 16px 16px 0 0 !important;
+    border-bottom: none !important;
+    box-shadow: 0 -8px 40px rgba(0,0,0,0.15) !important;
+    overflow: hidden;
+    animation: slideFromBottom 0.25s cubic-bezier(0.4,0,0.2,1) !important;
+  }
+
+  .ibx-reply-area { padding: 10px 12px 16px !important; }
+  .ibx-reply-area textarea { min-height: 60px; }
+
+  .ibx-thread-header { padding: 12px 14px !important; }
+  .ibx-thread-header h2 { font-size: 14px !important; }
+  .ibx-messages-area { padding: 14px !important; gap: 12px !important; }
+}
+
+/* ── TABLET (768px - 1023px) ── */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .ibx-sidebar {
+    width: 200px;
+  }
+  .ibx-list-panel {
+    width: 280px;
+  }
+  .ibx-compose-btn-text { display: none !important; }
+  .ibx-compose-btn { width: 42px !important; padding: 0 !important; }
+}
+
+/* ── DESKTOP (>= 1024px) ── */
+@media (min-width: 1024px) {
+  .ibx-hamburger { display: none !important; }
+}
+
+@keyframes slideFromBottom {
+  from { transform: translateY(100%) }
+  to   { transform: translateY(0) }
+}
+
+/* Safe area for notched phones */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .ibx-reply-area {
+    padding-bottom: calc(14px + env(safe-area-inset-bottom)) !important;
+  }
+  .ibx-compose-footer {
+    padding-bottom: calc(12px + env(safe-area-inset-bottom)) !important;
+  }
 }
 `;
 
@@ -284,6 +438,17 @@ function initials(name?: string | null, email?: string) {
   const parts = src.trim().split(" ");
   if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   return src.slice(0, 2).toUpperCase();
+}
+
+// ── Hook: window size ─────────────────────────────────────────────────────────
+function useWindowSize() {
+  const [width, setWidth] = useState(typeof window !== "undefined" ? window.innerWidth : 1200);
+  useEffect(() => {
+    const h = () => setWidth(window.innerWidth);
+    window.addEventListener("resize", h);
+    return () => window.removeEventListener("resize", h);
+  }, []);
+  return width;
 }
 
 // ── Avatar ────────────────────────────────────────────────────────────────────
@@ -319,12 +484,12 @@ function ListSkeleton() {
   return (
     <div style={{ padding: "8px 0" }}>
       {[1, 2, 3, 4].map(i => (
-        <div key={i} style={{ display: "flex", gap: 10, padding: "12px 16px", borderBottom: `1px solid ${C.border}` }}>
-          <div style={{ width: 40, height: 40, borderRadius: "50%", flexShrink: 0 }} className="ibx-shimmer" />
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
+        <div key={i} style={{ display: "flex", gap: 10, padding: "14px 16px", borderBottom: `1px solid ${C.border}` }}>
+          <div style={{ width: 42, height: 42, borderRadius: "50%", flexShrink: 0 }} className="ibx-shimmer" />
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 7 }}>
             <div style={{ display: "flex", justifyContent: "space-between" }}>
               <Skeleton w="45%" h={13} />
-              <Skeleton w="50px" h={11} />
+              <Skeleton w="42px" h={11} />
             </div>
             <Skeleton w="70%" h={12} />
             <Skeleton w="55%" h={11} />
@@ -346,7 +511,7 @@ function RoleBadge({ role }: { role: string }) {
   };
   const s = map[role.toLowerCase()] ?? { bg: C.border, color: C.textMid };
   return (
-    <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 20, background: s.bg, color: s.color, fontFamily: FONT_MONO, letterSpacing: "0.04em", textTransform: "uppercase" }}>
+    <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 20, background: s.bg, color: s.color, fontFamily: FONT_MONO, letterSpacing: "0.04em", textTransform: "uppercase", flexShrink: 0 }}>
       {role}
     </span>
   );
@@ -375,19 +540,29 @@ function EmptyState({ mailbox }: { mailbox: string }) {
 
 // ── Sidebar Navigation ────────────────────────────────────────────────────────
 function Sidebar({
-  mailbox, onMailbox, unreadCount, courses, selectedCtx, onSelectCtx,
+  mailbox, onMailbox, unreadCount, courses, selectedCtx, onSelectCtx, onClose,
 }: {
   mailbox: string; onMailbox: (v: string) => void; unreadCount: number;
   courses: CourseOption[]; selectedCtx: CourseOption | null; onSelectCtx: (o: CourseOption | null) => void;
+  onClose?: () => void;
 }) {
   const [coursesOpen, setCoursesOpen] = useState(true);
+
+  const handleMailbox = (key: string) => {
+    onMailbox(key);
+    onClose?.();
+  };
+  const handleCtx = (o: CourseOption | null) => {
+    onSelectCtx(o);
+    onClose?.();
+  };
 
   return (
     <div className="ibx-sidebar">
       {/* Brand */}
-      <div style={{ padding: "20px 16px 14px", borderBottom: `1px solid ${C.border}` }}>
+      <div style={{ padding: "16px 14px 12px", borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <div style={{ width: 28, height: 28, borderRadius: 8, background: C.maroon, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ width: 28, height: 28, borderRadius: 8, background: C.maroon, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
             <Inbox size={14} color="#fff" />
           </div>
           <div>
@@ -395,19 +570,25 @@ function Sidebar({
             <p style={{ fontSize: 10, margin: 0, color: C.textMuted, fontFamily: FONT_MONO }}>Messaging Center</p>
           </div>
         </div>
+        {onClose && (
+          <button className="ibx-btn" onClick={onClose}
+            style={{ border: "none", background: "none", color: C.textLight, width: 28, height: 28, borderRadius: 6 }}>
+            <X size={15} />
+          </button>
+        )}
       </div>
 
       {/* Mailbox filters */}
-      <div style={{ padding: "12px 8px 8px", overflowY: "auto" }} className="ibx-scroll">
+      <div style={{ padding: "12px 8px 8px", overflowY: "auto", flex: 1 }} className="ibx-scroll">
         <p style={{ fontSize: 10, fontWeight: 700, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.1em", padding: "0 8px 6px", margin: 0 }}>Mailboxes</p>
 
         {MAILBOX_FILTERS.map(({ key, label, Icon: FIcon, color }) => {
           const active = mailbox === key;
           return (
             <button key={key} className="ibx-btn"
-              onClick={() => onMailbox(key)}
+              onClick={() => handleMailbox(key)}
               style={{
-                width: "100%", justifyContent: "flex-start", padding: "8px 10px",
+                width: "100%", justifyContent: "flex-start", padding: "9px 10px",
                 borderRadius: 8, gap: 8, fontSize: 13, fontWeight: active ? 600 : 400,
                 background: active ? C.maroonBg : "none",
                 color: active ? C.maroon : C.textMid,
@@ -416,8 +597,8 @@ function Sidebar({
               onMouseEnter={e => { if (!active) { e.currentTarget.style.background = C.maroonBg; e.currentTarget.style.color = C.maroon; } }}
               onMouseLeave={e => { if (!active) { e.currentTarget.style.background = "none"; e.currentTarget.style.color = C.textMid; } }}
             >
-              <div style={{ width: 26, height: 26, borderRadius: 6, background: active ? C.maroon + "18" : C.border, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                <FIcon size={13} color={active ? C.maroon : color} />
+              <div style={{ width: 28, height: 28, borderRadius: 6, background: active ? C.maroon + "18" : C.border, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <FIcon size={14} color={active ? C.maroon : color} />
               </div>
               <span style={{ flex: 1, textAlign: "left" }}>{label}</span>
               {key === "unread" && unreadCount > 0 && (
@@ -445,8 +626,8 @@ function Sidebar({
           {coursesOpen && (
             <div style={{ animation: "fadeIn 0.15s ease" }}>
               <button className="ibx-btn"
-                onClick={() => onSelectCtx(null)}
-                style={{ width: "100%", justifyContent: "flex-start", padding: "7px 10px", borderRadius: 8, fontSize: 12, border: "none", fontWeight: !selectedCtx ? 600 : 400, background: !selectedCtx ? C.maroonBg : "none", color: !selectedCtx ? C.maroon : C.textMid, marginBottom: 1 }}
+                onClick={() => handleCtx(null)}
+                style={{ width: "100%", justifyContent: "flex-start", padding: "8px 10px", borderRadius: 8, fontSize: 12, border: "none", fontWeight: !selectedCtx ? 600 : 400, background: !selectedCtx ? C.maroonBg : "none", color: !selectedCtx ? C.maroon : C.textMid, marginBottom: 1 }}
                 onMouseEnter={e => { if (selectedCtx) { e.currentTarget.style.background = C.maroonBg; e.currentTarget.style.color = C.maroon; } }}
                 onMouseLeave={e => { if (selectedCtx) { e.currentTarget.style.background = "none"; e.currentTarget.style.color = C.textMid; } }}
               >
@@ -454,8 +635,8 @@ function Sidebar({
               </button>
               {courses.filter(o => o.type === "course").map(o => (
                 <button key={o.id} className="ibx-btn"
-                  onClick={() => onSelectCtx(o)}
-                  style={{ width: "100%", justifyContent: "flex-start", padding: "7px 10px", borderRadius: 8, fontSize: 12, border: "none", fontWeight: selectedCtx?.id === o.id ? 600 : 400, background: selectedCtx?.id === o.id ? C.maroonBg : "none", color: selectedCtx?.id === o.id ? C.maroon : C.textMid, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 1 }}
+                  onClick={() => handleCtx(o)}
+                  style={{ width: "100%", justifyContent: "flex-start", padding: "8px 10px", borderRadius: 8, fontSize: 12, border: "none", fontWeight: selectedCtx?.id === o.id ? 600 : 400, background: selectedCtx?.id === o.id ? C.maroonBg : "none", color: selectedCtx?.id === o.id ? C.maroon : C.textMid, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 1 }}
                   onMouseEnter={e => { if (selectedCtx?.id !== o.id) { e.currentTarget.style.background = C.maroonBg; e.currentTarget.style.color = C.maroon; } }}
                   onMouseLeave={e => { if (selectedCtx?.id !== o.id) { e.currentTarget.style.background = "none"; e.currentTarget.style.color = C.textMid; } }}
                 >
@@ -533,16 +714,18 @@ function PersonPickerDropdown({
     view === "course-roles"  ? activeCourse?.name :
     view === "course-people" ? (activeRole ?? "All") : null;
 
+  const showSearch = view !== "root" && view !== "course-roles";
+
   const PersonRow = ({ u }: { u: UserResult }) => (
     <button className="ibx-btn" onClick={() => { onSelectUser(u); onClose(); }}
-      style={{ width: "100%", justifyContent: "flex-start", padding: "10px 14px", border: "none", background: "none", gap: 10, borderBottom: `1px solid ${C.border}` }}
+      style={{ width: "100%", justifyContent: "flex-start", padding: "12px 14px", border: "none", background: "none", gap: 10, borderBottom: `1px solid ${C.border}`, minHeight: 56 }}
       onMouseEnter={e => (e.currentTarget.style.background = C.maroonBg)}
       onMouseLeave={e => (e.currentTarget.style.background = "none")}
     >
-      <Avatar name={u.name} image={u.image} size={32} />
+      <Avatar name={u.name} image={u.image} size={34} />
       <div style={{ minWidth: 0, flex: 1, textAlign: "left" }}>
-        {u.name && <p style={{ fontSize: 13, fontWeight: 600, color: C.text, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{u.name}</p>}
-        <p style={{ fontSize: 11, color: C.textMuted, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{u.email}</p>
+        {u.name && <p style={{ fontSize: 14, fontWeight: 600, color: C.text, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{u.name}</p>}
+        <p style={{ fontSize: 12, color: C.textMuted, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{u.email}</p>
       </div>
       {u.role && <RoleBadge role={u.role} />}
     </button>
@@ -550,34 +733,37 @@ function PersonPickerDropdown({
 
   const NavItem = ({ label, onClick }: { label: string; onClick: () => void }) => (
     <button className="ibx-btn" onClick={onClick}
-      style={{ width: "100%", justifyContent: "space-between", padding: "11px 14px", border: "none", background: "none", fontSize: 13, fontWeight: 500, color: C.textMid, borderBottom: `1px solid ${C.border}` }}
+      style={{ width: "100%", justifyContent: "space-between", padding: "14px 14px", border: "none", background: "none", fontSize: 14, fontWeight: 500, color: C.textMid, borderBottom: `1px solid ${C.border}`, minHeight: 52 }}
       onMouseEnter={e => { e.currentTarget.style.background = C.maroonBg; e.currentTarget.style.color = C.maroon; }}
       onMouseLeave={e => { e.currentTarget.style.background = "none"; e.currentTarget.style.color = C.textMid; }}
     >
-      {label}<ChevronRight size={13} style={{ color: C.textMuted }} />
+      {label}<ChevronRight size={14} style={{ color: C.textMuted }} />
     </button>
   );
 
-  const showSearch = view !== "root" && view !== "course-roles";
-
   return (
-    <div style={{ display: "flex", flexDirection: "column", maxHeight: 380, overflow: "hidden" }}>
+    <div style={{ display: "flex", flexDirection: "column", maxHeight: "70vh", overflow: "hidden" }}>
+      {/* Mobile drag handle */}
+      <div style={{ display: "flex", justifyContent: "center", padding: "10px 0 4px" }}>
+        <div style={{ width: 36, height: 4, borderRadius: 2, background: C.border }} />
+      </div>
+
       {/* Breadcrumb / back */}
       {view !== "root" && (
         <button className="ibx-btn" onClick={goBack}
-          style={{ padding: "10px 14px", background: C.maroon, border: "none", color: "#fff", fontSize: 13, fontWeight: 600, gap: 6, justifyContent: "flex-start", borderBottom: `1px solid ${C.maroonDark}` }}
+          style={{ padding: "12px 14px", background: C.maroon, border: "none", color: "#fff", fontSize: 14, fontWeight: 600, gap: 6, justifyContent: "flex-start", borderBottom: `1px solid ${C.maroonDark}` }}
         >
-          <ArrowLeft size={13} />{breadcrumb ?? "Back"}
+          <ArrowLeft size={14} />{breadcrumb ?? "Back"}
         </button>
       )}
       {showSearch && (
-        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderBottom: `1px solid ${C.border}`, background: C.surfaceAlt }}>
-          <Search size={13} style={{ color: C.textMuted, flexShrink: 0 }} />
+        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", borderBottom: `1px solid ${C.border}`, background: C.surfaceAlt }}>
+          <Search size={14} style={{ color: C.textMuted, flexShrink: 0 }} />
           <input ref={inputRef} value={query} onChange={e => setQuery(e.target.value)}
             placeholder="Search…"
-            style={{ flex: 1, border: "none", outline: "none", fontSize: 13, fontFamily: FONT, color: C.text, background: "transparent" }}
+            style={{ flex: 1, border: "none", outline: "none", fontFamily: FONT, color: C.text, background: "transparent" }}
           />
-          {query && <button className="ibx-btn" onClick={() => setQuery("")} style={{ border: "none", background: "none", color: C.textMuted, width: 18, height: 18 }}><X size={12} /></button>}
+          {query && <button className="ibx-btn" onClick={() => setQuery("")} style={{ border: "none", background: "none", color: C.textMuted, width: 20, height: 20 }}><X size={13} /></button>}
         </div>
       )}
       <div style={{ overflowY: "auto", flex: 1 }} className="ibx-scroll">
@@ -586,7 +772,7 @@ function PersonPickerDropdown({
           <NavItem label="All Users" onClick={() => { setView("users"); setQuery(""); fetchUsers(""); }} />
         </>)}
         {view === "courses" && (filteredCourses.length === 0
-          ? <p style={{ fontSize: 12, color: C.textMuted, padding: 14, margin: 0 }}>No courses found.</p>
+          ? <p style={{ fontSize: 13, color: C.textMuted, padding: 16, margin: 0 }}>No courses found.</p>
           : filteredCourses.filter(o => o.type === "course").map(o => (
               <NavItem key={o.id} label={o.name} onClick={() => { setActiveCourse(o); setView("course-roles"); setQuery(""); }} />
             ))
@@ -594,8 +780,8 @@ function PersonPickerDropdown({
         {view === "course-roles" && ["Teachers", "Staff", "Dean"].map(role => (
           <NavItem key={role} label={role} onClick={() => { setActiveRole(role); setView("course-people"); setQuery(""); setAllPeople([]); }} />
         ))}
-        {view === "course-people" && (loading ? <div style={{ padding: 16 }}><Skeleton w="60%" h={13} mb={8} /><Skeleton w="80%" h={12} /></div> : people.length === 0 ? <p style={{ fontSize: 12, color: C.textMuted, padding: 14, margin: 0 }}>No people found.</p> : people.map(u => <PersonRow key={u.id} u={u} />))}
-        {view === "users" && (loading ? <div style={{ padding: 16 }}><Skeleton w="60%" h={13} mb={8} /><Skeleton w="80%" h={12} /></div> : users.length === 0 ? <p style={{ fontSize: 12, color: C.textMuted, padding: 14, margin: 0 }}>No users found.</p> : users.map(u => <PersonRow key={u.id} u={u} />))}
+        {view === "course-people" && (loading ? <div style={{ padding: 16 }}><Skeleton w="60%" h={14} mb={8} /><Skeleton w="80%" h={12} /></div> : people.length === 0 ? <p style={{ fontSize: 13, color: C.textMuted, padding: 16, margin: 0 }}>No people found.</p> : people.map(u => <PersonRow key={u.id} u={u} />))}
+        {view === "users" && (loading ? <div style={{ padding: 16 }}><Skeleton w="60%" h={14} mb={8} /><Skeleton w="80%" h={12} /></div> : users.length === 0 ? <p style={{ fontSize: 13, color: C.textMuted, padding: 16, margin: 0 }}>No users found.</p> : users.map(u => <PersonRow key={u.id} u={u} />))}
       </div>
     </div>
   );
@@ -607,25 +793,25 @@ function ConvoRow({ convo, selected, onSelect }: { convo: Conversation; selected
   return (
     <div className="ibx-convo-row" onClick={onSelect}
       style={{
-        display: "flex", alignItems: "flex-start", gap: 10, padding: "12px 16px",
+        display: "flex", alignItems: "flex-start", gap: 10, padding: "14px 16px",
         background: selected ? C.maroonBg : C.surface,
         borderBottom: `1px solid ${C.border}`,
         cursor: "pointer",
         borderLeft: selected ? `3px solid ${C.maroon}` : "3px solid transparent",
         position: "relative",
-        transition: "background 0.1s",
+        minHeight: 72,
       }}
     >
       {/* Unread dot */}
-      <div style={{ position: "absolute", left: selected ? 14 : 10, top: 16, width: 6, height: 6, borderRadius: "50%", background: convo.unread ? C.unread : "transparent", flexShrink: 0, transition: "all 0.15s" }} />
+      <div style={{ position: "absolute", left: selected ? 14 : 10, top: 18, width: 6, height: 6, borderRadius: "50%", background: convo.unread ? C.unread : "transparent", flexShrink: 0, transition: "all 0.15s" }} />
 
       <div style={{ paddingLeft: 10, flexShrink: 0 }}>
-        <Avatar name={convo.participants[0]?.name} image={convo.participants[0]?.image} size={38} />
+        <Avatar name={convo.participants[0]?.name} image={convo.participants[0]?.image} size={40} />
       </div>
 
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", gap: 8, marginBottom: 2 }}>
-          <span style={{ fontSize: 13, fontWeight: convo.unread ? 700 : 500, color: convo.unread ? C.text : C.textMid, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", gap: 8, marginBottom: 3 }}>
+          <span style={{ fontSize: 14, fontWeight: convo.unread ? 700 : 500, color: convo.unread ? C.text : C.textMid, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {displayName}
           </span>
           <span style={{ fontSize: 11, color: C.textMuted, flexShrink: 0, fontFamily: FONT_MONO }}>
@@ -690,14 +876,13 @@ function ThreadViewer({ convoId, currentUserId, onBack, onArchive }: {
         <div style={{ width: 40, height: 40, borderRadius: "50%", border: `2px solid ${C.maroonMid}`, borderTopColor: C.maroon, animation: "spin 0.8s linear infinite" }} />
         <p style={{ fontSize: 13, color: C.textMuted, margin: 0 }}>Loading conversation…</p>
       </div>
-      <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
     </div>
   );
 
   if (error || !convo) return (
     <div className="ibx-thread-panel" style={{ alignItems: "center", justifyContent: "center", gap: 12 }}>
       <p style={{ color: C.danger, fontSize: 13 }}>{error ?? "Conversation not found."}</p>
-      <button className="ibx-btn" onClick={onBack} style={{ border: `1px solid ${C.border}`, borderRadius: 8, padding: "8px 16px", fontSize: 13, background: "none", color: C.textMid, gap: 6 }}>
+      <button className="ibx-btn" onClick={onBack} style={{ border: `1px solid ${C.border}`, borderRadius: 8, padding: "10px 18px", fontSize: 13, background: "none", color: C.textMid, gap: 6 }}>
         <ArrowLeft size={13} /> Back
       </button>
     </div>
@@ -708,18 +893,18 @@ function ThreadViewer({ convoId, currentUserId, onBack, onArchive }: {
   return (
     <div className="ibx-thread-panel">
       {/* ── Thread header ── */}
-      <div style={{ padding: "14px 20px", borderBottom: `1px solid ${C.border}`, background: C.surface, flexShrink: 0 }}>
-        <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
-          <button className="ibx-btn ibx-icon-btn" onClick={onBack} style={{ flexShrink: 0, marginTop: 2 }}>
-            <ArrowLeft size={14} />
+      <div className="ibx-thread-header" style={{ padding: "14px 18px", borderBottom: `1px solid ${C.border}`, background: C.surface, flexShrink: 0 }}>
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+          <button className="ibx-btn ibx-icon-btn" onClick={onBack} style={{ flexShrink: 0, marginTop: 1 }}>
+            <ArrowLeft size={15} />
           </button>
           <div style={{ flex: 1, minWidth: 0 }}>
             <h2 style={{ fontSize: 15, fontWeight: 700, color: C.text, margin: "0 0 8px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
               {convo.subject}
             </h2>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
               {others.map(p => (
-                <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 6, background: C.surfaceAlt, border: `1px solid ${C.border}`, borderRadius: 20, padding: "3px 10px 3px 5px" }}>
+                <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 5, background: C.surfaceAlt, border: `1px solid ${C.border}`, borderRadius: 20, padding: "3px 10px 3px 5px" }}>
                   <Avatar name={p.user.name} image={p.user.image} size={20} />
                   <span style={{ fontSize: 12, color: C.textMid, fontWeight: 500 }}>{p.user.name ?? "Unknown"}</span>
                   <RoleBadge role={p.user.role} />
@@ -727,26 +912,26 @@ function ThreadViewer({ convoId, currentUserId, onBack, onArchive }: {
               ))}
             </div>
           </div>
-          <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+          <div style={{ display: "flex", gap: 5, flexShrink: 0 }}>
             <button className="ibx-btn ibx-icon-btn" title="Archive"
               onClick={async () => { await fetch(`${API_BASE}/${convoId}`, { method: "DELETE" }); onArchive(convoId); onBack(); }}
             >
-              <Archive size={13} />
+              <Archive size={14} />
             </button>
-            <button className="ibx-btn ibx-icon-btn" title="More options"><MoreVertical size={13} /></button>
+            <button className="ibx-btn ibx-icon-btn" title="More options"><MoreVertical size={14} /></button>
           </div>
         </div>
       </div>
 
       {/* ── Messages ── */}
-      <div className="ibx-scroll" style={{ flex: 1, overflowY: "auto", padding: "20px", display: "flex", flexDirection: "column", gap: 16, background: C.bg }}>
+      <div className="ibx-scroll ibx-messages-area" style={{ flex: 1, overflowY: "auto", padding: "18px 18px", display: "flex", flexDirection: "column", gap: 16, background: C.bg }}>
         {convo.messages.map((msg) => {
           const isMine = msg.sender.id === currentUserId;
           return (
-            <div key={msg.id} style={{ display: "flex", flexDirection: isMine ? "row-reverse" : "row", gap: 10, alignItems: "flex-end", animation: "fadeIn 0.2s ease" }}>
-              <Avatar name={msg.sender.name} image={msg.sender.image} size={30} />
-              <div className="ibx-msg-bubble" style={{ maxWidth: "68%", display: "flex", flexDirection: "column", gap: 4, alignItems: isMine ? "flex-end" : "flex-start" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <div key={msg.id} style={{ display: "flex", flexDirection: isMine ? "row-reverse" : "row", gap: 8, alignItems: "flex-end", animation: "fadeIn 0.2s ease" }}>
+              <Avatar name={msg.sender.name} image={msg.sender.image} size={28} />
+              <div className="ibx-msg-bubble" style={{ maxWidth: "70%", display: "flex", flexDirection: "column", gap: 4, alignItems: isMine ? "flex-end" : "flex-start" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
                   {!isMine && <span style={{ fontSize: 12, fontWeight: 600, color: C.textMid }}>{msg.sender.name ?? "Unknown"}</span>}
                   {!isMine && <RoleBadge role={msg.sender.role} />}
                   <span style={{ fontSize: 10, color: C.textMuted, fontFamily: FONT_MONO }}>{timeAgo(msg.createdAt)}</span>
@@ -755,8 +940,8 @@ function ThreadViewer({ convoId, currentUserId, onBack, onArchive }: {
                   background: isMine ? C.maroon : C.surface,
                   color: isMine ? "#fff" : C.text,
                   borderRadius: isMine ? "14px 14px 3px 14px" : "14px 14px 14px 3px",
-                  padding: "11px 15px",
-                  fontSize: 13, lineHeight: 1.65,
+                  padding: "11px 14px",
+                  fontSize: 14, lineHeight: 1.65,
                   border: isMine ? "none" : `1px solid ${C.border}`,
                   boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
                   whiteSpace: "pre-wrap", wordBreak: "break-word",
@@ -767,7 +952,7 @@ function ThreadViewer({ convoId, currentUserId, onBack, onArchive }: {
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
                     {msg.attachments.map(a => (
                       <a key={a.id} href={a.url} target="_blank" rel="noreferrer"
-                        style={{ display: "inline-flex", alignItems: "center", gap: 5, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "4px 10px", fontSize: 11, color: C.textMid, textDecoration: "none", fontFamily: FONT_MONO }}>
+                        style={{ display: "inline-flex", alignItems: "center", gap: 5, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "5px 10px", fontSize: 11, color: C.textMid, textDecoration: "none", fontFamily: FONT_MONO }}>
                         📎 {a.name}
                       </a>
                     ))}
@@ -781,7 +966,7 @@ function ThreadViewer({ convoId, currentUserId, onBack, onArchive }: {
       </div>
 
       {/* ── Reply area ── */}
-      <div style={{ padding: "14px 20px", borderTop: `1px solid ${C.border}`, background: C.surface, flexShrink: 0 }}>
+      <div className="ibx-reply-area" style={{ padding: "12px 16px 14px", borderTop: `1px solid ${C.border}`, background: C.surface, flexShrink: 0 }}>
         {error && <p style={{ fontSize: 12, color: C.danger, margin: "0 0 8px" }}>{error}</p>}
         <div style={{ border: `1px solid ${C.border}`, borderRadius: 12, overflow: "hidden", background: C.surfaceAlt, transition: "border-color 0.15s" }}
           onFocusCapture={e => (e.currentTarget.style.borderColor = C.maroon)}
@@ -789,17 +974,17 @@ function ThreadViewer({ convoId, currentUserId, onBack, onArchive }: {
         >
           <textarea value={reply} onChange={e => setReply(e.target.value)}
             onKeyDown={e => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) sendReply(); }}
-            placeholder="Write a reply…  ⌘↵ to send"
+            placeholder="Write a reply…"
             rows={3}
-            style={{ width: "100%", border: "none", background: "transparent", padding: "12px 14px 8px", fontSize: 13, fontFamily: FONT, resize: "none", outline: "none", lineHeight: 1.6, color: C.text, display: "block" }}
+            style={{ width: "100%", border: "none", background: "transparent", padding: "12px 14px 8px", fontFamily: FONT, resize: "none", outline: "none", lineHeight: 1.6, color: C.text, display: "block" }}
           />
           <div style={{ display: "flex", justifyContent: "flex-end", padding: "6px 10px 10px" }}>
             <button className="ibx-btn" onClick={sendReply} disabled={sending || !reply.trim()}
-              style={{ padding: "8px 18px", borderRadius: 8, fontSize: 13, fontWeight: 600, color: "#fff", background: sending || !reply.trim() ? C.borderStrong : C.maroon, border: "none", gap: 6 }}
+              style={{ padding: "9px 20px", borderRadius: 8, fontSize: 14, fontWeight: 600, color: "#fff", background: sending || !reply.trim() ? C.borderStrong : C.maroon, border: "none", gap: 6 }}
               onMouseEnter={e => { if (!sending && reply.trim()) e.currentTarget.style.background = C.maroonDark; }}
               onMouseLeave={e => { if (!sending && reply.trim()) e.currentTarget.style.background = C.maroon; }}
             >
-              <Send size={13} />{sending ? "Sending…" : "Send Reply"}
+              <Send size={14} />{sending ? "Sending…" : "Send Reply"}
             </button>
           </div>
         </div>
@@ -848,45 +1033,50 @@ function ComposeModal({ initialRecipient, courseOptions, onClose, onSent }: {
     } catch (e) { setError((e as Error).message); setSending(false); }
   };
 
-  const inputCls: React.CSSProperties = { width: "100%", border: `1px solid ${C.border}`, borderRadius: 8, padding: "9px 13px", fontSize: 13, fontFamily: FONT, outline: "none", color: C.text, background: C.surfaceAlt, boxSizing: "border-box", transition: "border-color .15s" };
+  const inputCls: React.CSSProperties = {
+    width: "100%", border: `1px solid ${C.border}`, borderRadius: 8,
+    padding: "11px 13px", fontFamily: FONT, outline: "none",
+    color: C.text, background: C.surfaceAlt, boxSizing: "border-box",
+    transition: "border-color .15s",
+  };
 
   return (
-    <div className="ibx-compose-overlay" style={{ position: "fixed", inset: 0, zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)", padding: 16 }}>
-      <div className="ibx-compose-modal" style={{ background: C.surface, borderRadius: 14, width: "100%", maxWidth: 540, maxHeight: "88vh", display: "flex", flexDirection: "column", boxShadow: "0 24px 64px rgba(0,0,0,0.18), 0 8px 24px rgba(0,0,0,0.08)", overflow: "hidden", animation: "fadeIn 0.2s ease" }}>
+    <div className="ibx-compose-overlay" style={{ position: "fixed", inset: 0, zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.45)", backdropFilter: "blur(4px)", padding: 16 }}>
+      <div className="ibx-compose-modal" style={{ background: C.surface, borderRadius: 14, width: "100%", maxWidth: 540, maxHeight: "92vh", display: "flex", flexDirection: "column", boxShadow: "0 24px 64px rgba(0,0,0,0.18), 0 8px 24px rgba(0,0,0,0.08)", overflow: "hidden", animation: "fadeInModal 0.2s ease" }}>
 
         {/* Header */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", borderBottom: `1px solid ${C.border}`, background: C.maroon }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 18px", borderBottom: `1px solid ${C.border}`, background: C.maroon, flexShrink: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <Pencil size={15} color="rgba(255,255,255,0.8)" />
-            <span style={{ fontSize: 14, fontWeight: 700, color: "#fff" }}>New Message</span>
+            <span style={{ fontSize: 15, fontWeight: 700, color: "#fff" }}>New Message</span>
           </div>
-          <button className="ibx-btn" onClick={onClose} style={{ border: "none", background: "rgba(255,255,255,0.15)", color: "#fff", width: 28, height: 28, borderRadius: 6, fontSize: 16 }}>×</button>
+          <button className="ibx-btn" onClick={onClose} style={{ border: "none", background: "rgba(255,255,255,0.15)", color: "#fff", width: 32, height: 32, borderRadius: 8, fontSize: 18 }}>×</button>
         </div>
 
-        <div style={{ flex: 1, overflowY: "auto", padding: "18px 20px", display: "flex", flexDirection: "column", gap: 14 }} className="ibx-scroll">
+        <div style={{ flex: 1, overflowY: "auto", padding: "16px 18px", display: "flex", flexDirection: "column", gap: 14 }} className="ibx-scroll">
 
           {/* Recipients */}
           <div>
-            <label style={{ fontSize: 11, fontWeight: 700, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 6 }}>
+            <label style={{ fontSize: 11, fontWeight: 700, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 7 }}>
               To <span style={{ color: C.maroon }}>*</span>
             </label>
             <div ref={pickerRef} style={{ position: "relative" }}>
-              <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 6, border: `1px solid ${pickerOpen ? C.maroon : C.border}`, borderRadius: 8, padding: "7px 10px", minHeight: 40, background: C.surfaceAlt, cursor: "text" }}
+              <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 6, border: `1px solid ${pickerOpen ? C.maroon : C.border}`, borderRadius: 8, padding: "8px 10px", minHeight: 44, background: C.surfaceAlt, cursor: "text" }}
                 onClick={() => setPickerOpen(true)}
               >
                 {recipients.map(r => (
                   <span key={r.id} className="ibx-chip">
                     {r.name ?? r.email}
-                    <button className="ibx-btn" onClick={e => { e.stopPropagation(); removeRecipient(r.id); }} style={{ border: "none", background: "none", color: C.maroon, padding: 0, width: 14, height: 14, fontSize: 14, lineHeight: 1 }}>×</button>
+                    <button className="ibx-btn" onClick={e => { e.stopPropagation(); removeRecipient(r.id); }} style={{ border: "none", background: "none", color: C.maroon, padding: 0, width: 16, height: 16, fontSize: 16, lineHeight: 1 }}>×</button>
                   </span>
                 ))}
                 <div style={{ display: "flex", alignItems: "center", gap: 6, flex: 1, minWidth: 100 }}>
-                  <Search size={12} style={{ color: C.textMuted }} />
-                  <span style={{ fontSize: 13, color: C.textMuted }}>{recipients.length === 0 ? "Search or browse recipients…" : "Add more…"}</span>
+                  <Search size={13} style={{ color: C.textMuted }} />
+                  <span style={{ fontSize: 14, color: C.textMuted }}>{recipients.length === 0 ? "Search or browse recipients…" : "Add more…"}</span>
                 </div>
                 <button className="ibx-btn" onClick={e => { e.stopPropagation(); setPickerOpen(v => !v); }}
-                  style={{ border: `1px solid ${pickerOpen ? C.maroon : C.border}`, borderRadius: 6, background: pickerOpen ? C.maroonBg : "none", color: pickerOpen ? C.maroon : C.textLight, width: 28, height: 28 }}>
-                  <UserRound size={13} />
+                  style={{ border: `1px solid ${pickerOpen ? C.maroon : C.border}`, borderRadius: 6, background: pickerOpen ? C.maroonBg : "none", color: pickerOpen ? C.maroon : C.textLight, width: 30, height: 30 }}>
+                  <UserRound size={14} />
                 </button>
               </div>
               {pickerOpen && (
@@ -899,8 +1089,8 @@ function ComposeModal({ initialRecipient, courseOptions, onClose, onSent }: {
 
           {/* Course + Individual row */}
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-            <div style={{ flex: 1, minWidth: 160 }}>
-              <label style={{ fontSize: 11, fontWeight: 700, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 6 }}>Course (optional)</label>
+            <div style={{ flex: 1, minWidth: 140 }}>
+              <label style={{ fontSize: 11, fontWeight: 700, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 7 }}>Course (optional)</label>
               <select value={selectedCourse?.id ?? ""} onChange={e => {
                 const opt = courseOptions.find(o => o.id === e.target.value) ?? null;
                 setSelectedCourse(opt);
@@ -910,8 +1100,8 @@ function ComposeModal({ initialRecipient, courseOptions, onClose, onSent }: {
               </select>
             </div>
             <div style={{ display: "flex", alignItems: "flex-end", paddingBottom: 2 }}>
-              <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: 13, color: C.textMid, fontFamily: FONT, padding: "9px 0" }}>
-                <input type="checkbox" checked={individual} onChange={e => setIndividual(e.target.checked)} style={{ width: 15, height: 15, accentColor: C.maroon, cursor: "pointer" }} />
+              <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: 14, color: C.textMid, fontFamily: FONT, padding: "11px 0" }}>
+                <input type="checkbox" checked={individual} onChange={e => setIndividual(e.target.checked)} style={{ width: 16, height: 16, accentColor: C.maroon, cursor: "pointer" }} />
                 Individual messages
               </label>
             </div>
@@ -919,7 +1109,7 @@ function ComposeModal({ initialRecipient, courseOptions, onClose, onSent }: {
 
           {/* Subject */}
           <div>
-            <label style={{ fontSize: 11, fontWeight: 700, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 6 }}>Subject</label>
+            <label style={{ fontSize: 11, fontWeight: 700, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 7 }}>Subject</label>
             <input value={subject} onChange={e => setSubject(e.target.value)} placeholder="Message subject…"
               style={inputCls}
               onFocus={e => (e.currentTarget.style.borderColor = C.maroon)}
@@ -929,7 +1119,7 @@ function ComposeModal({ initialRecipient, courseOptions, onClose, onSent }: {
 
           {/* Body */}
           <div style={{ flex: 1 }}>
-            <label style={{ fontSize: 11, fontWeight: 700, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 6 }}>
+            <label style={{ fontSize: 11, fontWeight: 700, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 7 }}>
               Message <span style={{ color: C.maroon }}>*</span>
             </label>
             <textarea value={body} onChange={e => setBody(e.target.value)} rows={6}
@@ -944,25 +1134,25 @@ function ComposeModal({ initialRecipient, courseOptions, onClose, onSent }: {
           {attachments.length > 0 && (
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
               {attachments.map((f, i) => (
-                <span key={i} style={{ display: "inline-flex", alignItems: "center", gap: 4, background: C.border, borderRadius: 8, padding: "4px 10px", fontSize: 12, color: C.textMid, fontFamily: FONT_MONO }}>
+                <span key={i} style={{ display: "inline-flex", alignItems: "center", gap: 4, background: C.border, borderRadius: 8, padding: "5px 10px", fontSize: 12, color: C.textMid, fontFamily: FONT_MONO }}>
                   📎 {f.name}
-                  <button className="ibx-btn" onClick={() => setAttachments(p => p.filter((_, j) => j !== i))} style={{ border: "none", background: "none", color: C.textMuted, padding: 0, fontSize: 14, width: 14, height: 14 }}>×</button>
+                  <button className="ibx-btn" onClick={() => setAttachments(p => p.filter((_, j) => j !== i))} style={{ border: "none", background: "none", color: C.textMuted, padding: 0, fontSize: 16, width: 16, height: 16 }}>×</button>
                 </span>
               ))}
             </div>
           )}
 
           {error && (
-            <div style={{ background: "#FEF2F2", border: `1px solid #FECACA`, borderRadius: 8, padding: "10px 14px", fontSize: 13, color: C.danger }}>
+            <div style={{ background: "#FEF2F2", border: `1px solid #FECACA`, borderRadius: 8, padding: "10px 14px", fontSize: 14, color: C.danger }}>
               {error}
             </div>
           )}
         </div>
 
         {/* Footer */}
-        <div style={{ display: "flex", alignItems: "center", padding: "12px 20px", borderTop: `1px solid ${C.border}`, background: C.surfaceAlt, gap: 8 }}>
-          <button className="ibx-btn ibx-icon-btn" title="Add attachment" onClick={() => fileRef.current?.click()}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66L9.41 17.41a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+        <div className="ibx-compose-footer" style={{ display: "flex", alignItems: "center", padding: "12px 18px", borderTop: `1px solid ${C.border}`, background: C.surfaceAlt, gap: 8, flexShrink: 0 }}>
+          <button className="ibx-btn ibx-icon-btn" title="Add attachment" onClick={() => fileRef.current?.click()} style={{ width: 38, height: 38 }}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66L9.41 17.41a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
           </button>
           <input ref={fileRef} type="file" multiple style={{ display: "none" }} onChange={e => { if (e.target.files) setAttachments(p => [...p, ...Array.from(e.target.files!)]); }} />
 
@@ -972,28 +1162,31 @@ function ComposeModal({ initialRecipient, courseOptions, onClose, onSent }: {
           </span>
 
           <button className="ibx-btn" onClick={onClose}
-            style={{ padding: "8px 16px", borderRadius: 8, fontSize: 13, fontWeight: 500, color: C.textMid, border: `1px solid ${C.border}`, background: "none" }}
+            style={{ padding: "9px 16px", borderRadius: 8, fontSize: 14, fontWeight: 500, color: C.textMid, border: `1px solid ${C.border}`, background: "none" }}
             onMouseEnter={e => { e.currentTarget.style.borderColor = C.maroon; e.currentTarget.style.color = C.maroon; }}
             onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textMid; }}
           >
             Cancel
           </button>
           <button className="ibx-btn" onClick={handleSend} disabled={sending || recipients.length === 0 || !body.trim()}
-            style={{ padding: "8px 20px", borderRadius: 8, fontSize: 13, fontWeight: 700, color: "#fff", background: sending || recipients.length === 0 || !body.trim() ? C.borderStrong : C.maroon, border: "none", gap: 6 }}
+            style={{ padding: "9px 20px", borderRadius: 8, fontSize: 14, fontWeight: 700, color: "#fff", background: sending || recipients.length === 0 || !body.trim() ? C.borderStrong : C.maroon, border: "none", gap: 6 }}
             onMouseEnter={e => { if (!sending && recipients.length > 0 && body.trim()) e.currentTarget.style.background = C.maroonDark; }}
             onMouseLeave={e => { if (!sending && recipients.length > 0 && body.trim()) e.currentTarget.style.background = C.maroon; }}
           >
-            <Send size={13} />{sending ? "Sending…" : "Send Message"}
+            <Send size={14} />{sending ? "Sending…" : "Send"}
           </button>
         </div>
       </div>
-      <style>{`@keyframes fadeIn { from { opacity:0; transform: scale(0.97) } to { opacity:1; transform: scale(1) } }`}</style>
     </div>
   );
 }
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function InboxPage({ currentUserId: propUserId }: { currentUserId?: string }) {
+  const windowWidth = useWindowSize();
+  const isMobile = windowWidth < 768;
+  const isTablet = windowWidth >= 768 && windowWidth < 1024;
+
   const [currentUserId, setCurrentUserId] = useState(propUserId ?? "");
   const [courses, setCourses] = useState<CourseOption[]>([]);
   const [selectedCtx, setSelectedCtx] = useState<CourseOption | null>(null);
@@ -1006,6 +1199,7 @@ export default function InboxPage({ currentUserId: propUserId }: { currentUserId
   const [searchQuery, setSearchQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const pickerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -1062,29 +1256,45 @@ export default function InboxPage({ currentUserId: propUserId }: { currentUserId
   const unreadCount = convos.filter(c => c.unread).length;
   const currentFilter = MAILBOX_FILTERS.find(f => f.key === mailbox)!;
 
+  const showThread = !!activeConvoId && !!currentUserId;
+
   return (
     <div className="ibx-root">
       <style>{GLOBAL_CSS}</style>
 
+      {/* Overlay for mobile sidebar */}
+      <div
+        className={`ibx-overlay${sidebarOpen ? " visible" : ""}`}
+        onClick={() => setSidebarOpen(false)}
+        style={{ zIndex: 150 }}
+      />
+
       {/* ── Top bar ── */}
-      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 16px", borderBottom: `1px solid ${C.border}`, background: C.surface, flexShrink: 0, zIndex: 10 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", borderBottom: `1px solid ${C.border}`, background: C.surface, flexShrink: 0, zIndex: 10 }}>
+
+        {/* Hamburger (mobile/tablet) */}
+        <button className="ibx-btn ibx-icon-btn ibx-hamburger" onClick={() => setSidebarOpen(true)}
+          style={{ width: 40, height: 40, borderRadius: 10, flexShrink: 0 }}>
+          <Menu size={18} />
+        </button>
+
         {/* Search */}
-        <div style={{ flex: 1, maxWidth: 480, display: "flex", alignItems: "center", gap: 8, background: C.surfaceAlt, border: `1px solid ${C.border}`, borderRadius: 10, padding: "0 12px", height: 38, transition: "border-color 0.15s" }}
+        <div className="ibx-search-wrap" style={{ flex: 1, maxWidth: 480, display: "flex", alignItems: "center", gap: 8, background: C.surfaceAlt, border: `1px solid ${C.border}`, borderRadius: 10, padding: "0 12px", height: 40, transition: "border-color 0.15s" }}
           onFocusCapture={e => (e.currentTarget.style.borderColor = C.maroon)}
           onBlurCapture={e => (e.currentTarget.style.borderColor = C.border)}
         >
           <Search size={14} style={{ color: C.textMuted, flexShrink: 0 }} />
           <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
             placeholder="Search conversations…"
-            style={{ flex: 1, border: "none", outline: "none", fontSize: 13, fontFamily: FONT, color: C.text, background: "transparent" }}
+            style={{ flex: 1, border: "none", outline: "none", fontFamily: FONT, color: C.text, background: "transparent" }}
           />
-          {searchQuery && <button className="ibx-btn" onClick={() => setSearchQuery("")} style={{ border: "none", background: "none", color: C.textMuted, width: 16, height: 16, padding: 0 }}><X size={13} /></button>}
+          {searchQuery && <button className="ibx-btn" onClick={() => setSearchQuery("")} style={{ border: "none", background: "none", color: C.textMuted, width: 18, height: 18, padding: 0 }}><X size={14} /></button>}
         </div>
 
         {/* Recipient picker trigger */}
-        <div ref={pickerRef} style={{ position: "relative" }}>
-          <button className="ibx-btn ibx-icon-btn" title="Find recipient" onClick={() => setPickerOpen(v => !v)} style={{ width: 38, height: 38, borderRadius: 10 }}>
-            <UserRound size={15} />
+        <div ref={pickerRef} style={{ position: "relative", flexShrink: 0 }}>
+          <button className="ibx-btn ibx-icon-btn" title="Find recipient" onClick={() => setPickerOpen(v => !v)}>
+            <UserRound size={16} />
           </button>
           {pickerOpen && (
             <div className="ibx-dropdown" style={{ right: 0, left: "auto", width: 300 }}>
@@ -1097,27 +1307,29 @@ export default function InboxPage({ currentUserId: propUserId }: { currentUserId
           )}
         </div>
 
-        <button className="ibx-btn ibx-icon-btn" title="Refresh" onClick={() => fetchConvos(true)} style={{ width: 38, height: 38, borderRadius: 10 }}>
-          <RefreshCw size={14} style={{ animation: refreshing ? "spin 1s linear infinite" : "none" }} />
+        <button className="ibx-btn ibx-icon-btn" title="Refresh" onClick={() => fetchConvos(true)}
+          style={{ flexShrink: 0 }}>
+          <RefreshCw size={15} style={{ animation: refreshing ? "spin 1s linear infinite" : "none" }} />
         </button>
 
-        {/* Action buttons (active convo) */}
+        {/* Action buttons (active convo) — hidden on mobile */}
         {activeConvoId && (
-          <div style={{ display: "flex", gap: 6, paddingLeft: 4, borderLeft: `1px solid ${C.border}` }}>
-            <button className="ibx-btn ibx-icon-btn" title="Reply" style={{ width: 38, height: 38, borderRadius: 10 }}><Reply size={14} /></button>
-            <button className="ibx-btn ibx-icon-btn" title="Reply All" style={{ width: 38, height: 38, borderRadius: 10 }}><ReplyAll size={14} /></button>
-            <button className="ibx-btn ibx-icon-btn" title="Archive" onClick={() => handleArchive(activeConvoId)} style={{ width: 38, height: 38, borderRadius: 10 }}><Download size={14} /></button>
-            <button className="ibx-btn ibx-icon-btn" title="Delete" onClick={() => handleArchive(activeConvoId)} style={{ width: 38, height: 38, borderRadius: 10 }}><Trash2 size={14} /></button>
+          <div className="ibx-topbar-actions" style={{ display: "flex", gap: 5, paddingLeft: 4, borderLeft: `1px solid ${C.border}` }}>
+            <button className="ibx-btn ibx-icon-btn" title="Reply"><Reply size={15} /></button>
+            <button className="ibx-btn ibx-icon-btn" title="Reply All"><ReplyAll size={15} /></button>
+            <button className="ibx-btn ibx-icon-btn" title="Archive" onClick={() => handleArchive(activeConvoId)}><Download size={15} /></button>
+            <button className="ibx-btn ibx-icon-btn" title="Delete" onClick={() => handleArchive(activeConvoId)}><Trash2 size={15} /></button>
           </div>
         )}
 
         {/* Compose */}
-        <button className="ibx-btn" onClick={() => { setComposeFor(undefined); setComposing(true); }}
-          style={{ padding: "0 16px", height: 38, borderRadius: 10, background: C.maroon, color: "#fff", border: "none", fontSize: 13, fontWeight: 600, gap: 7, flexShrink: 0, position: "relative" }}
+        <button className="ibx-btn ibx-compose-btn" onClick={() => { setComposeFor(undefined); setComposing(true); }}
+          style={{ padding: "0 16px", height: 40, borderRadius: 10, background: C.maroon, color: "#fff", border: "none", fontSize: 14, fontWeight: 600, gap: 7, flexShrink: 0, position: "relative" }}
           onMouseEnter={e => (e.currentTarget.style.background = C.maroonDark)}
           onMouseLeave={e => (e.currentTarget.style.background = C.maroon)}
         >
-          <Pencil size={13} />Compose
+          <Pencil size={14} />
+          <span className="ibx-compose-btn-text">Compose</span>
           {unreadCount > 0 && (
             <span style={{ position: "absolute", top: -6, right: -6, background: C.danger, color: "#fff", fontSize: 9, fontWeight: 800, borderRadius: 10, padding: "1px 5px", fontFamily: FONT_MONO }}>
               {unreadCount}
@@ -1127,9 +1339,9 @@ export default function InboxPage({ currentUserId: propUserId }: { currentUserId
       </div>
 
       {/* ── Main body ── */}
-      <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
+      <div className="ibx-body">
 
-        {/* Sidebar */}
+        {/* Sidebar — slides in from left on mobile */}
         <Sidebar
           mailbox={mailbox}
           onMailbox={v => { setMailbox(v); setActiveConvoId(null); }}
@@ -1137,23 +1349,33 @@ export default function InboxPage({ currentUserId: propUserId }: { currentUserId
           courses={courses}
           selectedCtx={selectedCtx}
           onSelectCtx={v => { setSelectedCtx(v); setActiveConvoId(null); }}
+          onClose={isMobile ? () => setSidebarOpen(false) : undefined}
+          // Apply open class on mobile
+          {...(isMobile ? { "data-open": sidebarOpen } : {})}
         />
+        {/* We apply the sidebar open class via a portal-like trick below */}
+        <style>{`
+          @media (max-width: 767px) {
+            .ibx-sidebar { transform: translateX(${sidebarOpen ? "0" : "-100%"}) !important; }
+            ${sidebarOpen ? ".ibx-sidebar { animation: slideInLeft 0.25s cubic-bezier(0.4,0,0.2,1) !important; }" : ""}
+          }
+        `}</style>
 
         {/* Conversation list */}
-        <div className="ibx-list-panel">
+        <div className={`ibx-list-panel${isMobile && showThread ? " hidden-mobile" : ""}`}>
           {/* List header */}
           <div style={{ padding: "12px 16px 10px", borderBottom: `1px solid ${C.border}`, flexShrink: 0, background: C.surface }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <currentFilter.Icon size={15} color={C.maroon} />
-                <span style={{ fontSize: 14, fontWeight: 700, color: C.text }}>{currentFilter.label}</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+                <currentFilter.Icon size={15} color={C.maroon} style={{ flexShrink: 0 }} />
+                <span style={{ fontSize: 14, fontWeight: 700, color: C.text, whiteSpace: "nowrap" }}>{currentFilter.label}</span>
                 {selectedCtx && (
-                  <span style={{ fontSize: 11, background: C.maroonMid, color: C.maroon, borderRadius: 20, padding: "2px 8px", fontWeight: 600 }}>
+                  <span style={{ fontSize: 11, background: C.maroonMid, color: C.maroon, borderRadius: 20, padding: "2px 8px", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {selectedCtx.name}
                   </span>
                 )}
               </div>
-              <span style={{ fontSize: 11, color: C.textMuted, fontFamily: FONT_MONO }}>
+              <span style={{ fontSize: 11, color: C.textMuted, fontFamily: FONT_MONO, flexShrink: 0, marginLeft: 8 }}>
                 {filteredConvos.length} {filteredConvos.length === 1 ? "thread" : "threads"}
               </span>
             </div>
@@ -1175,21 +1397,25 @@ export default function InboxPage({ currentUserId: propUserId }: { currentUserId
         </div>
 
         {/* Thread viewer */}
-        {activeConvoId && currentUserId ? (
-          <ThreadViewer
-            convoId={activeConvoId}
-            currentUserId={currentUserId}
-            onBack={() => setActiveConvoId(null)}
-            onArchive={handleArchive}
-          />
-        ) : (
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12, background: C.bg, color: C.textMuted }}>
-            <div style={{ width: 56, height: 56, borderRadius: 16, background: C.maroonMid, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <MailOpen size={24} color={C.maroon} />
-            </div>
-            <p style={{ fontSize: 14, fontWeight: 600, color: C.textMid, margin: 0 }}>Select a conversation</p>
-            <p style={{ fontSize: 12, color: C.textMuted, margin: 0 }}>Choose from the list to read messages</p>
+        {showThread ? (
+          <div className={`ibx-thread-panel${isMobile ? " visible-mobile" : ""}`}>
+            <ThreadViewer
+              convoId={activeConvoId}
+              currentUserId={currentUserId}
+              onBack={() => setActiveConvoId(null)}
+              onArchive={handleArchive}
+            />
           </div>
+        ) : (
+          !isMobile && (
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12, background: C.bg, color: C.textMuted }}>
+              <div style={{ width: 60, height: 60, borderRadius: 18, background: C.maroonMid, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <MailOpen size={26} color={C.maroon} />
+              </div>
+              <p style={{ fontSize: 14, fontWeight: 600, color: C.textMid, margin: 0 }}>Select a conversation</p>
+              <p style={{ fontSize: 12, color: C.textMuted, margin: 0 }}>Choose from the list to read messages</p>
+            </div>
+          )
         )}
       </div>
 
@@ -1202,8 +1428,6 @@ export default function InboxPage({ currentUserId: propUserId }: { currentUserId
           onSent={fetchConvos}
         />
       )}
-
-      <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
     </div>
   );
 }

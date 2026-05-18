@@ -1,13 +1,5 @@
 "use client";
 
-// src/components/ui/CoursePeoplePage.tsx  (ADMIN)
-// Changes vs. original:
-//  • courseRole is now multi-value: "Staff" | "Head" | "Staff,Head"
-//  • Role badges render each role separately with distinct colours
-//  • 3-dot menu: View Profile | Edit Roles | Change Office | ─── | Remove From Office
-//  • Edit Roles modal — checkboxes for Staff / Head
-//  • Change Office modal — dropdown of all courses
-
 import { useState, useEffect, useTransition, useRef } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import {
@@ -29,12 +21,13 @@ function parseRoles(raw: string | null | undefined): CourseRole[] {
 function serializeRoles(roles: CourseRole[]): string {
   return [...new Set(roles)].filter(r => ALL_ROLES.includes(r)).join(",") || "Staff";
 }
-function roleLabel(raw: string): string { return parseRoles(raw).join(" · "); }
 
 const ROLE_BADGE: Record<CourseRole, { bg: string; color: string }> = {
   Staff: { bg: "#eff6ff", color: "#1d4ed8" },
   Head:  { bg: "#fef2f2", color: "#7b1113" },
 };
+
+const MAROON = "#7b1113";
 
 /* ─────────────────────────────────────────────────────────────────────────────
    TYPES
@@ -63,14 +56,14 @@ interface CourseOption { id: string; name: string; code: string; }
 ───────────────────────────────────────────────────────────────────────────── */
 const CSS = `
 .cpp-root { font-family:'Plus Jakarta Sans','Helvetica Neue',Arial,sans-serif; font-size:14px; color:#2d3b45; padding:12px 24px 24px; }
-.cpp-tabbar { display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:12px; border-bottom:2px solid #f0e4e4; }
-.cpp-tabs { display:flex; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+.cpp-tabbar { display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:12px; border-bottom:2px solid #f0e4e4; gap:8px; }
+.cpp-tabs { display:flex; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; flex:1; }
 .cpp-tabs::-webkit-scrollbar { display:none; }
-.cpp-tab { font-family:'Plus Jakarta Sans','Helvetica Neue',Arial,sans-serif; font-size:13px; font-weight:600; color:#6b7780; background:none; border:none; border-bottom:2px solid transparent; padding:8px 16px; cursor:pointer; margin-bottom:-2px; white-space:nowrap; transition:color .15s; }
+.cpp-tab { font-family:'Plus Jakarta Sans','Helvetica Neue',Arial,sans-serif; font-size:13px; font-weight:600; color:#6b7780; background:none; border:none; border-bottom:2px solid transparent; padding:8px 14px; cursor:pointer; margin-bottom:-2px; white-space:nowrap; transition:color .15s; }
 .cpp-tab:hover  { color:#7b1113; }
 .cpp-tab.active { color:#7b1113; border-bottom-color:#7b1113; }
 .cpp-toolbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; flex-wrap:wrap; gap:8px; }
-.cpp-toolbar-left { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.cpp-toolbar-left { display:flex; align-items:center; gap:8px; flex-wrap:wrap; flex:1; }
 .cpp-input  { font-family:'Plus Jakarta Sans','Helvetica Neue',Arial,sans-serif; font-size:13px; color:#2d3b45; border:1px solid #e5e7eb; border-radius:8px; padding:6px 10px; outline:none; background:#fff; transition:all .15s; }
 .cpp-input:focus  { border-color:#7b1113; box-shadow:0 0 0 3px rgba(123,17,19,.08); }
 .cpp-select { font-family:'Plus Jakarta Sans','Helvetica Neue',Arial,sans-serif; font-size:13px; color:#2d3b45; border:1px solid #e5e7eb; border-radius:8px; padding:6px 28px 6px 10px; outline:none; background:#fff; appearance:none; cursor:pointer; transition:all .15s; }
@@ -82,6 +75,8 @@ const CSS = `
 .cpp-btn-secondary:hover { border-color:#7b1113; color:#7b1113; }
 .cpp-btn-icon { background:none; border:none; cursor:pointer; padding:4px; border-radius:6px; color:#9ca3af; display:flex; align-items:center; transition:all .15s; }
 .cpp-btn-icon:hover { background:#fef2f2; color:#7b1113; }
+
+/* Desktop table */
 .cpp-table-wrap { width:100%; overflow-x:auto; }
 .cpp-table { width:100%; border-collapse:collapse; font-family:'Plus Jakarta Sans','Helvetica Neue',Arial,sans-serif; min-width:520px; }
 .cpp-table thead tr { border-bottom:1px solid #f0e4e4; }
@@ -97,6 +92,17 @@ const CSS = `
 .cpp-name-link { color:#7b1113; cursor:pointer; font-size:13px; font-weight:600; }
 .cpp-name-link:hover { text-decoration:underline; }
 .cpp-badge { font-family:'Plus Jakarta Sans','Helvetica Neue',Arial,sans-serif; font-size:11px; font-weight:700; padding:2px 8px; border-radius:20px; display:inline-block; letter-spacing:.04em; }
+
+/* Mobile person cards */
+.cpp-person-cards { display:none; flex-direction:column; gap:10px; }
+.cpp-person-card { background:#fff; border:1px solid #f0e4e4; border-radius:12px; padding:14px; display:flex; align-items:flex-start; gap:12px; }
+.cpp-person-card-body { flex:1; min-width:0; }
+.cpp-person-card-name { font-size:14px; font-weight:700; color:#7b1113; margin:0 0 2px; cursor:pointer; }
+.cpp-person-card-name:hover { text-decoration:underline; }
+.cpp-person-card-email { font-size:12px; color:#9ca3af; margin:0 0 8px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.cpp-person-card-meta { display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
+
+/* Menus */
 .cpp-menu       { position:absolute; background:#fff; border:1px solid #f0e4e4; border-radius:12px; box-shadow:0 4px 20px rgba(123,17,19,.08); z-index:50; min-width:180px; padding:4px 0; overflow:hidden; }
 .cpp-menu-fixed { position:fixed;    background:#fff; border:1px solid #f0e4e4; border-radius:12px; box-shadow:0 4px 20px rgba(123,17,19,.1);  z-index:99999; min-width:176px; padding:4px 0; overflow:hidden; }
 .cpp-menu-item  { display:block; width:100%; text-align:left; font-family:'Plus Jakarta Sans','Helvetica Neue',Arial,sans-serif; font-size:12px; font-weight:500; color:#374151; padding:8px 14px; background:none; border:none; cursor:pointer; transition:background .1s; }
@@ -104,8 +110,10 @@ const CSS = `
 .cpp-menu-item.danger { color:#c0392b; }
 .cpp-menu-item.danger:hover { background:#fef2f2; }
 .cpp-menu-divider { border-top:1px solid #f0e4e4; margin:4px 0; }
+
+/* Modals */
 .cpp-overlay { position:fixed; inset:0; z-index:50; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,.35); backdrop-filter:blur(2px); padding:12px; }
-.cpp-modal { background:#fff; border-radius:16px; box-shadow:0 8px 40px rgba(0,0,0,.18); border:1px solid #f0e4e4; display:flex; flex-direction:column; font-family:'Plus Jakarta Sans','Helvetica Neue',Arial,sans-serif; width:100%; max-width:620px; }
+.cpp-modal { background:#fff; border-radius:16px; box-shadow:0 8px 40px rgba(0,0,0,.18); border:1px solid #f0e4e4; display:flex; flex-direction:column; font-family:'Plus Jakarta Sans','Helvetica Neue',Arial,sans-serif; width:100%; max-width:620px; max-height:90vh; }
 .cpp-modal-header { display:flex; align-items:center; justify-content:space-between; padding:18px 22px 16px; border-bottom:1px solid #f0e4e4; flex-shrink:0; }
 .cpp-modal-title  { font-family:'Plus Jakarta Sans','Helvetica Neue',Arial,sans-serif; font-size:16px; font-weight:800; color:#111827; margin:0; }
 .cpp-modal-footer { display:flex; align-items:center; justify-content:flex-end; gap:10px; padding:14px 22px; border-top:1px solid #f0e4e4; background:#fdf8f8; border-radius:0 0 16px 16px; flex-shrink:0; }
@@ -146,7 +154,7 @@ const CSS = `
 .cpp-member-card { display:flex; align-items:center; gap:8px; border:1px solid #f0e4e4; background:#fff; border-radius:8px; padding:7px 10px; transition:border-color .15s; overflow:visible; position:relative; }
 .cpp-member-card:hover { border-color:#7b1113; }
 .cpp-gs-actions { display:flex; align-items:center; justify-content:flex-end; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
-.cpp-banner { display:flex; align-items:center; justify-content:space-between; background:#fef2f2; border:1px solid #f0c0c0; border-radius:8px; padding:8px 12px; margin-top:10px; }
+.cpp-banner { display:flex; align-items:center; justify-content:space-between; background:#fef2f2; border:1px solid #f0c0c0; border-radius:8px; padding:8px 12px; margin-top:10px; flex-wrap:wrap; gap:8px; }
 .cpp-plus-btn { width:24px; height:24px; display:flex; align-items:center; justify-content:center; border:1px solid #e5e7eb; border-radius:6px; background:#fff; cursor:pointer; font-size:16px; color:#7b1113; font-weight:700; transition:all .15s; }
 .cpp-plus-btn:hover { background:#fef2f2; border-color:#7b1113; }
 .cpp-spin-wrap  { display:flex; border:1px solid #e5e7eb; border-radius:8px; overflow:hidden; }
@@ -164,23 +172,42 @@ const CSS = `
 .cpp-role-desc { font-size:12px; color:#6b7780; margin-top:2px; line-height:1.5; }
 @keyframes cpp-spin { to { transform: rotate(360deg); } }
 .cpp-spin { animation: cpp-spin 1s linear infinite; }
-@media (max-width: 768px) {
+
+/* ── RESPONSIVE ── */
+@media (max-width: 767px) {
   .cpp-root { padding:10px 12px 80px; }
-  .cpp-tabbar { flex-direction:column; align-items:stretch; gap:0; border-bottom:none; }
-  .cpp-tabs { border-bottom:2px solid #f0e4e4; }
+  .cpp-tabbar { flex-wrap:wrap; align-items:stretch; border-bottom:none; padding-bottom:0; }
+  .cpp-tabs { border-bottom:2px solid #f0e4e4; width:100%; }
+  .cpp-tabbar > .cpp-btn-primary { margin-bottom:2px; }
+
   .cpp-toolbar { flex-direction:column; align-items:stretch; }
   .cpp-toolbar-left { flex-direction:column; align-items:stretch; }
   .cpp-toolbar-left .cpp-input  { width:100% !important; box-sizing:border-box; }
   .cpp-toolbar-left .cpp-select { width:100% !important; box-sizing:border-box; }
   .cpp-toolbar > .cpp-btn-primary { width:100%; justify-content:center; }
+
+  /* Hide desktop table, show cards */
   .cpp-table-wrap { display:none; }
+  .cpp-person-cards { display:flex; }
+
   .cpp-groups-layout { flex-direction:column; gap:16px; }
   .cpp-unassigned-col { width:100%; }
+  .cpp-group-members { padding:10px 16px; }
+  .cpp-member-card { flex-wrap:wrap; }
+
+  /* Modals as bottom sheets */
   .cpp-overlay { align-items:flex-end; padding:0; }
   .cpp-modal { max-width:100% !important; width:100% !important; max-height:92vh; border-radius:20px 20px 0 0; }
   .cpp-modal-body { padding:16px; }
-  .cpp-modal-header { padding:16px 16px 14px; }
-  .cpp-modal-footer { padding:12px 16px; border-radius:0; }
+  .cpp-modal-header { padding:14px 16px 12px; }
+  .cpp-modal-footer { padding:12px 16px; border-radius:0; gap:8px; }
+  .cpp-modal-footer .cpp-btn-primary, .cpp-modal-footer .cpp-btn-secondary { flex:1; justify-content:center; }
+
+  .cpp-gs-actions { justify-content:flex-start; }
+  .cpp-side-panel { width:100% !important; max-height:85vh; border-left:none; border-top:1px solid #f0e4e4; border-radius:20px 20px 0 0; }
+}
+@media (min-width: 768px) {
+  .cpp-person-cards { display:none !important; }
 }
 `;
 
@@ -218,7 +245,6 @@ const Avatar = ({ name, image, size=32 }: { name:string; image:string|null; size
     </div>
   );
 
-/** Render a set of role pills side by side */
 const RolePills = ({ raw }: { raw: string }) => (
   <span style={{ display:"inline-flex", gap:4, flexWrap:"wrap" }}>
     {parseRoles(raw).map(r => (
@@ -227,6 +253,13 @@ const RolePills = ({ raw }: { raw: string }) => (
       </span>
     ))}
   </span>
+);
+
+/* Mobile drag-handle for bottom-sheet modals */
+const DragHandle = () => (
+  <div style={{ display:"flex", justifyContent:"center", paddingTop:12, paddingBottom:4, flexShrink:0 }}>
+    <div style={{ width:40, height:4, borderRadius:9999, background:"#e5e7eb" }}/>
+  </div>
 );
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -240,6 +273,14 @@ export default function CoursePeoplePage() {
   const [, startTransition] = useTransition();
 
   const accentM = { accentColor: "#7b1113" };
+
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   /* ── Core state ─────────────────────────────────────────────────────────── */
   const [courseName,  setCourseName]  = useState("");
@@ -306,14 +347,14 @@ export default function CoursePeoplePage() {
   const [savingGroupSet,     setSavingGroupSet]     = useState(false);
 
   /* ── Group modal ────────────────────────────────────────────────────────── */
-  const [addGroupModal, setAddGroupModal] = useState<string|null>(null);
-  const [newGroupName,  setNewGroupName]  = useState("");
-  const [newGroupLimit, setNewGroupLimit] = useState(0);
-  const [savingGroup,   setSavingGroup]   = useState(false);
+  const [addGroupModal,  setAddGroupModal]  = useState<string|null>(null);
+  const [newGroupName,   setNewGroupName]   = useState("");
+  const [newGroupLimit,  setNewGroupLimit]  = useState(0);
+  const [savingGroup,    setSavingGroup]    = useState(false);
   const [editGroupModal, setEditGroupModal] = useState<{id:string;name:string;limit:number}|null>(null);
   const [editGroupName,  setEditGroupName]  = useState("");
   const [editGroupLimit, setEditGroupLimit] = useState(0);
-  const [savingEditGroup,setSavingEditGroup]= useState(false);
+  const [savingEditGroup, setSavingEditGroup] = useState(false);
 
   /* ── Edit/Clone group set ───────────────────────────────────────────────── */
   const [editGsModal,              setEditGsModal]              = useState<GroupSet|null>(null);
@@ -324,18 +365,18 @@ export default function CoursePeoplePage() {
   const [editGsLeaderType,         setEditGsLeaderType]         = useState("first");
   const [editGsLimit,              setEditGsLimit]              = useState(0);
   const [savingEditGs,             setSavingEditGs]             = useState(false);
-  const [cloneModal,       setCloneModal]       = useState<GroupSet|null>(null);
-  const [cloneName,        setCloneName]        = useState("");
-  const [submittingClone,  setSubmittingClone]  = useState(false);
+  const [cloneModal,      setCloneModal]      = useState<GroupSet|null>(null);
+  const [cloneName,       setCloneName]       = useState("");
+  const [submittingClone, setSubmittingClone] = useState(false);
 
   /* ── Move panel ─────────────────────────────────────────────────────────── */
-  const [movePanel,         setMovePanel]         = useState<{groupSetId:string;fromGroupId:string;userId:string;userName:string}|null>(null);
-  const [moveToGroupId,     setMoveToGroupId]     = useState("");
-  const [movePlacement,     setMovePlacement]     = useState("At the Top");
-  const [moveRelativeUserId,setMoveRelativeUserId]= useState("");
-  const [movingStudent,     setMovingStudent]     = useState(false);
+  const [movePanel,          setMovePanel]          = useState<{groupSetId:string;fromGroupId:string;userId:string;userName:string}|null>(null);
+  const [moveToGroupId,      setMoveToGroupId]      = useState("");
+  const [movePlacement,      setMovePlacement]      = useState("At the Top");
+  const [moveRelativeUserId, setMoveRelativeUserId] = useState("");
+  const [movingStudent,      setMovingStudent]      = useState(false);
 
-  /* ── close menus ────────────────────────────────────────────────────────── */
+  /* ── Close menus on outside click ───────────────────────────────────────── */
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       const t = e.target as HTMLElement;
@@ -376,7 +417,7 @@ export default function CoursePeoplePage() {
       .catch(()=>resolve());
   });
 
-  useEffect(()=>{ fetchPeople(); fetchGroupSets(); },[courseId]); // eslint-disable-line
+  useEffect(()=>{ fetchPeople(); fetchGroupSets(); }, [courseId]); // eslint-disable-line
 
   useEffect(()=>{
     const tab=searchParams.get("tab"); const gs=searchParams.get("groupSet");
@@ -438,27 +479,27 @@ export default function CoursePeoplePage() {
   };
 
   const handleBulkAdd = async () => {
-  if(!selectedIds.size) return;
-  setBulkAdding(true); setBulkError("");
-  const failed:string[]=[];
-  for(const u of allUsers.filter(u=>selectedIds.has(u.id))){
-    try{
-      const res=await fetch(`/api/admin/courses/${courseId}/people`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:u.email,role:serializeRoles(browseRoles)})});
-      const data=await res.json().catch(()=>({}));
-      if(!res.ok&&!data?.updated) failed.push(u.name);
-    } catch{ failed.push(u.name); }
-  }
-  await new Promise<void>(resolve=>{
-    fetch(`/api/admin/courses/${courseId}/people`).then(r=>r.json()).then(d=>{
-      const up=d.people??[]; startTransition(()=>{setPeople(up);setLoading(false);});
-      const enrolled=new Set(up.map((p:{email:string})=>p.email.toLowerCase()));
-      setAllUsers(p=>p.filter(u=>!enrolled.has(u.email.toLowerCase())));
-      setSelectedIds(new Set()); resolve();
-    }).catch(()=>resolve());
-  });
-  setBulkAdding(false);
-  if(failed.length>0) setBulkError(`Failed: ${failed.join(", ")}`); else closeAddModal();
-};
+    if(!selectedIds.size) return;
+    setBulkAdding(true); setBulkError("");
+    const failed:string[]=[];
+    for(const u of allUsers.filter(u=>selectedIds.has(u.id))){
+      try{
+        const res=await fetch(`/api/admin/courses/${courseId}/people`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:u.email,role:serializeRoles(browseRoles)})});
+        const data=await res.json().catch(()=>({}));
+        if(!res.ok&&!data?.updated) failed.push(u.name);
+      } catch{ failed.push(u.name); }
+    }
+    await new Promise<void>(resolve=>{
+      fetch(`/api/admin/courses/${courseId}/people`).then(r=>r.json()).then(d=>{
+        const up=d.people??[]; startTransition(()=>{setPeople(up);setLoading(false);});
+        const enrolled=new Set(up.map((p:{email:string})=>p.email.toLowerCase()));
+        setAllUsers(p=>p.filter(u=>!enrolled.has(u.email.toLowerCase())));
+        setSelectedIds(new Set()); resolve();
+      }).catch(()=>resolve());
+    });
+    setBulkAdding(false);
+    if(failed.length>0) setBulkError(`Failed: ${failed.join(", ")}`); else closeAddModal();
+  };
 
   const closeAddModal = () => { setAddModal(false); setChips([]); setSearchQ(""); setSuggestions([]); setAddError(""); setAddRoles(["Staff"]); setSectionOnly(false); setSelectedIds(new Set()); setBrowseSearch(""); setBulkError(""); setAddModalTab("search"); };
 
@@ -469,12 +510,8 @@ export default function CoursePeoplePage() {
   };
 
   /* ── Edit Roles ─────────────────────────────────────────────────────────── */
-  const openEditRoles = (p:Person) => {
-    setEditRolesTarget(p); setEditRolesChecked(parseRoles(p.role)); setMenuOpenId(null);
-  };
-  const toggleRoleCheck = (r:CourseRole) => {
-    setEditRolesChecked(prev => prev.includes(r) ? prev.filter(x=>x!==r) : [...prev,r]);
-  };
+  const openEditRoles = (p:Person) => { setEditRolesTarget(p); setEditRolesChecked(parseRoles(p.role)); setMenuOpenId(null); };
+  const toggleRoleCheck = (r:CourseRole) => { setEditRolesChecked(prev => prev.includes(r) ? prev.filter(x=>x!==r) : [...prev,r]); };
   const handleSaveRoles = async () => {
     if(!editRolesTarget||editRolesChecked.length===0) return;
     setSavingRoles(true);
@@ -508,10 +545,7 @@ export default function CoursePeoplePage() {
         method:"PATCH", headers:{"Content-Type":"application/json"},
         body: JSON.stringify({ courseId: selectedNewCourse }),
       });
-      if(res.ok){
-        setPeople(prev=>prev.filter(p=>p.id!==changeOfficeTarget.id));
-        setChangeOfficeTarget(null);
-      }
+      if(res.ok){ setPeople(prev=>prev.filter(p=>p.id!==changeOfficeTarget.id)); setChangeOfficeTarget(null); }
     } finally { setSavingOffice(false); }
   };
 
@@ -595,7 +629,7 @@ export default function CoursePeoplePage() {
               <button key={t.key} className={`cpp-tab${activeTab===t.key?" active":""}`} onClick={()=>setActiveTab(t.key)}>{t.label}</button>
             ))}
           </div>
-          <div style={{paddingBottom:6}}>
+          <div style={{paddingBottom:isMobile?2:6,flexShrink:0}}>
             <button className="cpp-btn-primary" onClick={()=>{resetGsModal();setGroupSetModal(true);}}>+ Group Set</button>
           </div>
         </div>
@@ -605,12 +639,12 @@ export default function CoursePeoplePage() {
           <>
             <div className="cpp-toolbar">
               <div className="cpp-toolbar-left">
-                <div style={{position:"relative"}}>
+                <div style={{position:"relative",flex:1,minWidth:isMobile?"100%":undefined}}>
                   <svg style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",color:"#9ca3af",pointerEvents:"none"}} width="13" height="13" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35" strokeLinecap="round"/></svg>
-                  <input className="cpp-input" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search people" style={{paddingLeft:30,width:200}}/>
+                  <input className="cpp-input" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search people" style={{paddingLeft:30,width:"100%",boxSizing:"border-box"}}/>
                 </div>
-                <div style={{position:"relative"}}>
-                  <select className="cpp-select" value={roleFilter} onChange={e=>setRoleFilter(e.target.value)} style={{minWidth:160}}>
+                <div style={{position:"relative",flex:isMobile?1:undefined}}>
+                  <select className="cpp-select" value={roleFilter} onChange={e=>setRoleFilter(e.target.value)} style={{minWidth:isMobile?"100%":160,width:isMobile?"100%":undefined,boxSizing:"border-box"}}>
                     <option value="All Roles">All Roles ({people.length})</option>
                     {ALL_ROLES.map(r=>roleCounts[r]>0?<option key={r} value={r}>{r} ({roleCounts[r]})</option>:null)}
                   </select>
@@ -622,57 +656,104 @@ export default function CoursePeoplePage() {
 
             {loading ? (
               <p style={{fontSize:13,color:"#9ca3af",textAlign:"center",padding:"48px 0"}}>Loading...</p>
+            ) : filtered.length === 0 ? (
+              <p style={{fontSize:13,color:"#9ca3af",textAlign:"center",padding:"48px 0"}}>No people enrolled yet.</p>
             ) : (
-              <div className="cpp-table-wrap">
-                <table className="cpp-table">
-                  <thead>
-                    <tr>
-                      <th className="avatar-col"/>
-                      {["Name","Login ID","Faculty Type","Position","Roles"].map(h=><th key={h}>{h}</th>)}
-                      <th className="action-col"/>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filtered.length===0 ? (
-                      <tr><td colSpan={7} style={{padding:"48px 0",textAlign:"center",fontSize:13,color:"#9ca3af"}}>No people enrolled yet.</td></tr>
-                    ) : filtered.map((p,i)=>(
-                      <tr key={p.id} className={i%2===0?"even":"odd"}>
-                        <td><Avatar name={p.name} image={p.image}/></td>
-                        <td className="name-col">
-                          <span className="cpp-name-link" onClick={()=>router.push(`/admin/courses/${courseId}/people/${p.id}`)}>{p.name}</span>
-                          {p.pronouns&&<span style={{fontSize:12,color:"#9ca3af",marginLeft:4}}>({p.pronouns})</span>}
-                        </td>
-                        <td>{p.email}</td>
-                        <td>
-                          {p.accountType?<span className="cpp-badge" style={{background:p.accountType==="Teaching"?"#eff6ff":"#f5f3ff",color:p.accountType==="Teaching"?"#1d4ed8":"#7c3aed"}}>{p.accountType}</span>:<span style={{color:"#d1d5db"}}>—</span>}
-                        </td>
-                        <td>{p.position??<span style={{color:"#d1d5db"}}>—</span>}</td>
-                        <td><RolePills raw={p.role}/></td>
-                        <td>
-                          <button
-                            ref={el=>{if(el)personBtnRefs.current.set(p.id,el);else personBtnRefs.current.delete(p.id);}}
-                            className="cpp-btn-icon"
-                            onClick={()=>setMenuOpenId(menuOpenId===p.id?null:p.id)}
-                          >
-                            <MoreVertical size={15}/>
-                          </button>
-                          {menuOpenId===p.id&&(
-                            <div className="cpp-menu-fixed" onClick={e=>e.stopPropagation()}
-                              ref={el=>{ if(!el) return; const btn=personBtnRefs.current.get(p.id); if(!btn) return; const r=btn.getBoundingClientRect(); el.style.top=`${r.bottom+4}px`; el.style.left=`${Math.max(4,r.right-el.offsetWidth)}px`; }}>
-                              <button className="cpp-menu-item" onClick={()=>{router.push(`/admin/courses/${courseId}/people/${p.id}`);setMenuOpenId(null);}}>View Profile</button>
-                              <div className="cpp-menu-divider"/>
-                              <button className="cpp-menu-item" onClick={()=>openEditRoles(p)}>Edit Roles</button>
-                              <button className="cpp-menu-item" onClick={()=>void openChangeOffice(p)}>Change Office</button>
-                              <div className="cpp-menu-divider"/>
-                              <button className="cpp-menu-item danger" onClick={()=>void removeUser(p.id)}>Remove From Office</button>
-                            </div>
-                          )}
-                        </td>
+              <>
+                {/* Desktop table */}
+                <div className="cpp-table-wrap">
+                  <table className="cpp-table">
+                    <thead>
+                      <tr>
+                        <th className="avatar-col"/>
+                        {["Name","Login ID","Faculty Type","Position","Roles"].map(h=><th key={h}>{h}</th>)}
+                        <th className="action-col"/>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {filtered.map((p,i)=>(
+                        <tr key={p.id} className={i%2===0?"even":"odd"}>
+                          <td><Avatar name={p.name} image={p.image}/></td>
+                          <td className="name-col">
+                            <span className="cpp-name-link" onClick={()=>router.push(`/admin/courses/${courseId}/people/${p.id}`)}>{p.name}</span>
+                            {p.pronouns&&<span style={{fontSize:12,color:"#9ca3af",marginLeft:4}}>({p.pronouns})</span>}
+                          </td>
+                          <td>{p.email}</td>
+                          <td>
+                            {p.accountType?<span className="cpp-badge" style={{background:p.accountType==="Teaching"?"#eff6ff":"#f5f3ff",color:p.accountType==="Teaching"?"#1d4ed8":"#7c3aed"}}>{p.accountType}</span>:<span style={{color:"#d1d5db"}}>—</span>}
+                          </td>
+                          <td>{p.position??<span style={{color:"#d1d5db"}}>—</span>}</td>
+                          <td><RolePills raw={p.role}/></td>
+                          <td>
+                            <button
+                              ref={el=>{if(el)personBtnRefs.current.set(p.id,el);else personBtnRefs.current.delete(p.id);}}
+                              className="cpp-btn-icon"
+                              onClick={()=>setMenuOpenId(menuOpenId===p.id?null:p.id)}
+                            >
+                              <MoreVertical size={15}/>
+                            </button>
+                            {menuOpenId===p.id&&(
+                              <div className="cpp-menu-fixed" onClick={e=>e.stopPropagation()}
+                                ref={el=>{ if(!el) return; const btn=personBtnRefs.current.get(p.id); if(!btn) return; const r=btn.getBoundingClientRect(); el.style.top=`${r.bottom+4}px`; el.style.left=`${Math.max(4,r.right-el.offsetWidth)}px`; }}>
+                                <button className="cpp-menu-item" onClick={()=>{router.push(`/admin/courses/${courseId}/people/${p.id}`);setMenuOpenId(null);}}>View Profile</button>
+                                <div className="cpp-menu-divider"/>
+                                <button className="cpp-menu-item" onClick={()=>openEditRoles(p)}>Edit Roles</button>
+                                <button className="cpp-menu-item" onClick={()=>void openChangeOffice(p)}>Change Office</button>
+                                <div className="cpp-menu-divider"/>
+                                <button className="cpp-menu-item danger" onClick={()=>void removeUser(p.id)}>Remove From Office</button>
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Mobile person cards */}
+                <div className="cpp-person-cards">
+                  {filtered.map(p => (
+                    <div key={p.id} className="cpp-person-card">
+                      <Avatar name={p.name} image={p.image} size={40}/>
+                      <div className="cpp-person-card-body">
+                        <p className="cpp-person-card-name" onClick={()=>router.push(`/admin/courses/${courseId}/people/${p.id}`)}>
+                          {p.name}{p.pronouns&&<span style={{fontSize:11,color:"#9ca3af",fontWeight:400,marginLeft:4}}>({p.pronouns})</span>}
+                        </p>
+                        <p className="cpp-person-card-email">{p.email}</p>
+                        <div className="cpp-person-card-meta">
+                          <RolePills raw={p.role}/>
+                          {p.accountType&&(
+                            <span className="cpp-badge" style={{background:p.accountType==="Teaching"?"#eff6ff":"#f5f3ff",color:p.accountType==="Teaching"?"#1d4ed8":"#7c3aed"}}>
+                              {p.accountType}
+                            </span>
+                          )}
+                          {p.position&&<span style={{fontSize:11,color:"#9ca3af"}}>{p.position}</span>}
+                        </div>
+                      </div>
+                      <div style={{position:"relative",flexShrink:0}}>
+                        <button
+                          ref={el=>{if(el)personBtnRefs.current.set(p.id,el);else personBtnRefs.current.delete(p.id);}}
+                          className="cpp-btn-icon"
+                          onClick={()=>setMenuOpenId(menuOpenId===p.id?null:p.id)}
+                        >
+                          <MoreVertical size={15}/>
+                        </button>
+                        {menuOpenId===p.id&&(
+                          <div className="cpp-menu-fixed" onClick={e=>e.stopPropagation()}
+                            ref={el=>{ if(!el) return; const btn=personBtnRefs.current.get(p.id); if(!btn) return; const r=btn.getBoundingClientRect(); el.style.top=`${r.bottom+4}px`; el.style.left=`${Math.max(4,r.right-el.offsetWidth)}px`; }}>
+                            <button className="cpp-menu-item" onClick={()=>{router.push(`/admin/courses/${courseId}/people/${p.id}`);setMenuOpenId(null);}}>View Profile</button>
+                            <div className="cpp-menu-divider"/>
+                            <button className="cpp-menu-item" onClick={()=>openEditRoles(p)}>Edit Roles</button>
+                            <button className="cpp-menu-item" onClick={()=>void openChangeOffice(p)}>Change Office</button>
+                            <div className="cpp-menu-divider"/>
+                            <button className="cpp-menu-item danger" onClick={()=>void removeUser(p.id)}>Remove From Office</button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
             )}
           </>
         )}
@@ -681,7 +762,7 @@ export default function CoursePeoplePage() {
         {isGroupsArea&&groupSets.length===0&&(
           <div style={{marginTop:24}}>
             <h2 style={{fontSize:20,fontWeight:800,color:"#7b1113",marginBottom:12}}>Staff Groups</h2>
-            <p style={{fontSize:13,color:"#4a5568",lineHeight:1.6,maxWidth:820,marginBottom:8}}>Staff groups are a useful way to organize staff for things like group projects or papers. Every staff group gets their own calendar, discussion board and collaboration tools.</p>
+            <p style={{fontSize:13,color:"#4a5568",lineHeight:1.6,maxWidth:820,marginBottom:8}}>Staff groups are a useful way to organize staff for things like group projects or papers.</p>
           </div>
         )}
 
@@ -746,7 +827,7 @@ export default function CoursePeoplePage() {
                             <button className="cpp-btn-icon" style={{padding:0}} onClick={()=>toggleGroup(g.id)}>{expanded?<ChevronDown size={14}/>:<ChevronRight size={14}/>}</button>
                             <span className="cpp-name-link" style={{flex:1,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{g.name}</span>
                             {leader&&<span style={{display:"flex",alignItems:"center",gap:4,fontSize:12,color:"#6b7780",flexShrink:0}}><User size={13} color="#9ca3af"/>{leader.user.name}</span>}
-                            <span style={{fontSize:12,color:"#9ca3af",marginLeft:12,flexShrink:0}}>{mc} member{mc!==1?"s":""}</span>
+                            <span style={{fontSize:12,color:"#9ca3af",marginLeft:8,flexShrink:0}}>{mc} member{mc!==1?"s":""}</span>
                             <div style={{position:"relative",flexShrink:0}}>
                               <button className="cpp-btn-icon" onClick={e=>{e.stopPropagation();setGroupMenuOpen(groupMenuOpen===g.id?null:g.id);}}>
                                 <MoreVertical size={15}/>
@@ -764,7 +845,7 @@ export default function CoursePeoplePage() {
                           {expanded&&(
                             <div className="cpp-group-members">
                               {!g.members||g.members.length===0?(<p style={{fontSize:12,color:"#9ca3af",textAlign:"center",padding:"12px 0"}}>No members yet.</p>):(
-                                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,overflow:"visible"}}>
+                                <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"1fr 1fr",gap:8,overflow:"visible"}}>
                                   {g.members.map(m=>{
                                     const mk=`${g.id}:${m.user.id}`;
                                     return(
@@ -812,6 +893,7 @@ export default function CoursePeoplePage() {
         {editRolesTarget&&(
           <div className="cpp-overlay" onClick={e=>{if(e.target===e.currentTarget)setEditRolesTarget(null);}}>
             <div className="cpp-modal" style={{maxWidth:420}}>
+              {isMobile&&<DragHandle/>}
               <div className="cpp-modal-header">
                 <h2 className="cpp-modal-title">Edit Roles</h2>
                 <button className="cpp-btn-icon" onClick={()=>setEditRolesTarget(null)}><X size={18}/></button>
@@ -830,7 +912,7 @@ export default function CoursePeoplePage() {
                     const checked=editRolesChecked.includes(r);
                     const desc = r==="Staff"
                       ? "Can view course content and submit assignments/forms."
-                      : "Can create assignments and forms, and manage course content. Also inherits Staff permissions when combined.";
+                      : "Can create assignments and forms, and manage course content.";
                     return(
                       <label key={r} className={`cpp-role-check-item${checked?" selected":""}`}>
                         <input type="checkbox" checked={checked} onChange={()=>toggleRoleCheck(r)} style={{accentColor:"#7b1113",marginTop:2,width:16,height:16,flexShrink:0,cursor:"pointer"}}/>
@@ -860,6 +942,7 @@ export default function CoursePeoplePage() {
         {changeOfficeTarget&&(
           <div className="cpp-overlay" onClick={e=>{if(e.target===e.currentTarget)setChangeOfficeTarget(null);}}>
             <div className="cpp-modal" style={{maxWidth:440}}>
+              {isMobile&&<DragHandle/>}
               <div className="cpp-modal-header">
                 <h2 className="cpp-modal-title">Change Office</h2>
                 <button className="cpp-btn-icon" onClick={()=>setChangeOfficeTarget(null)}><X size={18}/></button>
@@ -873,7 +956,7 @@ export default function CoursePeoplePage() {
                   </div>
                 </div>
                 <p style={{fontSize:12,color:"#6b7780",marginBottom:16,lineHeight:1.6}}>
-                  Select the office/course to transfer this person to. They will be removed from <strong>{courseName}</strong> and added to the selected one.
+                  Select the office/course to transfer this person to. They will be removed from <strong>{courseName}</strong>.
                 </p>
                 <label style={{display:"block",fontSize:13,fontWeight:700,color:"#2d3b45",marginBottom:6}}>
                   Target Office <span style={{color:"#c0392b"}}>*</span>
@@ -907,7 +990,8 @@ export default function CoursePeoplePage() {
         {/* ── Add People Modal ── */}
         {addModal&&(
           <div className="cpp-overlay" onClick={e=>{if(e.target===e.currentTarget)closeAddModal();}}>
-            <div className="cpp-modal" style={{maxHeight:"88vh"}}>
+            <div className="cpp-modal" style={{maxHeight:isMobile?"92vh":"88vh"}}>
+              {isMobile&&<DragHandle/>}
               <div className="cpp-modal-header">
                 <h2 className="cpp-modal-title">Add People</h2>
                 <button className="cpp-btn-icon" onClick={closeAddModal}><X size={18}/></button>
@@ -917,11 +1001,12 @@ export default function CoursePeoplePage() {
                   <button key={t.key} className={`cpp-subtab${addModalTab===t.key?" active":""}`} onClick={()=>setAddModalTab(t.key as "search"|"browse")}>{t.label}</button>
                 ))}
               </div>
+
               {addModalTab==="search"&&(
                 <div className="cpp-modal-body">
                   <div style={{marginBottom:16}}>
                     <p style={{fontSize:13,fontWeight:700,color:"#2d3b45",marginBottom:8}}>Add user(s) by</p>
-                    <div style={{display:"flex",gap:20,flexWrap:"wrap"}}>
+                    <div style={{display:"flex",gap:16,flexWrap:"wrap"}}>
                       {(["email","loginid","sisid"] as const).map(opt=>(
                         <label key={opt} style={{display:"flex",alignItems:"center",gap:6,cursor:"pointer",fontSize:13,color:"#2d3b45"}}>
                           <input type="radio" name="addBy" value={opt} checked={addBy===opt} onChange={()=>setAddBy(opt)} style={accentM}/>
@@ -959,22 +1044,24 @@ export default function CoursePeoplePage() {
                     <p style={{fontSize:11,color:"#9ca3af",marginTop:4}}>Press Enter or , to add · Paste multiple emails at once</p>
                     {addError&&<p style={{fontSize:12,color:"#7b1113",marginTop:4,fontWeight:600}}>{addError}</p>}
                   </div>
-                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:12}}>
+
+                  {/* Role + Section row */}
+                  <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"1fr 1fr",gap:16,marginBottom:12}}>
                     <div>
-  <label style={{display:"block",fontSize:13,fontWeight:700,color:"#2d3b45",marginBottom:6}}>Role(s)</label>
-  <div className="cpp-role-check-row" style={{flexDirection:"row",gap:8}}>
-    {ALL_ROLES.map(r=>{
-      const checked = addRoles.includes(r);
-      return(
-        <label key={r} className={`cpp-role-check-item${checked?" selected":""}`} style={{flex:1,padding:"10px 12px"}}>
-          <input type="checkbox" checked={checked} onChange={()=>setAddRoles(prev=>prev.includes(r)?prev.filter(x=>x!==r):[...prev,r])} style={{accentColor:"#7b1113",width:15,height:15,flexShrink:0,cursor:"pointer"}}/>
-          <span style={{fontWeight:700,fontSize:13,color:checked?ROLE_BADGE[r].color:"#2d3b45"}}>{r}</span>
-        </label>
-      );
-    })}
-  </div>
-  {addRoles.length===0&&<p style={{fontSize:12,color:"#c0392b",marginTop:6,fontWeight:600}}>At least one role must be selected.</p>}
-</div>
+                      <label style={{display:"block",fontSize:13,fontWeight:700,color:"#2d3b45",marginBottom:6}}>Role(s)</label>
+                      <div className="cpp-role-check-row" style={{flexDirection:"row",gap:8}}>
+                        {ALL_ROLES.map(r=>{
+                          const checked = addRoles.includes(r);
+                          return(
+                            <label key={r} className={`cpp-role-check-item${checked?" selected":""}`} style={{flex:1,padding:"10px 12px"}}>
+                              <input type="checkbox" checked={checked} onChange={()=>setAddRoles(prev=>prev.includes(r)?prev.filter(x=>x!==r):[...prev,r])} style={{accentColor:"#7b1113",width:15,height:15,flexShrink:0,cursor:"pointer"}}/>
+                              <span style={{fontWeight:700,fontSize:13,color:checked?ROLE_BADGE[r].color:"#2d3b45"}}>{r}</span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                      {addRoles.length===0&&<p style={{fontSize:12,color:"#c0392b",marginTop:6,fontWeight:600}}>At least one role must be selected.</p>}
+                    </div>
                     <div>
                       <label style={{display:"block",fontSize:13,fontWeight:700,color:"#2d3b45",marginBottom:6}}>Section</label>
                       <div style={{position:"relative"}}>
@@ -989,6 +1076,7 @@ export default function CoursePeoplePage() {
                   </label>
                 </div>
               )}
+
               {addModalTab==="browse"&&(
                 <div style={{display:"flex",flexDirection:"column",flex:1,overflow:"hidden"}}>
                   <div style={{padding:"16px 20px 12px",flexShrink:0}}>
@@ -997,21 +1085,21 @@ export default function CoursePeoplePage() {
                         <svg style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",color:"#9ca3af",pointerEvents:"none"}} width="13" height="13" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35" strokeLinecap="round"/></svg>
                         <input className="cpp-input" value={browseSearch} onChange={e=>setBrowseSearch(e.target.value)} placeholder="Search users…" style={{paddingLeft:30,width:"100%",boxSizing:"border-box"}}/>
                       </div>
-                      <div style={{display:"flex",gap:6}}>
-  {ALL_ROLES.map(r=>{
-    const checked = browseRoles.includes(r);
-    return(
-      <label key={r} className={`cpp-role-check-item${checked?" selected":""}`} style={{padding:"6px 12px",flexDirection:"row",alignItems:"center",gap:6,cursor:"pointer"}}>
-        <input type="checkbox" checked={checked} onChange={()=>setBrowseRoles(prev=>prev.includes(r)?prev.filter(x=>x!==r):[...prev,r])} style={{accentColor:"#7b1113",width:14,height:14,cursor:"pointer"}}/>
-        <span style={{fontWeight:700,fontSize:12,color:checked?ROLE_BADGE[r].color:"#2d3b45"}}>{r}</span>
-      </label>
-    );
-  })}
-</div>
+                      <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                        {ALL_ROLES.map(r=>{
+                          const checked = browseRoles.includes(r);
+                          return(
+                            <label key={r} className={`cpp-role-check-item${checked?" selected":""}`} style={{padding:"6px 12px",flexDirection:"row",alignItems:"center",gap:6,cursor:"pointer"}}>
+                              <input type="checkbox" checked={checked} onChange={()=>setBrowseRoles(prev=>prev.includes(r)?prev.filter(x=>x!==r):[...prev,r])} style={{accentColor:"#7b1113",width:14,height:14,cursor:"pointer"}}/>
+                              <span style={{fontWeight:700,fontSize:12,color:checked?ROLE_BADGE[r].color:"#2d3b45"}}>{r}</span>
+                            </label>
+                          );
+                        })}
+                      </div>
                     </div>
                     {selectedIds.size>0&&(
                       <div className="cpp-banner">
-                        <span style={{fontSize:13,color:"#7b1113",fontWeight:600}}>{selectedIds.size} user{selectedIds.size!==1?"s":""} selected — will be added as <strong>{browseRoles.join(" + ")}</strong></span>
+                        <span style={{fontSize:13,color:"#7b1113",fontWeight:600}}>{selectedIds.size} user{selectedIds.size!==1?"s":""} selected</span>
                         <button onClick={()=>setSelectedIds(new Set())} style={{fontSize:12,color:"#7b1113",background:"none",border:"none",cursor:"pointer",textDecoration:"underline",fontWeight:600}}>Clear</button>
                       </div>
                     )}
@@ -1026,7 +1114,7 @@ export default function CoursePeoplePage() {
                               <input type="checkbox" checked={allBrowseSel} ref={el=>{if(el) el.indeterminate=someBrowseSel&&!allBrowseSel;}} onChange={toggleAll} style={{width:14,height:14,accentColor:"#7b1113",cursor:"pointer"}}/>
                             </th>
                             <th className="cpp-browse-th">Name</th>
-                            <th className="cpp-browse-th">Email</th>
+                            {!isMobile&&<th className="cpp-browse-th">Email</th>}
                           </tr>
                         </thead>
                         <tbody>
@@ -1040,10 +1128,13 @@ export default function CoursePeoplePage() {
                               <td style={{padding:"10px 12px"}}>
                                 <div style={{display:"flex",alignItems:"center",gap:10}}>
                                   <Avatar name={u.name} image={u.image} size={30}/>
-                                  <span style={{fontSize:13,color:"#2d3b45",fontWeight:600}}>{u.name}</span>
+                                  <div>
+                                    <span style={{fontSize:13,color:"#2d3b45",fontWeight:600,display:"block"}}>{u.name}</span>
+                                    {isMobile&&<span style={{fontSize:11,color:"#9ca3af"}}>{u.email}</span>}
+                                  </div>
                                 </div>
                               </td>
-                              <td style={{padding:"10px 12px",fontSize:13,color:"#6b7780"}}>{u.email}</td>
+                              {!isMobile&&<td style={{padding:"10px 12px",fontSize:13,color:"#6b7780"}}>{u.email}</td>}
                             </tr>
                           ))}
                         </tbody>
@@ -1053,6 +1144,7 @@ export default function CoursePeoplePage() {
                   {bulkError&&<p style={{fontSize:12,color:"#7b1113",padding:"6px 20px",fontWeight:600}}>{bulkError}</p>}
                 </div>
               )}
+
               <div className="cpp-modal-footer">
                 <button className="cpp-btn-secondary" onClick={closeAddModal}>Cancel</button>
                 {addModalTab==="search"?(
@@ -1072,25 +1164,26 @@ export default function CoursePeoplePage() {
         {/* ── Create Group Set Modal ── */}
         {groupSetModal&&(
           <div className="cpp-overlay" onClick={e=>{if(e.target===e.currentTarget)setGroupSetModal(false);}}>
-            <div className="cpp-modal" style={{maxWidth:560,maxHeight:"90vh"}}>
+            <div className="cpp-modal" style={{maxWidth:560}}>
+              {isMobile&&<DragHandle/>}
               <div className="cpp-modal-header">
                 <h2 className="cpp-modal-title">Create Group Set</h2>
                 <button className="cpp-btn-icon" onClick={()=>setGroupSetModal(false)}><X size={18}/></button>
               </div>
               <div className="cpp-modal-body">
-                <div style={{display:"grid",gridTemplateColumns:"160px 1fr",gap:12,alignItems:"center",marginBottom:20}}>
+                <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"160px 1fr",gap:12,alignItems:"center",marginBottom:20}}>
                   <label style={{fontSize:13,color:"#2d3b45",fontWeight:600}}>Group Set Name <span style={{color:"#c0392b"}}>*</span></label>
-                  <input className="cpp-input" value={groupSetName} onChange={e=>setGroupSetName(e.target.value)} placeholder="Enter Group Set Name" style={{height:34}}/>
+                  <input className="cpp-input" value={groupSetName} onChange={e=>setGroupSetName(e.target.value)} placeholder="Enter Group Set Name" style={{height:34,width:"100%",boxSizing:"border-box"}}/>
                 </div>
-                <div style={{display:"grid",gridTemplateColumns:"160px 1fr",gap:12,alignItems:"flex-start",borderTop:"1px solid #f0e4e4",paddingTop:20,marginBottom:20}}>
+                <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"160px 1fr",gap:12,alignItems:"flex-start",borderTop:"1px solid #f0e4e4",paddingTop:20,marginBottom:20}}>
                   <label style={{fontSize:13,color:"#2d3b45",fontWeight:600,paddingTop:2}}>Self Sign-Up</label>
                   <div style={{display:"flex",flexDirection:"column",gap:8}}>
                     <label style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",fontSize:13,color:"#2d3b45"}}><input type="checkbox" checked={selfSignUp} onChange={e=>{setSelfSignUp(e.target.checked);if(!e.target.checked)setRequireSameSection(false);}} style={accentM}/>Allow self sign-up</label>
-                    <label style={{display:"flex",alignItems:"center",gap:8,cursor:selfSignUp?"pointer":"default",fontSize:13,color:selfSignUp?"#2d3b45":"#9ca3af"}}><input type="checkbox" checked={requireSameSection} onChange={e=>setRequireSameSection(e.target.checked)} disabled={!selfSignUp} style={accentM}/>Require group members to be in the same section</label>
+                    <label style={{display:"flex",alignItems:"center",gap:8,cursor:selfSignUp?"pointer":"default",fontSize:13,color:selfSignUp?"#2d3b45":"#9ca3af"}}><input type="checkbox" checked={requireSameSection} onChange={e=>setRequireSameSection(e.target.checked)} disabled={!selfSignUp} style={accentM}/>Require same section</label>
                   </div>
                 </div>
                 {!selfSignUp&&(
-                  <div style={{display:"grid",gridTemplateColumns:"160px 1fr",gap:12,alignItems:"flex-start",borderTop:"1px solid #f0e4e4",paddingTop:20,marginBottom:20}}>
+                  <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"160px 1fr",gap:12,alignItems:"flex-start",borderTop:"1px solid #f0e4e4",paddingTop:20,marginBottom:20}}>
                     <label style={{fontSize:13,color:"#2d3b45",fontWeight:600,paddingTop:6}}>Group Structure</label>
                     <div style={{display:"flex",flexDirection:"column",gap:10}}>
                       <div style={{position:"relative"}}>
@@ -1105,7 +1198,7 @@ export default function CoursePeoplePage() {
                     </div>
                   </div>
                 )}
-                <div style={{display:"grid",gridTemplateColumns:"160px 1fr",gap:12,alignItems:"flex-start",borderTop:"1px solid #f0e4e4",paddingTop:20}}>
+                <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"160px 1fr",gap:12,alignItems:"flex-start",borderTop:"1px solid #f0e4e4",paddingTop:20}}>
                   <label style={{fontSize:13,color:"#2d3b45",fontWeight:600,paddingTop:2}}>Leadership</label>
                   <div style={{display:"flex",flexDirection:"column",gap:8}}>
                     <label style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",fontSize:13,color:"#2d3b45"}}><input type="checkbox" checked={autoAssignLeader} onChange={e=>setAutoAssignLeader(e.target.checked)} style={accentM}/>Automatically assign a group leader</label>
@@ -1127,13 +1220,20 @@ export default function CoursePeoplePage() {
         {addGroupModal&&(
           <div className="cpp-overlay" onClick={e=>{if(e.target===e.currentTarget)setAddGroupModal(null);}}>
             <div className="cpp-modal" style={{maxWidth:440}}>
+              {isMobile&&<DragHandle/>}
               <div className="cpp-modal-header">
                 <h2 className="cpp-modal-title">Add Group</h2>
                 <button className="cpp-btn-icon" onClick={()=>setAddGroupModal(null)}><X size={18}/></button>
               </div>
               <div className="cpp-modal-body">
-                <div style={{marginBottom:16}}><label style={{display:"block",fontSize:13,fontWeight:700,color:"#2d3b45",marginBottom:6}}>Group Name <span style={{color:"#c0392b"}}>*</span></label><input className="cpp-input" value={newGroupName} onChange={e=>setNewGroupName(e.target.value)} placeholder="Name" style={{width:"100%",boxSizing:"border-box",height:34}}/></div>
-                <div><label style={{display:"block",fontSize:13,fontWeight:700,color:"#2d3b45",marginBottom:6}}>Group Membership Limit</label><SpinnerInput value={newGroupLimit} onChange={setNewGroupLimit}/></div>
+                <div style={{marginBottom:16}}>
+                  <label style={{display:"block",fontSize:13,fontWeight:700,color:"#2d3b45",marginBottom:6}}>Group Name <span style={{color:"#c0392b"}}>*</span></label>
+                  <input className="cpp-input" value={newGroupName} onChange={e=>setNewGroupName(e.target.value)} placeholder="Name" style={{width:"100%",boxSizing:"border-box",height:34}}/>
+                </div>
+                <div>
+                  <label style={{display:"block",fontSize:13,fontWeight:700,color:"#2d3b45",marginBottom:6}}>Group Membership Limit</label>
+                  <SpinnerInput value={newGroupLimit} onChange={setNewGroupLimit}/>
+                </div>
               </div>
               <div className="cpp-modal-footer">
                 <button className="cpp-btn-secondary" onClick={()=>setAddGroupModal(null)}>Cancel</button>
@@ -1147,13 +1247,20 @@ export default function CoursePeoplePage() {
         {editGroupModal&&(
           <div className="cpp-overlay" onClick={e=>{if(e.target===e.currentTarget)setEditGroupModal(null);}}>
             <div className="cpp-modal" style={{maxWidth:380}}>
+              {isMobile&&<DragHandle/>}
               <div className="cpp-modal-header">
                 <h2 className="cpp-modal-title">Edit Group</h2>
                 <button className="cpp-btn-icon" onClick={()=>setEditGroupModal(null)}><X size={18}/></button>
               </div>
               <div className="cpp-modal-body">
-                <div style={{marginBottom:16}}><label style={{display:"block",fontSize:13,fontWeight:700,color:"#2d3b45",marginBottom:6}}>Group Name <span style={{color:"#c0392b"}}>*</span></label><input className="cpp-input" value={editGroupName} onChange={e=>setEditGroupName(e.target.value)} style={{width:"100%",boxSizing:"border-box",height:34}}/></div>
-                <div><label style={{display:"block",fontSize:13,fontWeight:700,color:"#2d3b45",marginBottom:6}}>Group Membership Limit</label><SpinnerInput value={editGroupLimit} onChange={setEditGroupLimit} placeholder="Number"/></div>
+                <div style={{marginBottom:16}}>
+                  <label style={{display:"block",fontSize:13,fontWeight:700,color:"#2d3b45",marginBottom:6}}>Group Name <span style={{color:"#c0392b"}}>*</span></label>
+                  <input className="cpp-input" value={editGroupName} onChange={e=>setEditGroupName(e.target.value)} style={{width:"100%",boxSizing:"border-box",height:34}}/>
+                </div>
+                <div>
+                  <label style={{display:"block",fontSize:13,fontWeight:700,color:"#2d3b45",marginBottom:6}}>Membership Limit</label>
+                  <SpinnerInput value={editGroupLimit} onChange={setEditGroupLimit} placeholder="Number"/>
+                </div>
               </div>
               <div className="cpp-modal-footer">
                 <button className="cpp-btn-secondary" onClick={()=>setEditGroupModal(null)}>Cancel</button>
@@ -1166,7 +1273,8 @@ export default function CoursePeoplePage() {
         {/* ── Edit Group Set Modal ── */}
         {editGsModal&&(
           <div className="cpp-overlay" onClick={e=>{if(e.target===e.currentTarget)setEditGsModal(null);}}>
-            <div className="cpp-modal" style={{maxWidth:560,maxHeight:"90vh"}}>
+            <div className="cpp-modal" style={{maxWidth:560}}>
+              {isMobile&&<DragHandle/>}
               <div className="cpp-modal-header">
                 <h2 className="cpp-modal-title">Edit Group Set</h2>
                 <button className="cpp-btn-icon" onClick={()=>setEditGsModal(null)}><X size={18}/></button>
@@ -1200,6 +1308,7 @@ export default function CoursePeoplePage() {
         {cloneModal&&(
           <div className="cpp-overlay" onClick={e=>{if(e.target===e.currentTarget)setCloneModal(null);}}>
             <div className="cpp-modal" style={{maxWidth:440}}>
+              {isMobile&&<DragHandle/>}
               <div className="cpp-modal-header">
                 <h2 className="cpp-modal-title">Clone Group Set</h2>
                 <button className="cpp-btn-icon" onClick={()=>setCloneModal(null)}><X size={18}/></button>
@@ -1220,9 +1329,10 @@ export default function CoursePeoplePage() {
         {movePanel&&(()=>{
           const gs=groupSets.find(g=>g.id===movePanel.groupSetId); const others=gs?.groups.filter(g=>g.id!==movePanel.fromGroupId)??[];
           return(
-            <div style={{position:"fixed",inset:0,zIndex:50,display:"flex",justifyContent:"flex-end"}}>
-              <div style={{flex:1}} onClick={()=>setMovePanel(null)}/>
-              <div className="cpp-side-panel">
+            <div style={{position:"fixed",inset:0,zIndex:50,display:"flex",justifyContent:isMobile?"center":"flex-end",alignItems:isMobile?"flex-end":"stretch"}}>
+              <div style={{flex:isMobile?undefined:1}} onClick={()=>setMovePanel(null)}/>
+              <div className="cpp-side-panel" style={isMobile?{width:"100%",maxHeight:"85vh",borderLeft:"none",borderTop:"1px solid #f0e4e4",borderRadius:"20px 20px 0 0"}:{}}>
+                {isMobile&&<DragHandle/>}
                 <div className="cpp-modal-header">
                   <h2 style={{fontSize:16,fontWeight:800,color:"#2d3b45",margin:0}}>Move Member</h2>
                   <button className="cpp-btn-icon" onClick={()=>setMovePanel(null)}><X size={16}/></button>

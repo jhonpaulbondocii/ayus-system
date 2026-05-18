@@ -6,8 +6,7 @@ import { useRouter } from "next/navigation";
 import {
   BookOpen, MoreVertical, Trash2, GraduationCap, Briefcase,
   ChevronDown, ChevronRight, LayoutGrid, List, Plus,
-  Users, History, Home, Inbox, Calendar, LogOut,
-  BookMarked, Group, BarChart2, Menu, X,
+  Users, History,
 } from "lucide-react";
 
 interface Course {
@@ -22,8 +21,7 @@ type Category = "Academic" | "Non-Academic";
 type ViewMode = "grid" | "list";
 
 const MAROON = "#7b1113";
-const MAROON_LIGHT = "#fdf2f2";
-const FONT = "'Plus Jakarta Sans','Helvetica Neue',Arial,sans-serif";
+const FONT   = "'Plus Jakarta Sans','Helvetica Neue',Arial,sans-serif";
 const font: React.CSSProperties = { fontFamily: FONT };
 
 const PRESET_COLORS = [
@@ -33,150 +31,9 @@ const PRESET_COLORS = [
   "#37474f","#546e7a","#78909c","#5d4037",
 ];
 
-// ── Bottom Nav Items ────────────────────────────────────────────────────────────
-// All nav items – split into primary (always visible) and secondary (overflow/drawer)
-const PRIMARY_NAV = [
-  { label: "Courses",   icon: BookMarked,  href: "/courses" },
-  { label: "Groups",    icon: Group,       href: "/groups" },
-  { label: "Dashboard", icon: Home,        href: "/admin" },
-  { label: "Inbox",     icon: Inbox,       href: "/inbox" },
-  { label: "Calendar",  icon: Calendar,    href: "/calendar" },
-];
-
-const SECONDARY_NAV = [
-  { label: "Users",   icon: Users,   href: "/admin/users" },
-  { label: "History", icon: History, href: "/admin/history" },
-  { label: "Reports", icon: BarChart2, href: "/admin/reports" },
-  { label: "Logout",  icon: LogOut,  href: "/logout" },
-];
-
 function getGroupKey(c: Course): string {
   if (c.status === "UNPUBLISHED") return "unpublished";
   return c.term === "Academic" ? "academic" : c.term === "Non-Academic" ? "non-academic" : "uncategorized";
-}
-
-// ── Mobile Drawer Nav ──────────────────────────────────────────────────────────
-function MobileMoreDrawer({ open, onClose, currentPath }: {
-  open: boolean; onClose: () => void; currentPath: string;
-}) {
-  if (!open) return null;
-  return createPortal(
-    <>
-      {/* backdrop */}
-      <div
-        onClick={onClose}
-        style={{
-          position: "fixed", inset: 0, zIndex: 200000,
-          background: "rgba(0,0,0,0.45)", backdropFilter: "blur(3px)",
-        }}
-      />
-      {/* drawer */}
-      <div style={{
-        position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 200001,
-        background: "#fff", borderRadius: "20px 20px 0 0",
-        boxShadow: "0 -8px 40px rgba(0,0,0,0.18)",
-        padding: "0 0 env(safe-area-inset-bottom,16px)",
-        fontFamily: FONT,
-      }}>
-        {/* handle */}
-        <div style={{ display: "flex", justifyContent: "center", padding: "12px 0 4px" }}>
-          <div style={{ width: 36, height: 4, borderRadius: 99, background: "#e5e7eb" }}/>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 20px 12px" }}>
-          <p style={{ fontSize: 13, fontWeight: 800, color: "#111827", margin: 0 }}>More</p>
-          <button onClick={onClose} style={{ background: "#f3f4f6", border: "none", borderRadius: "50%", width: 30, height: 30, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#6b7280" }}>
-            <X size={15}/>
-          </button>
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 4, padding: "0 16px 24px" }}>
-          {SECONDARY_NAV.map(item => {
-            const Icon = item.icon;
-            const active = currentPath === item.href;
-            const isLogout = item.label === "Logout";
-            return (
-              <a key={item.label} href={item.href}
-                style={{
-                  display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
-                  padding: "14px 8px", borderRadius: 14, textDecoration: "none",
-                  background: active ? MAROON_LIGHT : isLogout ? "#fef2f2" : "#f9fafb",
-                  border: `1px solid ${active ? "#f0c4c4" : isLogout ? "#fee2e2" : "#f3f4f6"}`,
-                }}>
-                <Icon size={20} color={active ? MAROON : isLogout ? "#dc2626" : "#6b7280"}/>
-                <span style={{ fontSize: 10, fontWeight: 700, color: active ? MAROON : isLogout ? "#dc2626" : "#6b7280" }}>
-                  {item.label}
-                </span>
-              </a>
-            );
-          })}
-        </div>
-      </div>
-    </>,
-    document.body
-  );
-}
-
-// ── Bottom Nav Bar ─────────────────────────────────────────────────────────────
-function BottomNavBar({ currentPath = "/admin" }: { currentPath?: string }) {
-  const [drawerOpen, setDrawerOpen] = useState(false);
-
-  return (
-    <>
-      <nav style={{
-        position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 10000,
-        background: MAROON,
-        paddingBottom: "env(safe-area-inset-bottom, 0px)",
-        boxShadow: "0 -2px 20px rgba(0,0,0,0.18)",
-        fontFamily: FONT,
-      }}>
-        <div style={{
-          display: "flex", alignItems: "stretch",
-          maxWidth: 640, margin: "0 auto",
-        }}>
-          {PRIMARY_NAV.map(item => {
-            const Icon = item.icon;
-            const active = currentPath === item.href;
-            return (
-              <a key={item.label} href={item.href} style={{
-                flex: 1, display: "flex", flexDirection: "column",
-                alignItems: "center", justifyContent: "center",
-                gap: 3, padding: "10px 4px 10px", textDecoration: "none",
-                borderBottom: active ? "3px solid rgba(255,255,255,0.9)" : "3px solid transparent",
-                background: active ? "rgba(255,255,255,0.12)" : "transparent",
-                transition: "all 0.15s",
-              }}>
-                <Icon size={18} color={active ? "#fff" : "rgba(255,255,255,0.55)"}/>
-                <span style={{
-                  fontSize: 9, fontWeight: active ? 800 : 600, letterSpacing: "0.02em",
-                  color: active ? "#fff" : "rgba(255,255,255,0.55)",
-                  whiteSpace: "nowrap",
-                }}>
-                  {item.label}
-                </span>
-              </a>
-            );
-          })}
-
-          {/* More button */}
-          <button onClick={() => setDrawerOpen(true)} style={{
-            flex: 1, display: "flex", flexDirection: "column",
-            alignItems: "center", justifyContent: "center",
-            gap: 3, padding: "10px 4px 10px", border: "none",
-            background: drawerOpen ? "rgba(255,255,255,0.12)" : "transparent",
-            borderBottom: drawerOpen ? "3px solid rgba(255,255,255,0.9)" : "3px solid transparent",
-            cursor: "pointer", transition: "all 0.15s",
-          }}>
-            <Menu size={18} color={drawerOpen ? "#fff" : "rgba(255,255,255,0.55)"}/>
-            <span style={{
-              fontSize: 9, fontWeight: drawerOpen ? 800 : 600, letterSpacing: "0.02em",
-              color: drawerOpen ? "#fff" : "rgba(255,255,255,0.55)",
-            }}>More</span>
-          </button>
-        </div>
-      </nav>
-
-      <MobileMoreDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} currentPath={currentPath}/>
-    </>
-  );
 }
 
 // ── Publish Modal ──────────────────────────────────────────────────────────────
@@ -191,8 +48,7 @@ function PublishModal({ course, onConfirm, onCancel }: {
   ];
 
   return (
-    <div
-      style={{ position:"fixed",inset:0,zIndex:100000,background:"rgba(0,0,0,0.4)",backdropFilter:"blur(4px)",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:FONT,padding:"16px" }}
+    <div style={{ position:"fixed",inset:0,zIndex:100000,background:"rgba(0,0,0,0.4)",backdropFilter:"blur(4px)",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:FONT,padding:"16px" }}
       onClick={onCancel}>
       <div onClick={e=>e.stopPropagation()}
         style={{ background:"#fff",borderRadius:16,width:"100%",maxWidth:400,boxShadow:"0 20px 60px rgba(0,0,0,0.18)",overflow:"hidden" }}>
@@ -236,12 +92,12 @@ function SectionHeader({ count, collapsed, onToggle, badge }: {
   return (
     <button onClick={onToggle}
       className="w-full flex items-center gap-3 py-2.5 px-0 group transition-all"
-      style={{ background:"none",border:"none",cursor:"pointer",fontFamily:FONT }}>
-      <span style={{ color:"#9ca3af",transition:"transform 0.2s",display:"flex" }}>
+      style={{ background:"none",border:"none",cursor:"pointer",fontFamily:FONT,minHeight:44 }}>
+      <span style={{ color:"#9ca3af",transition:"transform 0.2s",display:"flex",flexShrink:0 }}>
         {collapsed ? <ChevronRight size={14}/> : <ChevronDown size={14}/>}
       </span>
       {badge}
-      <span style={{ fontSize:11,color:"#9ca3af",fontWeight:600 }}>
+      <span style={{ fontSize:11,color:"#9ca3af",fontWeight:600,whiteSpace:"nowrap" }}>
         {count} {count===1?"office":"offices"}
       </span>
       <span style={{ flex:1,height:1,background:"#f3f4f6",marginLeft:4 }}/>
@@ -250,12 +106,13 @@ function SectionHeader({ count, collapsed, onToggle, badge }: {
 }
 
 // ── List Row ───────────────────────────────────────────────────────────────────
-function CourseListRow({ course, onClick, onAssignments }: {
+function CourseListRow({ course, onClick, onAssignments, onUsers, onHistory }: {
   course: Course; onClick: ()=>void; onAssignments: ()=>void;
+  onUsers: ()=>void; onHistory: ()=>void;
 }) {
   return (
     <div onClick={onClick}
-      className="flex items-center gap-3 px-3 sm:px-4 py-3 rounded-xl border border-gray-100 bg-white cursor-pointer hover:shadow-md transition-all group"
+      className="flex items-center gap-3 px-3 py-3 rounded-xl border border-gray-100 bg-white cursor-pointer hover:shadow-md transition-all group"
       style={{ fontFamily:FONT }}>
       {course.image ? (
         // eslint-disable-next-line @next/next/no-img-element
@@ -268,19 +125,39 @@ function CourseListRow({ course, onClick, onAssignments }: {
         <p style={{ fontSize:13,fontWeight:700,color:"#111827",margin:0 }} className="truncate group-hover:underline">{course.name}</p>
         <p style={{ fontSize:11,color:"#9ca3af",margin:0 }}>{course.code}</p>
       </div>
-      <span className="hidden sm:inline" style={{ fontSize:11,color:"#9ca3af",fontWeight:600,flexShrink:0 }}>{course._count.enrollments} enrolled</span>
+
+      {/* Action icons — always visible */}
+      <div style={{ display:"flex",alignItems:"center",gap:4,flexShrink:0 }}>
+        <button onClick={e=>{e.stopPropagation();onUsers();}}
+          title="Users"
+          style={{ display:"flex",alignItems:"center",justifyContent:"center",width:32,height:32,borderRadius:8,border:"none",background:"#f9fafb",cursor:"pointer",color:"#6b7280",transition:"all 0.15s" }}
+          onMouseEnter={e=>{ e.currentTarget.style.background="#fdf3f3"; e.currentTarget.style.color=MAROON; }}
+          onMouseLeave={e=>{ e.currentTarget.style.background="#f9fafb"; e.currentTarget.style.color="#6b7280"; }}>
+          <Users size={14}/>
+        </button>
+        <button onClick={e=>{e.stopPropagation();onHistory();}}
+          title="History"
+          style={{ display:"flex",alignItems:"center",justifyContent:"center",width:32,height:32,borderRadius:8,border:"none",background:"#f9fafb",cursor:"pointer",color:"#6b7280",transition:"all 0.15s" }}
+          onMouseEnter={e=>{ e.currentTarget.style.background="#fdf3f3"; e.currentTarget.style.color=MAROON; }}
+          onMouseLeave={e=>{ e.currentTarget.style.background="#f9fafb"; e.currentTarget.style.color="#6b7280"; }}>
+          <History size={14}/>
+        </button>
+        <button onClick={e=>{e.stopPropagation();onAssignments();}}
+          title="Assignments"
+          style={{ display:"flex",alignItems:"center",justifyContent:"center",width:32,height:32,borderRadius:8,border:"none",background:"#f9fafb",cursor:"pointer",color:"#6b7280",transition:"all 0.15s" }}
+          onMouseEnter={e=>{ e.currentTarget.style.background="#fdf3f3"; e.currentTarget.style.color=MAROON; }}
+          onMouseLeave={e=>{ e.currentTarget.style.background="#f9fafb"; e.currentTarget.style.color="#6b7280"; }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg>
+        </button>
+      </div>
+
       <span style={{
         fontSize:10,fontWeight:800,padding:"2px 8px",borderRadius:20,
         background:course.status==="PUBLISHED"?"#f0fdf4":"#f9fafb",
         color:course.status==="PUBLISHED"?"#15803d":"#6b7280",
         border:`1px solid ${course.status==="PUBLISHED"?"#bbf7d0":"#e5e7eb"}`,
         flexShrink:0,textTransform:"uppercase",letterSpacing:"0.06em",whiteSpace:"nowrap",
-      }}>{course.status==="PUBLISHED"?"Published":"Draft"}</span>
-      <button onClick={e=>{e.stopPropagation();onAssignments();}}
-        className="hidden sm:block"
-        style={{ fontSize:11,color:MAROON,fontWeight:700,background:"#fdf2f2",border:"none",borderRadius:8,padding:"4px 10px",cursor:"pointer",flexShrink:0 }}>
-        Assignments
-      </button>
+      }}>{course.status==="PUBLISHED"?"Live":"Draft"}</span>
     </div>
   );
 }
@@ -393,11 +270,15 @@ export default function AdminDashboardPage() {
     onAssignments:   ()=>router.push(`/admin/courses/${c.id}/assignments`),
     onDiscussions:   ()=>router.push(`/admin/courses/${c.id}/discussions`),
     onFiles:         ()=>router.push(`/admin/courses/${c.id}/files`),
+    onUsers:         ()=>router.push(`/admin/courses/${c.id}/users`),
+    onHistory:       ()=>router.push(`/admin/courses/${c.id}/history`),
   });
 
+  // Responsive grid: 2 cols minimum on mobile, auto-fill on larger screens
   const gridStyle: React.CSSProperties = {
-    display:"grid", gap:12,
-    gridTemplateColumns:"repeat(auto-fill, minmax(160px, 1fr))",
+    display:"grid",
+    gap:10,
+    gridTemplateColumns:"repeat(2, 1fr)",
   };
 
   const listRows = (list: Course[]) => list.map(c=>(
@@ -405,51 +286,61 @@ export default function AdminDashboardPage() {
       key={c.id} course={c}
       onClick={()=>router.push(`/admin/courses/${c.id}/home`)}
       onAssignments={()=>router.push(`/admin/courses/${c.id}/assignments`)}
+      onUsers={()=>router.push(`/admin/courses/${c.id}/users`)}
+      onHistory={()=>router.push(`/admin/courses/${c.id}/history`)}
     />
   ));
+
+  const renderGrid = (list: Course[]) => (
+    <div style={{ ...gridStyle, paddingBottom:12 }}>
+      {list.map(c=><CourseCard key={c.id} {...cardProps(c)}/>)}
+    </div>
+  );
 
   return (
     <div style={{ ...font, minHeight:"100vh", background:"#f8f8f7" }}>
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
         @media (min-width: 480px) {
+          .course-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)) !important; }
+        }
+        @media (min-width: 640px) {
           .course-grid { grid-template-columns: repeat(auto-fill, minmax(178px, 1fr)) !important; }
         }
-        /* Bottom nav safe area */
-        .page-content {
-          padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
-        }
+        /* Ensure touch targets are at least 44px */
+        button { touch-action: manipulation; }
       `}</style>
 
       {/* ── Page Header ── */}
-      <div style={{ background:"#fff",borderBottom:"1px solid #f0e4e4",padding:"14px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,flexWrap:"wrap" }}>
+      <div style={{ background:"#fff",borderBottom:"1px solid #f0e4e4",padding:"12px 14px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,flexWrap:"wrap" }}>
         <div>
           <p style={{ fontSize:10,fontWeight:800,color:MAROON,textTransform:"uppercase",letterSpacing:"0.2em",margin:0 }}>Administration</p>
-          <h1 style={{ fontSize:18,fontWeight:900,color:"#111827",margin:"2px 0 0" }}>Offices</h1>
+          <h1 style={{ fontSize:17,fontWeight:900,color:"#111827",margin:"2px 0 0" }}>Offices</h1>
         </div>
-        <div style={{ display:"flex",alignItems:"center",gap:8,flexWrap:"wrap" }}>
+        <div style={{ display:"flex",alignItems:"center",gap:6 }}>
           <button
             onClick={()=>window.dispatchEvent(new Event("admin:openCreateCourse"))}
-            style={{ display:"flex",alignItems:"center",gap:5,padding:"7px 14px",borderRadius:10,border:"none",background:MAROON,color:"#fff",cursor:"pointer",fontFamily:FONT,fontSize:12,fontWeight:800,transition:"opacity 0.15s",whiteSpace:"nowrap" }}
+            style={{ display:"flex",alignItems:"center",gap:5,padding:"8px 12px",borderRadius:10,border:"none",background:MAROON,color:"#fff",cursor:"pointer",fontFamily:FONT,fontSize:12,fontWeight:800,transition:"opacity 0.15s",whiteSpace:"nowrap",minHeight:40 }}
             onMouseEnter={e=>(e.currentTarget.style.opacity="0.88")}
             onMouseLeave={e=>(e.currentTarget.style.opacity="1")}>
             <Plus size={13}/> New Office
           </button>
-          <div style={{ display:"flex",gap:3,background:"#f3f4f6",borderRadius:10,padding:3 }}>
+          <div style={{ display:"flex",gap:2,background:"#f3f4f6",borderRadius:10,padding:3 }}>
             {([["grid","Grid"] as const,["list","List"] as const]).map(([mode, label])=>(
               <button key={mode} onClick={()=>setViewMode(mode)}
-                style={{ display:"flex",alignItems:"center",gap:4,padding:"5px 10px",borderRadius:8,border:"none",cursor:"pointer",fontFamily:FONT,fontSize:11,fontWeight:700,transition:"all 0.15s",background:viewMode===mode?"#fff":"none",color:viewMode===mode?"#111827":"#9ca3af",boxShadow:viewMode===mode?"0 1px 4px rgba(0,0,0,0.08)":"none" }}>
-                {mode==="grid" ? <LayoutGrid size={12}/> : <List size={12}/>} {label}
+                style={{ display:"flex",alignItems:"center",gap:4,padding:"6px 10px",borderRadius:8,border:"none",cursor:"pointer",fontFamily:FONT,fontSize:11,fontWeight:700,transition:"all 0.15s",background:viewMode===mode?"#fff":"none",color:viewMode===mode?"#111827":"#9ca3af",boxShadow:viewMode===mode?"0 1px 4px rgba(0,0,0,0.08)":"none",minHeight:36 }}>
+                {mode==="grid" ? <LayoutGrid size={13}/> : <List size={13}/>}
+                <span style={{ display:"none" }} className="sm:inline">{label}</span>
               </button>
             ))}
           </div>
         </div>
       </div>
 
-      {/* ── Stat bar ── */}
+      {/* ── Stat bar — scrollable on mobile ── */}
       {!loading && courses.length > 0 && (
-        <div style={{ background:"#fff",borderBottom:"1px solid #f3f4f6",padding:"10px 16px",overflowX:"auto" }}>
-          <div style={{ display:"flex",gap:20,minWidth:"max-content" }}>
+        <div style={{ background:"#fff",borderBottom:"1px solid #f3f4f6",padding:"10px 14px",overflowX:"auto",WebkitOverflowScrolling:"touch" }}>
+          <div style={{ display:"flex",gap:16,minWidth:"max-content" }}>
             {[
               { label:"Total",        value:courses.length },
               { label:"Published",    value:totalPublished, color:"#15803d" },
@@ -466,8 +357,7 @@ export default function AdminDashboardPage() {
         </div>
       )}
 
-      {/* ── Content ── */}
-      <div className="page-content" style={{ padding:"16px" }}>
+      <div style={{ padding:"12px 10px" }}>
         {loading ? (
           <div style={{ display:"flex",alignItems:"center",justifyContent:"center",padding:"80px 0",gap:10 }}>
             <div style={{ width:20,height:20,border:`2px solid #f0e4e4`,borderTop:`2px solid ${MAROON}`,borderRadius:"50%",animation:"spin 0.8s linear infinite" }}/>
@@ -486,14 +376,14 @@ export default function AdminDashboardPage() {
 
             {/* ── Published ── */}
             {published.length>0 && (
-              <div style={{ background:"#fff",borderRadius:16,border:"1px solid #f0e4e4",overflow:"hidden" }}>
-                <div style={{ padding:"14px 16px 0" }}>
-                  <div style={{ display:"flex",alignItems:"center",gap:8,marginBottom:4 }}>
+              <div style={{ background:"#fff",borderRadius:14,border:"1px solid #f0e4e4",overflow:"hidden" }}>
+                <div style={{ padding:"12px 14px 0" }}>
+                  <div style={{ display:"flex",alignItems:"center",gap:8,marginBottom:2 }}>
                     <span style={{ fontSize:11,fontWeight:900,color:MAROON,textTransform:"uppercase",letterSpacing:"0.12em" }}>Published</span>
                     <span style={{ fontSize:11,color:"#9ca3af",fontWeight:600 }}>({published.length})</span>
                   </div>
                 </div>
-                <div style={{ padding:"4px 16px 16px",display:"flex",flexDirection:"column",gap:0 }}>
+                <div style={{ padding:"2px 14px 14px",display:"flex",flexDirection:"column",gap:0 }}>
 
                   {academic.length>0 && (
                     <div style={{ marginBottom:4 }}>
@@ -502,7 +392,7 @@ export default function AdminDashboardPage() {
                         badge={<span style={{ display:"inline-flex",alignItems:"center",gap:5,background:"#eff6ff",color:"#1565c0",border:"1px solid #bfdbfe",borderRadius:20,padding:"3px 10px 3px 8px",fontSize:11,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.06em",fontFamily:FONT,whiteSpace:"nowrap" }}><GraduationCap size={12}/> Academic</span>}
                       />
                       {!colAcademic && (viewMode==="grid"
-                        ? <div className="course-grid" style={{ ...gridStyle,paddingBottom:12 }}>{academic.map(c=><CourseCard key={c.id} {...cardProps(c)}/>)}</div>
+                        ? <div className="course-grid" style={gridStyle}>{academic.map(c=><CourseCard key={c.id} {...cardProps(c)}/>)}</div>
                         : <div style={{ display:"flex",flexDirection:"column",gap:6,paddingBottom:12 }}>{listRows(academic)}</div>
                       )}
                     </div>
@@ -515,7 +405,7 @@ export default function AdminDashboardPage() {
                         badge={<span style={{ display:"inline-flex",alignItems:"center",gap:5,background:"#fffbeb",color:"#b45309",border:"1px solid #fde68a",borderRadius:20,padding:"3px 10px 3px 8px",fontSize:11,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.06em",fontFamily:FONT,whiteSpace:"nowrap" }}><Briefcase size={12}/> Non-Academic</span>}
                       />
                       {!colNonAcademic && (viewMode==="grid"
-                        ? <div className="course-grid" style={{ ...gridStyle,paddingBottom:12 }}>{nonAcademic.map(c=><CourseCard key={c.id} {...cardProps(c)}/>)}</div>
+                        ? <div className="course-grid" style={gridStyle}>{nonAcademic.map(c=><CourseCard key={c.id} {...cardProps(c)}/>)}</div>
                         : <div style={{ display:"flex",flexDirection:"column",gap:6,paddingBottom:12 }}>{listRows(nonAcademic)}</div>
                       )}
                     </div>
@@ -528,7 +418,7 @@ export default function AdminDashboardPage() {
                         badge={<span style={{ display:"inline-flex",alignItems:"center",gap:5,background:"#f9fafb",color:"#6b7280",border:"1px solid #e5e7eb",borderRadius:20,padding:"3px 10px 3px 8px",fontSize:11,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.06em",fontFamily:FONT,whiteSpace:"nowrap" }}><BookOpen size={12}/> Uncategorized</span>}
                       />
                       {!colUncat && (viewMode==="grid"
-                        ? <div className="course-grid" style={{ ...gridStyle,paddingBottom:12 }}>{uncategorized.map(c=><CourseCard key={c.id} {...cardProps(c)}/>)}</div>
+                        ? <div className="course-grid" style={gridStyle}>{uncategorized.map(c=><CourseCard key={c.id} {...cardProps(c)}/>)}</div>
                         : <div style={{ display:"flex",flexDirection:"column",gap:6,paddingBottom:12 }}>{listRows(uncategorized)}</div>
                       )}
                     </div>
@@ -539,17 +429,17 @@ export default function AdminDashboardPage() {
 
             {/* ── Unpublished ── */}
             {unpublished.length>0 && (
-              <div style={{ background:"#fff",borderRadius:16,border:"1px solid #f3f4f6",overflow:"hidden" }}>
-                <div style={{ padding:"14px 16px 0" }}>
+              <div style={{ background:"#fff",borderRadius:14,border:"1px solid #f3f4f6",overflow:"hidden" }}>
+                <div style={{ padding:"12px 14px 0" }}>
                   <SectionHeader count={unpublished.length} collapsed={colUnpublished} onToggle={()=>setColUnpublished(v=>!v)}
                     accent={{ text:"#6b7280",bg:"#f9fafb",border:"#e5e7eb" }}
                     badge={<span style={{ fontSize:11,fontWeight:900,color:"#6b7280",textTransform:"uppercase",letterSpacing:"0.12em",fontFamily:FONT }}>Unpublished</span>}
                   />
                 </div>
                 {!colUnpublished && (
-                  <div style={{ padding:"0 16px 16px" }}>
+                  <div style={{ padding:"0 14px 14px" }}>
                     {viewMode==="grid"
-                      ? <div className="course-grid" style={{ ...gridStyle }}>{unpublished.map(c=><CourseCard key={c.id} {...cardProps(c)}/>)}</div>
+                      ? <div className="course-grid" style={gridStyle}>{unpublished.map(c=><CourseCard key={c.id} {...cardProps(c)}/>)}</div>
                       : <div style={{ display:"flex",flexDirection:"column",gap:6 }}>{listRows(unpublished)}</div>
                     }
                   </div>
@@ -567,26 +457,25 @@ export default function AdminDashboardPage() {
           onCancel={()=>setPublishTarget(null)}
         />
       )}
-
-      {/* ── Bottom Nav (mobile) ── */}
-      <BottomNavBar currentPath="/admin"/>
     </div>
   );
 }
 
 // ── Course Card ────────────────────────────────────────────────────────────────
-function CourseCard({ course, onTogglePublish, onDelete, onColorChange, onMove, onChangeCategory, onClick, onAssignments, onDiscussions, onFiles }: {
+function CourseCard({ course, onTogglePublish, onDelete, onColorChange, onMove, onChangeCategory, onClick, onAssignments, onDiscussions, onFiles, onUsers, onHistory }: {
   course:Course; onTogglePublish:()=>void; onDelete:()=>void;
   onColorChange:(c:string)=>void; onMove:(d:"top"|"up"|"down"|"bottom")=>void;
   onChangeCategory:(c:Category)=>void; onClick:()=>void;
   onAssignments:()=>void; onDiscussions:()=>void; onFiles:()=>void;
+  onUsers:()=>void; onHistory:()=>void;
 }) {
   const [menuOpen,      setMenuOpen]      = useState(false);
   const [menuTab,       setMenuTab]       = useState<"color"|"move"|"more">("color");
   const [hexInput,      setHexInput]      = useState(course.color);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [, startTransition]               = useTransition();
-  const [menuStyle, setMenuStyle]         = useState<React.CSSProperties>({});
+
+  const [menuStyle, setMenuStyle] = useState<React.CSSProperties>({});
   const triggerRef = useRef<HTMLButtonElement>(null);
 
   useEffect(()=>{ startTransition(()=>setHexInput(course.color)); },[course.color]);
@@ -632,10 +521,16 @@ function CourseCard({ course, onTogglePublish, onDelete, onColorChange, onMove, 
   const closeMenu  = () => { setMenuOpen(false); setConfirmDelete(false); };
   const applyColor = (e:React.MouseEvent) => { e.stopPropagation(); onColorChange(hexInput.startsWith("#")?hexInput:`#${hexInput}`); closeMenu(); };
 
-  const iconBtn = (title:string,cb:()=>void,svg:React.ReactNode) => (
+  // Small icon button for the card footer
+  const iconBtn = (title:string, cb:()=>void, svg:React.ReactNode) => (
     <button onClick={e=>{e.stopPropagation();cb();}} title={title}
-      style={{ background:"none",border:"none",cursor:"pointer",padding:0,color:"#d1d5db",display:"flex",lineHeight:1,transition:"color .15s" }}
-      onMouseEnter={e=>(e.currentTarget.style.color=MAROON)} onMouseLeave={e=>(e.currentTarget.style.color="#d1d5db")}>
+      style={{
+        background:"none",border:"none",cursor:"pointer",padding:"4px",
+        color:"#c4b5b5",display:"flex",lineHeight:1,transition:"color .15s",
+        minWidth:28,minHeight:28,alignItems:"center",justifyContent:"center",borderRadius:6,
+      }}
+      onMouseEnter={e=>(e.currentTarget.style.color=MAROON)}
+      onMouseLeave={e=>(e.currentTarget.style.color="#c4b5b5")}>
       {svg}
     </button>
   );
@@ -665,7 +560,7 @@ function CourseCard({ course, onTogglePublish, onDelete, onColorChange, onMove, 
         <button style={tabStyle("color")} onClick={()=>setMenuTab("color")}>Color</button>
         <button style={tabStyle("move")}  onClick={()=>setMenuTab("move")}>Move</button>
         <button style={tabStyle("more")}  onClick={()=>setMenuTab("more")}>More</button>
-        <button onClick={closeMenu} style={{ padding:"8px 10px",background:"none",border:"none",cursor:"pointer",color:"#9ca3af",fontSize:14,fontFamily:FONT }}>✕</button>
+        <button onClick={closeMenu} style={{ padding:"8px 10px",background:"none",border:"none",cursor:"pointer",color:"#9ca3af",fontSize:14,fontFamily:FONT,minWidth:40 }}>✕</button>
       </div>
 
       {menuTab==="color" && (
@@ -701,7 +596,7 @@ function CourseCard({ course, onTogglePublish, onDelete, onColorChange, onMove, 
         <div style={{ padding:"4px 0 8px" }}>
           {MOVE_ITEMS.map(item=>(
             <button key={item.dir} onClick={()=>{ onMove(item.dir); closeMenu(); }}
-              style={{ display:"flex",alignItems:"center",gap:10,width:"100%",padding:"9px 16px",fontSize:13,color:"#374151",background:"none",border:"none",cursor:"pointer",textAlign:"left",fontFamily:FONT }}
+              style={{ display:"flex",alignItems:"center",gap:10,width:"100%",padding:"10px 16px",fontSize:13,color:"#374151",background:"none",border:"none",cursor:"pointer",textAlign:"left",fontFamily:FONT,minHeight:44 }}
               onMouseEnter={e=>{ e.currentTarget.style.background="#fdf8f8"; e.currentTarget.style.color=MAROON; }}
               onMouseLeave={e=>{ e.currentTarget.style.background="none"; e.currentTarget.style.color="#374151"; }}>
               <span style={{ fontSize:16,width:20,textAlign:"center",color:"#9ca3af" }}>{item.icon}</span>{item.label}
@@ -715,7 +610,7 @@ function CourseCard({ course, onTogglePublish, onDelete, onColorChange, onMove, 
                 const active = course.term===cat.value;
                 return (
                   <button key={cat.value} onClick={()=>{ onChangeCategory(cat.value); closeMenu(); }}
-                    style={{ display:"flex",alignItems:"center",gap:8,width:"100%",padding:"8px 16px",fontSize:12,color:active?MAROON:"#374151",background:active?"#fdf3f3":"none",border:"none",cursor:"pointer",textAlign:"left",fontFamily:FONT,fontWeight:active?800:500 }}
+                    style={{ display:"flex",alignItems:"center",gap:8,width:"100%",padding:"10px 16px",fontSize:12,color:active?MAROON:"#374151",background:active?"#fdf3f3":"none",border:"none",cursor:"pointer",textAlign:"left",fontFamily:FONT,fontWeight:active?800:500,minHeight:44 }}
                     onMouseEnter={e=>{ if(!active){ e.currentTarget.style.background="#fdf8f8"; e.currentTarget.style.color=MAROON; }}}
                     onMouseLeave={e=>{ if(!active){ e.currentTarget.style.background="none"; e.currentTarget.style.color="#374151"; }}}>
                     <span style={{ color:active?MAROON:"#9ca3af" }}>{cat.icon}</span>{cat.value}
@@ -732,7 +627,7 @@ function CourseCard({ course, onTogglePublish, onDelete, onColorChange, onMove, 
         <div style={{ padding:"8px 14px 12px" }}>
           {!confirmDelete ? (
             <button onClick={()=>setConfirmDelete(true)}
-              style={{ display:"flex",alignItems:"center",gap:8,width:"100%",padding:"8px 10px",fontSize:13,color:"#dc2626",background:"none",border:"1px solid #fee2e2",borderRadius:8,cursor:"pointer",fontFamily:FONT }}
+              style={{ display:"flex",alignItems:"center",gap:8,width:"100%",padding:"10px",fontSize:13,color:"#dc2626",background:"none",border:"1px solid #fee2e2",borderRadius:8,cursor:"pointer",fontFamily:FONT,minHeight:44 }}
               onMouseEnter={e=>(e.currentTarget.style.background="#fef2f2")} onMouseLeave={e=>(e.currentTarget.style.background="none")}>
               <Trash2 size={14}/> Delete Office
             </button>
@@ -740,8 +635,8 @@ function CourseCard({ course, onTogglePublish, onDelete, onColorChange, onMove, 
             <div>
               <p style={{ fontSize:12,color:"#374151",margin:"0 0 10px" }}>Delete <strong>{course.name}</strong>? This cannot be undone.</p>
               <div style={{ display:"flex",gap:6 }}>
-                <button onClick={()=>setConfirmDelete(false)} style={{ flex:1,padding:"6px 0",fontSize:12,border:"1px solid #e5e7eb",borderRadius:6,background:"#fff",cursor:"pointer",fontFamily:FONT }}>Cancel</button>
-                <button onClick={()=>{ onDelete(); closeMenu(); }} style={{ flex:1,padding:"6px 0",fontSize:12,background:"#dc2626",color:"#fff",border:"none",borderRadius:6,cursor:"pointer",fontWeight:700,fontFamily:FONT }}>Delete</button>
+                <button onClick={()=>setConfirmDelete(false)} style={{ flex:1,padding:"8px 0",fontSize:12,border:"1px solid #e5e7eb",borderRadius:6,background:"#fff",cursor:"pointer",fontFamily:FONT,minHeight:44 }}>Cancel</button>
+                <button onClick={()=>{ onDelete(); closeMenu(); }} style={{ flex:1,padding:"8px 0",fontSize:12,background:"#dc2626",color:"#fff",border:"none",borderRadius:6,cursor:"pointer",fontWeight:700,fontFamily:FONT,minHeight:44 }}>Delete</button>
               </div>
             </div>
           )}
@@ -758,21 +653,28 @@ function CourseCard({ course, onTogglePublish, onDelete, onColorChange, onMove, 
       onMouseLeave={e=>{ if(!menuOpen){ e.currentTarget.style.boxShadow="0 1px 4px rgba(0,0,0,.06)"; e.currentTarget.style.transform="translateY(0)"; }}}>
 
       {/* ── Banner ── */}
-      <div style={{ position:"relative",height:90,backgroundColor:course.color,cursor:"pointer",borderRadius:"12px 12px 0 0",overflow:"hidden" }} onClick={onClick}>
+      <div style={{ position:"relative",height:80,backgroundColor:course.color,cursor:"pointer",borderRadius:"12px 12px 0 0",overflow:"hidden" }} onClick={onClick}>
         {course.image && (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={course.image} alt={course.name} style={{ position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover" }}/>
         )}
+
+        {/* School logo placeholder — always shown top-left */}
+        <div style={{ position:"absolute",top:6,left:6,width:24,height:24,borderRadius:6,background:"rgba(255,255,255,0.2)",border:"1px solid rgba(255,255,255,0.4)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1,overflow:"hidden" }}>
+          {/* Replace with your <img src="/logo.png"/> */}
+          <BookOpen size={12} color="rgba(255,255,255,0.9)"/>
+        </div>
+
         {course.status==="UNPUBLISHED" && (
           <button onClick={e=>{ e.stopPropagation(); onTogglePublish(); }}
-            style={{ position:"absolute",top:6,left:6,background:"rgba(255,255,255,0.92)",border:"none",borderRadius:6,padding:"3px 8px",fontSize:10,fontWeight:700,color:"#374151",cursor:"pointer",fontFamily:FONT,zIndex:1 }}
+            style={{ position:"absolute",top:6,left:36,background:"rgba(255,255,255,0.92)",border:"none",borderRadius:6,padding:"3px 8px",fontSize:10,fontWeight:700,color:"#374151",cursor:"pointer",fontFamily:FONT,zIndex:1,minHeight:28 }}
             onMouseEnter={e=>(e.currentTarget.style.background="#fff")}
             onMouseLeave={e=>(e.currentTarget.style.background="rgba(255,255,255,0.92)")}>
             Publish
           </button>
         )}
         <button ref={triggerRef} data-course-trigger="true" onClick={openMenu}
-          style={{ position:"absolute",top:5,right:5,background:menuOpen?"rgba(255,255,255,0.25)":"none",border:menuOpen?"1px solid rgba(255,255,255,0.4)":"none",borderRadius:"50%",cursor:"pointer",color:"rgba(255,255,255,0.9)",padding:3,display:"flex",zIndex:1 }}>
+          style={{ position:"absolute",top:5,right:5,background:menuOpen?"rgba(255,255,255,0.25)":"none",border:menuOpen?"1px solid rgba(255,255,255,0.4)":"none",borderRadius:"50%",cursor:"pointer",color:"rgba(255,255,255,0.9)",padding:4,display:"flex",zIndex:1,minWidth:30,minHeight:30,alignItems:"center",justifyContent:"center" }}>
           <MoreVertical size={15}/>
         </button>
       </div>
@@ -781,13 +683,25 @@ function CourseCard({ course, onTogglePublish, onDelete, onColorChange, onMove, 
       <div style={{ padding:"8px 10px 4px",cursor:"pointer",flex:1 }} onClick={onClick}>
         <p style={{ fontSize:12,fontWeight:800,color:course.color,lineHeight:1.3,margin:0,wordBreak:"break-word" }}>{course.name}</p>
         <p style={{ fontSize:10,color:"#9ca3af",margin:"2px 0 0",fontWeight:600 }}>{course.code}</p>
+        {/* Enrollment count — now always visible */}
+        <p style={{ fontSize:10,color:"#b0b7c3",margin:"3px 0 0",fontWeight:500,display:"flex",alignItems:"center",gap:3 }}>
+          <Users size={9}/> {course._count.enrollments}
+        </p>
       </div>
 
-      {/* ── Icons ── */}
-      <div style={{ display:"flex",alignItems:"center",gap:8,padding:"6px 10px 10px" }}>
-        {iconBtn("Assignments",onAssignments,<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg>)}
-        {iconBtn("Discussions",onDiscussions,<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>)}
-        {iconBtn("Files",onFiles,<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>)}
+      {/* ── Icons — all always visible, responsive sizing ── */}
+      <div style={{ display:"flex",alignItems:"center",gap:1,padding:"5px 6px 8px",borderTop:"1px solid #f5f5f5",marginTop:"auto" }}>
+        {iconBtn("Assignments", onAssignments,
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg>
+        )}
+        {iconBtn("Discussions", onDiscussions,
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        )}
+        {iconBtn("Files", onFiles,
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+        )}
+        {iconBtn("Users", onUsers, <Users size={13}/>)}
+        {iconBtn("History", onHistory, <History size={13}/>)}
       </div>
 
       {dropdown}

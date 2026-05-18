@@ -1,12 +1,58 @@
 "use client";
 
-import { useMemo, useState, useEffect, useRef, useCallback } from "react";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useSession } from "next-auth/react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
+import { createPortal } from "react-dom";
+import { Search, Plus, MoreVertical, X, ChevronDown } from "lucide-react";
 
 const MAROON = "#7b1113";
-const GRADE_OPTIONS = ["Points", "Percentage", "Complete/Incomplete", "Not Graded"];
-const SUBMISSION_TYPES = ["Online", "On Paper", "No Submission", "External Tool", "Lucid"];
+const FONT = "'Plus Jakarta Sans','Helvetica Neue',Arial,sans-serif";
+
+// ── Responsive global CSS ──────────────────────────────────────────────────────
+const GLOBAL_CSS = `
+  *, *::before, *::after { box-sizing: border-box; }
+
+  /* Prevent iOS input zoom */
+  @media (max-width: 767px) {
+    input, textarea, select { font-size: 16px !important; }
+  }
+
+  /* Smooth native scroll */
+  .asgn-scroll { -webkit-overflow-scrolling: touch; }
+  .asgn-scroll::-webkit-scrollbar { width: 3px; }
+  .asgn-scroll::-webkit-scrollbar-thumb { background: #f0c0c0; border-radius: 2px; }
+
+  /* Hide scrollbar on tab strip */
+  .asgn-tabstrip { scrollbar-width: none; }
+  .asgn-tabstrip::-webkit-scrollbar { display: none; }
+
+  /* Tap highlight */
+  button, [role="button"] { -webkit-tap-highlight-color: transparent; }
+
+  /* AssignTo panel full-width on mobile */
+  @media (max-width: 639px) {
+    .asgn-assign-panel { width: 100% !important; }
+    .asgn-modal { border-radius: 20px 20px 0 0 !important; }
+    .asgn-modal-footer { flex-direction: column !important; gap: 8px !important; }
+    .asgn-modal-footer button { width: 100% !important; height: 44px !important; font-size: 14px !important; border-radius: 10px !important; }
+    .asgn-row-meta { flex-direction: column !important; align-items: flex-start !important; gap: 4px !important; }
+    .asgn-date-grid { grid-template-columns: 1fr !important; }
+    .asgn-toolbar { flex-wrap: wrap; row-gap: 8px; }
+    .asgn-search-input { width: 100% !important; }
+    .asgn-toolbar-right { width: 100%; justify-content: flex-end; }
+  }
+
+  @media (max-width: 400px) {
+    .asgn-section-label { font-size: 10px !important; }
+  }
+
+  /* Safe area */
+  @supports (padding-bottom: env(safe-area-inset-bottom)) {
+    .asgn-assign-panel-footer { padding-bottom: calc(12px + env(safe-area-inset-bottom)) !important; }
+    .asgn-modal-footer { padding-bottom: calc(14px + env(safe-area-inset-bottom)) !important; }
+  }
+`;
 
 function buildTimes() {
   const list: string[] = [];
@@ -18,1636 +64,1405 @@ function buildTimes() {
   return list;
 }
 const TIME_OPTIONS = buildTimes();
-type TabKey = "details" | "submission" | "settings" | "assign";
 
-interface AssignTo {
+// ── Types ──────────────────────────────────────────────────────────────────────
+interface Assignment {
+  id: string;
+  title: string;
+  points: number;
+  status: "PUBLISHED" | "UNPUBLISHED";
+  dueDate: string | null;
+  availableFrom: string | null;
+  availableUntil: string | null;
+  assignmentGroup: string;
+  createdBy?: string | null;
+  createdById?: string | null;
+  publisherName?: string | null;
+  publisherImage?: string | null;
+  publisherRole?: string | null;
+  _isMine?: boolean;
+  isCreator?: boolean;
+}
+
+interface Props {
+  courseId: string;
+  currentUserId?: string | null;
+  currentUserName?: string | null;
+  currentUserRole?: string | null;
+}
+
+// ── Seen/New badge helpers ─────────────────────────────────────────────────────
+const SEEN_KEY = (courseId: string) => `seen_assignments_${courseId}`;
+function getSeenIds(courseId: string): Set<string> {
+  try {
+    const raw = localStorage.getItem(SEEN_KEY(courseId));
+    return new Set(raw ? JSON.parse(raw) : []);
+  } catch { return new Set(); }
+}
+function markSeen(courseId: string, id: string) {
+  try {
+    const seen = getSeenIds(courseId);
+    seen.add(String(id));
+    localStorage.setItem(SEEN_KEY(courseId), JSON.stringify([...seen]));
+  } catch { /* ignore */ }
+}
+
+function NewBadge() {
+  return (
+    <span style={{
+      display: "inline-flex", alignItems: "center",
+      padding: "1px 6px", borderRadius: 4,
+      fontSize: 9, fontWeight: 800, letterSpacing: "0.08em",
+      textTransform: "uppercase", color: "#fff", background: "#dc2626",
+    }}>
+      NEW
+    </span>
+  );
+}
+
+// ── Date/time helpers ──────────────────────────────────────────────────────────
+function fmtDue(iso: string | null) {
+  if (!iso) return null;
+  const d = new Date(iso);
+  return (
+    d.toLocaleDateString("en-US", { month: "short", day: "numeric" }) +
+    " at " +
+    d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }).toLowerCase()
+  );
+}
+function isoToDate(iso: string | null) {
+  if (!iso) return "";
+  return new Date(iso).toISOString().split("T")[0];
+}
+function isoToTime(iso: string | null) {
+  if (!iso) return "11:59 PM";
+  return new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+}
+function fmtDateLabel(date: string, time: string) {
+  if (!date) return "";
+  try {
+    const d = new Date(`${date}T00:00:00`);
+    return (
+      d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" }) +
+      " " + (time || "11:59 PM")
+    );
+  } catch { return ""; }
+}
+
+// ── Group persistence ──────────────────────────────────────────────────────────
+function groupsKey(courseId: string) { return `assignment_groups_${courseId}`; }
+function loadPersistedGroups(courseId: string): string[] {
+  try {
+    const raw = localStorage.getItem(groupsKey(courseId));
+    if (!raw) return [];
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? (arr.includes("Assignments") ? arr : ["Assignments", ...arr]) : [];
+  } catch { return []; }
+}
+function persistGroups(courseId: string, groups: string[]) {
+  try { localStorage.setItem(groupsKey(courseId), JSON.stringify(groups)); } catch { }
+}
+
+// ── Avatar ─────────────────────────────────────────────────────────────────────
+function PublisherAvatar({ name, image, size = 20 }: { name?: string | null; image?: string | null; size?: number }) {
+  const [imgError, setImgError] = useState(false);
+  const initial = name ? name.charAt(0).toUpperCase() : "?";
+  if (image && !imgError) {
+    return (
+      <Image src={image} alt={name ?? "Publisher"} width={size} height={size}
+        onError={() => setImgError(true)}
+        style={{ width: size, height: size, borderRadius: "50%", objectFit: "cover", flexShrink: 0, border: "1.5px solid #bfdbfe" }} />
+    );
+  }
+  return (
+    <span style={{
+      width: size, height: size, borderRadius: "50%", background: "#1d6fa4", color: "#fff",
+      fontSize: size * 0.42, fontWeight: 700, display: "inline-flex", alignItems: "center",
+      justifyContent: "center", flexShrink: 0,
+    }}>
+      {initial}
+    </span>
+  );
+}
+
+function PublisherChip({ name, image, role }: { name?: string | null; image?: string | null; role?: string | null }) {
+  if (!name) return null;
+  return (
+    <span style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: "#6b7280" }}>
+      <PublisherAvatar name={name} image={image} size={18} />
+      <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 100 }}>{name}</span>
+      {role && (
+        <span style={{ padding: "1px 5px", borderRadius: 4, fontSize: 9, fontWeight: 700, textTransform: "uppercase", background: "#eff6ff", color: "#1d6fa4", border: "1px solid #bfdbfe" }}>
+          {role}
+        </span>
+      )}
+    </span>
+  );
+}
+
+function AuthorBadge({ name, role }: { name: string; role: string }) {
+  return (
+    <span style={{
+      display: "inline-flex", alignItems: "center", gap: 4,
+      fontSize: 10, fontWeight: 600, padding: "2px 8px",
+      borderRadius: 20, border: "1px solid #f0c0c0",
+      background: "#fdf8f8", color: MAROON, flexShrink: 0,
+    }}>
+      <span style={{ width: 5, height: 5, borderRadius: "50%", background: MAROON, flexShrink: 0 }} />
+      {name} · {role}
+    </span>
+  );
+}
+
+// ── Publish toggle ─────────────────────────────────────────────────────────────
+function PublishToggle({ published, onToggle }: { published: boolean; onToggle: () => void }) {
+  return (
+    <button type="button" onClick={onToggle}
+      title={published ? "Published — click to unpublish" : "Unpublished — click to publish"}
+      style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", padding: 4, touchAction: "manipulation" }}>
+      {published ? (
+        <svg width="22" height="22" viewBox="0 0 20 20" fill="none">
+          <circle cx="10" cy="10" r="9" fill="#16a34a" />
+          <path d="M5.5 10.5l3 3 6-6" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      ) : (
+        <svg width="22" height="22" viewBox="0 0 20 20" fill="none">
+          <circle cx="10" cy="10" r="9" stroke="#9ca3af" strokeWidth="1.5" fill="none" />
+          <line x1="6" y1="14" x2="14" y2="6" stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round" />
+        </svg>
+      )}
+    </button>
+  );
+}
+
+function AssignmentIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.5" style={{ flexShrink: 0 }}>
+      <rect x="4" y="3" width="14" height="18" rx="2" />
+      <path d="M8 8h8M8 12h8M8 16h5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+// ── 3-dot row menu ─────────────────────────────────────────────────────────────
+type DropdownAction = "edit" | "speedgrader" | "duplicate" | "assignTo" | "delete";
+
+function AssignmentRowMenu({ assignment, onAction }: {
+  assignment: Assignment;
+  onAction: (action: DropdownAction, a: Assignment) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [menuStyle, setMenuStyle] = useState<React.CSSProperties>({});
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const h = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node) &&
+        btnRef.current && !btnRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, [open]);
+
+  const handleOpen = () => {
+    if (!btnRef.current) return;
+    const rect = btnRef.current.getBoundingClientRect();
+    const w = 180, h = 170;
+    const top = window.innerHeight - rect.bottom >= h ? rect.bottom + 4 : rect.top - h - 4;
+    const left = Math.min(rect.right - w, window.innerWidth - w - 8);
+    setMenuStyle({
+      position: "fixed", top, left, zIndex: 9999, background: "#fff",
+      border: "1px solid #e5e7eb", borderRadius: 10,
+      boxShadow: "0 8px 24px rgba(0,0,0,0.13)", minWidth: w, overflow: "hidden",
+    });
+    setOpen(v => !v);
+  };
+
+  const items: { label: string; action: DropdownAction; danger?: boolean; icon: React.ReactNode }[] = [
+    { label: "Edit", action: "edit", icon: <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" strokeLinecap="round" /><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" strokeLinecap="round" /></svg> },
+    { label: "SpeedGrader", action: "speedgrader", icon: <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" strokeLinecap="round" strokeLinejoin="round" /></svg> },
+    { label: "Duplicate", action: "duplicate", icon: <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" /></svg> },
+    { label: "Assign To…", action: "assignTo", icon: <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" strokeLinecap="round" /><circle cx="12" cy="7" r="4" /></svg> },
+    { label: "Delete", action: "delete", danger: true, icon: <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6" strokeLinecap="round" /><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" strokeLinecap="round" /><path d="M10 11v6M14 11v6" strokeLinecap="round" /><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2" strokeLinecap="round" /></svg> },
+  ];
+
+  return (
+    <>
+      <button ref={btnRef} type="button" onClick={e => { e.stopPropagation(); handleOpen(); }}
+        style={{ width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 8, background: "none", border: "none", cursor: "pointer", color: "#9ca3af", touchAction: "manipulation" }}
+        onMouseEnter={e => (e.currentTarget.style.background = "#f3f4f6")}
+        onMouseLeave={e => (e.currentTarget.style.background = "none")}>
+        <MoreVertical size={16} />
+      </button>
+      {open && typeof document !== "undefined" && createPortal(
+        <div ref={menuRef} style={menuStyle} onClick={e => e.stopPropagation()}>
+          {items.map((item, i) => (
+            <button key={item.action} type="button"
+              onClick={() => { setOpen(false); onAction(item.action, assignment); }}
+              style={{
+                width: "100%", textAlign: "left", padding: "10px 14px",
+                fontSize: 13, display: "flex", alignItems: "center", gap: 8,
+                background: "none", border: "none", cursor: "pointer",
+                color: item.danger ? "#dc2626" : "#374151",
+                borderTop: i > 0 ? "1px solid #f3f4f6" : "none",
+                minHeight: 42,
+              }}
+              onMouseEnter={e => (e.currentTarget.style.background = item.danger ? "#fef2f2" : "#f9fafb")}
+              onMouseLeave={e => (e.currentTarget.style.background = "none")}>
+              {item.icon}{item.label}
+            </button>
+          ))}
+        </div>,
+        document.body
+      )}
+    </>
+  );
+}
+
+// ── Group 3-dot menu ───────────────────────────────────────────────────────────
+function GroupMenu({ onEdit, onDelete, isLastGroup }: {
+  onEdit: () => void; onDelete: () => void; isLastGroup?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const [menuStyle, setMenuStyle] = useState<React.CSSProperties>({});
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const h = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node) &&
+        btnRef.current && !btnRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, [open]);
+
+  const handleOpen = () => {
+    if (!btnRef.current) return;
+    const rect = btnRef.current.getBoundingClientRect();
+    const w = 160, h = isLastGroup ? 44 : 88;
+    const top = window.innerHeight - rect.bottom >= h ? rect.bottom + 4 : rect.top - h - 4;
+    const left = Math.min(rect.right - w, window.innerWidth - w - 8);
+    setMenuStyle({ position: "fixed", top, left, zIndex: 9999, background: "#fff", border: "1px solid #e5e7eb", borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.13)", minWidth: w, overflow: "hidden" });
+    setOpen(v => !v);
+  };
+
+  return (
+    <>
+      <button ref={btnRef} type="button" onClick={e => { e.stopPropagation(); handleOpen(); }}
+        style={{ width: 30, height: 30, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 6, background: "none", border: "none", cursor: "pointer", color: "#9ca3af", touchAction: "manipulation" }}
+        onMouseEnter={e => (e.currentTarget.style.background = "#e5e7eb")}
+        onMouseLeave={e => (e.currentTarget.style.background = "none")}>
+        <MoreVertical size={14} />
+      </button>
+      {open && typeof document !== "undefined" && createPortal(
+        <div ref={menuRef} style={menuStyle}>
+          <button type="button" onClick={() => { setOpen(false); onEdit(); }}
+            style={{ width: "100%", textAlign: "left", padding: "10px 14px", fontSize: 13, display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", cursor: "pointer", color: "#374151", minHeight: 42 }}
+            onMouseEnter={e => (e.currentTarget.style.background = "#f9fafb")}
+            onMouseLeave={e => (e.currentTarget.style.background = "none")}>
+            <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" strokeLinecap="round" /><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" strokeLinecap="round" /></svg>
+            Edit
+          </button>
+          {!isLastGroup && (
+            <button type="button" onClick={() => { setOpen(false); onDelete(); }}
+              style={{ width: "100%", textAlign: "left", padding: "10px 14px", fontSize: 13, display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", cursor: "pointer", color: "#dc2626", borderTop: "1px solid #f3f4f6", minHeight: 42 }}
+              onMouseEnter={e => (e.currentTarget.style.background = "#fef2f2")}
+              onMouseLeave={e => (e.currentTarget.style.background = "none")}>
+              <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6" strokeLinecap="round" /><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" strokeLinecap="round" /><path d="M10 11v6M14 11v6" strokeLinecap="round" /><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2" strokeLinecap="round" /></svg>
+              Delete
+            </button>
+          )}
+        </div>,
+        document.body
+      )}
+    </>
+  );
+}
+
+// ── Modal shell ────────────────────────────────────────────────────────────────
+function ModalShell({ title, onClose, children, footer }: {
+  title: string; onClose: () => void;
+  children: React.ReactNode; footer: React.ReactNode;
+}) {
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "flex-end", justifyContent: "center", background: "rgba(0,0,0,0.32)", padding: 0 }}
+      onClick={onClose}>
+      <div className="asgn-modal" style={{ background: "#fff", width: "100%", maxWidth: 480, boxShadow: "0 24px 60px rgba(0,0,0,0.18)", overflow: "hidden", fontFamily: FONT }}
+        onClick={e => e.stopPropagation()}>
+        {/* Drag handle */}
+        <div style={{ display: "flex", justifyContent: "center", padding: "10px 0 4px" }}>
+          <div style={{ width: 36, height: 4, borderRadius: 2, background: "#d1d5db" }} />
+        </div>
+        {/* Header */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 18px", borderBottom: "1px solid #e5e7eb" }}>
+          <span style={{ fontSize: 14, fontWeight: 700, color: "#111827" }}>{title}</span>
+          <button onClick={onClose} style={{ width: 30, height: 30, display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid #e5e7eb", borderRadius: 7, background: "none", cursor: "pointer", color: "#6b7280" }}>
+            <X size={14} />
+          </button>
+        </div>
+        {/* Body */}
+        <div style={{ padding: "18px", overflowY: "auto", maxHeight: "65vh" }} className="asgn-scroll">
+          {children}
+        </div>
+        {/* Footer */}
+        <div className="asgn-modal-footer" style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 8, padding: "12px 18px", background: "#fafafa", borderTop: "1px solid #e5e7eb" }}>
+          {footer}
+        </div>
+      </div>
+
+      {/* Centered on larger screens */}
+      <style>{`
+        @media (min-width: 640px) {
+          .asgn-modal {
+            border-radius: 12px !important;
+            margin: auto !important;
+          }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+function BtnPrimary({ onClick, disabled, children }: { onClick?: () => void; disabled?: boolean; children: React.ReactNode }) {
+  return (
+    <button type="button" onClick={onClick} disabled={disabled}
+      style={{ height: 36, padding: "0 20px", fontFamily: FONT, fontSize: 13, fontWeight: 700, borderRadius: 8, border: "none", color: "#fff", background: disabled ? "#d1d5db" : MAROON, cursor: disabled ? "not-allowed" : "pointer", opacity: disabled ? 0.6 : 1, whiteSpace: "nowrap", touchAction: "manipulation" }}>
+      {children}
+    </button>
+  );
+}
+function BtnSecondary({ onClick, disabled, children }: { onClick?: () => void; disabled?: boolean; children: React.ReactNode }) {
+  return (
+    <button type="button" onClick={onClick} disabled={disabled}
+      style={{ height: 36, padding: "0 16px", fontFamily: FONT, fontSize: 13, fontWeight: 500, borderRadius: 8, border: "1px solid #d1d5db", color: "#374151", background: "#fff", cursor: disabled ? "not-allowed" : "pointer", opacity: disabled ? 0.5 : 1, whiteSpace: "nowrap", touchAction: "manipulation" }}>
+      {children}
+    </button>
+  );
+}
+function FieldLabel({ children, required }: { children: React.ReactNode; required?: boolean }) {
+  return (
+    <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 6 }}>
+      {children}{required && <span style={{ color: MAROON, marginLeft: 2 }}>*</span>}
+    </label>
+  );
+}
+function StyledInput({ value, onChange, placeholder, type = "text", onFocus, onBlur, autoFocus }: {
+  value: string; onChange: (v: string) => void; placeholder?: string;
+  type?: string; onFocus?: () => void; onBlur?: () => void; autoFocus?: boolean;
+}) {
+  return (
+    <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} autoFocus={autoFocus}
+      onFocus={e => { e.currentTarget.style.borderColor = MAROON; e.currentTarget.style.boxShadow = `0 0 0 3px rgba(123,17,19,0.08)`; onFocus?.(); }}
+      onBlur={e => { e.currentTarget.style.borderColor = "#d1d5db"; e.currentTarget.style.boxShadow = "none"; onBlur?.(); }}
+      style={{ width: "100%", height: 40, border: "1px solid #d1d5db", borderRadius: 8, padding: "0 12px", fontFamily: FONT, color: "#111827", background: "#fafafa", outline: "none", transition: "border-color 0.15s" }} />
+  );
+}
+function StyledSelect({ value, onChange, children, style }: {
+  value: string; onChange: (v: string) => void; children: React.ReactNode; style?: React.CSSProperties;
+}) {
+  return (
+    <div style={{ position: "relative" }}>
+      <select value={value} onChange={e => onChange(e.target.value)}
+        style={{ width: "100%", height: 40, border: "1px solid #d1d5db", borderRadius: 8, padding: "0 32px 0 12px", fontFamily: FONT, color: "#111827", background: "#fafafa", outline: "none", appearance: "none", cursor: "pointer", ...style }}>
+        {children}
+      </select>
+      <ChevronDown size={13} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", color: "#9ca3af", pointerEvents: "none" }} />
+    </div>
+  );
+}
+
+// ── Delete Assignment Modal ────────────────────────────────────────────────────
+function DeleteAssignmentModal({ assignment, onClose, onConfirm, deleting }: {
+  assignment: Assignment; onClose: () => void; onConfirm: () => void; deleting: boolean;
+}) {
+  return (
+    <ModalShell title="Delete Assignment" onClose={onClose}
+      footer={<>
+        <BtnSecondary onClick={onClose} disabled={deleting}>Cancel</BtnSecondary>
+        <button type="button" onClick={onConfirm} disabled={deleting}
+          style={{ height: 36, padding: "0 20px", fontFamily: FONT, fontSize: 13, fontWeight: 700, borderRadius: 8, border: "none", color: "#fff", background: "#dc2626", cursor: deleting ? "not-allowed" : "pointer", opacity: deleting ? 0.6 : 1 }}>
+          {deleting ? "Deleting…" : "Delete"}
+        </button>
+      </>}>
+      <p style={{ fontSize: 14, color: "#374151", lineHeight: 1.6 }}>
+        Are you sure you want to delete <strong>&ldquo;{assignment.title}&rdquo;</strong>? This action cannot be undone.
+      </p>
+    </ModalShell>
+  );
+}
+
+// ── Quick Edit Modal ───────────────────────────────────────────────────────────
+function QuickEditModal({ assignment, courseId, onClose, onSave, onMoreOptions }: {
+  assignment: Assignment; courseId: string; onClose: () => void;
+  onSave: (updated: Partial<Assignment> & { dueTime?: string }) => Promise<void>;
+  onMoreOptions: () => void;
+}) {
+  const [name, setName] = useState(assignment.title);
+  const [dueDate, setDueDate] = useState(isoToDate(assignment.dueDate));
+  const [dueTime, setDueTime] = useState(isoToTime(assignment.dueDate));
+  const [points, setPoints] = useState(String(assignment.points));
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  void courseId;
+
+  const dateLabel = fmtDateLabel(dueDate, dueTime);
+
+  const handleSave = async () => {
+    if (!name.trim()) { setError("Name is required."); return; }
+    setSaving(true);
+    try {
+      await onSave({ title: name.trim(), points: parseFloat(points) || 0, dueDate: dueDate || null, dueTime });
+      onClose();
+    } catch { setError("Failed to save. Please try again."); }
+    finally { setSaving(false); }
+  };
+
+  return (
+    <ModalShell title="Edit Assignment" onClose={onClose}
+      footer={<>
+        <BtnSecondary onClick={onMoreOptions}>More Options</BtnSecondary>
+        <div style={{ flex: 1 }} />
+        <BtnSecondary onClick={onClose} disabled={saving}>Cancel</BtnSecondary>
+        <BtnPrimary onClick={handleSave} disabled={saving || !name.trim()}>{saving ? "Saving…" : "Save"}</BtnPrimary>
+      </>}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        <div>
+          <FieldLabel required>Name</FieldLabel>
+          <StyledInput value={name} onChange={setName} autoFocus />
+        </div>
+        <div>
+          <FieldLabel>Due at</FieldLabel>
+          <div className="asgn-date-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <div>
+              <label style={{ fontSize: 11, color: "#9ca3af", display: "block", marginBottom: 4 }}>Date</label>
+              <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)}
+                style={{ width: "100%", height: 40, border: "1px solid #d1d5db", borderRadius: 8, padding: "0 10px", fontFamily: FONT, color: "#111827", background: "#fafafa", outline: "none" }} />
+            </div>
+            <div>
+              <label style={{ fontSize: 11, color: "#9ca3af", display: "block", marginBottom: 4 }}>Time</label>
+              <StyledSelect value={dueTime} onChange={setDueTime}>
+                {TIME_OPTIONS.map(t => <option key={t}>{t}</option>)}
+              </StyledSelect>
+            </div>
+          </div>
+          {dateLabel && <p style={{ fontSize: 12, color: MAROON, fontWeight: 600, marginTop: 6 }}>{dateLabel}</p>}
+        </div>
+        <div>
+          <FieldLabel>Points</FieldLabel>
+          <input type="number" min={0} value={points} onChange={e => setPoints(e.target.value)}
+            style={{ width: 120, height: 40, border: "1px solid #d1d5db", borderRadius: 8, padding: "0 12px", fontFamily: FONT, color: "#111827", background: "#fafafa", outline: "none" }} />
+        </div>
+        {error && <p style={{ fontSize: 12, color: "#dc2626" }}>⚠ {error}</p>}
+      </div>
+    </ModalShell>
+  );
+}
+
+// ── Add / Edit / Delete Group Modals ──────────────────────────────────────────
+function GroupNameModal({ title, initialValue, onClose, onSave, saving, saveLabel }: {
+  title: string; initialValue?: string; onClose: () => void;
+  onSave: (name: string) => void; saving: boolean; saveLabel: string;
+}) {
+  const [name, setName] = useState(initialValue ?? "");
+  const unchanged = name.trim() === (initialValue ?? "").trim();
+  return (
+    <ModalShell title={title} onClose={onClose}
+      footer={<>
+        <BtnSecondary onClick={onClose} disabled={saving}>Cancel</BtnSecondary>
+        <BtnPrimary onClick={() => name.trim() && onSave(name.trim())} disabled={saving || !name.trim() || unchanged}>
+          {saving ? "Saving…" : saveLabel}
+        </BtnPrimary>
+      </>}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <FieldLabel>Group Name</FieldLabel>
+        <StyledInput value={name} onChange={setName} placeholder="e.g. Essay Group 1" autoFocus />
+      </div>
+    </ModalShell>
+  );
+}
+
+function DeleteGroupModal({ groupName, assignmentCount, otherGroups, onClose, onDelete }: {
+  groupName: string; assignmentCount: number; otherGroups: string[];
+  onClose: () => void; onDelete: (action: "delete" | "move", targetGroup?: string) => void;
+}) {
+  const [choice, setChoice] = useState<"delete" | "move">("delete");
+  const [targetGroup, setTargetGroup] = useState(otherGroups[0] ?? "");
+  return (
+    <ModalShell title="Delete Assignment Group" onClose={onClose}
+      footer={<>
+        <BtnSecondary onClick={onClose}>Cancel</BtnSecondary>
+        <button type="button" onClick={() => onDelete(choice, choice === "move" ? targetGroup : undefined)}
+          disabled={choice === "move" && !targetGroup}
+          style={{ height: 36, padding: "0 20px", fontFamily: FONT, fontSize: 13, fontWeight: 700, borderRadius: 8, border: "none", color: "#fff", background: "#dc2626", cursor: "pointer", opacity: choice === "move" && !targetGroup ? 0.4 : 1 }}>
+          Delete Group
+        </button>
+      </>}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 14, fontSize: 14, color: "#374151" }}>
+        <p>You are about to delete <strong>{groupName}</strong>, which has <strong>{assignmentCount}</strong> assignment{assignmentCount !== 1 ? "s" : ""}.</p>
+        <p style={{ color: "#6b7280", fontSize: 13 }}>Would you like to:</p>
+        <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
+          <input type="radio" checked={choice === "delete"} onChange={() => setChoice("delete")} style={{ accentColor: MAROON, width: 16, height: 16 }} />
+          Delete its assignments
+        </label>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
+            <input type="radio" checked={choice === "move"} onChange={() => setChoice("move")} disabled={otherGroups.length === 0} style={{ accentColor: MAROON, width: 16, height: 16 }} />
+            <span style={{ color: otherGroups.length === 0 ? "#9ca3af" : "#374151" }}>Move its assignments to</span>
+          </label>
+          {choice === "move" && otherGroups.length > 0 && (
+            <div style={{ marginLeft: 26 }}>
+              <StyledSelect value={targetGroup} onChange={setTargetGroup} style={{ width: 220 }}>
+                <option value="">[ Select a Group ]</option>
+                {otherGroups.map(g => <option key={g} value={g}>{g}</option>)}
+              </StyledSelect>
+            </div>
+          )}
+        </div>
+      </div>
+    </ModalShell>
+  );
+}
+
+// ── Assign To Side Panel ───────────────────────────────────────────────────────
+interface AssignRow {
   id: number; assignees: string[];
   dueDate: string; dueTime: string;
   availableFrom: string; availableFromTime: string;
   until: string; untilTime: string;
 }
 
-interface SubmissionEntry {
-  id: number;
-  label: string;
-  required: boolean;
-  type: string;
-  allowedFileTypes?: string[];
-  maxFiles?: number | null;
-}
-
-interface AssignmentGroup { id: number; name: string; }
-interface GroupSetItem { id: string; name: string; }
-interface Staff { id: string; name: string; }
-
-const SUBMISSION_ENTRY_TYPES = [
-  "File Upload",
-  "Text Entry",
-  "Website URL",
-  "Media Recording",
-];
-
-const ALLOWED_FILE_TYPES = [
-  { value: "pdf", label: "PDF" },
-  { value: "docx", label: "DOCX" },
-  { value: "doc", label: "DOC" },
-  { value: "txt", label: "TXT" },
-  { value: "xlsx", label: "XLSX" },
-  { value: "csv", label: "CSV" },
-  { value: "pptx", label: "PPTX" },
-  { value: "jpg", label: "JPG" },
-  { value: "jpeg", label: "JPEG" },
-  { value: "png", label: "PNG" },
-  { value: "zip", label: "ZIP" },
-  { value: "mp4", label: "MP4" },
-  { value: "webm", label: "WEBM" },
-  { value: "mp3", label: "MP3" },
-  { value: "wav", label: "WAV" },
-  { value: "m4a", label: "M4A" },
-];
-
-function normalizeFileTypes(values: string[] | undefined): string[] {
-  if (!Array.isArray(values)) return [];
-  const allowed = new Set(ALLOWED_FILE_TYPES.map(t => t.value));
-  return values
-    .map(v => v.replace(/^\./, "").trim().toLowerCase())
-    .filter(v => allowed.has(v));
-}
-
-function formatFileTypes(values: string[] | undefined): string {
-  return normalizeFileTypes(values).map(v => v.toUpperCase()).join(", ");
-}
-
-// ─── Modals ───────────────────────────────────────────────────────────────────
-function WordCountModal({ text, chars, charsNoSpace, paragraphs, onClose }: {
-  text: string; chars: number; charsNoSpace: number; paragraphs: number; onClose: () => void;
+function AssignToPanel({ assignment, courseId, onClose, onSave }: {
+  assignment: Assignment; courseId: string; onClose: () => void; onSave: () => void;
 }) {
-  const words = text ? text.split(/\s+/).filter(Boolean).length : 0;
-  return (
-    <div className="fixed inset-0 z-300 flex items-center justify-center bg-black/40 px-4" onClick={onClose}>
-      <div className="bg-white rounded shadow-xl w-full max-w-[288px] border border-gray-200" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
-          <span className="text-sm font-semibold text-gray-800">Word Count</span>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-700 text-xl leading-none">×</button>
-        </div>
-        <div className="px-4 py-4 space-y-2 text-xs text-gray-700">
-          {([["Words", words], ["Characters (with spaces)", chars], ["Characters (no spaces)", charsNoSpace], ["Paragraphs", paragraphs]] as [string, number][]).map(([k, v]) => (
-            <div key={k} className="flex justify-between border-b border-gray-100 pb-1 last:border-0">
-              <span>{k}</span><span className="font-semibold">{v}</span>
-            </div>
-          ))}
-        </div>
-        <div className="px-4 py-3 border-t border-gray-200 flex justify-end">
-          <button onClick={onClose} style={{ background: MAROON }} className="h-7 px-4 text-white text-xs rounded hover:opacity-90">Close</button>
-        </div>
-      </div>
-    </div>
-  );
-}
+  const [rows, setRows] = useState<AssignRow[]>([{
+    id: 1, assignees: ["Everyone"],
+    dueDate: isoToDate(assignment.dueDate), dueTime: isoToTime(assignment.dueDate),
+    availableFrom: isoToDate(assignment.availableFrom), availableFromTime: isoToTime(assignment.availableFrom),
+    until: isoToDate(assignment.availableUntil), untilTime: isoToTime(assignment.availableUntil),
+  }]);
+  const [saving, setSaving] = useState(false);
+  const [openDropId, setOpenDropId] = useState<number | null>(null);
+  const [dropSearch, setDropSearch] = useState("");
 
-function FindReplaceModal({ html, onUpdate, onClose }: {
-  html: string; onUpdate: (html: string) => void; onClose: () => void;
-}) {
-  const [find, setFind] = useState("");
-  const [replace, setReplace] = useState("");
-  const [msg, setMsg] = useState("");
+  useEffect(() => {
+    if (openDropId === null) return;
+    const h = (e: MouseEvent) => {
+      if (!(e.target as HTMLElement).closest("[data-assigndrop]")) setOpenDropId(null);
+    };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, [openDropId]);
 
-  const doReplace = (all: boolean) => {
-    if (!find) return;
-    const esc = find.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const flags = all ? "gi" : "i";
-    const count = (html.match(new RegExp(esc, flags)) ?? []).length;
-    if (!count) { setMsg("No matches found."); return; }
-    onUpdate(html.replace(new RegExp(esc, flags), replace));
-    setMsg(all ? `Replaced ${count} occurrence(s).` : "Replaced first occurrence.");
+  const updateRow = (id: number, field: keyof AssignRow, value: string | string[]) =>
+    setRows(p => p.map(r => r.id === id ? { ...r, [field]: value } : r));
+
+  const toggleAssignee = (rowId: number, name: string) =>
+    setRows(p => p.map(r => {
+      if (r.id !== rowId) return r;
+      if (name === "Everyone") return { ...r, assignees: ["Everyone"] };
+      const without = r.assignees.filter(a => a !== "Everyone");
+      const has = without.includes(name);
+      const next = has ? without.filter(a => a !== name) : [...without, name];
+      return { ...r, assignees: next.length ? next : ["Everyone"] };
+    }));
+
+  const addRow = () => setRows(p => [...p, { id: Date.now(), assignees: [], dueDate: "", dueTime: "11:59 PM", availableFrom: "", availableFromTime: "12:00 AM", until: "", untilTime: "11:59 PM" }]);
+  const removeRow = (id: number) => setRows(p => p.filter(r => r.id !== id));
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const row = rows[0];
+      await fetch(`/api/admin/courses/${courseId}/assignments/${assignment.id}`, {
+        method: "PATCH", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ assignees: row.assignees, dueDate: row.dueDate || null, dueTime: row.dueTime, availableFrom: row.availableFrom || null, availableFromTime: row.availableFromTime, availableUntil: row.until || null, untilTime: row.untilTime }),
+      });
+      onSave(); onClose();
+    } finally { setSaving(false); }
   };
 
-  return (
-    <div className="fixed inset-0 z-300 flex items-center justify-center bg-black/40 px-4" onClick={onClose}>
-      <div className="bg-white rounded shadow-xl w-full max-w-sm border border-gray-200" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
-          <span className="text-sm font-semibold text-gray-800">Find and Replace</span>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-700 text-xl leading-none">×</button>
-        </div>
-        <div className="px-4 py-4 space-y-3">
+  function DateRow({ label, dateVal, timeVal, onDateChange, onTimeChange, onClear }: {
+    label: string; dateVal: string; timeVal: string;
+    onDateChange: (v: string) => void; onTimeChange: (v: string) => void; onClear: () => void;
+  }) {
+    const localLabel = fmtDateLabel(dateVal, timeVal);
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <p style={{ fontSize: 13, fontWeight: 600, color: "#374151", margin: 0 }}>{label}</p>
+        <div className="asgn-date-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
           <div>
-            <label className="text-xs text-gray-500 block mb-1">Find</label>
-            <input autoFocus value={find} onChange={e => setFind(e.target.value)} className="w-full h-8 border border-gray-300 rounded px-2 text-xs outline-none focus:border-[#7b1113]" placeholder="Search text..." />
+            <p style={{ fontSize: 10, color: "#9ca3af", marginBottom: 4 }}>Date</p>
+            <input type="date" value={dateVal} onChange={e => onDateChange(e.target.value)}
+              style={{ width: "100%", height: 38, border: "1px solid #d1d5db", borderRadius: 7, padding: "0 10px", fontFamily: FONT, fontSize: 13, color: "#111827", background: "#fff", outline: "none" }} />
           </div>
           <div>
-            <label className="text-xs text-gray-500 block mb-1">Replace with</label>
-            <input value={replace} onChange={e => setReplace(e.target.value)} className="w-full h-8 border border-gray-300 rounded px-2 text-xs outline-none focus:border-[#7b1113]" placeholder="Replacement..." />
+            <p style={{ fontSize: 10, color: "#9ca3af", marginBottom: 4 }}>Time</p>
+            <StyledSelect value={timeVal} onChange={onTimeChange}>
+              {TIME_OPTIONS.map(t => <option key={t}>{t}</option>)}
+            </StyledSelect>
           </div>
-          {msg && <p className="text-xs" style={{ color: MAROON }}>{msg}</p>}
         </div>
-        <div className="px-4 py-3 border-t border-gray-200 flex justify-end gap-2">
-          <button onClick={onClose} className="h-7 px-3 border border-gray-300 text-xs text-gray-700 rounded hover:bg-gray-50">Cancel</button>
-          <button onClick={() => doReplace(false)} className="h-7 px-3 border border-gray-300 text-xs text-gray-700 rounded hover:bg-gray-50">Replace</button>
-          <button onClick={() => doReplace(true)} style={{ background: MAROON }} className="h-7 px-3 text-white text-xs rounded hover:opacity-90">Replace All</button>
-        </div>
+        {localLabel && <p style={{ fontSize: 11, color: "#6b7280", margin: 0 }}>{localLabel}</p>}
+        <button onClick={onClear} style={{ fontSize: 11, fontWeight: 600, color: MAROON, background: "none", border: "none", padding: 0, cursor: "pointer", textAlign: "left", textDecoration: "underline" }}>
+          Clear
+        </button>
       </div>
-    </div>
-  );
-}
+    );
+  }
 
-function HTMLEditorModal({ html: init, onUpdate, onClose }: { html: string; onUpdate: (h: string) => void; onClose: () => void }) {
-  const [html, setHtml] = useState(init);
-  return (
-    <div className="fixed inset-0 z-300 flex items-center justify-center bg-black/40 px-4" onClick={onClose}>
-      <div className="bg-white rounded shadow-xl w-full max-w-2xl border border-gray-200" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
-          <span className="text-sm font-semibold text-gray-800">HTML Editor</span>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-700 text-xl leading-none">×</button>
-        </div>
-        <div className="px-4 py-4">
-          <textarea value={html} onChange={e => setHtml(e.target.value)} className="w-full h-64 border border-gray-300 rounded px-3 py-2 text-xs font-mono outline-none focus:border-[#7b1113] resize-none" />
-        </div>
-        <div className="px-4 py-3 border-t border-gray-200 flex justify-end gap-2">
-          <button onClick={onClose} className="h-7 px-3 border border-gray-300 text-xs text-gray-700 rounded hover:bg-gray-50">Cancel</button>
-          <button onClick={() => { onUpdate(html); onClose(); }} style={{ background: MAROON }} className="h-7 px-3 text-white text-xs rounded hover:opacity-90">Apply</button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ColorPickerModal({ type, onClose }: { type: "foreColor" | "backColor"; onClose: () => void }) {
-  const colors = type === "foreColor"
-    ? ["#000000", "#374151", "#ef4444", "#f97316", "#eab308", "#22c55e", "#3b82f6", "#8b5cf6", "#ec4899", "#ffffff"]
-    : ["transparent", "#fef9c3", "#fce7f3", "#e0f2fe", "#dcfce7", "#ede9fe", "#ffedd5", "#fee2e2", "#d1fae5", "#f1f5f9"];
-  return (
-    <div className="fixed inset-0 z-300 flex items-center justify-center bg-black/40 px-4" onClick={onClose}>
-      <div className="bg-white rounded shadow-xl border border-gray-200" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
-          <span className="text-sm font-semibold text-gray-800">{type === "foreColor" ? "Text Color" : "Background Color"}</span>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-700 text-xl leading-none">×</button>
-        </div>
-        <div className="p-4 grid grid-cols-5 gap-2">
-          {colors.map(c => (
-            <div
-              key={c}
-              title={c}
-              style={{ background: c === "transparent" ? "linear-gradient(45deg,#ccc 25%,#fff 25%,#fff 75%,#ccc 75%)" : c }}
-              className="w-8 h-8 rounded border border-gray-200 cursor-pointer hover:scale-110 transition-transform"
-              onClick={() => { document.execCommand(type, false, c === "transparent" ? "" : c); onClose(); }}
-            />
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function TablePicker({ onPick }: { onPick: (r: number, c: number) => void }) {
-  const [hover, setHover] = useState({ r: 0, c: 0 });
-  const MAX = 8;
-  return (
-    <div className="p-2 min-w-40">
-      <p className="text-[10px] text-gray-500 text-center mb-1.5 h-3">{hover.r > 0 ? `${hover.r} × ${hover.c} table` : "Select table size"}</p>
-      <div style={{ display: "grid", gridTemplateColumns: `repeat(${MAX},18px)`, gap: 2 }}>
-        {Array.from({ length: MAX * MAX }, (_, i) => {
-          const r = Math.floor(i / MAX) + 1, c = (i % MAX) + 1;
-          return (
-            <div
-              key={i}
-              onMouseEnter={() => setHover({ r, c })}
-              onClick={() => onPick(r, c)}
-              className={`w-4 h-4 border rounded-sm cursor-pointer transition-colors ${r <= hover.r && c <= hover.c ? "bg-blue-200 border-blue-400" : "bg-gray-50 border-gray-300"}`}
-            />
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-const Chevron = () => <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="9 18 15 12 9 6" /></svg>;
-
-type MAction = { type: "action"; icon?: string; label: string; shortcut?: string; action: () => void; disabled?: boolean };
-type MSep = { type: "sep" };
-type MSub = { type: "sub"; icon?: string; label: string; children: (MAction | MSep | MSub)[]; picker?: boolean; onPick?: (r: number, c: number) => void };
-type MItem = MAction | MSep | MSub;
-
-function MenuItems({ items, onClose }: { items: MItem[]; onClose: () => void }) {
   return (
     <>
-      {items.map((item, i) => {
-        if (item.type === "sep") return <div key={i} className="my-1 border-t border-gray-100" />;
-        if (item.type === "sub") return <SubMenuItem key={i} item={item} onClose={onClose} />;
-        return (
-          <button
-            key={i}
-            type="button"
-            disabled={item.disabled}
-            onMouseDown={e => { e.preventDefault(); if (!item.disabled) { item.action(); onClose(); } }}
-            className={`w-full text-left px-3 py-1 text-xs flex items-center gap-2 ${item.disabled ? "text-gray-300" : "text-gray-700 hover:bg-blue-600 hover:text-white"}`}
-          >
-            <span className="w-4 text-center text-sm shrink-0">{item.icon ?? ""}</span>
-            <span className="flex-1">{item.label}</span>
-            {item.shortcut && <span className="font-mono text-[10px] opacity-60 shrink-0">{item.shortcut}</span>}
-          </button>
-        );
-      })}
+      <div style={{ position: "fixed", inset: 0, zIndex: 40, background: "rgba(0,0,0,0.2)" }} onClick={onClose} />
+      <div className="asgn-assign-panel" style={{
+        position: "fixed", top: 0, right: 0, height: "100%", zIndex: 50,
+        width: "min(380px, 100vw)", background: "#fff",
+        boxShadow: "-4px 0 32px rgba(0,0,0,0.15)", borderLeft: "1px solid #e5e7eb",
+        display: "flex", flexDirection: "column", fontFamily: FONT,
+      }}>
+        {/* Header */}
+        <div style={{ padding: "14px 16px", borderBottom: "1px solid #e5e7eb", flexShrink: 0 }}>
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10 }}>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 2 }}>
+                <AssignmentIcon />
+                <span style={{ fontSize: 14, fontWeight: 700, color: "#111827", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{assignment.title}</span>
+              </div>
+              <p style={{ fontSize: 12, color: "#6b7280", margin: 0, marginLeft: 26 }}>Assignment · {assignment.points} pts</p>
+            </div>
+            <button onClick={onClose} style={{ width: 30, height: 30, display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid #e5e7eb", borderRadius: 7, background: "none", cursor: "pointer", color: "#6b7280", flexShrink: 0 }}>
+              <X size={14} />
+            </button>
+          </div>
+        </div>
+
+        {/* Info banner */}
+        <div style={{ margin: "12px 14px 0", display: "flex", gap: 10, background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 8, padding: "10px 12px" }}>
+          <div style={{ width: 20, height: 20, borderRadius: "50%", background: "#1d6fa4", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <span style={{ color: "#fff", fontSize: 10, fontWeight: 700 }}>i</span>
+          </div>
+          <p style={{ fontSize: 12, color: "#1e40af", lineHeight: 1.5, margin: 0 }}>Select who should be assigned and use the drop-down menus or manually enter your date and time.</p>
+        </div>
+
+        {/* Rows */}
+        <div className="asgn-scroll" style={{ flex: 1, overflowY: "auto", padding: "14px" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            {rows.map((row, idx) => (
+              <div key={row.id} style={{ border: "1px solid #e5e7eb", borderRadius: 10, padding: "14px", display: "flex", flexDirection: "column", gap: 16, position: "relative" }}>
+                {idx > 0 && (
+                  <button onClick={() => removeRow(row.id)} style={{ position: "absolute", top: 8, right: 8, background: "none", border: "none", cursor: "pointer", color: "#9ca3af", display: "flex" }}>
+                    <X size={13} />
+                  </button>
+                )}
+                {/* Assign to dropdown */}
+                <div>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: "#374151", marginBottom: 6 }}>Assign To</p>
+                  <div style={{ position: "relative" }} data-assigndrop>
+                    <div onMouseDown={e => { e.stopPropagation(); setOpenDropId(openDropId === row.id ? null : row.id); setDropSearch(""); }}
+                      style={{ minHeight: 40, border: "1px solid #d1d5db", borderRadius: 8, padding: "6px 10px", display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center", cursor: "pointer", background: "#fafafa" }}>
+                      {row.assignees.map(a => (
+                        <span key={a} style={{ display: "flex", alignItems: "center", gap: 5, padding: "2px 8px", borderRadius: 20, fontSize: 12, fontWeight: 600, color: "#fff", background: MAROON }}>
+                          {a}
+                          <button onMouseDown={e => { e.stopPropagation(); toggleAssignee(row.id, a); }} style={{ background: "none", border: "none", cursor: "pointer", color: "#fff", fontSize: 14, lineHeight: 1, padding: 0 }}>×</button>
+                        </span>
+                      ))}
+                      <input readOnly placeholder={row.assignees.length ? "" : "Start typing to search…"}
+                        style={{ flex: 1, minWidth: 60, fontSize: 13, border: "none", outline: "none", background: "transparent", color: "#9ca3af", cursor: "pointer" }} />
+                      <ChevronDown size={13} style={{ color: "#9ca3af", flexShrink: 0, transform: openDropId === row.id ? "rotate(180deg)" : "none", transition: "transform 0.15s" }} />
+                    </div>
+                    {openDropId === row.id && (
+                      <div data-assigndrop style={{ position: "absolute", zIndex: 50, width: "100%", background: "#fff", border: "1px solid #e5e7eb", borderRadius: 8, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", marginTop: 2, maxHeight: 200, overflowY: "auto" }}
+                        onMouseDown={e => e.stopPropagation()}>
+                        <div style={{ padding: "8px 10px 6px", borderBottom: "1px solid #f3f4f6", position: "sticky", top: 0, background: "#fff" }}>
+                          <input autoFocus value={dropSearch} onChange={e => setDropSearch(e.target.value)} placeholder="Search…"
+                            style={{ width: "100%", height: 32, border: "1px solid #e5e7eb", borderRadius: 6, padding: "0 10px", fontSize: 13, fontFamily: FONT, outline: "none" }} />
+                        </div>
+                        {["Everyone"].filter(o => o.toLowerCase().includes(dropSearch.toLowerCase())).map(opt => (
+                          <button key={opt} onMouseDown={e => { e.preventDefault(); e.stopPropagation(); toggleAssignee(row.id, opt); }}
+                            style={{ width: "100%", textAlign: "left", padding: "10px 14px", fontSize: 13, display: "flex", alignItems: "center", justifyContent: "space-between", background: "none", border: "none", cursor: "pointer", color: row.assignees.includes(opt) ? MAROON : "#374151", fontWeight: row.assignees.includes(opt) ? 700 : 400, minHeight: 40 }}>
+                            {opt}{row.assignees.includes(opt) && <span style={{ color: MAROON }}>✓</span>}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <DateRow label="Due Date" dateVal={row.dueDate} timeVal={row.dueTime}
+                  onDateChange={v => updateRow(row.id, "dueDate", v)} onTimeChange={v => updateRow(row.id, "dueTime", v)}
+                  onClear={() => { updateRow(row.id, "dueDate", ""); updateRow(row.id, "dueTime", "11:59 PM"); }} />
+                <DateRow label="Available from" dateVal={row.availableFrom} timeVal={row.availableFromTime}
+                  onDateChange={v => updateRow(row.id, "availableFrom", v)} onTimeChange={v => updateRow(row.id, "availableFromTime", v)}
+                  onClear={() => { updateRow(row.id, "availableFrom", ""); updateRow(row.id, "availableFromTime", "12:00 AM"); }} />
+                <DateRow label="Until" dateVal={row.until} timeVal={row.untilTime}
+                  onDateChange={v => updateRow(row.id, "until", v)} onTimeChange={v => updateRow(row.id, "untilTime", v)}
+                  onClear={() => { updateRow(row.id, "until", ""); updateRow(row.id, "untilTime", "11:59 PM"); }} />
+              </div>
+            ))}
+            <button onClick={addRow} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 600, color: MAROON, background: "none", border: "none", cursor: "pointer", padding: "4px 0" }}>
+              <Plus size={14} /> Add
+            </button>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="asgn-assign-panel-footer" style={{ flexShrink: 0, borderTop: "1px solid #e5e7eb", padding: "12px 14px", display: "flex", justifyContent: "flex-end", gap: 8, background: "#fafafa" }}>
+          <BtnSecondary onClick={onClose}>Cancel</BtnSecondary>
+          <BtnPrimary onClick={handleSave} disabled={saving}>{saving ? "Saving…" : "Save"}</BtnPrimary>
+        </div>
+      </div>
     </>
   );
 }
 
-function SubMenuItem({ item, onClose }: { item: MSub; onClose: () => void }) {
-  const [open, setOpen] = useState(false);
+// ── Assignment Row ─────────────────────────────────────────────────────────────
+function AssignmentRow({
+  a, courseId, router, variant,
+  currentUserName, currentUserRole,
+  seenIds, onView,
+  onEdit, onDuplicate, onAssignTo, onSpeedGrader, onDelete, onTogglePublish,
+}: {
+  a: Assignment; courseId: string; router: ReturnType<typeof useRouter>;
+  variant: "mine" | "others";
+  currentUserName?: string | null; currentUserRole?: string | null;
+  seenIds: Set<string>;
+  onView: (a: Assignment) => void;
+  onEdit: (a: Assignment) => void; onDuplicate: (a: Assignment) => void;
+  onAssignTo: (a: Assignment) => void; onSpeedGrader: (a: Assignment) => void;
+  onDelete: (a: Assignment) => void; onTogglePublish: (a: Assignment) => void;
+}) {
+  const accentColor = variant === "mine" ? MAROON : "#60a5fa";
+  const now = new Date();
+  const isClosed = a.availableUntil && now > new Date(a.availableUntil);
+  const due = fmtDue(a.dueDate);
+  const isNew = !seenIds.has(String(a.id));
+
+  const authorDisplayName = variant === "mine"
+    ? (currentUserName ?? a.publisherName ?? a.createdBy)
+    : (a.publisherName ?? a.createdBy);
+  const authorRole = variant === "mine"
+    ? (currentUserRole ?? a.publisherRole ?? "Admin")
+    : a.publisherRole;
+
+  const handleAction = (action: DropdownAction, assignment: Assignment) => {
+    if (action === "edit") onEdit(assignment);
+    else if (action === "speedgrader") onSpeedGrader(assignment);
+    else if (action === "duplicate") onDuplicate(assignment);
+    else if (action === "assignTo") onAssignTo(assignment);
+    else if (action === "delete") onDelete(assignment);
+  };
+
+  const handleClick = () => {
+    onView(a);
+    router.push(`/admin/courses/${courseId}/assignments/${a.id}`);
+  };
+
   return (
-    <div className="relative" onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
-      <button type="button" className="w-full text-left px-3 py-1 text-xs flex items-center gap-2 text-gray-700 hover:bg-blue-600 hover:text-white">
-        <span className="w-4 text-center text-sm shrink-0">{item.icon ?? ""}</span>
-        <span className="flex-1">{item.label}</span><Chevron />
-      </button>
-      {open && (
-        <div className="absolute left-full top-0 bg-white border border-gray-200 shadow-lg rounded-sm min-w-44 py-1 z-200">
-          {item.picker ? <TablePicker onPick={(r, c) => { item.onPick?.(r, c); onClose(); }} /> : <MenuItems items={item.children} onClose={onClose} />}
+    <div onClick={handleClick} style={{
+      display: "flex", alignItems: "flex-start", gap: 10,
+      padding: "14px 14px 14px 16px",
+      background: variant === "mine" ? "#fff" : "#fafcff",
+      borderBottom: "1px solid #f3f4f6",
+      cursor: "pointer", position: "relative",
+      transition: "background 0.1s",
+    }}
+      onMouseEnter={e => (e.currentTarget.style.background = "#fdf8f8")}
+      onMouseLeave={e => (e.currentTarget.style.background = variant === "mine" ? "#fff" : "#fafcff")}>
+      {/* Left accent bar */}
+      <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 3, borderRadius: "0 2px 2px 0", background: accentColor }} />
+
+      {/* Publish toggle */}
+      <div onClick={e => e.stopPropagation()} style={{ flexShrink: 0, marginTop: 1 }}>
+        <PublishToggle published={a.status === "PUBLISHED"} onToggle={() => onTogglePublish(a)} />
+      </div>
+
+      <div style={{ flexShrink: 0, marginTop: 3 }}>
+        <AssignmentIcon />
+      </div>
+
+      {/* Content */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap", marginBottom: 5 }}>
+          <span style={{ fontSize: 13, fontWeight: 700, color: MAROON, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "100%" }}>
+            {a.title}
+          </span>
+          {isNew && <NewBadge />}
+          {a.status === "UNPUBLISHED" && (
+            <span style={{ fontSize: 10, color: "#d97706", fontWeight: 600 }}>Not Published</span>
+          )}
+          {isClosed && (
+            <span style={{ fontSize: 10, color: "#9ca3af", fontWeight: 600 }}>Closed</span>
+          )}
+        </div>
+        <div className="asgn-row-meta" style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+          {variant === "mine" && authorDisplayName && (
+            <AuthorBadge name={authorDisplayName} role={authorRole ?? "Admin"} />
+          )}
+          {variant === "others" && (
+            <PublisherChip name={authorDisplayName} image={a.publisherImage} role={authorRole} />
+          )}
+          <span style={{ fontSize: 12, color: "#6b7280" }}>{a.points} pts</span>
+          {due && <><span style={{ color: "#d1d5db" }}>·</span><span style={{ fontSize: 12, color: "#6b7280" }}>Due: {due}</span></>}
+        </div>
+      </div>
+
+      {/* 3-dot menu */}
+      <div onClick={e => e.stopPropagation()} style={{ flexShrink: 0 }}>
+        <AssignmentRowMenu assignment={a} onAction={handleAction} />
+      </div>
+    </div>
+  );
+}
+
+// ── Group Section ──────────────────────────────────────────────────────────────
+function AssignmentGroupSection({
+  title, items, courseId, router, currentUserName, currentUserRole,
+  seenIds, onView,
+  onAddAssignment, onEdit, onDuplicate, onAssignTo, onSpeedGrader, onDelete, onTogglePublish,
+  onEditGroup, onDeleteGroup, isLastGroup, rowVariant = "mine",
+}: {
+  title: string; items: Assignment[]; courseId: string; router: ReturnType<typeof useRouter>;
+  currentUserName?: string | null; currentUserRole?: string | null;
+  seenIds: Set<string>; onView: (a: Assignment) => void;
+  onAddAssignment: (group: string) => void;
+  onEdit: (a: Assignment) => void; onDuplicate: (a: Assignment) => void;
+  onAssignTo: (a: Assignment) => void; onSpeedGrader: (a: Assignment) => void;
+  onDelete: (a: Assignment) => void; onTogglePublish: (a: Assignment) => void;
+  onEditGroup: (group: string) => void; onDeleteGroup: (group: string) => void;
+  isLastGroup?: boolean; rowVariant?: "mine" | "others";
+}) {
+  const [collapsed, setCollapsed] = useState(false);
+  const newCount = items.filter(a => !seenIds.has(String(a.id))).length;
+
+  return (
+    <div style={{ marginBottom: 12 }}>
+      {/* Group header */}
+      <div style={{
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        padding: "10px 14px", background: "#f9fafb",
+        border: "1px solid #e5e7eb", borderRadius: collapsed ? 8 : "8px 8px 0 0",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", flex: 1, minWidth: 0 }}
+          onClick={() => setCollapsed(c => !c)}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2.5"
+            style={{ flexShrink: 0, transform: collapsed ? "rotate(-90deg)" : "none", transition: "transform 0.15s" }}>
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+          <span style={{ fontSize: 13, fontWeight: 700, color: "#374151", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{title}</span>
+          <span style={{ fontSize: 12, color: "#9ca3af" }}>({items.length})</span>
+          {newCount > 0 && (
+            <span style={{ padding: "1px 6px", borderRadius: 20, fontSize: 9, fontWeight: 800, color: "#fff", background: "#dc2626" }}>
+              {newCount}
+            </span>
+          )}
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
+          {rowVariant === "mine" && (
+            <button onClick={() => onAddAssignment(title)}
+              style={{ width: 30, height: 30, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 6, background: "none", border: "none", cursor: "pointer", color: "#9ca3af", touchAction: "manipulation" }}
+              onMouseEnter={e => (e.currentTarget.style.background = "#e5e7eb")}
+              onMouseLeave={e => (e.currentTarget.style.background = "none")}>
+              <Plus size={15} />
+            </button>
+          )}
+          <GroupMenu onEdit={() => onEditGroup(title)} onDelete={() => onDeleteGroup(title)} isLastGroup={isLastGroup} />
+        </div>
+      </div>
+
+      {!collapsed && (
+        <div style={{ border: "1px solid #e5e7eb", borderTop: "none", borderRadius: "0 0 8px 8px", overflow: "hidden" }}>
+          {items.length === 0 ? (
+            <div style={{ padding: "18px 16px", fontSize: 13, color: "#9ca3af", textAlign: "center" }}>
+              No assignments in this group.
+            </div>
+          ) : (
+            items.map(a => (
+              <AssignmentRow key={a.id} a={a} courseId={courseId} router={router}
+                variant={rowVariant} currentUserName={currentUserName} currentUserRole={currentUserRole}
+                seenIds={seenIds} onView={onView}
+                onEdit={onEdit} onDuplicate={onDuplicate} onAssignTo={onAssignTo}
+                onSpeedGrader={onSpeedGrader} onDelete={onDelete} onTogglePublish={onTogglePublish} />
+            ))
+          )}
         </div>
       )}
     </div>
   );
 }
 
-// ─── Rich Text Editor ─────────────────────────────────────────────────────────
-function RichTextEditor({ onChange, placeholder = "Start typing..." }: { onChange?: (html: string) => void; placeholder?: string }) {
-  const editorRef = useRef<HTMLDivElement>(null);
-  const wrapRef = useRef<HTMLDivElement>(null);
-  const [wordCount, setWordCount] = useState(0);
-  const [openMenu, setOpenMenu] = useState<string | null>(null);
-  const [showWC, setShowWC] = useState(false);
-  const [showFR, setShowFR] = useState(false);
-  const [showHTML, setShowHTML] = useState(false);
-  const [showColor, setShowColor] = useState<"foreColor" | "backColor" | null>(null);
-  const [wcData, setWcData] = useState({ text: "", chars: 0, charsNoSpace: 0, paragraphs: 0 });
-  const [editorHtml, setEditorHtml] = useState("");
-  const [isFS, setIsFS] = useState(false);
-
-  const exec = useCallback((cmd: string, val?: string) => {
-    const ed = editorRef.current; if (!ed) return;
-    ed.focus();
-    try { document.execCommand(cmd, false, val); } catch (e) { console.warn(cmd, e); }
-  }, []);
-
-  const fmt = useCallback((tag: string) => {
-    const ed = editorRef.current; if (!ed) return; ed.focus();
-    document.execCommand("formatBlock", false, `<${tag}>`);
-  }, []);
-
-  const insertHTML = useCallback((html: string) => {
-    const ed = editorRef.current; if (!ed) return; ed.focus();
-    const ok = document.execCommand("insertHTML", false, html);
-    if (!ok) {
-      const sel = window.getSelection();
-      if (sel && sel.rangeCount) {
-        const range = sel.getRangeAt(0); range.deleteContents();
-        const frag = range.createContextualFragment(html);
-        range.insertNode(frag); range.collapse(false);
-        sel.removeAllRanges(); sel.addRange(range);
-      }
-    }
-    updateWC();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const insertTable = useCallback((rows: number, cols: number) => {
-    const hdr = `<tr>${Array(cols).fill(`<th style="border:1px solid #dee2e6;padding:6px 10px;background:#f7f9fb;font-weight:600;">&nbsp;</th>`).join("")}</tr>`;
-    const bdy = Array(rows - 1).fill(`<tr>${Array(cols).fill(`<td style="border:1px solid #dee2e6;padding:6px 10px;">&nbsp;</td>`).join("")}</tr>`).join("");
-    insertHTML(`<table style="border-collapse:collapse;width:100%;margin:8px 0;"><thead>${hdr}</thead><tbody>${bdy}</tbody></table><p><br></p>`);
-  }, [insertHTML]);
-
-  const updateWC = useCallback(() => {
-    const text = editorRef.current?.innerText.trim() ?? "";
-    setWordCount(text ? text.split(/\s+/).filter(Boolean).length : 0);
-    onChange?.(editorRef.current?.innerHTML ?? "");
-  }, [onChange]);
-
-  const closeMenus = useCallback(() => setOpenMenu(null), []);
-
-  const toggleFS = useCallback(() => {
-    if (!isFS) { wrapRef.current?.requestFullscreen?.(); setIsFS(true); }
-    else { document.exitFullscreen?.(); setIsFS(false); }
-  }, [isFS]);
-
-  useEffect(() => {
-    const h = () => { if (!document.fullscreenElement) setIsFS(false); };
-    document.addEventListener("fullscreenchange", h);
-    return () => document.removeEventListener("fullscreenchange", h);
-  }, []);
-
-  useEffect(() => {
-    if (!openMenu) return;
-    const h = (e: MouseEvent) => { if (!(e.target as HTMLElement).closest("[data-menubar]")) closeMenus(); };
-    document.addEventListener("mousedown", h);
-    return () => document.removeEventListener("mousedown", h);
-  }, [openMenu, closeMenus]);
-
-  useEffect(() => {
-    const h = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === "f") {
-        e.preventDefault();
-        setEditorHtml(editorRef.current?.innerHTML ?? "");
-        setShowFR(true);
-      }
-    };
-    document.addEventListener("keydown", h);
-    return () => document.removeEventListener("keydown", h);
-  }, []);
-
-  const menus = useMemo((): { label: string; items: MItem[] }[] => [
-    {
-      label: "Edit", items: [
-        { type: "action", icon: "↩", label: "Undo", shortcut: "Ctrl+Z", action: () => exec("undo") },
-        { type: "action", icon: "↪", label: "Redo", shortcut: "Ctrl+Y", action: () => exec("redo") },
-        { type: "sep" },
-        { type: "action", icon: "✂", label: "Cut", shortcut: "Ctrl+X", action: () => exec("cut") },
-        { type: "action", icon: "⧉", label: "Copy", shortcut: "Ctrl+C", action: () => exec("copy") },
-        { type: "action", icon: "📋", label: "Paste", shortcut: "Ctrl+V", action: () => exec("paste") },
-        { type: "sep" },
-        { type: "action", icon: "⊞", label: "Select all", shortcut: "Ctrl+A", action: () => exec("selectAll") },
-      ]
-    },
-    {
-      label: "View", items: [
-        { type: "action", icon: "⛶", label: "Fullscreen", action: toggleFS },
-        { type: "action", icon: "⊠", label: "Exit Fullscreen", action: toggleFS, disabled: !isFS },
-        { type: "action", icon: "</>", label: "HTML Editor", action: () => { setEditorHtml(editorRef.current?.innerHTML ?? ""); setShowHTML(true); } },
-      ]
-    },
-    {
-      label: "Insert", items: [
-        {
-          type: "sub", icon: "🔗", label: "Link", children: [
-            { type: "action", label: "Insert/Edit Link", action: () => { const url = prompt("URL:"); if (!url) return; const txt = prompt("Link text:") || url; insertHTML(`<a href="${url}">${txt}</a>`); } },
-            { type: "action", label: "Remove Link", action: () => exec("unlink") },
-          ]
-        },
-        {
-          type: "sub", icon: "🖼", label: "Image", children: [
-            { type: "action", label: "Insert from URL", action: () => { const url = prompt("Image URL:"); if (!url) return; const alt = prompt("Alt text:") || ""; insertHTML(`<img src="${url}" alt="${alt}" style="max-width:100%;border-radius:4px;" />`); } },
-            {
-              type: "action", label: "Upload image", action: () => {
-                const inp = document.createElement("input"); inp.type = "file"; inp.accept = "image/*";
-                inp.onchange = () => { const f = inp.files?.[0]; if (!f) return; const r = new FileReader(); r.onload = ev => insertHTML(`<img src="${ev.target?.result}" style="max-width:100%;" />`); r.readAsDataURL(f); };
-                inp.click();
-              }
-            },
-          ]
-        },
-        {
-          type: "sub", icon: "▶", label: "Media", children: [
-            {
-              type: "action", label: "Insert/Edit Video", action: () => {
-                let url = prompt("Video URL (YouTube/Vimeo):"); if (!url) return;
-                if (url.includes("youtube.com/watch?v=")) url = url.replace("watch?v=", "embed/");
-                else if (url.includes("youtu.be/")) url = url.replace("youtu.be/", "www.youtube.com/embed/");
-                else if (url.includes("vimeo.com/")) url = url.replace("vimeo.com/", "player.vimeo.com/video/");
-                insertHTML(`<iframe src="${url}" width="560" height="315" frameborder="0" allowfullscreen style="max-width:100%;border-radius:4px;"></iframe>`);
-              }
-            },
-          ]
-        },
-        {
-          type: "sub", icon: "📄", label: "Document", children: [
-            { type: "action", label: "Link to Document", action: () => { const url = prompt("Document URL:"); if (!url) return; const txt = prompt("Link text:") || url; insertHTML(`<a href="${url}">${txt}</a>`); } },
-          ]
-        },
-        { type: "sep" },
-        { type: "action", icon: "∑", label: "Equation", action: () => { const eq = prompt("Equation (LaTeX or plain):"); if (!eq) return; insertHTML(`<code style="font-family:monospace;background:#f4f4f4;padding:2px 6px;border-radius:3px;">${eq}</code>`); } },
-        { type: "sub", icon: "⊞", label: "Table", picker: true, children: [], onPick: (r: number, c: number) => insertTable(r, c) },
-        { type: "action", icon: "{ }", label: "Embed", action: () => { const code = prompt("Embed code (iframe):"); if (!code) return; insertHTML(code); } },
-        { type: "action", icon: "—", label: "Horizontal line", action: () => insertHTML('<hr style="border:none;border-top:2px solid #dee2e6;margin:12px 0;"/><p><br></p>') },
-      ]
-    },
-    {
-      label: "Format", items: [
-        { type: "action", icon: "B", label: "Bold", shortcut: "Ctrl+B", action: () => exec("bold") },
-        { type: "action", icon: "I", label: "Italic", shortcut: "Ctrl+I", action: () => exec("italic") },
-        { type: "action", icon: "U", label: "Underline", shortcut: "Ctrl+U", action: () => exec("underline") },
-        { type: "action", icon: "S", label: "Strikethrough", action: () => exec("strikeThrough") },
-        { type: "action", icon: "x²", label: "Superscript", action: () => exec("superscript") },
-        { type: "action", icon: "x₂", label: "Subscript", action: () => exec("subscript") },
-        { type: "action", icon: "<>", label: "Inline Code", action: () => insertHTML(`<code style="font-family:monospace;background:#f4f4f4;padding:2px 6px;border-radius:3px;">[code]</code>`) },
-        { type: "sep" },
-        {
-          type: "sub", icon: "¶", label: "Formats", children: [
-            { type: "action", label: "Heading 1", action: () => fmt("h1") },
-            { type: "action", label: "Heading 2", action: () => fmt("h2") },
-            { type: "action", label: "Heading 3", action: () => fmt("h3") },
-            { type: "action", label: "Heading 4", action: () => fmt("h4") },
-            { type: "action", label: "Paragraph", action: () => fmt("p") },
-            { type: "action", label: "Blockquote", action: () => insertHTML("<blockquote style='border-left:3px solid #6baef0;padding-left:12px;color:#555;margin:8px 0;'>[quote]</blockquote>") },
-            { type: "action", label: "Code Block", action: () => insertHTML("<pre style='background:#f4f4f4;padding:10px;border-radius:4px;font-family:monospace;font-size:13px;'>[code block]</pre>") },
-          ]
-        },
-        {
-          type: "sub", icon: "▤", label: "Blocks", children: [
-            { type: "action", label: "Blockquote", action: () => insertHTML("<blockquote style='border-left:3px solid #6baef0;padding-left:12px;color:#555;margin:8px 0;'>[quote]</blockquote>") },
-            { type: "action", label: "Code Block", action: () => insertHTML("<pre style='background:#f4f4f4;padding:10px;border-radius:4px;font-family:monospace;font-size:13px;'>[code block]</pre>") },
-            { type: "action", label: "Ordered List", action: () => exec("insertOrderedList") },
-            { type: "action", label: "Bullet List", action: () => exec("insertUnorderedList") },
-          ]
-        },
-        {
-          type: "sub", icon: "F", label: "Fonts", children: [
-            { type: "action", label: "Default", action: () => exec("fontName", "inherit") },
-            { type: "action", label: "Sans-serif", action: () => exec("fontName", "Arial, sans-serif") },
-            { type: "action", label: "Serif", action: () => exec("fontName", "Georgia, serif") },
-            { type: "action", label: "Monospace", action: () => exec("fontName", "monospace") },
-          ]
-        },
-        {
-          type: "sub", icon: "A↕", label: "Font sizes", children: [
-            { type: "action", label: "Small (8pt)", action: () => exec("fontSize", "1") },
-            { type: "action", label: "Normal (12pt)", action: () => exec("fontSize", "3") },
-            { type: "action", label: "Large (18pt)", action: () => exec("fontSize", "5") },
-            { type: "action", label: "Huge (36pt)", action: () => exec("fontSize", "7") },
-          ]
-        },
-        {
-          type: "sub", icon: "≡", label: "Align", children: [
-            { type: "action", label: "Left", action: () => exec("justifyLeft") },
-            { type: "action", label: "Center", action: () => exec("justifyCenter") },
-            { type: "action", label: "Right", action: () => exec("justifyRight") },
-            { type: "action", label: "Justify", action: () => exec("justifyFull") },
-          ]
-        },
-        {
-          type: "sub", icon: "↔", label: "Directionality", children: [
-            { type: "action", label: "Left to Right", action: () => { if (editorRef.current) editorRef.current.style.direction = "ltr"; } },
-            { type: "action", label: "Right to Left", action: () => { if (editorRef.current) editorRef.current.style.direction = "rtl"; } },
-          ]
-        },
-        { type: "sep" },
-        { type: "action", icon: "A", label: "Text color", action: () => setShowColor("foreColor") },
-        { type: "action", icon: "A", label: "Background color", action: () => setShowColor("backColor") },
-        { type: "sep" },
-        { type: "action", icon: "✕", label: "Clear formatting", action: () => exec("removeFormat") },
-      ]
-    },
-    {
-      label: "Tools", items: [
-        {
-          type: "action", icon: "≡", label: "Word Count", action: () => {
-            const t = editorRef.current?.innerText.trim() ?? "";
-            setWcData({ text: t, chars: editorRef.current?.innerText.length ?? 0, charsNoSpace: t.replace(/\s/g, "").length, paragraphs: editorRef.current?.querySelectorAll("p").length ?? 0 });
-            setShowWC(true);
-          }
-        },
-        { type: "action", icon: "🔍", label: "Find and Replace", shortcut: "Ctrl+F", action: () => { setEditorHtml(editorRef.current?.innerHTML ?? ""); setShowFR(true); } },
-      ]
-    },
-    {
-      label: "Table", items: [
-        { type: "sub", icon: "⊞", label: "Table", picker: true, children: [], onPick: (r: number, c: number) => insertTable(r, c) },
-        { type: "sep" },
-        { type: "action", icon: "✕", label: "Delete table", action: () => { const sel = window.getSelection(); if (!sel?.rangeCount) return; let n: Node | null = sel.getRangeAt(0).commonAncestorContainer; while (n && (n as Element).nodeName !== "TABLE") n = n.parentNode; if (n && (n as Element).nodeName === "TABLE") (n as Element).remove(); } },
-      ]
-    },
-  ], [exec, fmt, insertHTML, insertTable, toggleFS, isFS]);
-
-  const TBGroups = useMemo(() => [
-    [
-      {
-        html: <select className="h-6 border border-gray-300 rounded text-xs bg-white px-1 outline-none" onChange={(e: React.ChangeEvent<HTMLSelectElement>) => fmt(e.target.value)} defaultValue="p">
-          {[["Paragraph", "p"], ["Heading 1", "h1"], ["Heading 2", "h2"], ["Heading 3", "h3"], ["Heading 4", "h4"], ["Blockquote", "blockquote"], ["Code", "pre"]].map(([l, v]) => <option key={v} value={v}>{l}</option>)}
-        </select>, title: "Block format"
-      },
-      {
-        html: <select className="h-6 border border-gray-300 rounded text-xs bg-white px-1 outline-none" onChange={(e: React.ChangeEvent<HTMLSelectElement>) => e.target.value && exec("fontName", e.target.value)}>
-          {[["Font", ""], ["Default", "inherit"], ["Arial", "Arial"], ["Georgia", "Georgia"], ["Monospace", "monospace"]].map(([l, v]) => <option key={l} value={v}>{l}</option>)}
-        </select>, title: "Font"
-      },
-      {
-        html: <select className="h-6 border border-gray-300 rounded text-xs bg-white px-1 outline-none" onChange={(e: React.ChangeEvent<HTMLSelectElement>) => exec("fontSize", e.target.value)} defaultValue="3">
-          {[["8pt", "1"], ["10pt", "2"], ["12pt", "3"], ["14pt", "4"], ["18pt", "5"], ["24pt", "6"], ["36pt", "7"]].map(([l, v]) => <option key={v} value={v}>{l}</option>)}
-        </select>, title: "Font size"
-      },
-    ],
-    [
-      { label: "B", title: "Bold (Ctrl+B)", fn: () => exec("bold"), style: { fontWeight: 700 } },
-      { label: "I", title: "Italic (Ctrl+I)", fn: () => exec("italic"), style: { fontStyle: "italic" } },
-      { label: "U", title: "Underline", fn: () => exec("underline"), style: { textDecoration: "underline" } },
-      { label: "S̶", title: "Strikethrough", fn: () => exec("strikeThrough"), style: {} },
-    ],
-    [
-      { label: "A", title: "Text color", fn: () => setShowColor("foreColor"), style: { color: "#e74c3c", fontWeight: 700 } },
-      { label: "A", title: "Background color", fn: () => setShowColor("backColor"), style: { background: "linear-gradient(#fef9c3,#fef9c3) bottom/100% 4px no-repeat" } },
-      { label: "x²", title: "Superscript", fn: () => exec("superscript"), style: {} },
-      { label: "x₂", title: "Subscript", fn: () => exec("subscript"), style: {} },
-    ],
-    [
-      { label: "🔗", title: "Link", fn: () => { const url = prompt("URL:"); if (!url) return; const txt = prompt("Link text:") || url; insertHTML(`<a href="${url}">${txt}</a>`); }, style: {} },
-      { label: "🖼", title: "Image", fn: () => { const url = prompt("Image URL:"); if (!url) return; insertHTML(`<img src="${url}" style="max-width:100%;" />`); }, style: {} },
-    ],
-    [
-      { label: "◀≡", title: "Align left", fn: () => exec("justifyLeft"), style: {} },
-      { label: "≡", title: "Align center", fn: () => exec("justifyCenter"), style: {} },
-      { label: "≡▶", title: "Align right", fn: () => exec("justifyRight"), style: {} },
-      { label: "≡≡", title: "Justify", fn: () => exec("justifyFull"), style: {} },
-    ],
-    [
-      { label: "1.", title: "Ordered list", fn: () => exec("insertOrderedList"), style: {} },
-      { label: "•", title: "Bullet list", fn: () => exec("insertUnorderedList"), style: {} },
-      { label: "⇥", title: "Indent", fn: () => exec("indent"), style: {} },
-      { label: "⇤", title: "Outdent", fn: () => exec("outdent"), style: {} },
-    ],
-    [
-      { label: "⊞", title: "Insert table", fn: () => insertTable(3, 3), style: {} },
-      { label: "</>", title: "HTML editor", fn: () => { setEditorHtml(editorRef.current?.innerHTML ?? ""); setShowHTML(true); }, style: {} },
-      { label: "✕", title: "Clear formatting", fn: () => exec("removeFormat"), style: {} },
-    ],
-  ], [exec, fmt, insertHTML, insertTable]);
+// ── Others Author Section ──────────────────────────────────────────────────────
+function OthersAuthorSection({
+  authorName, authorRole, authorImage, items, courseId, router,
+  seenIds, onView, onEdit, onDuplicate, onAssignTo, onSpeedGrader, onDelete, onTogglePublish,
+}: {
+  authorName: string; authorRole?: string | null; authorImage?: string | null;
+  items: Assignment[]; courseId: string; router: ReturnType<typeof useRouter>;
+  seenIds: Set<string>; onView: (a: Assignment) => void;
+  onEdit: (a: Assignment) => void; onDuplicate: (a: Assignment) => void;
+  onAssignTo: (a: Assignment) => void; onSpeedGrader: (a: Assignment) => void;
+  onDelete: (a: Assignment) => void; onTogglePublish: (a: Assignment) => void;
+}) {
+  const [collapsed, setCollapsed] = useState(false);
+  const newCount = items.filter(a => !seenIds.has(String(a.id))).length;
 
   return (
-    <>
-      {showWC && <WordCountModal text={wcData.text} chars={wcData.chars} charsNoSpace={wcData.charsNoSpace} paragraphs={wcData.paragraphs} onClose={() => setShowWC(false)} />}
-      {showFR && <FindReplaceModal html={editorHtml} onUpdate={h => { if (editorRef.current) editorRef.current.innerHTML = h; }} onClose={() => setShowFR(false)} />}
-      {showHTML && <HTMLEditorModal html={editorHtml} onUpdate={h => { if (editorRef.current) editorRef.current.innerHTML = h; }} onClose={() => setShowHTML(false)} />}
-      {showColor && <ColorPickerModal type={showColor} onClose={() => setShowColor(null)} />}
-
-      <div ref={wrapRef} className="border border-gray-300 rounded overflow-hidden flex flex-col" style={{ minHeight: 320 }}>
-        {/* Menubar */}
-        <div data-menubar className="flex items-center gap-0.5 px-1 py-0.5 bg-[#f7f9fb] border-b border-gray-200 select-none flex-wrap">
-          {menus.map(m => (
-            <div key={m.label} className="relative">
-              <button
-                type="button"
-                onMouseDown={e => { e.preventDefault(); setOpenMenu(openMenu === m.label ? null : m.label); }}
-                className={`px-2 sm:px-2.5 py-0.5 text-xs rounded transition-colors ${openMenu === m.label ? "text-white" : "text-gray-700 hover:bg-gray-200"}`}
-                style={openMenu === m.label ? { background: MAROON } : {}}
-              >
-                {m.label}
-              </button>
-              {openMenu === m.label && (
-                <div className="absolute left-0 top-full mt-0.5 bg-white border border-gray-200 shadow-lg rounded-sm min-w-52 py-1 z-150">
-                  <MenuItems items={m.items} onClose={closeMenus} />
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-
-        {/* Toolbar */}
-        <div className="flex flex-wrap items-center gap-0.5 px-2 py-1 bg-[#f7f9fb] border-b border-gray-200">
-          {TBGroups.map((group, gi) => (
-            <div key={gi} className="flex items-center gap-0.5">
-              {gi > 0 && <div className="w-px h-5 bg-gray-300 mx-1" />}
-              {group.map((btn, bi) => {
-                if ("html" in btn) return <div key={bi} title={btn.title}>{btn.html}</div>;
-                return (
-                  <button
-                    key={bi}
-                    type="button"
-                    title={btn.title}
-                    style={btn.style as React.CSSProperties}
-                    onMouseDown={e => { e.preventDefault(); btn.fn?.(); }}
-                    className="h-6 min-w-6 px-1 border border-transparent rounded text-xs hover:bg-blue-50 hover:border-blue-200 text-gray-700 flex items-center justify-center"
-                  >
-                    {btn.label}
-                  </button>
-                );
-              })}
-            </div>
-          ))}
-        </div>
-
-        {/* Editor area */}
-        <div
-          ref={editorRef}
-          contentEditable
-          suppressContentEditableWarning
-          onInput={updateWC}
-          onKeyUp={updateWC}
-          onMouseUp={updateWC}
-          data-placeholder={placeholder}
-          className="flex-1 px-4 py-3 text-sm text-gray-800 outline-none overflow-y-auto"
-          style={{ minHeight: 260, lineHeight: 1.7 }}
-        />
-
-        {/* Status bar */}
-        <div className="flex items-center gap-4 px-3 py-1 bg-[#f7f9fb] border-t border-gray-200 text-xs text-gray-400">
-          <span>{wordCount} word{wordCount !== 1 ? "s" : ""}</span>
-          <span
-            className="ml-auto cursor-pointer hover:text-gray-600"
-            onClick={() => { setEditorHtml(editorRef.current?.innerHTML ?? ""); setShowHTML(true); }}
-            title="HTML Editor"
-          >
-            &lt;/&gt;
+    <div style={{ marginBottom: 12 }}>
+      <div onClick={() => setCollapsed(c => !c)}
+        style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: collapsed ? 8 : "8px 8px 0 0", cursor: "pointer" }}>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1d6fa4" strokeWidth="2.5"
+          style={{ flexShrink: 0, transform: collapsed ? "rotate(-90deg)" : "none", transition: "transform 0.15s" }}>
+          <path d="M6 9l6 6 6-6" />
+        </svg>
+        <PublisherAvatar name={authorName} image={authorImage} size={22} />
+        <span style={{ fontSize: 13, fontWeight: 700, color: "#1d4ed8" }}>{authorName}</span>
+        {authorRole && (
+          <span style={{ padding: "1px 6px", borderRadius: 4, fontSize: 9, fontWeight: 700, textTransform: "uppercase", background: "#eff6ff", color: "#1d6fa4", border: "1px solid #bfdbfe" }}>
+            {authorRole}
           </span>
-        </div>
+        )}
+        <span style={{ fontSize: 12, color: "#93c5fd" }}>({items.length})</span>
+        {newCount > 0 && (
+          <span style={{ padding: "1px 6px", borderRadius: 20, fontSize: 9, fontWeight: 800, color: "#fff", background: "#dc2626" }}>
+            {newCount}
+          </span>
+        )}
       </div>
-
-      <style>{`
-        [data-placeholder]:empty::before{content:attr(data-placeholder);color:#9ca3af;pointer-events:none;}
-        [contenteditable] table{border-collapse:collapse;width:100%;margin:8px 0;}
-        [contenteditable] td,[contenteditable] th{border:1px solid #dee2e6;padding:6px 10px;min-width:40px;}
-        [contenteditable] th{background:#f7f9fb;font-weight:600;}
-        [contenteditable] blockquote{border-left:3px solid #6baef0;padding-left:12px;color:#555;margin:8px 0;}
-        [contenteditable] pre{background:#f4f4f4;padding:10px;border-radius:4px;font-family:monospace;font-size:13px;}
-        [contenteditable] a{color:#1764ad;text-decoration:underline;}
-        [contenteditable] img{max-width:100%;border-radius:4px;}
-        [contenteditable] hr{border:none;border-top:2px solid #dee2e6;margin:12px 0;}
-        [contenteditable] h1{font-size:2em;font-weight:700;margin:.67em 0;}
-        [contenteditable] h2{font-size:1.5em;font-weight:700;margin:.75em 0;}
-        [contenteditable] h3{font-size:1.17em;font-weight:700;margin:.83em 0;}
-        [contenteditable] h4{font-size:1em;font-weight:700;margin:1.12em 0;}
-        [contenteditable] ol{list-style:decimal;padding-left:1.5em;}
-        [contenteditable] ul{list-style:disc;padding-left:1.5em;}
-        input[type="date"]::-webkit-calendar-picker-indicator{cursor:pointer;filter:invert(13%) sepia(85%) saturate(2000%) hue-rotate(340deg) brightness(70%);opacity:0.7;}
-        input[type="date"]::-webkit-calendar-picker-indicator:hover{opacity:1;}
-        input[type="date"]{color-scheme:light;accent-color:#7b1113;}
-        input[type="date"]::-webkit-datetime-edit-day-field:focus,
-        input[type="date"]::-webkit-datetime-edit-month-field:focus,
-        input[type="date"]::-webkit-datetime-edit-year-field:focus{background-color:#7b1113;color:#fff;border-radius:2px;}
-      `}</style>
-    </>
+      {!collapsed && (
+        <div style={{ border: "1px solid #bfdbfe", borderTop: "none", borderRadius: "0 0 8px 8px", overflow: "hidden" }}>
+          {items.map(a => (
+            <AssignmentRow key={a.id} a={a} courseId={courseId} router={router} variant="others"
+              seenIds={seenIds} onView={onView}
+              onEdit={onEdit} onDuplicate={onDuplicate} onAssignTo={onAssignTo}
+              onSpeedGrader={onSpeedGrader} onDelete={onDelete} onTogglePublish={onTogglePublish} />
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-
-function SubmissionEntryCard({
-  entry,
-  index,
-  canRemove,
-  onRemove,
-  onUpdate,
+// ── Others Group Section ───────────────────────────────────────────────────────
+function OthersGroupSection({
+  title, items, courseId, router,
+  seenIds, onView, onEdit, onDuplicate, onAssignTo, onSpeedGrader, onDelete, onTogglePublish,
 }: {
-  entry: SubmissionEntry;
-  index: number;
-  canRemove: boolean;
-  onRemove: () => void;
-  onUpdate: (field: keyof SubmissionEntry, value: string | boolean | string[] | number | null) => void;
+  title: string; items: Assignment[]; courseId: string; router: ReturnType<typeof useRouter>;
+  seenIds: Set<string>; onView: (a: Assignment) => void;
+  onEdit: (a: Assignment) => void; onDuplicate: (a: Assignment) => void;
+  onAssignTo: (a: Assignment) => void; onSpeedGrader: (a: Assignment) => void;
+  onDelete: (a: Assignment) => void; onTogglePublish: (a: Assignment) => void;
 }) {
-  const isFileUpload = entry.type === "File Upload";
-  const isMediaRecording = entry.type === "Media Recording";
-  const allowedTypes = normalizeFileTypes(entry.allowedFileTypes);
-  const hasTypes = allowedTypes.length > 0;
-
-  const toggleFileType = (value: string) => {
-    const next = allowedTypes.includes(value)
-      ? allowedTypes.filter(t => t !== value)
-      : [...allowedTypes, value];
-    onUpdate("allowedFileTypes", next);
-  };
-
-  const handleTypeChange = (nextType: string) => {
-    onUpdate("type", nextType);
-    if (nextType === "File Upload") {
-      onUpdate("allowedFileTypes", []);
-      onUpdate("maxFiles", 1);
-    } else if (nextType === "Media Recording") {
-      onUpdate("allowedFileTypes", ["mp4", "webm", "mp3", "wav", "m4a"]);
-      onUpdate("maxFiles", 1);
-    } else {
-      onUpdate("allowedFileTypes", []);
-      onUpdate("maxFiles", null);
-    }
-  };
-
-  const fileTypeChoices = isMediaRecording
-    ? ALLOWED_FILE_TYPES.filter(t => ["mp4", "webm", "mp3", "wav", "m4a"].includes(t.value))
-    : ALLOWED_FILE_TYPES.filter(t => !["mp4", "webm", "mp3", "wav", "m4a"].includes(t.value));
+  const [collapsed, setCollapsed] = useState(false);
+  const newCount = items.filter(a => !seenIds.has(String(a.id))).length;
 
   return (
-    <div className="border border-gray-200 rounded-md overflow-hidden bg-white relative">
-      <div className="flex items-center justify-between px-3 py-2 border-b border-gray-100" style={{ background: "#fef9f9" }}>
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded text-white" style={{ background: MAROON }}>
-            Entry {index}
+    <div style={{ marginBottom: 12 }}>
+      <div onClick={() => setCollapsed(c => !c)}
+        style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", background: "#f0f9ff", border: "1px solid #bae6fd", borderRadius: collapsed ? 8 : "8px 8px 0 0", cursor: "pointer" }}>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#0369a1" strokeWidth="2.5"
+          style={{ flexShrink: 0, transform: collapsed ? "rotate(-90deg)" : "none", transition: "transform 0.15s" }}>
+          <path d="M6 9l6 6 6-6" />
+        </svg>
+        <span style={{ fontSize: 13, fontWeight: 700, color: "#0369a1" }}>{title}</span>
+        <span style={{ fontSize: 12, color: "#7dd3fc" }}>({items.length})</span>
+        {newCount > 0 && (
+          <span style={{ padding: "1px 6px", borderRadius: 20, fontSize: 9, fontWeight: 800, color: "#fff", background: "#dc2626" }}>
+            {newCount}
           </span>
-          <span className="text-[11px] font-semibold text-gray-600">{entry.type}</span>
-          <span
-            className="text-[10px] font-bold px-1.5 py-0.5 rounded"
-            style={entry.required ? { background: "#fef2f2", color: MAROON, border: "1px solid #f0c0c0" } : { background: "#f3f4f6", color: "#6b7280" }}
-          >
-            {entry.required ? "Required" : "Optional"}
-          </span>
-          {(isFileUpload || isMediaRecording) && hasTypes && (
-            <span className="text-[10px] font-black px-1.5 py-0.5 rounded uppercase" style={{ background: MAROON, color: "#fff" }}>
-              {formatFileTypes(allowedTypes)}
-            </span>
-          )}
-        </div>
-
-        {canRemove && (
-          <button type="button" onClick={onRemove} className="w-6 h-6 flex items-center justify-center rounded hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors" aria-label="Remove submission entry">
-            ✕
-          </button>
         )}
       </div>
-
-      <div className="px-3 py-3 space-y-3">
-        <div>
-          <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide block mb-1">Submission Type</label>
-          <select value={entry.type} onChange={e => handleTypeChange(e.target.value)} className="w-full h-8 border border-gray-300 rounded-sm px-2 text-xs bg-white outline-none focus:border-[#7b1113]">
-            {SUBMISSION_ENTRY_TYPES.map(t => <option key={t}>{t}</option>)}
-          </select>
+      {!collapsed && (
+        <div style={{ border: "1px solid #bae6fd", borderTop: "none", borderRadius: "0 0 8px 8px", overflow: "hidden" }}>
+          {items.map(a => (
+            <AssignmentRow key={a.id} a={a} courseId={courseId} router={router} variant="others"
+              seenIds={seenIds} onView={onView}
+              onEdit={onEdit} onDuplicate={onDuplicate} onAssignTo={onAssignTo}
+              onSpeedGrader={onSpeedGrader} onDelete={onDelete} onTogglePublish={onTogglePublish} />
+          ))}
         </div>
+      )}
+    </div>
+  );
+}
 
-        {(isFileUpload || isMediaRecording) && (
-          <>
-            <div>
-              <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide block mb-2">
-                Allowed {isMediaRecording ? "Media" : "File"} Types
-                <span className="ml-1 normal-case font-normal text-gray-400">{isFileUpload ? "(leave empty to allow all)" : ""}</span>
-              </label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
-                {fileTypeChoices.map(ft => {
-                  const checked = allowedTypes.includes(ft.value);
-                  return (
-                    <label key={ft.value} className={
-                      checked
-                        ? "flex items-center gap-2 px-2.5 py-1.5 rounded border cursor-pointer transition-all text-xs font-medium select-none border-[#7b1113] bg-[#fef2f2] text-[#7b1113]"
-                        : "flex items-center gap-2 px-2.5 py-1.5 rounded border cursor-pointer transition-all text-xs font-medium select-none border-gray-200 bg-gray-50 text-gray-600 hover:border-gray-300 hover:bg-white"
-                    }>
-                      <input type="checkbox" checked={checked} onChange={() => toggleFileType(ft.value)} className="sr-only" />
-                      <span className={
-                        checked
-                          ? "w-3.5 h-3.5 rounded-sm border flex items-center justify-center shrink-0 transition-all border-[#7b1113] bg-[#7b1113]"
-                          : "w-3.5 h-3.5 rounded-sm border flex items-center justify-center shrink-0 transition-all border-gray-300 bg-white"
-                      }>
-                        {checked && (
-                          <svg width="8" height="8" viewBox="0 0 10 10" fill="none">
-                            <path d="M2 5l2.5 2.5L8 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
-                        )}
-                      </span>
-                      .{ft.label}
-                    </label>
-                  );
-                })}
-              </div>
-
-              {hasTypes ? (
-                <div className="mt-2 flex items-center gap-1.5 flex-wrap">
-                  <span className="text-[10px] font-semibold text-gray-500">Staff will see:</span>
-                  <span className="text-[10px] font-black px-1.5 py-0.5 rounded uppercase" style={{ background: MAROON, color: "#fff" }}>
-                    {formatFileTypes(allowedTypes)}
-                  </span>
-                </div>
-              ) : (
-                <p className="text-[10px] text-gray-400 mt-1.5 italic">{isFileUpload ? "No restriction — all file types accepted." : "Choose at least one media type."}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide block mb-1">Max Files</label>
-              <input
-                type="number"
-                min={1}
-                max={20}
-                value={entry.maxFiles ?? 1}
-                onChange={e => onUpdate("maxFiles", Math.max(1, parseInt(e.target.value, 10) || 1))}
-                className="w-20 h-8 border border-gray-300 rounded-sm px-2 text-xs outline-none focus:border-[#7b1113]"
-              />
-            </div>
-          </>
-        )}
-
-        <div className="pt-1 border-t border-gray-100">
-          <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer pt-1">
-            <input type="checkbox" checked={entry.required} onChange={e => onUpdate("required", e.target.checked)} style={{ accentColor: MAROON }} />
-            Required
-          </label>
-        </div>
+// ── Toolbar ────────────────────────────────────────────────────────────────────
+function Toolbar({ search, onSearch, right }: {
+  search: string; onSearch: (v: string) => void; right: React.ReactNode;
+}) {
+  return (
+    <div className="asgn-toolbar" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", borderBottom: "1px solid #f3f4f6", gap: 10 }}>
+      <div style={{ position: "relative", flex: 1, maxWidth: 280 }}>
+        <Search size={14} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "#9ca3af", pointerEvents: "none" }} />
+        <input className="asgn-search-input" value={search} onChange={e => onSearch(e.target.value)} placeholder="Search…"
+          style={{ width: "100%", height: 36, border: "1px solid #e5e7eb", borderRadius: 8, paddingLeft: 32, paddingRight: 10, fontFamily: FONT, fontSize: 13, color: "#374151", background: "#fafafa", outline: "none" }} />
+      </div>
+      <div className="asgn-toolbar-right" style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+        {right}
       </div>
     </div>
   );
 }
 
+function SectionLabel({ children, color, bg, border }: { children: React.ReactNode; color: string; bg: string; border: string }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", padding: "8px 14px", background: bg, borderBottom: `1px solid ${border}`, borderTop: `1px solid ${border}` }}>
+      <span className="asgn-section-label" style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", color }}>{children}</span>
+    </div>
+  );
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
-// Main Page
+// MAIN PAGE
 // ═══════════════════════════════════════════════════════════════════════════════
-export default function CreateAssignmentPage() {
+export default function CourseAssignmentsPage({
+  courseId, currentUserId, currentUserName, currentUserRole,
+}: Props) {
   const router = useRouter();
-  const params = useParams<{ id: string }>();
-  const searchParams = useSearchParams();
-  const courseId = params?.id ?? "";
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // ── Get current session user ──────────────────────────────────────────────
-  const { data: session } = useSession();
-  const sessionUserId = (session?.user as { id?: string })?.id ?? null;
+  const [mySearch, setMySearch] = useState("");
+  const [showGroupModal, setShowGroupModal] = useState(false);
+  const [localGroups, setLocalGroups] = useState<string[]>(["Assignments"]);
+  const [othersSearch, setOthersSearch] = useState("");
+  const [othersViewMode, setOthersViewMode] = useState<"author" | "group">("author");
 
-  const initial = useMemo(() => ({
-    name: searchParams.get("name") ?? "",
-    points: searchParams.get("points") ?? "0",
-    group: searchParams.get("group") ?? "",
-  }), [searchParams]);
+  const [quickEditTarget, setQuickEditTarget] = useState<Assignment | null>(null);
+  const [assignToTarget, setAssignToTarget] = useState<Assignment | null>(null);
+  const [editGroupTarget, setEditGroupTarget] = useState<string | null>(null);
+  const [deleteGroupTarget, setDeleteGroupTarget] = useState<string | null>(null);
+  const [savingEditGroup, setSavingEditGroup] = useState(false);
+  const [deleteAssignmentTarget, setDeleteAssignmentTarget] = useState<Assignment | null>(null);
+  const [deletingAssignment, setDeletingAssignment] = useState(false);
 
-  const [activeTab, setActiveTab] = useState<TabKey>("details");
+  const [resolvedUserId, setResolvedUserId] = useState<string | null | undefined>(currentUserId);
+  const [resolvedUserName, setResolvedUserName] = useState<string | null | undefined>(currentUserName);
 
-  const TABS: { key: TabKey; label: string }[] = [
-    { key: "details", label: "Details" },
-    { key: "submission", label: "Submission" },
-    { key: "settings", label: "Settings" },
-    { key: "assign", label: "Assign" },
-  ];
+  const [seenIds, setSeenIds] = useState<Set<string>>(() => getSeenIds(courseId));
 
-  // Form state
-  const [name, setName] = useState(initial.name);
-  const [points, setPoints] = useState(initial.points);
-  const [description, setDescription] = useState("");
-  const [group, setGroup] = useState(initial.group || "Assignments");
-  const [groups, setGroups] = useState<AssignmentGroup[]>([{ id: 1, name: "Assignments" }]);
-  const [groupsLoaded, setGroupsLoaded] = useState(false);
-  const [displayGradeAs, setDisplayGradeAs] = useState("Points");
-  const [submissionType, setSubmissionType] = useState("Online");
-  const [published, setPublished] = useState(false);
-  const [notifyUsers, setNotifyUsers] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
-  const [mounted, setMounted] = useState(false);
-
-  // Submission entries
-  const [submissionEntries, setSubmissionEntries] = useState<SubmissionEntry[]>([
-    { id: 1, label: "", required: false, type: "File Upload", allowedFileTypes: [], maxFiles: 1 },
-  ]);
-
-  const addSubmissionEntry = () =>
-    setSubmissionEntries(p => [...p, { id: Date.now(), label: "", required: false, type: "File Upload", allowedFileTypes: [], maxFiles: 1 }]);
-
-  const removeSubmissionEntry = (id: number) =>
-    setSubmissionEntries(p => p.filter(e => e.id !== id));
-
-  const updateSubmissionEntry = (
-    id: number,
-    field: keyof SubmissionEntry,
-    value: string | boolean | string[] | number | null
-  ) =>
-    setSubmissionEntries(p => p.map(e => e.id === id ? { ...e, [field]: value } : e));
-
-  const [submissionAttempts, setSubmissionAttempts] = useState("Unlimited");
-  const [allowedAttempts, setAllowedAttempts] = useState(1);
-
-  const [isGroupAssignment, setIsGroupAssignment] = useState(false);
-  const [assignGradesIndividually, setAssignGradesIndividually] = useState(false);
-  const [groupSet, setGroupSet] = useState("");
-  const [groupSets, setGroupSets] = useState<GroupSetItem[]>([]);
-  const [showGroupSetModal, setShowGroupSetModal] = useState(false);
-  const [groupSetName, setGroupSetName] = useState("");
-  const [selfSignUp, setSelfSignUp] = useState(false);
-  const [requireSameSection, setRequireSameSection] = useState(false);
-  const [groupStructure, setGroupStructure] = useState("Create groups later");
-  const [createGroupsNow, setCreateGroupsNow] = useState(0);
-  const [limitGroupMembers, setLimitGroupMembers] = useState(0);
-  const [autoAssignLeader, setAutoAssignLeader] = useState(false);
-  const [leaderType, setLeaderType] = useState("first");
-  const [groupModalOpen, setGroupModalOpen] = useState(false);
-  const [newGroupName, setNewGroupName] = useState("");
-
-  const [assignRows, setAssignRows] = useState<AssignTo[]>([{
-    id: 1, assignees: ["Everyone"], dueDate: "", dueTime: "",
-    availableFrom: "", availableFromTime: "", until: "", untilTime: ""
-  }]);
-  const [staff, setStaff] = useState<Staff[]>([]);
-  const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
-  const [dropdownSearch, setDropdownSearch] = useState("");
-
-  useEffect(() => setMounted(true), []);
-
-  useEffect(() => {
-    if (!courseId) return;
-    fetch(`/api/admin/courses/${courseId}/groupsets`)
-      .then(r => r.json())
-      .then(d => setGroupSets(d.groupSets ?? []))
-      .catch(() => { });
+  const handleView = useCallback((a: Assignment) => {
+    markSeen(courseId, String(a.id));
+    setSeenIds(getSeenIds(courseId));
   }, [courseId]);
 
   useEffect(() => {
+    if (!currentUserId) {
+      fetch("/api/auth/session").then(r => r.json()).then(s => {
+        if (s?.user?.id) setResolvedUserId(s.user.id);
+        if (s?.user?.name) setResolvedUserName(s.user.name);
+      }).catch(() => { });
+    }
+  }, [currentUserId]);
+
+  function isMyAssignment(a: Assignment, userId?: string | null, userName?: string | null): boolean {
+    if (a._isMine || a.isCreator) return true;
+    if (userId && a.createdById && a.createdById === userId) return true;
+    if (userName && a.createdBy && a.createdBy === userName) return true;
+    if (userName && a.publisherName && a.publisherName === userName) return true;
+    return false;
+  }
+
+  const loadAssignments = useCallback(() => {
     if (!courseId) return;
     fetch(`/api/admin/courses/${courseId}/assignments`)
       .then(r => r.json())
       .then(d => {
-        const list = d.assignments ?? [];
-        const apiGroupNames: string[] = [...new Set<string>(
-          list.map((a: { assignmentGroup: string }) => a.assignmentGroup || "Assignments")
+        const list: Assignment[] = d.assignments ?? [];
+        setAssignments(list);
+        setSeenIds(getSeenIds(courseId));
+        const apiGroups = [...new Set(
+          list.filter(a => isMyAssignment(a, resolvedUserId, resolvedUserName))
+            .map(a => a.assignmentGroup || "Assignments")
         )];
-        if (!apiGroupNames.includes("Assignments")) apiGroupNames.unshift("Assignments");
-        const urlGroup = initial.group;
-        if (urlGroup && !apiGroupNames.includes(urlGroup)) apiGroupNames.push(urlGroup);
-        const builtGroups = apiGroupNames.map((n, i) => ({ id: i + 1, name: n }));
-        setGroups(builtGroups);
-        if (urlGroup && apiGroupNames.includes(urlGroup)) setGroup(urlGroup);
-        else if (!urlGroup) setGroup("Assignments");
-        setGroupsLoaded(true);
+        setLocalGroups(prev => {
+          const merged = [...new Set(["Assignments", ...prev, ...apiGroups])];
+          persistGroups(courseId, merged);
+          return merged;
+        });
       })
-      .catch(() => { setGroupsLoaded(true); });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [courseId]);
+      .catch(() => { })
+      .finally(() => setLoading(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [courseId, resolvedUserId, resolvedUserName]);
 
   useEffect(() => {
     if (!courseId) return;
-    fetch(`/api/admin/courses/${courseId}/sections`)
-      .then(r => r.json())
-      .then(d => {
-        const rawStaff = d.staff ?? d.users ?? d.members ?? [];
-        setStaff(rawStaff.map((u: { id: string; name?: string; userName?: string; email?: string }) => ({
-          id: u.id,
-          name: u.name ?? u.userName ?? u.email ?? u.id,
-        })));
-      })
-      .catch(() => { });
-  }, [courseId]);
+    const persisted = loadPersistedGroups(courseId);
+    if (persisted.length > 0) setLocalGroups(prev => [...new Set(["Assignments", ...persisted, ...prev])]);
+    loadAssignments();
+  }, [courseId, loadAssignments]);
 
-  useEffect(() => {
-    if (openDropdownId === null) return;
-    const h = (e: MouseEvent) => {
-      if (!(e.target as HTMLElement).closest("[data-dropdown]")) setOpenDropdownId(null);
-    };
-    document.addEventListener("mousedown", h);
-    return () => document.removeEventListener("mousedown", h);
-  }, [openDropdownId]);
-
-  const addAssignRow = () => setAssignRows(p => [...p, {
-    id: Date.now(), assignees: [], dueDate: "", dueTime: "",
-    availableFrom: "", availableFromTime: "", until: "", untilTime: ""
-  }]);
-  const removeAssignRow = (id: number) => setAssignRows(p => p.filter(r => r.id !== id));
-  const updateAssignRow = (id: number, field: keyof AssignTo, value: string | string[]) =>
-    setAssignRows(p => p.map(r => r.id === id ? { ...r, [field]: value } : r));
-
-  const handleDateChange = (id: number, dateField: "dueDate" | "availableFrom" | "until", timeField: "dueTime" | "availableFromTime" | "untilTime", value: string) => {
-    setAssignRows(p => p.map(r => {
-  if (r.id !== id) return r;
-  const autoTime = dateField === "availableFrom" && value && !r[timeField] ? "12:00 AM" : r[timeField];
-  return { ...r, [dateField]: value, [timeField]: value ? autoTime : "" };
-}));
+  const handleTogglePublish = async (a: Assignment) => {
+    const newStatus = a.status === "PUBLISHED" ? "UNPUBLISHED" : "PUBLISHED";
+    setAssignments(prev => prev.map(x => x.id === a.id ? { ...x, status: newStatus } : x));
+    await fetch(`/api/admin/courses/${courseId}/assignments/${a.id}`, {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: newStatus }),
+    }).catch(() => { });
   };
 
-  const getDateErrors = (row: AssignTo) => {
-    const errors: { until?: string; availableFrom?: string } = {};
-    const toMs = (date: string, time: string) => { if (!date) return null; const t = time || "11:59 PM"; return new Date(`${date} ${t}`).getTime(); };
-    const due = toMs(row.dueDate, row.dueTime), until = toMs(row.until, row.untilTime), available = toMs(row.availableFrom, row.availableFromTime);
-    if (due && until && until < due) errors.until = "Lock date cannot be before due date";
-    if (due && available && available > due) errors.availableFrom = "Unlock date cannot be after due date";
-    return errors;
+  const handleSaveGroup = (name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    setLocalGroups(prev => {
+      if (prev.includes(trimmed)) return prev;
+      const next = [...prev, trimmed];
+      persistGroups(courseId, next);
+      return next;
+    });
+    setShowGroupModal(false);
   };
 
-  const toggleAssignee = (rowId: number, personName: string) => setAssignRows(p => p.map(r => {
-    if (r.id !== rowId) return r;
-    if (personName === "Everyone") {
-      return { ...r, assignees: ["Everyone"] };
-    }
-    const withoutEveryone = r.assignees.filter(a => a !== "Everyone");
-    const has = withoutEveryone.includes(personName);
-    const next = has ? withoutEveryone.filter(a => a !== personName) : [...withoutEveryone, personName];
-    return { ...r, assignees: next.length ? next : ["Everyone"] };
-  }));
-
-  const saveGroup = () => {
-    const n = newGroupName.trim();
-    if (!n) return;
-    if (!groups.find(g => g.name === n)) setGroups(p => [...p, { id: Date.now(), name: n }]);
-    setGroup(n);
-    setGroupModalOpen(false);
-    setNewGroupName("");
-  };
-
-  const handleSave = async (publish: boolean) => {
-    setSaveError(null);
-    if (!name.trim()) { setSaveError("Assignment Name is required."); return; }
-    if (!courseId) { setSaveError("Course ID missing."); return; }
-    if (submissionType === "Online" && submissionEntries.length === 0) { setSaveError("Please add at least one submission entry."); return; }
-    setSaving(true);
+  const handleEditGroupSave = async (newName: string) => {
+    if (!editGroupTarget) return;
+    setSavingEditGroup(true);
     try {
-      const row = assignRows[0];
-      const res = await fetch(`/api/admin/courses/${courseId}/assignments`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: name.trim(),
-          description,
-          points: parseFloat(points) || 0,
-          submissionType,
-          assignmentGroup: group,
-          displayGradeAs,
-          status: publish ? "PUBLISHED" : "UNPUBLISHED",
-          assignees: row?.assignees ?? [],
-          dueDate: row?.dueDate || null,
-          dueTime: row?.dueTime || null,
-          availableFrom: row?.availableFrom || null,
-          availableFromTime: row?.availableFromTime || null,
-          availableUntil: row?.until || null,
-          untilTime: row?.untilTime || null,
-          submissionEntries: submissionEntries.map(entry => ({
-            id: entry.id,
-            label: entry.label,
-            required: entry.required,
-            type: entry.type,
-            allowedFileTypes:
-              entry.type === "File Upload" || entry.type === "Media Recording"
-                ? normalizeFileTypes(entry.allowedFileTypes)
-                : [],
-            maxFiles:
-              entry.type === "File Upload" || entry.type === "Media Recording"
-                ? entry.maxFiles ?? 1
-                : null,
-          })),
-          submissionAttempts,
-          allowedAttempts: submissionAttempts === "Limited" ? allowedAttempts : null,
-          isGroupAssignment,
-          groupSetId: groupSet || null,
-          notifyUsers,
-          createdById: sessionUserId,
-        }),
+      const oldName = editGroupTarget;
+      setLocalGroups(prev => { const next = prev.map(g => g === oldName ? newName : g); persistGroups(courseId, next); return next; });
+      setAssignments(prev => prev.map(a => a.assignmentGroup === oldName ? { ...a, assignmentGroup: newName } : a));
+      assignments.filter(a => a.assignmentGroup === oldName).forEach(a => {
+        fetch(`/api/admin/courses/${courseId}/assignments/${a.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ assignmentGroup: newName }) }).catch(() => { });
       });
-      if (res.ok) {
-        setPublished(publish);
-        router.push(`/admin/courses/${courseId}/assignments`);
-      } else {
-        const data = await res.json().catch(() => ({}));
-        setSaveError((data as { error?: string })?.error ?? `Server error: ${res.status}`);
-      }
-    } catch {
-      setSaveError("Network error. Please try again.");
-    } finally {
-      setSaving(false);
-    }
+      setEditGroupTarget(null);
+    } finally { setSavingEditGroup(false); }
   };
 
-  // suppress assignGradesIndividually unused warning
-  void assignGradesIndividually;
+  const handleDeleteGroup = (action: "delete" | "move", targetGroup?: string) => {
+    if (!deleteGroupTarget) return;
+    const groupName = deleteGroupTarget;
+    if (action === "delete") {
+      assignments.filter(a => (a.assignmentGroup || "Assignments") === groupName).forEach(a => {
+        fetch(`/api/admin/courses/${courseId}/assignments/${a.id}`, { method: "DELETE" }).catch(() => { });
+      });
+      setAssignments(prev => prev.filter(a => (a.assignmentGroup || "Assignments") !== groupName));
+    } else if (action === "move" && targetGroup) {
+      setAssignments(prev => prev.map(a => (a.assignmentGroup || "Assignments") === groupName ? { ...a, assignmentGroup: targetGroup } : a));
+      assignments.filter(a => (a.assignmentGroup || "Assignments") === groupName).forEach(a => {
+        fetch(`/api/admin/courses/${courseId}/assignments/${a.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ assignmentGroup: targetGroup }) }).catch(() => { });
+      });
+    }
+    setLocalGroups(prev => { if (prev.length <= 1) return prev; const next = prev.filter(g => g !== groupName); persistGroups(courseId, next); return next; });
+    setDeleteGroupTarget(null);
+  };
 
-  if (!mounted) return null;
+  const handleQuickEditSave = async (updated: Partial<Assignment> & { dueTime?: string }) => {
+    if (!quickEditTarget) return;
+    await fetch(`/api/admin/courses/${courseId}/assignments/${quickEditTarget.id}`, {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: updated.title, points: updated.points, dueDate: updated.dueDate || null, dueTime: updated.dueTime }),
+    });
+    setAssignments(prev => prev.map(a => a.id === quickEditTarget.id ? { ...a, ...updated } : a));
+  };
 
-  const BottomBar = (
-    <div className="shrink-0 border-t border-gray-200 bg-white px-4 sm:px-8 py-3 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
-      <div className="flex items-center gap-3">
-        {saveError && <span className="text-xs text-red-600 font-medium">⚠ {saveError}</span>}
+  const handleDuplicate = async (a: Assignment) => {
+    const res = await fetch(`/api/admin/courses/${courseId}/assignments`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: `${a.title} Copy`, points: a.points, status: "UNPUBLISHED", assignmentGroup: a.assignmentGroup, dueDate: a.dueDate, availableFrom: a.availableFrom, availableUntil: a.availableUntil }),
+    }).catch(() => null);
+    if (res?.ok) loadAssignments();
+  };
+
+  const handleSpeedGrader = (a: Assignment) => window.open(`/admin/courses/${courseId}/assignments/${a.id}/speedgrader`, "_blank");
+
+  const handleDeleteAssignment = async () => {
+    if (!deleteAssignmentTarget) return;
+    setDeletingAssignment(true);
+    try {
+      await fetch(`/api/admin/courses/${courseId}/assignments/${deleteAssignmentTarget.id}`, { method: "DELETE" });
+      setAssignments(prev => prev.filter(a => a.id !== deleteAssignmentTarget.id));
+      setDeleteAssignmentTarget(null);
+    } finally { setDeletingAssignment(false); }
+  };
+
+  // Derived
+  const myAssignments = assignments.filter(a => isMyAssignment(a, resolvedUserId, resolvedUserName));
+  const otherAssignments = assignments.filter(a => !isMyAssignment(a, resolvedUserId, resolvedUserName));
+  const myFiltered = myAssignments.filter(a => a.title.toLowerCase().includes(mySearch.toLowerCase()));
+  const othersFiltered = otherAssignments.filter(a => a.title.toLowerCase().includes(othersSearch.toLowerCase()));
+
+  const myGrouped: Record<string, Assignment[]> = {};
+  for (const g of localGroups) myGrouped[g] = [];
+  for (const a of myFiltered) {
+    const g = a.assignmentGroup || "Assignments";
+    if (!myGrouped[g]) myGrouped[g] = [];
+    myGrouped[g].push(a);
+  }
+
+  const othersByAuthor: Record<string, { role?: string | null; image?: string | null; items: Assignment[] }> = {};
+  for (const a of othersFiltered) {
+    const author = a.publisherName ?? a.createdBy ?? "Unknown";
+    if (!othersByAuthor[author]) othersByAuthor[author] = { role: a.publisherRole, image: a.publisherImage, items: [] };
+    othersByAuthor[author].items.push(a);
+  }
+
+  const othersByGroup: Record<string, Assignment[]> = {};
+  for (const a of othersFiltered) {
+    const g = a.assignmentGroup || "Assignments";
+    if (!othersByGroup[g]) othersByGroup[g] = [];
+    othersByGroup[g].push(a);
+  }
+
+  const rowHandlers = {
+    onEdit: (a: Assignment) => setQuickEditTarget(a),
+    onDuplicate: handleDuplicate,
+    onAssignTo: (a: Assignment) => setAssignToTarget(a),
+    onSpeedGrader: handleSpeedGrader,
+    onDelete: (a: Assignment) => setDeleteAssignmentTarget(a),
+    onTogglePublish: handleTogglePublish,
+  };
+
+  if (loading) {
+    return (
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "60px 20px", gap: 10, color: "#9ca3af", fontSize: 13, fontFamily: FONT }}>
+        <svg style={{ animation: "spin 1s linear infinite", width: 18, height: 18 }} viewBox="0 0 24 24" fill="none">
+          <circle style={{ opacity: 0.25 }} cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+          <path style={{ opacity: 0.75 }} fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+        </svg>
+        Loading assignments…
+        <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
       </div>
-      <div className="flex items-center gap-2 justify-end flex-wrap">
-        <button
-          onClick={() => router.push(`/admin/courses/${courseId}/assignments`)}
-          disabled={saving}
-          className="h-8 px-4 border border-gray-300 bg-white text-xs text-gray-700 rounded hover:bg-gray-50 disabled:opacity-50"
-        >
-          Cancel
-        </button>
-        {activeTab !== "details" && (
-          <button
-            type="button"
-            onClick={() => setActiveTab(activeTab === "submission" ? "details" : activeTab === "settings" ? "submission" : "settings")}
-            className="h-8 px-4 border border-gray-300 bg-white text-xs text-gray-700 rounded hover:bg-gray-50"
-          >
-            ← Back
-          </button>
-        )}
-        {activeTab !== "assign" && (
-          <button
-            type="button"
-            onClick={() => setActiveTab(activeTab === "details" ? "submission" : activeTab === "submission" ? "settings" : "assign")}
-            className="h-8 px-4 border border-gray-300 bg-gray-50 text-xs text-gray-700 rounded hover:bg-gray-100"
-          >
-            Next →
-          </button>
-        )}
-        {activeTab === "assign" && (
-          <>
-            <button
-              onClick={() => handleSave(true)}
-              disabled={saving}
-              className="h-8 px-4 border border-gray-300 bg-gray-50 text-xs text-gray-700 rounded hover:bg-gray-100 disabled:opacity-50"
-            >
-              {saving ? "Saving..." : "Save & Publish"}
-            </button>
-            <button
-              onClick={() => handleSave(false)}
-              disabled={saving}
-              style={{ background: MAROON }}
-              className="h-8 px-4 text-white text-xs rounded hover:opacity-90 disabled:opacity-50"
-            >
-              {saving ? "Saving..." : "Save"}
-            </button>
-          </>
-        )}
-      </div>
-    </div>
-  );
+    );
+  }
 
   return (
-    <div className="w-full h-full bg-white flex flex-col" suppressHydrationWarning>
+    <div style={{ background: "#fff", fontFamily: FONT }}>
+      <style>{GLOBAL_CSS}</style>
 
-      {/* Top bar */}
-      <div className="flex items-center justify-end px-4 sm:px-6 py-2.5 border-b border-gray-200 bg-white shrink-0">
-        <div className="flex items-center gap-1.5 text-xs text-gray-600">
-          <span className="w-3 h-3 rounded-full border" style={published ? { background: "#22c55e", borderColor: "#22c55e" } : { borderColor: "#9ca3af" }} />
-          {published ? "Published" : "Not Published"}
-        </div>
-      </div>
+      {/* ── Section 1: Published by You ── */}
+      <SectionLabel color={MAROON} bg="#fef2f2" border="#f0c0c0">
+        Published by You
+      </SectionLabel>
 
-      {/* Tab bar */}
-      <div className="flex items-end border-b border-gray-200 px-2 sm:px-6 bg-white shrink-0 overflow-x-auto">
-        {TABS.map(t => (
-          <button
-            key={t.key}
-            onClick={() => setActiveTab(t.key)}
-            className={`px-3 sm:px-5 py-2 text-xs border border-b-0 -mb-px mr-0.5 rounded-t transition-colors whitespace-nowrap
-              ${activeTab === t.key
-                ? "bg-white border-gray-200 text-gray-900 font-medium"
-                : "border-transparent text-gray-500 hover:text-gray-700"}`}
-          >
-            {t.label}
+      <Toolbar search={mySearch} onSearch={setMySearch}
+        right={<>
+          <button onClick={() => setShowGroupModal(true)}
+            style={{ display: "flex", alignItems: "center", gap: 6, height: 36, padding: "0 12px", fontFamily: FONT, fontSize: 13, fontWeight: 600, border: "1px solid #e5e7eb", borderRadius: 8, background: "#fff", color: "#374151", cursor: "pointer", touchAction: "manipulation" }}>
+            <Plus size={14} />
+            <span style={{ display: "none" }} className="asgn-btn-text-lg">Group</span>
+            Group
           </button>
-        ))}
-      </div>
+          <button onClick={() => router.push(`/admin/courses/${courseId}/assignments/new`)}
+            style={{ display: "flex", alignItems: "center", gap: 6, height: 36, padding: "0 14px", fontFamily: FONT, fontSize: 13, fontWeight: 700, border: "none", borderRadius: 8, background: MAROON, color: "#fff", cursor: "pointer", touchAction: "manipulation" }}>
+            <Plus size={14} />
+            <span>New</span>
+          </button>
+        </>}
+      />
 
-      {/* Scrollable body */}
-      <div className="flex-1 overflow-y-auto px-4 sm:px-10 py-6">
-
-        {/* ══ DETAILS ══ */}
-        {activeTab === "details" && (
-          <div className="space-y-5 max-w-3xl">
-            <div>
-              <label className="text-xs text-gray-500 block mb-1">Assignment Name <span className="text-red-500">*</span></label>
-              <input
-                value={name}
-                onChange={e => setName(e.target.value)}
-                placeholder="Assignment Name"
-                className="w-full h-9 border rounded-sm px-3 text-sm outline-none focus:ring-1 transition-all"
-                style={{ borderColor: MAROON }}
-                onFocus={e => { e.currentTarget.style.boxShadow = `0 0 0 2px ${MAROON}30`; }}
-                onBlur={e => { e.currentTarget.style.boxShadow = "none"; }}
-              />
-            </div>
-            <div>
-              <label className="text-xs text-gray-500 block mb-1">Description</label>
-              <RichTextEditor onChange={setDescription} placeholder="Assignment description..." />
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] items-start gap-y-4 gap-x-4">
-              <label className="text-xs text-gray-700 sm:text-right pt-2">Points</label>
-              <input
-                type="number"
-                min={0}
-                value={points}
-                onChange={e => setPoints(e.target.value)}
-                className="h-8 border border-gray-300 rounded-sm px-3 text-xs w-full sm:w-80 outline-none focus:border-[#7b1113]"
-              />
-
-              <label className="text-xs text-gray-700 sm:text-right pt-2">Assignment Group</label>
-              <div className="flex items-center gap-2 flex-wrap">
-                <select
-                  value={group}
-                  onChange={e => {
-                    if (e.target.value === "__create__") {
-                      setNewGroupName(""); setGroupModalOpen(true);
-                    } else {
-                      setGroup(e.target.value);
-                    }
-                  }}
-                  className="h-8 border border-gray-300 rounded-sm px-3 text-xs w-full sm:w-80 bg-white outline-none focus:border-[#7b1113]"
-                  disabled={!groupsLoaded}
-                >
-                  {groups.map(g => <option key={g.id} value={g.name}>{g.name}</option>)}
-                  <option value="__create__">[ Create Group ]</option>
-                </select>
-                {initial.group && group === initial.group && (
-                  <span className="text-[10px] px-2 py-0.5 rounded text-white font-medium" style={{ background: MAROON }}>
-                    From group
-                  </span>
-                )}
-              </div>
-            </div>
+      <div style={{ padding: "12px 12px 4px" }}>
+        {myFiltered.length === 0 && mySearch ? (
+          <div style={{ padding: "32px 16px", textAlign: "center", fontSize: 13, color: "#9ca3af" }}>
+            No results for &ldquo;{mySearch}&rdquo;
           </div>
-        )}
-
-        {/* ══ SUBMISSION ══ */}
-        {activeTab === "submission" && (
-          <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] items-start gap-y-5 gap-x-4 max-w-3xl">
-            <label className="text-xs text-gray-700 sm:text-right pt-2">Submission Type</label>
-            <select
-              value={submissionType}
-              onChange={e => setSubmissionType(e.target.value)}
-              className="h-8 border border-gray-300 rounded-sm px-3 text-xs w-full sm:w-80 bg-white outline-none focus:border-[#7b1113]"
-            >
-              {SUBMISSION_TYPES.map(o => <option key={o}>{o}</option>)}
-            </select>
-
-            {submissionType === "Online" && (
-              <>
-                <label className="text-xs text-gray-700 sm:text-right pt-2">
-                  Submission Entries <span className="text-red-500">*</span>
-                </label>
-                <div className="space-y-3 w-full sm:max-w-xl">
-                  {submissionEntries.map((entry, idx) => (
-                    <SubmissionEntryCard
-                      key={entry.id}
-                      entry={entry}
-                      index={idx + 1}
-                      canRemove={submissionEntries.length > 1}
-                      onRemove={() => removeSubmissionEntry(entry.id)}
-                      onUpdate={(field, value) => updateSubmissionEntry(entry.id, field, value)}
-                    />
-                  ))}
-                  <button
-                    type="button"
-                    onClick={addSubmissionEntry}
-                    className="w-full h-9 border border-dashed border-gray-300 bg-gray-50 text-xs text-gray-600 rounded-md hover:bg-gray-100 hover:border-gray-400 flex items-center justify-center gap-1.5 transition-colors"
-                  >
-                    + Add Submission Entry
-                  </button>
-
-                  <div className="rounded-md p-3 border text-xs" style={{ background: "#fef2f2", borderColor: "#f0c0c0" }}>
-                    <p className="font-bold mb-2" style={{ color: MAROON }}>Staff View Preview</p>
-                    <div className="space-y-2">
-                      {submissionEntries.map(entry => {
-                        const allowed = normalizeFileTypes(entry.allowedFileTypes);
-                        const showTypes = (entry.type === "File Upload" || entry.type === "Media Recording") && allowed.length > 0;
-                        return (
-                          <div key={entry.id} className="flex items-center gap-2 flex-wrap bg-white rounded border border-gray-100 px-2.5 py-2">
-                            <span className="text-xs font-semibold text-gray-700">{entry.label || entry.type}</span>
-                            <span
-                              className="text-[10px] font-bold px-1.5 py-0.5 rounded"
-                              style={entry.required ? { background: "#fef2f2", color: MAROON, border: "1px solid #f0c0c0" } : { background: "#f3f4f6", color: "#6b7280" }}
-                            >
-                              {entry.required ? "Required" : "Optional"}
-                            </span>
-                            {showTypes && (
-                              <span className="text-[10px] font-black px-1.5 py-0.5 rounded uppercase" style={{ background: MAROON, color: "#fff" }}>
-                                {formatFileTypes(allowed)}
-                              </span>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                    <p className="text-gray-400 mt-2">Example: File Upload <strong>[Required]</strong> <strong>[PDF]</strong>.</p>
-                  </div>
-                </div>
-              </>
-            )}
-
-            <label className="text-xs text-gray-700 sm:text-right pt-2">Submission Attempts</label>
-            <div className="border border-gray-200 rounded-sm p-3 w-full sm:w-80 space-y-2">
-              <p className="text-xs font-medium text-gray-700">Allowed Attempts</p>
-              <select
-                value={submissionAttempts}
-                onChange={e => setSubmissionAttempts(e.target.value)}
-                className="h-8 border border-gray-300 rounded-sm px-3 text-xs w-full bg-white outline-none focus:border-[#7b1113]"
-              >
-                <option>Unlimited</option><option>Limited</option>
-              </select>
-              {submissionAttempts === "Limited" && (
-                <div>
-                  <p className="text-xs font-medium text-gray-700 mb-1">Number of Attempts</p>
-                  <input
-                    type="number"
-                    min={1}
-                    value={allowedAttempts}
-                    onChange={e => setAllowedAttempts(parseInt(e.target.value) || 1)}
-                    className="h-8 w-24 border border-gray-300 rounded-sm px-2 text-xs outline-none focus:border-[#7b1113]"
-                  />
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* ══ SETTINGS ══ */}
-        {activeTab === "settings" && (
-          <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] items-start gap-y-5 gap-x-4 max-w-3xl">
-            <label className="text-xs text-gray-700 sm:text-right pt-2">Display Grade as</label>
-            <select
-              value={displayGradeAs}
-              onChange={e => setDisplayGradeAs(e.target.value)}
-              className="h-8 border border-gray-300 rounded-sm px-3 text-xs w-full sm:w-80 bg-white outline-none focus:border-[#7b1113]"
-            >
-              {GRADE_OPTIONS.map(o => <option key={o}>{o}</option>)}
-            </select>
-
-
-            <label className="text-xs text-gray-700 sm:text-right pt-2">Group Assignment</label>
-            <div className="border border-gray-200 rounded-sm p-3 w-full sm:w-80 space-y-2">
-              <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
-                <input type="checkbox" checked={isGroupAssignment} onChange={e => setIsGroupAssignment(e.target.checked)} style={{ accentColor: MAROON }} />
-                This is a Group Assignment
-              </label>
-              {isGroupAssignment && (
-                <div className="pl-2 space-y-2">
-                  <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
-                    <input type="checkbox" checked={assignGradesIndividually} onChange={e => setAssignGradesIndividually(e.target.checked)} style={{ accentColor: MAROON }} />
-                    Assign Grades to Each Student Individually
-                  </label>
-                  <div>
-                    <p className="text-xs text-gray-700 mb-1">Group Set</p>
-                    <select
-                      value={groupSet}
-                      onChange={e => {
-                        if (e.target.value === "__new__") {
-                          setGroupSetName(""); setSelfSignUp(false); setRequireSameSection(false);
-                          setGroupStructure("Create groups later"); setShowGroupSetModal(true);
-                        } else setGroupSet(e.target.value);
-                      }}
-                      className="h-7 w-full border border-gray-300 rounded-sm px-2 text-xs bg-white outline-none focus:border-[#7b1113]"
-                    >
-                      <option value="">Select a group category</option>
-                      {groupSets.map(gs => <option key={gs.id} value={gs.id}>{gs.name}</option>)}
-                      <option value="__new__">+ New Group Set</option>
-                    </select>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* ══ ASSIGN ══ */}
-        {activeTab === "assign" && (
-          <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] items-start gap-y-5 gap-x-4 max-w-3xl">
-            <label className="text-xs text-gray-700 sm:text-right pt-2">Assign Access</label>
-            <div className="space-y-3 w-full">
-              {assignRows.map((row, idx) => (
-                <div key={row.id} className="border border-gray-200 rounded-sm p-3 space-y-3 w-full sm:max-w-xl relative">
-                  {idx > 0 && (
-                    <button type="button" onClick={() => removeAssignRow(row.id)} className="absolute top-2 right-2 text-gray-400 hover:text-red-500 text-xs">✕</button>
-                  )}
-
-                  <div className="relative" data-dropdown onMouseDown={e => e.stopPropagation()}>
-                    <p className="text-xs font-medium text-gray-700 mb-1">Assign To</p>
-                    <div
-                      onMouseDown={e => { e.stopPropagation(); setOpenDropdownId(openDropdownId === row.id ? null : row.id); setDropdownSearch(""); }}
-                      className="w-full min-h-7.5 border rounded-sm px-2 py-1 text-xs flex flex-wrap gap-1 items-center cursor-pointer bg-white select-none"
-                      style={{ borderColor: MAROON }}
-                    >
-                      {row.assignees.length > 0 ? row.assignees.map(a => (
-                        <span key={a} className="px-2 py-0.5 rounded text-xs flex items-center gap-1 text-white font-medium" style={{ background: MAROON }}>
-                          {a}
-                          <button
-                            type="button"
-                            onMouseDown={e => {
-                              e.stopPropagation();
-                              if (a === "Everyone") return;
-                              toggleAssignee(row.id, a);
-                            }}
-                            className="hover:opacity-70 font-bold ml-0.5"
-                          >×</button>
-                        </span>
-                      )) : <span className="text-gray-400">Start typing to search...</span>}
-                      <span className="ml-auto text-gray-400 text-[10px] pl-2 shrink-0">{openDropdownId === row.id ? "▲" : "▼"}</span>
-                    </div>
-
-                    {openDropdownId === row.id && (
-                      <div
-                        data-dropdown
-                        className="absolute z-50 w-full bg-white border border-gray-200 shadow-lg rounded-sm mt-0.5 max-h-52 overflow-y-auto"
-                        onMouseDown={e => e.stopPropagation()}
-                      >
-                        <div className="px-2 pt-2 pb-1 border-b border-gray-100 sticky top-0 bg-white">
-                          <input
-                            autoFocus
-                            value={dropdownSearch}
-                            onChange={e => setDropdownSearch(e.target.value)}
-                            placeholder="Search..."
-                            className="w-full h-6 px-2 text-xs border border-gray-200 rounded outline-none focus:border-[#7b1113]"
-                          />
-                        </div>
-
-                        {["Everyone"].filter(o => o.toLowerCase().includes(dropdownSearch.toLowerCase())).map(opt => (
-                          <button
-                            key={opt}
-                            type="button"
-                            onMouseDown={e => { e.preventDefault(); e.stopPropagation(); toggleAssignee(row.id, opt); }}
-                            className="w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-gray-50"
-                            style={{ color: row.assignees.includes(opt) ? MAROON : "#374151", fontWeight: row.assignees.includes(opt) ? 600 : 400 }}
-                          >
-                            {opt}{row.assignees.includes(opt) && <span style={{ color: MAROON }}>✓</span>}
-                          </button>
-                        ))}
-
-                        {staff.filter(s => s.name.toLowerCase().includes(dropdownSearch.toLowerCase())).length > 0 && (
-                          <>
-                            <div className="px-3 pt-2 pb-1 text-[10px] font-bold text-gray-500 uppercase tracking-widest border-t border-gray-100 bg-gray-50">Staff</div>
-                            {staff.filter(s => s.name.toLowerCase().includes(dropdownSearch.toLowerCase())).map(s => (
-                              <button
-                                key={s.id}
-                                type="button"
-                                onMouseDown={e => { e.preventDefault(); e.stopPropagation(); toggleAssignee(row.id, s.name); }}
-                                className="w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-gray-50"
-                                style={{ color: row.assignees.includes(s.name) ? MAROON : "#374151", fontWeight: row.assignees.includes(s.name) ? 600 : 400 }}
-                              >
-                                {s.name}{row.assignees.includes(s.name) && <span style={{ color: MAROON }}>✓</span>}
-                              </button>
-                            ))}
-                          </>
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  {(() => {
-                    const errs = getDateErrors(row);
-                    return ([
-                      ["Due Date", "dueDate", "dueTime", undefined] as const,
-                      ["Available from", "availableFrom", "availableFromTime", errs.availableFrom] as const,
-                      ["Until", "until", "untilTime", errs.until] as const,
-                    ].map(([label, dateField, timeField, errMsg]) => (
-                      <div key={label}>
-                        <p className="text-xs font-medium text-gray-700 mb-1">{label}</p>
-                        <div className={`flex gap-0 border rounded-sm overflow-hidden ${errMsg ? "border-red-500" : "border-gray-300"}`}>
-                          <input
-                            type="date"
-                            value={row[dateField]}
-                            onChange={e => handleDateChange(row.id, dateField as "dueDate" | "availableFrom" | "until", timeField as "dueTime" | "availableFromTime" | "untilTime", e.target.value)}
-                            className="flex-1 h-7 border-0 px-2 text-xs outline-none bg-white min-w-0"
-                          />
-                          <div className="w-px bg-gray-200 self-stretch" />
-                          <select
-                            value={row[timeField]}
-                            onChange={e => updateAssignRow(row.id, timeField, e.target.value)}
-                            className="h-7 border-0 px-2 text-xs bg-white outline-none w-24 sm:w-28"
-                          >
-                            <option value="">Time</option>
-                            {TIME_OPTIONS.map(t => <option key={t}>{t}</option>)}
-                          </select>
-                        </div>
-                        {errMsg && <p className="text-xs text-red-500 mt-0.5">{errMsg}</p>}
-                        <button
-                          type="button"
-                          onClick={() => { updateAssignRow(row.id, dateField, ""); updateAssignRow(row.id, timeField, ""); }}
-                          className="text-xs hover:underline mt-0.5"
-                          style={{ color: MAROON }}
-                        >
-                          Clear
-                        </button>
-                      </div>
-                    )));
-                  })()}
-                </div>
-              ))}
-
-              <button
-                type="button"
-                onClick={addAssignRow}
-                className="w-full sm:max-w-xl h-8 border border-gray-300 bg-gray-50 text-xs text-gray-600 rounded-sm hover:bg-gray-100 flex items-center justify-center gap-1"
-              >
-                + Assign To
-              </button>
-            </div>
-
-            <div />
-            <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer mt-1">
-              <input type="checkbox" checked={notifyUsers} onChange={e => setNotifyUsers(e.target.checked)} style={{ accentColor: MAROON }} />
-              Notify users that this content has changed
-            </label>
-          </div>
+        ) : (
+          Object.entries(myGrouped).map(([grp, items]) => (
+            <AssignmentGroupSection
+              key={grp} title={grp} items={items} courseId={courseId} router={router}
+              rowVariant="mine" currentUserName={resolvedUserName} currentUserRole={currentUserRole}
+              seenIds={seenIds} onView={handleView}
+              onAddAssignment={g => router.push(`/admin/courses/${courseId}/assignments/new?group=${encodeURIComponent(g)}`)}
+              onEditGroup={g => setEditGroupTarget(g)}
+              onDeleteGroup={g => {
+                const count = assignments.filter(a => (a.assignmentGroup || "Assignments") === g).length;
+                if (count === 0) {
+                  setLocalGroups(prev => { const next = prev.filter(x => x !== g); persistGroups(courseId, next); return next; });
+                } else {
+                  setDeleteGroupTarget(g);
+                }
+              }}
+              isLastGroup={localGroups.length <= 1}
+              {...rowHandlers}
+            />
+          ))
         )}
       </div>
 
-      {/* ── Add Assignment Group Modal ── */}
-      {groupModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 px-4">
-          <div className="w-full max-w-115 bg-white shadow-xl border border-gray-200 rounded">
-            <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
-              <div className="text-sm font-semibold text-gray-800">Add Assignment Group</div>
-              <button onClick={() => setGroupModalOpen(false)} className="w-6 h-6 flex items-center justify-center border text-gray-700 rounded text-sm" style={{ borderColor: MAROON, color: MAROON }}>×</button>
-            </div>
-            <div className="px-6 py-6">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
-                <label className="text-xs text-gray-700">Group Name:</label>
-                <input
-                  value={newGroupName}
-                  onChange={e => setNewGroupName(e.target.value)}
-                  onKeyDown={e => e.key === "Enter" && saveGroup()}
-                  placeholder="e.g., Essay Group 1"
-                  className="flex-1 w-full h-8 border border-gray-300 px-2 text-xs outline-none focus:border-[#7b1113] rounded-sm"
-                />
-              </div>
-            </div>
-            <div className="bg-gray-50 border-t border-gray-200 px-4 py-3 flex justify-end gap-2">
-              <button onClick={() => setGroupModalOpen(false)} className="h-8 px-4 border border-gray-300 bg-white text-xs text-gray-700 hover:bg-gray-50 rounded">Cancel</button>
-              <button onClick={saveGroup} style={{ background: MAROON }} className="h-8 px-4 text-white text-xs rounded hover:opacity-90">Add Group</button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* ── Section 2: Published by Others ── */}
+      <SectionLabel color="#1d6fa4" bg="#eff6ff" border="#bfdbfe">
+        Published by Others
+        {otherAssignments.length > 0 && (
+          <span style={{ marginLeft: 6, fontWeight: 500, color: "#93c5fd", fontSize: 11 }}>
+            ({otherAssignments.length})
+          </span>
+        )}
+      </SectionLabel>
 
-      {/* ── Group Set Modal ── */}
-      {showGroupSetModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4">
-          <div className="bg-white rounded-lg shadow-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-              <h2 className="text-base font-semibold text-gray-800">Create Group Set</h2>
-              <button onClick={() => setShowGroupSetModal(false)} className="w-7 h-7 flex items-center justify-center border border-gray-300 rounded text-gray-500 hover:bg-gray-100 text-sm">✕</button>
-            </div>
-            <div className="px-6 py-5 space-y-0">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 pb-4">
-                <label className="text-sm text-gray-700 sm:w-36 shrink-0">Group Set Name <span className="text-red-500">*</span></label>
-                <input
-                  value={groupSetName}
-                  onChange={e => setGroupSetName(e.target.value)}
-                  placeholder="Enter Group Set Name"
-                  className="flex-1 w-full h-9 border border-gray-300 rounded px-3 text-sm outline-none focus:border-[#7b1113]"
-                />
-              </div>
-              <div className="border-t border-gray-200 py-4">
-                <div className="flex flex-col sm:flex-row items-start gap-2 sm:gap-4">
-                  <label className="text-sm text-gray-700 sm:w-36 shrink-0 pt-0.5">Self Sign-Up</label>
-                  <div className="space-y-2 flex-1">
-                    <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                      <input type="checkbox" checked={selfSignUp} onChange={e => { setSelfSignUp(e.target.checked); if (!e.target.checked) setRequireSameSection(false); }} style={{ accentColor: MAROON }} />
-                      Allow self sign-up
-                    </label>
-                    <label className={`flex items-center gap-2 text-sm cursor-pointer ${selfSignUp ? "text-gray-700" : "text-gray-400"}`}>
-                      <input type="checkbox" checked={requireSameSection} onChange={e => setRequireSameSection(e.target.checked)} disabled={!selfSignUp} style={{ accentColor: MAROON }} />
-                      Require group members to be in the same section
-                    </label>
-                    {selfSignUp && (
-                      <div className="pt-2 space-y-3">
-                        <div>
-                          <p className="text-sm text-gray-700 mb-1">Create groups now</p>
-                          <div className="flex items-center border border-gray-300 rounded w-32">
-                            <input type="number" min={0} value={createGroupsNow} onChange={e => setCreateGroupsNow(parseInt(e.target.value) || 0)} className="flex-1 h-8 px-2 text-sm outline-none rounded-l" />
-                            <div className="flex flex-col border-l border-gray-300">
-                              <button onClick={() => setCreateGroupsNow(p => p + 1)} className="h-4 px-1.5 text-gray-500 hover:bg-gray-100 text-[10px] leading-none">▲</button>
-                              <button onClick={() => setCreateGroupsNow(p => Math.max(0, p - 1))} className="h-4 px-1.5 text-gray-500 hover:bg-gray-100 border-t border-gray-300 text-[10px] leading-none">▼</button>
-                            </div>
-                          </div>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-700 mb-1">Limit group members to</p>
-                          <div className="flex items-center border border-gray-300 rounded w-32">
-                            <input type="number" min={0} value={limitGroupMembers} onChange={e => setLimitGroupMembers(parseInt(e.target.value) || 0)} className="flex-1 h-8 px-2 text-sm outline-none rounded-l" />
-                            <div className="flex flex-col border-l border-gray-300">
-                              <button onClick={() => setLimitGroupMembers(p => p + 1)} className="h-4 px-1.5 text-gray-500 hover:bg-gray-100 text-[10px] leading-none">▲</button>
-                              <button onClick={() => setLimitGroupMembers(p => Math.max(0, p - 1))} className="h-4 px-1.5 text-gray-500 hover:bg-gray-100 border-t border-gray-300 text-[10px] leading-none">▼</button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-              {!selfSignUp && (
-                <div className="border-t border-gray-200 py-4">
-                  <div className="flex flex-col sm:flex-row items-start gap-2 sm:gap-4">
-                    <label className="text-sm text-gray-700 sm:w-36 shrink-0 pt-2">Group Structure</label>
-                    <select
-                      value={groupStructure}
-                      onChange={e => setGroupStructure(e.target.value)}
-                      className="flex-1 w-full h-9 border border-gray-300 rounded px-3 text-sm bg-white outline-none focus:border-[#7b1113]"
-                    >
-                      <option>Create groups later</option>
-                      <option>Split students by number of groups</option>
-                      <option>Split number of students per group</option>
-                    </select>
-                  </div>
-                </div>
-              )}
-              {groupStructure !== "Create groups later" && (
-                <div className="border-t border-gray-200 py-4">
-                  <div className="flex flex-col sm:flex-row items-start gap-2 sm:gap-4">
-                    <label className="text-sm text-gray-700 sm:w-36 shrink-0 pt-0.5">Leadership</label>
-                    <div className="space-y-2 flex-1">
-                      <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                        <input type="checkbox" checked={autoAssignLeader} onChange={e => setAutoAssignLeader(e.target.checked)} style={{ accentColor: MAROON }} />
-                        Automatically assign a student group leader
-                      </label>
-                      <div className="pl-2 space-y-1">
-                        {([["first", "Set first student to join as group leader"], ["random", "Set a random student as group leader"]] as [string, string][]).map(([val, lbl]) => (
-                          <label key={val} className={`flex items-center gap-2 text-sm cursor-pointer ${autoAssignLeader ? "text-gray-700" : "text-gray-400"}`}>
-                            <input type="radio" name="leaderType" value={val} checked={leaderType === val} onChange={() => setLeaderType(val)} disabled={!autoAssignLeader} style={{ accentColor: MAROON }} />
-                            {lbl}
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-lg">
-              <button onClick={() => setShowGroupSetModal(false)} className="px-4 py-2 border border-gray-300 rounded text-sm text-gray-700 hover:bg-gray-100">Cancel</button>
-              <button
-                onClick={async () => {
-                  if (!groupSetName.trim()) return;
-                  try {
-                    const res = await fetch(`/api/admin/courses/${courseId}/groupsets`, {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ name: groupSetName.trim(), selfSignUp, requireSameSection, groupStructure, createGroupsNow, limitGroupMembers, autoAssignLeader, leaderType })
-                    });
-                    if (res.ok) {
-                      const data = await res.json();
-                      const newGs = data.groupSet;
-                      setGroupSets(p => [...p, { id: newGs.id, name: newGs.name }]);
-                      setGroupSet(newGs.id);
-                      setShowGroupSetModal(false);
-                    }
-                  } catch { /* ignore */ }
-                }}
-                style={{ background: MAROON }}
-                className="px-4 py-2 text-white text-sm rounded hover:opacity-90"
-              >
-                Save
+      <Toolbar search={othersSearch} onSearch={setOthersSearch}
+        right={
+          <div style={{ display: "flex", border: "1px solid #e5e7eb", borderRadius: 8, overflow: "hidden" }}>
+            {(["author", "group"] as const).map(mode => (
+              <button key={mode} onClick={() => setOthersViewMode(mode)}
+                style={{ padding: "0 12px", height: 36, fontFamily: FONT, fontSize: 12, fontWeight: 700, border: "none", cursor: "pointer", whiteSpace: "nowrap", background: othersViewMode === mode ? MAROON : "transparent", color: othersViewMode === mode ? "#fff" : "#6b7280", transition: "all 0.15s", touchAction: "manipulation" }}>
+                By {mode === "author" ? "Author" : "Group"}
               </button>
-            </div>
+            ))}
           </div>
-        </div>
-      )}
+        }
+      />
 
-      {BottomBar}
+      <div style={{ padding: "12px 12px 20px" }}>
+        {otherAssignments.length === 0 ? (
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 20px", gap: 10 }}>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" strokeWidth="1.5">
+              <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" /><circle cx="12" cy="7" r="4" />
+            </svg>
+            <p style={{ fontSize: 13, color: "#9ca3af", margin: 0 }}>No assignments published by others yet.</p>
+          </div>
+        ) : othersFiltered.length === 0 ? (
+          <div style={{ padding: "32px 16px", textAlign: "center", fontSize: 13, color: "#9ca3af" }}>
+            No results for &ldquo;{othersSearch}&rdquo;
+          </div>
+        ) : othersViewMode === "author" ? (
+          Object.entries(othersByAuthor).map(([author, { role, image, items }]) => (
+            <OthersAuthorSection key={author} authorName={author} authorRole={role} authorImage={image}
+              items={items} courseId={courseId} router={router}
+              seenIds={seenIds} onView={handleView} {...rowHandlers} />
+          ))
+        ) : (
+          Object.entries(othersByGroup).map(([grp, items]) => (
+            <OthersGroupSection key={grp} title={grp} items={items} courseId={courseId} router={router}
+              seenIds={seenIds} onView={handleView} {...rowHandlers} />
+          ))
+        )}
+      </div>
+
+      {/* ── Modals ── */}
+      {showGroupModal && (
+        <GroupNameModal title="Add Assignment Group" onClose={() => setShowGroupModal(false)}
+          onSave={handleSaveGroup} saving={false} saveLabel="Save" />
+      )}
+      {quickEditTarget && (
+        <QuickEditModal assignment={quickEditTarget} courseId={courseId}
+          onClose={() => setQuickEditTarget(null)}
+          onSave={handleQuickEditSave}
+          onMoreOptions={() => { router.push(`/admin/courses/${courseId}/assignments/${quickEditTarget.id}/edit`); setQuickEditTarget(null); }} />
+      )}
+      {assignToTarget && (
+        <AssignToPanel assignment={assignToTarget} courseId={courseId}
+          onClose={() => setAssignToTarget(null)} onSave={loadAssignments} />
+      )}
+      {editGroupTarget && (
+        <GroupNameModal title="Edit Assignment Group" initialValue={editGroupTarget}
+          onClose={() => setEditGroupTarget(null)} onSave={handleEditGroupSave}
+          saving={savingEditGroup} saveLabel="Save" />
+      )}
+      {deleteGroupTarget && (
+        <DeleteGroupModal
+          groupName={deleteGroupTarget}
+          assignmentCount={assignments.filter(a => (a.assignmentGroup || "Assignments") === deleteGroupTarget).length}
+          otherGroups={localGroups.filter(g => g !== deleteGroupTarget)}
+          onClose={() => setDeleteGroupTarget(null)}
+          onDelete={handleDeleteGroup} />
+      )}
+      {deleteAssignmentTarget && (
+        <DeleteAssignmentModal
+          assignment={deleteAssignmentTarget}
+          onClose={() => setDeleteAssignmentTarget(null)}
+          onConfirm={handleDeleteAssignment}
+          deleting={deletingAssignment} />
+      )}
     </div>
   );
 }

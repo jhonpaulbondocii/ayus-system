@@ -12,7 +12,7 @@ import {
   Eye, PackageOpen, Check, Clock,
   Pencil, ChevronDown, Music,
   Archive, Image as ImageIcon, Film, ArrowUpRight,
-  AlertCircle, BarChart2,
+  AlertCircle, BarChart2, SlidersHorizontal,
 } from "lucide-react";
 
 const MAROON = "#7b1113";
@@ -103,11 +103,10 @@ function formTypeLabel(t: string) {
   return m[t] ?? t;
 }
 
-// ─── Shared micro-components ──────────────────────────────────────────────────
+// ─── Micro-components ─────────────────────────────────────────────────────────
 function FTIcon({ url, size = 14 }: { url: string; size?: number }) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const p: any = { size, style: { flexShrink: 0 } };
-  
   if (isImage(url))  return <ImageIcon {...p} style={{ ...p.style, color: "#0891b2" }}/>;
   if (isPdf(url))    return <FileText {...p} style={{ ...p.style, color: "#dc2626" }}/>;
   if (isVideo(url))  return <Film   {...p} style={{ ...p.style, color: "#7c3aed" }}/>;
@@ -191,7 +190,61 @@ interface Row {
   submitted: number; enrolled: number; fileCount: number; logCount: number; createdAt: string;
 }
 
-// ─── List Row (desktop table row) ─────────────────────────────────────────────
+// ─── Mobile Card ──────────────────────────────────────────────────────────────
+function RepoCard({ row, selected, onClick }: { row: Row; selected: boolean; onClick: () => void }) {
+  return (
+    <div
+      onClick={onClick}
+      style={{
+        background: selected ? "#fdf2f2" : "#fff",
+        border: `1px solid ${selected ? "rgba(123,17,19,0.25)" : "#e5e7eb"}`,
+        borderLeft: `3px solid ${selected ? MAROON : "transparent"}`,
+        borderRadius: 12,
+        padding: "12px 14px",
+        cursor: "pointer",
+        transition: "all 0.15s",
+        boxShadow: selected ? "0 2px 8px rgba(123,17,19,0.08)" : "0 1px 3px rgba(0,0,0,0.04)",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 10 }}>
+        <div style={{ width: 34, height: 34, borderRadius: 9, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, background: row.kind === "assignment" ? "#fef2f2" : "#eff6ff", border: `1px solid ${row.kind === "assignment" ? "rgba(123,17,19,0.1)" : "rgba(29,78,216,0.1)"}` }}>
+          {row.kind === "assignment" ? <Folder size={14} style={{ color: MAROON }}/> : <FileText size={14} style={{ color: "#1d4ed8" }}/>}
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginBottom: 2 }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: selected ? MAROON : "#1f2937", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "calc(100% - 80px)" }}>{row.name}</span>
+            <TypeBadge kind={row.kind} subtitle={row.subtitle}/>
+          </div>
+          <span style={{ fontSize: 11, color: "#9ca3af" }}>
+            {row.kind === "assignment" ? `${row.fileCount} files · ${row.logCount} logs · ` : ""}{row.submitted} submitted
+          </span>
+        </div>
+        <StatusDot status={row.status}/>
+      </div>
+
+      {row.kind === "assignment" && row.enrolled > 0 && (
+        <div style={{ marginBottom: 8 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+            <span style={{ fontSize: 10, color: "#9ca3af", fontWeight: 600 }}>{row.submitted}/{row.enrolled} submitted</span>
+          </div>
+          <ProgressBar submitted={row.submitted} enrolled={row.enrolled}/>
+        </div>
+      )}
+
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: row.kind === "form" ? 4 : 0 }}>
+        <DuePill dueDate={row.dueDate}/>
+        {row.kind === "form" && (
+          <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "#6b7280" }}>
+            <Users size={11}/><span style={{ fontWeight: 600 }}>{row.submitted} response{row.submitted !== 1 ? "s" : ""}</span>
+          </div>
+        )}
+        <ChevronRight size={13} style={{ color: selected ? MAROON : "#d1d5db" }}/>
+      </div>
+    </div>
+  );
+}
+
+// ─── Desktop List Row ─────────────────────────────────────────────────────────
 function RepoRow({ row, selected, onClick }: { row: Row; selected: boolean; onClick: () => void }) {
   return (
     <div
@@ -205,13 +258,13 @@ function RepoRow({ row, selected, onClick }: { row: Row; selected: boolean; onCl
       onMouseEnter={e => { if (!selected) e.currentTarget.style.background = "#fafafa"; }}
       onMouseLeave={e => { if (!selected) e.currentTarget.style.background = "transparent"; }}
     >
-      <div style={{ width: 36, height: 36, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, background: row.kind === "assignment" ? "#fef2f2" : "#eff6ff", border: `1px solid ${row.kind === "assignment" ? "rgba(123,17,19,0.1)" : "rgba(29,78,216,0.1)"}`, transition: "transform 0.1s" }}>
+      <div style={{ width: 36, height: 36, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, background: row.kind === "assignment" ? "#fef2f2" : "#eff6ff", border: `1px solid ${row.kind === "assignment" ? "rgba(123,17,19,0.1)" : "rgba(29,78,216,0.1)"}` }}>
         {row.kind === "assignment" ? <Folder size={15} style={{ color: MAROON }}/> : <FileText size={15} style={{ color: "#1d4ed8" }}/>}
       </div>
 
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3, flexWrap: "wrap" }}>
-          <span style={{ fontSize: 13, fontWeight: 700, color: selected ? MAROON : "#1f2937", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", transition: "color 0.1s" }}>{row.name}</span>
+          <span style={{ fontSize: 13, fontWeight: 700, color: selected ? MAROON : "#1f2937", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{row.name}</span>
           <TypeBadge kind={row.kind} subtitle={row.subtitle}/>
           {row.kind === "assignment" && !row.hasRepo && (
             <span style={{ fontSize: 9, padding: "1px 5px", borderRadius: 4, background: "#fffbeb", color: "#d97706", fontWeight: 700, border: "1px solid #fde68a" }}>no repo</span>
@@ -223,7 +276,7 @@ function RepoRow({ row, selected, onClick }: { row: Row; selected: boolean; onCl
         </div>
       </div>
 
-      <div style={{ width: 140, flexShrink: 0, display: "none" }} className="lg-show">
+      <div style={{ width: 140, flexShrink: 0 }}>
         {row.kind === "assignment" && row.enrolled > 0 ? (
           <div>
             <p style={{ fontSize: 10, color: "#9ca3af", fontWeight: 600, marginBottom: 4 }}>{row.submitted}/{row.enrolled}</p>
@@ -238,17 +291,17 @@ function RepoRow({ row, selected, onClick }: { row: Row; selected: boolean; onCl
 
       <div style={{ width: 110, flexShrink: 0 }}><DuePill dueDate={row.dueDate}/></div>
       <div style={{ width: 80, flexShrink: 0, display: "flex", justifyContent: "center" }}><StatusDot status={row.status}/></div>
-      <ChevronRight size={13} style={{ color: selected ? MAROON : "#d1d5db", flexShrink: 0, transition: "color 0.1s" }}/>
+      <ChevronRight size={13} style={{ color: selected ? MAROON : "#d1d5db", flexShrink: 0 }}/>
     </div>
   );
 }
 
 function StatCard({ label, value, icon, accent, sub }: { label: string; value: number; icon: React.ReactNode; accent: string; sub?: string }) {
   return (
-    <div style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 12, padding: "14px 16px", display: "flex", alignItems: "center", gap: 12, boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
+    <div style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 12, padding: "12px 14px", display: "flex", alignItems: "center", gap: 10, boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
       <div style={{ borderRadius: 8, padding: 8, background: "#f9fafb", color: accent, flexShrink: 0 }}>{icon}</div>
       <div style={{ minWidth: 0 }}>
-        <p style={{ fontSize: 22, fontWeight: 900, color: "#111827", lineHeight: 1, margin: 0, fontVariantNumeric: "tabular-nums" }}>{value}</p>
+        <p style={{ fontSize: 20, fontWeight: 900, color: "#111827", lineHeight: 1, margin: 0, fontVariantNumeric: "tabular-nums" }}>{value}</p>
         <p style={{ fontSize: 11, fontWeight: 600, color: "#6b7280", margin: "3px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{label}</p>
         {sub && <p style={{ fontSize: 10, color: "#9ca3af", margin: "2px 0 0" }}>{sub}</p>}
       </div>
@@ -294,9 +347,9 @@ function BulkDownloadButton({ files, assignmentTitle }: { files: RepoFile[]; ass
 
   return (
     <button onClick={handleDownload} disabled={state === "loading" || submittedFiles.length === 0}
-      style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, padding: "6px 12px", border: "1px solid", borderRadius: 8, cursor: submittedFiles.length === 0 ? "default" : "pointer", opacity: submittedFiles.length === 0 ? 0.5 : 1, transition: "all 0.15s", ...styles[state] }}>
+      style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, padding: "6px 10px", border: "1px solid", borderRadius: 8, cursor: submittedFiles.length === 0 ? "default" : "pointer", opacity: submittedFiles.length === 0 ? 0.5 : 1, transition: "all 0.15s", whiteSpace: "nowrap", ...styles[state] }}>
       {state === "loading" ? <><RefreshCw size={12} style={{ animation: "spin 1s linear infinite" }}/> Preparing...</>
-        : state === "done" ? <><Check size={12}/> Downloaded!</>
+        : state === "done" ? <><Check size={12}/> Done!</>
         : state === "error" ? "Failed"
         : <><PackageOpen size={12}/> Download All ({submittedFiles.length})</>}
     </button>
@@ -324,10 +377,10 @@ function StudentSection({ user, files, points, onPreview, onDelete }: {
           <p style={{ fontSize: 13, fontWeight: 700, color: "#1f2937", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.name ?? user.email}</p>
           <p style={{ fontSize: 11, color: "#9ca3af", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.email}</p>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
           <SPill status={files[0]?.submission?.status ?? "SUBMITTED"}/>
           <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 20, background: graded === files.length ? "#f0fdf4" : "#f9fafb", color: graded === files.length ? "#15803d" : "#6b7280", border: `1px solid ${graded === files.length ? "#bbf7d0" : "#e5e7eb"}` }}>
-            {graded}/{files.length} graded
+            {graded}/{files.length}
           </span>
         </div>
       </button>
@@ -337,26 +390,28 @@ function StudentSection({ user, files, points, onPreview, onDelete }: {
           {files.map((f, i) => {
             const late = f.submission?.submittedAt && new Date(f.uploadedAt) > new Date(f.submission.submittedAt);
             return (
-              <div key={f.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "none", borderBottom: i < files.length - 1 ? "1px solid #f9fafb" : "none", transition: "background 0.1s" }}
+              <div key={f.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", background: "none", borderBottom: i < files.length - 1 ? "1px solid #f9fafb" : "none", transition: "background 0.1s", flexWrap: "wrap" }}
                 onMouseEnter={e => (e.currentTarget.style.background = "#fef9f9")}
                 onMouseLeave={e => (e.currentTarget.style.background = "none")}
               >
                 <FTIcon url={f.fileUrl} size={13}/>
-                <button onClick={() => onPreview(f)} style={{ flex: 1, fontSize: 12, fontWeight: 600, color: MAROON, textAlign: "left", background: "none", border: "none", cursor: "pointer", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", padding: 0 }}>
+                <button onClick={() => onPreview(f)} style={{ flex: 1, fontSize: 12, fontWeight: 600, color: MAROON, textAlign: "left", background: "none", border: "none", cursor: "pointer", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", padding: 0, minWidth: 80 }}>
                   {f.fileName}
                 </button>
-                <span style={{ fontSize: 11, color: late ? "#dc2626" : "#9ca3af", flexShrink: 0 }}>
-                  {fmtShort(f.uploadedAt)}
-                  {late && <span style={{ marginLeft: 6, fontSize: 9, fontWeight: 800, background: "#fef2f2", color: "#dc2626", border: "1px solid #fecaca", padding: "1px 4px", borderRadius: 3 }}>LATE</span>}
-                </span>
-                <span style={{ fontSize: 11, color: "#9ca3af", flexShrink: 0 }}>{fmtSize(f.fileSize)}</span>
-                {f.submission?.grade != null
-                  ? <span style={{ fontSize: 12, fontWeight: 900, color: MAROON, flexShrink: 0 }}>{f.submission.grade}<span style={{ color: "#9ca3af", fontWeight: 400 }}>/{points}</span></span>
-                  : <span style={{ fontSize: 12, color: "#d1d5db", flexShrink: 0 }}>—/{points}</span>}
-                <div style={{ display: "flex", gap: 3, flexShrink: 0 }}>
-                  <button onClick={() => onPreview(f)} title="Preview" style={{ width: 24, height: 24, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 5, border: "none", background: "none", cursor: "pointer", color: "#9ca3af" }} onMouseEnter={e => (e.currentTarget.style.background = "#f3f4f6")} onMouseLeave={e => (e.currentTarget.style.background = "none")}><Eye size={11}/></button>
-                  <a href={f.fileUrl} download={f.fileName} target="_blank" rel="noopener noreferrer" style={{ width: 24, height: 24, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 5, color: "#9ca3af", textDecoration: "none" }} onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = "#f3f4f6")} onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = "none")}><Download size={11}/></a>
-                  <button onClick={() => onDelete(f.id)} title="Delete" style={{ width: 24, height: 24, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 5, border: "none", background: "none", cursor: "pointer", color: "#9ca3af" }} onMouseEnter={e => { e.currentTarget.style.background = "#fef2f2"; e.currentTarget.style.color = "#dc2626"; }} onMouseLeave={e => { e.currentTarget.style.background = "none"; e.currentTarget.style.color = "#9ca3af"; }}><Trash2 size={11}/></button>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0, flexWrap: "wrap" }}>
+                  <span style={{ fontSize: 11, color: late ? "#dc2626" : "#9ca3af" }}>
+                    {fmtShort(f.uploadedAt)}
+                    {late && <span style={{ marginLeft: 6, fontSize: 9, fontWeight: 800, background: "#fef2f2", color: "#dc2626", border: "1px solid #fecaca", padding: "1px 4px", borderRadius: 3 }}>LATE</span>}
+                  </span>
+                  <span style={{ fontSize: 11, color: "#9ca3af" }}>{fmtSize(f.fileSize)}</span>
+                  {f.submission?.grade != null
+                    ? <span style={{ fontSize: 12, fontWeight: 900, color: MAROON }}>{f.submission.grade}<span style={{ color: "#9ca3af", fontWeight: 400 }}>/{points}</span></span>
+                    : <span style={{ fontSize: 12, color: "#d1d5db" }}>—/{points}</span>}
+                  <div style={{ display: "flex", gap: 2 }}>
+                    <button onClick={() => onPreview(f)} title="Preview" style={{ width: 24, height: 24, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 5, border: "none", background: "none", cursor: "pointer", color: "#9ca3af" }} onMouseEnter={e => (e.currentTarget.style.background = "#f3f4f6")} onMouseLeave={e => (e.currentTarget.style.background = "none")}><Eye size={11}/></button>
+                    <a href={f.fileUrl} download={f.fileName} target="_blank" rel="noopener noreferrer" style={{ width: 24, height: 24, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 5, color: "#9ca3af", textDecoration: "none" }} onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = "#f3f4f6")} onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = "none")}><Download size={11}/></a>
+                    <button onClick={() => onDelete(f.id)} title="Delete" style={{ width: 24, height: 24, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 5, border: "none", background: "none", cursor: "pointer", color: "#9ca3af" }} onMouseEnter={e => { e.currentTarget.style.background = "#fef2f2"; e.currentTarget.style.color = "#dc2626"; }} onMouseLeave={e => { e.currentTarget.style.background = "none"; e.currentTarget.style.color = "#9ca3af"; }}><Trash2 size={11}/></button>
+                  </div>
                 </div>
               </div>
             );
@@ -385,6 +440,54 @@ function NotSubmittedRow({ user }: { user: EnrolledUser }) {
   );
 }
 
+// ─── Mobile Filter Sheet ──────────────────────────────────────────────────────
+function MobileFilterSheet({
+  tab, setTab, sort, setSort, onClose,
+  tabItems,
+}: {
+  tab: TabType; setTab: (t: TabType) => void;
+  sort: SortType; setSort: (s: SortType) => void;
+  onClose: () => void;
+  tabItems: { key: TabType; label: string; count: number }[];
+}) {
+  return (
+    <>
+      <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(0,0,0,0.4)", backdropFilter: "blur(2px)" }}/>
+      <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 61, background: "#fff", borderRadius: "16px 16px 0 0", padding: "0 0 env(safe-area-inset-bottom)", fontFamily: FONT, boxShadow: "0 -8px 40px rgba(0,0,0,0.15)", animation: "slideUp 0.22s ease" }}>
+        <div style={{ width: 36, height: 4, borderRadius: 99, background: "#e5e7eb", margin: "12px auto 0" }}/>
+        <div style={{ padding: "12px 20px 20px" }}>
+          <p style={{ fontSize: 12, fontWeight: 800, color: MAROON, textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 12 }}>Filter by type</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 20 }}>
+            {tabItems.map(t => (
+              <button key={t.key} onClick={() => { setTab(t.key); onClose(); }}
+                style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", borderRadius: 10, border: `1px solid ${tab === t.key ? MAROON : "#e5e7eb"}`, background: tab === t.key ? "#fef2f2" : "#fff", cursor: "pointer", transition: "all 0.12s" }}>
+                <span style={{ fontSize: 14, fontWeight: 700, color: tab === t.key ? MAROON : "#374151" }}>{t.label}</span>
+                <span style={{ fontSize: 11, fontWeight: 800, padding: "2px 8px", borderRadius: 20, background: tab === t.key ? MAROON : "#f3f4f6", color: tab === t.key ? "#fff" : "#6b7280" }}>{t.count}</span>
+              </button>
+            ))}
+          </div>
+
+          <p style={{ fontSize: 12, fontWeight: 800, color: MAROON, textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 12 }}>Sort by</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {[
+              { value: "newest",      label: "Newest first" },
+              { value: "oldest",      label: "Oldest first" },
+              { value: "name",        label: "Name A–Z"     },
+              { value: "submissions", label: "Most submitted" },
+            ].map(s => (
+              <button key={s.value} onClick={() => { setSort(s.value as SortType); onClose(); }}
+                style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", borderRadius: 10, border: `1px solid ${sort === s.value ? MAROON : "#e5e7eb"}`, background: sort === s.value ? "#fef2f2" : "#fff", cursor: "pointer", transition: "all 0.12s" }}>
+                <span style={{ fontSize: 14, fontWeight: 700, color: sort === s.value ? MAROON : "#374151" }}>{s.label}</span>
+                {sort === s.value && <Check size={14} style={{ color: MAROON }}/>}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
 // ─── Slide-over Drawer ────────────────────────────────────────────────────────
 function RepositoryDrawer({ row, courseId, onClose }: { row: Row; courseId: string; onClose: () => void }) {
   const router = useRouter();
@@ -397,6 +500,14 @@ function RepositoryDrawer({ row, courseId, onClose }: { row: Row; courseId: stri
   const [editingName, setEditingName] = useState(false);
   const [nameInput,   setNameInput]   = useState("");
   const [savingName,  setSavingName]  = useState(false);
+  const [isMobile,    setIsMobile]    = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   useEffect(() => {
     setLoading(true); setRepoData(null); setEnrolled([]); setFormSubs([]);
@@ -475,26 +586,36 @@ function RepositoryDrawer({ row, courseId, onClose }: { row: Row; courseId: stri
 
   const drawerTabs: { key: DrawerTab; label: string; count: number; alert?: boolean }[] = row.kind === "assignment"
     ? [
-        { key: "files",   label: "Submissions",   count: submitted            },
-        { key: "pending", label: "Not Submitted",  count: notSubmitted.length, alert: notSubmitted.length > 0 },
-        { key: "logs",    label: "Activity Log",   count: logs.length          },
+        { key: "files",   label: "Submissions",  count: submitted            },
+        { key: "pending", label: "Pending",       count: notSubmitted.length, alert: notSubmitted.length > 0 },
+        { key: "logs",    label: "Logs",          count: logs.length          },
       ]
     : [
         { key: "responses", label: "Responses", count: formSubs.length },
       ];
 
+  // On mobile, drawer is bottom sheet; on desktop, slide-in from right
+  const drawerWidth = isMobile ? "100vw" : "min(600px, 100vw)";
+  const drawerStyle: React.CSSProperties = isMobile
+    ? { position: "fixed", left: 0, right: 0, bottom: 0, top: "10vh", zIndex: 50, background: "#fff", boxShadow: "0 -8px 40px rgba(0,0,0,0.18)", display: "flex", flexDirection: "column", fontFamily: FONT, animation: "slideUp 0.25s cubic-bezier(0.4,0,0.2,1)", borderRadius: "16px 16px 0 0", overflow: "hidden" }
+    : { position: "fixed", top: 0, right: 0, bottom: 0, zIndex: 50, width: drawerWidth, background: "#fff", boxShadow: "-8px 0 40px rgba(0,0,0,0.14)", display: "flex", flexDirection: "column", fontFamily: FONT, animation: "slideInRight 0.22s cubic-bezier(0.4,0,0.2,1)" };
+
   return (
     <>
       <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 40, background: "rgba(0,0,0,0.28)", backdropFilter: "blur(2px)" }}/>
 
-      <div style={{ position: "fixed", top: 0, right: 0, bottom: 0, zIndex: 50, width: "min(600px, 100vw)", background: "#fff", boxShadow: "-8px 0 40px rgba(0,0,0,0.14)", display: "flex", flexDirection: "column", fontFamily: FONT, animation: "slideInRight 0.22s cubic-bezier(0.4,0,0.2,1)" }}>
+      <div style={drawerStyle}>
         <style>{`
           @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+          @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
           @keyframes spin { to { transform: rotate(360deg); } }
         `}</style>
 
+        {/* Mobile drag handle */}
+        {isMobile && <div style={{ width: 36, height: 4, borderRadius: 99, background: "rgba(255,255,255,0.4)", margin: "10px auto 0", flexShrink: 0 }}/>}
+
         {/* Header */}
-        <div style={{ background: MAROON, padding: "14px 20px", flexShrink: 0 }}>
+        <div style={{ background: MAROON, padding: isMobile ? "10px 16px 14px" : "14px 20px", flexShrink: 0 }}>
           <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
               <p style={{ fontSize: 10, fontWeight: 800, color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: "0.18em", margin: "0 0 4px" }}>
@@ -511,7 +632,7 @@ function RepositoryDrawer({ row, courseId, onClose }: { row: Row; courseId: stri
                 </div>
               ) : (
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <h2 style={{ fontSize: 15, fontWeight: 800, color: "#fff", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{repoData?.name ?? row.name}</h2>
+                  <h2 style={{ fontSize: isMobile ? 14 : 15, fontWeight: 800, color: "#fff", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{repoData?.name ?? row.name}</h2>
                   {row.kind === "assignment" && repoData && (
                     <button onClick={() => { setNameInput(repoData.name); setEditingName(true); }} style={{ color: "rgba(255,255,255,0.45)", background: "none", border: "none", cursor: "pointer", display: "flex" }}>
                       <Pencil size={12}/>
@@ -522,16 +643,10 @@ function RepositoryDrawer({ row, courseId, onClose }: { row: Row; courseId: stri
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
               <button onClick={goFullView} title="Open full detail page"
-                style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 700, padding: "5px 10px", borderRadius: 7, background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.2)", color: "rgba(255,255,255,0.8)", cursor: "pointer", transition: "all 0.12s" }}
-                onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.25)"; }}
-                onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.15)"; }}
-              >
-                <ArrowUpRight size={12}/> Full view
+                style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 700, padding: "5px 10px", borderRadius: 7, background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.2)", color: "rgba(255,255,255,0.8)", cursor: "pointer" }}>
+                <ArrowUpRight size={12}/>{!isMobile && " Full view"}
               </button>
-              <button onClick={onClose} style={{ width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 7, background: "rgba(255,255,255,0.12)", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.6)", transition: "all 0.12s" }}
-                onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.22)"; e.currentTarget.style.color = "#fff"; }}
-                onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.12)"; e.currentTarget.style.color = "rgba(255,255,255,0.6)"; }}
-              >
+              <button onClick={onClose} style={{ width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 7, background: "rgba(255,255,255,0.12)", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.6)" }}>
                 <X size={14}/>
               </button>
             </div>
@@ -540,41 +655,40 @@ function RepositoryDrawer({ row, courseId, onClose }: { row: Row; courseId: stri
 
         {/* Stats bar */}
         {!loading && (
-          <div style={{ display: "flex", alignItems: "center", gap: 0, borderBottom: "1px solid #f3f4f6", background: "#fdf8f8", flexShrink: 0, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 0, borderBottom: "1px solid #f3f4f6", background: "#fdf8f8", flexShrink: 0, overflowX: "auto" }}>
             {[
               { label: row.kind === "form" ? "Responses" : "Submitted", value: row.kind === "form" ? formSubs.length : submitted },
               ...(row.kind === "assignment" ? [
-                { label: "Files",         value: files.length         },
-                { label: "Graded",        value: graded               },
-                { label: "Not Submitted", value: notSubmitted.length  },
+                { label: "Files",    value: files.length        },
+                { label: "Graded",   value: graded              },
+                { label: "Pending",  value: notSubmitted.length },
               ] : []),
             ].map((s, i, arr) => (
-              <div key={s.label} style={{ flex: 1, minWidth: 70, padding: "10px 14px", borderRight: i < arr.length - 1 ? "1px solid #f3f4f6" : "none" }}>
-                <p style={{ fontSize: 18, fontWeight: 900, color: "#111827", margin: 0, lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>{s.value}</p>
-                <p style={{ fontSize: 10, color: "#9ca3af", fontWeight: 600, margin: "3px 0 0" }}>{s.label}</p>
+              <div key={s.label} style={{ flex: "0 0 auto", padding: isMobile ? "8px 12px" : "10px 14px", borderRight: i < arr.length - 1 ? "1px solid #f3f4f6" : "none" }}>
+                <p style={{ fontSize: isMobile ? 16 : 18, fontWeight: 900, color: "#111827", margin: 0, lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>{s.value}</p>
+                <p style={{ fontSize: 10, color: "#9ca3af", fontWeight: 600, margin: "3px 0 0", whiteSpace: "nowrap" }}>{s.label}</p>
               </div>
             ))}
             {row.kind === "assignment" && enrolled.length > 0 && (
-              <div style={{ flex: 2, minWidth: 120, padding: "10px 14px" }}>
+              <div style={{ flex: 1, minWidth: 100, padding: isMobile ? "8px 12px" : "10px 14px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
-                  <span style={{ fontSize: 10, color: "#9ca3af", fontWeight: 600 }}>Submission rate</span>
-                  <span style={{ fontSize: 10, fontWeight: 900, color: MAROON, fontVariantNumeric: "tabular-nums" }}>{pct}%</span>
+                  <span style={{ fontSize: 10, color: "#9ca3af", fontWeight: 600 }}>Rate</span>
+                  <span style={{ fontSize: 10, fontWeight: 900, color: MAROON }}>{pct}%</span>
                 </div>
                 <ProgressBar submitted={submitted} enrolled={enrolled.length}/>
               </div>
             )}
-            <div style={{ padding: "10px 14px", flexShrink: 0 }}><DuePill dueDate={row.dueDate}/></div>
+            <div style={{ padding: isMobile ? "8px 12px" : "10px 14px", flexShrink: 0 }}><DuePill dueDate={row.dueDate}/></div>
           </div>
         )}
 
         {/* Assignment info strip */}
         {!loading && assignment && (
-          <div style={{ padding: "10px 16px", background: "#fafafa", borderBottom: "1px solid #f3f4f6", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexShrink: 0 }}>
+          <div style={{ padding: "8px 16px", background: "#fafafa", borderBottom: "1px solid #f3f4f6", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexShrink: 0, flexWrap: "wrap" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", fontSize: 12, color: "#6b7280" }}>
               <span style={{ fontWeight: 700, color: "#1f2937" }}>{assignment.title}</span>
               <span style={{ color: "#e5e7eb" }}>·</span>
               <span style={{ fontWeight: 600, color: MAROON }}>{assignment.points} pts</span>
-              {assignment.dueDate && <><span style={{ color: "#e5e7eb" }}>·</span><span>Due {fmtDate(assignment.dueDate)}</span></>}
             </div>
             <BulkDownloadButton files={files} assignmentTitle={assignment.title}/>
           </div>
@@ -582,11 +696,10 @@ function RepositoryDrawer({ row, courseId, onClose }: { row: Row; courseId: stri
 
         {/* Tab bar */}
         {drawerTabs.length > 1 && (
-          <div style={{ display: "flex", background: "#fff", borderBottom: "1px solid #f3f4f6", flexShrink: 0, padding: "0 4px" }}>
+          <div style={{ display: "flex", background: "#fff", borderBottom: "1px solid #f3f4f6", flexShrink: 0, padding: "0 4px", overflowX: "auto" }}>
             {drawerTabs.map(t => (
               <button key={t.key} onClick={() => setActiveTab(t.key)}
-                style={{ display: "flex", alignItems: "center", gap: 6, padding: "10px 14px", fontSize: 12, fontWeight: 700, border: "none", background: "none", cursor: "pointer", borderBottom: `2px solid ${activeTab === t.key ? MAROON : "transparent"}`, color: activeTab === t.key ? MAROON : "#9ca3af", transition: "all 0.12s", whiteSpace: "nowrap" }}
-              >
+                style={{ display: "flex", alignItems: "center", gap: 6, padding: isMobile ? "8px 12px" : "10px 14px", fontSize: 12, fontWeight: 700, border: "none", background: "none", cursor: "pointer", borderBottom: `2px solid ${activeTab === t.key ? MAROON : "transparent"}`, color: activeTab === t.key ? MAROON : "#9ca3af", whiteSpace: "nowrap" }}>
                 {t.label}
                 <span style={{ fontSize: 10, fontWeight: 800, padding: "1px 6px", borderRadius: 20, background: activeTab === t.key ? "#fef2f2" : "#f3f4f6", color: activeTab === t.key ? MAROON : "#9ca3af" }}>{t.count}</span>
                 {t.alert && activeTab !== t.key && <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#ef4444", flexShrink: 0 }}/>}
@@ -617,10 +730,7 @@ function RepositoryDrawer({ row, courseId, onClose }: { row: Row; courseId: stri
               <>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 16px", background: "#fef9f9", borderBottom: "1px solid #fce8e8" }}>
                   <div style={{ flex: 1, fontSize: 10, fontWeight: 800, color: MAROON, textTransform: "uppercase", letterSpacing: "0.1em" }}>Student</div>
-                  <div style={{ width: 100, fontSize: 10, fontWeight: 800, color: MAROON, textTransform: "uppercase", letterSpacing: "0.1em" }}>Submitted</div>
-                  <div style={{ width: 60, fontSize: 10, fontWeight: 800, color: MAROON, textTransform: "uppercase", letterSpacing: "0.1em" }}>Status</div>
-                  <div style={{ width: 50, fontSize: 10, fontWeight: 800, color: MAROON, textTransform: "uppercase", letterSpacing: "0.1em", textAlign: "right" }}>Grade</div>
-                  <div style={{ width: 72 }}/>
+                  <div style={{ fontSize: 10, fontWeight: 800, color: MAROON, textTransform: "uppercase", letterSpacing: "0.1em" }}>Status / Grade</div>
                 </div>
                 {Object.entries(filesByUser).map(([userId, userFiles]) => (
                   <StudentSection key={userId} user={userFiles[0].user} files={userFiles}
@@ -699,7 +809,7 @@ function RepositoryDrawer({ row, courseId, onClose }: { row: Row; courseId: stri
                 </div>
                 <div style={{ textAlign: "center" }}>
                   <p style={{ fontSize: 14, fontWeight: 700, color: "#4b5563", margin: "0 0 4px" }}>No responses yet</p>
-                  <p style={{ fontSize: 12, color: "#9ca3af", margin: 0 }}>Responses will appear when students submit the form</p>
+                  <p style={{ fontSize: 12, color: "#9ca3af", margin: 0 }}>Responses will appear when students submit</p>
                 </div>
               </div>
             ) : (
@@ -723,19 +833,19 @@ function RepositoryDrawer({ row, courseId, onClose }: { row: Row; courseId: stri
 
       {/* File Preview Modal */}
       {previewFile && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 24, background: "rgba(0,0,0,0.75)", backdropFilter: "blur(6px)" }}
+        <div style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: isMobile ? 12 : 24, background: "rgba(0,0,0,0.75)", backdropFilter: "blur(6px)" }}
           onClick={() => setPreviewFile(null)}
         >
-          <div style={{ background: "#fff", borderRadius: 16, overflow: "hidden", display: "flex", boxShadow: "0 32px 80px rgba(0,0,0,0.3)", width: "100%", maxWidth: 800, maxHeight: "90vh" }}
+          <div style={{ background: "#fff", borderRadius: 16, overflow: "hidden", display: "flex", flexDirection: isMobile ? "column" : "row", boxShadow: "0 32px 80px rgba(0,0,0,0.3)", width: "100%", maxWidth: 800, maxHeight: "90vh" }}
             onClick={e => e.stopPropagation()}
           >
-            <div style={{ flex: 1, background: "#0f172a", display: "flex", alignItems: "center", justifyContent: "center", padding: 24, minHeight: 0, overflow: "auto" }}>
+            <div style={{ flex: 1, background: "#0f172a", display: "flex", alignItems: "center", justifyContent: "center", padding: 16, minHeight: isMobile ? 200 : 0, overflow: "auto" }}>
               {isImage(previewFile.fileUrl)
-                ? <img src={previewFile.fileUrl} alt={previewFile.fileName} style={{ maxWidth: "100%", maxHeight: "80vh", objectFit: "contain", borderRadius: 8 }}/>
+                ? <img src={previewFile.fileUrl} alt={previewFile.fileName} style={{ maxWidth: "100%", maxHeight: isMobile ? 260 : "80vh", objectFit: "contain", borderRadius: 8 }}/>
                 : isVideo(previewFile.fileUrl)
-                ? <video src={previewFile.fileUrl} controls style={{ maxWidth: "100%", maxHeight: "80vh", borderRadius: 8 }}/>
+                ? <video src={previewFile.fileUrl} controls style={{ maxWidth: "100%", maxHeight: isMobile ? 260 : "80vh", borderRadius: 8 }}/>
                 : isPdf(previewFile.fileUrl)
-                ? <iframe src={previewFile.fileUrl} title={previewFile.fileName} style={{ width: "100%", height: "80vh", borderRadius: 8, border: "none" }}/>
+                ? <iframe src={previewFile.fileUrl} title={previewFile.fileName} style={{ width: "100%", height: isMobile ? 260 : "80vh", borderRadius: 8, border: "none" }}/>
                 : (
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14, color: "#6b7280" }}>
                     <FTIcon url={previewFile.fileUrl} size={48}/>
@@ -744,44 +854,24 @@ function RepositoryDrawer({ row, courseId, onClose }: { row: Row; courseId: stri
                   </div>
                 )}
             </div>
-            <div style={{ width: 200, flexShrink: 0, background: "#fff", borderLeft: "1px solid #f3f4f6", display: "flex", flexDirection: "column", overflowY: "auto" }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 14px", background: MAROON, flexShrink: 0 }}>
+            <div style={{ width: isMobile ? "100%" : 200, flexShrink: 0, background: "#fff", borderLeft: isMobile ? "none" : "1px solid #f3f4f6", borderTop: isMobile ? "1px solid #f3f4f6" : "none", display: "flex", flexDirection: "column", overflowY: "auto", maxHeight: isMobile ? 220 : undefined }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", background: MAROON, flexShrink: 0 }}>
                 <span style={{ fontSize: 11, fontWeight: 700, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{previewFile.fileName}</span>
                 <button onClick={() => setPreviewFile(null)} style={{ color: "rgba(255,255,255,0.6)", background: "none", border: "none", cursor: "pointer", display: "flex", marginLeft: 6 }}><X size={13}/></button>
               </div>
-              <div style={{ padding: 14, display: "flex", flexDirection: "column", gap: 16, fontSize: 12 }}>
-                <div>
-                  <p style={{ fontSize: 10, fontWeight: 800, color: MAROON, textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 8px" }}>Student</p>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <UAv name={previewFile.user.name} image={previewFile.user.image} size={26}/>
-                    <div style={{ minWidth: 0 }}>
-                      <p style={{ fontSize: 12, fontWeight: 700, color: "#1f2937", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{previewFile.user.name ?? "—"}</p>
-                      <p style={{ fontSize: 10, color: "#9ca3af", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{previewFile.user.email}</p>
-                    </div>
+              <div style={{ padding: 14, display: "flex", flexDirection: isMobile ? "row" : "column", gap: isMobile ? 20 : 16, fontSize: 12, flexWrap: "wrap" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <UAv name={previewFile.user.name} image={previewFile.user.image} size={26}/>
+                  <div style={{ minWidth: 0 }}>
+                    <p style={{ fontSize: 12, fontWeight: 700, color: "#1f2937", margin: 0 }}>{previewFile.user.name ?? "—"}</p>
+                    <p style={{ fontSize: 10, color: "#9ca3af", margin: 0 }}>{fmtSize(previewFile.fileSize)}</p>
                   </div>
                 </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  {[
-                    { label: "Submitted", value: fmtShort(previewFile.uploadedAt) },
-                    { label: "Size",      value: fmtSize(previewFile.fileSize)    },
-                  ].map(i => (
-                    <div key={i.label} style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
-                      <span style={{ color: "#9ca3af" }}>{i.label}</span>
-                      <span style={{ fontWeight: 700, color: "#374151", textAlign: "right" }}>{i.value}</span>
-                    </div>
-                  ))}
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <span style={{ color: "#9ca3af" }}>Status</span>
-                    <SPill status={previewFile.submission?.status ?? "PENDING"}/>
-                  </div>
-                </div>
-                <div style={{ paddingTop: 10, borderTop: "1px solid #f3f4f6" }}>
+                <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                  <SPill status={previewFile.submission?.status ?? "PENDING"}/>
                   <a href={previewFile.fileUrl} download={previewFile.fileName} target="_blank" rel="noopener noreferrer"
-                    style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "#6b7280", textDecoration: "none" }}
-                    onMouseEnter={e => ((e.currentTarget as HTMLElement).style.color = "#374151")}
-                    onMouseLeave={e => ((e.currentTarget as HTMLElement).style.color = "#6b7280")}
-                  >
-                    <Download size={12}/> Download file
+                    style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "#6b7280", textDecoration: "none" }}>
+                    <Download size={12}/> Download
                   </a>
                 </div>
               </div>
@@ -795,14 +885,23 @@ function RepositoryDrawer({ row, courseId, onClose }: { row: Row; courseId: stri
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function AdminCourseRepositoriesPage({ courseId }: { courseId: string }) {
-  const [repos,     setRepos]     = useState<AssignmentRepo[]>([]);
-  const [forms,     setForms]     = useState<Form[]>([]);
-  const [loading,   setLoading]   = useState(true);
-  const [search,    setSearch]    = useState("");
-  const [tab,       setTab]       = useState<TabType>("all");
-  const [sort,      setSort]      = useState<SortType>("newest");
-  const [drawerRow, setDrawerRow] = useState<Row | null>(null);
-  const [, startTransition]       = useTransition();
+  const [repos,          setRepos]          = useState<AssignmentRepo[]>([]);
+  const [forms,          setForms]          = useState<Form[]>([]);
+  const [loading,        setLoading]        = useState(true);
+  const [search,         setSearch]         = useState("");
+  const [tab,            setTab]            = useState<TabType>("all");
+  const [sort,           setSort]           = useState<SortType>("newest");
+  const [drawerRow,      setDrawerRow]      = useState<Row | null>(null);
+  const [filterOpen,     setFilterOpen]     = useState(false);
+  const [isMobile,       setIsMobile]       = useState(false);
+  const [, startTransition]                 = useTransition();
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   const fetchData = useCallback(() => {
     Promise.all([
@@ -858,35 +957,35 @@ export default function AdminCourseRepositoriesPage({ courseId }: { courseId: st
     { key: "forms",       label: "Forms",       count: forms.length  },
   ];
 
+  const activeFilterCount = (tab !== "all" ? 1 : 0) + (sort !== "newest" ? 1 : 0);
+
   return (
     <>
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
-        @media (min-width: 1024px) { .lg-show { display: block !important; } }
+        @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
       `}</style>
 
       <div style={{ height: "100%", display: "flex", flexDirection: "column", background: "#f8f8f7", fontFamily: FONT }}>
 
         {/* Page header */}
-        <div style={{ background: "#fff", borderBottom: "1px solid #e5e7eb", padding: "16px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexShrink: 0 }}>
+        <div style={{ background: "#fff", borderBottom: "1px solid #e5e7eb", padding: isMobile ? "12px 16px" : "16px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexShrink: 0 }}>
           <div>
             <p style={{ fontSize: 11, fontWeight: 800, color: MAROON, textTransform: "uppercase", letterSpacing: "0.2em", margin: "0 0 2px" }}>Course</p>
-            <h1 style={{ fontSize: 20, fontWeight: 900, color: "#111827", margin: 0, lineHeight: 1 }}>Repositories</h1>
+            <h1 style={{ fontSize: isMobile ? 17 : 20, fontWeight: 900, color: "#111827", margin: 0, lineHeight: 1 }}>Repositories</h1>
           </div>
           <button onClick={() => { setLoading(true); fetchData(); }}
-            style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, color: "#6b7280", border: "1px solid #e5e7eb", padding: "6px 12px", borderRadius: 8, background: "#fff", cursor: "pointer", transition: "all 0.12s" }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = "#9ca3af"; e.currentTarget.style.color = "#374151"; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = "#e5e7eb"; e.currentTarget.style.color = "#6b7280"; }}
-          >
-            <RefreshCw size={13} style={{ animation: loading ? "spin 1s linear infinite" : "none" }}/> Refresh
+            style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, color: "#6b7280", border: "1px solid #e5e7eb", padding: "6px 12px", borderRadius: 8, background: "#fff", cursor: "pointer", whiteSpace: "nowrap" }}>
+            <RefreshCw size={13} style={{ animation: loading ? "spin 1s linear infinite" : "none" }}/>
+            {!isMobile && "Refresh"}
           </button>
         </div>
 
         {/* Scrollable body */}
-        <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px", display: "flex", flexDirection: "column", gap: 16 }}>
+        <div style={{ flex: 1, overflowY: "auto", padding: isMobile ? "12px 12px" : "20px 24px", display: "flex", flexDirection: "column", gap: isMobile ? 12 : 16 }}>
 
-          {/* Stat cards */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12 }}>
+          {/* Stat cards – 2-column on mobile, 4-column on desktop */}
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(4, 1fr)", gap: isMobile ? 8 : 12 }}>
             <StatCard label="Assignments"     value={repos.length}     icon={<Folder size={14}/>}      accent={MAROON}   sub={`${repos.filter(r => r.hasRepo).length} with repo`}/>
             <StatCard label="Forms"           value={forms.length}     icon={<FileText size={14}/>}    accent="#1d4ed8"  sub={`${formResponses} responses`}/>
             <StatCard label="Total Submitted" value={totalSubmissions} icon={<TrendingUp size={14}/>}  accent="#16a34a"/>
@@ -894,49 +993,59 @@ export default function AdminCourseRepositoriesPage({ courseId }: { courseId: st
           </div>
 
           {/* Main table card */}
-          <div style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 14, overflow: "hidden", display: "flex", flexDirection: "column", boxShadow: "0 1px 4px rgba(0,0,0,0.04)", flex: 1 }}>
+          <div style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 14, overflow: "hidden", display: "flex", flexDirection: "column", boxShadow: "0 1px 4px rgba(0,0,0,0.04)", flex: 1, minHeight: 300 }}>
 
             {/* Toolbar */}
-            <div style={{ padding: "12px 16px", borderBottom: "1px solid #f3f4f6", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", background: "#fff" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, border: "1px solid #e5e7eb", borderRadius: 8, padding: "6px 12px", width: 220, background: "#fafafa", transition: "all 0.12s" }}
-                onFocusCapture={e => { e.currentTarget.style.background = "#fff"; e.currentTarget.style.borderColor = MAROON; }}
-                onBlurCapture={e => { e.currentTarget.style.background = "#fafafa"; e.currentTarget.style.borderColor = "#e5e7eb"; }}
-              >
+            <div style={{ padding: isMobile ? "10px 12px" : "12px 16px", borderBottom: "1px solid #f3f4f6", display: "flex", alignItems: "center", gap: 8, background: "#fff", flexWrap: "wrap" }}>
+
+              {/* Search */}
+              <div style={{ display: "flex", alignItems: "center", gap: 8, border: "1px solid #e5e7eb", borderRadius: 8, padding: "6px 12px", flex: 1, minWidth: 120, maxWidth: isMobile ? "none" : 240, background: "#fafafa" }}>
                 <Search size={13} style={{ color: "#9ca3af", flexShrink: 0 }}/>
                 <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search…"
-                  style={{ flex: 1, fontSize: 12, color: "#374151", border: "none", outline: "none", background: "transparent" }}/>
+                  style={{ flex: 1, fontSize: 12, color: "#374151", border: "none", outline: "none", background: "transparent", minWidth: 0 }}/>
                 {search && <button onClick={() => setSearch("")} style={{ color: "#9ca3af", background: "none", border: "none", cursor: "pointer", display: "flex", padding: 0 }}><X size={12}/></button>}
               </div>
 
-              <div style={{ display: "flex", alignItems: "center", gap: 2, background: "#f3f4f6", borderRadius: 8, padding: 3 }}>
-                {tabItems.map(t => (
-                  <button key={t.key} onClick={() => setTab(t.key)}
-                    style={{ display: "flex", alignItems: "center", gap: 5, padding: "5px 10px", fontSize: 12, fontWeight: 700, borderRadius: 6, border: "none", cursor: "pointer", transition: "all 0.12s", background: tab === t.key ? "#fff" : "transparent", color: tab === t.key ? "#1f2937" : "#6b7280", boxShadow: tab === t.key ? "0 1px 3px rgba(0,0,0,0.08)" : "none" }}
-                  >
-                    {t.label}
-                    <span style={{ fontSize: 10, fontWeight: 800, padding: "1px 5px", borderRadius: 20, background: tab === t.key ? "#f3f4f6" : "#e5e7eb", color: tab === t.key ? "#4b5563" : "#6b7280" }}>{t.count}</span>
-                  </button>
-                ))}
-              </div>
+              {isMobile ? (
+                /* Mobile: filter button opens sheet */
+                <button onClick={() => setFilterOpen(true)}
+                  style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, padding: "6px 12px", border: `1px solid ${activeFilterCount > 0 ? MAROON : "#e5e7eb"}`, borderRadius: 8, background: activeFilterCount > 0 ? "#fef2f2" : "#fff", color: activeFilterCount > 0 ? MAROON : "#374151", cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}>
+                  <SlidersHorizontal size={13}/>
+                  Filter{activeFilterCount > 0 ? ` (${activeFilterCount})` : ""}
+                </button>
+              ) : (
+                /* Desktop: inline tab pills + sort */
+                <>
+                  <div style={{ display: "flex", alignItems: "center", gap: 2, background: "#f3f4f6", borderRadius: 8, padding: 3, flexShrink: 0 }}>
+                    {tabItems.map(t => (
+                      <button key={t.key} onClick={() => setTab(t.key)}
+                        style={{ display: "flex", alignItems: "center", gap: 5, padding: "5px 10px", fontSize: 12, fontWeight: 700, borderRadius: 6, border: "none", cursor: "pointer", transition: "all 0.12s", background: tab === t.key ? "#fff" : "transparent", color: tab === t.key ? "#1f2937" : "#6b7280", boxShadow: tab === t.key ? "0 1px 3px rgba(0,0,0,0.08)" : "none", whiteSpace: "nowrap" }}>
+                        {t.label}
+                        <span style={{ fontSize: 10, fontWeight: 800, padding: "1px 5px", borderRadius: 20, background: tab === t.key ? "#f3f4f6" : "#e5e7eb", color: tab === t.key ? "#4b5563" : "#6b7280" }}>{t.count}</span>
+                      </button>
+                    ))}
+                  </div>
 
-              <div style={{ display: "flex", alignItems: "center", gap: 6, marginLeft: "auto" }}>
-                <Filter size={12} style={{ color: "#9ca3af" }}/>
-                <select value={sort} onChange={e => setSort(e.target.value as SortType)}
-                  style={{ fontSize: 12, color: "#374151", border: "1px solid #e5e7eb", borderRadius: 7, padding: "5px 10px", background: "#fff", outline: "none", cursor: "pointer" }}>
-                  <option value="newest">Newest first</option>
-                  <option value="oldest">Oldest first</option>
-                  <option value="name">Name A–Z</option>
-                  <option value="submissions">Most submitted</option>
-                </select>
-              </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginLeft: "auto", flexShrink: 0 }}>
+                    <Filter size={12} style={{ color: "#9ca3af" }}/>
+                    <select value={sort} onChange={e => setSort(e.target.value as SortType)}
+                      style={{ fontSize: 12, color: "#374151", border: "1px solid #e5e7eb", borderRadius: 7, padding: "5px 10px", background: "#fff", outline: "none", cursor: "pointer" }}>
+                      <option value="newest">Newest first</option>
+                      <option value="oldest">Oldest first</option>
+                      <option value="name">Name A–Z</option>
+                      <option value="submissions">Most submitted</option>
+                    </select>
+                  </div>
+                </>
+              )}
 
-              <span style={{ fontSize: 11, color: "#9ca3af", fontWeight: 500, whiteSpace: "nowrap" }}>
+              <span style={{ fontSize: 11, color: "#9ca3af", fontWeight: 500, whiteSpace: "nowrap", marginLeft: isMobile ? "auto" : 0 }}>
                 {filtered.length} item{filtered.length !== 1 ? "s" : ""}
               </span>
             </div>
 
-            {/* Column headers */}
-            {!loading && filtered.length > 0 && (
+            {/* Desktop column headers */}
+            {!loading && filtered.length > 0 && !isMobile && (
               <div style={{ display: "flex", alignItems: "center", gap: 16, padding: "8px 20px", background: "#fef9f9", borderBottom: "1px solid #fce8e8" }}>
                 {[
                   { label: "Name",     style: { flex: 1 } as React.CSSProperties },
@@ -952,7 +1061,7 @@ export default function AdminCourseRepositoriesPage({ courseId }: { courseId: st
               </div>
             )}
 
-            {/* Rows */}
+            {/* Rows / Cards */}
             {loading ? (
               <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10, color: "#9ca3af", padding: 60 }}>
                 <RefreshCw size={18} style={{ animation: "spin 1s linear infinite" }}/>
@@ -968,26 +1077,50 @@ export default function AdminCourseRepositoriesPage({ courseId }: { courseId: st
                   <p style={{ fontSize: 12, color: "#9ca3af", margin: 0 }}>{search ? "Try a different keyword" : "Create assignments or forms to see them here."}</p>
                 </div>
               </div>
+            ) : isMobile ? (
+              /* Mobile cards */
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: 12, overflowY: "auto" }}>
+                {filtered.map(row => (
+                  <RepoCard
+                    key={`${row.kind}-${row.id}`}
+                    row={row}
+                    selected={drawerRow?.id === row.id && drawerRow?.kind === row.kind}
+                    onClick={() => setDrawerRow(prev =>
+                      prev?.id === row.id && prev?.kind === row.kind ? null : row
+                    )}
+                  />
+                ))}
+              </div>
             ) : (
+              /* Desktop list */
               <div style={{ display: "flex", flexDirection: "column", flex: 1, overflowY: "auto" }}>
-                <div style={{ display: "block" }}>
-                  {filtered.map(row => (
-                    <RepoRow
-                      key={`${row.kind}-${row.id}`}
-                      row={row}
-                      selected={drawerRow?.id === row.id && drawerRow?.kind === row.kind}
-                      onClick={() => setDrawerRow(prev =>
-                        prev?.id === row.id && prev?.kind === row.kind ? null : row
-                      )}
-                    />
-                  ))}
-                </div>
+                {filtered.map(row => (
+                  <RepoRow
+                    key={`${row.kind}-${row.id}`}
+                    row={row}
+                    selected={drawerRow?.id === row.id && drawerRow?.kind === row.kind}
+                    onClick={() => setDrawerRow(prev =>
+                      prev?.id === row.id && prev?.kind === row.kind ? null : row
+                    )}
+                  />
+                ))}
               </div>
             )}
           </div>
         </div>
       </div>
 
+      {/* Mobile filter sheet */}
+      {filterOpen && (
+        <MobileFilterSheet
+          tab={tab} setTab={setTab}
+          sort={sort} setSort={setSort}
+          onClose={() => setFilterOpen(false)}
+          tabItems={tabItems}
+        />
+      )}
+
+      {/* Drawer */}
       {drawerRow && (
         <RepositoryDrawer
           row={drawerRow}
