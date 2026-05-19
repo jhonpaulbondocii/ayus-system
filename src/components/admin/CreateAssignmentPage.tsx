@@ -696,13 +696,10 @@ function SubmissionEntryCard({
     onUpdate("type", nextType);
     if (nextType === "File Upload") {
       onUpdate("allowedFileTypes", []);
-      onUpdate("maxFiles", 1);
     } else if (nextType === "Media Recording") {
       onUpdate("allowedFileTypes", ["mp4", "webm", "mp3", "wav", "m4a"]);
-      onUpdate("maxFiles", 1);
     } else {
       onUpdate("allowedFileTypes", []);
-      onUpdate("maxFiles", null);
     }
   };
 
@@ -792,17 +789,6 @@ function SubmissionEntryCard({
               )}
             </div>
 
-            <div>
-              <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide block mb-1">Max Files</label>
-              <input
-                type="number"
-                min={1}
-                max={20}
-                value={entry.maxFiles ?? 1}
-                onChange={e => onUpdate("maxFiles", Math.max(1, parseInt(e.target.value, 10) || 1))}
-                className="w-20 h-8 border border-gray-300 rounded-sm px-2 text-xs outline-none focus:border-[#7b1113]"
-              />
-            </div>
           </>
         )}
 

@@ -265,7 +265,7 @@ function AssignmentRowMenu({ assignment, onAction, isManager, courseId }: {
   const handleOpen = () => {
     if (!btnRef.current) return;
     const rect = btnRef.current.getBoundingClientRect();
-    const itemCount = isManager ? 5 : 1; // speedgrader always shown
+    const itemCount = isManager ? 4 : 0;
     const h = itemCount * 38 + 8;
     const w = 190;
     const spaceBelow = window.innerHeight - rect.bottom;
@@ -279,7 +279,6 @@ function AssignmentRowMenu({ assignment, onAction, isManager, courseId }: {
     setOpen(v => !v);
   };
 
-  const speedgraderHref = `/courses/${courseId}/gradebook/speed_grader?assignment_id=${assignment.id}`;
 
   const managerItems: { label: string; action: DropdownAction; danger?: boolean; icon: React.ReactNode }[] = [
     { label: "Edit", action: "edit", icon: <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" strokeLinecap="round" /><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" strokeLinecap="round" /></svg> },
@@ -296,27 +295,6 @@ function AssignmentRowMenu({ assignment, onAction, isManager, courseId }: {
       </button>
       {open && typeof document !== "undefined" && createPortal(
         <div ref={menuRef} style={menuStyle} onClick={e => e.stopPropagation()}>
-          {/* SpeedGrader — always visible */}
-          {isDesktop ? (
-            <button
-              type="button"
-              onClick={() => { setOpen(false); window.open(speedgraderHref, "_blank", "noopener,noreferrer"); }}
-              className="w-full text-left px-4 py-2.5 text-xs flex items-center gap-2 text-gray-700 hover:bg-gray-50"
-            >
-              <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-              SpeedGrader
-              <svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} className="ml-auto opacity-40"><path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
-            </button>
-          ) : (
-            <a
-              href={speedgraderHref}
-              onClick={() => setOpen(false)}
-              className="w-full text-left px-4 py-2.5 text-xs flex items-center gap-2 text-gray-700 hover:bg-gray-50"
-            >
-              <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-              SpeedGrader
-            </a>
-          )}
           {isManager && managerItems.map((item, i) => (
             <button key={item.action} type="button"
               onClick={() => { setOpen(false); onAction(item.action, assignment); }}
@@ -877,18 +855,10 @@ function MineAssignmentRow({ a, courseId, currentUserName, currentUserRole, seen
           </div>
         </div>
 
-        {/* SpeedGrader button (mobile/tablet shows here inline) */}
-        <div className="mt-2 sm:hidden" onClick={e => e.stopPropagation()}>
-          <SpeedGraderButton courseId={courseId} assignmentId={a.id} />
-        </div>
       </div>
 
       {/* Right actions */}
       <div className="shrink-0 flex items-center gap-1" onClick={e => e.stopPropagation()}>
-        {/* SpeedGrader — desktop inline */}
-        <div className="hidden sm:block">
-          <SpeedGraderButton courseId={courseId} assignmentId={a.id} />
-        </div>
         <AssignmentRowMenu assignment={a} onAction={handleAction} isManager={true} courseId={courseId} />
       </div>
     </div>

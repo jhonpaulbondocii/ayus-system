@@ -23,6 +23,7 @@ import CourseGradesTab from "./course/CourseGradesTab";
 import CoursePeopleTab from "./course/CoursePeopleTab";
 import CourseQuizzesTab from "./course/CourseQuizzesTab";
 import CourseSettingsTab from "./course/CourseSettingsTab";
+import CourseRepositoriesTab from "./course/CourseRepositoriesTab";
 
 import {
   FONT,
@@ -499,8 +500,10 @@ function CourseViewInner({ courseId }: { courseId: string }) {
   const canManagePeople = membership?.permissions.managePeople ?? false;
   const canManageCourse = membership?.permissions.manageCourse ?? false;
 
-  const TABS: Tab[] = ALL_TABS.filter(
-    (t) => !HIDDEN_FOR_STAFF.includes(t)
+  const TABS: Tab[] = (
+    isHead
+      ? ["Home", "Announcements", "Assignments", "Repositories", "Grades", "People", "Form"]
+      : ["Home", "Announcements", "Assignments", "Grades", "People", "Form"]
   ) as Tab[];
 
   const handleAddPerson = async () => {
@@ -719,6 +722,16 @@ function CourseViewInner({ courseId }: { courseId: string }) {
         </div>
       )}
 
+ {activeTab === "Repositories" && dataLoaded && (
+        <div className="flex-1 overflow-hidden flex flex-col">
+          <CourseRepositoriesTab
+            courseId={courseId}
+            isHead={isHead}
+            onNavigateToAssignments={() => handleTabChange("Assignments")}
+            onNavigateToForms={() => handleTabChange("Form")}
+          />
+        </div>
+      )}
       {activeTab === "Settings" && isHead && course && (
         <div className="flex-1 overflow-y-auto">
           <CourseSettingsTab
@@ -792,10 +805,12 @@ function CourseViewInner({ courseId }: { courseId: string }) {
             </div>
             <div className="space-y-0.5 px-0">
               {TABS.map((tab) => {
+                if (tab === "Repositories") return null;
                 const isActive = activeTab === tab;
+                const isAssignments = tab === "Assignments";
                 return (
-                  <button
-                    key={tab}
+                  <div key={tab}>
+                    <button
                     onClick={() => handleTabChange(tab)}
                     className="w-full text-left text-sm py-2 transition-colors flex items-center gap-2"
                     style={{
@@ -805,19 +820,37 @@ function CourseViewInner({ courseId }: { courseId: string }) {
                       color: isActive ? COLORS.text : COLORS.primary,
                       fontWeight: isActive ? 600 : 500,
                       background: isActive ? COLORS.primarySoft : "transparent",
-                      borderLeft: isActive
-                        ? `3px solid ${COLORS.primary}`
-                        : "3px solid transparent",
+                      borderLeft: isActive ? `3px solid ${COLORS.primary}` : "3px solid transparent",
                     }}
-                    onMouseEnter={(e) => {
-                      if (!isActive) e.currentTarget.style.background = COLORS.primarySoft;
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isActive) e.currentTarget.style.background = "transparent";
-                    }}
+                    onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = COLORS.primarySoft; }}
+                    onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = "transparent"; }}
                   >
                     {tab}
                   </button>
+                  {isAssignments && isHead && (
+                    <button
+                      onClick={() => handleTabChange("Repositories")}
+                      className="w-full text-left text-sm py-2 transition-colors flex items-center gap-2"
+                      style={{
+                        paddingLeft: activeTab === "Repositories" ? 25 : 28,
+                        paddingRight: 12,
+                        fontFamily: FONT,
+                        color: activeTab === "Repositories" ? COLORS.text : COLORS.primary,
+                        fontWeight: activeTab === "Repositories" ? 600 : 500,
+                        background: activeTab === "Repositories" ? COLORS.primarySoft : "transparent",
+                        borderLeft: activeTab === "Repositories" ? `3px solid ${COLORS.primary}` : "3px solid transparent",
+                        fontSize: 13,
+                      }}
+                      onMouseEnter={e => { if (activeTab !== "Repositories") e.currentTarget.style.background = COLORS.primarySoft; }}
+                      onMouseLeave={e => { if (activeTab !== "Repositories") e.currentTarget.style.background = "transparent"; }}
+                    >
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" style={{ color: "#f59e0b", flexShrink: 0 }}>
+                        <path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/>
+                      </svg>
+                      Repositories
+                    </button>
+                  )}
+                  </div>
                 );
               })}
             </div>

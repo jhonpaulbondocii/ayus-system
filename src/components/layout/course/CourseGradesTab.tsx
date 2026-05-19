@@ -655,7 +655,7 @@ function FilterChip({ filter, onRemove, onChangeStatus, statusOptions }: {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   GRADE PANEL — full-screen on mobile
+   GRADE PANEL
 ───────────────────────────────────────────────────────────────────────────── */
 function GradePanel({
   panel, onClose, onSave, onOpenSpeedgrader,
@@ -738,7 +738,6 @@ function GradePanel({
   return (
     <>
       <div className="fixed inset-0 z-40 bg-black/20" onClick={onClose} />
-      {/* Full-screen on mobile, 400px panel on desktop */}
       <div className="fixed inset-0 sm:inset-auto sm:right-0 sm:top-0 sm:h-full z-50 bg-white shadow-2xl border-l border-gray-200 flex flex-col overflow-hidden"
         style={{ width: "100%", maxWidth: 400, fontFamily: FONT }}>
         <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-b border-gray-200 shrink-0" style={{ background: MAROON }}>
@@ -955,7 +954,7 @@ function GradePanel({
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   FORM RESPONSE PANEL — full-screen on mobile
+   FORM RESPONSE PANEL
 ───────────────────────────────────────────────────────────────────────────── */
 interface FetchedAnswer {
   questionId: string;
@@ -1296,21 +1295,37 @@ function CellEditor({
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   MOBILE GRADE CARD — used in mobile list view for ManageGrades
+   MOBILE STAFF GRADE CARD — used in ManageGrades mobile view
+   Shows per-assignment grades + per-group averages + overall average
 ───────────────────────────────────────────────────────────────────────────── */
 function MobileStaffGradeCard({
-  staff, columns, savingCells, onOpenPanel, onCellSave,
+  staff, columns, allColumns, savingCells, onOpenPanel,
 }: {
   staff: StaffRow;
   columns: GradeColumn[];
+  allColumns: GradeColumn[];
   savingCells: Set<string>;
   onOpenPanel: (staffId: string, col: GradeColumn) => void;
   onCellSave: (staffId: string, col: GradeColumn, grade: number | null) => Promise<void>;
 }) {
   const [expanded, setExpanded] = useState(false);
 
+  // Group averages
+  const groups = Array.from(new Set(columns.map(c => c.assignmentGroup).filter(Boolean)));
+  const groupAverages = groups.map(group => {
+    const groupCols = columns.filter(c => c.assignmentGroup === group && !c.doNotCount && c.displayGradeAs !== "Not Graded");
+    if (groupCols.length === 0) return null;
+    const earned = groupCols.reduce((sum, col) => {
+      if (col.type === "form") return sum + (staff.formGrades?.find(g => g.formId === col.id)?.score ?? 0);
+      return sum + (staff.assignmentGrades?.find(g => g.assignmentId === col.id)?.grade ?? 0);
+    }, 0);
+    const possible = groupCols.reduce((sum, c) => sum + c.points, 0);
+    const pct = possible > 0 ? Math.round((earned / possible) * 100) : null;
+    return { group, earned, possible, pct };
+  }).filter(Boolean) as { group: string; earned: number; possible: number; pct: number | null }[];
+
   return (
-    <div className="border border-gray-200 rounded-xl overflow-hidden mb-2 bg-white">
+    <div className="border border-gray-200 rounded-xl overflow-hidden mb-3 bg-white shadow-sm">
       {/* Header row */}
       <button
         onClick={() => setExpanded(e => !e)}
@@ -1328,7 +1343,8 @@ function MobileStaffGradeCard({
         </div>
         <div className="flex items-center gap-3 shrink-0">
           <div className="text-right">
-            <p className="text-sm font-black" style={{ color: MAROON }}>
+            <p className="text-sm font-black"
+              style={{ color: staff.percentage !== null ? getScoreColor(staff.totalEarned, staff.totalPossible) : "#9ca3af" }}>
               {staff.percentage !== null && staff.totalPossible > 0 ? `${staff.percentage}%` : "—"}
             </p>
             <p className="text-[10px] text-gray-400">{staff.totalEarned}/{staff.totalPossible} pts</p>
@@ -1337,63 +1353,101 @@ function MobileStaffGradeCard({
         </div>
       </button>
 
-      {/* Expanded assignments */}
       {expanded && (
-        <div className="border-t border-gray-100 divide-y divide-gray-100">
-          {columns.map(col => {
-            const isNG = col.displayGradeAs === "Not Graded";
-            const score = col.type === "form"
-              ? (staff.formGrades?.find(g => g.formId === col.id)?.score ?? null)
-              : (staff.assignmentGrades?.find(g => g.assignmentId === col.id)?.grade ?? null);
-            const gradeEntry = col.type === "assignment"
-              ? staff.assignmentGrades?.find(g => g.assignmentId === col.id) : null;
-            const formEntry = col.type === "form"
-              ? staff.formGrades?.find(g => g.formId === col.id) : null;
-            const status = gradeEntry?.status ?? null;
-            const hasSubmission = gradeEntry?.hasSubmission ?? formEntry?.hasSubmission ?? false;
-            const cellKey = `${staff.id}_${col.id}`;
-            const isSaving = savingCells.has(cellKey);
-
-            return (
-              <div key={col.id} className="flex items-center justify-between px-4 py-2.5 gap-3">
-                <div className="flex items-center gap-2 min-w-0 flex-1">
-                  {col.type === "form"
-                    ? <ClipboardList size={12} className="text-gray-400 shrink-0" />
-                    : <BookOpen size={12} className="text-gray-400 shrink-0" />}
-                  <div className="min-w-0">
-                    <p className="text-xs font-semibold text-gray-700 truncate">{col.title}</p>
-                    <p className="text-[10px] text-gray-400">{isNG ? "Not graded" : `Out of ${col.points}`}</p>
+        <div className="border-t border-gray-100">
+          {/* Group averages summary */}
+          {groupAverages.length > 1 && (
+            <div className="px-4 py-3 bg-gray-50 border-b border-gray-100">
+              <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Group Averages</p>
+              <div className="flex flex-wrap gap-2">
+                {groupAverages.map(ga => (
+                  <div key={ga.group} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-gray-200 bg-white">
+                    <span className="text-[10px] font-semibold text-gray-500 truncate max-w-[80px]">{ga.group}</span>
+                    <span className="text-[11px] font-black"
+                      style={{ color: ga.pct !== null ? getScoreColor(ga.earned, ga.possible) : "#9ca3af" }}>
+                      {ga.pct !== null ? `${ga.pct}%` : "—"}
+                    </span>
                   </div>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <div className="w-14 flex items-center justify-center h-8">
-                    {isSaving ? <RotateCcw size={10} className="animate-spin text-gray-400" /> :
-                    isNG ? <span className="text-xs text-gray-400">-</span> :
-                    status === "EXCUSED" ? <span className="text-xs font-bold text-amber-600">EX</span> :
-                    status === "MISSING" ? <AlertCircle size={14} className="text-red-400" /> :
-                    score !== null ? (
-                      <span className="text-xs font-bold px-1.5 py-0.5 rounded"
-                        style={{ background: getScoreBg(score, col.points), color: getScoreColor(score, col.points) }}>
-                        {score}/{col.points}
-                      </span>
-                    ) : hasSubmission ? (
-                      <span className="text-[10px] font-bold text-blue-600">Sub</span>
-                    ) : (
-                      <span className="text-xs text-gray-300">—</span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Per-assignment rows */}
+          <div className="divide-y divide-gray-100">
+            {columns.map(col => {
+              const isNG = col.displayGradeAs === "Not Graded";
+              const score = col.type === "form"
+                ? (staff.formGrades?.find(g => g.formId === col.id)?.score ?? null)
+                : (staff.assignmentGrades?.find(g => g.assignmentId === col.id)?.grade ?? null);
+              const gradeEntry = col.type === "assignment"
+                ? staff.assignmentGrades?.find(g => g.assignmentId === col.id) : null;
+              const formEntry = col.type === "form"
+                ? staff.formGrades?.find(g => g.formId === col.id) : null;
+              const status = gradeEntry?.status ?? null;
+              const hasSubmission = gradeEntry?.hasSubmission ?? formEntry?.hasSubmission ?? false;
+              const cellKey = `${staff.id}_${col.id}`;
+              const isSaving = savingCells.has(cellKey);
+
+              return (
+                <div key={col.id} className="flex items-center justify-between px-4 py-2.5 gap-3">
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    {col.type === "form"
+                      ? <ClipboardList size={12} className="text-gray-400 shrink-0" />
+                      : <BookOpen size={12} className="text-gray-400 shrink-0" />}
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold text-gray-700 truncate">{col.title}</p>
+                      <p className="text-[10px] text-gray-400">
+                        {isNG ? "Not graded" : `Out of ${col.points}`}
+                        {col.assignmentGroup ? ` · ${col.assignmentGroup}` : ""}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <div className="min-w-[56px] flex items-center justify-center h-8">
+                      {isSaving ? <RotateCcw size={10} className="animate-spin text-gray-400" /> :
+                      isNG ? <span className="text-xs text-gray-400">-</span> :
+                      status === "EXCUSED" ? <span className="text-xs font-bold text-amber-600">EX</span> :
+                      status === "MISSING" ? <AlertCircle size={14} className="text-red-400" /> :
+                      score !== null ? (
+                        <span className="text-xs font-black px-2 py-1 rounded-lg"
+                          style={{ background: getScoreBg(score, col.points), color: getScoreColor(score, col.points) }}>
+                          {score}/{col.points}
+                        </span>
+                      ) : hasSubmission ? (
+                        <span className="text-[10px] font-bold text-blue-600">Sub</span>
+                      ) : (
+                        <span className="text-xs text-gray-300">—</span>
+                      )}
+                    </div>
+                    {!isNG && (
+                      <button
+                        onClick={() => onOpenPanel(staff.id, col)}
+                        className="h-8 w-8 rounded-lg text-white flex items-center justify-center shrink-0"
+                        style={{ background: MAROON }}>
+                        <Eye size={12} />
+                      </button>
                     )}
                   </div>
-                  {!isNG && (
-                    <button
-                      onClick={() => onOpenPanel(staff.id, col)}
-                      className="h-8 px-2.5 rounded-lg text-[11px] font-black text-white flex items-center gap-1"
-                      style={{ background: MAROON }}>
-                      <Eye size={11} />
-                    </button>
-                  )}
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
+
+          {/* Overall total row */}
+          <div className="px-4 py-3 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
+            <span className="text-xs font-black text-gray-600">Overall Average</span>
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-gray-500">{staff.totalEarned} / {staff.totalPossible} pts</span>
+              <span className="text-sm font-black px-2.5 py-1 rounded-lg"
+                style={{
+                  background: staff.percentage !== null ? getScoreBg(staff.totalEarned, staff.totalPossible) : "#f9fafb",
+                  color: staff.percentage !== null ? getScoreColor(staff.totalEarned, staff.totalPossible) : "#9ca3af",
+                }}>
+                {staff.percentage !== null && staff.totalPossible > 0 ? `${staff.percentage}%` : "—"}
+              </span>
+            </div>
+          </div>
         </div>
       )}
     </div>
@@ -1401,7 +1455,7 @@ function MobileStaffGradeCard({
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   MY GRADES VIEW — responsive
+   MY GRADES VIEW — fully responsive
 ───────────────────────────────────────────────────────────────────────────── */
 function MyGradesView({ courseId }: { courseId: string }) {
   const [rows, setRows] = useState<OwnGradeRow[]>([]);
@@ -1428,6 +1482,16 @@ function MyGradesView({ courseId }: { courseId: string }) {
   const totalEarned = countable.reduce((sum, r) => sum + (r.submission?.grade ?? 0), 0);
   const totalPossible = countable.reduce((sum, r) => sum + r.points, 0);
   const totalPct = totalPossible > 0 ? Math.round((totalEarned / totalPossible) * 100) : null;
+
+  // Group breakdown
+  const groups = Array.from(new Set(rows.map(r => r.assignmentGroup).filter(Boolean)));
+  const groupBreakdown = groups.map(group => {
+    const groupRows = countable.filter(r => r.assignmentGroup === group);
+    const earned = groupRows.reduce((sum, r) => sum + (r.submission?.grade ?? 0), 0);
+    const possible = groupRows.reduce((sum, r) => sum + r.points, 0);
+    const pct = possible > 0 ? Math.round((earned / possible) * 100) : null;
+    return { group, earned, possible, pct, count: groupRows.length };
+  }).filter(g => g.count > 0);
 
   if (loading) return (
     <div className="flex items-center justify-center h-64 gap-3 text-gray-400" style={{ fontFamily: FONT }}>
@@ -1459,7 +1523,9 @@ function MyGradesView({ courseId }: { courseId: string }) {
         </div>
         <div className="flex items-center gap-2">
           {totalPct !== null && (
-            <span className="text-xs font-black text-white bg-white/20 px-2 py-0.5 rounded-full">{totalPct}%</span>
+            <span className="text-xs font-black text-white bg-white/20 px-2.5 py-1 rounded-full">
+              {totalPct}%
+            </span>
           )}
           <button onClick={load}
             className="w-7 h-7 flex items-center justify-center text-white/70 hover:text-white border border-white/20 rounded-lg hover:bg-white/10 transition-all"
@@ -1473,7 +1539,7 @@ function MyGradesView({ courseId }: { courseId: string }) {
       <div className="bg-white border-b border-gray-200 px-4 sm:px-5 py-3 shrink-0">
         <div className="relative">
           <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search Assignments…"
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search assignments…"
             className="w-full pl-8 pr-3 h-9 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none text-gray-700"
             style={{ fontFamily: FONT }}
             onFocus={e => (e.currentTarget.style.borderColor = "#6b7280")}
@@ -1481,72 +1547,143 @@ function MyGradesView({ courseId }: { courseId: string }) {
         </div>
       </div>
 
-      {/* CONTENT — card list on mobile, table on desktop */}
       <div className="flex-1 overflow-auto">
         {rows.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full gap-3 text-gray-400">
             <BookOpen size={32} className="opacity-30" />
             <p className="text-sm font-semibold">No assignments assigned to you yet.</p>
           </div>
-        ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full gap-3 text-gray-400">
-            <BookOpen size={32} className="opacity-30" />
-            <p className="text-sm font-semibold">No results for &quot;{search}&quot;</p>
-          </div>
         ) : (
           <>
-            {/* Mobile card list */}
-            <div className="sm:hidden px-4 py-3 space-y-2">
-              {filtered.map(row => {
-                const sub = row.submission;
-                const dga = row.displayGradeAs ?? "Points";
-                const isNG = dga === "Not Graded";
-                const grade = sub?.grade ?? null;
-                const scoreColor = getScoreColor(grade, row.points);
-                const scoreBg = getScoreBg(grade, row.points);
+            {/* ── MOBILE LAYOUT ── */}
+            <div className="sm:hidden">
+              {/* Overall summary card */}
+              <div className="mx-4 mt-4 mb-2 rounded-2xl overflow-hidden border border-gray-200 shadow-sm">
+                <div className="px-4 py-3 flex items-center justify-between" style={{ background: MAROON }}>
+                  <div className="flex items-center gap-2.5">
+                    {session?.user?.image
+                      ? <Image src={session.user.image} alt={session.user.name ?? ""} width={32} height={32} className="w-8 h-8 rounded-full object-cover ring-2 ring-white/30" />
+                      : <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[10px] font-black ring-2 ring-white/30"
+                          style={{ background: "#5a0d0f" }}>{getInitials(session?.user?.name ?? "Me")}</div>}
+                    <div>
+                      <p className="text-sm font-black text-white leading-tight">{session?.user?.name ?? "My Grades"}</p>
+                      <p className="text-[10px] text-white/60">{countable.length} graded item{countable.length !== 1 ? "s" : ""}</p>
+                    </div>
+                  </div>
+                  {totalPct !== null && (
+                    <div className="text-right">
+                      <p className="text-2xl font-black text-white leading-none">{totalPct}%</p>
+                      <p className="text-[10px] text-white/60 mt-0.5">{totalEarned.toFixed(1)} / {totalPossible} pts</p>
+                    </div>
+                  )}
+                </div>
 
-                return (
-                  <div key={row.id} className="bg-white border border-gray-200 rounded-xl p-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-start gap-2 min-w-0 flex-1">
-                        {row.type === "form"
-                          ? <ClipboardList size={13} className="text-gray-400 shrink-0 mt-0.5" />
-                          : <BookOpen size={13} className="text-gray-400 shrink-0 mt-0.5" />}
-                        <div className="min-w-0">
-                          <p className="text-sm font-bold text-gray-800 leading-tight">{row.title}</p>
-                          <p className="text-[11px] text-gray-400 mt-0.5">{row.assignmentGroup}</p>
+                {/* Group breakdown pills */}
+                {groupBreakdown.length > 0 && (
+                  <div className="px-4 py-3 bg-gray-50 border-t border-gray-100">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">By Group</p>
+                    <div className="flex flex-wrap gap-2">
+                      {groupBreakdown.map(gb => (
+                        <div key={gb.group} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-gray-200 bg-white">
+                          <span className="text-[10px] font-semibold text-gray-500 max-w-[90px] truncate">{gb.group}</span>
+                          <span className="text-[11px] font-black"
+                            style={{ color: gb.pct !== null ? getScoreColor(gb.earned, gb.possible) : "#9ca3af" }}>
+                            {gb.pct !== null ? `${gb.pct}%` : "—"}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Assignment cards */}
+              {filtered.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 gap-3 text-gray-400">
+                  <BookOpen size={28} className="opacity-30" />
+                  <p className="text-sm font-semibold">No results for &quot;{search}&quot;</p>
+                </div>
+              ) : (
+                <div className="px-4 pb-4 space-y-2 mt-2">
+                  {filtered.map(row => {
+                    const sub = row.submission;
+                    const dga = row.displayGradeAs ?? "Points";
+                    const isNG = dga === "Not Graded";
+                    const grade = sub?.grade ?? null;
+                    const scoreColor = getScoreColor(grade, row.points);
+                    const scoreBg = getScoreBg(grade, row.points);
+
+                    const statusBadge = (() => {
+                      if (!sub) return null;
+                      if (sub.status === "EXCUSED") return <span className="text-[10px] font-black text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">Excused</span>;
+                      if (sub.status === "MISSING") return <span className="text-[10px] font-black text-red-700 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full">Missing</span>;
+                      if (sub.status === "LATE") return <span className="text-[10px] font-black text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full">Late</span>;
+                      if (sub.hasSubmission && grade === null) return <span className="text-[10px] font-black text-purple-700 bg-purple-50 border border-purple-200 px-2 py-0.5 rounded-full">Submitted</span>;
+                      return null;
+                    })();
+
+                    return (
+                      <div key={row.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+                        <div className="px-4 py-3">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex items-start gap-2.5 min-w-0 flex-1">
+                              <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
+                                style={{ background: isNG ? "#f9fafb" : "#fef2f2" }}>
+                                {row.type === "form"
+                                  ? <ClipboardList size={13} style={{ color: isNG ? "#9ca3af" : MAROON }} />
+                                  : <BookOpen size={13} style={{ color: isNG ? "#9ca3af" : MAROON }} />}
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-sm font-bold text-gray-800 leading-tight">{row.title}</p>
+                                <p className="text-[11px] text-gray-400 mt-0.5">{row.assignmentGroup}</p>
+                              </div>
+                            </div>
+                            <div className="shrink-0 flex flex-col items-end gap-1">
+                              {isNG ? (
+                                <span className="text-xs text-gray-400 italic">Not graded</span>
+                              ) : grade !== null ? (
+                                <span className="text-base font-black px-2.5 py-1 rounded-xl"
+                                  style={{ background: scoreBg, color: scoreColor }}>
+                                  {grade}<span className="text-xs font-semibold opacity-60">/{row.points}</span>
+                                </span>
+                              ) : (
+                                <span className="text-sm text-gray-300 font-semibold">— / {row.points}</span>
+                              )}
+                              {statusBadge}
+                            </div>
+                          </div>
+
+                          {/* Sub-info row */}
+                          <div className="flex items-center gap-3 mt-2.5 pt-2.5 border-t border-gray-100 flex-wrap">
+                            {row.dueDate && (
+                              <div className="flex items-center gap-1 text-[10px] text-gray-400">
+                                <Calendar size={9} />
+                                <span>Due {new Date(row.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
+                              </div>
+                            )}
+                            {grade !== null && !isNG && (
+                              <div className="flex items-center gap-1 text-[10px] font-semibold"
+                                style={{ color: scoreColor }}>
+                                <TrendingUp size={9} />
+                                <span>{Math.round((grade / row.points) * 100)}%</span>
+                              </div>
+                            )}
+                            {sub?.submittedAt && (
+                              <div className="flex items-center gap-1 text-[10px] text-gray-400">
+                                <CheckCircle2 size={9} />
+                                <span>Submitted {new Date(sub.submittedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
-                      <div className="shrink-0 text-right">
-                        {isNG ? (
-                          <span className="text-xs text-gray-400">Not graded</span>
-                        ) : sub?.status === "EXCUSED" ? (
-                          <span className="text-xs font-bold text-amber-600">Excused</span>
-                        ) : sub?.status === "MISSING" ? (
-                          <span className="text-xs font-bold text-red-500">Missing</span>
-                        ) : grade !== null ? (
-                          <span className="text-sm font-black px-2 py-0.5 rounded-lg"
-                            style={{ background: scoreBg, color: scoreColor }}>
-                            {grade} / {row.points}
-                          </span>
-                        ) : sub?.hasSubmission ? (
-                          <span className="text-[11px] font-bold text-blue-600">Submitted</span>
-                        ) : (
-                          <span className="text-xs text-gray-300">— / {row.points}</span>
-                        )}
-                      </div>
-                    </div>
-                    {row.dueDate && (
-                      <p className="text-[10px] text-gray-400 mt-2 flex items-center gap-1">
-                        <Calendar size={9} /> Due {new Date(row.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                      </p>
-                    )}
-                  </div>
-                );
-              })}
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
-            {/* Desktop table */}
+            {/* ── DESKTOP TABLE LAYOUT ── */}
             <div className="hidden sm:block overflow-x-auto">
               <table className="border-collapse w-full min-w-max">
                 <thead>
@@ -1567,7 +1704,7 @@ function MyGradesView({ courseId }: { courseId: string }) {
                               {row.type === "form"
                                 ? <ClipboardList size={9} className="text-gray-400" />
                                 : <BookOpen size={9} className="text-gray-400" />}
-                              <span className="text-[10px] font-semibold text-gray-600 truncate max-w-22" title={row.title}>{row.title}</span>
+                              <span className="text-[10px] font-semibold text-gray-600 truncate max-w-[88px]" title={row.title}>{row.title}</span>
                             </div>
                             <span className="text-[10px] text-gray-500 font-normal">points</span>
                             <span className="text-[10px] font-bold text-gray-600">{isNG ? "UNGRADED" : `Out of ${row.points}`}</span>
@@ -1653,7 +1790,7 @@ function MyGradesView({ courseId }: { courseId: string }) {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   MANAGE GRADES VIEW — responsive
+   MANAGE GRADES VIEW — fully responsive
 ───────────────────────────────────────────────────────────────────────────── */
 function ManageGradesView({ courseId }: { courseId: string }) {
   const [data, setData] = useState<GradesData>(EMPTY_GRADES_DATA);
@@ -1846,6 +1983,25 @@ function ManageGradesView({ courseId }: { courseId: string }) {
   const totalPending = (data.staff ?? []).reduce((sum, s) =>
     sum + (s.assignmentGrades ?? []).filter(g => g.hasSubmission && g.status !== "GRADED").length, 0);
 
+  // Class-wide averages per assignment (for mobile summary header)
+  const classAverageByAssignment = filteredColumns.map(col => {
+    const staffWithGrade = filteredStaff.filter(s => {
+      if (col.type === "form") return (s.formGrades?.find(g => g.formId === col.id)?.score ?? null) !== null;
+      return (s.assignmentGrades?.find(g => g.assignmentId === col.id)?.grade ?? null) !== null;
+    });
+    if (staffWithGrade.length === 0) return { col, avg: null, count: 0 };
+    const total = staffWithGrade.reduce((sum, s) => {
+      if (col.type === "form") return sum + (s.formGrades?.find(g => g.formId === col.id)?.score ?? 0);
+      return sum + (s.assignmentGrades?.find(g => g.assignmentId === col.id)?.grade ?? 0);
+    }, 0);
+    return { col, avg: Math.round((total / staffWithGrade.length) * 10) / 10, count: staffWithGrade.length };
+  });
+
+  // Class overall average
+  const classOverallPct = filteredStaff.length > 0
+    ? Math.round(filteredStaff.reduce((sum, s) => sum + (s.percentage ?? 0), 0) / filteredStaff.length)
+    : null;
+
   const addFilter = (f: ActiveFilter) => setActiveFilters(p => [...p, f]);
   const removeFilter = (idx: number) => setActiveFilters(p => p.filter((_, i) => i !== idx));
   const clearAllFilters = () => setActiveFilters([]);
@@ -1893,9 +2049,13 @@ function ManageGradesView({ courseId }: { courseId: string }) {
               <Clock size={9} />{totalPending}
             </span>
           )}
+          {classOverallPct !== null && (
+            <span className="text-xs font-black text-white bg-white/20 px-2 py-0.5 rounded-full hidden sm:inline">
+              Class avg: {classOverallPct}%
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-2">
-          {/* Mobile search toggle */}
           <button
             onClick={() => setMobileSearchOpen(o => !o)}
             className="sm:hidden w-7 h-7 flex items-center justify-center text-white/70 hover:text-white border border-white/20 rounded-lg hover:bg-white/10 transition-all">
@@ -1986,7 +2146,7 @@ function ManageGradesView({ courseId }: { courseId: string }) {
         </div>
       </div>
 
-      {/* GRADEBOOK TABLE / CARD LIST */}
+      {/* GRADEBOOK CONTENT */}
       <div className="flex-1 overflow-auto">
         {filteredStaff.length === 0 || filteredColumns.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full gap-3 text-gray-400">
@@ -2004,23 +2164,76 @@ function ManageGradesView({ courseId }: { courseId: string }) {
           </div>
         ) : (
           <>
-            {/* Mobile: card list */}
-            <div className="sm:hidden px-4 py-3">
-              {filteredStaff.map(staff => (
-                <MobileStaffGradeCard
-                  key={staff.id}
-                  staff={staff}
-                  columns={filteredColumns}
-                  savingCells={savingCells}
-                  onOpenPanel={(staffId, col) => openPanelForStaff(staffId, col)}
-                  onCellSave={async (staffId, col, grade) => {
-                    if (col.type === "assignment") await saveGrade(staffId, col.id, grade);
-                  }}
-                />
-              ))}
+            {/* ── MOBILE: class summary + card list ── */}
+            <div className="sm:hidden">
+              {/* Class summary banner */}
+              <div className="mx-4 mt-4 mb-3 rounded-2xl overflow-hidden border border-gray-200 shadow-sm">
+                <div className="px-4 py-3 flex items-center justify-between" style={{ background: MAROON }}>
+                  <div>
+                    <p className="text-xs font-black text-white">Class Overview</p>
+                    <p className="text-[10px] text-white/60 mt-0.5">{filteredStaff.length} staff · {filteredColumns.length} assignment{filteredColumns.length !== 1 ? "s" : ""}</p>
+                  </div>
+                  {classOverallPct !== null && (
+                    <div className="text-right">
+                      <p className="text-2xl font-black text-white leading-none">{classOverallPct}%</p>
+                      <p className="text-[10px] text-white/60 mt-0.5">class avg</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Per-assignment class averages */}
+                {classAverageByAssignment.some(a => a.avg !== null) && (
+                  <div className="px-4 py-3 bg-gray-50 border-t border-gray-100">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Assignment Averages</p>
+                    <div className="space-y-1.5">
+                      {classAverageByAssignment.filter(a => a.avg !== null).map(({ col, avg, count }) => (
+                        <div key={col.id} className="flex items-center gap-2">
+                          <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                            {col.type === "form"
+                              ? <ClipboardList size={10} className="text-gray-400 shrink-0" />
+                              : <BookOpen size={10} className="text-gray-400 shrink-0" />}
+                            <span className="text-[11px] font-semibold text-gray-600 truncate">{col.title}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <span className="text-[10px] text-gray-400">{count} graded</span>
+                            <span className="text-xs font-black px-2 py-0.5 rounded-lg"
+                              style={{
+                                background: getScoreBg(avg, col.points),
+                                color: getScoreColor(avg, col.points),
+                              }}>
+                              {avg}/{col.points}
+                            </span>
+                            <span className="text-[10px] font-semibold"
+                              style={{ color: getScoreColor(avg, col.points) }}>
+                              {col.points > 0 ? `${Math.round((avg! / col.points) * 100)}%` : ""}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Staff cards */}
+              <div className="px-4 pb-4">
+                {filteredStaff.map(staff => (
+                  <MobileStaffGradeCard
+                    key={staff.id}
+                    staff={staff}
+                    columns={filteredColumns}
+                    allColumns={allColumns}
+                    savingCells={savingCells}
+                    onOpenPanel={openPanelForStaff}
+                    onCellSave={async (staffId, col, grade) => {
+                      if (col.type === "assignment") await saveGrade(staffId, col.id, grade);
+                    }}
+                  />
+                ))}
+              </div>
             </div>
 
-            {/* Desktop: spreadsheet table */}
+            {/* ── DESKTOP: spreadsheet table ── */}
             <div className="hidden sm:block overflow-x-auto">
               <table className="border-collapse" style={{ width: 240 + filteredColumns.length * 120 + (visibleGroups.length * 120) + 120 }}>
                 <thead>
@@ -2043,6 +2256,9 @@ function ManageGradesView({ courseId }: { courseId: string }) {
                             return g?.hasSubmission && g.status !== "GRADED";
                           }).length : 0;
 
+                      // Class average for this column
+                      const colAvgData = classAverageByAssignment.find(a => a.col.id === col.id);
+
                       return (
                         <th key={col.id}
                           className="border-b-2 border-r border-gray-200 px-2 py-0 align-bottom text-center"
@@ -2052,10 +2268,19 @@ function ManageGradesView({ courseId }: { courseId: string }) {
                               {col.type === "form"
                                 ? <ClipboardList size={9} className="text-gray-400" />
                                 : <BookOpen size={9} className="text-gray-400" />}
-                              <span className="text-[10px] font-semibold text-gray-600 truncate max-w-22" title={col.title}>{col.title}</span>
+                              <span className="text-[10px] font-semibold text-gray-600 truncate max-w-[88px]" title={col.title}>{col.title}</span>
                             </div>
                             <span className="text-[10px] text-gray-500 font-normal">{subLabel}</span>
                             <span className="text-[10px] font-bold text-gray-600">{outOfLabel}</span>
+                            {colAvgData?.avg !== null && colAvgData?.avg !== undefined && (
+                              <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full mt-0.5"
+                                style={{
+                                  background: getScoreBg(colAvgData.avg, col.points),
+                                  color: getScoreColor(colAvgData.avg, col.points),
+                                }}>
+                                avg {col.points > 0 ? `${Math.round((colAvgData.avg / col.points) * 100)}%` : colAvgData.avg}
+                              </span>
+                            )}
                             {needsGrading > 0 && (
                               <span className="text-[8px] font-black px-1 py-0.5 rounded-full text-white mt-0.5"
                                 style={{ background: "#b45309" }}>{needsGrading} pending</span>
@@ -2071,7 +2296,7 @@ function ManageGradesView({ courseId }: { courseId: string }) {
                         className="border-b-2 border-r border-l border-gray-200 px-2 py-0 text-center align-bottom"
                         style={{ width: 120, minWidth: 120, borderBottomColor: "#d1d5db", background: "#f9fafb" }}>
                         <div className="pb-2 pt-2">
-                          <p className="text-[10px] font-black text-gray-500 truncate max-w-25 mx-auto" title={group}>{group}</p>
+                          <p className="text-[10px] font-black text-gray-500 truncate max-w-[100px] mx-auto" title={group}>{group}</p>
                           <p className="text-[10px] text-gray-400 font-normal">UNGRADED AS 0</p>
                         </div>
                       </th>
@@ -2082,6 +2307,12 @@ function ManageGradesView({ courseId }: { courseId: string }) {
                       <div className="pb-2 pt-2">
                         <p className="text-xs font-bold text-gray-700">Total</p>
                         <p className="text-[10px] text-gray-500 font-normal">UNGRADED AS 0</p>
+                        {classOverallPct !== null && (
+                          <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full mt-0.5 inline-block"
+                            style={{ background: getScoreBg(classOverallPct, 100), color: getScoreColor(classOverallPct, 100) }}>
+                            avg {classOverallPct}%
+                          </span>
+                        )}
                       </div>
                     </th>
                   </tr>
@@ -2207,7 +2438,7 @@ function ManageGradesView({ courseId }: { courseId: string }) {
                       <td className="sticky right-0 z-10 bg-white group-hover:bg-blue-50/30 border-l border-gray-200 px-4 py-2.5 text-center transition-colors"
                         style={{ width: 120 }}>
                         {staff.percentage !== null && staff.totalPossible > 0
-                          ? <span className="text-sm font-semibold text-gray-700">{staff.percentage}%</span>
+                          ? <span className="text-sm font-semibold" style={{ color: getScoreColor(staff.totalEarned, staff.totalPossible) }}>{staff.percentage}%</span>
                           : <span className="text-sm text-gray-400">—</span>}
                       </td>
                     </tr>
@@ -2238,6 +2469,11 @@ function ManageGradesView({ courseId }: { courseId: string }) {
             <ClipboardList size={9} className="text-gray-400" />
             <span className="text-[10px] text-gray-400">Form</span>
           </div>
+          {classOverallPct !== null && (
+            <span className="text-[10px] font-semibold text-gray-500 sm:hidden">
+              Class avg: {classOverallPct}%
+            </span>
+          )}
         </div>
       </div>
 

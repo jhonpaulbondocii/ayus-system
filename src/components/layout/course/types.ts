@@ -207,6 +207,7 @@ export type Tab =
   | "Syllabus"
   | "Collaborations"
   | "Form"
+  | "Repositories"   // ← add this
   | "Settings";
 
 export type TabKey = "details" | "submission" | "settings" | "assign";

@@ -221,11 +221,7 @@ function PublisherBar({
       <div className="w-7 h-7 rounded-full overflow-hidden shrink-0 border border-gray-200 bg-gray-100 flex items-center justify-center">
         {image ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={image}
-            alt={name}
-            className="w-full h-full object-cover"
-          />
+          <img src={image} alt={name} className="w-full h-full object-cover" />
         ) : (
           <span className="text-[11px] font-bold text-gray-500">
             {name.charAt(0).toUpperCase()}
@@ -534,19 +530,23 @@ function FileEntryUpload({
           role="button"
           tabIndex={0}
           aria-label="Upload file"
-          className="relative border-2 border-dashed rounded-xl px-4 py-6 flex flex-col items-center justify-center gap-2 cursor-pointer transition-colors select-none"
+          className="relative border-2 border-dashed rounded-xl px-4 py-5 flex flex-col items-center justify-center gap-2 cursor-pointer transition-colors select-none"
           style={{
             borderColor: hasError ? "#ef4444" : "#d1d5db",
             background: hasError ? "#fef2f2" : "#fafafa",
-            minHeight: 100,
+            minHeight: 90,
           }}
           onClick={() => {
-            const input = document.getElementById(`file-input-${entryKey}`) as HTMLInputElement | null;
+            const input = document.getElementById(
+              `file-input-${entryKey}`
+            ) as HTMLInputElement | null;
             input?.click();
           }}
           onKeyDown={(e) => {
             if (e.key === "Enter" || e.key === " ") {
-              const input = document.getElementById(`file-input-${entryKey}`) as HTMLInputElement | null;
+              const input = document.getElementById(
+                `file-input-${entryKey}`
+              ) as HTMLInputElement | null;
               input?.click();
             }
           }}
@@ -566,11 +566,11 @@ function FileEntryUpload({
             onChange={(e) => onFiles(Array.from(e.target.files ?? []))}
           />
           <div
-            className="w-10 h-10 rounded-xl flex items-center justify-center"
+            className="w-9 h-9 rounded-xl flex items-center justify-center"
             style={{ background: hasError ? "#fee2e2" : "#fef2f2" }}
           >
             <Upload
-              size={18}
+              size={16}
               style={{ color: hasError ? "#ef4444" : MAROON }}
             />
           </div>
@@ -607,42 +607,45 @@ function FileEntryUpload({
           </div>
         )}
 
-        {/* Selected files */}
+        {/* Selected files — scrollable list capped at ~3 items */}
         {selectedFiles.length > 0 && (
           <div className="space-y-1.5">
             <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
-              Selected Files
+              Selected Files ({selectedFiles.length})
             </p>
-            {selectedFiles.map((f, i) => (
-              <div
-                key={`${entryKey}-${f.name}-${i}`}
-                className="flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg border border-gray-200 bg-white"
-              >
-                <div className="flex items-center gap-2 min-w-0">
-                  <FileText
-                    size={12}
-                    style={{ color: MAROON, flexShrink: 0 }}
-                  />
-                  <span className="text-xs text-gray-700 truncate font-medium">
-                    {f.name}
-                  </span>
-                  <span className="text-[10px] text-gray-400 shrink-0">
-                    {(f.size / 1024).toFixed(0)} KB
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onRemove(i);
-                  }}
-                  className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 touch-manipulation shrink-0"
-                  aria-label="Remove file"
+            {/* FIX: max-h + overflow-y-auto so list scrolls instead of pushing buttons off screen */}
+            <div className="space-y-1.5 max-h-40 overflow-y-auto overscroll-contain pr-0.5">
+              {selectedFiles.map((f, i) => (
+                <div
+                  key={`${entryKey}-${f.name}-${i}`}
+                  className="flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg border border-gray-200 bg-white"
                 >
-                  <X size={12} />
-                </button>
-              </div>
-            ))}
+                  <div className="flex items-center gap-2 min-w-0">
+                    <FileText
+                      size={12}
+                      style={{ color: MAROON, flexShrink: 0 }}
+                    />
+                    <span className="text-xs text-gray-700 truncate font-medium">
+                      {f.name}
+                    </span>
+                    <span className="text-[10px] text-gray-400 shrink-0">
+                      {(f.size / 1024).toFixed(0)} KB
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onRemove(i);
+                    }}
+                    className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 touch-manipulation shrink-0"
+                    aria-label="Remove file"
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
@@ -799,25 +802,29 @@ function SubmitterFileUploadSection({
   };
 
   return (
-    <div className="space-y-3">
-      {fileEntries.map((entry, index) => {
-        const entryKey = String(entry.id);
-        return (
-          <FileEntryUpload
-            key={entryKey}
-            entry={entry}
-            index={index}
-            totalEntries={fileEntries.length}
-            selectedFiles={selectedFilesByEntry[entryKey] ?? []}
-            fileErrors={fileErrorsByEntry[entryKey] ?? []}
-            onFiles={(files) => handleFilesForEntry(entry, files)}
-            onRemove={(idx) => removeFile(entryKey, idx)}
-            inputRef={(el) => {
-              inputRefs.current[entryKey] = el;
-            }}
-          />
-        );
-      })}
+    // FIX: flex column layout so action buttons are always visible at the bottom
+    <div className="flex flex-col gap-3">
+      {/* Scrollable file entries area */}
+      <div className="space-y-3">
+        {fileEntries.map((entry, index) => {
+          const entryKey = String(entry.id);
+          return (
+            <FileEntryUpload
+              key={entryKey}
+              entry={entry}
+              index={index}
+              totalEntries={fileEntries.length}
+              selectedFiles={selectedFilesByEntry[entryKey] ?? []}
+              fileErrors={fileErrorsByEntry[entryKey] ?? []}
+              onFiles={(files) => handleFilesForEntry(entry, files)}
+              onRemove={(idx) => removeFile(entryKey, idx)}
+              inputRef={(el) => {
+                inputRefs.current[entryKey] = el;
+              }}
+            />
+          );
+        })}
+      </div>
 
       {submitError && (
         <div
@@ -829,8 +836,24 @@ function SubmitterFileUploadSection({
         </div>
       )}
 
-      {/* Action buttons — stacked on mobile, row on sm+ */}
-      <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-2 pt-1">
+      {/*
+        FIX: Action buttons — sticky on mobile so they're always visible above
+        the bottom nav bar. Uses safe-area-inset for notch/home indicator support.
+        On sm+ screens: normal inline row layout.
+      */}
+      <div
+        className="
+          sticky bottom-0 left-0 right-0
+          bg-white border-t border-gray-100
+          px-3 py-3
+          flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-2
+          sm:static sm:border-none sm:bg-transparent sm:px-0 sm:py-0 sm:pt-1
+          z-10
+        "
+        style={{
+          paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom, 0px))",
+        }}
+      >
         <button
           type="button"
           onClick={onCancel}
@@ -953,6 +976,7 @@ export default function CourseAssignmentSubmitterDetail({
   assignment,
   courseId,
   currentUserId,
+  onBack,
 }: CourseAssignmentSubmitterDetailProps) {
   const now = new Date();
   const isNotYetAvailable = !!(
@@ -978,16 +1002,31 @@ export default function CourseAssignmentSubmitterDetail({
     assignment.submissionType === "Online";
 
   const [mode, setMode] = useState<"view" | "submit">("view");
-  const handleSubmitted = () => window.location.reload();
+  const handleSubmitted = () => {
+    setMode("view");
+    onBack();
+  };
 
   return (
-    <div className="flex flex-col bg-white" style={{ fontFamily: FONT }}>
-
+    /*
+      FIX: The root container uses `min-h-0` and `overflow-y-auto` so the entire
+      page is scrollable. On mobile, `pb-safe` (via inline style) adds space at
+      the bottom for the device's home indicator / navigation bar.
+      The sticky action bar inside SubmitterFileUploadSection handles the rest.
+    */
+    <div
+      className="flex flex-col bg-white overflow-y-auto"
+      style={{
+        fontFamily: FONT,
+        // Extra bottom padding so content isn't hidden behind native nav bar
+        paddingBottom: mode === "submit"
+          ? "0px" // sticky bar inside handles its own safe area
+          : "env(safe-area-inset-bottom, 16px)",
+      }}
+    >
       {/* ── Top availability banner ── */}
       {(isNotYetAvailable || isClosed) && (
-        <div
-          className="flex items-center justify-center sm:justify-end px-3 sm:px-4 py-2.5 border-b border-gray-200 shrink-0 gap-2 bg-white"
-        >
+        <div className="flex items-center justify-center sm:justify-end px-3 sm:px-4 py-2.5 border-b border-gray-200 shrink-0 gap-2 bg-white">
           {isNotYetAvailable && (
             <span
               className="flex items-center gap-1.5 h-8 px-3 text-xs font-bold rounded-lg"
@@ -1051,12 +1090,6 @@ export default function CourseAssignmentSubmitterDetail({
             )}
           </div>
         </div>
-
-        {/*
-          Layout:
-          - Mobile  : Details accordion → status banner → description → submission area
-          - Desktop : [content column] | [sidebar column]
-        */}
 
         {/* Mobile-only details accordion */}
         <div className="lg:hidden">

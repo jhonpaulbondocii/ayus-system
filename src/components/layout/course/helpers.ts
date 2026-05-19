@@ -17,13 +17,13 @@
     success: "#15803d",
   };
 
-  export const ALL_TABS = [
-    "Home","Announcements","Assignments","Discussions",
-    "Grades","People","Files","Syllabus","Collaborations","Form",
-  ] as const;
+export const ALL_TABS = [
+  "Home","Announcements","Assignments","Discussions",
+  "Grades","People","Files","Syllabus","Collaborations","Form","Repositories",
+] as const;
 
-  export const HIDDEN_FOR_HEAD: string[] = ["Discussions","Collaborations","Syllabus","Files"];
-  export const HIDDEN_FOR_STAFF: string[] = ["Discussions","Collaborations","Syllabus","Files"];
+export const HIDDEN_FOR_HEAD: string[] = ["Discussions","Collaborations","Syllabus","Files"];
+export const HIDDEN_FOR_STAFF: string[] = ["Discussions","Collaborations","Syllabus","Files"];
 
   export const GRADE_OPTIONS = [
     "Points","Percentage","Complete/Incomplete",

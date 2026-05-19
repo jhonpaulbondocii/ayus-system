@@ -410,6 +410,15 @@ export async function POST(
       },
     });
 
+    // Auto-create repository for this assignment
+    await prisma.repository.create({
+      data: {
+        name: assignment.title,
+        assignmentId: assignment.id,
+        courseId: courseId,
+      },
+    });
+
     const submissionEntries = parseSubmissionEntries(assignment.onlineEntryOptions);
 
     const creatorEnrollment = await prisma.courseEnrollment.findUnique({
