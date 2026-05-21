@@ -94,10 +94,12 @@ function fmtDateTime(iso: string | null) {
 
 function normalizeFileUrl(url: string | null): string | null {
   if (!url) return null;
-  if (url.startsWith("/") || url.startsWith("http")) return url;
+  if (url.startsWith("http://") || url.startsWith("https://")) return url;
+  if (url.startsWith("/uploads/submissions/")) return url;
+  if (url.startsWith("/uploads/")) return url;
+  if (url.startsWith("uploads/")) return `/${url}`;
   return `/uploads/submissions/${url}`;
 }
-
 function isPdf(url: string | null)   { return !!url && /\.pdf$/i.test(url.split("?")[0]); }
 function isImage(url: string | null) { return !!url && /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(url.split("?")[0]); }
 
@@ -145,17 +147,15 @@ function FileViewer({ fileUrl, zoom, pdfPage, setPdfTotal }: {
   );
 
   if (isPdf(url)) return (
-    <div className="bg-white shadow-2xl transition-transform" style={{ transform: `scale(${zoom})`, transformOrigin: "top center", width: "min(850px, 100%)", minHeight: 1100 }}>
-      <iframe ref={iframeRef} src={`${url}#page=${pdfPage}`} className="w-full"
-        style={{ height: Math.round(1100 * zoom) + "px", border: "none" }}
-        onLoad={() => {
-          try {
-            const doc = (iframeRef.current?.contentWindow as unknown as { PDFViewerApplication?: { pdfDocument?: { numPages?: number } } })?.PDFViewerApplication;
-            if (doc?.pdfDocument?.numPages) setPdfTotal(doc.pdfDocument.numPages);
-          } catch {}
-        }}/>
-    </div>
-  );
+  <div className="bg-white shadow-2xl transition-transform" style={{ transform: `scale(${zoom})`, transformOrigin: "top center", width: "min(850px, 100%)", minHeight: 1100 }}>
+    <embed
+      src={`${url}#page=${pdfPage}`}
+      type="application/pdf"
+      className="w-full"
+      style={{ height: Math.round(1100 * zoom) + "px", border: "none" }}
+    />
+  </div>
+);
 
   if (isImage(url)) return (
     // eslint-disable-next-line @next/next/no-img-element
