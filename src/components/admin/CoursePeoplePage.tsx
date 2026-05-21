@@ -27,7 +27,6 @@ const ROLE_BADGE: Record<CourseRole, { bg: string; color: string }> = {
   Head:  { bg: "#fef2f2", color: "#7b1113" },
 };
 
-const MAROON = "#7b1113";
 
 /* ─────────────────────────────────────────────────────────────────────────────
    TYPES
@@ -314,7 +313,6 @@ export default function CoursePeoplePage() {
   /* ── Add people ─────────────────────────────────────────────────────────── */
   const [addModal,     setAddModal]     = useState(false);
   const [addModalTab,  setAddModalTab]  = useState<"search"|"browse">("search");
-  const [addBy,        setAddBy]        = useState<"email"|"loginid"|"sisid">("email");
   const [chips,        setChips]        = useState<Chip[]>([]);
   const [searchQ,      setSearchQ]      = useState("");
   const [suggestions,  setSuggestions]  = useState<UserSuggestion[]>([]);
@@ -684,26 +682,39 @@ export default function CoursePeoplePage() {
                           </td>
                           <td>{p.position??<span style={{color:"#d1d5db"}}>—</span>}</td>
                           <td><RolePills raw={p.role}/></td>
-                          <td>
-                            <button
-                              ref={el=>{if(el)personBtnRefs.current.set(p.id,el);else personBtnRefs.current.delete(p.id);}}
-                              className="cpp-btn-icon"
-                              onClick={()=>setMenuOpenId(menuOpenId===p.id?null:p.id)}
-                            >
-                              <MoreVertical size={15}/>
-                            </button>
-                            {menuOpenId===p.id&&(
-                              <div className="cpp-menu-fixed" onClick={e=>e.stopPropagation()}
-                                ref={el=>{ if(!el) return; const btn=personBtnRefs.current.get(p.id); if(!btn) return; const r=btn.getBoundingClientRect(); el.style.top=`${r.bottom+4}px`; el.style.left=`${Math.max(4,r.right-el.offsetWidth)}px`; }}>
-                                <button className="cpp-menu-item" onClick={()=>{router.push(`/admin/courses/${courseId}/people/${p.id}`);setMenuOpenId(null);}}>View Profile</button>
-                                <div className="cpp-menu-divider"/>
-                                <button className="cpp-menu-item" onClick={()=>openEditRoles(p)}>Edit Roles</button>
-                                <button className="cpp-menu-item" onClick={()=>void openChangeOffice(p)}>Change Office</button>
-                                <div className="cpp-menu-divider"/>
-                                <button className="cpp-menu-item danger" onClick={()=>void removeUser(p.id)}>Remove From Office</button>
-                              </div>
-                            )}
-                          </td>
+                          <td style={{position:"static"}}>
+  <div style={{position:"relative",display:"inline-block"}}>
+    <button
+      ref={el=>{if(el)personBtnRefs.current.set(p.id,el);else personBtnRefs.current.delete(p.id);}}
+      className="cpp-btn-icon"
+      onClick={e=>{e.stopPropagation();setMenuOpenId(menuOpenId===p.id?null:p.id);}}
+    >
+      <MoreVertical size={15}/>
+    </button>
+    {menuOpenId===p.id&&(
+      <div
+        className="cpp-menu-fixed"
+        onClick={e=>e.stopPropagation()}
+        ref={el=>{
+          if(!el) return;
+          const btn=personBtnRefs.current.get(p.id);
+          if(!btn) return;
+          const r=btn.getBoundingClientRect();
+          el.style.top=`${r.bottom+4}px`;
+          el.style.left=`${Math.max(4,r.right-el.offsetWidth)}px`;
+          el.style.zIndex="999999";
+        }}
+      >
+        <button className="cpp-menu-item" onClick={()=>{router.push(`/admin/courses/${courseId}/people/${p.id}`);setMenuOpenId(null);}}>View Profile</button>
+        <div className="cpp-menu-divider"/>
+        <button className="cpp-menu-item" onClick={()=>openEditRoles(p)}>Edit Roles</button>
+        <button className="cpp-menu-item" onClick={()=>void openChangeOffice(p)}>Change Office</button>
+        <div className="cpp-menu-divider"/>
+        <button className="cpp-menu-item danger" onClick={()=>void removeUser(p.id)}>Remove From Office</button>
+      </div>
+    )}
+  </div>
+</td>
                         </tr>
                       ))}
                     </tbody>
@@ -1005,20 +1016,9 @@ export default function CoursePeoplePage() {
               {addModalTab==="search"&&(
                 <div className="cpp-modal-body">
                   <div style={{marginBottom:16}}>
-                    <p style={{fontSize:13,fontWeight:700,color:"#2d3b45",marginBottom:8}}>Add user(s) by</p>
-                    <div style={{display:"flex",gap:16,flexWrap:"wrap"}}>
-                      {(["email","loginid","sisid"] as const).map(opt=>(
-                        <label key={opt} style={{display:"flex",alignItems:"center",gap:6,cursor:"pointer",fontSize:13,color:"#2d3b45"}}>
-                          <input type="radio" name="addBy" value={opt} checked={addBy===opt} onChange={()=>setAddBy(opt)} style={accentM}/>
-                          {opt==="email"?"Email Address":opt==="loginid"?"Login ID":"SIS ID"}
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                  <div style={{marginBottom:16}}>
                     <label style={{display:"block",fontSize:13,fontWeight:700,color:"#2d3b45",marginBottom:6}}>
-                      {addBy==="email"?"Email Addresses":addBy==="loginid"?"Login IDs":"SIS IDs"} <span style={{color:"#c0392b"}}>*</span>
-                    </label>
+  Email Addresses <span style={{color:"#c0392b"}}>*</span>
+</label>
                     <div className="cpp-chip-box" onClick={()=>searchRef.current?.focus()}>
                       {chips.map(chip=>(
                         <span key={chip.id} style={{display:"inline-flex",alignItems:"center",gap:5,padding:"3px 6px 3px 8px",borderRadius:6,fontSize:12,background:chip.status==="valid"?"#f0fdf4":"#fef2f2",border:`1px solid ${chip.status==="valid"?"#86efac":"#f0c0c0"}`,color:chip.status==="valid"?"#15803d":"#7b1113"}}>
@@ -1063,7 +1063,7 @@ export default function CoursePeoplePage() {
                       {addRoles.length===0&&<p style={{fontSize:12,color:"#c0392b",marginTop:6,fontWeight:600}}>At least one role must be selected.</p>}
                     </div>
                     <div>
-                      <label style={{display:"block",fontSize:13,fontWeight:700,color:"#2d3b45",marginBottom:6}}>Section</label>
+                      <label style={{display:"block",fontSize:13,fontWeight:700,color:"#2d3b45",marginBottom:6}}>Office</label>
                       <div style={{position:"relative"}}>
                         <select className="cpp-select" style={{width:"100%"}}><option>{courseName}</option></select>
                         <DropArrow/>

@@ -11,6 +11,7 @@ import {
   FileText,
   AlertCircle,
   ExternalLink,
+  Download,
   RefreshCw,
   Clock,
   Lock,
@@ -190,9 +191,11 @@ function parseSubmittedEntries(
 }
 
 function resolveFileUrl(url: string): string {
-  return url.startsWith("/") || url.startsWith("http")
-    ? url
-    : `/uploads/submissions/${url}`;
+  console.log("[resolveFileUrl] input:", url);
+  if (!url) return "";
+  if (url.startsWith("http://") || url.startsWith("https://")) return url;
+  if (url.startsWith("/")) return url;
+  return `/uploads/submissions/${url}`;
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -339,10 +342,12 @@ function SubmittedView({
   assignment,
   onResubmit,
   canResubmit,
+  onPreview,
 }: {
   assignment: AssignmentWithRole;
   onResubmit: () => void;
   canResubmit: boolean;
+  onPreview: (url: string, name: string) => void;
 }) {
   const sub = assignment.submissions?.[0];
   if (!sub?.submittedAt) return null;
@@ -393,16 +398,15 @@ function SubmittedView({
                   </p>
                 </div>
                 {entry.fileUrl && (
-                  <a
-                    href={resolveFileUrl(entry.fileUrl)}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button
+                    type="button"
+                    onClick={() => onPreview(resolveFileUrl(entry.fileUrl ?? ""), entry.fileName || entry.fileUrl?.split("/").pop() || "File")}
                     className="flex items-center gap-1 h-8 px-3 text-[11px] font-bold border rounded-lg hover:bg-gray-50 shrink-0 touch-manipulation"
-                    style={{ color: MAROON, borderColor: "#f0c0c0" }}
+                    style={{ color: MAROON, borderColor: "#f0c0c0", background: "white", cursor: "pointer" }}
                   >
                     <ExternalLink size={11} />
                     <span>View</span>
-                  </a>
+                  </button>
                 )}
               </div>
             ))}
@@ -415,16 +419,15 @@ function SubmittedView({
             <span className="text-xs font-semibold text-gray-700 flex-1 truncate">
               {sub.fileUrl.split("/").pop()}
             </span>
-            <a
-              href={resolveFileUrl(sub.fileUrl)}
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              type="button"
+              onClick={() => onPreview(resolveFileUrl(sub.fileUrl!), sub.fileUrl!.split("/").pop() || "File")}
               className="flex items-center gap-1 h-8 px-3 text-[11px] font-bold border rounded-lg hover:bg-gray-50 shrink-0 touch-manipulation"
-              style={{ color: MAROON, borderColor: "#f0c0c0" }}
+              style={{ color: MAROON, borderColor: "#f0c0c0", background: "white", cursor: "pointer" }}
             >
               <ExternalLink size={11} />
               <span>View</span>
-            </a>
+            </button>
           </div>
         )
       )}
@@ -1002,6 +1005,8 @@ export default function CourseAssignmentSubmitterDetail({
     assignment.submissionType === "Online";
 
   const [mode, setMode] = useState<"view" | "submit">("view");
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewName, setPreviewName] = useState<string>("");
   const handleSubmitted = () => {
     setMode("view");
     onBack();
@@ -1198,6 +1203,7 @@ export default function CourseAssignmentSubmitterDetail({
                   assignment={assignment}
                   onResubmit={() => setMode("submit")}
                   canResubmit={canResubmit}
+                  onPreview={(url, name) => { setPreviewUrl(url); setPreviewName(name); }}
                 />
               </div>
             )}
@@ -1242,6 +1248,55 @@ export default function CourseAssignmentSubmitterDetail({
           </div>
         </div>
       </div>
+
+      {/* ── File Preview Modal ── */}
+      {previewUrl && (
+        <div
+          style={{ position: "fixed", inset: 0, zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,.6)", padding: "16px" }}
+          onClick={() => setPreviewUrl(null)}
+        >
+          <div
+            style={{ background: "#fff", borderRadius: 16, width: "100%", maxWidth: 900, height: "90dvh", display: "flex", flexDirection: "column", overflow: "hidden" }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", background: MAROON, flexShrink: 0 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+                <FileText size={13} style={{ color: "rgba(255,255,255,.7)", flexShrink: 0 }} />
+                <span style={{ fontSize: 13, fontWeight: 700, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{previewName}</span>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
+                <a href={previewUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,.7)", display: "flex", alignItems: "center", gap: 4 }}>
+                  <ExternalLink size={11} /> Open
+                </a>
+                <a href={previewUrl} download={previewName} style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,.7)", display: "flex", alignItems: "center", gap: 4 }}>
+                  <Download size={11} /> Download
+                </a>
+                <button onClick={() => setPreviewUrl(null)} style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,.6)" }}>
+                  <X size={15} />
+                </button>
+              </div>
+            </div>
+            <div style={{ flex: 1, overflow: "hidden", background: "#f3f4f6", minHeight: 0 }}>
+              {/\.(jpg|jpeg|png|gif|webp|svg)$/i.test(previewUrl.split("?")[0]) ? (
+                <div style={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={previewUrl} alt={previewName} style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain", borderRadius: 8 }} />
+                </div>
+              ) : /\.pdf$/i.test(previewUrl.split("?")[0]) ? (
+                <iframe src={previewUrl} title={previewName} style={{ width: "100%", height: "100%", border: "none" }} />
+              ) : (
+                <div style={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16, color: "#9ca3af" }}>
+                  <FileText size={48} />
+                  <p style={{ fontSize: 13 }}>Preview not available.</p>
+                  <a href={previewUrl} download={previewName} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 700, padding: "8px 16px", borderRadius: 10, color: "#fff", background: MAROON, textDecoration: "none" }}>
+                    <Download size={13} /> Download to view
+                  </a>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

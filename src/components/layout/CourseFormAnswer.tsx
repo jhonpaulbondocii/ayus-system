@@ -24,8 +24,8 @@ interface FormQuestion {
   type: QuestionType;
   question: string;
   description?: string;
-  points: number;
-  required: boolean;
+  points?: number;
+  required: boolean;  
   options?: string[];
   scaleMin?: number;
   scaleMax?: number;
@@ -42,7 +42,6 @@ interface Form {
   title: string;
   description?: string;
   formType: "Survey / Feedback" | "Evaluation" | "Registration Form" | "Graded Assessment";
-  points: number;
   questions: FormQuestion[];
   confirmationMessage?: string;
   allowMultipleResponses?: boolean;
@@ -55,6 +54,7 @@ interface Form {
   _publisherName?: string | null;
   _publisherImage?: string | null;
   _publisherId?: string | null;
+  _publisherRole?: string | null;
 }
 
 type AnswerValue = string | string[] | Record<string, string>;
@@ -128,10 +128,10 @@ const ANSWER_CSS = `
     -webkit-overflow-scrolling: touch;
   }
   .cfa-inner {
-    max-width: 720px;
+    max-width: 100%;
     width: 100%;
     margin: 0 auto;
-    padding: 28px 20px 100px;
+    padding: 20px 24px 100px;
   }
   .cfa-header-card {
     background: #fff;
@@ -141,6 +141,7 @@ const ANSWER_CSS = `
     border: 1px solid #e5e7eb;
     box-shadow: 0 1px 4px rgba(0,0,0,.06);
     overflow: hidden;
+    width: 100%;
   }
   .cfa-header-card-body {
     padding: 20px 24px;
@@ -347,7 +348,7 @@ const ANSWER_CSS = `
       padding: 8px 14px;
     }
     .cfa-inner {
-      padding: 16px 12px 100px;
+      padding: 12px 12px 100px;
     }
     .cfa-header-card-body {
       padding: 16px;
@@ -371,9 +372,9 @@ const ANSWER_CSS = `
 
 // ── Publisher Bar ─────────────────────────────────────────────────────────────
 function PublisherBar({
-  name, image, publisherId, currentUserId,
+  name, image, role, publisherId, currentUserId,
 }: {
-  name?: string | null; image?: string | null;
+  name?: string | null; image?: string | null; role?: string | null;
   publisherId?: string | null; currentUserId?: string | null;
 }) {
   if (!name) return null;
@@ -391,10 +392,12 @@ function PublisherBar({
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "#6b7280", flexWrap: "wrap" }}>
         <span style={{ fontWeight: 600, color: "#1f2937" }}>{name}</span>
-        <span style={{
-          padding: "1px 6px", borderRadius: 4, fontSize: 10, fontWeight: 700,
-          background: "#fef2f2", color: MAROON, border: "1px solid #f0c0c0",
-        }}>Head</span>
+        {role && (
+          <span style={{
+            padding: "1px 6px", borderRadius: 4, fontSize: 10, fontWeight: 700,
+            background: "#fef2f2", color: MAROON, border: "1px solid #f0c0c0",
+          }}>{role}</span>
+        )}
         <span style={{ color: "#9ca3af" }}>· Published this form</span>
       </div>
     </div>
@@ -741,13 +744,6 @@ function QuestionCard({
             </div>
           )}
         </div>
-        {question.points > 0 && (
-          <span style={{
-            fontSize: 11, fontWeight: 700, color: "#6b7280",
-            background: "#f9fafb", border: "1px solid #e5e7eb",
-            borderRadius: 99, padding: "2px 8px", flexShrink: 0, whiteSpace: "nowrap",
-          }}>{question.points} pt{question.points !== 1 ? "s" : ""}</span>
-        )}
       </div>
       {error && (
         <div style={{
@@ -934,7 +930,7 @@ export default function CourseFormAnswer({
             <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
             </svg>
-            <span>Back to Forms &amp; Quizzes</span>
+            <span>Back to Forms</span>
           </button>
           {!submitted && !isClosed && (
             <button
@@ -952,6 +948,7 @@ export default function CourseFormAnswer({
         <PublisherBar
           name={form._publisherName}
           image={form._publisherImage}
+          role={form._publisherRole}
           publisherId={form._publisherId}
           currentUserId={currentUserId}
         />
@@ -979,11 +976,6 @@ export default function CourseFormAnswer({
                       color: "#fff", background: TYPE_COLORS[form.formType] ?? MAROON,
                       whiteSpace: "nowrap",
                     }}>{form.formType}</span>
-                    {form.formType === "Graded Assessment" && (
-                      <span style={{ fontSize: 12, color: "#374151", display: "flex", alignItems: "center", gap: 3 }}>
-                        <strong>{form.points}</strong> points
-                      </span>
-                    )}
                     {answerableQuestions.length > 0 && (
                       <span style={{ fontSize: 12, color: "#6b7280" }}>
                         {answerableQuestions.length} question{answerableQuestions.length !== 1 ? "s" : ""}

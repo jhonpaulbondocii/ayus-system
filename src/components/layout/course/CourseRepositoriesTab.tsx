@@ -448,46 +448,113 @@ function StudentSection({ user, files, points, onPreview }: {
 
 // ─── Form Response Card ───────────────────────────────────────────────────────
 
-function FormResponseCard({ sub }: { sub: FormSubmission }) {
-  const [open, setOpen] = useState(false);
+function getInitial(name: string | null, email: string) {
+  if (name) return name.charAt(0).toUpperCase();
+  return email.charAt(0).toUpperCase();
+}
+
+function fmtDateShort(iso: string) {
+  return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+function FormSubmissionModal({ submission, formTitle, onClose }: {
+  submission: FormSubmission; formTitle: string; onClose: () => void;
+}) {
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    const h = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", h);
+    return () => { document.body.style.overflow = ""; window.removeEventListener("keydown", h); };
+  }, [onClose]);
+
   return (
-    <div style={{ borderBottom: "1px solid #f9fafb" }}>
-      <button
-        onClick={() => setOpen(v => !v)}
-        style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 16px", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}
-        onMouseEnter={e => (e.currentTarget.style.background = "#f9fafb")}
-        onMouseLeave={e => (e.currentTarget.style.background = "none")}
-      >
-        {open ? <ChevronDown size={12} style={{ color: "#9ca3af", flexShrink: 0 }} /> : <ChevronRight size={12} style={{ color: "#9ca3af", flexShrink: 0 }} />}
-        <UAv name={sub.user.name} image={null} size={28} />
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ fontSize: 13, fontWeight: 700, color: "#1f2937", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{sub.user.name ?? sub.user.email}</p>
-          <p style={{ fontSize: 11, color: "#9ca3af", margin: 0 }}>{sub.user.email}</p>
+    <>
+      <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(0,0,0,0.45)", backdropFilter: "blur(3px)" }} />
+      <div onClick={e => e.stopPropagation()} style={{ position: "fixed", zIndex: 61, background: "#fff", display: "flex", flexDirection: "column", fontFamily: FONT, overflow: "hidden", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: "min(560px, calc(100vw - 32px))", maxHeight: "85vh", borderRadius: 20, boxShadow: "0 32px 80px rgba(0,0,0,0.28)" }}>
+        <div style={{ background: MAROON, padding: "14px 18px", flexShrink: 0 }}>
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
+            <div style={{ minWidth: 0 }}>
+              <p style={{ fontSize: 10, fontWeight: 800, color: "rgba(255,255,255,0.55)", textTransform: "uppercase", letterSpacing: "0.18em", margin: "0 0 3px" }}>Response Detail</p>
+              <p style={{ fontSize: 14, fontWeight: 700, color: "#fff", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{formTitle}</p>
+            </div>
+            <button onClick={onClose} style={{ width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%", background: "rgba(255,255,255,0.15)", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.7)", flexShrink: 0 }}>
+              <X size={13} />
+            </button>
+          </div>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-          {sub.totalPoints > 0 && (
-            <span style={{ fontSize: 12, fontWeight: 700, color: sub.score != null ? MAROON : "#9ca3af" }}>
-              {sub.score != null ? `${sub.score}/${sub.totalPoints}` : `—/${sub.totalPoints}`}
-            </span>
-          )}
-          <span style={{ fontSize: 11, color: "#9ca3af" }}>{fmtDate(sub.createdAt)}</span>
-        </div>
-      </button>
-      {open && (
-        <div style={{ margin: "0 16px 12px 52px", display: "flex", flexDirection: "column", gap: 8 }}>
-          {sub.answers.length === 0
-            ? <p style={{ fontSize: 12, color: "#9ca3af", fontStyle: "italic" }}>No answers recorded</p>
-            : sub.answers.map((a, i) => (
-              <div key={i} style={{ border: "1px solid #f3f4f6", borderRadius: 8, padding: "10px 12px", background: "#fafafa" }}>
-                <p style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", margin: "0 0 4px" }}>{a.question}</p>
-                <p style={{ fontSize: 13, color: "#1f2937", margin: 0, wordBreak: "break-word" }}>
-                  {a.answer ?? <span style={{ color: "#9ca3af", fontStyle: "italic" }}>No answer</span>}
+        <div style={{ padding: "14px 18px", borderBottom: "1px solid #f3f4f6", background: "#f9fafb", flexShrink: 0 }}>
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+            <div style={{ width: 40, height: 40, borderRadius: "50%", background: MAROON, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, fontWeight: 800, flexShrink: 0 }}>
+              {getInitial(submission.user.name, submission.user.email)}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontSize: 14, fontWeight: 700, color: "#111827", margin: "0 0 2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{submission.user.name ?? "Anonymous"}</p>
+              <p style={{ fontSize: 12, color: "#9ca3af", margin: "0 0 3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{submission.user.email}</p>
+              {submission.user.courseRole && (
+                <p style={{ fontSize: 11, fontWeight: 700, color: MAROON, margin: 0 }}>
+                  {submission.user.courseRole}{submission.user.section ? ` · ${submission.user.section}` : ""}
                 </p>
-                {a.points > 0 && <p style={{ fontSize: 11, color: "#9ca3af", margin: "4px 0 0" }}>{a.points} pt{a.points !== 1 ? "s" : ""}</p>}
-              </div>
-            ))}
+              )}
+            </div>
+            <div style={{ textAlign: "right", flexShrink: 0 }}>
+              <p style={{ fontSize: 10, color: "#9ca3af", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 2px" }}>Submitted</p>
+              <p style={{ fontSize: 12, fontWeight: 600, color: "#374151", margin: "0 0 1px" }}>{fmtDateShort(submission.createdAt)}</p>
+              <p style={{ fontSize: 11, color: "#9ca3af", margin: 0 }}>{new Date(submission.createdAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}</p>
+            </div>
+          </div>
         </div>
-      )}
+        <div style={{ flex: 1, overflowY: "auto", padding: "14px 18px", display: "flex", flexDirection: "column", gap: 10 }}>
+          {!submission.answers || submission.answers.length === 0 ? (
+            <p style={{ fontSize: 13, color: "#9ca3af", textAlign: "center", padding: "32px 0", margin: 0 }}>No answers recorded.</p>
+          ) : submission.answers.map((ans, i) => (
+            <div key={ans.questionId ?? i} style={{ border: "1px solid #f3f4f6", borderRadius: 12, padding: "12px 14px", background: "#fff", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
+              <p style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", margin: "0 0 6px", lineHeight: 1.4 }}>
+                <span style={{ color: "#d1d5db", fontFamily: "monospace", marginRight: 6 }}>{i + 1}.</span>
+                {ans.question}
+              </p>
+              <p style={{ fontSize: 13, fontWeight: 500, color: "#111827", margin: 0, paddingLeft: 16, wordBreak: "break-word", lineHeight: 1.5 }}>
+                {Array.isArray(ans.answer) ? (ans.answer.length ? ans.answer.join(", ") : "—") : (ans.answer || "—")}
+              </p>
+            </div>
+          ))}
+          <div style={{ height: 4 }} />
+        </div>
+        <div style={{ padding: "12px 18px", borderTop: "1px solid #f3f4f6", background: "#fff", flexShrink: 0 }}>
+          <button onClick={onClose} style={{ height: 38, padding: "0 20px", border: "1px solid #e5e7eb", borderRadius: 10, fontSize: 13, fontWeight: 700, color: "#6b7280", background: "#fff", cursor: "pointer" }}
+            onMouseEnter={e => (e.currentTarget.style.background = "#f9fafb")}
+            onMouseLeave={e => (e.currentTarget.style.background = "#fff")}>
+            Close
+          </button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function FormResponseCard({ sub, onOpen }: { sub: FormSubmission; onOpen: () => void }) {
+  const answerCount = sub.answers?.length ?? 0;
+  return (
+    <div onClick={onOpen} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 16px", borderBottom: "1px solid #f9fafb", cursor: "pointer", transition: "background 0.1s" }}
+      onMouseEnter={e => (e.currentTarget.style.background = "#f9fafb")}
+      onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+    >
+      <div style={{ width: 34, height: 34, borderRadius: "50%", background: MAROON, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 800, flexShrink: 0 }}>
+        {getInitial(sub.user.name, sub.user.email)}
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{ fontSize: 13, fontWeight: 700, color: "#1f2937", margin: "0 0 2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{sub.user.name ?? "Anonymous"}</p>
+        <p style={{ fontSize: 11, color: "#9ca3af", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{sub.user.email}</p>
+        {sub.user.courseRole && (
+          <p style={{ fontSize: 10, fontWeight: 700, color: MAROON, margin: "2px 0 0" }}>
+            {sub.user.courseRole}{sub.user.section ? ` · ${sub.user.section}` : ""}
+          </p>
+        )}
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 3, flexShrink: 0 }}>
+        {answerCount > 0 && <span style={{ fontSize: 10, color: "#9ca3af" }}>{answerCount} ans</span>}
+        <span style={{ fontSize: 11, color: "#9ca3af" }}>{fmtDateShort(sub.createdAt)}</span>
+      </div>
+      <ChevronRight size={12} style={{ color: "#d1d5db", flexShrink: 0 }} />
     </div>
   );
 }
@@ -593,10 +660,10 @@ function RepositoryDrawer({ row, courseId, onClose, onNavigate }: {
   onNavigate: (kind: "assignment" | "form", id: string) => void;
 }) {
   const [formSubs,    setFormSubs]    = useState<FormSubmission[]>([]);
-  const [loadingForm, setLoadingForm] = useState(false);
-  const [previewFile, setPreviewFile] = useState<RepoFile | null>(null);
-  const [isMobile,    setIsMobile]    = useState(false);
-
+const [loadingForm, setLoadingForm] = useState(false);
+const [previewFile, setPreviewFile] = useState<RepoFile | null>(null);
+const [selectedSub, setSelectedSub] = useState<FormSubmission | null>(null);
+const [isMobile,    setIsMobile]    = useState(false);
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 640);
     check();
@@ -766,7 +833,7 @@ function RepositoryDrawer({ row, courseId, onClose, onNavigate }: {
                   </div>
                   <div style={{ fontSize: 10, fontWeight: 800, color: "#1d4ed8", textTransform: "uppercase", letterSpacing: "0.1em" }}>Submitted</div>
                 </div>
-                {formSubs.map(s => <FormResponseCard key={s.id} sub={s} />)}
+                {formSubs.map(s => <FormResponseCard key={s.id} sub={s} onOpen={() => setSelectedSub(s)} />)}
               </>
             )
           )}
@@ -824,6 +891,13 @@ function RepositoryDrawer({ row, courseId, onClose, onNavigate }: {
             </div>
           </div>
         </div>
+      )}
+    {selectedSub && (
+        <FormSubmissionModal
+          submission={selectedSub}
+          formTitle={row.name}
+          onClose={() => setSelectedSub(null)}
+        />
       )}
     </>
   );

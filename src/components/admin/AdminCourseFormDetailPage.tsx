@@ -27,10 +27,8 @@ interface FormQuestion {
 interface FormRecord {
   id: string | number;
   title: string;
-  description: string | null;
+  description?: string;
   formType: "Survey / Feedback" | "Evaluation" | "Registration Form" | "Graded Assessment";
-  assignmentGroup: string;
-  points: number;
   published: boolean;
   questions: FormQuestion[];
   confirmationMessage: string;
@@ -496,50 +494,60 @@ export default function AdminCourseFormDetailPage({
               )}
 
               {/* Details grid */}
-              <div className="bg-white border border-gray-100 rounded-lg mb-5 overflow-hidden">
-                <div className="px-1 py-1 border-b border-gray-100" style={{ background: "#fdf2f2" }}>
-                  <p className="text-[10px] font-black uppercase tracking-widest px-3 py-1" style={{ color: MAROON }}>Details</p>
+              {/* Details grid */}
+              <div className="bg-white border border-gray-100 rounded-xl mb-5 overflow-hidden shadow-sm">
+                <div className="px-4 py-2.5 border-b border-gray-100 flex items-center gap-2" style={{ background: "#fdf2f2" }}>
+                  <svg width="13" height="13" fill="none" stroke={MAROON} strokeWidth={2} viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                  <p className="text-[10px] font-black uppercase tracking-widest" style={{ color: MAROON }}>Details</p>
                 </div>
-                <div className="px-4 sm:px-5 py-4 grid grid-cols-2 sm:grid-cols-3 gap-4">
-                  {[
-                    ["Type", form.formType],
-                    ["Group", form.assignmentGroup],
-                    ["Points", form.formType === "Graded Assessment" ? `${form.points}` : "—"],
-                    ["Questions", `${qCount}`],
-                    ["Status", isPublished ? "Published" : "Unpublished"],
-                    ["Can Respond", availability.canRespond ? "Yes" : "No"],
-                  ].map(([k, v]) => (
-                    <div key={k}>
-                      <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">{k}</p>
-                      <p className="text-sm font-bold text-gray-800">{v}</p>
-                    </div>
-                  ))}
+                <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-y divide-gray-100">
+                  <div className="px-4 py-4 flex flex-col gap-1">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Type</p>
+                    <span className="text-[11px] px-2 py-0.5 rounded-full text-white font-bold w-fit" style={{ background: typeColors[form.formType] ?? MAROON }}>{form.formType}</span>
+                  </div>
+                  <div className="px-4 py-4 flex flex-col gap-1">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Questions</p>
+                    <p className="text-2xl font-black" style={{ color: MAROON }}>{qCount}</p>
+                  </div>
+                  <div className="px-4 py-4 flex flex-col gap-1">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Status</p>
+                    <span className="flex items-center gap-1.5 text-sm font-bold" style={{ color: isPublished ? "#15803d" : "#9ca3af" }}>
+                      <span className="w-2 h-2 rounded-full shrink-0" style={{ background: isPublished ? "#22c55e" : "#9ca3af" }}/>
+                      {isPublished ? "Published" : "Unpublished"}
+                    </span>
+                  </div>
+                  <div className="px-4 py-4 flex flex-col gap-1">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Can Respond</p>
+                    <span className="flex items-center gap-1.5 text-sm font-bold" style={{ color: availability.canRespond ? "#15803d" : "#ef4444" }}>
+                      <span className="w-2 h-2 rounded-full shrink-0" style={{ background: availability.canRespond ? "#22c55e" : "#ef4444" }}/>
+                      {availability.canRespond ? "Yes" : "No"}
+                    </span>
+                  </div>
                 </div>
               </div>
 
               {/* Schedule */}
-              <div className="bg-white border border-gray-100 rounded-lg mb-5 overflow-hidden">
-                <div className="px-1 py-1 border-b border-gray-100" style={{ background: "#fdf2f2" }}>
-                  <p className="text-[10px] font-black uppercase tracking-widest px-3 py-1" style={{ color: MAROON }}>Schedule</p>
+              <div className="bg-white border border-gray-100 rounded-xl mb-5 overflow-hidden shadow-sm">
+                <div className="px-4 py-2.5 border-b border-gray-100 flex items-center gap-2" style={{ background: "#fdf2f2" }}>
+                  <svg width="13" height="13" fill="none" stroke={MAROON} strokeWidth={2} viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  <p className="text-[10px] font-black uppercase tracking-widest" style={{ color: MAROON }}>Schedule</p>
                 </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm min-w-100">
-                    <thead>
-                      <tr className="border-b border-gray-100">
-                        {["Due", "For", "Available From", "Until"].map(h => (
-                          <th key={h} className="text-left px-3 sm:px-5 py-3 text-[10px] font-black uppercase tracking-widest text-gray-400">{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td className="px-3 sm:px-5 py-3 text-sm font-semibold text-gray-700">{fmtDate(form.dueDate)}</td>
-                        <td className="px-3 sm:px-5 py-3 text-sm font-semibold text-gray-700">{forLabel}</td>
-                        <td className="px-3 sm:px-5 py-3 text-sm text-gray-600">{fmtDate(form.availableFrom)}</td>
-                        <td className="px-3 sm:px-5 py-3 text-sm text-gray-600">{fmtDate(form.availableUntil)}</td>
-                      </tr>
-                    </tbody>
-                  </table>
+                <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-y divide-gray-100">
+                  {[
+                    { label: "Due", value: fmtDate(form.dueDate), icon: "⏰", accent: true },
+                    { label: "For", value: forLabel, icon: "👥", accent: false },
+                    { label: "Available From", value: fmtDate(form.availableFrom), icon: "🟢", accent: false },
+                    { label: "Until", value: fmtDate(form.availableUntil), icon: "🔴", accent: false },
+                  ].map(({ label, value, icon, accent }) => (
+                    <div key={label} className="px-4 py-4 flex flex-col gap-1.5">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 flex items-center gap-1">
+                        <span>{icon}</span>{label}
+                      </p>
+                      <p className="text-sm font-semibold" style={{ color: accent ? MAROON : "#374151" }}>
+                        {value}
+                      </p>
+                    </div>
+                  ))}
                 </div>
               </div>
             </>
@@ -618,7 +626,6 @@ export default function AdminCourseFormDetailPage({
           <div className="px-4 py-2 border-t border-gray-100">
             <p className="text-[10px] text-gray-400 leading-relaxed">
               {qCount} question{qCount !== 1 ? "s" : ""}
-              {form.formType === "Graded Assessment" && ` · ${form.points} pts`}
             </p>
           </div>
         </div>

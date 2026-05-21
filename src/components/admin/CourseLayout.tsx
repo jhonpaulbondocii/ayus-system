@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { ChevronDown, ChevronRight, Menu, X, ChevronLeft } from "lucide-react";
+import { ChevronRight, Menu, X, ChevronLeft } from "lucide-react";
 
 interface Props {
   courseId:    string;
@@ -41,10 +41,9 @@ export default function CourseLayout({
 
   const [sidebarOpen,   setSidebarOpen]   = useState(true);
   const [fetchedName,   setFetchedName]   = useState("");
-  const [repoOpen,      setRepoOpen]      = useState(false);
   const [repositories,  setRepositories]  = useState<Repository[]>([]);
-  const [repoLoading,   setRepoLoading]   = useState(false);
-  const [repoFetched,   setRepoFetched]   = useState(false);
+const [repoLoading,   setRepoLoading]   = useState(false);
+const [repoFetched,   setRepoFetched]   = useState(false);
   const [isMobile,      setIsMobile]      = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
@@ -95,31 +94,16 @@ export default function CourseLayout({
       .catch(() => {});
   }, [courseId, propName]);
 
-  /* ── Auto-open repos when on repo page ── */
+  /* ── Fetch repos when on repo page ── */
   useEffect(() => {
-    if (pathname?.includes("/repositories")) {
-      setRepoOpen(true);
-      if (!repoFetched) {
-        fetch(`/api/admin/courses/${courseId}/repositories`)
-          .then(r => r.json())
-          .then(d => { setRepositories(d.repositories ?? []); setRepoFetched(true); })
-          .catch(() => {});
-      }
+    if (pathname?.includes("/repositories") && !repoFetched) {
+      fetch(`/api/admin/courses/${courseId}/repositories`)
+        .then(r => r.json())
+        .then(d => { setRepositories(d.repositories ?? []); setRepoFetched(true); })
+        .catch(() => {});
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
-
-  const handleRepoToggle = () => {
-    const next = !repoOpen;
-    setRepoOpen(next);
-    if (next && !repoFetched) {
-      setRepoLoading(true);
-      fetch(`/api/admin/courses/${courseId}/repositories`)
-        .then(r => r.json())
-        .then(d => { setRepositories(d.repositories ?? []); setRepoLoading(false); setRepoFetched(true); })
-        .catch(() => setRepoLoading(false));
-    }
-  };
 
   const courseName    = propName || fetchedName || "";
   const activeRepoId  = pathname?.match(/\/repositories\/([^/]+)/)?.[1];
@@ -143,23 +127,13 @@ export default function CourseLayout({
     if (item.label === "Repositories") {
       return (
         <div key="Repositories">
-          <div
-            className={[
-              "flex items-center rounded transition-colors",
-              isRepoSection && !activeRepoId
-                ? "bg-[#fdf8f8] border-l-[3px] border-[#7b1113] rounded-none"
-                : isRepoSection
-                ? "border-l-[3px] border-[#f0e4e4] rounded-none"
-                : "",
-            ].join(" ")}
-          >
-            <button
+          <button
               type="button"
               onClick={() => navigate(item.href(courseId))}
               className={[
-                "flex-1 text-left text-sm px-3 py-2.5 flex items-center gap-1.5 transition-colors min-h-[40px]",
+                "w-full text-left text-sm px-3 py-2.5 flex items-center gap-1.5 transition-colors min-h-[40px]",
                 isRepoSection
-                  ? "text-gray-900 font-semibold"
+                  ? "text-gray-900 font-semibold bg-[#fdf8f8] border-l-[3px] border-[#7b1113] rounded-none"
                   : "text-[#7b1113] hover:bg-[#fdf8f8] rounded",
               ].join(" ")}
             >
@@ -168,57 +142,6 @@ export default function CourseLayout({
               </svg>
               Repositories
             </button>
-            <button
-              type="button"
-              onClick={handleRepoToggle}
-              className="pr-2.5 py-2.5 text-gray-400 hover:text-[#7b1113] transition-colors shrink-0 min-w-[32px] flex items-center justify-center"
-            >
-              {repoOpen ? <ChevronDown size={13}/> : <ChevronRight size={13}/>}
-            </button>
-          </div>
-
-          {repoOpen && (
-            <div className="ml-3 mt-0.5 border-l-2 border-[#f0e4e4] pl-2 pb-1 space-y-0.5">
-              {repoLoading ? (
-                <p className="px-2 py-2 text-[11px] text-gray-400 animate-pulse">Loading…</p>
-              ) : repositories.length === 0 ? (
-                <p className="px-2 py-2 text-[11px] text-gray-400 italic">No repositories yet</p>
-              ) : repositories.map(repo => {
-                const active = activeRepoId === repo.id;
-                return (
-                  <button
-                    key={repo.id}
-                    type="button"
-                    onClick={() => navigate(`/admin/courses/${courseId}/repositories/${repo.id}`)}
-                    className={[
-                      "w-full text-left px-2 py-2 rounded text-[11px] flex items-center gap-1.5 transition-colors group min-h-[36px]",
-                      active
-                        ? "bg-[#fef2f2] text-[#7b1113] font-bold"
-                        : "text-gray-600 hover:bg-[#fdf8f8] hover:text-[#7b1113]",
-                    ].join(" ")}
-                  >
-                    <svg
-                      className={["w-3 h-3 shrink-0 transition-colors", active ? "text-[#7b1113]" : "text-gray-300 group-hover:text-[#7b1113]"].join(" ")}
-                      viewBox="0 0 24 24" fill="currentColor"
-                    >
-                      <path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/>
-                    </svg>
-                    <span className="truncate flex-1">{repo.name}</span>
-                    {repo._count.files > 0 && (
-                      <span className={[
-                        "text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0",
-                        active
-                          ? "bg-[#fef2f2] text-[#7b1113]"
-                          : "bg-gray-100 text-gray-400 group-hover:bg-[#fef2f2] group-hover:text-[#7b1113]",
-                      ].join(" ")}>
-                        {repo._count.files}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          )}
         </div>
       );
     }

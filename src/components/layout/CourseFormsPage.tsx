@@ -1,11 +1,12 @@
 "use client";
 
 import CourseFormAnswer from "@/components/layout/CourseFormAnswer";
+import HeadFormDetail from "@/components/layout/course/HeadFormDetail";
+import HeadFormResponses from "@/components/layout/course/HeadFormResponses";  // ← new import
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import Image from "next/image";
 import {
-  Plus, MoreVertical,
-  CheckCircle, Circle, FileText,
+  Plus, FileText,
 } from "lucide-react";
 
 const MAROON = "#7b1113";
@@ -34,7 +35,6 @@ interface Form {
   availableFromTime: string;
   availableUntil: string;
   availableUntilTime: string;
-  points: number;
   published: boolean;
   questions: FormQuestion[];
   createdAt: string;
@@ -62,7 +62,7 @@ interface FormQuestion {
   type: QuestionType;
   question: string;
   description?: string;
-  points: number;
+  points?: number;
   required: boolean;
   image?: string;
   options?: string[];
@@ -278,35 +278,6 @@ function AuthorBadge({ name, role }: { name: string; role: string }) {
   );
 }
 
-// ── Publisher Bar ──────────────────────────────────────────────────────────────
-function PublisherBar({ name, image, role, publisherId, currentUserId }: {
-  name?: string | null; image?: string | null; role?: string | null;
-  publisherId?: string | null; currentUserId?: string | null;
-}) {
-  if (!name) return null;
-  if (publisherId && currentUserId && publisherId === currentUserId) return null;
-  return (
-    <div className="cft-publisher-bar">
-      <div className="w-7 h-7 rounded-full overflow-hidden shrink-0 border border-gray-200 bg-gray-100 flex items-center justify-center">
-        {image
-          ? <Image src={image} alt={name} width={28} height={28} className="w-full h-full object-cover" />
-          : <span className="text-xs font-bold text-gray-500">{name.charAt(0).toUpperCase()}</span>}
-      </div>
-      <div className="flex items-center gap-1.5 text-xs text-gray-600 min-w-0 flex-wrap">
-        <span className="font-semibold text-gray-800 truncate">{name}</span>
-        {role && (
-          <span
-            className="px-1.5 py-0.5 rounded text-[10px] font-bold shrink-0"
-            style={{ background: "#fef2f2", color: MAROON, border: "1px solid #f0c0c0" }}
-          >
-            {role}
-          </span>
-        )}
-        <span className="text-gray-400 shrink-0">· Published this form</span>
-      </div>
-    </div>
-  );
-}
 
 // ── Publisher Chip ─────────────────────────────────────────────────────────────
 function PublisherChip({ name, image }: { name?: string | null; image?: string | null }) {
@@ -704,11 +675,7 @@ function QuestionCard({ question, isActive, isGraded, onActivate, onChange, onDu
                 <span className="shrink-0 text-gray-400">{question.type === "multiple_choice" ? "◉" : question.type === "checkboxes" ? "☑" : `${idx + 1}.`}</span>
                 {isActive ? (
                   <>
-                    <input
-                      value={opt}
-                      onChange={e => updateOptions(idx, e.target.value)}
-                      className="flex-1 text-sm border-0 border-b border-gray-300 pb-0.5 outline-none bg-transparent min-w-0"
-                    />
+                    <input value={opt} onChange={e => updateOptions(idx, e.target.value)} className="flex-1 text-sm border-0 border-b border-gray-300 pb-0.5 outline-none bg-transparent min-w-0" />
                     <button type="button" onClick={() => removeOption(idx)} className="w-6 h-6 flex items-center justify-center text-gray-300 hover:text-gray-500 text-sm shrink-0">×</button>
                   </>
                 ) : (
@@ -724,16 +691,8 @@ function QuestionCard({ question, isActive, isGraded, onActivate, onChange, onDu
             )}
           </div>
         )}
-        {question.type === "short_answer" && (
-          <div className="border-b border-dashed border-gray-300 py-1">
-            <span className="text-sm text-gray-300">Short answer text</span>
-          </div>
-        )}
-        {question.type === "paragraph" && (
-          <div className="border-b border-dashed border-gray-300 py-2">
-            <span className="text-sm text-gray-300">Long answer text</span>
-          </div>
-        )}
+        {question.type === "short_answer" && <div className="border-b border-dashed border-gray-300 py-1"><span className="text-sm text-gray-300">Short answer text</span></div>}
+        {question.type === "paragraph"    && <div className="border-b border-dashed border-gray-300 py-2"><span className="text-sm text-gray-300">Long answer text</span></div>}
         {question.type === "linear_scale" && (
           <div className="flex items-center gap-2 flex-wrap">
             {Array.from({ length: (question.scaleMax ?? 5) - (question.scaleMin ?? 1) + 1 }, (_, i) => i + (question.scaleMin ?? 1)).map(n => (
@@ -752,25 +711,17 @@ function QuestionCard({ question, isActive, isGraded, onActivate, onChange, onDu
                   <th className="w-24 p-2" />
                   {(question.columns ?? []).map((col, ci) => (
                     <th key={ci} className="p-2 text-center min-w-14">
-                      {isActive
-                        ? <input value={col} onChange={e => updateCol(ci, e.target.value)} className="w-14 text-center border-0 border-b border-gray-300 outline-none bg-transparent text-xs" />
-                        : col}
+                      {isActive ? <input value={col} onChange={e => updateCol(ci, e.target.value)} className="w-14 text-center border-0 border-b border-gray-300 outline-none bg-transparent text-xs" /> : col}
                     </th>
                   ))}
-                  {isActive && (
-                    <th className="p-2">
-                      <button type="button" onClick={addCol} className="text-xs text-blue-500 hover:underline whitespace-nowrap">+ Col</button>
-                    </th>
-                  )}
+                  {isActive && <th className="p-2"><button type="button" onClick={addCol} className="text-xs text-blue-500 hover:underline whitespace-nowrap">+ Col</button></th>}
                 </tr>
               </thead>
               <tbody>
                 {(question.rows ?? []).map((row, ri) => (
                   <tr key={ri} className="border-t border-gray-100">
                     <td className="p-2">
-                      {isActive
-                        ? <input value={row} onChange={e => updateRow(ri, e.target.value)} className="w-20 border-0 border-b border-gray-300 outline-none bg-transparent text-xs" />
-                        : row}
+                      {isActive ? <input value={row} onChange={e => updateRow(ri, e.target.value)} className="w-20 border-0 border-b border-gray-300 outline-none bg-transparent text-xs" /> : row}
                     </td>
                     {(question.columns ?? []).map((_, ci) => (
                       <td key={ci} className="p-2 text-center">
@@ -779,32 +730,14 @@ function QuestionCard({ question, isActive, isGraded, onActivate, onChange, onDu
                     ))}
                   </tr>
                 ))}
-                {isActive && (
-                  <tr>
-                    <td className="p-2">
-                      <button type="button" onClick={addRow} className="text-xs text-blue-500 hover:underline">+ Add row</button>
-                    </td>
-                  </tr>
-                )}
+                {isActive && <tr><td className="p-2"><button type="button" onClick={addRow} className="text-xs text-blue-500 hover:underline">+ Add row</button></td></tr>}
               </tbody>
             </table>
           </div>
         )}
-        {question.type === "date" && (
-          <div className="flex items-center gap-2 text-sm text-gray-400 border-b border-dashed border-gray-300 py-1 w-48">
-            <span>📅</span> Month / Day / Year
-          </div>
-        )}
-        {question.type === "time" && (
-          <div className="flex items-center gap-2 text-sm text-gray-400 border-b border-dashed border-gray-300 py-1 w-36">
-            <span>🕐</span> Time
-          </div>
-        )}
-        {question.type === "file_upload" && (
-          <div className="border-2 border-dashed border-gray-300 rounded p-4 text-center">
-            <span className="text-xs text-gray-400">Add File</span>
-          </div>
-        )}
+        {question.type === "date" && <div className="flex items-center gap-2 text-sm text-gray-400 border-b border-dashed border-gray-300 py-1 w-48"><span>📅</span> Month / Day / Year</div>}
+        {question.type === "time" && <div className="flex items-center gap-2 text-sm text-gray-400 border-b border-dashed border-gray-300 py-1 w-36"><span>🕐</span> Time</div>}
+        {question.type === "file_upload" && <div className="border-2 border-dashed border-gray-300 rounded p-4 text-center"><span className="text-xs text-gray-400">Add File</span></div>}
       </div>
       {isActive && (
         <QuestionActionBar
@@ -858,13 +791,8 @@ function FloatingToolbar({ onAdd }: { onAdd: (type: QuestionType | "section") =>
             <div key={group.group}>
               <div className="px-4 pt-3 pb-1 text-[10px] font-bold text-gray-400 uppercase tracking-widest">{group.group}</div>
               {group.options.map(item => (
-                <button
-                  key={item.label}
-                  type="button"
-                  onClick={() => { item.action(); setOpen(false); }}
-                  className="w-full text-left px-4 py-2.5 hover:bg-gray-50 text-xs text-gray-700 touch-manipulation"
-                  style={{ minHeight: 40 }}
-                >
+                <button key={item.label} type="button" onClick={() => { item.action(); setOpen(false); }}
+                  className="w-full text-left px-4 py-2.5 hover:bg-gray-50 text-xs text-gray-700 touch-manipulation" style={{ minHeight: 40 }}>
                   {item.label}
                 </button>
               ))}
@@ -873,12 +801,7 @@ function FloatingToolbar({ onAdd }: { onAdd: (type: QuestionType | "section") =>
           <div className="h-2" />
         </div>
       )}
-      <button
-        type="button"
-        onClick={() => setOpen(v => !v)}
-        className="cft-add-btn"
-        style={{ background: MAROON }}
-      >
+      <button type="button" onClick={() => setOpen(v => !v)} className="cft-add-btn" style={{ background: MAROON }}>
         {open ? "Close" : "+ Add Question"}
       </button>
     </div>
@@ -891,12 +814,12 @@ function QuestionsTab({ questions, isGraded, onChange }: { questions: FormQuesti
   const idCounter = useRef(1000);
   const newQ = (type: QuestionType | "section"): FormQuestion => {
     const id = String(idCounter.current++);
-    if (type === "section") return { id, type: "section", question: "", points: 0, required: false, sectionTitle: "New Section", sectionDescription: "" };
+    if (type === "section") return { id, type: "section", question: "", required: false, sectionTitle: "New Section", sectionDescription: "" };
     const defaults: Partial<FormQuestion> = {};
     if (["multiple_choice","checkboxes","dropdown"].includes(type)) defaults.options = ["Option 1","Option 2","Option 3"];
     if (["mc_grid","checkbox_grid"].includes(type)) { defaults.rows = ["Row 1","Row 2"]; defaults.columns = ["Column 1","Column 2"]; }
     if (type === "linear_scale") { defaults.scaleMin = 1; defaults.scaleMax = 5; }
-    return { id, type: type as QuestionType, question: "", points: 1, required: false, ...defaults };
+    return { id, type: type as QuestionType, question: "", required: false, ...defaults };
   };
   const addQ = (type: QuestionType | "section") => { const q = newQ(type); onChange([...questions, q]); setActiveId(q.id); };
   const dup = (idx: number) => { const q = { ...questions[idx], id: String(idCounter.current++) }; const u = [...questions]; u.splice(idx + 1, 0, q); onChange(u); setActiveId(q.id); };
@@ -904,13 +827,11 @@ function QuestionsTab({ questions, isGraded, onChange }: { questions: FormQuesti
   const upd = (idx: number, q: FormQuestion) => { const u = [...questions]; u[idx] = q; onChange(u); };
   const up = (idx: number) => { if (idx === 0) return; const u = [...questions]; [u[idx - 1], u[idx]] = [u[idx], u[idx - 1]]; onChange(u); };
   const dn = (idx: number) => { if (idx === questions.length - 1) return; const u = [...questions]; [u[idx], u[idx + 1]] = [u[idx + 1], u[idx]]; onChange(u); };
-  const total = questions.reduce((s, q) => s + (q.points || 0), 0);
   return (
     <div className="relative">
       {questions.length > 0 && (
         <div className="flex items-center justify-between mb-3 text-xs text-gray-500">
           <span>{questions.filter(q => q.type !== "section").length} question(s)</span>
-          {isGraded && <span>{total} pt(s) total</span>}
         </div>
       )}
       <div className="space-y-3 pb-24">
@@ -923,16 +844,11 @@ function QuestionsTab({ questions, isGraded, onChange }: { questions: FormQuesti
         )}
         {questions.map((q, idx) => (
           <QuestionCard
-            key={q.id}
-            question={q}
-            isActive={activeId === q.id}
-            isGraded={isGraded}
+            key={q.id} question={q} isActive={activeId === q.id} isGraded={isGraded}
             onActivate={() => setActiveId(q.id)}
             onChange={updated => upd(idx, updated)}
-            onDuplicate={() => dup(idx)}
-            onDelete={() => delQ(idx)}
-            onMoveUp={() => up(idx)}
-            onMoveDown={() => dn(idx)}
+            onDuplicate={() => dup(idx)} onDelete={() => delQ(idx)}
+            onMoveUp={() => up(idx)} onMoveDown={() => dn(idx)}
           />
         ))}
       </div>
@@ -961,7 +877,6 @@ function AssignToDropdown({ selected, setSelected, sections, staff }: {
     });
   };
 
-  // Shared option button style builder — avoids duplicate style props
   const optionStyle = (isSelected: boolean): React.CSSProperties => ({
     color: isSelected ? MAROON : "#374151",
     fontWeight: isSelected ? 600 : 400,
@@ -977,13 +892,7 @@ function AssignToDropdown({ selected, setSelected, sections, staff }: {
         {selected.length > 0 ? selected.map(a => (
           <span key={a} className="px-2 py-0.5 rounded text-xs flex items-center gap-1 text-white" style={{ background: MAROON }}>
             {a}
-            <button
-              type="button"
-              onMouseDown={e => { e.stopPropagation(); toggle(a); }}
-              className="hover:opacity-70 ml-0.5"
-            >
-              ×
-            </button>
+            <button type="button" onMouseDown={e => { e.stopPropagation(); toggle(a); }} className="hover:opacity-70 ml-0.5">×</button>
           </span>
         )) : <span className="text-gray-400">Start typing to search...</span>}
         <span className="ml-auto text-gray-400 text-[10px] pl-2">{open ? "▲" : "▼"}</span>
@@ -991,39 +900,24 @@ function AssignToDropdown({ selected, setSelected, sections, staff }: {
       {open && (
         <div className="absolute z-50 w-full bg-white border border-gray-200 shadow-lg rounded-sm mt-0.5 max-h-52 overflow-y-auto">
           <div className="px-2 pt-2 pb-1 border-b border-gray-100 sticky top-0 bg-white">
-            <input
-              autoFocus
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="Search..."
-              className="w-full h-7 px-2 text-xs border border-gray-200 rounded outline-none"
-            />
+            <input autoFocus value={search} onChange={e => setSearch(e.target.value)} placeholder="Search..."
+              className="w-full h-7 px-2 text-xs border border-gray-200 rounded outline-none" />
           </div>
           {["Everyone"].filter(o => o.toLowerCase().includes(search.toLowerCase())).map(opt => (
-            <button
-              key={opt}
-              type="button"
-              onMouseDown={e => { e.preventDefault(); e.stopPropagation(); toggle(opt); }}
+            <button key={opt} type="button" onMouseDown={e => { e.preventDefault(); e.stopPropagation(); toggle(opt); }}
               className="w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-gray-50"
-              style={{ ...optionStyle(selected.includes(opt)), minHeight: 36 }}
-            >
-              {opt}
-              {selected.includes(opt) && <span style={{ color: MAROON }}>✓</span>}
+              style={{ ...optionStyle(selected.includes(opt)), minHeight: 36 }}>
+              {opt}{selected.includes(opt) && <span style={{ color: MAROON }}>✓</span>}
             </button>
           ))}
           {sections.filter(s => s.name.toLowerCase().includes(search.toLowerCase())).length > 0 && (
             <>
               <div className="px-3 pt-2 pb-1 text-[10px] font-bold text-gray-500 uppercase tracking-widest border-t border-gray-100 bg-gray-50">Sections</div>
               {sections.filter(s => s.name.toLowerCase().includes(search.toLowerCase())).map(s => (
-                <button
-                  key={s.id}
-                  type="button"
-                  onMouseDown={e => { e.preventDefault(); e.stopPropagation(); toggle(s.name); }}
+                <button key={s.id} type="button" onMouseDown={e => { e.preventDefault(); e.stopPropagation(); toggle(s.name); }}
                   className="w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-gray-50"
-                  style={{ ...optionStyle(selected.includes(s.name)), minHeight: 36 }}
-                >
-                  {s.name}
-                  {selected.includes(s.name) && <span style={{ color: MAROON }}>✓</span>}
+                  style={{ ...optionStyle(selected.includes(s.name)), minHeight: 36 }}>
+                  {s.name}{selected.includes(s.name) && <span style={{ color: MAROON }}>✓</span>}
                 </button>
               ))}
             </>
@@ -1032,15 +926,10 @@ function AssignToDropdown({ selected, setSelected, sections, staff }: {
             <>
               <div className="px-3 pt-2 pb-1 text-[10px] font-bold text-gray-500 uppercase tracking-widest border-t border-gray-100 bg-gray-50">Staff</div>
               {staff.filter(s => s.name.toLowerCase().includes(search.toLowerCase())).map(s => (
-                <button
-                  key={s.id}
-                  type="button"
-                  onMouseDown={e => { e.preventDefault(); e.stopPropagation(); toggle(s.name); }}
+                <button key={s.id} type="button" onMouseDown={e => { e.preventDefault(); e.stopPropagation(); toggle(s.name); }}
                   className="w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-gray-50"
-                  style={{ ...optionStyle(selected.includes(s.name)), minHeight: 36 }}
-                >
-                  {s.name}
-                  {selected.includes(s.name) && <span style={{ color: MAROON }}>✓</span>}
+                  style={{ ...optionStyle(selected.includes(s.name)), minHeight: 36 }}>
+                  {s.name}{selected.includes(s.name) && <span style={{ color: MAROON }}>✓</span>}
                 </button>
               ))}
             </>
@@ -1086,7 +975,6 @@ function FormCreateEditView({ form, courseId, sections, staff, onCancel, onSave 
   const [formType, setFormType] = useState<Form["formType"]>(form?.formType ?? "Survey / Feedback");
   const [assignmentGroup, setAssignmentGroup] = useState(form?.assignmentGroup ?? "Assignments");
   const [groups, setGroups] = useState<AssignmentGroup[]>([{ id: 1, name: "Assignments" }]);
-  const [points, setPoints] = useState(String(form?.points ?? 0));
   const [allowMultipleResponses, setAllowMultipleResponses] = useState(form?.allowMultipleResponses ?? false);
   const [confirmationMessage, setConfirmationMessage] = useState(form?.confirmationMessage ?? "");
   const [assignTo, setAssignTo] = useState<string[]>(form?.assignTo ?? ["Everyone"]);
@@ -1101,8 +989,6 @@ function FormCreateEditView({ form, courseId, sections, staff, onCancel, onSave 
   const [questions, setQuestions] = useState<FormQuestion[]>(form?.questions ?? []);
 
   const isGraded = formType === "Graded Assessment";
-  const computedPoints = questions.filter(q => q.type !== "section").reduce((sum, q) => sum + (q.points || 0), 0);
-  const displayPoints = isGraded ? (questions.length > 0 ? computedPoints : (parseFloat(points) || 0)) : 0;
 
   useEffect(() => {
     fetch(`/api/courses/${courseId}/assignments`).then(r => r.json()).then(d => {
@@ -1120,7 +1006,6 @@ function FormCreateEditView({ form, courseId, sections, staff, onCancel, onSave 
     try {
       await onSave({
         title: title.trim(), description, formType, assignmentGroup,
-        points: isGraded ? (questions.length > 0 ? computedPoints : (parseFloat(points) || 0)) : 0,
         shuffleAnswers: false, allowMultipleResponses, responseLimit: null,
         anonymousResponses: false, showResultsToRespondents: false,
         showOneAtATime: false, lockQuestionsAfterAnswering: false,
@@ -1147,25 +1032,17 @@ function FormCreateEditView({ form, courseId, sections, staff, onCancel, onSave 
       <div className="flex items-center justify-between px-4 sm:px-6 py-2.5 border-b border-gray-200 bg-white shrink-0 flex-wrap gap-2">
         <span className="text-sm font-bold text-gray-700">{form ? "Edit Form" : "New Form"}</span>
         <div className="flex items-center gap-3 text-xs text-gray-600 flex-wrap">
-          {isGraded && <span>Points <strong className="text-gray-800">{displayPoints}</strong></span>}
           <div className="flex items-center gap-1.5">
-            <span
-              className="w-3 h-3 rounded-full border"
-              style={published ? { background: "#22c55e", borderColor: "#22c55e" } : { borderColor: "#9ca3af" }}
-            />
+            <span className="w-3 h-3 rounded-full border"
+              style={published ? { background: "#22c55e", borderColor: "#22c55e" } : { borderColor: "#9ca3af" }}/>
             <span>{published ? "Published" : "Not Published"}</span>
           </div>
         </div>
       </div>
-
       {/* Tab bar */}
       <div className="cft-tab-bar">
         {(["details","questions","responses"] as const).map(key => (
-          <button
-            key={key}
-            onClick={() => setActiveTab(key)}
-            className={`cft-tab-btn${activeTab === key ? " active" : ""}`}
-          >
+          <button key={key} onClick={() => setActiveTab(key)} className={`cft-tab-btn${activeTab === key ? " active" : ""}`}>
             {key === "questions" ? (
               <span className="flex items-center gap-1">
                 Questions
@@ -1179,34 +1056,20 @@ function FormCreateEditView({ form, courseId, sections, staff, onCancel, onSave 
           </button>
         ))}
       </div>
-
       {/* Content */}
       <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4">
         {activeTab === "details" && (
           <div className="max-w-2xl space-y-4">
             <div>
-              <label className="text-xs text-gray-500 block mb-1">
-                Form Title <span className="text-red-500">*</span>
-              </label>
-              <input
-                value={title}
-                onChange={e => setTitle(e.target.value)}
-                placeholder="Untitled Form"
-                className="w-full h-9 border rounded-sm px-3 text-sm outline-none"
-                style={{ borderColor: MAROON }}
-              />
+              <label className="text-xs text-gray-500 block mb-1">Form Title <span className="text-red-500">*</span></label>
+              <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Untitled Form"
+                className="w-full h-9 border rounded-sm px-3 text-sm outline-none" style={{ borderColor: MAROON }}/>
             </div>
             <div>
               <label className="text-xs text-gray-500 block mb-1">Description / Instructions</label>
-              <textarea
-                value={description}
-                onChange={e => setDescription(e.target.value)}
-                placeholder="Form description..."
-                rows={4}
-                className="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:border-[#7b1113] resize-none"
-              />
+              <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Form description..." rows={4}
+                className="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:border-[#7b1113] resize-none"/>
             </div>
-            {/* Responsive form grid */}
             <div className="cft-form-grid">
               <label className="cft-form-label">Form Type</label>
               <select value={formType} onChange={e => setFormType(e.target.value as Form["formType"])} className={sel}>
@@ -1215,40 +1078,11 @@ function FormCreateEditView({ form, courseId, sections, staff, onCancel, onSave 
                 <option>Registration Form</option>
                 <option>Graded Assessment</option>
               </select>
-
-              <label className="cft-form-label">Assignment Group</label>
-              <select
-                value={assignmentGroup}
-                onChange={e => {
-                  if (e.target.value === "__create__") { setNewGroupName(""); setGroupModalOpen(true); }
-                  else setAssignmentGroup(e.target.value);
-                }}
-                className={sel}
-              >
-                {groups.map(g => <option key={g.id} value={g.name}>{g.name}</option>)}
-                <option value="__create__">[ Create Group ]</option>
-              </select>
-
-              {isGraded && (
-                <>
-                  <label className="cft-form-label">Points</label>
-                  <input
-                    type="number"
-                    min={0}
-                    value={questions.length > 0 ? computedPoints : points}
-                    onChange={e => setPoints(e.target.value)}
-                    readOnly={questions.length > 0}
-                    className="h-9 border border-gray-300 rounded-sm px-3 text-xs w-full outline-none focus:border-[#7b1113]"
-                    style={questions.length > 0 ? { background: "#f9fafb", color: "#6b7280" } : {}}
-                  />
-                </>
-              )}
-
               <label className="cft-form-label">Assign</label>
               <div className="border border-gray-200 rounded-sm p-3 space-y-3">
                 <div>
                   <p className="text-xs font-medium text-gray-700 mb-1">Assign To</p>
-                  <AssignToDropdown selected={assignTo} setSelected={setAssignTo} sections={sections} staff={staff} />
+                  <AssignToDropdown selected={assignTo} setSelected={setAssignTo} sections={sections} staff={staff}/>
                 </div>
                 {[
                   { label: "Due Date",       date: dueDate,        setDate: setDueDate,        time: dueTime,            setTime: setDueTime },
@@ -1258,31 +1092,17 @@ function FormCreateEditView({ form, courseId, sections, staff, onCancel, onSave 
                   <div key={label}>
                     <p className="text-xs font-medium text-gray-700 mb-1">{label}</p>
                     <div className="flex border border-gray-300 rounded-sm overflow-hidden">
-                      <input
-                        type="date"
-                        value={date}
-                        onChange={e => setDate(e.target.value)}
-                        className="flex-1 h-8 border-0 px-2 text-xs outline-none bg-white min-w-0"
-                        style={{ fontSize: "13px" }}
-                      />
-                      <div className="w-px bg-gray-200 self-stretch" />
-                      <select
-                        value={time}
-                        onChange={e => setTime(e.target.value)}
-                        className="h-8 border-0 px-2 text-xs bg-white outline-none w-28 shrink-0"
-                      >
+                      <input type="date" value={date} onChange={e => setDate(e.target.value)}
+                        className="flex-1 h-8 border-0 px-2 text-xs outline-none bg-white min-w-0" style={{ fontSize: "13px" }}/>
+                      <div className="w-px bg-gray-200 self-stretch"/>
+                      <select value={time} onChange={e => setTime(e.target.value)}
+                        className="h-8 border-0 px-2 text-xs bg-white outline-none w-28 shrink-0">
                         <option value="">Time</option>
                         {TIME_OPTIONS.map(t => <option key={t}>{t}</option>)}
                       </select>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => { setDate(""); setTime(""); }}
-                      className="text-xs hover:underline mt-0.5"
-                      style={{ color: MAROON }}
-                    >
-                      Clear
-                    </button>
+                    <button type="button" onClick={() => { setDate(""); setTime(""); }}
+                      className="text-xs hover:underline mt-0.5" style={{ color: MAROON }}>Clear</button>
                   </div>
                 ))}
               </div>
@@ -1290,106 +1110,58 @@ function FormCreateEditView({ form, courseId, sections, staff, onCancel, onSave 
           </div>
         )}
         {activeTab === "questions" && (
-          <QuestionsTab questions={questions} isGraded={isGraded} onChange={setQuestions} />
+          <QuestionsTab questions={questions} isGraded={isGraded} onChange={setQuestions}/>
         )}
         {activeTab === "responses" && (
           <div className="max-w-lg space-y-4">
             <div>
               <label className="text-xs font-medium text-gray-700 block mb-1">Confirmation Message</label>
-              <textarea
-                value={confirmationMessage}
-                onChange={e => setConfirmationMessage(e.target.value)}
-                placeholder="Thank you for completing this form."
-                rows={3}
-                className="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:border-[#7b1113] resize-none"
-              />
+              <textarea value={confirmationMessage} onChange={e => setConfirmationMessage(e.target.value)}
+                placeholder="Thank you for completing this form." rows={3}
+                className="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:border-[#7b1113] resize-none"/>
             </div>
             <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={allowMultipleResponses}
-                onChange={e => setAllowMultipleResponses(e.target.checked)}
-                style={{ accentColor: MAROON }}
-              />
+              <input type="checkbox" checked={allowMultipleResponses} onChange={e => setAllowMultipleResponses(e.target.checked)} style={{ accentColor: MAROON }}/>
               Show &quot;Submit another response&quot; button
             </label>
             <div className="border-t border-gray-100 pt-4">
               <p className="text-xs font-medium text-gray-700 mb-3">Preview</p>
-              <SubmitConfirmationPreview message={confirmationMessage} allowMultiple={allowMultipleResponses} />
+              <SubmitConfirmationPreview message={confirmationMessage} allowMultiple={allowMultipleResponses}/>
             </div>
           </div>
         )}
       </div>
-
       {/* Group create modal */}
       {groupModalOpen && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/20 px-4 pb-4 sm:pb-0">
           <div className="w-full max-w-sm bg-white shadow-xl border border-gray-200 rounded-xl">
             <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
               <span className="text-sm font-semibold text-gray-800">Add Assignment Group</span>
-              <button
-                onClick={() => setGroupModalOpen(false)}
-                className="w-7 h-7 flex items-center justify-center border rounded text-sm"
-                style={{ borderColor: MAROON, color: MAROON }}
-              >
-                ×
-              </button>
+              <button onClick={() => setGroupModalOpen(false)} className="w-7 h-7 flex items-center justify-center border rounded text-sm" style={{ borderColor: MAROON, color: MAROON }}>×</button>
             </div>
             <div className="px-5 py-5">
               <div className="flex flex-col gap-2">
                 <label className="text-xs font-medium text-gray-700">Group Name</label>
-                <input
-                  value={newGroupName}
-                  onChange={e => setNewGroupName(e.target.value)}
-                  onKeyDown={e => e.key === "Enter" && saveGroup()}
-                  placeholder="e.g., Evaluation Group 1"
-                  className="h-9 border border-gray-300 px-2 text-xs outline-none focus:border-[#7b1113] rounded-sm w-full"
-                />
+                <input value={newGroupName} onChange={e => setNewGroupName(e.target.value)} onKeyDown={e => e.key === "Enter" && saveGroup()}
+                  placeholder="e.g., Evaluation Group 1" className="h-9 border border-gray-300 px-2 text-xs outline-none focus:border-[#7b1113] rounded-sm w-full"/>
               </div>
             </div>
             <div className="bg-gray-50 border-t border-gray-200 px-4 py-3 flex flex-col-reverse sm:flex-row justify-end gap-2">
-              <button
-                onClick={() => setGroupModalOpen(false)}
-                className="h-10 px-4 border border-gray-300 bg-white text-xs text-gray-700 hover:bg-gray-50 rounded touch-manipulation"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={saveGroup}
-                style={{ background: MAROON }}
-                className="h-10 px-4 text-white text-xs rounded hover:opacity-90 touch-manipulation"
-              >
-                Add Group
-              </button>
+              <button onClick={() => setGroupModalOpen(false)} className="h-10 px-4 border border-gray-300 bg-white text-xs text-gray-700 hover:bg-gray-50 rounded touch-manipulation">Cancel</button>
+              <button onClick={saveGroup} style={{ background: MAROON }} className="h-10 px-4 text-white text-xs rounded hover:opacity-90 touch-manipulation">Add Group</button>
             </div>
           </div>
         </div>
       )}
-
-      {/* Footer actions */}
+      {/* Footer */}
       <div className="shrink-0 border-t border-gray-200 bg-white px-4 sm:px-6 py-3 flex items-center justify-between flex-wrap gap-2">
         <div>{saveError && <span className="text-xs text-red-600 font-medium">⚠ {saveError}</span>}</div>
         <div className="flex items-center gap-2 flex-wrap justify-end w-full sm:w-auto">
-          <button
-            onClick={onCancel}
-            disabled={saving}
-            className="h-9 px-4 border border-gray-300 bg-white text-xs text-gray-700 rounded hover:bg-gray-50 disabled:opacity-50 touch-manipulation"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={() => handleSave(true)}
-            disabled={saving}
-            className="h-9 px-4 border border-gray-300 bg-gray-50 text-xs text-gray-700 rounded hover:bg-gray-100 disabled:opacity-50 touch-manipulation"
-          >
+          <button onClick={onCancel} disabled={saving} className="h-9 px-4 border border-gray-300 bg-white text-xs text-gray-700 rounded hover:bg-gray-50 disabled:opacity-50 touch-manipulation">Cancel</button>
+          <button onClick={() => handleSave(true)} disabled={saving} className="h-9 px-4 border border-gray-300 bg-gray-50 text-xs text-gray-700 rounded hover:bg-gray-100 disabled:opacity-50 touch-manipulation">
             {saving ? "Saving..." : "Save & Publish"}
           </button>
-          <button
-            onClick={() => handleSave(false)}
-            disabled={saving}
-            style={{ background: MAROON }}
-            className="h-9 px-4 text-white text-xs rounded hover:opacity-90 disabled:opacity-50 touch-manipulation"
-          >
+          <button onClick={() => handleSave(false)} disabled={saving} style={{ background: MAROON }} className="h-9 px-4 text-white text-xs rounded hover:opacity-90 disabled:opacity-50 touch-manipulation">
             {saving ? "Saving..." : "Save"}
           </button>
         </div>
@@ -1398,182 +1170,7 @@ function FormCreateEditView({ form, courseId, sections, staff, onCancel, onSave 
   );
 }
 
-// ── Manager Detail View ────────────────────────────────────────────────────────
-function ManagerFormDetail({ form, onBack, onEdit, onDelete, onTogglePublish, currentUserId }: {
-  form: Form; onBack: () => void;
-  onEdit: () => void; onDelete: () => void; onTogglePublish: () => void;
-  currentUserId?: string | null;
-}) {
-  const [showDotMenu, setShowDotMenu] = useState(false);
-  const [menuPos, setMenuPos] = useState<{ top: number; right: number } | null>(null);
-  const dotBtnRef = useRef<HTMLButtonElement>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!showDotMenu) return;
-    function handler(e: MouseEvent) {
-      if (menuRef.current?.contains(e.target as Node) || dotBtnRef.current?.contains(e.target as Node)) return;
-      setShowDotMenu(false);
-    }
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [showDotMenu]);
-
-  const handleDotOpen = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (showDotMenu) { setShowDotMenu(false); return; }
-    const rect = dotBtnRef.current?.getBoundingClientRect();
-    if (rect) setMenuPos({ top: rect.bottom + 4, right: Math.max(8, window.innerWidth - rect.right) });
-    setShowDotMenu(true);
-  };
-
-  return (
-    <div className="flex flex-col h-full bg-white" style={{ fontFamily: FONT }}>
-      <div className="cft-detail-header">
-        <button
-          onClick={onBack}
-          className="flex items-center gap-1 text-sm font-bold hover:underline touch-manipulation"
-          style={{ color: MAROON, minHeight: 36 }}
-        >
-          <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-          </svg>
-          <span className="hidden sm:inline">Back to Forms</span>
-          <span className="sm:hidden">Back</span>
-        </button>
-        <div className="cft-detail-actions">
-          <button
-            onClick={onTogglePublish}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-all touch-manipulation"
-            style={form.published
-              ? { background: "#f0fdf4", color: "#15803d", border: "1px solid #bbf7d0", minHeight: 36 }
-              : { background: "#f9fafb", color: "#6b7280", border: "1px solid #e5e7eb", minHeight: 36 }}
-          >
-            {form.published ? <CheckCircle size={13} style={{ color: "#15803d" }} /> : <Circle size={13} />}
-            <span className="hidden sm:inline">{form.published ? "Published" : "Unpublished"}</span>
-          </button>
-          <button
-            onClick={onEdit}
-            className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 border border-gray-200 rounded-lg hover:border-gray-400 text-gray-600 transition-all touch-manipulation"
-            style={{ minHeight: 36 }}
-          >
-            <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
-              <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
-            </svg>
-            Edit
-          </button>
-          <button
-            ref={dotBtnRef}
-            onClick={handleDotOpen}
-            className="w-9 h-9 flex items-center justify-center border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-500 touch-manipulation"
-          >
-            <MoreVertical size={15} />
-          </button>
-          {showDotMenu && menuPos && (
-            <div ref={menuRef} className="cft-row-menu-portal" style={{ top: menuPos.top, right: menuPos.right }}>
-              <button
-                onClick={() => { setShowDotMenu(false); onDelete(); }}
-                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-red-600 hover:bg-red-50 text-left"
-                style={{ minHeight: 40 }}
-              >
-                <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                  <polyline points="3 6 5 6 21 6" />
-                  <path d="M19 6l-1 14H6L5 6" />
-                  <path d="M10 11v6M14 11v6" />
-                  <path d="M9 6V4h6v2" />
-                </svg>
-                Delete Form
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-      <PublisherBar
-        name={form._publisherName}
-        image={form._publisherImage}
-        role="Head"
-        publisherId={form._publisherId}
-        currentUserId={currentUserId}
-      />
-      <div className="flex-1 overflow-y-auto px-4 sm:px-8 py-5">
-        <h1 className="text-xl sm:text-2xl font-black text-gray-900 mb-5 word-break">{form.title}</h1>
-        {form.description && (
-          <div className="text-sm text-gray-700 leading-relaxed mb-6" dangerouslySetInnerHTML={{ __html: form.description }} />
-        )}
-        <div className="bg-white border rounded-lg mb-5 overflow-hidden">
-          <div className="px-4 py-2 border-b" style={{ background: "#fdf2f2" }}>
-            <p className="text-[10px] font-black uppercase tracking-widest" style={{ color: MAROON }}>Details</p>
-          </div>
-          <div className="px-5 py-4 grid grid-cols-2 gap-3">
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">Type</p>
-              <span className="px-2 py-0.5 rounded text-xs font-bold text-white" style={{ background: TYPE_COLORS[form.formType] ?? MAROON }}>
-                {form.formType}
-              </span>
-            </div>
-            {form.formType === "Graded Assessment" && (
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">Points</p>
-                <p className="text-sm font-bold text-gray-800">{form.points}</p>
-              </div>
-            )}
-            {form.questions?.length > 0 && (
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">Questions</p>
-                <p className="text-sm font-bold text-gray-800">{form.questions.filter(q => q.type !== "section").length}</p>
-              </div>
-            )}
-            {form.dueDate && (
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">Due Date</p>
-                <p className="text-sm font-bold text-gray-800">{fmtDue(form.dueDate, form.dueTime)}</p>
-              </div>
-            )}
-          </div>
-        </div>
-        <div className="bg-white border rounded-lg overflow-hidden">
-          <div className="px-4 py-2 border-b" style={{ background: "#fdf2f2" }}>
-            <p className="text-[10px] font-black uppercase tracking-widest" style={{ color: MAROON }}>Schedule</p>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm" style={{ minWidth: 320 }}>
-              <thead>
-                <tr className="border-b border-gray-100">
-                  {["Due", "Available From", "Until"].map(h => (
-                    <th key={h} className="text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-gray-400">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td className="px-4 py-3 text-sm font-semibold text-gray-700">{fmtDue(form.dueDate, form.dueTime) || "No due date"}</td>
-                  <td className="px-4 py-3 text-sm text-gray-600">{form.availableFrom ? fmtDue(form.availableFrom, form.availableFromTime) : "—"}</td>
-                  <td className="px-4 py-3 text-sm text-gray-600">{form.availableUntil ? fmtDue(form.availableUntil, form.availableUntilTime) : "—"}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-        {!form.published && (
-          <div
-            className="mt-5 flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-semibold"
-            style={{ background: "#fffbeb", border: "1px solid #fde68a", color: "#92400e" }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0">
-              <circle cx="12" cy="12" r="10" />
-              <line x1="12" y1="8" x2="12" y2="12" />
-              <line x1="12" y1="16" x2="12.01" y2="16" />
-            </svg>
-            This form is not published yet. Staff cannot see it.
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ── Manager Section ────────────────────────────────────────────────────────────
+// ── Manager Section (list view for Head) ───────────────────────────────────────
 function ManagerSection({ forms, onCreate, onEdit, onDelete, onTogglePublish, onView }: {
   forms: Form[];
   onCreate: () => void; onEdit: (id: string | number) => void;
@@ -1585,19 +1182,14 @@ function ManagerSection({ forms, onCreate, onEdit, onDelete, onTogglePublish, on
     <div>
       <div className="flex items-center justify-between mb-3 px-1">
         <div />
-        <button
-          onClick={onCreate}
-          className="flex items-center gap-1.5 px-4 py-2 text-sm text-white rounded font-medium hover:opacity-90 touch-manipulation"
-          style={{ minHeight: 40, background: MAROON }}
-        >
+        <button onClick={onCreate} className="flex items-center gap-1.5 px-4 py-2 text-sm text-white rounded font-medium hover:opacity-90 touch-manipulation"
+          style={{ minHeight: 40, background: MAROON }}>
           <Plus size={14} /> Form
         </button>
       </div>
       <div className="border border-gray-200 rounded">
-        <div
-          className="flex items-center gap-2 px-4 py-3 bg-gray-50 border-b border-gray-200 cursor-pointer select-none hover:bg-gray-100"
-          onClick={() => setExpanded(v => !v)}
-        >
+        <div className="flex items-center gap-2 px-4 py-3 bg-gray-50 border-b border-gray-200 cursor-pointer select-none hover:bg-gray-100"
+          onClick={() => setExpanded(v => !v)}>
           <span className="text-xs text-gray-500">{expanded ? "▾" : "▸"}</span>
           <span className="text-sm font-medium text-gray-700">Forms</span>
           {forms.length > 0 && <span className="text-xs text-gray-400 ml-1">({forms.length})</span>}
@@ -1605,18 +1197,15 @@ function ManagerSection({ forms, onCreate, onEdit, onDelete, onTogglePublish, on
         {expanded && (
           <div>
             {forms.length === 0 ? (
-              <div className="px-4 py-12 text-center">
-                <div className="text-2xl mb-3">📋</div>
-                <p className="text-sm text-gray-400">No forms yet</p>
-                <button onClick={onCreate} className="mt-3 text-xs font-bold hover:underline" style={{ color: MAROON }}>
-                  + Create your first form
-                </button>
+              <div className="flex items-center justify-between px-4 py-3">
+                <p className="text-sm text-gray-400">No forms yet.</p>
+                <button onClick={onCreate} className="text-xs font-bold hover:underline" style={{ color: MAROON }}>+ Create your first form</button>
               </div>
             ) : (
               <div className="divide-y divide-gray-200">
                 {forms.map(form => (
                   <div key={form.id} className="cft-row">
-                    <PublishToggle published={form.published} onToggle={() => onTogglePublish(form.id)} />
+                    <PublishToggle published={form.published} onToggle={() => onTogglePublish(form.id)}/>
                     <div className="flex-1 min-w-0 cursor-pointer" onClick={() => onView(form)}>
                       <div className="flex items-center gap-2 flex-wrap">
                         <h3 className="text-sm font-semibold hover:underline word-break" style={{ color: MAROON }}>{form.title}</h3>
@@ -1626,12 +1215,11 @@ function ManagerSection({ forms, onCreate, onEdit, onDelete, onTogglePublish, on
                         {!form.published && <span className="text-[10px] text-amber-600 font-medium shrink-0">Not Published</span>}
                       </div>
                       <div className="cft-row-meta mt-1 text-xs text-gray-500">
-                        {form.formType === "Graded Assessment" && <span>{form.points} pts</span>}
                         {form.questions?.length > 0 && <><span>•</span><span>{form.questions.filter(q => q.type !== "section").length} Q</span></>}
                         {form.dueDate && <><span>•</span><span>Due: {fmtDate(form.dueDate, form.dueTime)}</span></>}
                       </div>
                     </div>
-                    <FormRowMenu formId={form.id} onEdit={onEdit} onDelete={onDelete} />
+                    <FormRowMenu formId={form.id} onEdit={onEdit} onDelete={onDelete}/>
                   </div>
                 ))}
               </div>
@@ -1651,12 +1239,10 @@ function SubmitterSection({ forms, onView }: { forms: Form[]; onView: (f: Form) 
 
   const upcoming: Form[] = [], undated: Form[] = [], past: Form[] = [];
   forms.forEach(f => {
-    if (!f.dueDate) {
-      undated.push(f);
-    } else {
+    if (!f.dueDate) { undated.push(f); }
+    else {
       const d = buildLocalDate(f.dueDate, f.dueTime);
-      if (d && d >= now) upcoming.push(f);
-      else past.push(f);
+      if (d && d >= now) upcoming.push(f); else past.push(f);
     }
   });
 
@@ -1672,27 +1258,21 @@ function SubmitterSection({ forms, onView }: { forms: Form[]; onView: (f: Form) 
     const isClosed = !!untilDate && now > untilDate;
     return (
       <div className="cft-row" onClick={() => onView(form)}>
-        <div className="w-1 h-8 rounded-full shrink-0" style={{ background: "#60a5fa" }} />
-        <FileText size={16} className="shrink-0 text-gray-400" />
+        <div className="w-1 h-8 rounded-full shrink-0" style={{ background: "#60a5fa" }}/>
+        <FileText size={16} className="shrink-0 text-gray-400"/>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <h3 className="text-sm font-semibold hover:underline word-break" style={{ color: "#0369a1" }}>{form.title}</h3>
-            <span className="text-[10px] px-2 py-0.5 rounded-full text-white font-medium shrink-0" style={{ background: TYPE_COLORS[form.formType] ?? MAROON }}>
-              {form.formType}
-            </span>
+            <span className="text-[10px] px-2 py-0.5 rounded-full text-white font-medium shrink-0" style={{ background: TYPE_COLORS[form.formType] ?? MAROON }}>{form.formType}</span>
             {isClosed && <span className="text-[10px] text-gray-500 font-medium shrink-0">Closed</span>}
           </div>
           <div className="cft-row-meta mt-0.5 text-xs text-gray-500">
-            {form.formType === "Graded Assessment" && <span>{form.points} pts</span>}
             {form.questions?.length > 0 && <><span>•</span><span>{form.questions.filter(q => q.type !== "section").length} Q</span></>}
             {form.dueDate && <><span>•</span><span><span className="font-medium text-gray-700">Due</span> {fmtDue(form.dueDate, form.dueTime)}</span></>}
-            {form._publisherName && <><span>•</span><PublisherChip name={form._publisherName} image={form._publisherImage} /></>}
+            {form._publisherName && <><span>•</span><PublisherChip name={form._publisherName} image={form._publisherImage}/></>}
           </div>
         </div>
-        <span
-          className="text-[11px] px-2 sm:px-3 py-1 rounded-full font-bold shrink-0"
-          style={{ background: "#fef2f2", color: MAROON, border: "1px solid #f0c0c0" }}
-        >
+        <span className="text-[11px] px-2 sm:px-3 py-1 rounded-full font-bold shrink-0" style={{ background: "#fef2f2", color: MAROON, border: "1px solid #f0c0c0" }}>
           Fill out
         </span>
       </div>
@@ -1703,23 +1283,18 @@ function SubmitterSection({ forms, onView }: { forms: Form[]; onView: (f: Form) 
     const [col, setCol] = useState(false);
     return (
       <div className="mb-3">
-        <div
-          className="flex items-center gap-2 px-4 py-2.5 border select-none cursor-pointer"
-          style={{ background: "#f0f9ff", borderColor: "#bae6fd" }}
-          onClick={() => setCol(c => !c)}
-        >
-          <svg
-            width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#0369a1" strokeWidth="2.5"
-            style={{ transform: col ? "rotate(-90deg)" : "rotate(0deg)", transition: "transform 0.15s", flexShrink: 0 }}
-          >
-            <path d="M6 9l6 6 6-6" />
+        <div className="flex items-center gap-2 px-4 py-2.5 border select-none cursor-pointer"
+          style={{ background: "#f0f9ff", borderColor: "#bae6fd" }} onClick={() => setCol(c => !c)}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#0369a1" strokeWidth="2.5"
+            style={{ transform: col ? "rotate(-90deg)" : "rotate(0deg)", transition: "transform 0.15s", flexShrink: 0 }}>
+            <path d="M6 9l6 6 6-6"/>
           </svg>
           <span className="text-sm font-semibold" style={{ color: "#0369a1" }}>{title}</span>
           <span className="text-xs text-blue-400 ml-1">({items.length})</span>
         </div>
         {!col && (
           <div className="border border-t-0" style={{ borderColor: "#bae6fd" }}>
-            {items.map(f => <FormRow key={f.id} form={f} />)}
+            {items.map(f => <FormRow key={f.id} form={f}/>)}
           </div>
         )}
       </div>
@@ -1729,10 +1304,8 @@ function SubmitterSection({ forms, onView }: { forms: Form[]; onView: (f: Form) 
   return (
     <div className="mt-4">
       <div className="border border-gray-200 rounded">
-        <div
-          className="flex items-center justify-between px-4 py-3 bg-blue-50 border-b border-blue-100 cursor-pointer select-none"
-          onClick={() => setExpanded(v => !v)}
-        >
+        <div className="flex items-center justify-between px-4 py-3 bg-blue-50 border-b border-blue-100 cursor-pointer select-none"
+          onClick={() => setExpanded(v => !v)}>
           <div className="flex items-center gap-2">
             <span className="text-xs text-blue-400">{expanded ? "▾" : "▸"}</span>
             <span className="text-sm font-medium" style={{ color: "#0369a1" }}>Forms</span>
@@ -1748,19 +1321,15 @@ function SubmitterSection({ forms, onView }: { forms: Form[]; onView: (f: Form) 
         {expanded && (
           <div>
             {forms.length === 0 ? (
-              <div className="px-4 py-8 text-center">
-                <p className="text-sm text-gray-400">No forms assigned to you.</p>
-              </div>
+              <div className="px-4 py-8 text-center"><p className="text-sm text-gray-400">No forms assigned to you.</p></div>
             ) : viewMode === "date" ? (
               <>
-                {upcoming.length > 0 && <GroupSection title="Upcoming" items={upcoming} />}
-                {undated.length > 0 && <GroupSection title="Undated" items={undated} />}
-                {past.length > 0 && <GroupSection title="Past" items={past} />}
+                {upcoming.length > 0 && <GroupSection title="Upcoming" items={upcoming}/>}
+                {undated.length > 0 && <GroupSection title="Undated" items={undated}/>}
+                {past.length > 0 && <GroupSection title="Past" items={past}/>}
               </>
             ) : (
-              Object.entries(typeGroups).map(([grp, items]) => (
-                <GroupSection key={grp} title={grp} items={items} />
-              ))
+              Object.entries(typeGroups).map(([grp, items]) => <GroupSection key={grp} title={grp} items={items}/>)
             )}
           </div>
         )}
@@ -1773,14 +1342,11 @@ function SubmitterSection({ forms, onView }: { forms: Form[]; onView: (f: Form) 
 function StaffFormsList({ forms, onView }: { forms: Form[]; onView: (f: Form) => void }) {
   const [expanded, setExpanded] = useState(true);
   const now = new Date();
-
   return (
     <div className="px-3 sm:px-6 py-5" style={{ fontFamily: FONT }}>
       <div className="border border-gray-200 rounded overflow-hidden">
-        <div
-          className="flex items-center gap-2 px-4 py-3 bg-gray-50 border-b border-gray-200 cursor-pointer select-none hover:bg-gray-100"
-          onClick={() => setExpanded(v => !v)}
-        >
+        <div className="flex items-center gap-2 px-4 py-3 bg-gray-50 border-b border-gray-200 cursor-pointer select-none hover:bg-gray-100"
+          onClick={() => setExpanded(v => !v)}>
           <span className="text-xs text-gray-500">{expanded ? "▾" : "▸"}</span>
           <span className="text-sm font-medium text-gray-700">Forms &amp; Quizzes</span>
           {forms.length > 0 && <span className="text-xs text-gray-400 ml-1">({forms.length})</span>}
@@ -1799,7 +1365,7 @@ function StaffFormsList({ forms, onView }: { forms: Form[]; onView: (f: Form) =>
                   const isClosed = !!untilDate && now > untilDate;
                   return (
                     <div key={form.id} className="cft-row" onClick={() => onView(form)}>
-                      <FileText size={16} className="shrink-0 text-gray-400" />
+                      <FileText size={16} className="shrink-0 text-gray-400"/>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <h3 className="text-sm font-semibold hover:underline word-break" style={{ color: MAROON }}>{form.title}</h3>
@@ -1809,10 +1375,9 @@ function StaffFormsList({ forms, onView }: { forms: Form[]; onView: (f: Form) =>
                           {isClosed && <span className="text-[10px] text-gray-500 font-medium shrink-0">Closed</span>}
                         </div>
                         <div className="cft-row-meta mt-1 text-xs text-gray-500">
-                          {form.formType === "Graded Assessment" && <span>{form.points} pts</span>}
                           {form.questions?.length > 0 && <><span>•</span><span>{form.questions.filter(q => q.type !== "section").length} Q</span></>}
                           {form.dueDate && <><span>•</span><span>Due: {fmtDate(form.dueDate, form.dueTime)}</span></>}
-                          {form._publisherName && <><span>•</span><AuthorBadge name={form._publisherName} role="Head" /></>}
+                          {form._publisherName && <><span>•</span><AuthorBadge name={form._publisherName} role="Head"/></>}
                         </div>
                       </div>
                     </div>
@@ -1848,7 +1413,7 @@ interface CourseFormsPageProps {
 }
 
 export default function CourseFormsPage({ courseId, isHead, canManageForms, currentUserId }: CourseFormsPageProps) {
-  const [mode, setMode] = useState<"list" | "create" | "edit" | "detail" | "answer">("list");
+  const [mode, setMode] = useState<"list" | "create" | "edit" | "detail" | "answer" | "responses">("list");
   const [forms, setForms] = useState<Form[]>([]);
   const [editingForm, setEditingForm] = useState<Form | undefined>(undefined);
   const [viewingForm, setViewingForm] = useState<Form | undefined>(undefined);
@@ -1858,6 +1423,13 @@ export default function CourseFormsPage({ courseId, isHead, canManageForms, curr
   const [deleting, setDeleting] = useState(false);
   const [loading, setLoading] = useState(true);
   const [viewer, setViewer] = useState<{ canManageForms: boolean; courseRole: string | null } | null>(null);
+  const [submissions, setSubmissions] = useState<{
+    id: string; createdAt: string;
+    user: { name: string | null; email: string; courseRole?: string; section?: string | null } | null;
+    answers?: { questionId: string; question: string; type: string; answer: string | string[] | null; points?: number; earnedPoints?: number }[];
+    score?: number | null; totalPoints?: number | null;
+  }[]>([]);
+  const [submissionsLoading, setSubmissionsLoading] = useState(false);
 
   const canManage = canManageForms ?? viewer?.canManageForms ?? false;
   const headMode = isHead ?? (viewer?.courseRole === "Head");
@@ -1875,12 +1447,20 @@ export default function CourseFormsPage({ courseId, isHead, canManageForms, curr
       .catch(() => {});
   }, [courseId]);
 
+ const loadSubmissions = useCallback(async (formId: string | number) => {
+    setSubmissionsLoading(true);
+    try {
+      const res = await fetch(`/api/courses/${courseId}/forms/${formId}/submissions`);
+      const data = await res.json();
+      setSubmissions(data.submissions ?? []);
+    } catch { setSubmissions([]); }
+    finally { setSubmissionsLoading(false); }
+  }, [courseId]);
+
   useEffect(() => { loadForms(); }, [loadForms]);
 
   const onSave = async (data: Partial<Form>, publish: boolean) => {
-    const url = editingForm
-      ? `/api/courses/${courseId}/forms/${editingForm.id}`
-      : `/api/courses/${courseId}/forms`;
+    const url = editingForm ? `/api/courses/${courseId}/forms/${editingForm.id}` : `/api/courses/${courseId}/forms`;
     const res = await fetch(url, {
       method: editingForm ? "PATCH" : "POST",
       headers: { "Content-Type": "application/json" },
@@ -1925,25 +1505,41 @@ export default function CourseFormsPage({ courseId, isHead, canManageForms, curr
     else setMode("answer");
   };
 
+  /* ── answer mode ── */
   if (mode === "answer" && viewingForm) {
     return (
       <>
         <style>{RESPONSIVE_CSS}</style>
         <CourseFormAnswer
-          courseId={courseId}
-          form={viewingForm}
-          currentUserId={currentUserId}
+          courseId={courseId} form={viewingForm} currentUserId={currentUserId}
           onBack={() => { setMode("list"); setViewingForm(undefined); }}
         />
       </>
     );
   }
 
+  /* ── responses mode ── */
+  if (mode === "responses" && viewingForm) {
+    return (
+      <>
+        <style>{RESPONSIVE_CSS}</style>
+        <HeadFormResponses
+          form={viewingForm}
+          submissions={submissions}
+          loading={submissionsLoading}
+          onBack={() => setMode("detail")}
+          onRefresh={() => loadSubmissions(viewingForm.id)}
+        />
+      </>
+    );
+  }
+
+  /* ── detail mode — uses HeadFormDetail ── */
   if (mode === "detail" && viewingForm) {
     return (
       <>
         <style>{RESPONSIVE_CSS}</style>
-        <ManagerFormDetail
+        <HeadFormDetail
           form={viewingForm}
           currentUserId={currentUserId}
           onBack={() => { setMode("list"); setViewingForm(undefined); }}
@@ -1952,6 +1548,10 @@ export default function CourseFormsPage({ courseId, isHead, canManageForms, curr
           onTogglePublish={() => {
             onTogglePublish(viewingForm.id);
             setViewingForm(prev => prev ? { ...prev, published: !prev.published } : prev);
+          }}
+          onViewResponses={() => {
+            loadSubmissions(viewingForm.id);
+            setMode("responses");
           }}
         />
         {deleteTarget && (
@@ -1966,15 +1566,13 @@ export default function CourseFormsPage({ courseId, isHead, canManageForms, curr
     );
   }
 
+  /* ── create / edit mode ── */
   if ((mode === "create" || mode === "edit") && canManage) {
     return (
       <>
         <style>{RESPONSIVE_CSS}</style>
         <FormCreateEditView
-          form={editingForm}
-          courseId={courseId}
-          sections={sections}
-          staff={staff}
+          form={editingForm} courseId={courseId} sections={sections} staff={staff}
           onCancel={() => { setMode("list"); setEditingForm(undefined); }}
           onSave={onSave}
         />
@@ -1982,6 +1580,7 @@ export default function CourseFormsPage({ courseId, isHead, canManageForms, curr
     );
   }
 
+  /* ── loading ── */
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20 text-sm text-gray-400" style={{ fontFamily: FONT }}>
@@ -1990,9 +1589,10 @@ export default function CourseFormsPage({ courseId, isHead, canManageForms, curr
     );
   }
 
+  /* ── list mode ── */
   if (headMode && canManage) {
     const resolvedForms = forms.map(f => ({ ...f, _resolvedRole: resolveFormRole(f, currentUserId) }));
-    const managerForms = resolvedForms.filter(f => f._resolvedRole === "manager");
+    const managerForms  = resolvedForms.filter(f => f._resolvedRole === "manager");
     const submitterForms = resolvedForms.filter(f => f._resolvedRole === "submitter");
 
     return (
@@ -2024,7 +1624,7 @@ export default function CourseFormsPage({ courseId, isHead, canManageForms, curr
             <span>Assigned to You</span>
           </div>
           <div className="px-3 sm:px-5 py-4">
-            <SubmitterSection forms={submitterForms} onView={openForm} />
+            <SubmitterSection forms={submitterForms} onView={openForm}/>
           </div>
         </div>
       </>
@@ -2034,7 +1634,7 @@ export default function CourseFormsPage({ courseId, isHead, canManageForms, curr
   return (
     <>
       <style>{RESPONSIVE_CSS}</style>
-      <StaffFormsList forms={forms} onView={openForm} />
+      <StaffFormsList forms={forms} onView={openForm}/>
     </>
   );
 }

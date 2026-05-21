@@ -28,9 +28,8 @@ interface Form {
   description: string;
   formType: "Survey / Feedback" | "Evaluation" | "Registration Form" | "Graded Assessment";
   assignmentGroup: string;
-  points: number;
   published: boolean;
-  questions: { id: string; type: string; points: number }[];
+  questions: { id: string; type: string }[];
   dueDate: string;
   createdAt: string;
   createdAtLabel: string;
@@ -239,7 +238,6 @@ function FormRow({ form, variant, onView, onEdit, onDelete, onTogglePublish }: {
           {variant === "others" && <PublisherChip name={form.authorName} image={form.authorImage} role={form.authorRole}/>}
           {variant === "mine" && form.authorName && <AuthorBadge name={form.authorName} role={form.authorRole ?? "Admin"}/>}
           <div className="flex items-center gap-1.5 text-[11px] text-gray-400 flex-wrap">
-            {form.formType === "Graded Assessment" && <span>{form.points} pts</span>}
             {qCount > 0 && <><span>·</span><span>{qCount}q</span></>}
             {form.dueDate && <><span>·</span><span>Due {new Date(form.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span></>}
           </div>
@@ -267,7 +265,6 @@ function FormRow({ form, variant, onView, onEdit, onDelete, onTogglePublish }: {
             {variant === "others" && <PublisherChip name={form.authorName} image={form.authorImage} role={form.authorRole}/>}
             {variant === "mine" && form.authorName && <AuthorBadge name={form.authorName} role={form.authorRole ?? "Admin"}/>}
             <div className="flex items-center gap-2 text-xs text-gray-500 flex-wrap">
-              {form.formType === "Graded Assessment" && <span>{form.points} pts</span>}
               {qCount > 0 && <><span>•</span><span>{qCount} question{qCount !== 1 ? "s" : ""}</span></>}
               {form.dueDate && <><span>•</span><span>Due: {new Date(form.dueDate).toLocaleDateString()}</span></>}
             </div>
@@ -454,10 +451,7 @@ export default function AdminCourseFormsPage({ courseId, currentUserId, currentU
           {myExpanded && (
             <div>
               {myFiltered.length === 0 && myForms.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-10 gap-3">
-                  <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: "#fef2f2" }}>
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={MAROON} strokeWidth="1.5"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                  </div>
+                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
                   <p className="text-sm text-gray-400">No forms published by you yet.</p>
                   <button onClick={() => router.push(`/admin/courses/${courseId}/forms/new`)} className="text-xs font-bold hover:underline" style={{ color: MAROON }}>+ Create your first form</button>
                 </div>

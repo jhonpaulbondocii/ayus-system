@@ -343,7 +343,7 @@ function FilePreviewModal({ sub, onClose }: { sub: Submission; onClose: () => vo
 
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,.6)", padding: "16px" }} onClick={onClose}>
-      <div style={{ background: "#fff", borderRadius: 16, boxShadow: "0 24px 48px rgba(0,0,0,.3)", width: "100%", maxWidth: 860, maxHeight: "90dvh", display: "flex", flexDirection: "column", overflow: "hidden" }} onClick={e => e.stopPropagation()}>
+      <div style={{ background: "#fff", borderRadius: 16, boxShadow: "0 24px 48px rgba(0,0,0,.3)", width: "100%", maxWidth: "95vw", height: "90dvh", display: "flex", flexDirection: "column", overflow: "hidden" }} onClick={e => e.stopPropagation()}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", background: MAROON, flexShrink: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
             <FileText size={13} style={{ color: "rgba(255,255,255,.7)", flexShrink: 0 }} />
@@ -376,7 +376,7 @@ function FilePreviewModal({ sub, onClose }: { sub: Submission; onClose: () => vo
               <img src={url} alt={fileName} style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain", borderRadius: 8, boxShadow: "0 4px 20px rgba(0,0,0,.15)" }} />
             </div>
           ) : isPdf(url) ? (
-            <iframe src={url} title={fileName} style={{ width: "100%", height: "100%", border: "none", minHeight: 400 }} />
+            <iframe src={url} title={fileName} style={{ width: "100%", height: "100%", border: "none", display: "block" }} />
           ) : (
             <div style={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16, color: "#9ca3af" }}>
               <FileText size={48} />

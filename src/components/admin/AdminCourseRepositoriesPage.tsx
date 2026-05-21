@@ -12,7 +12,7 @@ import {
   Eye, PackageOpen, Check,
   Pencil, ChevronDown, Music,
   Archive, Image as ImageIcon, Film, ArrowUpRight,
-  SlidersHorizontal,
+  SlidersHorizontal, Calendar,
 } from "lucide-react";
 
 const MAROON = "#7b1113";
@@ -48,7 +48,7 @@ interface FormAnswer {
   question: string;
   type: string;
   points: number;
-  answer: string | null;
+  answer: string | string[] | null;
 }
 
 interface FormSubmission {
@@ -76,6 +76,12 @@ const isDoc    = (u: string) => /\.(doc|docx)$/i.test(u.split("?")[0]);
 const isSheet  = (u: string) => /\.(xls|xlsx)$/i.test(u.split("?")[0]);
 const isZip    = (u: string) => /\.(zip|rar|7z)$/i.test(u.split("?")[0]);
 
+function fmtAnswerValue(val: string | string[] | null): string {
+  if (val === null || val === undefined) return "—";
+  if (Array.isArray(val)) return val.length ? val.join(", ") : "—";
+  return val || "—";
+}
+
 function fmtDue(iso: string | null) {
   if (!iso) return null;
   const d = new Date(iso), now = Date.now(), diff = d.getTime() - now, days = diff / 86400000;
@@ -92,6 +98,24 @@ function formTypeLabel(t: string) {
     REGISTRATION_FORM: "Registration", GRADED_ASSESSMENT: "Assessment",
   };
   return m[t] ?? t;
+}
+
+function getInitial(name: string | null, email: string) {
+  if (name) return name.charAt(0).toUpperCase();
+  return email.charAt(0).toUpperCase();
+}
+
+function fmtDateShort(iso: string) {
+  return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+function fmtDateTime(iso: string) {
+  const d = new Date(iso);
+  return (
+    d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) +
+    " · " +
+    d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
+  );
 }
 
 // ─── Micro-components ─────────────────────────────────────────────────────────
@@ -161,8 +185,8 @@ function StatusDot({ status }: { status: string }) {
 interface Row {
   kind: "assignment" | "form";
   id: string;
-  repoId: string | null;      // actual repo id (only when hasRepo)
-  assignmentId: string | null; // always set for assignments
+  repoId: string | null;
+  assignmentId: string | null;
   hasRepo: boolean;
   name: string;
   subtitle: string;
@@ -173,7 +197,6 @@ interface Row {
   fileCount: number;
   logCount: number;
   createdAt: string;
-  // inline files from list API (assignments only)
   files: RepoFile[];
   points: number;
 }
@@ -288,7 +311,7 @@ function BulkDownloadButton({ files, assignmentTitle }: { files: RepoFile[]; ass
     } catch { setState("error"); setTimeout(() => setState("idle"), 3000); }
   };
 
-  const styles: Record<string, React.CSSProperties> = {
+  const btnStyles: Record<string, React.CSSProperties> = {
     idle:    { borderColor: "#e5e7eb", color: "#374151", background: "#fff" },
     loading: { borderColor: "#e5e7eb", color: "#9ca3af", background: "#f9fafb" },
     done:    { borderColor: "#bbf7d0", color: "#15803d", background: "#f0fdf4" },
@@ -297,7 +320,7 @@ function BulkDownloadButton({ files, assignmentTitle }: { files: RepoFile[]; ass
 
   return (
     <button onClick={handleDownload} disabled={state === "loading" || files.length === 0}
-      style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, padding: "6px 10px", border: "1px solid", borderRadius: 8, cursor: files.length === 0 ? "default" : "pointer", opacity: files.length === 0 ? 0.5 : 1, transition: "all 0.15s", whiteSpace: "nowrap", ...styles[state] }}>
+      style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, padding: "6px 10px", border: "1px solid", borderRadius: 8, cursor: files.length === 0 ? "default" : "pointer", opacity: files.length === 0 ? 0.5 : 1, transition: "all 0.15s", whiteSpace: "nowrap", ...btnStyles[state] }}>
       {state === "loading" ? <><RefreshCw size={12} style={{ animation: "spin 1s linear infinite" }}/> Preparing...</>
         : state === "done" ? <><Check size={12}/> Done!</>
         : state === "error" ? "Failed"
@@ -372,54 +395,176 @@ function StudentSection({ user, files, points, onPreview }: {
   );
 }
 
-// ─── Form Response Card ───────────────────────────────────────────────────────
-function FormResponseCard({ sub }: { sub: FormSubmission }) {
-  const [open, setOpen] = useState(false);
+// ─── Form Submission Detail Modal ─────────────────────────────────────────────
+function FormSubmissionModal({
+  submission,
+  formTitle,
+  onClose,
+}: {
+  submission: FormSubmission;
+  formTitle: string;
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    const h = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", h);
+    return () => {
+      document.body.style.overflow = "";
+      window.removeEventListener("keydown", h);
+    };
+  }, [onClose]);
 
   return (
-    <div style={{ borderBottom: "1px solid #f9fafb" }}>
-      <button onClick={() => setOpen(v => !v)}
-        style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 16px", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}
-        onMouseEnter={e => (e.currentTarget.style.background = "#f9fafb")}
-        onMouseLeave={e => (e.currentTarget.style.background = "none")}
-      >
-        {open ? <ChevronDown size={12} style={{ color: "#9ca3af", flexShrink: 0 }}/> : <ChevronRight size={12} style={{ color: "#9ca3af", flexShrink: 0 }}/>}
-        <UAv name={sub.user.name} image={null} size={28}/>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ fontSize: 13, fontWeight: 700, color: "#1f2937", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-            {sub.user.name ?? sub.user.email}
-          </p>
-          <p style={{ fontSize: 11, color: "#9ca3af", margin: 0 }}>{sub.user.email}</p>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-          {sub.totalPoints > 0 && (
-            <span style={{ fontSize: 12, fontWeight: 700, color: sub.score != null ? MAROON : "#9ca3af" }}>
-              {sub.score != null ? `${sub.score}/${sub.totalPoints}` : `—/${sub.totalPoints}`}
-            </span>
-          )}
-          <span style={{ fontSize: 11, color: "#9ca3af" }}>{fmtDate(sub.createdAt)}</span>
-        </div>
-      </button>
+    <>
+      {/* Backdrop */}
+      <div
+        onClick={onClose}
+        style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(0,0,0,0.45)", backdropFilter: "blur(3px)" }}
+      />
 
-      {open && sub.answers.length > 0 && (
-        <div style={{ margin: "0 16px 12px 52px", display: "flex", flexDirection: "column", gap: 8 }}>
-          {sub.answers.map((a, i) => (
-            <div key={i} style={{ border: "1px solid #f3f4f6", borderRadius: 8, padding: "10px 12px", background: "#fafafa" }}>
-              <p style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", margin: "0 0 4px" }}>{a.question}</p>
-              <p style={{ fontSize: 13, color: "#1f2937", margin: 0, wordBreak: "break-word" }}>
-                {a.answer ?? <span style={{ color: "#9ca3af", fontStyle: "italic" }}>No answer</span>}
+      {/* Modal */}
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          position: "fixed",
+          zIndex: 61,
+          background: "#fff",
+          display: "flex",
+          flexDirection: "column",
+          fontFamily: FONT,
+          overflow: "hidden",
+          // Desktop: centered modal
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          width: "min(560px, calc(100vw - 32px))",
+          maxHeight: "85vh",
+          borderRadius: 20,
+          boxShadow: "0 32px 80px rgba(0,0,0,0.28)",
+        }}
+      >
+        {/* Header */}
+        <div style={{ background: MAROON, padding: "14px 18px", flexShrink: 0 }}>
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
+            <div style={{ minWidth: 0 }}>
+              <p style={{ fontSize: 10, fontWeight: 800, color: "rgba(255,255,255,0.55)", textTransform: "uppercase", letterSpacing: "0.18em", margin: "0 0 3px" }}>Response Detail</p>
+              <p style={{ fontSize: 14, fontWeight: 700, color: "#fff", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{formTitle}</p>
+            </div>
+            <button onClick={onClose}
+              style={{ width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%", background: "rgba(255,255,255,0.15)", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.7)", flexShrink: 0 }}>
+              <X size={13}/>
+            </button>
+          </div>
+        </div>
+
+        {/* User info */}
+        <div style={{ padding: "14px 18px", borderBottom: "1px solid #f3f4f6", background: "#f9fafb", flexShrink: 0 }}>
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+            <div style={{ width: 40, height: 40, borderRadius: "50%", background: MAROON, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, fontWeight: 800, flexShrink: 0 }}>
+              {getInitial(submission.user.name, submission.user.email)}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontSize: 14, fontWeight: 700, color: "#111827", margin: "0 0 2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {submission.user.name ?? "Anonymous"}
               </p>
-              {a.points > 0 && (
-                <p style={{ fontSize: 11, color: "#9ca3af", margin: "4px 0 0" }}>{a.points} pt{a.points !== 1 ? "s" : ""}</p>
+              <p style={{ fontSize: 12, color: "#9ca3af", margin: "0 0 3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{submission.user.email}</p>
+              {submission.user.courseRole && (
+                <p style={{ fontSize: 11, fontWeight: 700, color: MAROON, margin: 0 }}>
+                  {submission.user.courseRole}
+                  {submission.user.section ? ` · ${submission.user.section}` : ""}
+                </p>
               )}
             </div>
-          ))}
+            <div style={{ textAlign: "right", flexShrink: 0 }}>
+              <p style={{ fontSize: 10, color: "#9ca3af", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 2px" }}>Submitted</p>
+              <p style={{ fontSize: 12, fontWeight: 600, color: "#374151", margin: "0 0 1px" }}>{fmtDateShort(submission.createdAt)}</p>
+              <p style={{ fontSize: 11, color: "#9ca3af", margin: 0 }}>
+                {new Date(submission.createdAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
+              </p>
+            </div>
+          </div>
         </div>
-      )}
 
-      {open && sub.answers.length === 0 && (
-        <p style={{ fontSize: 12, color: "#9ca3af", margin: "0 16px 12px 52px", fontStyle: "italic" }}>No answers recorded</p>
-      )}
+        {/* Answers — scrollable */}
+        <div style={{ flex: 1, overflowY: "auto", padding: "14px 18px", display: "flex", flexDirection: "column", gap: 10 }}>
+          {!submission.answers || submission.answers.length === 0 ? (
+            <p style={{ fontSize: 13, color: "#9ca3af", textAlign: "center", padding: "32px 0", margin: 0 }}>No answers recorded.</p>
+          ) : (
+            submission.answers.map((ans, i) => (
+              <div key={ans.questionId ?? i}
+                style={{ border: "1px solid #f3f4f6", borderRadius: 12, padding: "12px 14px", background: "#fff", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
+                <p style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", margin: "0 0 6px", lineHeight: 1.4 }}>
+                  <span style={{ color: "#d1d5db", fontFamily: "monospace", marginRight: 6 }}>{i + 1}.</span>
+                  {ans.question}
+                </p>
+                <p style={{ fontSize: 13, fontWeight: 500, color: "#111827", margin: 0, paddingLeft: 16, wordBreak: "break-word", lineHeight: 1.5 }}>
+                  {fmtAnswerValue(ans.answer)}
+                </p>
+              </div>
+            ))
+          )}
+          <div style={{ height: 4 }}/>
+        </div>
+
+        {/* Footer */}
+        <div style={{ padding: "12px 18px", borderTop: "1px solid #f3f4f6", background: "#fff", flexShrink: 0 }}>
+          <button onClick={onClose}
+            style={{ height: 38, padding: "0 20px", border: "1px solid #e5e7eb", borderRadius: 10, fontSize: 13, fontWeight: 700, color: "#6b7280", background: "#fff", cursor: "pointer", transition: "background 0.15s" }}
+            onMouseEnter={e => (e.currentTarget.style.background = "#f9fafb")}
+            onMouseLeave={e => (e.currentTarget.style.background = "#fff")}
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ─── Form Response Card (list item in drawer) ─────────────────────────────────
+function FormResponseCard({ sub, onOpen }: { sub: FormSubmission; onOpen: () => void }) {
+  const answerCount = sub.answers?.length ?? 0;
+
+  return (
+    <div
+      onClick={onOpen}
+      style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 16px", borderBottom: "1px solid #f9fafb", cursor: "pointer", transition: "background 0.1s" }}
+      onMouseEnter={e => (e.currentTarget.style.background = "#f9fafb")}
+      onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+    >
+      {/* Avatar */}
+      <div style={{ width: 34, height: 34, borderRadius: "50%", background: MAROON, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 800, flexShrink: 0 }}>
+        {getInitial(sub.user.name, sub.user.email)}
+      </div>
+
+      {/* Info */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{ fontSize: 13, fontWeight: 700, color: "#1f2937", margin: "0 0 2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          {sub.user.name ?? "Anonymous"}
+        </p>
+        <p style={{ fontSize: 11, color: "#9ca3af", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          {sub.user.email}
+        </p>
+        {sub.user.courseRole && (
+          <p style={{ fontSize: 10, fontWeight: 700, color: MAROON, margin: "2px 0 0" }}>
+            {sub.user.courseRole}{sub.user.section ? ` · ${sub.user.section}` : ""}
+          </p>
+        )}
+      </div>
+
+      {/* Right side */}
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 3, flexShrink: 0 }}>
+        {answerCount > 0 && (
+          <span style={{ fontSize: 10, color: "#9ca3af" }}>{answerCount} ans</span>
+        )}
+        <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "#9ca3af" }}>
+          <Calendar size={10}/>
+          <span>{fmtDateShort(sub.createdAt)}</span>
+        </div>
+      </div>
+
+      <ChevronRight size={12} style={{ color: "#d1d5db", flexShrink: 0 }}/>
     </div>
   );
 }
@@ -472,17 +617,15 @@ function MobileFilterSheet({ tab, setTab, sort, setSort, onClose, tabItems }: {
 function RepositoryDrawer({ row, courseId, onClose }: { row: Row; courseId: string; onClose: () => void }) {
   const router = useRouter();
 
-  // For forms: fetch submissions from API
-  // For assignments: files are already in row.files (from the list API)
-  const [formSubs,    setFormSubs]    = useState<FormSubmission[]>([]);
-  const [loadingForm, setLoadingForm] = useState(false);
-  const [previewFile, setPreviewFile] = useState<RepoFile | null>(null);
-  const [editingName, setEditingName] = useState(false);
-  const [nameInput,   setNameInput]   = useState(row.name);
-  const [savingName,  setSavingName]  = useState(false);
-  const [isMobile,    setIsMobile]    = useState(false);
+  const [formSubs,      setFormSubs]      = useState<FormSubmission[]>([]);
+  const [loadingForm,   setLoadingForm]   = useState(false);
+  const [previewFile,   setPreviewFile]   = useState<RepoFile | null>(null);
+  const [selectedSub,   setSelectedSub]   = useState<FormSubmission | null>(null);
+  const [editingName,   setEditingName]   = useState(false);
+  const [nameInput,     setNameInput]     = useState(row.name);
+  const [savingName,    setSavingName]    = useState(false);
+  const [isMobile,      setIsMobile]      = useState(false);
 
-  // Active tab: assignments always show "files", forms always show "responses"
   const activeTab: DrawerTab = row.kind === "form" ? "responses" : "files";
 
   useEffect(() => {
@@ -492,7 +635,6 @@ function RepositoryDrawer({ row, courseId, onClose }: { row: Row; courseId: stri
     return () => window.removeEventListener("resize", check);
   }, []);
 
-  // Fetch form submissions when a form row is opened
   useEffect(() => {
     if (row.kind !== "form") return;
     const controller = new AbortController();
@@ -513,10 +655,12 @@ function RepositoryDrawer({ row, courseId, onClose }: { row: Row; courseId: stri
   }, [row.id, row.kind, courseId]);
 
   useEffect(() => {
-    const h = (e: KeyboardEvent) => { if (e.key === "Escape" && !previewFile) onClose(); };
+    const h = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !previewFile && !selectedSub) onClose();
+    };
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
-  }, [onClose, previewFile]);
+  }, [onClose, previewFile, selectedSub]);
 
   const saveName = async () => {
     if (!nameInput.trim() || !row.repoId) return;
@@ -539,7 +683,6 @@ function RepositoryDrawer({ row, courseId, onClose }: { row: Row; courseId: stri
     }
   };
 
-  // Group assignment files by student
   const files = row.files ?? [];
   const filesByUser: Record<string, RepoFile[]> = {};
   files.forEach(f => {
@@ -559,11 +702,8 @@ function RepositoryDrawer({ row, courseId, onClose }: { row: Row; courseId: stri
       <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 40, background: "rgba(0,0,0,0.28)", backdropFilter: "blur(2px)" }}/>
 
       <div style={drawerStyle}>
-        <style>{`
-          @keyframes spin { to { transform: rotate(360deg); } }
-        `}</style>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
 
-        {/* Mobile drag handle */}
         {isMobile && <div style={{ width: 36, height: 4, borderRadius: 99, background: "rgba(0,0,0,0.15)", margin: "10px auto 0", flexShrink: 0 }}/>}
 
         {/* Header */}
@@ -654,6 +794,16 @@ function RepositoryDrawer({ row, courseId, onClose }: { row: Row; courseId: stri
           </div>
         )}
 
+        {/* Form responses column header */}
+        {row.kind === "form" && !isLoading && formSubs.length > 0 && (
+          <div style={{ display: "flex", alignItems: "center", padding: "8px 16px", background: "#eff6ff", borderBottom: "1px solid #dbeafe", flexShrink: 0 }}>
+            <div style={{ flex: 1, fontSize: 10, fontWeight: 800, color: "#1d4ed8", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+              {formSubs.length} response{formSubs.length !== 1 ? "s" : ""}
+            </div>
+            <div style={{ fontSize: 10, fontWeight: 800, color: "#1d4ed8", textTransform: "uppercase", letterSpacing: "0.1em" }}>Submitted</div>
+          </div>
+        )}
+
         {/* Content */}
         <div style={{ flex: 1, overflowY: "auto" }}>
           {isLoading ? (
@@ -663,7 +813,6 @@ function RepositoryDrawer({ row, courseId, onClose }: { row: Row; courseId: stri
             </div>
 
           ) : activeTab === "files" ? (
-            /* ── Assignment submissions ── */
             submittedCount === 0 ? (
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "60px 24px", gap: 14 }}>
                 <div style={{ width: 56, height: 56, borderRadius: "50%", background: "#fef2f2", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -693,7 +842,7 @@ function RepositoryDrawer({ row, courseId, onClose }: { row: Row; courseId: stri
             )
 
           ) : (
-            /* ── Form responses ── */
+            /* ── Form responses list ── */
             formSubs.length === 0 ? (
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "60px 24px", gap: 14 }}>
                 <div style={{ width: 56, height: 56, borderRadius: "50%", background: "#eff6ff", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -705,15 +854,13 @@ function RepositoryDrawer({ row, courseId, onClose }: { row: Row; courseId: stri
                 </div>
               </div>
             ) : (
-              <>
-                <div style={{ display: "flex", alignItems: "center", padding: "8px 16px", background: "#eff6ff", borderBottom: "1px solid #dbeafe" }}>
-                  <div style={{ flex: 1, fontSize: 10, fontWeight: 800, color: "#1d4ed8", textTransform: "uppercase", letterSpacing: "0.1em" }}>
-                    {formSubs.length} response{formSubs.length !== 1 ? "s" : ""}
-                  </div>
-                  <div style={{ fontSize: 10, fontWeight: 800, color: "#1d4ed8", textTransform: "uppercase", letterSpacing: "0.1em" }}>Submitted</div>
-                </div>
-                {formSubs.map(s => <FormResponseCard key={s.id} sub={s}/>)}
-              </>
+              formSubs.map(s => (
+                <FormResponseCard
+                  key={s.id}
+                  sub={s}
+                  onOpen={() => setSelectedSub(s)}
+                />
+              ))
             )
           )}
         </div>
@@ -764,6 +911,15 @@ function RepositoryDrawer({ row, courseId, onClose }: { row: Row; courseId: stri
           </div>
         </div>
       )}
+
+      {/* Form Submission Detail Modal */}
+      {selectedSub && (
+        <FormSubmissionModal
+          submission={selectedSub}
+          formTitle={row.name}
+          onClose={() => setSelectedSub(null)}
+        />
+      )}
     </>
   );
 }
@@ -806,7 +962,6 @@ export default function AdminCourseRepositoriesPage({ courseId }: { courseId: st
   useEffect(() => { fetchRef.current = fetchData; }, [fetchData]);
   useEffect(() => { fetchRef.current(); }, []);
 
-  // Build unified rows — files are embedded from the list API response
   const allRows: Row[] = [
     ...repos.map((r): Row => ({
       kind:         "assignment",
@@ -823,7 +978,7 @@ export default function AdminCourseRepositoriesPage({ courseId }: { courseId: st
       fileCount:    r._count.files,
       logCount:     r._count.logs,
       createdAt:    r.createdAt,
-      files:        r.files ?? [],       // ← files come from the list API directly
+      files:        r.files ?? [],
       points:       r.assignment.points,
     })),
     ...forms.map((f): Row => ({

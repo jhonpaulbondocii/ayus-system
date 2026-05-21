@@ -1,5 +1,5 @@
 "use client";
-// src/components/admin/CourseGradesPage.tsx  — fully responsive / mobile-friendly
+// src/components/admin/CourseGradesPage.tsx  — assignments only, no forms
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
@@ -9,7 +9,7 @@ import {
   ChevronDown, BookOpen, FileText, RotateCcw, CheckCircle2,
   Clock, AlertCircle, Minus, X, ExternalLink,
   Eye, ChevronRight, ChevronLeft,
-  ClipboardList, GraduationCap, ArrowRight,
+  GraduationCap, ArrowRight,
   Calendar, Settings2, SlidersHorizontal,
 } from "lucide-react";
 import {
@@ -34,7 +34,7 @@ interface GradeColumn {
   dueDate: string | null;
   assignmentGroup: string;
   doNotCount?: boolean;
-  type: "assignment" | "form";
+  type: "assignment";
   displayGradeAs: DisplayGradeAs;
 }
 interface AssignmentGrade {
@@ -50,13 +50,6 @@ interface AssignmentGrade {
   websiteUrl: string | null;
   daysLate?: number | null;
 }
-interface FormGrade {
-  formId: string;
-  score: number | null;
-  submittedAt: string | null;
-  submissionId: string | null;
-  hasSubmission: boolean;
-}
 interface StaffRow {
   id: string;
   name: string;
@@ -65,7 +58,6 @@ interface StaffRow {
   position: string | null;
   courseRole: string;
   assignmentGrades: AssignmentGrade[];
-  formGrades: FormGrade[];
   totalEarned: number;
   totalPossible: number;
   percentage: number | null;
@@ -73,9 +65,8 @@ interface StaffRow {
 interface GradesData {
   staff: StaffRow[];
   assignments: GradeColumn[];
-  forms: GradeColumn[];
 }
-const EMPTY_GRADES_DATA: GradesData = { staff: [], assignments: [], forms: [] };
+const EMPTY_GRADES_DATA: GradesData = { staff: [], assignments: [] };
 
 interface GradePanelData {
   staffId: string;
@@ -87,15 +78,6 @@ interface GradePanelData {
   maxPoints: number;
   displayGradeAs: DisplayGradeAs;
   grade: AssignmentGrade;
-}
-interface FormResponsePanelData {
-  staffId: string;
-  staffName: string;
-  staffImage: string | null;
-  formId: string;
-  formTitle: string;
-  maxPoints: number;
-  formGrade: FormGrade;
 }
 type SubmissionStatus = "None" | "Late" | "Missing" | "Excused";
 
@@ -188,29 +170,23 @@ function recalcStaff(
   staff: StaffRow,
   updatedAssignmentGrades: AssignmentGrade[],
   assignments: GradeColumn[],
-  forms: GradeColumn[] = [],
-  updatedFormGrades?: FormGrade[]
 ): StaffRow {
   const safeAssignments = assignments ?? [];
-  const safeForms       = forms ?? [];
   const safeGrades      = updatedAssignmentGrades ?? [];
-  const safeFormGrades  = updatedFormGrades ?? staff.formGrades ?? [];
 
-  const earnedFromAssignments = safeGrades.reduce((sum, g) => {
+  const totalEarned = safeGrades.reduce((sum, g) => {
     const col = safeAssignments.find((a) => a.id === g.assignmentId);
     if (col?.doNotCount || col?.displayGradeAs === "Not Graded") return sum;
     return sum + (g.grade ?? 0);
   }, 0);
 
-  const earnedFromForms = safeFormGrades.reduce((sum, g) => sum + (g.score ?? 0), 0);
-  const totalEarned     = earnedFromAssignments + earnedFromForms;
-  const totalPossible   =
-    safeAssignments.filter((a) => !a.doNotCount && a.displayGradeAs !== "Not Graded")
-      .reduce((sum, a) => sum + a.points, 0) +
-    safeForms.reduce((sum, f) => sum + f.points, 0);
+  const totalPossible = safeAssignments
+    .filter((a) => !a.doNotCount && a.displayGradeAs !== "Not Graded")
+    .reduce((sum, a) => sum + a.points, 0);
+
   const percentage = totalPossible > 0 ? Math.round((totalEarned / totalPossible) * 100) : null;
 
-  return { ...staff, assignmentGrades: safeGrades, formGrades: safeFormGrades, totalEarned, totalPossible, percentage };
+  return { ...staff, assignmentGrades: safeGrades, totalEarned, totalPossible, percentage };
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -960,199 +936,6 @@ function GradePanel({
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   FORM RESPONSE PANEL
-───────────────────────────────────────────────────────────────────────────── */
-interface FetchedAnswer { questionId: string; question: string; type: string; answer: string | string[] | null; }
-
-function FormResponsePanel({
-  panel, courseId, onClose, onSave, onViewResponses, isMobile,
-}: {
-  panel: FormResponsePanelData; courseId: string;
-  onClose: () => void;
-  onSave: (score: number | null) => Promise<void>;
-  onViewResponses: () => void;
-  isMobile: boolean;
-}) {
-  const [gradeInput,     setGradeInput]     = useState(panel.formGrade.score !== null ? String(panel.formGrade.score) : "");
-  const [saving,         setSaving]         = useState(false);
-  const [error,          setError]          = useState<string | null>(null);
-  const [saved,          setSaved]          = useState(false);
-  const [answers,        setAnswers]        = useState<FetchedAnswer[]>([]);
-  const [loadingAnswers, setLoadingAnswers] = useState(false);
-
-  useEffect(() => {
-    const submissionId = panel.formGrade.submissionId;
-    if (!submissionId) return;
-    setLoadingAnswers(true);
-    fetch(`/api/admin/courses/${courseId}/forms/${panel.formId}/submissions`)
-      .then(r => r.json())
-      .then(data => {
-        const subs: { id: string; answers?: FetchedAnswer[] }[] = data.submissions ?? [];
-        const match = subs.find(s => s.id === submissionId);
-        if (match?.answers) setAnswers(match.answers);
-      })
-      .catch(() => {})
-      .finally(() => setLoadingAnswers(false));
-  }, [courseId, panel.formId, panel.formGrade.submissionId]);
-
-  const handleSave = async () => {
-    setError(null);
-    const trimmed = gradeInput.trim();
-    const parsed  = trimmed === "" ? null : parseFloat(trimmed);
-    if (parsed !== null) {
-      if (isNaN(parsed) || parsed < 0) { setError("Enter a valid score ≥ 0."); return; }
-      if (panel.maxPoints > 0 && parsed > panel.maxPoints) { setError(`Max is ${panel.maxPoints} pts.`); return; }
-    }
-    setSaving(true);
-    try { await onSave(parsed); setSaved(true); setTimeout(() => setSaved(false), 2000); }
-    catch { setError("Failed to save. Try again."); }
-    finally { setSaving(false); }
-  };
-
-  const pctValue = gradeInput && panel.maxPoints > 0 ? Math.round((parseFloat(gradeInput) / panel.maxPoints) * 100) : null;
-  function fmtAnswerValue(val: string | string[] | null): string {
-    if (val === null || val === undefined) return "—";
-    if (Array.isArray(val)) return val.length ? val.join(", ") : "—";
-    return val || "—";
-  }
-
-  const panelContent = (
-    <>
-      <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200 shrink-0" style={{ background: MAROON }}>
-        <div className="flex items-center gap-3 min-w-0">
-          {panel.staffImage
-            ? <Image src={panel.staffImage} alt={panel.staffName} width={32} height={32} className="rounded-full object-cover shrink-0 ring-2 ring-white/30" />
-            : <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[10px] font-black shrink-0 ring-2 ring-white/30"
-                style={{ background: MAROON_DARK }}>{getInitials(panel.staffName)}</div>}
-          <div className="min-w-0">
-            <p className="text-sm font-black text-white truncate">{panel.staffName}</p>
-            <div className="flex items-center gap-1.5 mt-0.5">
-              <ClipboardList size={10} className="text-white/60" />
-              <p className="text-[10px] font-semibold text-white/70 truncate">{panel.formTitle}</p>
-            </div>
-          </div>
-        </div>
-        <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/10 hover:bg-white/20 text-white shrink-0 transition-colors">
-          <X size={14} />
-        </button>
-      </div>
-
-      <div className="px-4 py-3 border-b border-gray-100 shrink-0 bg-gray-50">
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <div className="flex items-center gap-4 text-xs flex-wrap">
-            <div>
-              <span className="text-gray-400 font-medium">Submitted</span>
-              <p className="font-bold text-gray-700 mt-0.5">
-                {panel.formGrade.submittedAt ? fmtDate(panel.formGrade.submittedAt) : <span className="text-gray-400 italic">Not submitted</span>}
-              </p>
-            </div>
-            <div>
-              <span className="text-gray-400 font-medium">Responses</span>
-              <p className="font-bold text-gray-700 mt-0.5">{loadingAnswers ? "Loading…" : `${answers.length} answer${answers.length !== 1 ? "s" : ""}`}</p>
-            </div>
-          </div>
-          {panel.formGrade.hasSubmission && (
-            <button onClick={onViewResponses}
-              className="flex items-center gap-1.5 h-9 px-3 rounded-lg text-xs font-black text-white transition-all hover:opacity-90 shrink-0"
-              style={{ background: MAROON }}>
-              <Eye size={11} /> View <ArrowRight size={11} />
-            </button>
-          )}
-        </div>
-      </div>
-
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
-        <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-3">Responses</p>
-        {loadingAnswers ? (
-          <div className="flex items-center justify-center py-10 gap-2 text-gray-400">
-            <RotateCcw size={14} className="animate-spin" />
-            <span className="text-xs font-semibold">Loading answers…</span>
-          </div>
-        ) : answers.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-10 gap-2">
-            <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
-              <ClipboardList size={18} className="text-gray-300" />
-            </div>
-            <p className="text-xs text-gray-400 font-semibold">No answers recorded</p>
-          </div>
-        ) : answers.map((ans, i) => (
-          <div key={ans.questionId ?? i} className="border border-gray-200 rounded-xl overflow-hidden">
-            <div className="px-3 py-2 bg-gray-50 border-b border-gray-100">
-              <p className="text-[10px] font-black text-gray-500">
-                <span className="text-gray-400 mr-1">Q{i + 1}.</span>{ans.question}
-              </p>
-            </div>
-            <div className="px-3 py-2.5 text-xs text-gray-700 leading-relaxed">{fmtAnswerValue(ans.answer)}</div>
-          </div>
-        ))}
-
-        <div className="border-t border-gray-100 pt-4">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Score</p>
-            <span className="text-[10px] font-bold text-gray-400">{panel.maxPoints > 0 ? `/ ${panel.maxPoints} pts` : ""}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <input type="number" min={0} max={panel.maxPoints > 0 ? panel.maxPoints : undefined} step={0.5}
-              value={gradeInput} onChange={e => { setGradeInput(e.target.value); setError(null); }}
-              placeholder="—"
-              className="flex-1 h-11 border-2 rounded-xl px-3 text-base font-black outline-none transition-colors"
-              style={{ borderColor: gradeInput ? MAROON : "#e5e7eb", color: gradeInput ? MAROON : "#9ca3af" }}
-              onFocus={e => (e.currentTarget.style.borderColor = MAROON)}
-              onBlur={e  => (e.currentTarget.style.borderColor = gradeInput ? MAROON : "#e5e7eb")} />
-            {pctValue !== null && !isNaN(pctValue) && (
-              <div className="h-11 px-3 rounded-xl flex flex-col items-center justify-center shrink-0 border"
-                style={{ background: getScoreBg(parseFloat(gradeInput), panel.maxPoints), borderColor: getScoreColor(parseFloat(gradeInput), panel.maxPoints) + "40" }}>
-                <span className="text-sm font-black leading-none" style={{ color: getScoreColor(parseFloat(gradeInput), panel.maxPoints) }}>{pctValue}%</span>
-                <span className="text-[9px] font-bold leading-none mt-0.5" style={{ color: getScoreColor(parseFloat(gradeInput), panel.maxPoints) }}>{getLetterGrade(pctValue)}</span>
-              </div>
-            )}
-          </div>
-          {error && <p className="text-[10px] text-red-500 mt-1 font-semibold">{error}</p>}
-        </div>
-      </div>
-
-      <div className="shrink-0 border-t border-gray-200 px-4 py-3 bg-gray-50 flex items-center gap-2 flex-wrap">
-        <button onClick={onClose} className="h-10 px-4 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-white transition-colors shrink-0">Close</button>
-        {panel.formGrade.hasSubmission && (
-          <button onClick={onViewResponses}
-            className="h-10 px-3 rounded-xl text-sm font-black border-2 transition-all flex items-center gap-1.5 shrink-0"
-            style={{ borderColor: MAROON, color: MAROON, background: "white" }}>
-            <Eye size={12} /> Full Page
-          </button>
-        )}
-        <button onClick={handleSave} disabled={saving}
-          className="flex-1 h-10 rounded-xl text-sm font-black text-white transition-all disabled:opacity-60 flex items-center justify-center gap-2 min-w-[100px]"
-          style={{ background: saved ? "#15803d" : MAROON }}>
-          {saving ? <><RotateCcw size={12} className="animate-spin" /> Saving…</> : saved ? <><CheckCircle2 size={12} /> Saved!</> : "Save Score"}
-        </button>
-      </div>
-    </>
-  );
-
-  if (isMobile) {
-    return (
-      <>
-        <div className="fixed inset-0 z-40 bg-black/30" onClick={onClose} />
-        <div className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl shadow-2xl flex flex-col overflow-hidden"
-          style={{ maxHeight: "92dvh", fontFamily: FONT }}>
-          {panelContent}
-        </div>
-      </>
-    );
-  }
-
-  return (
-    <>
-      <div className="fixed inset-0 z-40 bg-black/20" onClick={onClose} />
-      <div className="fixed right-0 top-0 h-full z-50 bg-white shadow-2xl border-l border-gray-200 flex flex-col"
-        style={{ width: "min(460px, 95vw)", fontFamily: FONT }}>
-        {panelContent}
-      </div>
-    </>
-  );
-}
-
-/* ─────────────────────────────────────────────────────────────────────────────
    INLINE CELL DISPLAY
 ───────────────────────────────────────────────────────────────────────────── */
 function CellDisplay({ col, score, status, hasSubmission, isSaving }: {
@@ -1186,12 +969,8 @@ function CellDisplay({ col, score, status, hasSubmission, isSaving }: {
 
   if (hasSubmission) return (
     <div className="flex items-center gap-0.5">
-      {col.type === "form"
-        ? <ClipboardList size={11} style={{ color: MAROON }} />
-        : <Eye size={11} style={{ color: "#1d4ed8" }} />}
-      <span className="text-[9px] font-bold" style={{ color: col.type === "form" ? MAROON : "#1d4ed8" }}>
-        {col.type === "form" ? "View" : "Sub"}
-      </span>
+      <Eye size={11} style={{ color: "#1d4ed8" }} />
+      <span className="text-[9px] font-bold" style={{ color: "#1d4ed8" }}>Sub</span>
     </div>
   );
 
@@ -1311,12 +1090,11 @@ function CellEditor({ col, score, onSave, onOpenPanel, onDismiss }: {
    MOBILE STAFF GRADE CARD
 ───────────────────────────────────────────────────────────────────────────── */
 function MobileStaffCard({
-  staff, filteredColumns, onOpenGradePanel, onOpenFormPanel, savingCells,
+  staff, filteredColumns, onOpenGradePanel, savingCells,
 }: {
   staff: StaffRow;
   filteredColumns: GradeColumn[];
   onOpenGradePanel: (staff: StaffRow, col: GradeColumn) => void;
-  onOpenFormPanel:  (staff: StaffRow, col: GradeColumn) => void;
   savingCells: Set<string>;
 }) {
   const [expanded, setExpanded] = useState(false);
@@ -1377,13 +1155,10 @@ function MobileStaffCard({
           {filteredColumns.length === 0 ? (
             <p className="px-4 py-3 text-xs text-gray-400 italic">No assignments</p>
           ) : filteredColumns.map(col => {
-            const score: number | null = col.type === "form"
-              ? (staff.formGrades?.find(g => g.formId === col.id)?.score ?? null)
-              : (staff.assignmentGrades?.find(g => g.assignmentId === col.id)?.grade ?? null);
-            const gradeEntry    = col.type === "assignment" ? staff.assignmentGrades?.find(g => g.assignmentId === col.id) : null;
-            const formEntry     = col.type === "form" ? staff.formGrades?.find(g => g.formId === col.id) : null;
+            const gradeEntry    = staff.assignmentGrades?.find(g => g.assignmentId === col.id);
+            const score: number | null = gradeEntry?.grade ?? null;
             const status        = gradeEntry?.status ?? null;
-            const hasSubmission = gradeEntry?.hasSubmission ?? formEntry?.hasSubmission ?? false;
+            const hasSubmission = gradeEntry?.hasSubmission ?? false;
             const cellKey       = `${staff.id}_${col.id}`;
             const isSaving      = savingCells.has(cellKey);
             const isNG          = col.displayGradeAs === "Not Graded";
@@ -1396,19 +1171,16 @@ function MobileStaffCard({
             })();
 
             const handleTap = () => {
-              if (isNG) return;
-              if (col.type === "form" && formEntry) { onOpenFormPanel(staff, col); }
-              else if (gradeEntry)                  { onOpenGradePanel(staff, col); }
+              if (isNG || !gradeEntry) return;
+              onOpenGradePanel(staff, col);
             };
 
             return (
               <button key={col.id} onClick={handleTap}
                 className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${isNG ? "opacity-40 cursor-default" : "hover:bg-white active:bg-white"}`}>
                 <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
-                  style={{ background: col.type === "form" ? MAROON_LIGHT : "#eff6ff" }}>
-                  {col.type === "form"
-                    ? <ClipboardList size={12} style={{ color: MAROON }} />
-                    : <BookOpen size={12} className="text-blue-600" />}
+                  style={{ background: "#eff6ff" }}>
+                  <BookOpen size={12} className="text-blue-600" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-semibold text-gray-800 truncate leading-tight">{col.title}</p>
@@ -1478,8 +1250,7 @@ export default function CourseGradesPage({ courseId }: { courseId: string }) {
   const [assignSearch, setAssignSearch] = useState("");
   const [activeCell,   setActiveCell]   = useState<{ staffId: string; colId: string } | null>(null);
   const [savingCells,  setSavingCells]  = useState<Set<string>>(new Set());
-  const [gradePanel,        setGradePanel]        = useState<GradePanelData | null>(null);
-  const [formResponsePanel, setFormResponsePanel] = useState<FormResponsePanelData | null>(null);
+  const [gradePanel,   setGradePanel]   = useState<GradePanelData | null>(null);
 
   const [filterPanelOpen, setFilterPanelOpen] = useState(false);
   const [activeFilters,   setActiveFilters]   = useState<ActiveFilter[]>([]);
@@ -1500,7 +1271,7 @@ export default function CourseGradesPage({ courseId }: { courseId: string }) {
 
   const fetchGrades = useCallback(async () => {
     setLoading(true); setLoadError(false);
-    setActiveCell(null); setGradePanel(null); setFormResponsePanel(null);
+    setActiveCell(null); setGradePanel(null);
     try {
       const res  = await fetch(`/api/admin/courses/${courseId}/grades`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -1508,7 +1279,6 @@ export default function CourseGradesPage({ courseId }: { courseId: string }) {
       setData({
         staff:       Array.isArray(json.staff)       ? json.staff       : [],
         assignments: Array.isArray(json.assignments) ? json.assignments : [],
-        forms:       Array.isArray(json.forms)       ? json.forms       : [],
       });
     } catch { setLoadError(true); setData(EMPTY_GRADES_DATA); }
     finally  { setLoading(false); }
@@ -1543,36 +1313,13 @@ export default function CourseGradesPage({ courseId }: { courseId: string }) {
               ? { ...g, grade, feedback: feedback ?? g.feedback, status: resolvedStatus, daysLate: daysLate ?? g.daysLate }
               : g
           );
-          return recalcStaff(s, updated, prev.assignments, prev.forms);
+          return recalcStaff(s, updated, prev.assignments);
         }),
       }));
       if (gradePanel?.staffId === staffId && gradePanel?.assignmentId === assignmentId) {
         setGradePanel(p => p ? {
           ...p, grade: { ...p.grade, grade, feedback: feedback ?? p.grade.feedback, status: resolvedStatus, daysLate: daysLate ?? p.grade.daysLate }
         } : p);
-      }
-    } finally { setSavingCells(p => { const n = new Set(p); n.delete(key); return n; }); }
-  };
-
-  const saveFormScore = async (staffId: string, formId: string, score: number | null) => {
-    const key = `${staffId}_${formId}`;
-    setSavingCells(p => new Set(p).add(key));
-    try {
-      const res = await fetch(`/api/admin/courses/${courseId}/grades/${staffId}`, {
-        method: "PATCH", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ formId, score }),
-      });
-      if (!res.ok) throw new Error();
-      setData(prev => ({
-        ...prev,
-        staff: prev.staff.map(s => {
-          if (s.id !== staffId) return s;
-          const updatedFormGrades = s.formGrades.map(g => g.formId === formId ? { ...g, score } : g);
-          return recalcStaff(s, s.assignmentGrades, prev.assignments, prev.forms, updatedFormGrades);
-        }),
-      }));
-      if (formResponsePanel?.staffId === staffId && formResponsePanel?.formId === formId) {
-        setFormResponsePanel(p => p ? { ...p, formGrade: { ...p.formGrade, score } } : p);
       }
     } finally { setSavingCells(p => { const n = new Set(p); n.delete(key); return n; }); }
   };
@@ -1594,8 +1341,8 @@ export default function CourseGradesPage({ courseId }: { courseId: string }) {
     </div>
   );
 
-  /* ── Derived data ── */
-  const allColumns: GradeColumn[] = [...(data.assignments ?? []), ...(data.forms ?? [])];
+  /* ── Derived data — assignments only ── */
+  const allColumns: GradeColumn[] = data.assignments ?? [];
 
   const assignmentGroups: string[] = Array.from(
     new Set(allColumns.map(c => c.assignmentGroup).filter(Boolean))
@@ -1621,10 +1368,10 @@ export default function CourseGradesPage({ courseId }: { courseId: string }) {
       }
       if (f.type === "submissions") {
         if (f.value === "Has No Submissions") {
-          const hasAny = (s.assignmentGrades ?? []).some(g => g.hasSubmission) || (s.formGrades ?? []).some(g => g.hasSubmission);
+          const hasAny = (s.assignmentGrades ?? []).some(g => g.hasSubmission);
           if (hasAny) return false;
         } else if (f.value === "Has Submissions") {
-          const hasAny = (s.assignmentGrades ?? []).some(g => g.hasSubmission) || (s.formGrades ?? []).some(g => g.hasSubmission);
+          const hasAny = (s.assignmentGrades ?? []).some(g => g.hasSubmission);
           if (!hasAny) return false;
         } else if (f.value === "Has Ungraded Submissions") {
           const hasUngraded = (s.assignmentGrades ?? []).some(g => g.hasSubmission && g.status !== "GRADED");
@@ -1637,20 +1384,13 @@ export default function CourseGradesPage({ courseId }: { courseId: string }) {
       if (f.type === "dateRange") {
         const start = f.startDate ? new Date(f.startDate) : null;
         const end   = f.endDate   ? new Date(f.endDate + "T23:59:59") : null;
-        const hasMatchingSubmission =
-          (s.assignmentGrades ?? []).some(g => {
-            if (!g.submittedAt) return false;
-            const d = new Date(g.submittedAt);
-            if (start && d < start) return false;
-            if (end   && d > end)   return false;
-            return true;
-          }) || (s.formGrades ?? []).some(g => {
-            if (!g.submittedAt) return false;
-            const d = new Date(g.submittedAt);
-            if (start && d < start) return false;
-            if (end   && d > end)   return false;
-            return true;
-          });
+        const hasMatchingSubmission = (s.assignmentGrades ?? []).some(g => {
+          if (!g.submittedAt) return false;
+          const d = new Date(g.submittedAt);
+          if (start && d < start) return false;
+          if (end   && d > end)   return false;
+          return true;
+        });
         if (!hasMatchingSubmission) return false;
       }
     }
@@ -1689,7 +1429,7 @@ export default function CourseGradesPage({ courseId }: { courseId: string }) {
   const STAFF_W = 180;
   const TOTAL_W = 100;
 
-  /* ── Mobile panel helpers ── */
+  /* ── Mobile panel helper ── */
   const openGradePanelForStaff = (staff: StaffRow, col: GradeColumn) => {
     const gradeEntry = staff.assignmentGrades?.find(g => g.assignmentId === col.id);
     if (gradeEntry) {
@@ -1697,16 +1437,6 @@ export default function CourseGradesPage({ courseId }: { courseId: string }) {
         staffId: staff.id, staffName: staff.name, staffEmail: staff.email, staffImage: staff.image,
         assignmentId: col.id, assignmentTitle: col.title, maxPoints: col.points,
         displayGradeAs: col.displayGradeAs, grade: gradeEntry,
-      });
-    }
-  };
-
-  const openFormPanelForStaff = (staff: StaffRow, col: GradeColumn) => {
-    const formEntry = staff.formGrades?.find(g => g.formId === col.id);
-    if (formEntry) {
-      setFormResponsePanel({
-        staffId: staff.id, staffName: staff.name, staffImage: staff.image,
-        formId: col.id, formTitle: col.title, maxPoints: col.points, formGrade: formEntry,
       });
     }
   };
@@ -1736,7 +1466,6 @@ export default function CourseGradesPage({ courseId }: { courseId: string }) {
           )}
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
-          {/* Mobile: search toggle */}
           <button onClick={() => setSearchExpanded(e => !e)}
             className={`w-8 h-8 flex items-center justify-center border border-white/20 rounded-lg transition-all lg:hidden ${searchExpanded ? "bg-white/20 text-white" : "text-white/70 hover:text-white hover:bg-white/10"}`}>
             <Search size={14} />
@@ -1749,12 +1478,8 @@ export default function CourseGradesPage({ courseId }: { courseId: string }) {
         </div>
       </div>
 
-      {/* ── SEARCH + FILTER BAR ──
-          Mobile: collapsed by default, toggle via search icon.
-          Desktop (lg+): always visible.
-      ── */}
+      {/* ── SEARCH + FILTER BAR ── */}
       <div className={`bg-white border-b border-gray-200 px-3 py-3 shrink-0 ${isMobile && !searchExpanded ? "hidden" : "block"}`}>
-        {/* Search row */}
         <div className="flex items-center gap-2">
           <div className="flex-1 relative">
             <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
@@ -1774,7 +1499,6 @@ export default function CourseGradesPage({ courseId }: { courseId: string }) {
           </div>
         </div>
 
-        {/* Filter row */}
         <div className="flex items-center gap-2 mt-2 flex-wrap">
           <div ref={filterBtnRef} className="relative shrink-0">
             <button onClick={() => setFilterPanelOpen(o => !o)}
@@ -1807,7 +1531,6 @@ export default function CourseGradesPage({ courseId }: { courseId: string }) {
             )}
           </div>
 
-          {/* Active filter chips — horizontal scroll on mobile */}
           <div className="flex items-center gap-1.5 flex-1 overflow-x-auto min-w-0" style={{ scrollbarWidth: "none" }}>
             {activeFilters.map((f, idx) => (
               <FilterChip key={idx} filter={f} onRemove={() => removeFilter(idx)}
@@ -1827,7 +1550,7 @@ export default function CourseGradesPage({ courseId }: { courseId: string }) {
         </div>
       </div>
 
-      {/* Mobile Filter Panel (bottom-sheet) */}
+      {/* Mobile Filter Panel */}
       {isMobile && (
         <FilterPanel
           open={filterPanelOpen}
@@ -1871,7 +1594,6 @@ export default function CourseGradesPage({ courseId }: { courseId: string }) {
                 staff={staff}
                 filteredColumns={filteredColumns}
                 onOpenGradePanel={openGradePanelForStaff}
-                onOpenFormPanel={openFormPanelForStaff}
                 savingCells={savingCells}
               />
             ))}
@@ -1883,7 +1605,6 @@ export default function CourseGradesPage({ courseId }: { courseId: string }) {
               style={{ width: STAFF_W + filteredColumns.length * COL_W + visibleGroups.length * TOTAL_W + TOTAL_W }}>
               <thead>
                 <tr>
-                  {/* Sticky staff name column */}
                   <th className="sticky left-0 z-20 bg-white border-b-2 border-r border-gray-200 text-left px-3 py-2.5"
                     style={{ width: STAFF_W, minWidth: STAFF_W, borderBottomColor: "#d1d5db" }}>
                     <span className="text-xs font-bold text-gray-700">Staff Name</span>
@@ -1896,11 +1617,10 @@ export default function CourseGradesPage({ courseId }: { courseId: string }) {
                     const isPct = dga === "Percentage";
                     const subLabel   = isNG ? "—" : isPct ? "%" : isCI ? "✓/✗" : "pts";
                     const outOfLabel = isNG ? "—" : isPct ? "100%" : `/${col.points}`;
-                    const needsGrading = col.type === "assignment"
-                      ? (data.staff ?? []).filter(s => {
-                          const g = (s.assignmentGrades ?? []).find(g => g.assignmentId === col.id);
-                          return g?.hasSubmission && g.status !== "GRADED";
-                        }).length : 0;
+                    const needsGrading = (data.staff ?? []).filter(s => {
+                      const g = (s.assignmentGrades ?? []).find(g => g.assignmentId === col.id);
+                      return g?.hasSubmission && g.status !== "GRADED";
+                    }).length;
 
                     return (
                       <th key={col.id}
@@ -1908,9 +1628,7 @@ export default function CourseGradesPage({ courseId }: { courseId: string }) {
                         style={{ width: COL_W, minWidth: COL_W, borderBottomColor: "#d1d5db", background: "white" }}>
                         <div className="flex flex-col items-center justify-end pb-2 pt-2 gap-0.5 px-1">
                           <div className="flex items-center gap-0.5 mb-0.5 w-full justify-center">
-                            {col.type === "form"
-                              ? <ClipboardList size={8} className="text-gray-400 shrink-0" />
-                              : <BookOpen size={8} className="text-gray-400 shrink-0" />}
+                            <BookOpen size={8} className="text-gray-400 shrink-0" />
                             <span className="text-[9px] font-semibold text-gray-600 truncate max-w-[72px]" title={col.title}>{col.title}</span>
                           </div>
                           <div className="flex items-center gap-1">
@@ -1938,7 +1656,6 @@ export default function CourseGradesPage({ courseId }: { courseId: string }) {
                     </th>
                   ))}
 
-                  {/* Sticky total column */}
                   <th className="sticky right-0 z-20 border-b-2 border-l border-gray-200 px-3 py-0 text-center align-bottom"
                     style={{ width: TOTAL_W, minWidth: TOTAL_W, borderBottomColor: "#d1d5db", background: "#f9fafb" }}>
                     <div className="pb-2 pt-2">
@@ -1956,7 +1673,6 @@ export default function CourseGradesPage({ courseId }: { courseId: string }) {
 
                   return (
                     <tr key={staff.id} className="group hover:bg-blue-50/30 transition-colors border-b border-gray-100">
-                      {/* Sticky staff name */}
                       <td className="sticky left-0 z-10 bg-white group-hover:bg-blue-50/30 border-r border-gray-200 px-3 py-2 transition-colors"
                         style={{ width: STAFF_W }}>
                         <div className="flex items-center gap-2">
@@ -1974,27 +1690,17 @@ export default function CourseGradesPage({ courseId }: { courseId: string }) {
                       </td>
 
                       {filteredColumns.map(col => {
-                        const dga   = col.displayGradeAs ?? "Points";
-                        const isNG  = dga === "Not Graded";
-                        const score: number | null = col.type === "form"
-                          ? (staff.formGrades?.find(g => g.formId === col.id)?.score ?? null)
-                          : (staff.assignmentGrades?.find(g => g.assignmentId === col.id)?.grade ?? null);
-                        const gradeEntry    = col.type === "assignment" ? staff.assignmentGrades?.find(g => g.assignmentId === col.id) : null;
-                        const formEntry     = col.type === "form" ? staff.formGrades?.find(g => g.formId === col.id) : null;
+                        const dga        = col.displayGradeAs ?? "Points";
+                        const isNG       = dga === "Not Graded";
+                        const gradeEntry = staff.assignmentGrades?.find(g => g.assignmentId === col.id);
+                        const score: number | null = gradeEntry?.grade ?? null;
                         const status        = gradeEntry?.status ?? null;
-                        const hasSubmission = gradeEntry?.hasSubmission ?? formEntry?.hasSubmission ?? false;
-                        const cellKey       = `${staff.id}_${col.id}`;
-                        const isActive      = activeCell?.staffId === staff.id && activeCell?.colId === col.id;
-                        const isSaving      = savingCells.has(cellKey);
+                        const hasSubmission = gradeEntry?.hasSubmission ?? false;
+                        const cellKey  = `${staff.id}_${col.id}`;
+                        const isActive = activeCell?.staffId === staff.id && activeCell?.colId === col.id;
+                        const isSaving = savingCells.has(cellKey);
 
                         const openPanel = () => {
-                          if (col.type === "form" && formEntry) {
-                            setFormResponsePanel({
-                              staffId: staff.id, staffName: staff.name, staffImage: staff.image,
-                              formId: col.id, formTitle: col.title, maxPoints: col.points, formGrade: formEntry,
-                            });
-                            return;
-                          }
                           if (gradeEntry) {
                             setGradePanel({
                               staffId: staff.id, staffName: staff.name, staffEmail: staff.email, staffImage: staff.image,
@@ -2006,13 +1712,6 @@ export default function CourseGradesPage({ courseId }: { courseId: string }) {
 
                         const handleCellClick = () => {
                           if (isNG) return;
-                          if (col.type === "form" && formEntry) {
-                            setFormResponsePanel({
-                              staffId: staff.id, staffName: staff.name, staffImage: staff.image,
-                              formId: col.id, formTitle: col.title, maxPoints: col.points, formGrade: formEntry,
-                            });
-                            return;
-                          }
                           setActiveCell(isActive ? null : { staffId: staff.id, colId: col.id });
                         };
 
@@ -2052,10 +1751,8 @@ export default function CourseGradesPage({ courseId }: { courseId: string }) {
                         const groupCols = allColumns.filter(c =>
                           (c.assignmentGroup || "Ungrouped") === group && !c.doNotCount && c.displayGradeAs !== "Not Graded"
                         );
-                        const groupEarned = groupCols.reduce((sum, col) => {
-                          if (col.type === "form") return sum + (staff.formGrades?.find(g => g.formId === col.id)?.score ?? 0);
-                          return sum + (staff.assignmentGrades?.find(g => g.assignmentId === col.id)?.grade ?? 0);
-                        }, 0);
+                        const groupEarned = groupCols.reduce((sum, col) =>
+                          sum + (staff.assignmentGrades?.find(g => g.assignmentId === col.id)?.grade ?? 0), 0);
                         const groupPossible = groupCols.reduce((sum, col) => sum + col.points, 0);
                         const groupPct      = groupPossible > 0 ? Math.round((groupEarned / groupPossible) * 100) : null;
                         return (
@@ -2069,7 +1766,6 @@ export default function CourseGradesPage({ courseId }: { courseId: string }) {
                         );
                       })}
 
-                      {/* Sticky total */}
                       <td className="sticky right-0 z-10 border-l border-gray-200 px-3 py-2 text-center transition-colors"
                         style={{ width: TOTAL_W, background: staff.percentage !== null ? pctBg : "#f9fafb" }}>
                         {staff.percentage !== null ? (
@@ -2098,18 +1794,8 @@ export default function CourseGradesPage({ courseId }: { courseId: string }) {
             <span className="text-[10px] font-medium text-gray-400">Click cell to edit · Enter or click away to save · Esc to cancel</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <ClipboardList size={10} className="text-gray-400" />
+            <BookOpen size={10} className="text-gray-400" />
             <span className="text-[10px] font-medium text-gray-400">Click → to open grade panel</span>
-          </div>
-          <div className="ml-auto flex items-center gap-3">
-            <div className="flex items-center gap-1">
-              <BookOpen size={9} className="text-gray-400" />
-              <span className="text-[10px] text-gray-400">Assignment</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <ClipboardList size={9} className="text-gray-400" />
-              <span className="text-[10px] text-gray-400">Form</span>
-            </div>
           </div>
         </div>
       )}
@@ -2134,20 +1820,6 @@ export default function CourseGradesPage({ courseId }: { courseId: string }) {
             await saveGrade(gradePanel.staffId, gradePanel.assignmentId, grade, feedback, status, daysLate);
           }}
           onOpenSpeedgrader={navigateToSpeedgrader}
-          isMobile={isMobile}
-        />
-      )}
-
-      {/* ── FORM RESPONSE PANEL ── */}
-      {formResponsePanel && (
-        <FormResponsePanel
-          panel={formResponsePanel}
-          courseId={courseId}
-          onClose={() => setFormResponsePanel(null)}
-          onSave={async score => { await saveFormScore(formResponsePanel.staffId, formResponsePanel.formId, score); }}
-          onViewResponses={() => {
-            router.push(`/admin/courses/${courseId}/forms/${formResponsePanel.formId}/responses`);
-          }}
           isMobile={isMobile}
         />
       )}

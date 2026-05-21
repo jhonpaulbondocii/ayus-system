@@ -512,6 +512,8 @@ export default function SpeedGraderClient({ courseId, assignmentId, initialStude
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentId]);
 
+  const saveGradeRef = useRef<(gradeOverride?: number | null) => Promise<void>>(async () => {});
+
   const handleRubricSelect = useCallback((criterionId: string, points: number) => {
     if (!current) return;
     const userId = current.userId;
@@ -521,17 +523,23 @@ export default function SpeedGraderClient({ courseId, assignmentId, initialStude
       if (points === -1) { next = { ...existing }; delete next[criterionId]; }
       else { next = { ...existing, [criterionId]: points }; }
       if (rubric) {
+        const allDone = rubric.criteria.every(c => { const key = c.id ?? c.name; return key in next; });
         const total = rubric.criteria.reduce((sum, c) => { const key = c.id ?? c.name; return sum + (next[key] ?? 0); }, 0);
         if (Object.keys(next).length > 0) setGradeInput(String(total));
+        if (allDone) {
+          setTimeout(() => saveGradeRef.current(total), 0);
+        }
       }
       return { ...prev, [userId]: next };
     });
   }, [current, rubric]);
 
   const saveGrade = useCallback(async (gradeOverride?: number | null) => {
+    saveGradeRef.current = saveGrade;
     if (!current || !assignment) return;
     if (displayAs === "Not Graded") return;
     if (!current.id) return;
+    if (gradeInput === "" && gradeOverride === undefined) return;
     setGradeSaving(true);
     const isExcused = (displayAs === "Complete/Incomplete" && ciStatus === "Excused") || (displayAs !== "Complete/Incomplete" && statusInput === "Excused");
     const isCiClear = displayAs === "Complete/Incomplete" && ciStatus === "---";

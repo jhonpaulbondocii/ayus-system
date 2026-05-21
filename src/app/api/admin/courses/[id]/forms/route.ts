@@ -49,15 +49,12 @@ function toPhTimeString(dt: Date | null | undefined): string {
 }
 
 // ── FIXED: Parse date+time strings as Philippine local time (UTC+8) ───────────
-// Previously used `new Date(dueDate)` which treated the date as UTC midnight,
-// causing an 8-hour offset when displayed in PH timezone.
 function parseDatePh(
   date: string | null | undefined,
   time: string | null | undefined
 ): Date | null {
   if (!date) return null;
 
-  // Strip any accidental ISO time component — keep only YYYY-MM-DD
   const datePart = date.includes("T") ? date.split("T")[0] : date;
 
   let hours = 0;
@@ -75,7 +72,6 @@ function parseDatePh(
 
   const pad = (n: number) => String(n).padStart(2, "0");
   const [year, month, day] = datePart.split("-").map(Number);
-  // Explicit +08:00 offset → stored correctly as UTC in DB
   const isoString = `${year}-${pad(month)}-${pad(day)}T${pad(hours)}:${pad(minutes)}:00+08:00`;
   const parsed = new Date(isoString);
   return isNaN(parsed.getTime()) ? null : parsed;
@@ -97,6 +93,9 @@ export async function GET(_req: NextRequest, { params }: Props) {
       include: {
         author: { select: { id: true, name: true, role: true, image: true } },
         questions: { orderBy: { order: "asc" } },
+        _count: {
+          select: { formSubmissions: true },
+        },
       },
     });
 
@@ -118,7 +117,6 @@ export async function GET(_req: NextRequest, { params }: Props) {
       accessCode: f.accessCode ?? "",
       confirmationMessage: f.confirmationMessage ?? "",
       assignTo: f.assignTo,
-      // FIXED: use PH timezone conversion instead of raw UTC ISO split
       dueDate:            toPhDateString(f.dueDate),
       dueTime:            toPhTimeString(f.dueDate),
       availableFrom:      toPhDateString(f.availableFrom),
@@ -128,12 +126,14 @@ export async function GET(_req: NextRequest, { params }: Props) {
       published: f.published,
       createdAt: f.createdAt.toISOString(),
       createdAtLabel: f.createdAt.toLocaleDateString(),
-      // ── Author info ──
       authorId: f.authorId,
       authorName: f.author?.name ?? f.authorName ?? "Admin",
       authorRole: f.authorRole ?? "Admin",
       authorImage: f.author?.image ?? null,
       questions: f.questions,
+      _count: {
+        formSubmissions: f._count.formSubmissions,
+      },
     }));
 
     return NextResponse.json({ forms: data });
@@ -193,7 +193,6 @@ export async function POST(req: NextRequest, { params }: Props) {
       return NextResponse.json({ error: "Title is required." }, { status: 400 });
     }
 
-    // ── Resolve author ──
     const authorId = access.userId ?? null;
     const authorSystemRole = access.systemRole ?? "STAFF";
     const authorCourseRole = access.courseRole ?? null;
@@ -211,7 +210,6 @@ export async function POST(req: NextRequest, { params }: Props) {
       if (user?.name) authorName = user.name;
     }
 
-    // Normalize formType: handle both "Survey / Feedback" and "SURVEY_FEEDBACK"
     const formTypeMap: Record<string, string> = {
       "Survey / Feedback": "SURVEY_FEEDBACK",
       "Evaluation": "EVALUATION",
@@ -241,7 +239,6 @@ export async function POST(req: NextRequest, { params }: Props) {
         accessCode: accessCode ? String(accessCode) : null,
         confirmationMessage: confirmationMessage ?? null,
         assignTo: Array.isArray(assignTo) ? assignTo : [],
-        // FIXED: use parseDatePh instead of new Date() to preserve PH timezone
         dueDate:       parseDatePh(dueDate, dueTime),
         dueTime:       dueTime ?? null,
         availableFrom: parseDatePh(availableFrom, availableFromTime),

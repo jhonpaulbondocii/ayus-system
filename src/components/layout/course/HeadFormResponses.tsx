@@ -1,20 +1,20 @@
 "use client";
 
-// AdminCourseFormResponsesPage.tsx
-// Route: /admin/courses/[id]/forms/[formId]/responses
+// HeadFormResponses.tsx
+// Mirrors AdminCourseFormResponsesPage UI/features exactly, adapted for Head role
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import {
   RefreshCw, ChevronLeft, Download, Search,
   Calendar, ChevronDown, ChevronUp, X, FileText,
-  ArrowRight,
 } from "lucide-react";
 
 const MAROON = "#7b1113";
 const FONT = "'Plus Jakarta Sans','Helvetica Neue',Arial,sans-serif";
 
-// ── Types ─────────────────────────────────────────────────────────────────────
+/* ─────────────────────────────────────────────────────────────────────────────
+   TYPES
+───────────────────────────────────────────────────────────────────────────── */
 interface Answer {
   questionId: string;
   question: string;
@@ -39,13 +39,23 @@ interface Submission {
 }
 
 interface FormMeta {
-  id: string;
+  id: string | number;
   title: string;
   formType: string;
-  questions: { id: string; question: string; type: string; points: number }[];
+  questions?: { id: string; question: string; type: string; points?: number }[];
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+interface Props {
+  form: FormMeta;
+  submissions: Submission[];
+  loading?: boolean;
+  onBack: () => void;
+  onRefresh?: () => void;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   HELPERS
+───────────────────────────────────────────────────────────────────────────── */
 function fmtDateTime(iso: string) {
   const d = new Date(iso);
   return (
@@ -78,8 +88,13 @@ function exportCSV(submissions: Submission[], formTitle: string) {
   if (inputName === null) return;
   const fileName = (inputName.trim() || defaultName).replace(/\.csv$/i, "") + ".csv";
   const allQuestions = submissions[0]?.answers?.map(a => a.question) ?? [];
-  const header = [...allQuestions];
+  const header = ["Name", "Email", "Role", "Section", "Submitted", ...allQuestions];
   const rows = submissions.map(s => [
+    s.user?.name ?? "Anonymous",
+    s.user?.email ?? "",
+    s.user?.courseRole ?? "",
+    s.user?.section ?? "",
+    new Date(s.createdAt).toLocaleString(),
     ...(s.answers?.map(a => fmtAnswerValue(a.answer)) ?? []),
   ]);
   const csv = [header, ...rows]
@@ -94,8 +109,9 @@ function exportCSV(submissions: Submission[], formTitle: string) {
   URL.revokeObjectURL(url);
 }
 
-
-// ── Submission Detail Modal ───────────────────────────────────────────────────
+/* ─────────────────────────────────────────────────────────────────────────────
+   SUBMISSION DETAIL MODAL
+───────────────────────────────────────────────────────────────────────────── */
 function SubmissionModal({
   submission, formTitle, onClose,
 }: {
@@ -103,7 +119,6 @@ function SubmissionModal({
   formTitle: string;
   onClose: () => void;
 }) {
-  // Prevent body scroll on mount
   useEffect(() => {
     document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = ""; };
@@ -111,18 +126,10 @@ function SubmissionModal({
 
   return (
     <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 z-50 bg-black/40"
-        onClick={onClose}
-      />
-
-      {/* Sheet — bottom on mobile, centered modal on sm+ */}
+      <div className="fixed inset-0 z-50 bg-black/40" onClick={onClose} />
       <div
         className="fixed z-50 bg-white flex flex-col border border-gray-100 overflow-hidden
-          /* mobile: bottom sheet */
           bottom-0 left-0 right-0 rounded-t-2xl max-h-[92dvh]
-          /* sm+: centered modal */
           sm:inset-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2
           sm:rounded-2xl sm:shadow-2xl sm:w-full sm:max-w-xl sm:max-h-[85vh]"
         style={{ fontFamily: FONT }}
@@ -134,35 +141,24 @@ function SubmissionModal({
         </div>
 
         {/* Header */}
-        <div
-          className="flex items-center justify-between px-5 py-3.5 border-b border-gray-100 shrink-0"
-          style={{ background: MAROON }}
-        >
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-100 shrink-0" style={{ background: MAROON }}>
           <div className="min-w-0">
             <p className="text-[10px] font-black uppercase tracking-widest text-white/60">Response Detail</p>
             <p className="text-sm font-bold text-white truncate mt-0.5">{formTitle}</p>
           </div>
-          <button
-            onClick={onClose}
-            className="w-7 h-7 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors ml-3 shrink-0"
-          >
+          <button onClick={onClose} className="w-7 h-7 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors ml-3 shrink-0">
             <X size={14} />
           </button>
         </div>
 
-        {/* User info + score */}
+        {/* User info */}
         <div className="px-5 py-4 border-b border-gray-100 shrink-0 bg-gray-50">
           <div className="flex items-start gap-3">
-            <div
-              className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-black shrink-0"
-              style={{ background: MAROON }}
-            >
+            <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-black shrink-0" style={{ background: MAROON }}>
               {getInitial(submission.user?.name ?? null, submission.user?.email ?? "?")}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-gray-800 truncate">
-                {submission.user?.name ?? "Anonymous"}
-              </p>
+              <p className="text-sm font-bold text-gray-800 truncate">{submission.user?.name ?? "Anonymous"}</p>
               <p className="text-xs text-gray-400 truncate">{submission.user?.email ?? "—"}</p>
               {submission.user?.courseRole && (
                 <p className="text-xs font-semibold mt-0.5" style={{ color: MAROON }}>
@@ -179,19 +175,15 @@ function SubmissionModal({
               </p>
             </div>
           </div>
-
         </div>
 
-        {/* Answers — scrollable */}
+        {/* Answers */}
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3 overscroll-contain">
           {!submission.answers || submission.answers.length === 0 ? (
             <p className="text-sm text-gray-400 text-center py-10">No answers recorded.</p>
           ) : (
             submission.answers.map((ans, i) => (
-              <div
-                key={ans.questionId ?? i}
-                className="border border-gray-100 rounded-xl p-4 bg-white shadow-sm"
-              >
+              <div key={ans.questionId ?? i} className="border border-gray-100 rounded-xl p-4 bg-white shadow-sm">
                 <p className="text-xs font-bold text-gray-600 mb-2 leading-snug">
                   <span className="text-gray-400 mr-1.5 font-mono">{i + 1}.</span>
                   {ans.question}
@@ -199,19 +191,23 @@ function SubmissionModal({
                 <p className="text-sm text-gray-900 font-medium pl-4 break-words">
                   {fmtAnswerValue(ans.answer)}
                 </p>
+                {(ans.points ?? 0) > 0 && (
+                  <div className="mt-2 pl-4 flex items-center gap-1.5">
+                    <span className="text-[10px] text-gray-400">Score:</span>
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded" style={{ background: "#fef2f2", color: MAROON }}>
+                      {ans.earnedPoints ?? 0}/{ans.points} pts
+                    </span>
+                  </div>
+                )}
               </div>
             ))
           )}
-          {/* Bottom padding for safe area on mobile */}
           <div className="h-2" />
         </div>
 
         {/* Footer */}
         <div className="px-5 py-4 border-t border-gray-100 bg-white shrink-0 flex gap-2 pb-safe">
-          <button
-            onClick={onClose}
-            className="flex-1 sm:flex-none h-11 sm:h-9 px-5 border border-gray-200 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-50 transition-colors"
-          >
+          <button onClick={onClose} className="flex-1 sm:flex-none h-11 sm:h-9 px-5 border border-gray-200 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-50 transition-colors">
             Close
           </button>
         </div>
@@ -220,14 +216,10 @@ function SubmissionModal({
   );
 }
 
-// ── Submission Row — desktop ───────────────────────────────────────────────────
-function SubmissionRow({
-  submission, index, onClick,
-}: {
-  submission: Submission;
-  index: number;
-  onClick: () => void;
-}) {
+/* ─────────────────────────────────────────────────────────────────────────────
+   DESKTOP ROW
+───────────────────────────────────────────────────────────────────────────── */
+function SubmissionRow({ submission, index, onClick }: { submission: Submission; index: number; onClick: () => void }) {
   const answerCount = submission.answers?.length ?? 0;
   return (
     <div
@@ -235,10 +227,7 @@ function SubmissionRow({
       className="hidden sm:flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 cursor-pointer transition-colors border-b border-gray-100 last:border-0 group"
     >
       <span className="text-xs text-gray-300 font-mono w-5 shrink-0 text-right">{index + 1}</span>
-      <div
-        className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-black shrink-0"
-        style={{ background: MAROON }}
-      >
+      <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-black shrink-0" style={{ background: MAROON }}>
         {getInitial(submission.user?.name ?? null, submission.user?.email ?? "?")}
       </div>
       <div className="flex-1 min-w-0">
@@ -248,14 +237,11 @@ function SubmissionRow({
         <p className="text-xs text-gray-400 truncate">{submission.user?.email ?? "—"}</p>
         {submission.user?.courseRole && (
           <p className="text-xs font-semibold" style={{ color: MAROON }}>
-            {submission.user.courseRole}
-            {submission.user.section ? ` · ${submission.user.section}` : ""}
+            {submission.user.courseRole}{submission.user.section ? ` · ${submission.user.section}` : ""}
           </p>
         )}
       </div>
-      {answerCount > 0 && (
-        <span className="text-xs text-gray-400 shrink-0">{answerCount} ans</span>
-      )}
+      {answerCount > 0 && <span className="text-xs text-gray-400 shrink-0">{answerCount} ans</span>}
       <div className="flex items-center gap-1 text-xs text-gray-400 shrink-0">
         <Calendar size={11} />
         {fmtDateTime(submission.createdAt)}
@@ -265,109 +251,47 @@ function SubmissionRow({
   );
 }
 
-// ── Submission Card — mobile ───────────────────────────────────────────────────
-function SubmissionCard({
-  submission, index, onClick,
-}: {
-  submission: Submission;
-  index: number;
-  onClick: () => void;
-}) {
+/* ─────────────────────────────────────────────────────────────────────────────
+   MOBILE CARD
+───────────────────────────────────────────────────────────────────────────── */
+function SubmissionCard({ submission, index, onClick }: { submission: Submission; index: number; onClick: () => void }) {
   const answerCount = submission.answers?.length ?? 0;
   return (
     <div
       onClick={onClick}
       className="sm:hidden flex items-center gap-3 px-4 py-3.5 border-b border-gray-100 last:border-0 active:bg-gray-50 cursor-pointer transition-colors"
     >
-      {/* Avatar */}
-      <div
-        className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-black shrink-0"
-        style={{ background: MAROON }}
-      >
+      <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-black shrink-0" style={{ background: MAROON }}>
         {getInitial(submission.user?.name ?? null, submission.user?.email ?? "?")}
       </div>
-
-      {/* Info */}
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-gray-800 truncate">
-          {submission.user?.name ?? "Anonymous"}
-        </p>
+        <p className="text-sm font-semibold text-gray-800 truncate">{submission.user?.name ?? "Anonymous"}</p>
         <p className="text-xs text-gray-400 truncate">{submission.user?.email ?? "—"}</p>
         <div className="flex items-center gap-2 mt-0.5 flex-wrap">
           {submission.user?.courseRole && (
             <span className="text-[10px] font-bold" style={{ color: MAROON }}>
-              {submission.user.courseRole}
-              {submission.user.section ? ` · ${submission.user.section}` : ""}
+              {submission.user.courseRole}{submission.user.section ? ` · ${submission.user.section}` : ""}
             </span>
           )}
           <span className="text-[10px] text-gray-400 flex items-center gap-0.5">
             <Calendar size={9} /> {fmtDateShort(submission.createdAt)}
           </span>
-          {answerCount > 0 && (
-            <span className="text-[10px] text-gray-400">{answerCount} answers</span>
-          )}
+          {answerCount > 0 && <span className="text-[10px] text-gray-400">{answerCount} answers</span>}
         </div>
       </div>
-
-      {/* Score badge + chevron */}
-      <div className="flex flex-col items-end gap-1.5 shrink-0">
-        <ChevronDown size={13} className="text-gray-300 -rotate-90" />
-      </div>
+      <ChevronDown size={13} className="text-gray-300 shrink-0 -rotate-90" />
     </div>
   );
 }
 
-// ── Data fetcher ──────────────────────────────────────────────────────────────
-async function loadData(courseId: string, formId: string) {
-  const [resData, formData] = await Promise.all([
-    fetch(`/api/admin/courses/${courseId}/forms/${formId}/submissions`).then(r => r.json()),
-    fetch(`/api/admin/courses/${courseId}/forms/${formId}`).then(r => r.json()),
-  ]);
-  return { submissions: resData.submissions ?? [], form: formData.form ?? formData ?? null };
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// MAIN COMPONENT
-// ═══════════════════════════════════════════════════════════════════════════════
-export default function AdminCourseFormResponsesPage({
-  courseId,
-  formId,
-}: {
-  courseId: string;
-  formId: string;
-}) {
-  const router = useRouter();
-  const [submissions, setSubmissions] = useState<Submission[]>([]);
-  const [form, setForm] = useState<FormMeta | null>(null);
-  const [loading, setLoading] = useState(true);
+/* ─────────────────────────────────────────────────────────────────────────────
+   MAIN COMPONENT
+───────────────────────────────────────────────────────────────────────────── */
+export default function HeadFormResponses({ form, submissions, loading = false, onBack, onRefresh }: Props) {
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Submission | null>(null);
   const [sortDir, setSortDir] = useState<"desc" | "asc">("desc");
   const [showSearch, setShowSearch] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    loadData(courseId, formId)
-      .then(({ submissions: subs, form: f }) => {
-        if (cancelled) return;
-        setSubmissions(subs);
-        setForm(f);
-        setLoading(false);
-      })
-      .catch(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
-  }, [courseId, formId]);
-
-  const handleRefresh = () => {
-    setLoading(true);
-    loadData(courseId, formId)
-      .then(({ submissions: subs, form: f }) => {
-        setSubmissions(subs);
-        setForm(f);
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  };
 
   const filtered = submissions
     .filter(s => {
@@ -383,21 +307,13 @@ export default function AdminCourseFormResponsesPage({
     });
 
   const formTitle = form?.title ?? "Form";
-  const isGraded = form?.formType === "Graded Assessment";
-  const avgScore = isGraded && submissions.length
-    ? (submissions.reduce((s, sub) => s + (sub.score ?? 0), 0) / submissions.length).toFixed(1)
-    : null;
 
   return (
     <div className="flex flex-col h-full bg-white" style={{ fontFamily: FONT }}>
 
       {/* ── Header ── */}
       <div className="border-b border-gray-200 px-3 sm:px-6 py-3 flex items-center gap-2 sm:gap-3 shrink-0 bg-white">
-        <button
-          onClick={() => router.push(`/admin/courses/${courseId}/forms/${formId}`)}
-          className="flex items-center gap-1 text-xs font-bold hover:underline shrink-0 py-1"
-          style={{ color: MAROON }}
-        >
+        <button onClick={onBack} className="flex items-center gap-1 text-xs font-bold hover:underline shrink-0 py-1" style={{ color: MAROON }}>
           <ChevronLeft size={14} />
           <span className="hidden sm:inline">Back</span>
         </button>
@@ -416,13 +332,16 @@ export default function AdminCourseFormResponsesPage({
             {showSearch ? <X size={14} /> : <Search size={14} />}
           </button>
 
-          <button
-            onClick={handleRefresh}
-            className="w-8 h-8 flex items-center justify-center border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-400 transition-colors"
-            title="Refresh"
-          >
-            <RefreshCw size={13} className={loading ? "animate-spin" : ""} />
-          </button>
+          {onRefresh && (
+            <button
+              onClick={onRefresh}
+              className="w-8 h-8 flex items-center justify-center border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-400 transition-colors"
+              title="Refresh"
+            >
+              <RefreshCw size={13} className={loading ? "animate-spin" : ""} />
+            </button>
+          )}
+
           <button
             onClick={() => exportCSV(filtered, formTitle)}
             disabled={!filtered.length}
@@ -434,7 +353,7 @@ export default function AdminCourseFormResponsesPage({
         </div>
       </div>
 
-      {/* Mobile search bar (expandable) */}
+      {/* Mobile search bar */}
       {showSearch && (
         <div className="sm:hidden px-3 py-2 border-b border-gray-100 bg-white shrink-0">
           <div className="relative">
@@ -447,10 +366,7 @@ export default function AdminCourseFormResponsesPage({
               className="w-full pl-8 pr-8 h-9 border border-gray-200 rounded-lg text-xs outline-none focus:border-gray-400 bg-white"
             />
             {search && (
-              <button
-                onClick={() => setSearch("")}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-500"
-              >
+              <button onClick={() => setSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-500">
                 <X size={12} />
               </button>
             )}
@@ -472,7 +388,7 @@ export default function AdminCourseFormResponsesPage({
         )}
       </div>
 
-      {/* ── Search + sort (desktop only) ── */}
+      {/* ── Search + sort (desktop) ── */}
       <div className="hidden sm:flex items-center gap-2 px-6 py-3 border-b border-gray-100 shrink-0">
         <div className="relative flex-1 max-w-xs">
           <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -483,10 +399,7 @@ export default function AdminCourseFormResponsesPage({
             className="w-full pl-8 pr-8 h-8 border border-gray-200 rounded-lg text-xs outline-none focus:border-gray-400 bg-white"
           />
           {search && (
-            <button
-              onClick={() => setSearch("")}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-500"
-            >
+            <button onClick={() => setSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-500">
               <X size={12} />
             </button>
           )}
@@ -509,11 +422,7 @@ export default function AdminCourseFormResponsesPage({
           {sortDir === "desc" ? <ChevronDown size={11} /> : <ChevronUp size={11} />}
           {sortDir === "desc" ? "Newest first" : "Oldest first"}
         </button>
-        {search && (
-          <span className="text-[10px] text-gray-400 ml-1">
-            {filtered.length} result{filtered.length !== 1 ? "s" : ""}
-          </span>
-        )}
+        {search && <span className="text-[10px] text-gray-400 ml-1">{filtered.length} result{filtered.length !== 1 ? "s" : ""}</span>}
       </div>
 
       {/* ── Content ── */}
@@ -524,18 +433,13 @@ export default function AdminCourseFormResponsesPage({
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 gap-3 px-4">
-            <div
-              className="w-14 h-14 rounded-full flex items-center justify-center"
-              style={{ background: "#fef2f2" }}
-            >
+            <div className="w-14 h-14 rounded-full flex items-center justify-center" style={{ background: "#fef2f2" }}>
               <FileText size={22} style={{ color: MAROON }} />
             </div>
             <p className="text-sm font-semibold text-gray-500 text-center">
               {search ? `No results for "${search}"` : "No responses yet"}
             </p>
-            {!search && (
-              <p className="text-xs text-gray-400 text-center">Responses will appear here once submitted.</p>
-            )}
+            {!search && <p className="text-xs text-gray-400 text-center">Responses will appear here once submitted.</p>}
           </div>
         ) : (
           <div>
@@ -551,9 +455,7 @@ export default function AdminCourseFormResponsesPage({
 
             {filtered.map((s, i) => (
               <div key={s.id}>
-                {/* Desktop row */}
                 <SubmissionRow submission={s} index={i} onClick={() => setSelected(s)} />
-                {/* Mobile card */}
                 <SubmissionCard submission={s} index={i} onClick={() => setSelected(s)} />
               </div>
             ))}
@@ -561,7 +463,7 @@ export default function AdminCourseFormResponsesPage({
         )}
       </div>
 
-      {/* ── Detail Modal / Sheet ── */}
+      {/* ── Detail Modal ── */}
       {selected && (
         <SubmissionModal
           submission={selected}

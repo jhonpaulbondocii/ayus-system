@@ -771,8 +771,8 @@ function AssignToSelector({ selected, setSelected, staff }: {
 }
 
 // ─── ThreeDotMenu ─────────────────────────────────────────────────────────────
-function ThreeDotMenu({ onDelete, onToggleLock, locked, allowComments, onToggleComments }: {
-  onDelete: () => void; onToggleLock: () => void; locked?: boolean; allowComments?: boolean; onToggleComments: () => void;
+function ThreeDotMenu({ onDelete, onToggleLock, locked }: {
+  onDelete: () => void; onToggleLock: () => void; locked?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -797,10 +797,7 @@ function ThreeDotMenu({ onDelete, onToggleLock, locked, allowComments, onToggleC
               {locked ? <><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 9.9-1" /></> : <><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></>}
             </svg>{locked ? "Unlock" : "Lock"}
           </button>
-          <button type="button" onClick={() => { onToggleComments(); setOpen(false); }} className="w-full text-left px-4 py-2.5 text-sm flex items-center gap-2 hover:bg-gray-50 text-gray-700">
-            <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
-            {allowComments ? "Disable Comments" : "Enable Comments"}
-          </button>
+          
         </div>
       )}
     </div>
@@ -831,15 +828,12 @@ function AuthorAvatar({ name, size = 36 }: { name: string; size?: number }) {
 }
 
 // ─── AnnouncementDetailView ───────────────────────────────────────────────────
-function AnnouncementDetailView({ announcement, onBack, onDelete, onToggleLock, onToggleComments, courseId }: {
+function AnnouncementDetailView({ announcement, onBack, onDelete, onToggleLock, courseId }: {
   announcement: Announcement; onBack: () => void;
   onDelete: (id: string | number) => void;
   onToggleLock: (id: string | number) => void;
-  onToggleComments: (id: string | number) => void;
   courseId: string;
 }) {
-  const [replyText, setReplyText] = useState("");
-  const [replies, setReplies] = useState<{ id: number; text: string; author: string; date: string }[]>([]);
   const [authorRole, setAuthorRole] = useState<string | undefined>(undefined);
 
   useEffect(() => {
@@ -855,17 +849,9 @@ function AnnouncementDetailView({ announcement, onBack, onDelete, onToggleLock, 
 
   const formatAudience = (assignTo?: string[]) => !assignTo || assignTo.length === 0 ? "Everyone" : assignTo.join(", ");
 
-  const submitReply = () => {
-    if (!replyText.trim()) return;
-    setReplies(prev => [...prev, {
-      id: Date.now(), text: replyText.trim(), author: "Admin",
-      date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit", hour12: true }),
-    }]);
-    setReplyText("");
-  };
 
   return (
-    <div className="px-3 sm:px-6 lg:px-8 py-4 sm:py-6 max-w-4xl mx-auto">
+    <div className="px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
       <button type="button" onClick={onBack} className="inline-flex items-center gap-1 text-sm mb-4 hover:underline" style={{ color: MAROON }}>
         <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
         Back to Announcements
@@ -873,7 +859,7 @@ function AnnouncementDetailView({ announcement, onBack, onDelete, onToggleLock, 
 
       <div className="border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm">
         {/* Header */}
-        <div className="flex items-start gap-3 px-4 sm:px-6 py-4 border-b border-gray-100">
+        <div className="flex items-start gap-3 px-4 sm:px-8 py-4 sm:py-5 border-b border-gray-100">
           <AuthorAvatar name={announcement.author} size={38} />
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
@@ -893,14 +879,12 @@ function AnnouncementDetailView({ announcement, onBack, onDelete, onToggleLock, 
               onDelete={() => { onDelete(announcement.id); onBack(); }}
               onToggleLock={() => onToggleLock(announcement.id)}
               locked={announcement.locked}
-              allowComments={announcement.allowComments}
-              onToggleComments={() => onToggleComments(announcement.id)}
             />
           </div>
         </div>
 
         {/* Body */}
-        <div className="px-4 sm:px-6 py-5">
+        <div className="px-4 sm:px-8 py-5 sm:py-7">
           <h1 className="text-lg sm:text-xl font-bold text-gray-900 mb-4">{announcement.title}</h1>
           {announcement.bodyHtml
             ? <div className="prose prose-sm max-w-none text-gray-700 leading-relaxed" dangerouslySetInnerHTML={{ __html: announcement.bodyHtml }} style={{ lineHeight: 1.8 }} />
@@ -922,73 +906,20 @@ function AnnouncementDetailView({ announcement, onBack, onDelete, onToggleLock, 
           )}
         </div>
 
-        {/* Reply area */}
-        {announcement.locked ? (
-          <div className="px-4 sm:px-6 py-4 border-t border-gray-100 bg-amber-50">
-            <p className="text-sm text-amber-700 flex items-center gap-2">
-              <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
-              This announcement is locked. Replies are disabled.
-            </p>
-          </div>
-        ) : announcement.allowComments === false ? (
-          <div className="px-4 sm:px-6 py-4 border-t border-gray-100 bg-gray-50">
-            <p className="text-sm text-gray-500 flex items-center gap-2">
-              <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
-              Comments are disabled for this announcement.
-            </p>
-          </div>
-        ) : (
-          <div className="px-4 sm:px-6 py-4 border-t border-gray-100 bg-gray-50">
-            <div className="text-sm font-semibold text-gray-700 mb-3">
-              {replies.length > 0 ? `${replies.length} Repl${replies.length !== 1 ? "ies" : "y"}` : "Reply"}
-            </div>
-            {replies.length > 0 && (
-              <div className="space-y-3 mb-4">
-                {replies.map((r) => (
-                  <div key={r.id} className="flex gap-3">
-                    <AuthorAvatar name={r.author} size={30} />
-                    <div className="flex-1 bg-white rounded border border-gray-200 px-3 py-2 min-w-0">
-                      <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <span className="text-xs font-semibold text-gray-700">{r.author}</span>
-                        <span className="text-xs text-gray-400">{r.date}</span>
-                      </div>
-                      <p className="text-sm text-gray-600">{r.text}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-            <div className="flex gap-3 items-start">
-              <AuthorAvatar name="Admin" size={30} />
-              <div className="flex-1 min-w-0">
-                <textarea value={replyText} onChange={(e) => setReplyText(e.target.value)}
-                  placeholder="Write a reply…" rows={3}
-                  className="w-full border border-gray-300 rounded px-3 py-2 text-sm resize-none outline-none focus:border-[#7b1113] transition-colors"
-                  onKeyDown={(e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) submitReply(); }} />
-                <div className="flex justify-end mt-2">
-                  <button type="button" onClick={submitReply} disabled={!replyText.trim()} style={{ background: MAROON }}
-                    className="h-8 px-4 text-white text-sm rounded hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed">
-                    Post Reply
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        
       </div>
     </div>
   );
 }
 
 // ─── AnnouncementsListView ────────────────────────────────────────────────────
-function AnnouncementsListView({ filter, setFilter, search, setSearch, onAdd, onMarkAllRead, announcements, onRemove, onToggleLock, onToggleComments, onView, selectedIds, setSelectedIds }: {
+function AnnouncementsListView({ filter, setFilter, search, setSearch, onAdd, onMarkAllRead, announcements, onRemove, onToggleLock, onView, selectedIds, setSelectedIds }: {
   filter: FilterType; setFilter: (v: FilterType) => void;
   search: string; setSearch: (v: string) => void;
   onAdd: () => void; onMarkAllRead: () => void;
   announcements: Announcement[];
   onRemove: (id: string | number) => void;
   onToggleLock: (id: string | number) => void;
-  onToggleComments: (id: string | number) => void;
   onView: (id: string | number) => void;
   selectedIds: Set<string | number>;
   setSelectedIds: React.Dispatch<React.SetStateAction<Set<string | number>>>;
@@ -1050,12 +981,7 @@ function AnnouncementsListView({ filter, setFilter, search, setSearch, onAdd, on
             style={{ borderColor: hasSelection ? "#ef4444" : "#d1d5db", color: hasSelection ? "#ef4444" : "#d1d5db", background: "white", cursor: hasSelection ? "pointer" : "not-allowed", opacity: hasSelection ? 1 : 0.45 }}>
             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6M14 11v6" /><path d="M9 6V4h6v2" /></svg>
           </button>
-          <button type="button" disabled={!hasSelection} onClick={() => hasSelection && setConfirmLock("bulk")}
-            title="Toggle lock selected"
-            className="inline-flex items-center justify-center w-9 h-9 border rounded transition-colors"
-            style={{ borderColor: hasSelection ? MAROON : "#d1d5db", color: hasSelection ? MAROON : "#d1d5db", background: "white", cursor: hasSelection ? "pointer" : "not-allowed", opacity: hasSelection ? 1 : 0.45 }}>
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
-          </button>
+        
         </div>
       </div>
 
@@ -1120,10 +1046,7 @@ function AnnouncementsListView({ filter, setFilter, search, setSearch, onAdd, on
                     ))}
                   </div>
                 )}
-                <button type="button" onClick={(e) => { e.stopPropagation(); onView(a.id); }}
-                  className="mt-1.5 inline-flex items-center gap-1 text-xs hover:underline" style={{ color: MAROON }}>
-                  ↩ Reply
-                </button>
+                
               </div>
 
               {/* Right side: menu + date */}
@@ -1132,8 +1055,6 @@ function AnnouncementsListView({ filter, setFilter, search, setSearch, onAdd, on
                   onDelete={() => { setPendingDeleteId(a.id); setConfirmDelete("single"); }}
                   onToggleLock={() => onToggleLock(a.id)}
                   locked={a.locked}
-                  allowComments={a.allowComments}
-                  onToggleComments={() => onToggleComments(a.id)}
                 />
                 <div className="text-right text-xs text-gray-400 leading-snug hidden sm:block">
                   <div>{a.createdAtLabel}</div>
@@ -1157,7 +1078,6 @@ export function AnnouncementCreateView(props: {
   onRemoveAttachment: (id: string) => void;
   assignTo: string[]; setAssignTo: React.Dispatch<React.SetStateAction<string[]>>;
   staff: Staff[];
-  allowComment: boolean; setAllowComment: (v: boolean) => void;
   availableFromDate: string; setAvailableFromDate: (v: string) => void;
   availableFromTime: string; setAvailableFromTime: (v: string) => void;
   untilDate: string; setUntilDate: (v: string) => void;
@@ -1168,7 +1088,6 @@ export function AnnouncementCreateView(props: {
   const {
     isCoursePublished, topicTitle, setTopicTitle, bodyHtml, setBodyHtml, setBodyText,
     attachments, onAddAttachments, onRemoveAttachment, assignTo, setAssignTo, staff,
-    allowComment, setAllowComment,
     availableFromDate, setAvailableFromDate, availableFromTime, setAvailableFromTime,
     untilDate, setUntilDate, untilTime, setUntilTime,
     onCancel, onPublish, onResetUntil, isPublishing,
@@ -1176,7 +1095,7 @@ export function AnnouncementCreateView(props: {
 
   return (
     // FIXED: added pb-safe for mobile nav bar clearance; max-w constrains width
-    <div className="px-3 sm:px-6 lg:px-8 py-4 sm:py-6 max-w-4xl mx-auto pb-6">
+    <div className="px-3 sm:px-6 lg:px-8 py-4 sm:py-6 pb-6">
       <div className="flex items-center gap-6 border-b border-gray-200 mb-6">
         <div className="text-sm font-medium py-3 border-b-2 -mb-px" style={{ borderColor: MAROON, color: "#374151" }}>Details</div>
       </div>
@@ -1213,15 +1132,7 @@ export function AnnouncementCreateView(props: {
         <AssignToSelector selected={assignTo} setSelected={setAssignTo} staff={staff} />
       </div>
 
-      {/* Options */}
-      <div className="mb-6">
-        <div className="text-sm font-medium text-gray-800 mb-3">Options</div>
-        <label className="flex items-center gap-2 cursor-pointer select-none text-sm text-gray-700">
-          <input type="checkbox" checked={allowComment} onChange={(e) => setAllowComment(e.target.checked)}
-            className="h-4 w-4 rounded" style={{ accentColor: MAROON }} />
-          Allow Participants to Comment
-        </label>
-      </div>
+    
 
       {/* Scheduling — FIXED: stacked on mobile, no overflow */}
       <div className="mb-8 border border-gray-200 rounded-lg p-4 bg-gray-50">
@@ -1295,7 +1206,6 @@ export default function CourseAnnouncementsPage({
   const [attachments, setAttachments] = useState<AttachedFile[]>([]);
   const [assignTo, setAssignTo] = useState<string[]>(["Everyone"]);
   const [staff, setStaff] = useState<Staff[]>([]);
-  const [allowComment, setAllowComment] = useState(true);
   const [availableFromDate, setAvailableFromDate] = useState("");
   const [availableFromTime, setAvailableFromTime] = useState("");
   const [untilDate, setUntilDate] = useState("");
@@ -1379,20 +1289,7 @@ export default function CourseAnnouncementsPage({
     }
   };
 
-  const onToggleComments = async (id: string | number) => {
-    const current = announcements.find(a => a.id === id);
-    const newValue = current ? !current.allowComments : false;
-    setAnnouncements(prev => prev.map(a => a.id === id ? { ...a, allowComments: newValue } : a));
-    if (!courseId) return;
-    try {
-      const res = await fetch(`/api/admin/courses/${courseId}/announcements/${id}`, {
-        method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ allowComments: newValue }),
-      });
-      if (!res.ok) throw new Error("Failed");
-    } catch {
-      setAnnouncements(prev => prev.map(a => a.id === id ? { ...a, allowComments: !newValue } : a));
-    }
-  };
+  
 
   const onAddAttachments = (files: AttachedFile[]) => setAttachments(prev => [...prev, ...files]);
   const onRemoveAttachment = (id: string) => setAttachments(prev => prev.filter(f => f.id !== id));
@@ -1416,7 +1313,7 @@ export default function CourseAnnouncementsPage({
 
   const resetCreateForm = () => {
     setTopicTitle(""); setBodyHtml(""); setBodyText(""); setAttachments([]);
-    setAssignTo(["Everyone"]); setAllowComment(true);
+    setAssignTo(["Everyone"]);
     setAvailableFromDate(""); setAvailableFromTime(""); setUntilDate(""); setUntilTime("");
   };
 
@@ -1434,7 +1331,7 @@ export default function CourseAnnouncementsPage({
         createdAtLabel: now.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit", hour12: true }),
         read: false, attachments: [...attachments],
         assignTo: assignTo.length ? assignTo : ["Everyone"],
-        locked: false, allowComments: allowComment,
+        locked: false,
         availableFrom: availableFromIso, availableUntil: availableUntilIso,
       }, ...prev]);
       resetCreateForm(); setMode("list"); return;
@@ -1448,7 +1345,6 @@ export default function CourseAnnouncementsPage({
         body: JSON.stringify({
           title: topicTitle.trim(), bodyText: bodyText.trim(), bodyHtml, author: authorName,
           assignTo: assignTo.length ? assignTo : ["Everyone"],
-          allowComments: allowComment,
           availableFrom: availableFromIso,
           availableUntil: availableUntilIso,
           attachments: attachments.map(f => ({ name: f.name, url: f.url, size: f.size, mimeType: f.type })),
@@ -1463,7 +1359,7 @@ export default function CourseAnnouncementsPage({
         read: false,
         attachments: (announcement.attachments ?? []).map((a: { id: string; name: string; size: number; mimeType: string; url: string }) => ({ id: a.id, name: a.name, size: a.size, type: a.mimeType, url: a.url })),
         assignTo: announcement.assignTo,
-        locked: false, allowComments: allowComment,
+        locked: false,
         availableFrom: announcement.availableFrom ?? null,
         availableUntil: announcement.availableUntil ?? null,
       }, ...prev]);
@@ -1493,7 +1389,6 @@ export default function CourseAnnouncementsPage({
         onBack={() => { setMode("list"); setViewingId(null); }}
         onDelete={onRemove}
         onToggleLock={onToggleLock}
-        onToggleComments={onToggleComments}
       />
     );
   }
@@ -1506,7 +1401,6 @@ export default function CourseAnnouncementsPage({
         bodyHtml={bodyHtml} setBodyHtml={setBodyHtml} setBodyText={setBodyText}
         attachments={attachments} onAddAttachments={onAddAttachments} onRemoveAttachment={onRemoveAttachment}
         assignTo={assignTo} setAssignTo={setAssignTo} staff={staff}
-        allowComment={allowComment} setAllowComment={setAllowComment}
         availableFromDate={availableFromDate} setAvailableFromDate={setAvailableFromDate}
         availableFromTime={availableFromTime} setAvailableFromTime={setAvailableFromTime}
         untilDate={untilDate} setUntilDate={setUntilDate} untilTime={untilTime} setUntilTime={setUntilTime}
@@ -1520,7 +1414,7 @@ export default function CourseAnnouncementsPage({
       filter={filter} setFilter={setFilter} search={search} setSearch={setSearch}
       onAdd={() => setMode("create")} onMarkAllRead={onMarkAllRead}
       announcements={filteredAnnouncements}
-      onRemove={onRemove} onToggleLock={onToggleLock} onToggleComments={onToggleComments}
+      onRemove={onRemove} onToggleLock={onToggleLock}
       onView={onView} selectedIds={selectedIds} setSelectedIds={setSelectedIds}
     />
   );

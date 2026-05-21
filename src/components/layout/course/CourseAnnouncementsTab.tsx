@@ -110,12 +110,6 @@ function AnnouncementThreeDot({
   );
 }
 
-// ─── Reply types ──────────────────────────────────────────────────────────────
-interface Reply {
-  id: number;
-  text: string;
-  date: string;
-}
 
 // ─── Detail View ──────────────────────────────────────────────────────────────
 function StudentAnnouncementDetail({
@@ -127,29 +121,9 @@ function StudentAnnouncementDetail({
   onBack: () => void;
   onMarkRead: (id: string) => void;
 }) {
-  const [replyText, setReplyText] = useState("");
-  const [replies, setReplies] = useState<Reply[]>([]);
-  const [showReplyEditor, setShowReplyEditor] = useState(false);
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const isMobile = useIsMobile();
-
-  const submitReply = () => {
-    if (!replyText.trim()) return;
-    setReplies((prev) => [
-      ...prev,
-      {
-        id: Date.now(),
-        text: replyText.trim(),
-        date: new Date().toLocaleDateString("en-US", {
-          month: "short", day: "numeric", year: "numeric",
-          hour: "numeric", minute: "2-digit", hour12: true,
-        }),
-      },
-    ]);
-    setReplyText("");
-    setShowReplyEditor(false);
-  };
 
   return (
     <div className="px-3 sm:px-6 py-4 sm:py-5">
@@ -272,91 +246,7 @@ function StudentAnnouncementDetail({
           )}
         </div>
 
-        {/* Reply section */}
-        {announcement.allowComments && !announcement.locked && (
-          <div className="px-4 sm:px-5 py-4 border-t border-gray-100 bg-gray-50">
-            {replies.length > 0 && (
-              <div className="space-y-3 mb-4">
-                {replies.map((r) => (
-                  <div key={r.id} className="flex gap-2 sm:gap-3">
-                    <Avatar name="Me" image={null} size={28} />
-                    <div className="flex-1 bg-white rounded-lg border border-gray-200 px-3 py-2">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs font-semibold text-gray-700">You</span>
-                        <span className="text-xs text-gray-400">{r.date}</span>
-                      </div>
-                      <p className="text-sm text-gray-600">{r.text}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-            {!showReplyEditor ? (
-              <button
-                type="button"
-                onClick={() => setShowReplyEditor(true)}
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-lg hover:opacity-90 active:opacity-80 transition-opacity"
-                style={{ background: MAROON }}
-              >
-                ↩ Reply
-              </button>
-            ) : (
-              <div className="space-y-3">
-                <p className="text-sm font-semibold text-gray-700">Write a reply</p>
-                <textarea
-                  value={replyText}
-                  onChange={(e) => setReplyText(e.target.value)}
-                  placeholder="Write a reply..."
-                  rows={3}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm resize-none outline-none focus:border-[#7b1113] transition-colors"
-                />
-                <div className="flex justify-end gap-2">
-                  <button
-                    type="button"
-                    onClick={() => { setShowReplyEditor(false); setReplyText(""); }}
-                    className="h-9 px-4 border border-gray-300 text-xs text-gray-700 rounded-lg hover:bg-gray-50 active:bg-gray-100 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    onClick={submitReply}
-                    disabled={!replyText.trim()}
-                    style={{ background: MAROON }}
-                    className="h-9 px-4 text-white text-xs rounded-lg hover:opacity-90 active:opacity-80 disabled:opacity-50 transition-opacity"
-                  >
-                    Post Reply
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Locked notice */}
-        {announcement.locked && (
-          <div className="px-4 sm:px-5 py-3 border-t border-gray-100 bg-amber-50">
-            <p className="text-sm text-amber-700 flex items-center gap-2">
-              <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <rect x="3" y="11" width="18" height="11" rx="2" />
-                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-              </svg>
-              This announcement is locked.
-            </p>
-          </div>
-        )}
-
-        {/* Comments disabled */}
-        {announcement.allowComments === false && !announcement.locked && (
-          <div className="px-4 sm:px-5 py-3 border-t border-gray-100 bg-gray-50">
-            <p className="text-sm text-gray-500 flex items-center gap-2">
-              <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-              </svg>
-              Comments are disabled.
-            </p>
-          </div>
-        )}
+      
       </div>
     </div>
   );
@@ -636,15 +526,6 @@ function StudentAnnouncementList({
                   </div>
                 )}
 
-                {/* Reply CTA */}
-                <button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); onView(a.id); }}
-                  className="mt-2 inline-flex items-center gap-1 text-xs hover:underline font-medium"
-                  style={{ color: MAROON }}
-                >
-                  ↩ Reply
-                </button>
               </div>
 
               {/* Right meta column */}
@@ -699,7 +580,6 @@ export default function CourseAnnouncementsTab({
   const [bodyText, setBodyText] = useState("");
   const [attachments, setAttachments] = useState<AnnouncementCreateAttachment[]>([]);
   const [assignTo, setAssignTo] = useState<string[]>(["Everyone"]);
-  const [allowComment, setAllowComment] = useState(true);
   const [availableFromDate, setAvailableFromDate] = useState("");
   const [availableFromTime, setAvailableFromTime] = useState("");
   const [untilDate, setUntilDate] = useState("");
@@ -731,7 +611,6 @@ export default function CourseAnnouncementsTab({
     setBodyText("");
     setAttachments([]);
     setAssignTo(["Everyone"]);
-    setAllowComment(true);
     setAvailableFromDate("");
     setAvailableFromTime("");
     setUntilDate("");
@@ -750,7 +629,6 @@ export default function CourseAnnouncementsTab({
           bodyText: bodyText.trim(),
           bodyHtml,
           assignTo: assignTo.length ? assignTo : ["Everyone"],
-          allowComments: allowComment,
           availableFrom: availableFromDate
             ? `${availableFromDate}T${availableFromTime || "00:00"}`
             : null,
@@ -835,8 +713,6 @@ export default function CourseAnnouncementsTab({
         assignTo={assignTo}
         setAssignTo={setAssignTo}
         staff={people.map((p) => ({ id: p.id, name: p.name ?? p.email }))}
-        allowComment={allowComment}
-        setAllowComment={setAllowComment}
         availableFromDate={availableFromDate}
         setAvailableFromDate={setAvailableFromDate}
         availableFromTime={availableFromTime}

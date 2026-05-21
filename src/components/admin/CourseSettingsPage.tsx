@@ -10,19 +10,18 @@ const MAROON_LIGHT = "#fdf2f2";
 const MAROON_MID = "#f0e4e4";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
-interface CourseDetails {
+interface OfficeDetails {
   name: string;
   code: string;
 }
 
-const TABS = ["Course Details"] as const;
+const TABS = ["Office Details"] as const;
 type Tab = (typeof TABS)[number];
 
 interface PageProps {
-  courseId: string;
+  officeId: string;
   initialName: string;
   initialCode: string;
-  initialStatus: string;
   initialImage: string;
 }
 
@@ -41,13 +40,13 @@ const GLOBAL_CSS = `
 
   *, *::before, *::after { box-sizing: border-box; }
 
-  /* Prevent iOS zoom on input focus */
   @media (max-width: 767px) {
     input, textarea, select { font-size: 16px !important; }
   }
 
-  .csp-root {
+  .osp-root {
     display: flex;
+    flex-direction: column;
     height: 100%;
     overflow: hidden;
     font-family: 'DM Sans', 'Helvetica Neue', Arial, sans-serif;
@@ -55,7 +54,7 @@ const GLOBAL_CSS = `
   }
 
   /* ── Tabs ── */
-  .csp-tabs {
+  .osp-tabs {
     border-bottom: 1px solid #e5e7eb;
     display: flex;
     padding: 0 24px;
@@ -65,9 +64,9 @@ const GLOBAL_CSS = `
     scrollbar-width: none;
     -webkit-overflow-scrolling: touch;
   }
-  .csp-tabs::-webkit-scrollbar { display: none; }
+  .osp-tabs::-webkit-scrollbar { display: none; }
 
-  .csp-tab-btn {
+  .osp-tab-btn {
     padding: 0 4px;
     margin-right: 20px;
     height: 44px;
@@ -82,60 +81,78 @@ const GLOBAL_CSS = `
     transition: all 0.15s;
     flex-shrink: 0;
   }
-  .csp-tab-btn.active {
+  .osp-tab-btn.active {
     border-bottom-color: ${MAROON};
     color: ${MAROON};
   }
-  .csp-tab-btn:not(.active) {
-    color: #6b7280;
-  }
-  .csp-tab-btn:not(.active):hover {
-    color: #374151;
+  .osp-tab-btn:not(.active) { color: #6b7280; }
+  .osp-tab-btn:not(.active):hover { color: #374151; }
+
+  /* ── Layout: sidebar + content ── */
+  .osp-body {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+    min-height: 0;
   }
 
   /* ── Scrollable content ── */
-  .csp-scroll {
+  .osp-scroll {
     flex: 1;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
+    min-width: 0;
   }
-  .csp-scroll::-webkit-scrollbar { width: 4px; }
-  .csp-scroll::-webkit-scrollbar-track { background: transparent; }
-  .csp-scroll::-webkit-scrollbar-thumb { background: ${MAROON_MID}; border-radius: 2px; }
+  .osp-scroll::-webkit-scrollbar { width: 4px; }
+  .osp-scroll::-webkit-scrollbar-track { background: transparent; }
+  .osp-scroll::-webkit-scrollbar-thumb { background: ${MAROON_MID}; border-radius: 2px; }
 
   /* ── Content area ── */
-  .csp-content {
-    padding: 32px 24px;
-    max-width: 640px;
+  .osp-content {
+    padding: 28px 28px 40px;
     width: 100%;
-    margin: 0 auto;
+  }
+
+  /* ── Layout: image card left (fixed width), info card takes the rest ── */
+  .osp-grid {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: 16px;
+    align-items: start;
+  }
+  .osp-grid-full {
+    grid-column: 1 / -1;
+  }
+
+  /* ── Make image card compact — don't stretch ── */
+  .osp-image-card {
+    align-self: start;
   }
 
   /* ── Card section ── */
-  .csp-card {
+  .osp-card {
     background: #fff;
     border: 1px solid #e5e7eb;
     border-radius: 10px;
     overflow: hidden;
-    margin-bottom: 16px;
   }
-  .csp-card-header {
-    padding: 14px 18px;
+  .osp-card-header {
+    padding: 13px 16px;
     background: #fafafa;
     border-bottom: 1px solid #e5e7eb;
     display: flex;
     align-items: center;
     gap: 8px;
   }
-  .csp-card-body {
-    padding: 18px;
+  .osp-card-body {
+    padding: 16px;
   }
 
   /* ── Form fields ── */
-  .csp-field { margin-bottom: 16px; }
-  .csp-field:last-child { margin-bottom: 0; }
+  .osp-field { margin-bottom: 14px; }
+  .osp-field:last-child { margin-bottom: 0; }
 
-  .csp-label {
+  .osp-label {
     display: block;
     font-size: 11px;
     font-weight: 700;
@@ -144,9 +161,9 @@ const GLOBAL_CSS = `
     letter-spacing: 0.07em;
     margin-bottom: 6px;
   }
-  .csp-label .req { color: ${MAROON}; margin-left: 2px; }
+  .osp-label .req { color: ${MAROON}; margin-left: 2px; }
 
-  .csp-input {
+  .osp-input {
     width: 100%;
     height: 40px;
     border: 1px solid #d1d5db;
@@ -159,66 +176,25 @@ const GLOBAL_CSS = `
     outline: none;
     transition: border-color 0.15s, box-shadow 0.15s;
   }
-  .csp-input:focus {
+  .osp-input:focus {
     border-color: ${MAROON};
     box-shadow: 0 0 0 3px rgba(123,17,19,0.08);
     background: #fff;
   }
 
-  /* ── Status row ── */
-  .csp-status-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
-  }
-  .csp-status-dot {
-    width: 9px;
-    height: 9px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-  .csp-status-text {
-    font-size: 13px;
-    font-weight: 600;
-    color: #374151;
-  }
-  .csp-publish-btn {
-    height: 30px;
-    padding: 0 12px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 12px;
-    font-weight: 600;
-    border-radius: 6px;
-    border: 1.5px solid ${MAROON};
-    color: ${MAROON};
-    background: none;
-    cursor: pointer;
-    transition: all 0.15s;
-    white-space: nowrap;
-  }
-  .csp-publish-btn:hover {
-    background: ${MAROON_LIGHT};
-  }
-  .csp-publish-btn.publishing {
-    background: ${MAROON};
-    color: #fff;
-  }
-
   /* ── Image picker ── */
-  .csp-image-trigger {
+  .osp-image-trigger {
     display: flex;
-    align-items: center;
-    gap: 14px;
-    flex-wrap: wrap;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
   }
-  .csp-image-thumb {
-    width: 88px;
-    height: 66px;
+  .osp-image-thumb {
+    width: 100%;
+    height: 120px;
     border-radius: 8px;
     border: 2px dashed #d1d5db;
     overflow: hidden;
-    flex-shrink: 0;
     background: #f9fafb;
     display: flex;
     align-items: center;
@@ -226,16 +202,18 @@ const GLOBAL_CSS = `
     cursor: pointer;
     transition: border-color 0.15s;
   }
-  .csp-image-thumb:hover { border-color: ${MAROON}; }
-  .csp-image-thumb img { width: 100%; height: 100%; object-fit: cover; }
-  .csp-image-actions {
+  .osp-image-thumb:hover { border-color: ${MAROON}; }
+  .osp-image-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .osp-image-actions {
     display: flex;
-    flex-direction: column;
-    gap: 4px;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
   }
-  .csp-image-change-btn {
-    height: 32px;
-    padding: 0 14px;
+  .osp-image-change-btn {
+    height: 30px;
+    padding: 0 12px;
     font-family: 'DM Sans', sans-serif;
     font-size: 12px;
     font-weight: 600;
@@ -246,21 +224,20 @@ const GLOBAL_CSS = `
     cursor: pointer;
     transition: all 0.15s;
     white-space: nowrap;
-    align-self: flex-start;
   }
-  .csp-image-change-btn:hover {
+  .osp-image-change-btn:hover {
     border-color: ${MAROON};
     color: ${MAROON};
   }
-  .csp-image-hint {
+  .osp-image-hint {
     font-size: 11px;
     color: #9ca3af;
     font-family: 'DM Mono', monospace;
   }
 
   /* ── Footer ── */
-  .csp-footer {
-    padding: 16px 18px;
+  .osp-footer {
+    padding: 14px 16px;
     background: #fafafa;
     border-top: 1px solid #e5e7eb;
     display: flex;
@@ -269,20 +246,20 @@ const GLOBAL_CSS = `
     gap: 10px;
     flex-wrap: wrap;
   }
-  .csp-footer-messages {
+  .osp-footer-messages {
     flex: 1;
     min-width: 0;
     display: flex;
     flex-direction: column;
     gap: 3px;
   }
-  .csp-save-btn {
-    height: 38px;
+  .osp-save-btn {
+    height: 36px;
     padding: 0 20px;
     font-family: 'DM Sans', sans-serif;
     font-size: 13px;
     font-weight: 700;
-    border-radius: 8px;
+    border-radius: 7px;
     border: none;
     color: #fff;
     background: ${MAROON};
@@ -291,9 +268,9 @@ const GLOBAL_CSS = `
     white-space: nowrap;
     flex-shrink: 0;
   }
-  .csp-save-btn:hover:not(:disabled) { opacity: 0.88; }
-  .csp-save-btn:disabled { opacity: 0.45; cursor: not-allowed; }
-  .csp-success-msg {
+  .osp-save-btn:hover:not(:disabled) { opacity: 0.88; }
+  .osp-save-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .osp-success-msg {
     font-size: 12px;
     font-weight: 600;
     color: #16a34a;
@@ -301,7 +278,7 @@ const GLOBAL_CSS = `
     align-items: center;
     gap: 5px;
   }
-  .csp-error-msg {
+  .osp-error-msg {
     font-size: 12px;
     font-weight: 600;
     color: ${MAROON};
@@ -310,52 +287,74 @@ const GLOBAL_CSS = `
     gap: 5px;
   }
 
-  /* ── Danger zone card ── */
-  .csp-danger-card {
+  /* ── Delete row at bottom ── */
+  .osp-delete-row {
+    margin-top: 4px;
+    padding: 14px 16px;
     background: #fff;
     border: 1px solid #fecaca;
     border-radius: 10px;
-    overflow: hidden;
-    margin-bottom: 16px;
-  }
-  .csp-danger-header {
-    padding: 14px 18px;
-    background: #fff5f5;
-    border-bottom: 1px solid #fecaca;
     display: flex;
     align-items: center;
-    gap: 8px;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .osp-delete-info p {
+    margin: 0;
+  }
+  .osp-delete-btn {
+    height: 34px;
+    padding: 0 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    border-radius: 7px;
+    border: 1.5px solid #fecaca;
+    color: #dc2626;
+    background: #fff5f5;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .osp-delete-btn:hover {
+    background: #fee2e2;
   }
 
-  /* ── MOBILE (< 640px) ── */
-  @media (max-width: 639px) {
-    .csp-tabs { padding: 0 12px; }
-    .csp-tab-btn { height: 40px; font-size: 12px; margin-right: 14px; }
-    .csp-content { padding: 16px 12px; }
-    .csp-card-header { padding: 12px 14px; }
-    .csp-card-body { padding: 14px; }
-    .csp-footer {
+  /* ── TABLET (< 900px): equal columns ── */
+  @media (max-width: 899px) and (min-width: 768px) {
+    .osp-grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  /* ── MOBILE (< 768px): single column ── */
+  @media (max-width: 767px) {
+    .osp-tabs { padding: 0 14px; }
+    .osp-tab-btn { height: 40px; font-size: 12px; margin-right: 14px; }
+    .osp-content { padding: 14px 14px 32px; }
+    .osp-grid { grid-template-columns: 1fr; gap: 12px; }
+    .osp-grid-full { grid-column: 1; }
+    .osp-card-header { padding: 11px 14px; }
+    .osp-card-body { padding: 14px; }
+    .osp-footer {
       flex-direction: column;
       align-items: stretch;
-      gap: 10px;
-      padding: 14px;
+      gap: 8px;
+      padding: 12px 14px;
     }
-    .csp-footer-messages { width: 100%; }
-    .csp-save-btn {
+    .osp-footer-messages { width: 100%; }
+    .osp-save-btn {
       width: 100%;
-      height: 44px;
+      height: 42px;
       font-size: 14px;
-      border-radius: 10px;
+      border-radius: 8px;
     }
-    .csp-image-trigger { gap: 12px; }
-    .csp-image-thumb { width: 72px; height: 56px; }
-    .csp-image-change-btn { height: 36px; font-size: 13px; }
-    .csp-status-row { gap: 10px; }
-    .csp-publish-btn { height: 34px; padding: 0 14px; font-size: 13px; }
+    .osp-image-thumb { width: 68px; height: 52px; }
+    .osp-delete-row { padding: 12px 14px; }
   }
 
   /* ── Modal ── */
-  .csp-modal-overlay {
+  .osp-modal-overlay {
     position: fixed;
     inset: 0;
     z-index: 9999;
@@ -366,12 +365,12 @@ const GLOBAL_CSS = `
     padding: 0;
   }
   @media (min-width: 560px) {
-    .csp-modal-overlay {
+    .osp-modal-overlay {
       align-items: center;
       padding: 24px;
     }
   }
-  .csp-modal {
+  .osp-modal {
     width: 100%;
     max-width: 520px;
     background: #fff;
@@ -383,17 +382,17 @@ const GLOBAL_CSS = `
     max-height: 92vh;
   }
   @media (min-width: 560px) {
-    .csp-modal { border-radius: 12px; }
+    .osp-modal { border-radius: 12px; }
   }
-  .csp-modal-handle {
+  .osp-modal-handle {
     display: flex;
     justify-content: center;
     padding: 10px 0 4px;
   }
   @media (min-width: 560px) {
-    .csp-modal-handle { display: none; }
+    .osp-modal-handle { display: none; }
   }
-  .csp-modal-header {
+  .osp-modal-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -401,12 +400,12 @@ const GLOBAL_CSS = `
     border-bottom: 1px solid #e5e7eb;
     flex-shrink: 0;
   }
-  .csp-modal-title {
+  .osp-modal-title {
     font-size: 14px;
     font-weight: 700;
     color: #111827;
   }
-  .csp-modal-close {
+  .osp-modal-close {
     width: 30px;
     height: 30px;
     border: 1px solid #e5e7eb;
@@ -420,14 +419,14 @@ const GLOBAL_CSS = `
     justify-content: center;
     transition: all 0.12s;
   }
-  .csp-modal-close:hover { border-color: ${MAROON}; color: ${MAROON}; }
-  .csp-modal-body {
+  .osp-modal-close:hover { border-color: ${MAROON}; color: ${MAROON}; }
+  .osp-modal-body {
     padding: 18px;
     overflow-y: auto;
     flex: 1;
     -webkit-overflow-scrolling: touch;
   }
-  .csp-dropzone {
+  .osp-dropzone {
     border: 2px dashed #d1d5db;
     border-radius: 10px;
     transition: all 0.15s;
@@ -436,19 +435,20 @@ const GLOBAL_CSS = `
     align-items: center;
     justify-content: center;
   }
-  .csp-dropzone.drag-over {
+  .osp-dropzone.drag-over {
     border-color: ${MAROON};
     background: ${MAROON_LIGHT};
   }
-  .csp-dropzone-inner {
+  .osp-dropzone-inner {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 8px;
     padding: 24px;
     text-align: center;
+    width: 100%;
   }
-  .csp-modal-footer {
+  .osp-modal-footer {
     display: flex;
     justify-content: flex-end;
     gap: 8px;
@@ -456,11 +456,11 @@ const GLOBAL_CSS = `
     flex-wrap: wrap;
   }
   @media (max-width: 559px) {
-    .csp-modal-footer { flex-direction: column; }
-    .csp-modal-footer button { width: 100%; height: 44px; font-size: 14px; border-radius: 10px; }
-    .csp-modal-body { padding: 14px; }
+    .osp-modal-footer { flex-direction: column; }
+    .osp-modal-footer button { width: 100%; height: 44px; font-size: 14px; border-radius: 10px; }
+    .osp-modal-body { padding: 14px; }
   }
-  .csp-btn-secondary {
+  .osp-btn-secondary {
     height: 36px;
     padding: 0 16px;
     font-family: 'DM Sans', sans-serif;
@@ -474,9 +474,9 @@ const GLOBAL_CSS = `
     transition: all 0.12s;
     white-space: nowrap;
   }
-  .csp-btn-secondary:hover { border-color: #9ca3af; }
-  .csp-btn-secondary:disabled { opacity: 0.45; cursor: not-allowed; }
-  .csp-btn-primary {
+  .osp-btn-secondary:hover { border-color: #9ca3af; }
+  .osp-btn-secondary:disabled { opacity: 0.45; cursor: not-allowed; }
+  .osp-btn-primary {
     height: 36px;
     padding: 0 20px;
     font-family: 'DM Sans', sans-serif;
@@ -490,13 +490,13 @@ const GLOBAL_CSS = `
     transition: opacity 0.12s;
     white-space: nowrap;
   }
-  .csp-btn-primary:hover:not(:disabled) { opacity: 0.88; }
-  .csp-btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+  .osp-btn-primary:hover:not(:disabled) { opacity: 0.88; }
+  .osp-btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
 
-  /* Safe area for notched phones */
   @supports (padding-bottom: env(safe-area-inset-bottom)) {
-    .csp-footer { padding-bottom: calc(16px + env(safe-area-inset-bottom)); }
-    .csp-modal-body { padding-bottom: calc(18px + env(safe-area-inset-bottom)); }
+    .osp-footer { padding-bottom: calc(14px + env(safe-area-inset-bottom)); }
+    .osp-modal-body { padding-bottom: calc(18px + env(safe-area-inset-bottom)); }
+    .osp-delete-row { margin-bottom: env(safe-area-inset-bottom); }
   }
 `;
 
@@ -504,7 +504,7 @@ const GLOBAL_CSS = `
 function SectionIcon({ children }: { children: React.ReactNode }) {
   return (
     <div style={{
-      width: 26, height: 26, borderRadius: 6,
+      width: 24, height: 24, borderRadius: 6,
       background: MAROON_LIGHT,
       display: "flex", alignItems: "center", justifyContent: "center",
       flexShrink: 0,
@@ -515,29 +515,26 @@ function SectionIcon({ children }: { children: React.ReactNode }) {
 }
 
 // ── Main Export ────────────────────────────────────────────────────────────────
-export default function CourseSettingsPage({
-  courseId,
+export default function OfficeSettingsPage({
+  officeId,
   initialName,
   initialCode,
-  initialStatus,
   initialImage,
 }: PageProps) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<Tab>("Course Details");
-  const [published, setPublished] = useState(initialStatus === "PUBLISHED");
-  const [publishLoading, setPublishLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<Tab>("Office Details");
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-  const [courseImageUrl, setCourseImageUrl] = useState(initialImage);
+  const [officeImageUrl, setOfficeImageUrl] = useState(initialImage);
   const [showImageModal, setShowImageModal] = useState(false);
 
-  const [details, setDetails] = useState<CourseDetails>({
+  const [details, setDetails] = useState<OfficeDetails>({
     name: initialName,
     code: initialCode,
   });
 
-  const update = useCallback((k: keyof CourseDetails, v: string) =>
+  const update = useCallback((k: keyof OfficeDetails, v: string) =>
     setDetails(d => ({ ...d, [k]: v })), []);
 
   const handleSave = async () => {
@@ -545,13 +542,12 @@ export default function CourseSettingsPage({
     setSaveError(null);
     setSaveSuccess(false);
     try {
-      const res = await fetch(`/api/admin/courses/${courseId}`, {
+      const res = await fetch(`/api/admin/offices/${officeId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: details.name,
           code: details.code,
-          status: published ? "PUBLISHED" : "UNPUBLISHED",
         }),
       });
       if (!res.ok) {
@@ -569,61 +565,40 @@ export default function CourseSettingsPage({
     }
   };
 
-  const handlePublishToggle = async () => {
-    const newStatus = !published;
-    setPublished(newStatus);
-    setPublishLoading(true);
-    try {
-      await fetch(`/api/admin/courses/${courseId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus ? "PUBLISHED" : "UNPUBLISHED" }),
-      });
-      router.refresh();
-    } catch {
-      setPublished(!newStatus);
-    } finally {
-      setPublishLoading(false);
-    }
-  };
-
   return (
     <>
       <style>{GLOBAL_CSS}</style>
-      <div className="csp-root">
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0 }}>
+      <div className="osp-root">
 
-          {/* ── Tabs ── */}
-          <div className="csp-tabs">
-            {TABS.map(tab => (
-              <button
-                key={tab}
-                type="button"
-                onClick={() => setActiveTab(tab)}
-                className={`csp-tab-btn${activeTab === tab ? " active" : ""}`}
-              >
-                {tab}
-              </button>
-            ))}
-          </div>
+        {/* ── Tabs ── */}
+        <div className="osp-tabs">
+          {TABS.map(tab => (
+            <button
+              key={tab}
+              type="button"
+              onClick={() => setActiveTab(tab)}
+              className={`osp-tab-btn${activeTab === tab ? " active" : ""}`}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
 
-          {/* ── Scrollable content ── */}
-          <div className="csp-scroll">
-            <div className="csp-content">
-              {activeTab === "Course Details" && (
-                <CourseDetailsTab
+        {/* ── Body ── */}
+        <div className="osp-body">
+          <div className="osp-scroll">
+            <div className="osp-content">
+              {activeTab === "Office Details" && (
+                <OfficeDetailsTab
                   details={details}
                   update={update}
                   onSave={handleSave}
                   saving={saving}
                   saveSuccess={saveSuccess}
                   saveError={saveError}
-                  courseImageUrl={courseImageUrl}
+                  officeImageUrl={officeImageUrl}
                   onChooseImage={() => setShowImageModal(true)}
-                  published={published}
-                  publishLoading={publishLoading}
-                  onPublishToggle={handlePublishToggle}
-                  courseId={courseId}
+                  officeId={officeId}
                 />
               )}
             </div>
@@ -633,10 +608,10 @@ export default function CourseSettingsPage({
         {showImageModal && (
           <ChooseImageModal
             open={showImageModal}
-            courseId={courseId}
+            officeId={officeId}
             onClose={() => setShowImageModal(false)}
             onUploaded={url => {
-              setCourseImageUrl(url);
+              setOfficeImageUrl(url);
               setShowImageModal(false);
               router.refresh();
             }}
@@ -647,223 +622,164 @@ export default function CourseSettingsPage({
   );
 }
 
-// ── Course Details Tab ─────────────────────────────────────────────────────────
-function CourseDetailsTab({
+// ── Office Details Tab ─────────────────────────────────────────────────────────
+function OfficeDetailsTab({
   details, update, onSave, saving, saveSuccess, saveError,
-  courseImageUrl, onChooseImage, published, publishLoading, onPublishToggle, courseId,
+  officeImageUrl, onChooseImage, officeId,
 }: {
-  details: CourseDetails;
-  update: (k: keyof CourseDetails, v: string) => void;
+  details: OfficeDetails;
+  update: (k: keyof OfficeDetails, v: string) => void;
   onSave: () => void;
   saving: boolean;
   saveSuccess: boolean;
   saveError: string | null;
-  courseImageUrl: string;
+  officeImageUrl: string;
   onChooseImage: () => void;
-  published: boolean;
-  publishLoading: boolean;
-  onPublishToggle: () => void;
-  courseId: string;
+  officeId: string;
 }) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
 
-      {/* ── Status Card ── */}
-      <div className="csp-card">
-        <div className="csp-card-header">
-          <SectionIcon>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={MAROON} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10" />
-              <polyline points="12 6 12 12 16 14" />
-            </svg>
-          </SectionIcon>
-          <span style={{ fontSize: 12, fontWeight: 700, color: "#374151", letterSpacing: "0.02em" }}>
-            Visibility
-          </span>
-        </div>
-        <div className="csp-card-body">
-          <div className="csp-status-row">
-            <div className="csp-status-dot" style={{ background: published ? "#16a34a" : "#9ca3af" }} />
-            <span className="csp-status-text">{published ? "Published" : "Unpublished"}</span>
-            <span style={{ fontSize: 12, color: "#9ca3af" }}>
-              {published ? "Students can see this course" : "Hidden from students"}
+      {/* ── Two-column grid ── */}
+      <div className="osp-grid">
+
+        {/* ── Office Image Card ── */}
+        <div className="osp-card osp-image-card">
+          <div className="osp-card-header">
+            <SectionIcon>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={MAROON} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" />
+                <circle cx="8.5" cy="8.5" r="1.5" />
+                <polyline points="21 15 16 10 5 21" />
+              </svg>
+            </SectionIcon>
+            <span style={{ fontSize: 12, fontWeight: 700, color: "#374151", letterSpacing: "0.02em" }}>
+              Office Image
             </span>
-            <button
-              type="button"
-              onClick={onPublishToggle}
-              disabled={publishLoading}
-              className={`csp-publish-btn${publishLoading ? " publishing" : ""}`}
-              style={{ marginLeft: "auto" }}
-            >
-              {publishLoading ? "Saving…" : published ? "Unpublish" : "Publish"}
-            </button>
           </div>
-        </div>
-      </div>
-
-      {/* ── Course Image Card ── */}
-      <div className="csp-card">
-        <div className="csp-card-header">
-          <SectionIcon>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={MAROON} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="3" width="18" height="18" rx="2" />
-              <circle cx="8.5" cy="8.5" r="1.5" />
-              <polyline points="21 15 16 10 5 21" />
-            </svg>
-          </SectionIcon>
-          <span style={{ fontSize: 12, fontWeight: 700, color: "#374151", letterSpacing: "0.02em" }}>
-            Course Image
-          </span>
-        </div>
-        <div className="csp-card-body">
-          <div className="csp-image-trigger">
-            <button
-              type="button"
-              onClick={onChooseImage}
-              className="csp-image-thumb"
-              aria-label="Choose course image"
-            >
-              {courseImageUrl ? (
-                <Image src={courseImageUrl} alt="Course" width={200} height={150} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-              ) : (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="3" width="18" height="18" rx="2" />
-                  <circle cx="8.5" cy="8.5" r="1.5" />
-                  <polyline points="21 15 16 10 5 21" />
-                </svg>
-              )}
-            </button>
-            <div className="csp-image-actions">
-              <button type="button" onClick={onChooseImage} className="csp-image-change-btn">
-                {courseImageUrl ? "Change image" : "Upload image"}
+          <div className="osp-card-body">
+            <div className="osp-image-trigger">
+              <button
+                type="button"
+                onClick={onChooseImage}
+                className="osp-image-thumb"
+                aria-label="Choose office image"
+              >
+                {officeImageUrl ? (
+                  <Image
+                    src={officeImageUrl}
+                    alt="Office"
+                    width={200}
+                    height={150}
+                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                  />
+                ) : (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2" />
+                    <circle cx="8.5" cy="8.5" r="1.5" />
+                    <polyline points="21 15 16 10 5 21" />
+                  </svg>
+                )}
               </button>
-              <span className="csp-image-hint">PNG, JPG, WebP · Max 5 MB</span>
+              <div className="osp-image-actions">
+                <button type="button" onClick={onChooseImage} className="osp-image-change-btn">
+                  {officeImageUrl ? "Change image" : "Upload image"}
+                </button>
+                <span className="osp-image-hint">PNG, JPG, WebP · Max 5 MB</span>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* ── Course Info Card ── */}
-      <div className="csp-card">
-        <div className="csp-card-header">
-          <SectionIcon>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={MAROON} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 20h9" />
-              <path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" />
-            </svg>
-          </SectionIcon>
-          <span style={{ fontSize: 12, fontWeight: 700, color: "#374151", letterSpacing: "0.02em" }}>
-            Course Information
-          </span>
-        </div>
+        {/* ── Office Info Card ── */}
+        <div className="osp-card">
+          <div className="osp-card-header">
+            <SectionIcon>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={MAROON} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 20h9" />
+                <path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" />
+              </svg>
+            </SectionIcon>
+            <span style={{ fontSize: 12, fontWeight: 700, color: "#374151", letterSpacing: "0.02em" }}>
+              Office Information
+            </span>
+          </div>
 
-        <div className="csp-card-body">
-          <div className="csp-field">
-            <label className="csp-label">
-              Course Name <span className="req">*</span>
-            </label>
-            <input
-              className="csp-input"
-              value={details.name}
-              onChange={e => update("name", e.target.value)}
-              placeholder="e.g. Introduction to Computer Science"
-            />
+          <div className="osp-card-body">
+            <div className="osp-field">
+              <label className="osp-label">
+                Office Name <span className="req">*</span>
+              </label>
+              <input
+                className="osp-input"
+                value={details.name}
+                onChange={e => update("name", e.target.value)}
+                placeholder="e.g. Registrar's Office"
+              />
+            </div>
+            <div className="osp-field">
+              <label className="osp-label">Office Code</label>
+              <input
+                className="osp-input"
+                value={details.code}
+                onChange={e => update("code", e.target.value)}
+                placeholder="e.g. REG001"
+                style={{ fontFamily: "'DM Mono', monospace", letterSpacing: "0.04em" }}
+              />
+            </div>
           </div>
-          <div className="csp-field">
-            <label className="csp-label">Course Code</label>
-            <input
-              className="csp-input"
-              value={details.code}
-              onChange={e => update("code", e.target.value)}
-              placeholder="e.g. CS101"
-              style={{ fontFamily: "'DM Mono', monospace", letterSpacing: "0.04em" }}
-            />
-          </div>
-        </div>
 
-        {/* Footer inside card */}
-        <div className="csp-footer">
-          <div className="csp-footer-messages">
-            {saveSuccess && (
-              <span className="csp-success-msg">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-                Saved successfully
-              </span>
-            )}
-            {saveError && (
-              <span className="csp-error-msg">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="10" />
-                  <line x1="12" y1="8" x2="12" y2="12" />
-                  <line x1="12" y1="16" x2="12.01" y2="16" />
-                </svg>
-                {saveError}
-              </span>
-            )}
-          </div>
-          <button
-            type="button"
-            onClick={onSave}
-            disabled={saving || !details.name.trim()}
-            className="csp-save-btn"
-          >
-            {saving ? "Saving…" : "Save Changes"}
-          </button>
-        </div>
-      </div>
-
-      {/* ── Danger Zone ── */}
-      <div className="csp-danger-card">
-        <div className="csp-danger-header">
-          <div style={{
-            width: 26, height: 26, borderRadius: 6,
-            background: "#fef2f2",
-            display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-          }}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
-              <line x1="12" y1="9" x2="12" y2="13" />
-              <line x1="12" y1="17" x2="12.01" y2="17" />
-            </svg>
-          </div>
-          <span style={{ fontSize: 12, fontWeight: 700, color: "#dc2626", letterSpacing: "0.02em" }}>
-            Danger Zone
-          </span>
-        </div>
-        <div className="csp-card-body">
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-            <div>
-              <p style={{ fontSize: 13, fontWeight: 600, color: "#374151", margin: "0 0 2px" }}>
-                Delete this course
-              </p>
-              <p style={{ fontSize: 12, color: "#9ca3af", margin: 0 }}>
-                Permanently remove the course and all its data. This cannot be undone.
-              </p>
+          {/* Footer inside card */}
+          <div className="osp-footer">
+            <div className="osp-footer-messages">
+              {saveSuccess && (
+                <span className="osp-success-msg">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                  Saved successfully
+                </span>
+              )}
+              {saveError && (
+                <span className="osp-error-msg">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="12" />
+                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                  </svg>
+                  {saveError}
+                </span>
+              )}
             </div>
             <button
               type="button"
-              style={{
-                height: 34, padding: "0 14px",
-                fontFamily: "'DM Sans', sans-serif",
-                fontSize: 12, fontWeight: 700,
-                borderRadius: 7,
-                border: "1.5px solid #fecaca",
-                color: "#dc2626",
-                background: "#fff5f5",
-                cursor: "pointer",
-                transition: "all 0.15s",
-                whiteSpace: "nowrap",
-                flexShrink: 0,
-              }}
-              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = "#fee2e2"; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = "#fff5f5"; }}
+              onClick={onSave}
+              disabled={saving || !details.name.trim()}
+              className="osp-save-btn"
             >
-              Delete Course
+              {saving ? "Saving…" : "Save Changes"}
             </button>
           </div>
         </div>
+
+      </div>
+
+      {/* ── Delete Office row — no "Danger Zone" label ── */}
+      <div className="osp-delete-row">
+        <div className="osp-delete-info">
+          <p style={{ fontSize: 13, fontWeight: 600, color: "#374151", marginBottom: 2 }}>
+            Delete this office
+          </p>
+          <p style={{ fontSize: 12, color: "#9ca3af" }}>
+            Permanently removes the office and all its data. This cannot be undone.
+          </p>
+        </div>
+        <button
+          type="button"
+          className="osp-delete-btn"
+        >
+          Delete Office
+        </button>
       </div>
 
     </div>
@@ -872,12 +788,12 @@ function CourseDetailsTab({
 
 // ── Choose Image Modal ─────────────────────────────────────────────────────────
 function ChooseImageModal({
-  open, onClose, onUploaded, courseId,
+  open, onClose, onUploaded, officeId,
 }: {
   open: boolean;
   onClose: () => void;
   onUploaded: (url: string) => void;
-  courseId: string;
+  officeId: string;
 }) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [dragOver, setDragOver] = useState(false);
@@ -911,7 +827,7 @@ function ChooseImageModal({
     try {
       const form = new FormData();
       form.append("file", file);
-      const res = await fetch(`/api/courses/${courseId}/image`, { method: "POST", body: form });
+      const res = await fetch(`/api/offices/${officeId}/image`, { method: "POST", body: form });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.url) throw new Error(data.error || "Upload failed");
       onUploaded(data.url);
@@ -930,40 +846,37 @@ function ChooseImageModal({
 
   return ReactDOM.createPortal(
     <div
-      className="csp-modal-overlay"
+      className="osp-modal-overlay"
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="csp-modal">
-        {/* Mobile drag handle */}
-        <div className="csp-modal-handle">
+      <div className="osp-modal">
+        <div className="osp-modal-handle">
           <div style={{ width: 36, height: 4, borderRadius: 2, background: "#d1d5db" }} />
         </div>
 
-        {/* Header */}
-        <div className="csp-modal-header">
-          <span className="csp-modal-title">Choose Course Image</span>
-          <button type="button" className="csp-modal-close" onClick={onClose}>×</button>
+        <div className="osp-modal-header">
+          <span className="osp-modal-title">Choose Office Image</span>
+          <button type="button" className="osp-modal-close" onClick={onClose}>×</button>
         </div>
 
-        {/* Body */}
-        <div className="csp-modal-body">
+        <div className="osp-modal-body">
           <div
-            className={`csp-dropzone${dragOver ? " drag-over" : ""}`}
+            className={`osp-dropzone${dragOver ? " drag-over" : ""}`}
             onDragEnter={e => { e.preventDefault(); setDragOver(true); }}
             onDragOver={e => { e.preventDefault(); setDragOver(true); }}
             onDragLeave={e => { e.preventDefault(); setDragOver(false); }}
             onDrop={handleDrop}
           >
-            <div className="csp-dropzone-inner">
+            <div className="osp-dropzone-inner">
               {!previewUrl ? (
                 <>
                   <div style={{
-                    width: 52, height: 52, borderRadius: 12,
+                    width: 48, height: 48, borderRadius: 10,
                     background: MAROON_LIGHT,
                     display: "flex", alignItems: "center", justifyContent: "center",
                     marginBottom: 4,
                   }}>
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={MAROON} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={MAROON} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                       <rect x="3" y="3" width="18" height="18" rx="2" />
                       <circle cx="8.5" cy="8.5" r="1.5" />
                       <polyline points="21 15 16 10 5 21" />
@@ -978,7 +891,7 @@ function ChooseImageModal({
                   <button
                     type="button"
                     onClick={() => inputRef.current?.click()}
-                    className="csp-btn-primary"
+                    className="osp-btn-primary"
                     style={{ height: 36 }}
                   >
                     Browse files
@@ -1029,11 +942,11 @@ function ChooseImageModal({
             </p>
           )}
 
-          <div className="csp-modal-footer">
-            <button type="button" onClick={onClose} disabled={saving} className="csp-btn-secondary">
+          <div className="osp-modal-footer">
+            <button type="button" onClick={onClose} disabled={saving} className="osp-btn-secondary">
               Cancel
             </button>
-            <button type="button" onClick={uploadAndSave} disabled={saving || !file} className="csp-btn-primary">
+            <button type="button" onClick={uploadAndSave} disabled={saving || !file} className="osp-btn-primary">
               {saving ? "Uploading…" : "Save Image"}
             </button>
           </div>

@@ -196,6 +196,9 @@ export async function GET(
     include: {
       questions: { orderBy: { order: "asc" } },
       author: { select: { id: true, name: true, image: true, role: true } },
+      _count: {
+        select: { formSubmissions: true },
+      },
     },
     orderBy: { createdAt: "desc" },
   });
@@ -208,22 +211,18 @@ export async function GET(
       );
       const isCreator = f.author?.id === userId || f.authorId === userId;
 
-      // Check if the author is a system Admin
       const authorIsAdmin = f.author?.role === "ADMIN";
 
       if (roleType === "admin") return true;
 
       if (roleType === "headOnly") {
-        // Head Only: sees forms they created + forms FROM ADMIN assigned to them
         return isCreator || (authorIsAdmin && assignedToYou);
       }
 
       if (roleType === "both") {
-        // Both: sees forms they created + forms assigned to them (from Head or Admin)
         return isCreator || assignedToYou;
       }
 
-      // Staff Only: only forms assigned to them
       return assignedToYou;
     })
     .map((f) => {
@@ -240,6 +239,9 @@ export async function GET(
       return {
         ...serializeForm(f),
         assignTo,
+        _count: {
+          formSubmissions: f._count.formSubmissions,
+        },
         _formRole:        formRole,
         _publisherName:   f.author?.name  ?? null,
         _publisherImage:  f.author?.image ?? null,

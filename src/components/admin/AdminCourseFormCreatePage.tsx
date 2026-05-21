@@ -27,7 +27,6 @@ interface FormQuestion {
   type: QuestionType;
   question: string;
   description?: string;
-  points: number;
   required: boolean;
   options?: string[];
   scaleMin?: number;
@@ -44,7 +43,6 @@ interface FormData {
   description: string;
   formType: FormType;
   assignmentGroup: string;
-  points: number;
   shuffleAnswers: boolean;
   allowMultipleResponses: boolean;
   anonymousResponses: boolean;
@@ -232,21 +230,14 @@ function QuestionTypeMenu({ current, onChange }: { current: QuestionType; onChan
 }
 
 // ── Question Action Bar ───────────────────────────────────────────────────────
-function QuestionActionBar({ question, isGraded, isSection, onChange, onDuplicate, onDelete, onMoveUp, onMoveDown }: {
-  question: FormQuestion; isGraded: boolean; isSection: boolean;
+function QuestionActionBar({ question, isSection, onChange, onDuplicate, onDelete, onMoveUp, onMoveDown }: {
+  question: FormQuestion; isSection: boolean;
   onChange: (q: FormQuestion) => void; onDuplicate: () => void; onDelete: () => void;
   onMoveUp: () => void; onMoveDown: () => void;
 }) {
   return (
     <div className="flex items-center justify-end gap-1 px-3 sm:px-6 py-3 border-t border-gray-100 flex-wrap">
-      {isGraded && !isSection && (
-        <div className="flex items-center gap-1.5 mr-auto">
-          <input type="number" min={0} value={question.points}
-            onChange={e => onChange({ ...question, points: parseFloat(e.target.value) || 0 })}
-            className="w-12 h-7 border border-gray-300 rounded px-2 text-xs text-center outline-none focus:border-[#7b1113]" />
-          <span className="text-xs text-gray-500">pts</span>
-        </div>
-      )}
+      
       <button type="button" onClick={onMoveUp} className="w-7 h-7 flex items-center justify-center rounded hover:bg-gray-100 text-gray-400 text-xs">↑</button>
       <button type="button" onClick={onMoveDown} className="w-7 h-7 flex items-center justify-center rounded hover:bg-gray-100 text-gray-400 text-xs">↓</button>
       <div className="w-px h-5 bg-gray-200 mx-1" />
@@ -278,8 +269,8 @@ function QuestionActionBar({ question, isGraded, isSection, onChange, onDuplicat
 }
 
 // ── Question Card ─────────────────────────────────────────────────────────────
-function QuestionCard({ question, isActive, isGraded, onActivate, onChange, onDuplicate, onDelete, onMoveUp, onMoveDown }: {
-  question: FormQuestion; isActive: boolean; isGraded: boolean;
+function QuestionCard({ question, isActive, onActivate, onChange, onDuplicate, onDelete, onMoveUp, onMoveDown }: {
+  question: FormQuestion; isActive: boolean;
   onActivate: () => void; onChange: (q: FormQuestion) => void;
   onDuplicate: () => void; onDelete: () => void; onMoveUp: () => void; onMoveDown: () => void;
 }) {
@@ -296,7 +287,7 @@ function QuestionCard({ question, isActive, isGraded, onActivate, onChange, onDu
   const addRow = () => onChange({ ...question, rows: [...(question.rows ?? []), `Row ${(question.rows?.length ?? 0) + 1}`] });
   const addCol = () => onChange({ ...question, columns: [...(question.columns ?? []), `Column ${(question.columns?.length ?? 0) + 1}`] });
 
-  const actionBarProps = { question, isGraded, isSection, onChange, onDuplicate, onDelete, onMoveUp, onMoveDown };
+  const actionBarProps = { question, isSection, onChange, onDuplicate, onDelete, onMoveUp, onMoveDown };
 
   if (isSection) {
     return (
@@ -464,19 +455,19 @@ function FloatingToolbar({ onAdd }: { onAdd: (type: QuestionType | "section") =>
 }
 
 // ── Questions Tab ─────────────────────────────────────────────────────────────
-function QuestionsTab({ questions, isGraded, onChange }: {
-  questions: FormQuestion[]; isGraded: boolean; onChange: (qs: FormQuestion[]) => void;
+function QuestionsTab({ questions, onChange }: {
+  questions: FormQuestion[]; onChange: (qs: FormQuestion[]) => void;
 }) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const idCounter = useRef(1000);
   const newQuestion = (type: QuestionType | "section"): FormQuestion => {
     const id = String(idCounter.current++);
-    if (type === "section") return { id, type: "section", question: "", points: 0, required: false, sectionTitle: "New Section", sectionDescription: "" };
+    if (type === "section") return { id, type: "section", question: "", required: false, sectionTitle: "New Section", sectionDescription: "" };
     const defaults: Partial<FormQuestion> = {};
     if (["multiple_choice", "checkboxes", "dropdown"].includes(type)) defaults.options = ["Option 1", "Option 2", "Option 3"];
     if (["mc_grid", "checkbox_grid"].includes(type)) { defaults.rows = ["Row 1", "Row 2"]; defaults.columns = ["Column 1", "Column 2"]; }
     if (type === "linear_scale") { defaults.scaleMin = 1; defaults.scaleMax = 5; }
-    return { id, type: type as QuestionType, question: "", points: 1, required: false, ...defaults };
+    return { id, type: type as QuestionType, question: "", required: false, ...defaults };
   };
   const addQuestion = (type: QuestionType | "section") => { const q = newQuestion(type); onChange([...questions, q]); setActiveId(q.id); };
   const duplicate = (idx: number) => { const q = { ...questions[idx], id: String(idCounter.current++) }; const u = [...questions]; u.splice(idx + 1, 0, q); onChange(u); setActiveId(q.id); };
@@ -484,14 +475,12 @@ function QuestionsTab({ questions, isGraded, onChange }: {
   const update = (idx: number, q: FormQuestion) => { const u = [...questions]; u[idx] = q; onChange(u); };
   const moveUp = (idx: number) => { if (!idx) return; const u = [...questions]; [u[idx - 1], u[idx]] = [u[idx], u[idx - 1]]; onChange(u); };
   const moveDown = (idx: number) => { if (idx === questions.length - 1) return; const u = [...questions]; [u[idx], u[idx + 1]] = [u[idx + 1], u[idx]]; onChange(u); };
-  const totalPts = questions.reduce((s, q) => s + (q.points || 0), 0);
 
   return (
     <div className="relative">
       {questions.length > 0 && (
         <div className="flex items-center justify-between mb-3 text-xs text-gray-500">
           <span>{questions.filter(q => q.type !== "section").length} question(s)</span>
-          {isGraded && <span>{totalPts} pt(s) total</span>}
         </div>
       )}
       <div className="space-y-3 pb-20">
@@ -503,7 +492,7 @@ function QuestionsTab({ questions, isGraded, onChange }: {
           </div>
         )}
         {questions.map((q, idx) => (
-          <QuestionCard key={q.id} question={q} isActive={activeId === q.id} isGraded={isGraded}
+          <QuestionCard key={q.id} question={q} isActive={activeId === q.id}
             onActivate={() => setActiveId(q.id)} onChange={u => update(idx, u)}
             onDuplicate={() => duplicate(idx)} onDelete={() => deleteQ(idx)}
             onMoveUp={() => moveUp(idx)} onMoveDown={() => moveDown(idx)} />
@@ -599,7 +588,6 @@ export default function AdminCourseFormCreateEditPage() {
   const [formType, setFormType] = useState<FormType>("Survey / Feedback");
   const [assignmentGroup, setAssignmentGroup] = useState("Assignments");
   const [groups, setGroups] = useState<AssignmentGroup[]>([{ id: 1, name: "Assignments" }]);
-  const [points, setPoints] = useState("0");
   const [confirmationMessage, setConfirmationMessage] = useState("");
   const [allowMultipleResponses, setAllowMultipleResponses] = useState(false);
   const [assignTo, setAssignTo] = useState<string[]>(["Everyone"]);
@@ -613,8 +601,6 @@ export default function AdminCourseFormCreateEditPage() {
   const [staff, setStaff] = useState<Staff[]>([]);
   const [groupModalOpen, setGroupModalOpen] = useState(false);
   const [newGroupName, setNewGroupName] = useState("");
-
-  const isGraded = formType === "Graded Assessment";
 
 
   useEffect(() => { setMounted(true); }, []);
@@ -630,7 +616,6 @@ export default function AdminCourseFormCreateEditPage() {
         setDescription(f.description ?? "");
         setFormType(FORM_TYPE_DISPLAY[f.formType as string] ?? "Survey / Feedback");
         setAssignmentGroup(f.assignmentGroup ?? "Assignments");
-        setPoints(String(f.points ?? 0));
         setConfirmationMessage(f.confirmationMessage ?? "");
         setAllowMultipleResponses(f.allowMultipleResponses ?? false);
         setAssignTo(f.assignTo ?? ["Everyone"]);
@@ -677,7 +662,6 @@ export default function AdminCourseFormCreateEditPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: title.trim(), description, formType, assignmentGroup,
-          points: parseFloat(points) || 0,
           shuffleAnswers: false, allowMultipleResponses, responseLimit: null,
           anonymousResponses: false, showResultsToRespondents: false,
           showOneAtATime: false, lockQuestionsAfterAnswering: false,
@@ -734,7 +718,6 @@ export default function AdminCourseFormCreateEditPage() {
           {isEditing ? "Edit Form" : "New Form"}
         </h1>
         <div className="flex items-center gap-3 sm:gap-4 text-xs text-gray-600">
-          {parseFloat(points) > 0 && <span>Points <strong className="text-gray-800">{parseFloat(points) || 0}</strong></span>}
 
           <div className="flex items-center gap-1.5">
             <span className="w-3 h-3 rounded-full border" style={published ? { background: "#22c55e", borderColor: "#22c55e" } : { borderColor: "#9ca3af" }} />
@@ -795,31 +778,6 @@ export default function AdminCourseFormCreateEditPage() {
                     <option>Graded Assessment</option>
                   </select>
                 </div>
-                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4">
-                  <label className="text-xs text-gray-700 font-medium sm:w-36 sm:text-right shrink-0">Assignment Group</label>
-                  <select value={assignmentGroup}
-                    onChange={e => { if (e.target.value === "__create__") { setNewGroupName(""); setGroupModalOpen(true); } else setAssignmentGroup(e.target.value); }}
-                    className="h-8 border border-gray-300 rounded-sm px-3 text-xs w-full sm:w-72 bg-white outline-none focus:border-[#7b1113]">
-                    {groups.map(g => <option key={g.id} value={g.name}>{g.name}</option>)}
-                    <option value="__create__">[ Create Group ]</option>
-                  </select>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4">
-                  <label className="text-xs text-gray-700 font-medium sm:w-36 sm:text-right shrink-0">
-                    Points
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="number"
-                      min={0}
-                      value={points}
-                      onChange={e => setPoints(e.target.value)}
-                      placeholder="0"
-                      className="h-8 border border-gray-300 rounded-sm px-3 text-xs w-32 outline-none focus:border-[#7b1113]"
-                    />
-                    <span className="text-xs text-gray-500">pts</span>
-                  </div>
-                </div>
                 <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-4">
                   <label className="text-xs text-gray-700 font-medium sm:w-36 sm:text-right sm:pt-2 shrink-0">Assign</label>
                   <div className="border border-gray-200 rounded-sm p-3 w-full sm:max-w-lg space-y-3">
@@ -843,7 +801,7 @@ export default function AdminCourseFormCreateEditPage() {
 
         {/* ── QUESTIONS ── */}
         {activeTab === "questions" && (
-          <QuestionsTab questions={questions} isGraded={isGraded} onChange={setQuestions} />
+          <QuestionsTab questions={questions} onChange={setQuestions} />
         )}
 
         {/* ── RESPONSES ── */}

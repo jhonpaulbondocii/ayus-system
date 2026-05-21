@@ -27,7 +27,6 @@ interface FormQuestion {
   type: QuestionType;
   question: string;
   description?: string;
-  points: number;
   required: boolean;
   options?: string[];
   scaleMin?: number;
@@ -44,7 +43,6 @@ interface FormData {
   description: string;
   formType: FormType;
   assignmentGroup: string;
-  points: number;
   shuffleAnswers: boolean;
   allowMultipleResponses: boolean;
   anonymousResponses: boolean;
@@ -1076,12 +1074,12 @@ function QuestionsTab({ questions, isGraded, onChange }: {
 
   const newQuestion = (type: QuestionType | "section"): FormQuestion => {
     const id = String(idCounter.current++);
-    if (type === "section") return { id, type: "section", question: "", points: 0, required: false, sectionTitle: "New Section", sectionDescription: "" };
+    if (type === "section") return { id, type: "section", question: "", required: false, sectionTitle: "New Section", sectionDescription: "" };
     const defaults: Partial<FormQuestion> = {};
     if (["multiple_choice", "checkboxes", "dropdown"].includes(type)) defaults.options = ["Option 1", "Option 2", "Option 3"];
     if (["mc_grid", "checkbox_grid"].includes(type)) { defaults.rows = ["Row 1", "Row 2"]; defaults.columns = ["Column 1", "Column 2"]; }
     if (type === "linear_scale") { defaults.scaleMin = 1; defaults.scaleMax = 5; }
-    return { id, type: type as QuestionType, question: "", points: 0, required: false, ...defaults };
+    return { id, type: type as QuestionType, question: "", required: false, ...defaults };
   };
   const addQuestion = (type: QuestionType | "section") => { const q = newQuestion(type); onChange([...questions, q]); setActiveId(q.id); };
   const duplicate = (idx: number) => { const q = { ...questions[idx], id: String(idCounter.current++) }; const u = [...questions]; u.splice(idx + 1, 0, q); onChange(u); setActiveId(q.id); };
@@ -1203,7 +1201,6 @@ export default function AdminCourseFormCreateEditPage() {
   const [formType, setFormType] = useState<FormType>("Survey / Feedback");
   const [assignmentGroup, setAssignmentGroup] = useState("Assignments");
   const [groups, setGroups] = useState<AssignmentGroup[]>([{ id: 1, name: "Assignments" }]);
-  const [points, setPoints] = useState("0");
   const [confirmationMessage, setConfirmationMessage] = useState("");
   const [allowMultipleResponses, setAllowMultipleResponses] = useState(false);
   const [assignTo, setAssignTo] = useState<string[]>(["Everyone"]);
@@ -1234,7 +1231,6 @@ export default function AdminCourseFormCreateEditPage() {
         setInitialDescription(f.description ?? "");
         setFormType(FORM_TYPE_DISPLAY[f.formType as string] ?? "Survey / Feedback");
         setAssignmentGroup(f.assignmentGroup ?? "Assignments");
-        setPoints(String(f.points ?? 0));
         setConfirmationMessage(f.confirmationMessage ?? "");
         setAllowMultipleResponses(f.allowMultipleResponses ?? false);
         setAssignTo(f.assignTo ?? ["Everyone"]);
@@ -1281,7 +1277,6 @@ export default function AdminCourseFormCreateEditPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: title.trim(), description, formType, assignmentGroup,
-          points: parseFloat(points) || 0,
           shuffleAnswers: false, allowMultipleResponses, responseLimit: null,
           anonymousResponses: false, showResultsToRespondents: false,
           showOneAtATime: false, lockQuestionsAfterAnswering: false,
@@ -1347,9 +1342,6 @@ export default function AdminCourseFormCreateEditPage() {
           {isEditing ? "Edit Form" : "New Form"}
         </h1>
         <div className="flex items-center gap-2 sm:gap-4 text-xs text-gray-600 shrink-0">
-          {parseFloat(points) > 0 && (
-            <span className="hidden sm:inline">Points <strong className="text-gray-800">{parseFloat(points)}</strong></span>
-          )}
           <div className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-full border shrink-0" style={published ? { background: "#22c55e", borderColor: "#22c55e" } : { borderColor: "#9ca3af" }} />
             <span className="hidden xs:inline">{published ? "Published" : "Unpublished"}</span>
@@ -1415,26 +1407,6 @@ export default function AdminCourseFormCreateEditPage() {
                 </select>
               </div>
 
-              {/* Assignment Group */}
-              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4">
-                <label className="text-xs text-gray-700 font-medium sm:w-36 sm:text-right shrink-0">Assignment Group</label>
-                <select value={assignmentGroup}
-                  onChange={e => { if (e.target.value === "__create__") { setNewGroupName(""); setGroupModalOpen(true); } else setAssignmentGroup(e.target.value); }}
-                  className="h-9 border border-gray-300 rounded-sm px-3 text-xs w-full sm:w-72 bg-white outline-none focus:border-[#7b1113]">
-                  {groups.map(g => <option key={g.id} value={g.name}>{g.name}</option>)}
-                  <option value="__create__">[ Create Group ]</option>
-                </select>
-              </div>
-
-              {/* Points */}
-              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4">
-                <label className="text-xs text-gray-700 font-medium sm:w-36 sm:text-right shrink-0">Points</label>
-                <div className="flex items-center gap-2">
-                  <input type="number" min={0} value={points} onChange={e => setPoints(e.target.value)}
-                    placeholder="0" className="h-9 border border-gray-300 rounded-sm px-3 text-xs w-28 sm:w-32 outline-none focus:border-[#7b1113]" />
-                  <span className="text-xs text-gray-500">pts total</span>
-                </div>
-              </div>
 
               {/* Assign section */}
               <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-4">
