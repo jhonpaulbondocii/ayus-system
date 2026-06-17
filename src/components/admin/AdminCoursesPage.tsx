@@ -23,11 +23,12 @@ interface CourseForm {
   status:      "PUBLISHED" | "UNPUBLISHED";
   description: string;
   term:        string;
+  officeType:  string;
 }
 
 const EMPTY_FORM: CourseForm = {
   name: "", code: "", color: "#cc2a27",
-  status: "UNPUBLISHED", description: "", term: "",
+  status: "UNPUBLISHED", description: "", term: "", officeType: "",
 };
 
 const TERMS = ["2nd Sem AY 2025-2026", "1st Sem AY 2025-2026", "2nd Sem AY 2024-2025"];
@@ -221,7 +222,7 @@ export default function AdminCoursesPage() {
                 onEdit={() => setModal({
                   mode: "edit", id: c.id,
                   form: { name: c.name, code: c.code, color: c.color, status: c.status,
-                          description: c.description ?? "", term: c.term ?? "" },
+        description: c.description ?? "", term: c.term ?? "", officeType: (c as Course & { officeType?: string }).officeType ?? "" },
                 })}
                 onDelete={() => setDeleteTarget(c)}
               />
@@ -299,7 +300,7 @@ export default function AdminCoursesPage() {
                       onClick={() => setModal({
                         mode: "edit", id: c.id,
                         form: { name: c.name, code: c.code, color: c.color, status: c.status,
-                                description: c.description ?? "", term: c.term ?? "" },
+        description: c.description ?? "", term: c.term ?? "", officeType: (c as Course & { officeType?: string }).officeType ?? "" },
                       })}
                       title="Edit"
                       className="w-7 h-7 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100"
@@ -380,6 +381,18 @@ export default function AdminCoursesPage() {
                   rows={2}
                   className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none resize-none"
                 />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Office Type</label>
+                <select
+                  value={modal.form.officeType}
+                  onChange={e => setModal(m => m ? { ...m, form: { ...m.form, officeType: e.target.value } } : m)}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none"
+                >
+                  <option value="">— Standard Office —</option>
+                  <option value="CLINIC">Clinic</option>
+                </select>
               </div>
 
               <div>

@@ -197,6 +197,7 @@ exports.Prisma.CourseScalarFieldEnum = {
   color: 'color',
   image: 'image',
   status: 'status',
+  officeType: 'officeType',
   description: 'description',
   term: 'term',
   startDate: 'startDate',
@@ -560,6 +561,58 @@ exports.Prisma.RubricRatingScalarFieldEnum = {
   order: 'order'
 };
 
+exports.Prisma.StudentScalarFieldEnum = {
+  id: 'id',
+  studentNumber: 'studentNumber',
+  name: 'name',
+  age: 'age',
+  gender: 'gender',
+  course: 'course',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.PatientRecordScalarFieldEnum = {
+  id: 'id',
+  courseId: 'courseId',
+  studentId: 'studentId',
+  complaint: 'complaint',
+  temperature: 'temperature',
+  bloodPressure: 'bloodPressure',
+  pulseRate: 'pulseRate',
+  weight: 'weight',
+  diagnosis: 'diagnosis',
+  medicine: 'medicine',
+  action: 'action',
+  notes: 'notes',
+  visitDate: 'visitDate',
+  recordedBy: 'recordedBy',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.MedicineInventoryScalarFieldEnum = {
+  id: 'id',
+  courseId: 'courseId',
+  name: 'name',
+  unit: 'unit',
+  stockQty: 'stockQty',
+  lowStockThreshold: 'lowStockThreshold',
+  notes: 'notes',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.MedicineUsageScalarFieldEnum = {
+  id: 'id',
+  patientRecordId: 'patientRecordId',
+  medicineId: 'medicineId',
+  medicineName: 'medicineName',
+  quantityUsed: 'quantityUsed',
+  unit: 'unit',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -659,6 +712,14 @@ exports.FormQuestionType = exports.$Enums.FormQuestionType = {
   SECTION: 'SECTION'
 };
 
+exports.PatientAction = exports.$Enums.PatientAction = {
+  GIVEN_MEDICINE: 'GIVEN_MEDICINE',
+  SENT_HOME: 'SENT_HOME',
+  FOR_OBSERVATION: 'FOR_OBSERVATION',
+  REFERRED_HOSPITAL: 'REFERRED_HOSPITAL',
+  REFERRED_GUIDANCE: 'REFERRED_GUIDANCE'
+};
+
 exports.Prisma.ModelName = {
   Conversation: 'Conversation',
   ConversationParticipant: 'ConversationParticipant',
@@ -691,7 +752,11 @@ exports.Prisma.ModelName = {
   FormSubmission: 'FormSubmission',
   Rubric: 'Rubric',
   RubricCriterion: 'RubricCriterion',
-  RubricRating: 'RubricRating'
+  RubricRating: 'RubricRating',
+  Student: 'Student',
+  PatientRecord: 'PatientRecord',
+  MedicineInventory: 'MedicineInventory',
+  MedicineUsage: 'MedicineUsage'
 };
 
 /**

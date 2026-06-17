@@ -24,6 +24,8 @@ import CoursePeopleTab from "./course/CoursePeopleTab";
 import CourseQuizzesTab from "./course/CourseQuizzesTab";
 import CourseSettingsTab from "./course/CourseSettingsTab";
 import CourseRepositoriesTab from "./course/CourseRepositoriesTab";
+import CoursePatientRecordsTab from "./course/CoursePatientRecordsTab";
+import CourseMedicineInventoryTab from "./course/CourseMedicineInventoryTab";
 
 import {
   FONT,
@@ -500,10 +502,12 @@ function CourseViewInner({ courseId }: { courseId: string }) {
   const canManagePeople = membership?.permissions.managePeople ?? false;
   const canManageCourse = membership?.permissions.manageCourse ?? false;
 
+  const isClinic = course?.officeType === "CLINIC";
+
   const TABS: Tab[] = (
     isHead
-      ? ["Home", "Announcements", "Assignments", "Repositories", "Grades", "People", "Form"]
-      : ["Home", "Announcements", "Assignments", "Grades", "People", "Form"]
+      ? ["Home", "Announcements", "Assignments", "Repositories", "Grades", "People", "Form", ...(isClinic ? ["Patient Records", "Medicine Inventory"] : [])]
+      : ["Home", "Announcements", "Assignments", "Grades", "People", "Form", ...(isClinic ? ["Patient Records", "Medicine Inventory"] : [])]
   ) as Tab[];
 
   const handleAddPerson = async () => {
@@ -729,6 +733,25 @@ function CourseViewInner({ courseId }: { courseId: string }) {
             isHead={isHead}
             onNavigateToAssignments={() => handleTabChange("Assignments")}
             onNavigateToForms={() => handleTabChange("Form")}
+          />
+        </div>
+      )}
+      {activeTab === "Patient Records" && isClinic && dataLoaded && (
+        <div className="flex-1 overflow-hidden flex flex-col">
+          <CoursePatientRecordsTab
+            courseId={courseId}
+            isAdmin={isAdmin}
+            isHead={isHead}
+            currentUserId={currentUserId}
+          />
+        </div>
+      )}
+      {activeTab === "Medicine Inventory" && isClinic && dataLoaded && (
+        <div className="flex-1 overflow-hidden flex flex-col">
+          <CourseMedicineInventoryTab
+            courseId={courseId}
+            isAdmin={isAdmin}
+            isHead={isHead}
           />
         </div>
       )}

@@ -8,7 +8,7 @@ import { signOut } from "next-auth/react";
 import {
   LayoutDashboard, Users, FolderKanban,
   Inbox, Clock, CalendarDays, LogOut, BookOpen,
-  ChevronLeft, ChevronRight,
+  ChevronLeft, ChevronRight, GraduationCap,
 } from "lucide-react";
 import AdminCoursesPanel, { AdminCoursesProvider, useAdminCourses } from "./AdminCoursesPanel";
 import AdminGroupsPanel from "./AdminGroupsPanel";
@@ -33,8 +33,9 @@ function CreateCourseModal({
   onClose:   () => void;
   onCreated: (courseId: string) => void;
 }) {
-  const [name,     setName]     = useState("");
-  const [creating, setCreating] = useState(false);
+  const [name,       setName]       = useState("");
+  const [officeType, setOfficeType] = useState("");
+  const [creating,   setCreating]   = useState(false);
 
   const handleCreate = async () => {
     if (!name.trim()) return;
@@ -43,7 +44,7 @@ function CreateCourseModal({
     const code  = name.trim().toUpperCase().replace(/\s+/g, "-");
     const res   = await fetch("/api/admin/courses", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: name.trim(), code, color, status: "UNPUBLISHED" }),
+      body: JSON.stringify({ name: name.trim(), code, color, status: "UNPUBLISHED", officeType: officeType || null }),
     });
     const data = await res.json();
     setCreating(false);
@@ -88,6 +89,21 @@ function CreateCourseModal({
             onFocus={e => { e.currentTarget.style.borderColor = MAROON; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(123,17,19,.08)"; }}
             onBlur={e  => { e.currentTarget.style.borderColor = "#e5e7eb"; e.currentTarget.style.boxShadow = "none"; }}
           />
+          <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8, marginTop: 14 }}>
+            Office Type
+          </label>
+          <select
+            value={officeType}
+            onChange={e => setOfficeType(e.target.value)}
+            style={{
+              width: "100%", border: "1px solid #e5e7eb", borderRadius: 8,
+              padding: "9px 12px", fontSize: 13, outline: "none",
+              boxSizing: "border-box", fontFamily: FONT, background: "#fff", cursor: "pointer",
+            }}
+          >
+            <option value="">— Standard Office —</option>
+            <option value="CLINIC">Clinic</option>
+          </select>
         </div>
         <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, padding: "12px 22px 18px", background: "#fdf8f8", borderTop: "1px solid #f0e4e4" }}>
           <button onClick={onClose}
@@ -205,7 +221,14 @@ function AdminSidebar({
           <span className="text-[10px] mt-1 text-center leading-tight">Users</span>
         </Link>
 
-        {/* 6. Inbox */}
+        {/* 6. Students */}
+        <Link href="/admin/students" onClick={handlePageNavClick}
+          className={`flex flex-col items-center justify-center w-full py-2.5 px-1 transition-colors ${pageIsActive("/admin/students") ? ACTIVE_CLS : INACTIVE_CLS}`}>
+          <GraduationCap size={18} />
+          <span className="text-[10px] mt-1 text-center leading-tight">Students</span>
+        </Link>
+
+        {/* 7. Inbox */}
         <Link href="/admin/inbox" onClick={handlePageNavClick}
           className={`flex flex-col items-center justify-center w-full py-2.5 px-1 transition-colors ${pageIsActive("/admin/inbox") ? ACTIVE_CLS : INACTIVE_CLS}`}>
           <Inbox size={18} />
@@ -422,7 +445,13 @@ function MobileBottomNav({
             <span style={LABEL_STYLE(pageIsActive("/admin/users"))}>Users</span>
           </Link>
 
-          {/* 6. Inbox */}
+          {/* 6. Students */}
+          <Link href="/admin/students" onClick={handlePageNavClick} style={NAV_ITEM_STYLE(pageIsActive("/admin/students"))}>
+            <GraduationCap size={20} color={iconColor(pageIsActive("/admin/students"))} />
+            <span style={LABEL_STYLE(pageIsActive("/admin/students"))}>Students</span>
+          </Link>
+
+          {/* 7. Inbox */}
           <Link href="/admin/inbox" onClick={handlePageNavClick} style={NAV_ITEM_STYLE(pageIsActive("/admin/inbox"))}>
             <Inbox size={20} color={iconColor(pageIsActive("/admin/inbox"))} />
             <span style={LABEL_STYLE(pageIsActive("/admin/inbox"))}>Inbox</span>

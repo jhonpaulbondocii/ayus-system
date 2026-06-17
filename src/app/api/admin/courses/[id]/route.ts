@@ -46,7 +46,7 @@ export async function PATCH(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
-  const { name, code, color, status, description, term, startDate, endDate } = await req.json();
+  const { name, code, color, status, description, term, startDate, endDate, officeType } = await req.json();
 
   const course = await prisma.course.update({
     where: { id },
@@ -59,6 +59,7 @@ export async function PATCH(
       ...(term        !== undefined && { term }),
       ...(startDate   !== undefined && { startDate: startDate ? new Date(startDate) : null }),
       ...(endDate     !== undefined && { endDate:   endDate   ? new Date(endDate)   : null }),
+      ...(officeType  !== undefined && { officeType: officeType || null }),
     },
   });
 

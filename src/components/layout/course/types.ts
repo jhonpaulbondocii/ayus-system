@@ -8,6 +8,7 @@ export interface Course {
   image: string | null;
   status: string;
   term: string | null;
+  officeType: string | null;
 }
 
 export interface Assignment {
@@ -207,7 +208,9 @@ export type Tab =
   | "Syllabus"
   | "Collaborations"
   | "Form"
-  | "Repositories"   // ← add this
+  | "Repositories"
+  | "Patient Records"
+  | "Medicine Inventory"
   | "Settings";
 
 export type TabKey = "details" | "submission" | "settings" | "assign";

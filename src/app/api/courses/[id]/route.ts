@@ -47,6 +47,7 @@ export async function GET(_request: Request, { params }: Props) {
     term: enrollment.course.term,
     startDate: enrollment.course.startDate,
     endDate: enrollment.course.endDate,
+    officeType: enrollment.course.officeType ?? null,
   };
 
   return NextResponse.json({

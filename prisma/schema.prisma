@@ -79,6 +79,14 @@ enum FormQuestionType {
   SECTION
 }
 
+enum PatientAction {
+  GIVEN_MEDICINE
+  SENT_HOME
+  FOR_OBSERVATION
+  REFERRED_HOSPITAL
+  REFERRED_GUIDANCE
+}
+
 model Conversation {
   id        String       @id @default(cuid())
   subject   String
@@ -173,6 +181,7 @@ model User {
   quizzesCreated           Quiz[]                    @relation("QuizAuthor")
   formsCreated             Form[]                    @relation("FormAuthor")
   gradedSubmissions        Submission[]              @relation("GradedSubmissions")
+  patientRecords           PatientRecord[]           @relation("RecordedBy")
 
   @@map("users")
 }
@@ -198,6 +207,7 @@ model Course {
   color       String       @default("#cc2a27")
   image       String?
   status      CourseStatus @default(UNPUBLISHED)
+  officeType  String?
   description String?
   term        String?
   startDate   DateTime?
@@ -205,14 +215,16 @@ model Course {
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
-  enrollments   CourseEnrollment[]
-  groups        Group[]
-  groupSets     GroupSet[]
-  assignments   Assignment[]
-  announcements Announcement[]
-  conversations Conversation[]
-  quizzes       Quiz[]
-  forms         Form[]
+  enrollments       CourseEnrollment[]
+  groups            Group[]
+  groupSets         GroupSet[]
+  assignments       Assignment[]
+  announcements     Announcement[]
+  conversations     Conversation[]
+  quizzes           Quiz[]
+  forms             Form[]
+  patientRecords    PatientRecord[]
+  medicineInventory MedicineInventory[]
 
   @@map("courses")
 }
@@ -334,7 +346,7 @@ model Submission {
   grade        Float?
   feedback     String?          @db.Text
   submittedAt  DateTime?
-   daysLate     Int?
+  daysLate     Int?
   gradedById   String?
   gradedAt     DateTime?
   createdAt    DateTime         @default(now())
@@ -409,7 +421,7 @@ model Announcement {
   authorId       String?
   assignTo       String[]  @default([])
   allowComment   Boolean   @default(false)
-  locked         Boolean   @default(false)   // ← DAGDAG ITO
+  locked         Boolean   @default(false)
   allowLiking    Boolean   @default(false)
   availableFrom  DateTime?
   availableUntil DateTime?
@@ -665,10 +677,10 @@ model Rubric {
   assignmentId         String   @unique
   courseId             String?
   title                String
-  type                 String   @default("scale")      // "scale" | "written_feedback"
-  ratingDisplay        String   @default("level")      // "level" | "points"
-  ratingOrder          String   @default("high_low")   // "high_low" | "low_high"
-  scoring              String   @default("scored")     // "scored" | "unscored"
+  type                 String   @default("scale")
+  ratingDisplay        String   @default("level")
+  ratingOrder          String   @default("high_low")
+  scoring              String   @default("scored")
   doNotPostToGradebook Boolean  @default(false)
   useForGrading        Boolean  @default(false)
   hideScoreTotal       Boolean  @default(false)
@@ -676,7 +688,7 @@ model Rubric {
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
 
-  assignment Assignment       @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  assignment Assignment        @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
   criteria   RubricCriterion[]
 
   @@map("rubrics")
@@ -709,4 +721,87 @@ model RubricRating {
   criterion RubricCriterion @relation(fields: [criterionId], references: [id], onDelete: Cascade)
 
   @@map("rubric_ratings")
+}
+
+model Student {
+  id            String   @id @default(cuid())
+  studentNumber String   @unique
+  name          String
+  age           Int?
+  gender        String?
+  course        String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  patientRecords PatientRecord[]
+
+  @@map("students")
+}
+
+// ── Patient Records ───────────────────────────────────────────────────────────
+
+model PatientRecord {
+  id            String        @id @default(cuid())
+  courseId      String
+  studentId     String
+  complaint     String        @db.Text
+  temperature   Float?
+  bloodPressure String?
+  pulseRate     Int?
+  weight        Float?
+  diagnosis     String?       @db.Text
+  medicine      String?       @db.Text
+  action        PatientAction
+  notes         String?       @db.Text
+  visitDate     DateTime
+  recordedBy    String
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  course         Course          @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  student        Student         @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  recordedByUser User            @relation("RecordedBy", fields: [recordedBy], references: [id])
+  medicineUsages MedicineUsage[]
+
+  @@index([courseId])
+  @@index([studentId])
+  @@index([courseId, visitDate])
+  @@map("patient_records")
+}
+
+// ── Medicine Inventory ────────────────────────────────────────────────────────
+
+model MedicineInventory {
+  id                String   @id @default(cuid())
+  courseId          String
+  name              String
+  unit              String   // e.g. "tablet", "capsule", "ml", "bottle", "box"
+  stockQty          Int      @default(0)
+  lowStockThreshold Int      @default(10)
+  notes             String?  @db.Text
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  course Course          @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  usages MedicineUsage[]
+
+  @@index([courseId])
+  @@map("medicine_inventory")
+}
+
+model MedicineUsage {
+  id              String   @id @default(cuid())
+  patientRecordId String
+  medicineId      String
+  medicineName    String   // snapshot of name at time of recording
+  quantityUsed    Int
+  unit            String   // snapshot of unit at time of recording
+  createdAt       DateTime @default(now())
+
+  patientRecord PatientRecord     @relation(fields: [patientRecordId], references: [id], onDelete: Cascade)
+  medicine      MedicineInventory @relation(fields: [medicineId], references: [id], onDelete: Restrict)
+
+  @@index([patientRecordId])
+  @@index([medicineId])
+  @@map("medicine_usages")
 }

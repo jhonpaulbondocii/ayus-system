@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
   if (!await requireAdmin())
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { name, code, color, status, description, term, startDate, endDate } = await req.json();
+  const { name, code, color, status, description, term, startDate, endDate, officeType } = await req.json();
 
   if (!name || !code)
     return NextResponse.json({ error: "Name and code are required" }, { status: 400 });
@@ -49,6 +49,7 @@ export async function POST(req: NextRequest) {
       term:        term        ?? null,
       startDate:   startDate   ? new Date(startDate) : null,
       endDate:     endDate     ? new Date(endDate)   : null,
+      officeType:  officeType  ?? null,
     },
   });
 
