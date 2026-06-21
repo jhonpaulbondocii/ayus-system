@@ -48,8 +48,11 @@ async function fetchRecords(courseId: string, dateFrom?: string, dateTo?: string
       diagnosis:     true,
       medicine:      true,
       action:        true,
-      notes:         true,
-      visitDate:     true,
+      notes:          true,
+      visitDate:      true,
+      signatureUrl:   true,
+      signedAt:       true,
+      signatureMethod:true,
       student: {
         select: {
           studentNumber: true,
@@ -117,14 +120,16 @@ export async function GET(
       action:        ACTION_LABELS[r.action] ?? r.action,
       notes:         r.notes                 ?? "—",
       recordedBy:    r.recordedByUser.name   ?? "—",
+      signed:        r.signedAt ? `Signed ${formatDateShort(r.signedAt)} ${formatTime(r.signedAt)}` : "Unsigned",
+      signMethod:    r.signatureMethod === "uploaded" ? "Uploaded" : r.signatureMethod === "drawn" ? "Drawn" : "—",
     }));
 
     const colHeaders = [
-      "Date", "Time", "Student No.", "Name", "Course",
-      "Age", "Gender", "Chief Complaint", "Temp", "BP",
-      "Pulse", "Weight", "Diagnosis", "Medicine / Dosage",
-      "Action Taken", "Notes", "Recorded By",
-    ];
+        "Date", "Time", "Student No.", "Name", "Course",
+        "Age", "Gender", "Chief Complaint", "Temp", "BP",
+        "Pulse", "Weight", "Diagnosis", "Medicine / Dosage",
+        "Action Taken", "Notes", "Recorded By", "E-Signature",
+      ];
 
     // ── EXCEL ──────────────────────────────────────────────────────────────────
     if (format === "excel") {
@@ -140,7 +145,9 @@ export async function GET(
           r.date, r.time, r.studentNo, r.name, r.course,
           r.age, r.gender, r.complaint, r.temperature,
           r.bloodPressure, r.pulseRate, r.weight,
+          // NG ITO:
           r.diagnosis, r.medicine, r.action, r.notes, r.recordedBy,
+          r.signed,
         ]),
       ];
 
@@ -150,6 +157,7 @@ export async function GET(
         { wch: 5  }, { wch: 8  }, { wch: 26 }, { wch: 8  },
         { wch: 10 }, { wch: 10 }, { wch: 10 },
         { wch: 24 }, { wch: 24 }, { wch: 22 }, { wch: 28 }, { wch: 18 },
+        { wch: 20 },
       ];
 
       const wb = XLSX.utils.book_new();
@@ -166,10 +174,10 @@ export async function GET(
 
     // ── PDF — landscape A3 for more space ──────────────────────────────────────
     if (format === "pdf") {
-      const { default: jsPDF } = await import("jspdf");
+      const jsPDFModule = await import("jspdf");
+      const jsPDF = jsPDFModule.jsPDF ?? jsPDFModule.default;
       const { default: autoTable } = await import("jspdf-autotable");
 
-      // A3 landscape gives ~420mm width vs A4's 297mm — much more room
       const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a3" });
       const pageW = doc.internal.pageSize.getWidth();
 
@@ -202,6 +210,7 @@ export async function GET(
           r.age, r.gender, r.complaint, r.temperature,
           r.bloodPressure, r.pulseRate, r.weight,
           r.diagnosis, r.medicine, r.action, r.notes, r.recordedBy,
+          records[rows.indexOf(r)]?.signatureUrl ? "" : "—",
         ]),
         styles: {
           fontSize:    7.5,
@@ -242,6 +251,28 @@ export async function GET(
           14: { cellWidth: 24 },                    // Action
           15: { cellWidth: 28 },                    // Notes
           16: { cellWidth: 21 },                    // Recorded By
+          17: { cellWidth: 30, halign: "center" },  // E-Signature
+        },
+        didDrawCell: (data) => {
+          if (data.column.index === 17 && data.section === "body") {
+            const rowIndex = data.row.index;
+            const sigUrl = records[rowIndex]?.signatureUrl;
+            if (sigUrl && sigUrl.startsWith("data:image/")) {
+              try {
+                const { x, y, width, height } = data.cell;
+                const padding = 2;
+                doc.addImage(
+                  sigUrl, "PNG",
+                  x + padding,
+                  y + padding,
+                  width - padding * 2,
+                  height - padding * 2,
+                );
+              } catch {
+                // skip kung may error sa image
+              }
+            }
+          }
         },
         didDrawPage: (data) => {
           const pageH = doc.internal.pageSize.getHeight();
@@ -301,7 +332,8 @@ export async function GET(
         1700, // Action Taken
         2400, // Notes
         1400, // Recorded By
-      ]; // total = 24200 — fills A3 landscape nicely
+        2200, // E-Signature
+      ];// total = 24200 — fills A3 landscape nicely
 
       const thinBorder = {
         top:    { style: BorderStyle.SINGLE, size: 1, color: "E5E7EB" },
@@ -343,26 +375,56 @@ export async function GET(
           })],
         });
 
+      const makeImageCell = async (base64: string | null, width: number, isAlt: boolean) => {
+        const { ImageRun } = await import("docx");
+        const children = base64 && base64.startsWith("data:image/")
+          ? [new Paragraph({
+              alignment: AlignmentType.CENTER,
+              children: [new ImageRun({
+                data: base64.split(",")[1],
+                transformation: { width: 80, height: 30 },
+                type: "png",
+              })],
+            })]
+          : [new Paragraph({
+              alignment: AlignmentType.CENTER,
+              children: [new TextRun({ text: "—", size: 14 })],
+            })];
+        return new TableCell({
+          width:   { size: width, type: WidthType.DXA },
+          shading: isAlt
+            ? { type: ShadingType.SOLID, color: MAROON_LIGHT, fill: MAROON_LIGHT }
+            : { type: ShadingType.SOLID, color: "FFFFFF", fill: "FFFFFF" },
+          borders: thinBorder,
+          margins: { top: 40, bottom: 40, left: 80, right: 80 },
+          children,
+        });
+      };
+
       const centered = [true, true, true, false, false, true, true,
-                        false, true, true, true, true, false, false, false, false, false];
+                        false, true, true, true, true, false, false, false, false, false, true];
 
       const headerRow = new TableRow({
         tableHeader: true,
         children: colHeaders.map((h, i) => makeHeaderCell(h, colWidths[i])),
       });
 
-      const dataRows = rows.map((r, idx) => {
+      const dataRows = await Promise.all(rows.map(async (r, idx) => {
         const isAlt = idx % 2 === 1;
-        const vals  = [
+        const textVals = [
           r.date, r.time, r.studentNo, r.name, r.course,
           r.age, r.gender, r.complaint, r.temperature,
           r.bloodPressure, r.pulseRate, r.weight,
           r.diagnosis, r.medicine, r.action, r.notes, r.recordedBy,
         ];
+        const textCells = textVals.map((v, i) =>
+          makeDataCell(v, colWidths[i], isAlt, centered[i])
+        );
+        const sigCell = await makeImageCell(records[idx]?.signatureUrl ?? null, colWidths[17], isAlt);
         return new TableRow({
-          children: vals.map((v, i) => makeDataCell(v, colWidths[i], isAlt, centered[i])),
+          children: [...textCells, sigCell],
         });
-      });
+      }));
 
       const doc = new Document({
         sections: [{
