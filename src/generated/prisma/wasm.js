@@ -565,6 +565,7 @@ exports.Prisma.StudentScalarFieldEnum = {
   id: 'id',
   studentNumber: 'studentNumber',
   name: 'name',
+  email: 'email',
   age: 'age',
   gender: 'gender',
   course: 'course',
@@ -588,7 +589,13 @@ exports.Prisma.PatientRecordScalarFieldEnum = {
   visitDate: 'visitDate',
   recordedBy: 'recordedBy',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  signatureUrl: 'signatureUrl',
+  signatureMethod: 'signatureMethod',
+  signedAt: 'signedAt',
+  signToken: 'signToken',
+  signTokenExpiresAt: 'signTokenExpiresAt',
+  signEmailSentAt: 'signEmailSentAt'
 };
 
 exports.Prisma.MedicineInventoryScalarFieldEnum = {

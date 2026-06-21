@@ -40,6 +40,7 @@ export async function GET(
         id:            true,
         studentNumber: true,
         name:          true,
+        email:         true,
         age:           true,
         gender:        true,
         course:        true,

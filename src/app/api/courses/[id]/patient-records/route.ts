@@ -4,6 +4,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireCoursePermission } from "@/lib/course-access";
 import { PatientAction } from "@/generated/prisma";
+import { generateSignToken, signTokenExpiry } from "@/lib/sign-token";
+import { sendSignatureRequestEmail } from "@/lib/email";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // GET /api/courses/[id]/patient-records
@@ -72,6 +74,10 @@ export async function GET(
         notes:         true,
         visitDate:     true,
         createdAt:     true,
+        // ── NEW: signature status ──
+        signatureUrl:    true,
+        signatureMethod: true,
+        signedAt:        true,
         student: {
           select: {
             id:            true,
@@ -88,7 +94,6 @@ export async function GET(
             name: true,
           },
         },
-        // ── NEW: include medicine usages ──
         medicineUsages: {
           select: {
             id:           true,
@@ -154,7 +159,6 @@ export async function POST(
       action:         string;
       notes?:         string | null;
       visitDate:      string;
-      // ── NEW ──
       medicineUsages?: {
         medicineId:   string;
         quantityUsed: number;
@@ -213,12 +217,11 @@ export async function POST(
       const medicines = await prisma.medicineInventory.findMany({
         where: {
           id:       { in: medicineIds },
-          courseId,                       // ensure medicines belong to this clinic
+          courseId,
         },
         select: { id: true, name: true, unit: true, stockQty: true },
       });
 
-      // Make sure all requested medicines were found
       if (medicines.length !== medicineIds.length) {
         return NextResponse.json(
           { error: "One or more medicines not found in inventory" },
@@ -272,6 +275,7 @@ export async function POST(
               age:           true,
               gender:        true,
               course:        true,
+              email:         true, // ── NEW: kailangan para sa signature email ──
             },
           },
           recordedByUser: {
@@ -289,13 +293,12 @@ export async function POST(
           data: medicineSnapshots.map((med) => ({
             patientRecordId: created.id,
             medicineId:      med.id,
-            medicineName:    med.name,      // snapshot
+            medicineName:    med.name,
             quantityUsed:    med.quantityUsed,
-            unit:            med.unit,      // snapshot
+            unit:            med.unit,
           })),
         });
 
-        // Deduct stock for each medicine (allow going negative — clinic flexibility)
         for (const med of medicineSnapshots) {
           await tx.medicineInventory.update({
             where: { id: med.id },
@@ -319,8 +322,51 @@ export async function POST(
       },
     });
 
+    // ── NEW: Generate signing token + send signature request email ───────────
+    // Hindi natin ito ginagawa sa transaction kasi external side-effect ito
+    // (email send) — di natin gustong i-rollback ang record kung mabigo lang
+    // ang email.
+    let signEmailSentAt: Date | null = null;
+
+    if (record.student.email) {
+      try {
+        const signToken = generateSignToken();
+        const expiresAt = signTokenExpiry(7); // 7 days
+
+        await prisma.patientRecord.update({
+          where: { id: record.id },
+          data:  { signToken, signTokenExpiresAt: expiresAt },
+        });
+
+        await sendSignatureRequestEmail({
+          to:        record.student.email,
+          name:      record.student.name,
+          visitDate: record.visitDate.toISOString(),
+          complaint: record.complaint,
+          action:    record.action,
+          signToken,
+        });
+
+        signEmailSentAt = new Date();
+        await prisma.patientRecord.update({
+          where: { id: record.id },
+          data:  { signEmailSentAt },
+        });
+      } catch (emailErr) {
+        // Huwag i-fail ang buong request kung email lang nabigo —
+        // naka-save na ang visit record, just walang naipadalang sign link.
+        console.error("[POST /patient-records] Failed to send signature email:", emailErr);
+      }
+    }
+
     return NextResponse.json(
-      { record: { ...record, medicineUsages: usages } },
+      {
+        record: {
+          ...record,
+          medicineUsages: usages,
+          signEmailSentAt,
+        },
+      },
       { status: 201 }
     );
   } catch (err) {

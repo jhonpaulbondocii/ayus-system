@@ -613,7 +613,7 @@ model Form {
   dueTime                     String?
   availableFrom               DateTime?
   availableFromTime           String?
-  availableUntil              DateTime?
+  availableUntil               DateTime?
   availableUntilTime          String?
   published                   Boolean   @default(false)
   createdAt                   DateTime  @default(now())
@@ -727,6 +727,7 @@ model Student {
   id            String   @id @default(cuid())
   studentNumber String   @unique
   name          String
+  email         String?  // ⬅️ BAGO — para magamit sa pag-email ng signature request
   age           Int?
   gender        String?
   course        String?
@@ -758,6 +759,14 @@ model PatientRecord {
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
+  // ⬅️ BAGO — e-signature ng student
+  signatureUrl       String?   @db.Text // base64 PNG data URL ng signature
+  signatureMethod    String?            // "drawn" | "uploaded"
+  signedAt           DateTime?
+  signToken          String?   @unique
+  signTokenExpiresAt DateTime?
+  signEmailSentAt    DateTime?
+
   course         Course          @relation(fields: [courseId], references: [id], onDelete: Cascade)
   student        Student         @relation(fields: [studentId], references: [id], onDelete: Cascade)
   recordedByUser User            @relation("RecordedBy", fields: [recordedBy], references: [id])
@@ -766,6 +775,7 @@ model PatientRecord {
   @@index([courseId])
   @@index([studentId])
   @@index([courseId, visitDate])
+  @@index([signToken]) // ⬅️ BAGO
   @@map("patient_records")
 }
 

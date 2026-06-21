@@ -6,7 +6,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import {
   Search, Plus, X, RefreshCw, ChevronDown,
   Trash2, Check, ArrowLeft, FileText,
-  Download, Filter, Stethoscope, Pill, AlertTriangle,
+  Download, Filter, Stethoscope, Pill, AlertTriangle, PenLine,
 } from "lucide-react";
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -48,6 +48,7 @@ interface StudentInfo {
   id:            string;
   studentNumber: string;
   name:          string;
+  email:         string | null;
   age:           number | null;
   gender:        string | null;
   course:        string | null;
@@ -92,6 +93,10 @@ interface PatientRecord {
   student:       StudentInfo;
   recordedByUser:{ id: string; name: string };
   medicineUsages?: MedicineUsage[];
+  // ── NEW: e-signature ──
+  signatureUrl?:    string | null;
+  signatureMethod?: string | null;
+  signedAt?:        string | null;
 }
 
 interface Props {
@@ -960,6 +965,35 @@ function RecordDetailView({
                       </div>
                     ))}
                   </div>
+
+                  {/* ── NEW: E-Signature ── */}
+                  <div className="px-4 py-3 border-t border-gray-100 bg-gray-50/50">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-1.5">
+                      E-Signature
+                    </p>
+                    {v.signatureUrl ? (
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <img
+                          src={v.signatureUrl}
+                          alt={`${v.student.name} signature`}
+                          className="h-14 max-w-[180px] object-contain border border-gray-200 rounded-lg bg-white px-3 py-1.5"
+                        />
+                        <div className="flex items-center gap-1.5 text-[11px] text-gray-400">
+                          <Check size={12} className="text-green-500 shrink-0" />
+                          <span>
+                            Signed {fmtDate(v.signedAt)} {fmtTime(v.signedAt)}
+                            {v.signatureMethod && (
+                              <span className="text-gray-300"> · {v.signatureMethod === "uploaded" ? "Uploaded" : "Drawn"}</span>
+                            )}
+                          </span>
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full bg-amber-50 text-amber-600 border border-amber-200">
+                        <PenLine size={11} /> Awaiting student signature
+                      </span>
+                    )}
+                  </div>
                 </div>
               );
             })}
@@ -1302,6 +1336,16 @@ export default function CoursePatientRecordsTab({
                             </div>
                           </div>
                           <div className="shrink-0 flex items-center gap-2">
+                            {/* ── NEW: signature status (desktop) ── */}
+                            {r.signatureUrl ? (
+                              <span className="hidden lg:inline-flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-full bg-green-50 text-green-600">
+                                <Check size={10} /> Signed
+                              </span>
+                            ) : (
+                              <span className="hidden lg:inline-flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-full bg-amber-50 text-amber-600">
+                                <PenLine size={10} /> Unsigned
+                              </span>
+                            )}
                             <span className="text-[10px] text-gray-400 font-medium hidden lg:inline">
                               by {r.recordedByUser.name}
                             </span>
@@ -1346,6 +1390,12 @@ export default function CoursePatientRecordsTab({
                             {hasMedicines && <><span>·</span><span className="flex items-center gap-0.5"><Pill size={9} /> {r.medicineUsages!.length} med{r.medicineUsages!.length !== 1 ? "s" : ""}</span></>}
                             <span>·</span>
                             <span>{fmtTime(r.visitDate)}</span>
+                            {/* ── NEW: signature status (mobile) ── */}
+                            <span>·</span>
+                            <span className={`flex items-center gap-0.5 font-semibold ${r.signatureUrl ? "text-green-500" : "text-amber-500"}`}>
+                              {r.signatureUrl ? <Check size={9} /> : <PenLine size={9} />}
+                              {r.signatureUrl ? "Signed" : "Unsigned"}
+                            </span>
                           </div>
                         </div>
                       </div>

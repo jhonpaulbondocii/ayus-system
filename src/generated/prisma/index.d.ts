@@ -38821,6 +38821,7 @@ export namespace Prisma {
     id: string | null
     studentNumber: string | null
     name: string | null
+    email: string | null
     age: number | null
     gender: string | null
     course: string | null
@@ -38832,6 +38833,7 @@ export namespace Prisma {
     id: string | null
     studentNumber: string | null
     name: string | null
+    email: string | null
     age: number | null
     gender: string | null
     course: string | null
@@ -38843,6 +38845,7 @@ export namespace Prisma {
     id: number
     studentNumber: number
     name: number
+    email: number
     age: number
     gender: number
     course: number
@@ -38864,6 +38867,7 @@ export namespace Prisma {
     id?: true
     studentNumber?: true
     name?: true
+    email?: true
     age?: true
     gender?: true
     course?: true
@@ -38875,6 +38879,7 @@ export namespace Prisma {
     id?: true
     studentNumber?: true
     name?: true
+    email?: true
     age?: true
     gender?: true
     course?: true
@@ -38886,6 +38891,7 @@ export namespace Prisma {
     id?: true
     studentNumber?: true
     name?: true
+    email?: true
     age?: true
     gender?: true
     course?: true
@@ -38984,6 +38990,7 @@ export namespace Prisma {
     id: string
     studentNumber: string
     name: string
+    email: string | null
     age: number | null
     gender: string | null
     course: string | null
@@ -39014,6 +39021,7 @@ export namespace Prisma {
     id?: boolean
     studentNumber?: boolean
     name?: boolean
+    email?: boolean
     age?: boolean
     gender?: boolean
     course?: boolean
@@ -39027,6 +39035,7 @@ export namespace Prisma {
     id?: boolean
     studentNumber?: boolean
     name?: boolean
+    email?: boolean
     age?: boolean
     gender?: boolean
     course?: boolean
@@ -39038,6 +39047,7 @@ export namespace Prisma {
     id?: boolean
     studentNumber?: boolean
     name?: boolean
+    email?: boolean
     age?: boolean
     gender?: boolean
     course?: boolean
@@ -39060,6 +39070,7 @@ export namespace Prisma {
       id: string
       studentNumber: string
       name: string
+      email: string | null
       age: number | null
       gender: string | null
       course: string | null
@@ -39462,6 +39473,7 @@ export namespace Prisma {
     readonly id: FieldRef<"Student", 'String'>
     readonly studentNumber: FieldRef<"Student", 'String'>
     readonly name: FieldRef<"Student", 'String'>
+    readonly email: FieldRef<"Student", 'String'>
     readonly age: FieldRef<"Student", 'Int'>
     readonly gender: FieldRef<"Student", 'String'>
     readonly course: FieldRef<"Student", 'String'>
@@ -39856,6 +39868,12 @@ export namespace Prisma {
     recordedBy: string | null
     createdAt: Date | null
     updatedAt: Date | null
+    signatureUrl: string | null
+    signatureMethod: string | null
+    signedAt: Date | null
+    signToken: string | null
+    signTokenExpiresAt: Date | null
+    signEmailSentAt: Date | null
   }
 
   export type PatientRecordMaxAggregateOutputType = {
@@ -39875,6 +39893,12 @@ export namespace Prisma {
     recordedBy: string | null
     createdAt: Date | null
     updatedAt: Date | null
+    signatureUrl: string | null
+    signatureMethod: string | null
+    signedAt: Date | null
+    signToken: string | null
+    signTokenExpiresAt: Date | null
+    signEmailSentAt: Date | null
   }
 
   export type PatientRecordCountAggregateOutputType = {
@@ -39894,6 +39918,12 @@ export namespace Prisma {
     recordedBy: number
     createdAt: number
     updatedAt: number
+    signatureUrl: number
+    signatureMethod: number
+    signedAt: number
+    signToken: number
+    signTokenExpiresAt: number
+    signEmailSentAt: number
     _all: number
   }
 
@@ -39927,6 +39957,12 @@ export namespace Prisma {
     recordedBy?: true
     createdAt?: true
     updatedAt?: true
+    signatureUrl?: true
+    signatureMethod?: true
+    signedAt?: true
+    signToken?: true
+    signTokenExpiresAt?: true
+    signEmailSentAt?: true
   }
 
   export type PatientRecordMaxAggregateInputType = {
@@ -39946,6 +39982,12 @@ export namespace Prisma {
     recordedBy?: true
     createdAt?: true
     updatedAt?: true
+    signatureUrl?: true
+    signatureMethod?: true
+    signedAt?: true
+    signToken?: true
+    signTokenExpiresAt?: true
+    signEmailSentAt?: true
   }
 
   export type PatientRecordCountAggregateInputType = {
@@ -39965,6 +40007,12 @@ export namespace Prisma {
     recordedBy?: true
     createdAt?: true
     updatedAt?: true
+    signatureUrl?: true
+    signatureMethod?: true
+    signedAt?: true
+    signToken?: true
+    signTokenExpiresAt?: true
+    signEmailSentAt?: true
     _all?: true
   }
 
@@ -40071,6 +40119,12 @@ export namespace Prisma {
     recordedBy: string
     createdAt: Date
     updatedAt: Date
+    signatureUrl: string | null
+    signatureMethod: string | null
+    signedAt: Date | null
+    signToken: string | null
+    signTokenExpiresAt: Date | null
+    signEmailSentAt: Date | null
     _count: PatientRecordCountAggregateOutputType | null
     _avg: PatientRecordAvgAggregateOutputType | null
     _sum: PatientRecordSumAggregateOutputType | null
@@ -40109,6 +40163,12 @@ export namespace Prisma {
     recordedBy?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    signatureUrl?: boolean
+    signatureMethod?: boolean
+    signedAt?: boolean
+    signToken?: boolean
+    signTokenExpiresAt?: boolean
+    signEmailSentAt?: boolean
     course?: boolean | CourseDefaultArgs<ExtArgs>
     student?: boolean | StudentDefaultArgs<ExtArgs>
     recordedByUser?: boolean | UserDefaultArgs<ExtArgs>
@@ -40133,6 +40193,12 @@ export namespace Prisma {
     recordedBy?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    signatureUrl?: boolean
+    signatureMethod?: boolean
+    signedAt?: boolean
+    signToken?: boolean
+    signTokenExpiresAt?: boolean
+    signEmailSentAt?: boolean
     course?: boolean | CourseDefaultArgs<ExtArgs>
     student?: boolean | StudentDefaultArgs<ExtArgs>
     recordedByUser?: boolean | UserDefaultArgs<ExtArgs>
@@ -40155,6 +40221,12 @@ export namespace Prisma {
     recordedBy?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    signatureUrl?: boolean
+    signatureMethod?: boolean
+    signedAt?: boolean
+    signToken?: boolean
+    signTokenExpiresAt?: boolean
+    signEmailSentAt?: boolean
   }
 
   export type PatientRecordInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -40195,6 +40267,12 @@ export namespace Prisma {
       recordedBy: string
       createdAt: Date
       updatedAt: Date
+      signatureUrl: string | null
+      signatureMethod: string | null
+      signedAt: Date | null
+      signToken: string | null
+      signTokenExpiresAt: Date | null
+      signEmailSentAt: Date | null
     }, ExtArgs["result"]["patientRecord"]>
     composites: {}
   }
@@ -40608,6 +40686,12 @@ export namespace Prisma {
     readonly recordedBy: FieldRef<"PatientRecord", 'String'>
     readonly createdAt: FieldRef<"PatientRecord", 'DateTime'>
     readonly updatedAt: FieldRef<"PatientRecord", 'DateTime'>
+    readonly signatureUrl: FieldRef<"PatientRecord", 'String'>
+    readonly signatureMethod: FieldRef<"PatientRecord", 'String'>
+    readonly signedAt: FieldRef<"PatientRecord", 'DateTime'>
+    readonly signToken: FieldRef<"PatientRecord", 'String'>
+    readonly signTokenExpiresAt: FieldRef<"PatientRecord", 'DateTime'>
+    readonly signEmailSentAt: FieldRef<"PatientRecord", 'DateTime'>
   }
     
 
@@ -43555,6 +43639,7 @@ export namespace Prisma {
     id: 'id',
     studentNumber: 'studentNumber',
     name: 'name',
+    email: 'email',
     age: 'age',
     gender: 'gender',
     course: 'course',
@@ -43581,7 +43666,13 @@ export namespace Prisma {
     visitDate: 'visitDate',
     recordedBy: 'recordedBy',
     createdAt: 'createdAt',
-    updatedAt: 'updatedAt'
+    updatedAt: 'updatedAt',
+    signatureUrl: 'signatureUrl',
+    signatureMethod: 'signatureMethod',
+    signedAt: 'signedAt',
+    signToken: 'signToken',
+    signTokenExpiresAt: 'signTokenExpiresAt',
+    signEmailSentAt: 'signEmailSentAt'
   };
 
   export type PatientRecordScalarFieldEnum = (typeof PatientRecordScalarFieldEnum)[keyof typeof PatientRecordScalarFieldEnum]
@@ -46785,6 +46876,7 @@ export namespace Prisma {
     id?: StringFilter<"Student"> | string
     studentNumber?: StringFilter<"Student"> | string
     name?: StringFilter<"Student"> | string
+    email?: StringNullableFilter<"Student"> | string | null
     age?: IntNullableFilter<"Student"> | number | null
     gender?: StringNullableFilter<"Student"> | string | null
     course?: StringNullableFilter<"Student"> | string | null
@@ -46797,6 +46889,7 @@ export namespace Prisma {
     id?: SortOrder
     studentNumber?: SortOrder
     name?: SortOrder
+    email?: SortOrderInput | SortOrder
     age?: SortOrderInput | SortOrder
     gender?: SortOrderInput | SortOrder
     course?: SortOrderInput | SortOrder
@@ -46812,6 +46905,7 @@ export namespace Prisma {
     OR?: StudentWhereInput[]
     NOT?: StudentWhereInput | StudentWhereInput[]
     name?: StringFilter<"Student"> | string
+    email?: StringNullableFilter<"Student"> | string | null
     age?: IntNullableFilter<"Student"> | number | null
     gender?: StringNullableFilter<"Student"> | string | null
     course?: StringNullableFilter<"Student"> | string | null
@@ -46824,6 +46918,7 @@ export namespace Prisma {
     id?: SortOrder
     studentNumber?: SortOrder
     name?: SortOrder
+    email?: SortOrderInput | SortOrder
     age?: SortOrderInput | SortOrder
     gender?: SortOrderInput | SortOrder
     course?: SortOrderInput | SortOrder
@@ -46843,6 +46938,7 @@ export namespace Prisma {
     id?: StringWithAggregatesFilter<"Student"> | string
     studentNumber?: StringWithAggregatesFilter<"Student"> | string
     name?: StringWithAggregatesFilter<"Student"> | string
+    email?: StringNullableWithAggregatesFilter<"Student"> | string | null
     age?: IntNullableWithAggregatesFilter<"Student"> | number | null
     gender?: StringNullableWithAggregatesFilter<"Student"> | string | null
     course?: StringNullableWithAggregatesFilter<"Student"> | string | null
@@ -46870,6 +46966,12 @@ export namespace Prisma {
     recordedBy?: StringFilter<"PatientRecord"> | string
     createdAt?: DateTimeFilter<"PatientRecord"> | Date | string
     updatedAt?: DateTimeFilter<"PatientRecord"> | Date | string
+    signatureUrl?: StringNullableFilter<"PatientRecord"> | string | null
+    signatureMethod?: StringNullableFilter<"PatientRecord"> | string | null
+    signedAt?: DateTimeNullableFilter<"PatientRecord"> | Date | string | null
+    signToken?: StringNullableFilter<"PatientRecord"> | string | null
+    signTokenExpiresAt?: DateTimeNullableFilter<"PatientRecord"> | Date | string | null
+    signEmailSentAt?: DateTimeNullableFilter<"PatientRecord"> | Date | string | null
     course?: XOR<CourseRelationFilter, CourseWhereInput>
     student?: XOR<StudentRelationFilter, StudentWhereInput>
     recordedByUser?: XOR<UserRelationFilter, UserWhereInput>
@@ -46893,6 +46995,12 @@ export namespace Prisma {
     recordedBy?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    signatureUrl?: SortOrderInput | SortOrder
+    signatureMethod?: SortOrderInput | SortOrder
+    signedAt?: SortOrderInput | SortOrder
+    signToken?: SortOrderInput | SortOrder
+    signTokenExpiresAt?: SortOrderInput | SortOrder
+    signEmailSentAt?: SortOrderInput | SortOrder
     course?: CourseOrderByWithRelationInput
     student?: StudentOrderByWithRelationInput
     recordedByUser?: UserOrderByWithRelationInput
@@ -46901,6 +47009,7 @@ export namespace Prisma {
 
   export type PatientRecordWhereUniqueInput = Prisma.AtLeast<{
     id?: string
+    signToken?: string
     AND?: PatientRecordWhereInput | PatientRecordWhereInput[]
     OR?: PatientRecordWhereInput[]
     NOT?: PatientRecordWhereInput | PatientRecordWhereInput[]
@@ -46919,11 +47028,16 @@ export namespace Prisma {
     recordedBy?: StringFilter<"PatientRecord"> | string
     createdAt?: DateTimeFilter<"PatientRecord"> | Date | string
     updatedAt?: DateTimeFilter<"PatientRecord"> | Date | string
+    signatureUrl?: StringNullableFilter<"PatientRecord"> | string | null
+    signatureMethod?: StringNullableFilter<"PatientRecord"> | string | null
+    signedAt?: DateTimeNullableFilter<"PatientRecord"> | Date | string | null
+    signTokenExpiresAt?: DateTimeNullableFilter<"PatientRecord"> | Date | string | null
+    signEmailSentAt?: DateTimeNullableFilter<"PatientRecord"> | Date | string | null
     course?: XOR<CourseRelationFilter, CourseWhereInput>
     student?: XOR<StudentRelationFilter, StudentWhereInput>
     recordedByUser?: XOR<UserRelationFilter, UserWhereInput>
     medicineUsages?: MedicineUsageListRelationFilter
-  }, "id">
+  }, "id" | "signToken">
 
   export type PatientRecordOrderByWithAggregationInput = {
     id?: SortOrder
@@ -46942,6 +47056,12 @@ export namespace Prisma {
     recordedBy?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    signatureUrl?: SortOrderInput | SortOrder
+    signatureMethod?: SortOrderInput | SortOrder
+    signedAt?: SortOrderInput | SortOrder
+    signToken?: SortOrderInput | SortOrder
+    signTokenExpiresAt?: SortOrderInput | SortOrder
+    signEmailSentAt?: SortOrderInput | SortOrder
     _count?: PatientRecordCountOrderByAggregateInput
     _avg?: PatientRecordAvgOrderByAggregateInput
     _max?: PatientRecordMaxOrderByAggregateInput
@@ -46969,6 +47089,12 @@ export namespace Prisma {
     recordedBy?: StringWithAggregatesFilter<"PatientRecord"> | string
     createdAt?: DateTimeWithAggregatesFilter<"PatientRecord"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"PatientRecord"> | Date | string
+    signatureUrl?: StringNullableWithAggregatesFilter<"PatientRecord"> | string | null
+    signatureMethod?: StringNullableWithAggregatesFilter<"PatientRecord"> | string | null
+    signedAt?: DateTimeNullableWithAggregatesFilter<"PatientRecord"> | Date | string | null
+    signToken?: StringNullableWithAggregatesFilter<"PatientRecord"> | string | null
+    signTokenExpiresAt?: DateTimeNullableWithAggregatesFilter<"PatientRecord"> | Date | string | null
+    signEmailSentAt?: DateTimeNullableWithAggregatesFilter<"PatientRecord"> | Date | string | null
   }
 
   export type MedicineInventoryWhereInput = {
@@ -50342,6 +50468,7 @@ export namespace Prisma {
     id?: string
     studentNumber: string
     name: string
+    email?: string | null
     age?: number | null
     gender?: string | null
     course?: string | null
@@ -50354,6 +50481,7 @@ export namespace Prisma {
     id?: string
     studentNumber: string
     name: string
+    email?: string | null
     age?: number | null
     gender?: string | null
     course?: string | null
@@ -50366,6 +50494,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     studentNumber?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    email?: NullableStringFieldUpdateOperationsInput | string | null
     age?: NullableIntFieldUpdateOperationsInput | number | null
     gender?: NullableStringFieldUpdateOperationsInput | string | null
     course?: NullableStringFieldUpdateOperationsInput | string | null
@@ -50378,6 +50507,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     studentNumber?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    email?: NullableStringFieldUpdateOperationsInput | string | null
     age?: NullableIntFieldUpdateOperationsInput | number | null
     gender?: NullableStringFieldUpdateOperationsInput | string | null
     course?: NullableStringFieldUpdateOperationsInput | string | null
@@ -50390,6 +50520,7 @@ export namespace Prisma {
     id?: string
     studentNumber: string
     name: string
+    email?: string | null
     age?: number | null
     gender?: string | null
     course?: string | null
@@ -50401,6 +50532,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     studentNumber?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    email?: NullableStringFieldUpdateOperationsInput | string | null
     age?: NullableIntFieldUpdateOperationsInput | number | null
     gender?: NullableStringFieldUpdateOperationsInput | string | null
     course?: NullableStringFieldUpdateOperationsInput | string | null
@@ -50412,6 +50544,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     studentNumber?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    email?: NullableStringFieldUpdateOperationsInput | string | null
     age?: NullableIntFieldUpdateOperationsInput | number | null
     gender?: NullableStringFieldUpdateOperationsInput | string | null
     course?: NullableStringFieldUpdateOperationsInput | string | null
@@ -50433,6 +50566,12 @@ export namespace Prisma {
     visitDate: Date | string
     createdAt?: Date | string
     updatedAt?: Date | string
+    signatureUrl?: string | null
+    signatureMethod?: string | null
+    signedAt?: Date | string | null
+    signToken?: string | null
+    signTokenExpiresAt?: Date | string | null
+    signEmailSentAt?: Date | string | null
     course: CourseCreateNestedOneWithoutPatientRecordsInput
     student: StudentCreateNestedOneWithoutPatientRecordsInput
     recordedByUser: UserCreateNestedOneWithoutPatientRecordsInput
@@ -50456,6 +50595,12 @@ export namespace Prisma {
     recordedBy: string
     createdAt?: Date | string
     updatedAt?: Date | string
+    signatureUrl?: string | null
+    signatureMethod?: string | null
+    signedAt?: Date | string | null
+    signToken?: string | null
+    signTokenExpiresAt?: Date | string | null
+    signEmailSentAt?: Date | string | null
     medicineUsages?: MedicineUsageUncheckedCreateNestedManyWithoutPatientRecordInput
   }
 
@@ -50473,6 +50618,12 @@ export namespace Prisma {
     visitDate?: DateTimeFieldUpdateOperationsInput | Date | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    signatureUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    signatureMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    signedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    signToken?: NullableStringFieldUpdateOperationsInput | string | null
+    signTokenExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    signEmailSentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     course?: CourseUpdateOneRequiredWithoutPatientRecordsNestedInput
     student?: StudentUpdateOneRequiredWithoutPatientRecordsNestedInput
     recordedByUser?: UserUpdateOneRequiredWithoutPatientRecordsNestedInput
@@ -50496,6 +50647,12 @@ export namespace Prisma {
     recordedBy?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    signatureUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    signatureMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    signedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    signToken?: NullableStringFieldUpdateOperationsInput | string | null
+    signTokenExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    signEmailSentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     medicineUsages?: MedicineUsageUncheckedUpdateManyWithoutPatientRecordNestedInput
   }
 
@@ -50516,6 +50673,12 @@ export namespace Prisma {
     recordedBy: string
     createdAt?: Date | string
     updatedAt?: Date | string
+    signatureUrl?: string | null
+    signatureMethod?: string | null
+    signedAt?: Date | string | null
+    signToken?: string | null
+    signTokenExpiresAt?: Date | string | null
+    signEmailSentAt?: Date | string | null
   }
 
   export type PatientRecordUpdateManyMutationInput = {
@@ -50532,6 +50695,12 @@ export namespace Prisma {
     visitDate?: DateTimeFieldUpdateOperationsInput | Date | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    signatureUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    signatureMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    signedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    signToken?: NullableStringFieldUpdateOperationsInput | string | null
+    signTokenExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    signEmailSentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type PatientRecordUncheckedUpdateManyInput = {
@@ -50551,6 +50720,12 @@ export namespace Prisma {
     recordedBy?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    signatureUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    signatureMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    signedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    signToken?: NullableStringFieldUpdateOperationsInput | string | null
+    signTokenExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    signEmailSentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type MedicineInventoryCreateInput = {
@@ -53112,6 +53287,7 @@ export namespace Prisma {
     id?: SortOrder
     studentNumber?: SortOrder
     name?: SortOrder
+    email?: SortOrder
     age?: SortOrder
     gender?: SortOrder
     course?: SortOrder
@@ -53127,6 +53303,7 @@ export namespace Prisma {
     id?: SortOrder
     studentNumber?: SortOrder
     name?: SortOrder
+    email?: SortOrder
     age?: SortOrder
     gender?: SortOrder
     course?: SortOrder
@@ -53138,6 +53315,7 @@ export namespace Prisma {
     id?: SortOrder
     studentNumber?: SortOrder
     name?: SortOrder
+    email?: SortOrder
     age?: SortOrder
     gender?: SortOrder
     course?: SortOrder
@@ -53188,6 +53366,12 @@ export namespace Prisma {
     recordedBy?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    signatureUrl?: SortOrder
+    signatureMethod?: SortOrder
+    signedAt?: SortOrder
+    signToken?: SortOrder
+    signTokenExpiresAt?: SortOrder
+    signEmailSentAt?: SortOrder
   }
 
   export type PatientRecordAvgOrderByAggregateInput = {
@@ -53213,6 +53397,12 @@ export namespace Prisma {
     recordedBy?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    signatureUrl?: SortOrder
+    signatureMethod?: SortOrder
+    signedAt?: SortOrder
+    signToken?: SortOrder
+    signTokenExpiresAt?: SortOrder
+    signEmailSentAt?: SortOrder
   }
 
   export type PatientRecordMinOrderByAggregateInput = {
@@ -53232,6 +53422,12 @@ export namespace Prisma {
     recordedBy?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    signatureUrl?: SortOrder
+    signatureMethod?: SortOrder
+    signedAt?: SortOrder
+    signToken?: SortOrder
+    signTokenExpiresAt?: SortOrder
+    signEmailSentAt?: SortOrder
   }
 
   export type PatientRecordSumOrderByAggregateInput = {
@@ -58085,6 +58281,12 @@ export namespace Prisma {
     visitDate: Date | string
     createdAt?: Date | string
     updatedAt?: Date | string
+    signatureUrl?: string | null
+    signatureMethod?: string | null
+    signedAt?: Date | string | null
+    signToken?: string | null
+    signTokenExpiresAt?: Date | string | null
+    signEmailSentAt?: Date | string | null
     course: CourseCreateNestedOneWithoutPatientRecordsInput
     student: StudentCreateNestedOneWithoutPatientRecordsInput
     medicineUsages?: MedicineUsageCreateNestedManyWithoutPatientRecordInput
@@ -58106,6 +58308,12 @@ export namespace Prisma {
     visitDate: Date | string
     createdAt?: Date | string
     updatedAt?: Date | string
+    signatureUrl?: string | null
+    signatureMethod?: string | null
+    signedAt?: Date | string | null
+    signToken?: string | null
+    signTokenExpiresAt?: Date | string | null
+    signEmailSentAt?: Date | string | null
     medicineUsages?: MedicineUsageUncheckedCreateNestedManyWithoutPatientRecordInput
   }
 
@@ -58609,6 +58817,12 @@ export namespace Prisma {
     recordedBy?: StringFilter<"PatientRecord"> | string
     createdAt?: DateTimeFilter<"PatientRecord"> | Date | string
     updatedAt?: DateTimeFilter<"PatientRecord"> | Date | string
+    signatureUrl?: StringNullableFilter<"PatientRecord"> | string | null
+    signatureMethod?: StringNullableFilter<"PatientRecord"> | string | null
+    signedAt?: DateTimeNullableFilter<"PatientRecord"> | Date | string | null
+    signToken?: StringNullableFilter<"PatientRecord"> | string | null
+    signTokenExpiresAt?: DateTimeNullableFilter<"PatientRecord"> | Date | string | null
+    signEmailSentAt?: DateTimeNullableFilter<"PatientRecord"> | Date | string | null
   }
 
   export type UserCreateWithoutResetTokensInput = {
@@ -59185,6 +59399,12 @@ export namespace Prisma {
     visitDate: Date | string
     createdAt?: Date | string
     updatedAt?: Date | string
+    signatureUrl?: string | null
+    signatureMethod?: string | null
+    signedAt?: Date | string | null
+    signToken?: string | null
+    signTokenExpiresAt?: Date | string | null
+    signEmailSentAt?: Date | string | null
     student: StudentCreateNestedOneWithoutPatientRecordsInput
     recordedByUser: UserCreateNestedOneWithoutPatientRecordsInput
     medicineUsages?: MedicineUsageCreateNestedManyWithoutPatientRecordInput
@@ -59206,6 +59426,12 @@ export namespace Prisma {
     recordedBy: string
     createdAt?: Date | string
     updatedAt?: Date | string
+    signatureUrl?: string | null
+    signatureMethod?: string | null
+    signedAt?: Date | string | null
+    signToken?: string | null
+    signTokenExpiresAt?: Date | string | null
+    signEmailSentAt?: Date | string | null
     medicineUsages?: MedicineUsageUncheckedCreateNestedManyWithoutPatientRecordInput
   }
 
@@ -65102,6 +65328,12 @@ export namespace Prisma {
     visitDate: Date | string
     createdAt?: Date | string
     updatedAt?: Date | string
+    signatureUrl?: string | null
+    signatureMethod?: string | null
+    signedAt?: Date | string | null
+    signToken?: string | null
+    signTokenExpiresAt?: Date | string | null
+    signEmailSentAt?: Date | string | null
     course: CourseCreateNestedOneWithoutPatientRecordsInput
     recordedByUser: UserCreateNestedOneWithoutPatientRecordsInput
     medicineUsages?: MedicineUsageCreateNestedManyWithoutPatientRecordInput
@@ -65123,6 +65355,12 @@ export namespace Prisma {
     recordedBy: string
     createdAt?: Date | string
     updatedAt?: Date | string
+    signatureUrl?: string | null
+    signatureMethod?: string | null
+    signedAt?: Date | string | null
+    signToken?: string | null
+    signTokenExpiresAt?: Date | string | null
+    signEmailSentAt?: Date | string | null
     medicineUsages?: MedicineUsageUncheckedCreateNestedManyWithoutPatientRecordInput
   }
 
@@ -65211,6 +65449,7 @@ export namespace Prisma {
     id?: string
     studentNumber: string
     name: string
+    email?: string | null
     age?: number | null
     gender?: string | null
     course?: string | null
@@ -65222,6 +65461,7 @@ export namespace Prisma {
     id?: string
     studentNumber: string
     name: string
+    email?: string | null
     age?: number | null
     gender?: string | null
     course?: string | null
@@ -65413,6 +65653,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     studentNumber?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    email?: NullableStringFieldUpdateOperationsInput | string | null
     age?: NullableIntFieldUpdateOperationsInput | number | null
     gender?: NullableStringFieldUpdateOperationsInput | string | null
     course?: NullableStringFieldUpdateOperationsInput | string | null
@@ -65424,6 +65665,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     studentNumber?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    email?: NullableStringFieldUpdateOperationsInput | string | null
     age?: NullableIntFieldUpdateOperationsInput | number | null
     gender?: NullableStringFieldUpdateOperationsInput | string | null
     course?: NullableStringFieldUpdateOperationsInput | string | null
@@ -65715,6 +65957,12 @@ export namespace Prisma {
     visitDate: Date | string
     createdAt?: Date | string
     updatedAt?: Date | string
+    signatureUrl?: string | null
+    signatureMethod?: string | null
+    signedAt?: Date | string | null
+    signToken?: string | null
+    signTokenExpiresAt?: Date | string | null
+    signEmailSentAt?: Date | string | null
     course: CourseCreateNestedOneWithoutPatientRecordsInput
     student: StudentCreateNestedOneWithoutPatientRecordsInput
     recordedByUser: UserCreateNestedOneWithoutPatientRecordsInput
@@ -65737,6 +65985,12 @@ export namespace Prisma {
     recordedBy: string
     createdAt?: Date | string
     updatedAt?: Date | string
+    signatureUrl?: string | null
+    signatureMethod?: string | null
+    signedAt?: Date | string | null
+    signToken?: string | null
+    signTokenExpiresAt?: Date | string | null
+    signEmailSentAt?: Date | string | null
   }
 
   export type PatientRecordCreateOrConnectWithoutMedicineUsagesInput = {
@@ -65798,6 +66052,12 @@ export namespace Prisma {
     visitDate?: DateTimeFieldUpdateOperationsInput | Date | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    signatureUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    signatureMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    signedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    signToken?: NullableStringFieldUpdateOperationsInput | string | null
+    signTokenExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    signEmailSentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     course?: CourseUpdateOneRequiredWithoutPatientRecordsNestedInput
     student?: StudentUpdateOneRequiredWithoutPatientRecordsNestedInput
     recordedByUser?: UserUpdateOneRequiredWithoutPatientRecordsNestedInput
@@ -65820,6 +66080,12 @@ export namespace Prisma {
     recordedBy?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    signatureUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    signatureMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    signedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    signToken?: NullableStringFieldUpdateOperationsInput | string | null
+    signTokenExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    signEmailSentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type MedicineInventoryUpsertWithoutUsagesInput = {
@@ -66180,6 +66446,12 @@ export namespace Prisma {
     visitDate: Date | string
     createdAt?: Date | string
     updatedAt?: Date | string
+    signatureUrl?: string | null
+    signatureMethod?: string | null
+    signedAt?: Date | string | null
+    signToken?: string | null
+    signTokenExpiresAt?: Date | string | null
+    signEmailSentAt?: Date | string | null
   }
 
   export type AccountUpdateWithoutUserInput = {
@@ -66813,6 +67085,12 @@ export namespace Prisma {
     visitDate?: DateTimeFieldUpdateOperationsInput | Date | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    signatureUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    signatureMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    signedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    signToken?: NullableStringFieldUpdateOperationsInput | string | null
+    signTokenExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    signEmailSentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     course?: CourseUpdateOneRequiredWithoutPatientRecordsNestedInput
     student?: StudentUpdateOneRequiredWithoutPatientRecordsNestedInput
     medicineUsages?: MedicineUsageUpdateManyWithoutPatientRecordNestedInput
@@ -66834,6 +67112,12 @@ export namespace Prisma {
     visitDate?: DateTimeFieldUpdateOperationsInput | Date | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    signatureUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    signatureMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    signedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    signToken?: NullableStringFieldUpdateOperationsInput | string | null
+    signTokenExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    signEmailSentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     medicineUsages?: MedicineUsageUncheckedUpdateManyWithoutPatientRecordNestedInput
   }
 
@@ -66853,6 +67137,12 @@ export namespace Prisma {
     visitDate?: DateTimeFieldUpdateOperationsInput | Date | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    signatureUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    signatureMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    signedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    signToken?: NullableStringFieldUpdateOperationsInput | string | null
+    signTokenExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    signEmailSentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type CourseEnrollmentCreateManyCourseInput = {
@@ -67020,6 +67310,12 @@ export namespace Prisma {
     recordedBy: string
     createdAt?: Date | string
     updatedAt?: Date | string
+    signatureUrl?: string | null
+    signatureMethod?: string | null
+    signedAt?: Date | string | null
+    signToken?: string | null
+    signTokenExpiresAt?: Date | string | null
+    signEmailSentAt?: Date | string | null
   }
 
   export type MedicineInventoryCreateManyCourseInput = {
@@ -67520,6 +67816,12 @@ export namespace Prisma {
     visitDate?: DateTimeFieldUpdateOperationsInput | Date | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    signatureUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    signatureMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    signedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    signToken?: NullableStringFieldUpdateOperationsInput | string | null
+    signTokenExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    signEmailSentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     student?: StudentUpdateOneRequiredWithoutPatientRecordsNestedInput
     recordedByUser?: UserUpdateOneRequiredWithoutPatientRecordsNestedInput
     medicineUsages?: MedicineUsageUpdateManyWithoutPatientRecordNestedInput
@@ -67541,6 +67843,12 @@ export namespace Prisma {
     recordedBy?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    signatureUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    signatureMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    signedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    signToken?: NullableStringFieldUpdateOperationsInput | string | null
+    signTokenExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    signEmailSentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     medicineUsages?: MedicineUsageUncheckedUpdateManyWithoutPatientRecordNestedInput
   }
 
@@ -67560,6 +67868,12 @@ export namespace Prisma {
     recordedBy?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    signatureUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    signatureMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    signedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    signToken?: NullableStringFieldUpdateOperationsInput | string | null
+    signTokenExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    signEmailSentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type MedicineInventoryUpdateWithoutCourseInput = {
@@ -68343,6 +68657,12 @@ export namespace Prisma {
     recordedBy: string
     createdAt?: Date | string
     updatedAt?: Date | string
+    signatureUrl?: string | null
+    signatureMethod?: string | null
+    signedAt?: Date | string | null
+    signToken?: string | null
+    signTokenExpiresAt?: Date | string | null
+    signEmailSentAt?: Date | string | null
   }
 
   export type PatientRecordUpdateWithoutStudentInput = {
@@ -68359,6 +68679,12 @@ export namespace Prisma {
     visitDate?: DateTimeFieldUpdateOperationsInput | Date | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    signatureUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    signatureMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    signedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    signToken?: NullableStringFieldUpdateOperationsInput | string | null
+    signTokenExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    signEmailSentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     course?: CourseUpdateOneRequiredWithoutPatientRecordsNestedInput
     recordedByUser?: UserUpdateOneRequiredWithoutPatientRecordsNestedInput
     medicineUsages?: MedicineUsageUpdateManyWithoutPatientRecordNestedInput
@@ -68380,6 +68706,12 @@ export namespace Prisma {
     recordedBy?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    signatureUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    signatureMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    signedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    signToken?: NullableStringFieldUpdateOperationsInput | string | null
+    signTokenExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    signEmailSentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     medicineUsages?: MedicineUsageUncheckedUpdateManyWithoutPatientRecordNestedInput
   }
 
@@ -68399,6 +68731,12 @@ export namespace Prisma {
     recordedBy?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    signatureUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    signatureMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    signedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    signToken?: NullableStringFieldUpdateOperationsInput | string | null
+    signTokenExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    signEmailSentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type MedicineUsageCreateManyPatientRecordInput = {
