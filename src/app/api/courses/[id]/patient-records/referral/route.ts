@@ -34,7 +34,7 @@ function escXml(s: string): string {
 
 export async function POST(
   req: NextRequest,
-  _context: { params: { id: string } }
+  _context: { params: Promise<{ id: string }> }
 ) {
   try {
     const body = await req.json() as {
