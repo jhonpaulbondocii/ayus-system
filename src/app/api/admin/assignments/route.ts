@@ -8,7 +8,6 @@ export async function GET() {
       where: { dueDate: { not: null } },
       include: {
         course: { select: { id: true, name: true, code: true, color: true } },
-        group:  { select: { id: true, name: true, groupSetId: true } },
       },
       orderBy: { dueDate: "asc" },
     });
@@ -22,7 +21,7 @@ export async function GET() {
         availableUntil: a.availableUntil ? a.availableUntil.toISOString() : null,
         status:         a.status,
         course:         a.course ?? null,
-        group:          a.group  ?? null,
+        group:          null,
       })),
     });
   } catch (err) {
