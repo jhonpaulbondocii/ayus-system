@@ -32,7 +32,9 @@ interface Student {
   studentNumber: string;
   name:          string;
   email:         string | null;
-  age:           number | null;
+  address:       string | null;
+  birthDate:     string | null; // ISO date string, e.g. "2003-05-14"
+  age:           number | null; // computed server-side from birthDate (or manual fallback)
   gender:        string | null;
   course:        string | null;
   createdAt:     string;
@@ -82,7 +84,8 @@ function StudentFormModal({ student, onClose, onSaved }: {
   const [middleName,    setMiddleName]    = useState(() => { const p = student?.name?.split(","); const parts = p?.[1]?.trim().split(" ") ?? []; return parts.length > 1 ? parts.slice(1).join(" ") : ""; });
   const [lastName,      setLastName]      = useState(() => student?.name?.split(",")?.[0]?.trim() ?? "");
   const [email,         setEmail]         = useState(student?.email         ?? "");
-  const [age,           setAge]           = useState(student?.age != null ? String(student.age) : "");
+  const [address,       setAddress]       = useState(student?.address       ?? "");
+  const [birthDate,     setBirthDate]     = useState(student?.birthDate ? student.birthDate.slice(0, 10) : "");
   const [gender,        setGender]        = useState(student?.gender        ?? "");
   const [course,        setCourse]        = useState(student?.course        ?? "");
   const [saving,        setSaving]        = useState(false);
@@ -105,7 +108,8 @@ function StudentFormModal({ student, onClose, onSaved }: {
           studentNumber: studentNumber.trim(),
           name: fullName,
           email: email.trim() || null,
-          age: age || null,
+          address: address.trim() || null,
+          birthDate: birthDate || null,
           gender: gender || null,
           course: course || null,
         }),
@@ -148,6 +152,9 @@ function StudentFormModal({ student, onClose, onSaved }: {
           <Field label="Email">
             <input type="email" value={email} onChange={e => setEmail(e.target.value)} className={inputCls} placeholder="e.g. juan.delacruz@example.com"/>
           </Field>
+          <Field label="Address">
+            <input value={address} onChange={e => setAddress(e.target.value)} className={inputCls} placeholder="e.g. San Juan, Mexico, Pampanga"/>
+          </Field>
           <Field label="Last Name" required>
             <input value={lastName} onChange={e => setLastName(e.target.value)} className={inputCls} placeholder="e.g. Dela Cruz"/>
           </Field>
@@ -160,8 +167,8 @@ function StudentFormModal({ student, onClose, onSaved }: {
             </Field>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Age">
-              <input type="number" min={1} max={99} value={age} onChange={e => setAge(e.target.value)} className={inputCls} placeholder="e.g. 20"/>
+            <Field label="Birth Date">
+              <input type="date" value={birthDate} onChange={e => setBirthDate(e.target.value)} className={inputCls}/>
             </Field>
             <Field label="Gender">
               <SimpleSelect value={gender} onChange={setGender} options={GENDERS} placeholder="Select…"/>

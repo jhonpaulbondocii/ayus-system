@@ -25,6 +25,7 @@ import CourseQuizzesTab from "./course/CourseQuizzesTab";
 import CourseSettingsTab from "./course/CourseSettingsTab";
 import CourseRepositoriesTab from "./course/CourseRepositoriesTab";
 import CoursePatientRecordsTab from "./course/CoursePatientRecordsTab";
+import CourseMedicalExamRecordTab from "./course/CourseMedicalExamRecordTab";
 import CourseMedicineInventoryTab from "./course/CourseMedicineInventoryTab";
 
 import {
@@ -506,8 +507,8 @@ function CourseViewInner({ courseId }: { courseId: string }) {
 
   const TABS: Tab[] = (
     isHead
-      ? ["Home", "Announcements", "Assignments", "Repositories", "Grades", "People", "Form", ...(isClinic ? ["Patient Records", "Medicine Inventory"] : [])]
-      : ["Home", "Announcements", "Assignments", "Grades", "People", "Form", ...(isClinic ? ["Patient Records", "Medicine Inventory"] : [])]
+      ? ["Home", "Announcements", "Assignments", "Repositories", "Grades", "People", "Form", ...(isClinic ? ["Patient Records", "Medical Exam Record", "Medicine Inventory"] : [])]
+      : ["Home", "Announcements", "Assignments", "Grades", "People", "Form", ...(isClinic ? ["Patient Records", "Medical Exam Record", "Medicine Inventory"] : [])]
   ) as Tab[];
 
   const handleAddPerson = async () => {
@@ -739,6 +740,16 @@ function CourseViewInner({ courseId }: { courseId: string }) {
       {activeTab === "Patient Records" && isClinic && dataLoaded && (
         <div className="flex-1 overflow-hidden flex flex-col">
           <CoursePatientRecordsTab
+            courseId={courseId}
+            isAdmin={isAdmin}
+            isHead={isHead}
+            currentUserId={currentUserId}
+          />
+        </div>
+      )}
+      {activeTab === "Medical Exam Record" && isClinic && dataLoaded && (
+        <div className="flex-1 overflow-hidden flex flex-col">
+          <CourseMedicalExamRecordTab
             courseId={courseId}
             isAdmin={isAdmin}
             isHead={isHead}

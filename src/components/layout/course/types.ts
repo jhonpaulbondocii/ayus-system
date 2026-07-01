@@ -210,6 +210,7 @@ export type Tab =
   | "Form"
   | "Repositories"
   | "Patient Records"
+  | "Medical Exam Record"
   | "Medicine Inventory"
   | "Settings";
 

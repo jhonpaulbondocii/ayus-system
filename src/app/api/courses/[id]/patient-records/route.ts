@@ -39,6 +39,17 @@ export async function GET(
     const dateFrom = searchParams.get("dateFrom")?.trim() ?? "";
     const dateTo   = searchParams.get("dateTo")?.trim()   ?? "";
 
+    function computeAge(birthDate: Date | null, fallbackAge: number | null): number | null {
+      if (birthDate) {
+        const today = new Date();
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const m = today.getMonth() - birthDate.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
+        return age;
+      }
+      return fallbackAge;
+    }
+
     const records = await prisma.patientRecord.findMany({
       where: {
         courseId,
@@ -46,8 +57,8 @@ export async function GET(
         ...(dateFrom || dateTo
           ? {
               visitDate: {
-                ...(dateFrom ? { gte: new Date(`${dateFrom}T00:00:00.000Z`) } : {}),
-                ...(dateTo   ? { lte: new Date(`${dateTo}T23:59:59.999Z`)   } : {}),
+                ...(dateFrom ? { gte: new Date(`${dateFrom}T00:00:00+08:00`) } : {}),
+                ...(dateTo   ? { lte: new Date(`${dateTo}T23:59:59+08:00`)   } : {}),
               },
             }
           : {}),
@@ -83,7 +94,10 @@ export async function GET(
             id:            true,
             studentNumber: true,
             name:          true,
+            email:         true,
+            address:       true,
             age:           true,
+            birthDate:     true,
             gender:        true,
             course:        true,
           },
@@ -107,7 +121,16 @@ export async function GET(
       orderBy: { visitDate: "desc" },
     });
 
-    return NextResponse.json({ records });
+    const recordsWithAge = records.map(r => ({
+      ...r,
+      student: {
+        ...r.student,
+        age:       computeAge(r.student.birthDate, r.student.age),
+        birthDate: r.student.birthDate?.toISOString() ?? null,
+      },
+    }));
+
+    return NextResponse.json({ records: recordsWithAge });
   } catch (err) {
     console.error("[GET /patient-records]", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

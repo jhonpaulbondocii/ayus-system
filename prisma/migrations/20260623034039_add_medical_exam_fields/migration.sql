@@ -1,0 +1,1 @@
+ALTER TABLE "medical_exam_records" ADD COLUMN IF NOT EXISTS "section" TEXT;

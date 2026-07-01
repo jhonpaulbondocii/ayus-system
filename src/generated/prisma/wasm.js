@@ -171,13 +171,13 @@ exports.Prisma.UserScalarFieldEnum = {
   status: 'status',
   department: 'department',
   position: 'position',
-  pronouns: 'pronouns',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
   bio: 'bio',
+  pronouns: 'pronouns',
   contactNumber: 'contactNumber',
   employmentStatus: 'employmentStatus',
-  accountType: 'accountType',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  accountType: 'accountType'
 };
 
 exports.Prisma.PasswordResetTokenScalarFieldEnum = {
@@ -195,24 +195,24 @@ exports.Prisma.CourseScalarFieldEnum = {
   name: 'name',
   code: 'code',
   color: 'color',
-  image: 'image',
   status: 'status',
-  officeType: 'officeType',
   description: 'description',
   term: 'term',
   startDate: 'startDate',
   endDate: 'endDate',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  image: 'image',
+  officeType: 'officeType'
 };
 
 exports.Prisma.CourseEnrollmentScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
   courseId: 'courseId',
+  createdAt: 'createdAt',
   courseRole: 'courseRole',
-  section: 'section',
-  createdAt: 'createdAt'
+  section: 'section'
 };
 
 exports.Prisma.GroupSetScalarFieldEnum = {
@@ -222,29 +222,57 @@ exports.Prisma.GroupSetScalarFieldEnum = {
   selfSignUp: 'selfSignUp',
   requireSameSection: 'requireSameSection',
   groupStructure: 'groupStructure',
-  createGroupsNow: 'createGroupsNow',
-  limitGroupMembers: 'limitGroupMembers',
-  autoAssignLeader: 'autoAssignLeader',
-  leaderType: 'leaderType',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  autoAssignLeader: 'autoAssignLeader',
+  createGroupsNow: 'createGroupsNow',
+  leaderType: 'leaderType',
+  limitGroupMembers: 'limitGroupMembers'
 };
 
 exports.Prisma.GroupScalarFieldEnum = {
   id: 'id',
   name: 'name',
   courseId: 'courseId',
-  groupSetId: 'groupSetId',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  groupSetId: 'groupSetId'
 };
 
 exports.Prisma.GroupMemberScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
   groupId: 'groupId',
+  createdAt: 'createdAt',
   isLeader: 'isLeader',
-  order: 'order',
+  order: 'order'
+};
+
+exports.Prisma.AnnouncementScalarFieldEnum = {
+  id: 'id',
+  courseId: 'courseId',
+  title: 'title',
+  bodyText: 'bodyText',
+  bodyHtml: 'bodyHtml',
+  author: 'author',
+  assignTo: 'assignTo',
+  allowComment: 'allowComment',
+  allowLiking: 'allowLiking',
+  availableFrom: 'availableFrom',
+  availableUntil: 'availableUntil',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  authorId: 'authorId',
+  locked: 'locked'
+};
+
+exports.Prisma.AnnouncementAttachmentScalarFieldEnum = {
+  id: 'id',
+  announcementId: 'announcementId',
+  name: 'name',
+  url: 'url',
+  size: 'size',
+  mimeType: 'mimeType',
   createdAt: 'createdAt'
 };
 
@@ -252,31 +280,31 @@ exports.Prisma.AssignmentScalarFieldEnum = {
   id: 'id',
   title: 'title',
   description: 'description',
-  points: 'points',
   dueDate: 'dueDate',
-  availableFrom: 'availableFrom',
-  availableUntil: 'availableUntil',
   courseId: 'courseId',
   groupId: 'groupId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  assignmentGroup: 'assignmentGroup',
+  availableFrom: 'availableFrom',
+  availableUntil: 'availableUntil',
+  displayGradeAs: 'displayGradeAs',
+  points: 'points',
   status: 'status',
   submissionType: 'submissionType',
-  assignmentGroup: 'assignmentGroup',
-  displayGradeAs: 'displayGradeAs',
-  onlineEntryOptions: 'onlineEntryOptions',
-  submissionAttempts: 'submissionAttempts',
   allowedAttempts: 'allowedAttempts',
+  anonymousGrading: 'anonymousGrading',
   doNotCount: 'doNotCount',
   isGroupAssignment: 'isGroupAssignment',
-  groupSetId: 'groupSetId',
-  requirePeerReviews: 'requirePeerReviews',
-  anonymousGrading: 'anonymousGrading',
-  peerReviewAssign: 'peerReviewAssign',
-  peerReviewAnonymous: 'peerReviewAnonymous',
   notifyUsers: 'notifyUsers',
+  onlineEntryOptions: 'onlineEntryOptions',
+  peerReviewAnonymous: 'peerReviewAnonymous',
+  peerReviewAssign: 'peerReviewAssign',
+  requirePeerReviews: 'requirePeerReviews',
+  submissionAttempts: 'submissionAttempts',
+  groupSetId: 'groupSetId',
   assignees: 'assignees',
-  createdById: 'createdById',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  createdById: 'createdById'
 };
 
 exports.Prisma.SubmissionScalarFieldEnum = {
@@ -285,26 +313,17 @@ exports.Prisma.SubmissionScalarFieldEnum = {
   assignmentId: 'assignmentId',
   status: 'status',
   fileUrl: 'fileUrl',
-  textEntry: 'textEntry',
-  websiteUrl: 'websiteUrl',
-  comments: 'comments',
   grade: 'grade',
   feedback: 'feedback',
   submittedAt: 'submittedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  comments: 'comments',
+  textEntry: 'textEntry',
+  websiteUrl: 'websiteUrl',
   daysLate: 'daysLate',
-  gradedById: 'gradedById',
   gradedAt: 'gradedAt',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-};
-
-exports.Prisma.RepositoryScalarFieldEnum = {
-  id: 'id',
-  name: 'name',
-  assignmentId: 'assignmentId',
-  courseId: 'courseId',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  gradedById: 'gradedById'
 };
 
 exports.Prisma.RepositoryFileScalarFieldEnum = {
@@ -331,34 +350,6 @@ exports.Prisma.ActivityLogScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
-exports.Prisma.AnnouncementScalarFieldEnum = {
-  id: 'id',
-  courseId: 'courseId',
-  title: 'title',
-  bodyText: 'bodyText',
-  bodyHtml: 'bodyHtml',
-  author: 'author',
-  authorId: 'authorId',
-  assignTo: 'assignTo',
-  allowComment: 'allowComment',
-  locked: 'locked',
-  allowLiking: 'allowLiking',
-  availableFrom: 'availableFrom',
-  availableUntil: 'availableUntil',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-};
-
-exports.Prisma.AnnouncementAttachmentScalarFieldEnum = {
-  id: 'id',
-  announcementId: 'announcementId',
-  name: 'name',
-  url: 'url',
-  size: 'size',
-  mimeType: 'mimeType',
-  createdAt: 'createdAt'
-};
-
 exports.Prisma.AccountScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
@@ -381,18 +372,9 @@ exports.Prisma.SessionScalarFieldEnum = {
   expires: 'expires'
 };
 
-exports.Prisma.VerificationTokenScalarFieldEnum = {
-  identifier: 'identifier',
-  token: 'token',
-  expires: 'expires'
-};
-
 exports.Prisma.QuizScalarFieldEnum = {
   id: 'id',
   courseId: 'courseId',
-  authorId: 'authorId',
-  authorName: 'authorName',
-  authorRole: 'authorRole',
   title: 'title',
   description: 'description',
   quizType: 'quizType',
@@ -418,7 +400,10 @@ exports.Prisma.QuizScalarFieldEnum = {
   availableUntil: 'availableUntil',
   published: 'published',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  authorId: 'authorId',
+  authorName: 'authorName',
+  authorRole: 'authorRole'
 };
 
 exports.Prisma.QuizQuestionScalarFieldEnum = {
@@ -426,29 +411,11 @@ exports.Prisma.QuizQuestionScalarFieldEnum = {
   quizId: 'quizId',
   type: 'type',
   question: 'question',
-  description: 'description',
   points: 'points',
   correctAnswer: 'correctAnswer',
   order: 'order',
-  createdAt: 'createdAt'
-};
-
-exports.Prisma.QuizAnswerScalarFieldEnum = {
-  id: 'id',
-  questionId: 'questionId',
-  text: 'text',
-  correct: 'correct',
-  order: 'order',
-  createdAt: 'createdAt'
-};
-
-exports.Prisma.QuizMatchPairScalarFieldEnum = {
-  id: 'id',
-  questionId: 'questionId',
-  left: 'left',
-  right: 'right',
-  order: 'order',
-  createdAt: 'createdAt'
+  createdAt: 'createdAt',
+  description: 'description'
 };
 
 exports.Prisma.QuizAttemptScalarFieldEnum = {
@@ -464,9 +431,6 @@ exports.Prisma.QuizAttemptScalarFieldEnum = {
 exports.Prisma.FormScalarFieldEnum = {
   id: 'id',
   courseId: 'courseId',
-  authorId: 'authorId',
-  authorName: 'authorName',
-  authorRole: 'authorRole',
   title: 'title',
   description: 'description',
   formType: 'formType',
@@ -490,7 +454,10 @@ exports.Prisma.FormScalarFieldEnum = {
   availableUntilTime: 'availableUntilTime',
   published: 'published',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  authorId: 'authorId',
+  authorName: 'authorName',
+  authorRole: 'authorRole'
 };
 
 exports.Prisma.FormQuestionScalarFieldEnum = {
@@ -565,12 +532,14 @@ exports.Prisma.StudentScalarFieldEnum = {
   id: 'id',
   studentNumber: 'studentNumber',
   name: 'name',
-  email: 'email',
   age: 'age',
   gender: 'gender',
   course: 'course',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  email: 'email',
+  address: 'address',
+  birthDate: 'birthDate'
 };
 
 exports.Prisma.PatientRecordScalarFieldEnum = {
@@ -590,12 +559,46 @@ exports.Prisma.PatientRecordScalarFieldEnum = {
   recordedBy: 'recordedBy',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
+  signEmailSentAt: 'signEmailSentAt',
+  signToken: 'signToken',
+  signTokenExpiresAt: 'signTokenExpiresAt',
+  signatureMethod: 'signatureMethod',
+  signatureUrl: 'signatureUrl',
+  signedAt: 'signedAt'
+};
+
+exports.Prisma.MedicalExamRecordScalarFieldEnum = {
+  id: 'id',
+  courseId: 'courseId',
+  studentId: 'studentId',
+  purpose: 'purpose',
+  remarks: 'remarks',
+  visitDate: 'visitDate',
+  recordedBy: 'recordedBy',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
   signatureUrl: 'signatureUrl',
   signatureMethod: 'signatureMethod',
   signedAt: 'signedAt',
   signToken: 'signToken',
   signTokenExpiresAt: 'signTokenExpiresAt',
-  signEmailSentAt: 'signEmailSentAt'
+  signEmailSentAt: 'signEmailSentAt',
+  height: 'height',
+  weight: 'weight',
+  heartRate: 'heartRate',
+  bloodPressure: 'bloodPressure',
+  temperature: 'temperature',
+  respiratoryRate: 'respiratoryRate',
+  placeOfBirth: 'placeOfBirth',
+  section: 'section',
+  physicalSigns: 'physicalSigns',
+  isPregnant: 'isPregnant',
+  lastMenstrualPeriod: 'lastMenstrualPeriod',
+  civilStatus: 'civilStatus',
+  fitnessStatus: 'fitnessStatus',
+  fitnessFor: 'fitnessFor',
+  clearanceRemarks: 'clearanceRemarks',
+  clearanceIssuedAt: 'clearanceIssuedAt'
 };
 
 exports.Prisma.MedicineInventoryScalarFieldEnum = {
@@ -618,6 +621,39 @@ exports.Prisma.MedicineUsageScalarFieldEnum = {
   quantityUsed: 'quantityUsed',
   unit: 'unit',
   createdAt: 'createdAt'
+};
+
+exports.Prisma.Quiz_answersScalarFieldEnum = {
+  id: 'id',
+  questionId: 'questionId',
+  text: 'text',
+  correct: 'correct',
+  order: 'order',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.Quiz_match_pairsScalarFieldEnum = {
+  id: 'id',
+  questionId: 'questionId',
+  left: 'left',
+  right: 'right',
+  order: 'order',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.RepositoriesScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  assignmentId: 'assignmentId',
+  courseId: 'courseId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.Verification_tokensScalarFieldEnum = {
+  identifier: 'identifier',
+  token: 'token',
+  expires: 'expires'
 };
 
 exports.Prisma.SortOrder = {
@@ -739,20 +775,16 @@ exports.Prisma.ModelName = {
   GroupSet: 'GroupSet',
   Group: 'Group',
   GroupMember: 'GroupMember',
-  Assignment: 'Assignment',
-  Submission: 'Submission',
-  Repository: 'Repository',
-  RepositoryFile: 'RepositoryFile',
-  ActivityLog: 'ActivityLog',
   Announcement: 'Announcement',
   AnnouncementAttachment: 'AnnouncementAttachment',
+  Assignment: 'Assignment',
+  Submission: 'Submission',
+  RepositoryFile: 'RepositoryFile',
+  ActivityLog: 'ActivityLog',
   Account: 'Account',
   Session: 'Session',
-  VerificationToken: 'VerificationToken',
   Quiz: 'Quiz',
   QuizQuestion: 'QuizQuestion',
-  QuizAnswer: 'QuizAnswer',
-  QuizMatchPair: 'QuizMatchPair',
   QuizAttempt: 'QuizAttempt',
   Form: 'Form',
   FormQuestion: 'FormQuestion',
@@ -762,8 +794,13 @@ exports.Prisma.ModelName = {
   RubricRating: 'RubricRating',
   Student: 'Student',
   PatientRecord: 'PatientRecord',
+  MedicalExamRecord: 'MedicalExamRecord',
   MedicineInventory: 'MedicineInventory',
-  MedicineUsage: 'MedicineUsage'
+  MedicineUsage: 'MedicineUsage',
+  quiz_answers: 'quiz_answers',
+  quiz_match_pairs: 'quiz_match_pairs',
+  repositories: 'repositories',
+  verification_tokens: 'verification_tokens'
 };
 
 /**

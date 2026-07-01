@@ -150,3 +150,76 @@ export async function DELETE(
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PATCH /api/courses/[id]/patient-records/[recordId]
+// ─────────────────────────────────────────────────────────────────────────────
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string; recordId: string }> }
+) {
+  try {
+    const { id: courseId, recordId } = await params;
+
+    const access = await requireCoursePermission(courseId, "view_course");
+    if (!access.ok) {
+      return NextResponse.json({ error: access.error }, { status: access.status });
+    }
+
+    const existing = await prisma.patientRecord.findUnique({
+      where: { id: recordId },
+      select: { courseId: true, recordedBy: true },
+    });
+
+    if (!existing) {
+      return NextResponse.json({ error: "Record not found." }, { status: 404 });
+    }
+    if (existing.courseId !== courseId) {
+      return NextResponse.json({ error: "Forbidden." }, { status: 403 });
+    }
+
+    const isHead  = access.courseRole?.includes("Head");
+    const isOwner = existing.recordedBy === access.userId;
+    if (!isHead && !isOwner) {
+      return NextResponse.json({ error: "Not allowed to edit this record." }, { status: 403 });
+    }
+
+    const body = await req.json();
+    const {
+      complaint, temperature, bloodPressure, pulseRate,
+      weight, diagnosis, medicine, action, notes, visitDate,
+    } = body;
+
+    const updated = await prisma.patientRecord.update({
+      where: { id: recordId },
+      data: {
+        complaint:     complaint?.trim(),
+        temperature:   temperature   ?? null,
+        bloodPressure: bloodPressure ?? null,
+        pulseRate:     pulseRate     ?? null,
+        weight:        weight        ?? null,
+        diagnosis:     diagnosis?.trim()  || null,
+        medicine:      medicine           || null,
+        action,
+        notes:         notes?.trim()      || null,
+        visitDate:     visitDate ? new Date(visitDate) : undefined,
+      },
+      include: {
+        student: {
+          select: {
+            id: true, studentNumber: true, name: true,
+            email: true, address: true, birthDate: true,
+            age: true, gender: true, course: true,
+          },
+        },
+        recordedByUser: { select: { id: true, name: true } },
+        medicineUsages: true,
+      },
+    });
+
+    return NextResponse.json({ record: updated });
+  } catch (err) {
+    console.error("[PATCH /patient-records/[recordId]]", err);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}

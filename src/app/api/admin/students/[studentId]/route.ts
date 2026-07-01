@@ -13,7 +13,7 @@ export async function PATCH(
 
   const { studentId } = await params;
   const body = await req.json();
-  const { studentNumber, name, email, age, gender, course } = body;
+  const { studentNumber, name, email, address, birthDate, age, gender, course } = body;
 
   const student = await prisma.student.update({
     where: { id: studentId },
@@ -21,7 +21,9 @@ export async function PATCH(
       ...(studentNumber !== undefined && { studentNumber: studentNumber.trim() }),
       ...(name          !== undefined && { name:          name.trim()          }),
       ...(email         !== undefined && { email:         email ? String(email).trim() : null }),
-      ...(age           !== undefined && { age:           age ? parseInt(age) : null }),
+      ...(address       !== undefined && { address:       address ? String(address).trim() : null }),
+      ...(birthDate     !== undefined && { birthDate:     birthDate ? new Date(birthDate) : null }),
+      ...(age           !== undefined && { age:           age ? parseInt(age) : null }), // legacy fallback only
       ...(gender        !== undefined && { gender:        gender || null       }),
       ...(course        !== undefined && { course:        course || null       }),
     },

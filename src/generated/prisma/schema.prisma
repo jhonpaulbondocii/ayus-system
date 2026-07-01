@@ -9,6 +9,733 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+model Conversation {
+  id           String                    @id @default(cuid())
+  subject      String
+  scope        MessageScope              @default(DIRECT)
+  courseId     String?
+  createdAt    DateTime                  @default(now())
+  updatedAt    DateTime                  @updatedAt
+  participants ConversationParticipant[]
+  course       Course?                   @relation(fields: [courseId], references: [id])
+  messages     Message[]
+
+  @@map("conversations")
+}
+
+model ConversationParticipant {
+  id             String       @id @default(cuid())
+  conversationId String
+  userId         String
+  isAuthor       Boolean      @default(false)
+  deletedAt      DateTime?
+  lastReadAt     DateTime?
+  createdAt      DateTime     @default(now())
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, userId])
+  @@map("conversation_participants")
+}
+
+model Message {
+  id             String              @id @default(cuid())
+  conversationId String
+  senderId       String
+  body           String
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  attachments    MessageAttachment[]
+  conversation   Conversation        @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         User                @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@map("messages")
+}
+
+model MessageAttachment {
+  id        String   @id @default(cuid())
+  messageId String
+  name      String
+  url       String
+  size      Int?
+  mimeType  String?
+  createdAt DateTime @default(now())
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@map("message_attachments")
+}
+
+model User {
+  id                                        String                    @id @default(cuid())
+  name                                      String
+  email                                     String                    @unique
+  emailVerified                             DateTime?
+  password                                  String?
+  image                                     String?
+  role                                      Role                      @default(STAFF)
+  status                                    ApprovalStatus            @default(PENDING)
+  department                                String?
+  position                                  String?
+  createdAt                                 DateTime                  @default(now())
+  updatedAt                                 DateTime                  @updatedAt
+  bio                                       String?
+  pronouns                                  String?
+  contactNumber                             String?
+  employmentStatus                          String?
+  accountType                               String?
+  accounts                                  Account[]
+  activityLogs                              ActivityLog[]
+  conversationParticipants                  ConversationParticipant[]
+  enrollments                               CourseEnrollment[]
+  formSubmissions                           FormSubmission[]
+  formsCreated                              Form[]                    @relation("FormAuthor")
+  groupMembers                              GroupMember[]
+  medicalExamRecords                        MedicalExamRecord[]       @relation("MedExamRecordedBy")
+  sentMessages                              Message[]
+  resetTokens                               PasswordResetToken[]
+  patientRecords                            PatientRecord[]           @relation("RecordedBy")
+  quizAttempts                              QuizAttempt[]
+  quizzesCreated                            Quiz[]                    @relation("QuizAuthor")
+  repositoryFiles                           RepositoryFile[]
+  sessions                                  Session[]
+  submissions_submissions_gradedByIdTousers Submission[]              @relation("submissions_gradedByIdTousers")
+  submissions                               Submission[]
+
+  @@map("users")
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  token     String
+  via       String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("password_reset_tokens")
+}
+
+model Course {
+  id                 String              @id @default(cuid())
+  name               String
+  code               String
+  color              String              @default("#cc2a27")
+  status             CourseStatus        @default(UNPUBLISHED)
+  description        String?
+  term               String?
+  startDate          DateTime?
+  endDate            DateTime?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  image              String?
+  officeType         String?
+  announcements      Announcement[]
+  assignments        Assignment[]
+  conversations      Conversation[]
+  enrollments        CourseEnrollment[]
+  forms              Form[]
+  groupSets          GroupSet[]
+  groups             Group[]
+  medicalExamRecords MedicalExamRecord[]
+  medicineInventory  MedicineInventory[]
+  patientRecords     PatientRecord[]
+  quizzes            Quiz[]
+
+  @@map("courses")
+}
+
+model CourseEnrollment {
+  id         String   @id @default(cuid())
+  userId     String
+  courseId   String
+  createdAt  DateTime @default(now())
+  courseRole String   @default("Student")
+  section    String?
+  course     Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+  @@map("course_enrollments")
+}
+
+model GroupSet {
+  id                 String   @id @default(cuid())
+  name               String
+  courseId           String
+  selfSignUp         Boolean  @default(false)
+  requireSameSection Boolean  @default(false)
+  groupStructure     String   @default("Create groups later")
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  autoAssignLeader   Boolean  @default(false)
+  createGroupsNow    Int      @default(0)
+  leaderType         String   @default("first")
+  limitGroupMembers  Int      @default(0)
+  course             Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  groups             Group[]
+
+  @@map("group_sets")
+}
+
+model Group {
+  id          String        @id @default(cuid())
+  name        String
+  courseId    String
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  groupSetId  String?
+  assignments Assignment[]
+  members     GroupMember[]
+  course      Course        @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  groupSet    GroupSet?     @relation(fields: [groupSetId], references: [id])
+
+  @@map("groups")
+}
+
+model GroupMember {
+  id        String   @id @default(cuid())
+  userId    String
+  groupId   String
+  createdAt DateTime @default(now())
+  isLeader  Boolean  @default(false)
+  order     Int      @default(0)
+  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, groupId])
+  @@map("group_members")
+}
+
+model Announcement {
+  id             String                   @id @default(cuid())
+  courseId       String
+  title          String
+  bodyText       String                   @default("")
+  bodyHtml       String                   @default("")
+  author         String                   @default("Admin")
+  assignTo       String[]                 @default([])
+  allowComment   Boolean                  @default(false)
+  allowLiking    Boolean                  @default(false)
+  availableFrom  DateTime?
+  availableUntil DateTime?
+  createdAt      DateTime                 @default(now())
+  updatedAt      DateTime                 @updatedAt
+  authorId       String?
+  locked         Boolean                  @default(false)
+  attachments    AnnouncementAttachment[]
+  course         Course                   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@map("announcements")
+}
+
+model AnnouncementAttachment {
+  id             String       @id @default(cuid())
+  announcementId String
+  name           String
+  url            String
+  size           Int
+  mimeType       String       @default("")
+  createdAt      DateTime     @default(now())
+  announcement   Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+
+  @@map("announcement_attachments")
+}
+
+model Assignment {
+  id                  String        @id @default(cuid())
+  title               String
+  description         String?
+  dueDate             DateTime?
+  courseId            String?
+  groupId             String?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  assignmentGroup     String        @default("Assignments")
+  availableFrom       DateTime?
+  availableUntil      DateTime?
+  displayGradeAs      String        @default("Points")
+  points              Float         @default(0)
+  status              CourseStatus  @default(UNPUBLISHED)
+  submissionType      String        @default("Online")
+  allowedAttempts     Int?
+  anonymousGrading    Boolean       @default(false)
+  doNotCount          Boolean       @default(false)
+  isGroupAssignment   Boolean       @default(false)
+  notifyUsers         Boolean       @default(false)
+  onlineEntryOptions  String[]      @default([])
+  peerReviewAnonymous Boolean       @default(false)
+  peerReviewAssign    String        @default("manually")
+  requirePeerReviews  Boolean       @default(false)
+  submissionAttempts  String        @default("Unlimited")
+  groupSetId          String?
+  assignees           String[]      @default([])
+  createdById         String?
+  course              Course?       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  groups              Group?        @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  repositories        repositories?
+  rubric              Rubric?
+  submissions         Submission[]
+
+  @@map("assignments")
+}
+
+model Submission {
+  id                                  String           @id @default(cuid())
+  userId                              String
+  assignmentId                        String
+  status                              AssignmentStatus @default(PENDING)
+  fileUrl                             String?
+  grade                               Float?
+  feedback                            String?
+  submittedAt                         DateTime?
+  createdAt                           DateTime         @default(now())
+  updatedAt                           DateTime         @updatedAt
+  comments                            String?
+  textEntry                           String?
+  websiteUrl                          String?
+  daysLate                            Int?
+  gradedAt                            DateTime?
+  gradedById                          String?
+  repository_files                    RepositoryFile?
+  assignment                          Assignment       @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  users_submissions_gradedByIdTousers User?            @relation("submissions_gradedByIdTousers", fields: [gradedById], references: [id])
+  user                                User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, assignmentId])
+  @@map("submissions")
+}
+
+model RepositoryFile {
+  id           String       @id @default(cuid())
+  repositoryId String
+  submissionId String?      @unique
+  userId       String
+  fileName     String
+  fileUrl      String
+  fileSize     Int?
+  mimeType     String?
+  uploadedAt   DateTime     @default(now())
+  repositories repositories @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  submissions  Submission?  @relation(fields: [submissionId], references: [id])
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("repository_files")
+}
+
+model ActivityLog {
+  id           String        @id @default(cuid())
+  repositoryId String?
+  userId       String
+  action       String
+  targetType   String?
+  targetId     String?
+  targetName   String?
+  metadata     Json?
+  createdAt    DateTime      @default(now())
+  repositories repositories? @relation(fields: [repositoryId], references: [id])
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("activity_logs")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model Quiz {
+  id                          String         @id @default(cuid())
+  courseId                    String
+  title                       String
+  description                 String?
+  quizType                    QuizType       @default(GRADED_QUIZ)
+  assignmentGroup             String         @default("Assignments")
+  points                      Float          @default(0)
+  shuffleAnswers              Boolean        @default(false)
+  timeLimit                   Int?
+  allowMultipleAttempts       Boolean        @default(false)
+  attemptLimit                Int?
+  scoreToKeep                 String         @default("highest")
+  viewResponses               Boolean        @default(true)
+  onlyOnceAfterAttempt        Boolean        @default(false)
+  showCorrectAnswers          Boolean        @default(true)
+  showCorrectAnswersAt        DateTime?
+  hideCorrectAnswersAt        DateTime?
+  showOneAtATime              Boolean        @default(false)
+  lockQuestionsAfterAnswering Boolean        @default(false)
+  accessCode                  String?
+  ipFilter                    String?
+  assignTo                    String[]       @default([])
+  dueDate                     DateTime?
+  availableFrom               DateTime?
+  availableUntil              DateTime?
+  published                   Boolean        @default(false)
+  createdAt                   DateTime       @default(now())
+  updatedAt                   DateTime       @updatedAt
+  authorId                    String?
+  authorName                  String         @default("Admin")
+  authorRole                  String         @default("Admin")
+  attempts                    QuizAttempt[]
+  questions                   QuizQuestion[]
+  author                      User?          @relation("QuizAuthor", fields: [authorId], references: [id])
+  course                      Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@map("quizzes")
+}
+
+model QuizQuestion {
+  id               String             @id @default(cuid())
+  quizId           String
+  type             QuizQuestionType   @default(MULTIPLE_CHOICE)
+  question         String
+  points           Float              @default(1)
+  correctAnswer    String?
+  order            Int                @default(0)
+  createdAt        DateTime           @default(now())
+  description      String?
+  quiz_answers     quiz_answers[]
+  quiz_match_pairs quiz_match_pairs[]
+  quiz             Quiz               @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  @@map("quiz_questions")
+}
+
+model QuizAttempt {
+  id              String   @id @default(cuid())
+  quizId          String
+  userId          String
+  score           Float    @default(0)
+  durationSeconds Int      @default(0)
+  submittedAt     DateTime @default(now())
+  answers         Json     @default("{}")
+  quiz            Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("quiz_attempts")
+}
+
+model Form {
+  id                          String           @id @default(cuid())
+  courseId                    String
+  title                       String
+  description                 String?
+  formType                    FormType         @default(SURVEY_FEEDBACK)
+  assignmentGroup             String           @default("Assignments")
+  points                      Float            @default(0)
+  shuffleAnswers              Boolean          @default(false)
+  allowMultipleResponses      Boolean          @default(false)
+  responseLimit               Int?
+  anonymousResponses          Boolean          @default(false)
+  showResultsToRespondents    Boolean          @default(false)
+  showOneAtATime              Boolean          @default(false)
+  lockQuestionsAfterAnswering Boolean          @default(false)
+  accessCode                  String?
+  confirmationMessage         String?
+  assignTo                    String[]         @default([])
+  dueDate                     DateTime?
+  dueTime                     String?
+  availableFrom               DateTime?
+  availableFromTime           String?
+  availableUntil              DateTime?
+  availableUntilTime          String?
+  published                   Boolean          @default(false)
+  createdAt                   DateTime         @default(now())
+  updatedAt                   DateTime         @updatedAt
+  authorId                    String?
+  authorName                  String           @default("Admin")
+  authorRole                  String           @default("Admin")
+  questions                   FormQuestion[]
+  formSubmissions             FormSubmission[]
+  author                      User?            @relation("FormAuthor", fields: [authorId], references: [id])
+  course                      Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([courseId])
+  @@map("forms")
+}
+
+model FormQuestion {
+  id                 String           @id @default(cuid())
+  formId             String
+  type               FormQuestionType @default(SHORT_ANSWER)
+  question           String           @default("")
+  description        String?
+  points             Float            @default(0)
+  required           Boolean          @default(false)
+  image              String?
+  options            String[]         @default([])
+  correctAnswer      String?
+  scaleMin           Int?
+  scaleMax           Int?
+  scaleMinLabel      String?
+  scaleMaxLabel      String?
+  rows               String[]         @default([])
+  columns            String[]         @default([])
+  sectionTitle       String?
+  sectionDescription String?
+  order              Int              @default(0)
+  form               Form             @relation(fields: [formId], references: [id], onDelete: Cascade)
+
+  @@index([formId])
+  @@map("form_questions")
+}
+
+model FormSubmission {
+  id        String   @id @default(cuid())
+  formId    String
+  userId    String
+  answers   Json
+  score     Float    @default(0)
+  createdAt DateTime @default(now())
+  form      Form     @relation(fields: [formId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([formId, userId])
+  @@map("form_submissions")
+}
+
+model Rubric {
+  id                   String            @id @default(cuid())
+  assignmentId         String            @unique
+  courseId             String?
+  title                String
+  type                 String            @default("scale")
+  ratingDisplay        String            @default("level")
+  ratingOrder          String            @default("high_low")
+  scoring              String            @default("scored")
+  doNotPostToGradebook Boolean           @default(false)
+  useForGrading        Boolean           @default(false)
+  hideScoreTotal       Boolean           @default(false)
+  pointsPossible       Float             @default(0)
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+  criteria             RubricCriterion[]
+  assignment           Assignment        @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+
+  @@map("rubrics")
+}
+
+model RubricCriterion {
+  id          String         @id @default(cuid())
+  rubricId    String
+  name        String
+  description String?
+  points      Float          @default(0)
+  enableRange Boolean        @default(false)
+  order       Int            @default(0)
+  createdAt   DateTime       @default(now())
+  rubric      Rubric         @relation(fields: [rubricId], references: [id], onDelete: Cascade)
+  ratings     RubricRating[]
+
+  @@map("rubric_criteria")
+}
+
+model RubricRating {
+  id          String          @id @default(cuid())
+  criterionId String
+  points      Float           @default(0)
+  name        String
+  description String?
+  order       Int             @default(0)
+  criterion   RubricCriterion @relation(fields: [criterionId], references: [id], onDelete: Cascade)
+
+  @@map("rubric_ratings")
+}
+
+model Student {
+  id                 String              @id @default(cuid())
+  studentNumber      String              @unique
+  name               String
+  age                Int?
+  gender             String?
+  course             String?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  email              String?
+  address            String?
+  birthDate          DateTime?
+  medicalExamRecords MedicalExamRecord[]
+  patientRecords     PatientRecord[]
+
+  @@map("students")
+}
+
+model PatientRecord {
+  id                 String          @id @default(cuid())
+  courseId           String
+  studentId          String
+  complaint          String
+  temperature        Float?
+  bloodPressure      String?
+  pulseRate          Int?
+  weight             Float?
+  diagnosis          String?
+  medicine           String?
+  action             PatientAction
+  notes              String?
+  visitDate          DateTime
+  recordedBy         String
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+  signEmailSentAt    DateTime?
+  signToken          String?         @unique
+  signTokenExpiresAt DateTime?
+  signatureMethod    String?
+  signatureUrl       String?
+  signedAt           DateTime?
+  medicineUsages     MedicineUsage[]
+  course             Course          @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  recordedByUser     User            @relation("RecordedBy", fields: [recordedBy], references: [id])
+  student            Student         @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([courseId])
+  @@index([studentId])
+  @@index([courseId, visitDate])
+  @@index([signToken])
+  @@map("patient_records")
+}
+
+model MedicalExamRecord {
+  id                  String    @id @default(cuid())
+  courseId            String
+  studentId           String
+  purpose             String
+  remarks             String?
+  visitDate           DateTime
+  recordedBy          String
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  signatureUrl        String?
+  signatureMethod     String?
+  signedAt            DateTime?
+  signToken           String?   @unique
+  signTokenExpiresAt  DateTime?
+  signEmailSentAt     DateTime?
+  height              Float?
+  weight              Float?
+  heartRate           String?
+  bloodPressure       String?
+  temperature         Float?
+  respiratoryRate     String?
+  placeOfBirth        String?
+  section             String?
+  physicalSigns       Json?
+  isPregnant          Boolean?
+  lastMenstrualPeriod String?
+  civilStatus         String?
+  fitnessStatus       String?
+  fitnessFor          String[]  @default([])
+  clearanceRemarks    String?
+  clearanceIssuedAt   DateTime?
+  course              Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  recordedByUser      User      @relation("MedExamRecordedBy", fields: [recordedBy], references: [id])
+  student             Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([courseId])
+  @@index([studentId])
+  @@index([courseId, visitDate])
+  @@index([signToken])
+  @@map("medical_exam_records")
+}
+
+model MedicineInventory {
+  id                String          @id @default(cuid())
+  courseId          String
+  name              String
+  unit              String
+  stockQty          Int             @default(0)
+  lowStockThreshold Int             @default(10)
+  notes             String?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  course            Course          @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  usages            MedicineUsage[]
+
+  @@index([courseId])
+  @@map("medicine_inventory")
+}
+
+model MedicineUsage {
+  id              String            @id @default(cuid())
+  patientRecordId String
+  medicineId      String
+  medicineName    String
+  quantityUsed    Int
+  unit            String
+  createdAt       DateTime          @default(now())
+  medicine        MedicineInventory @relation(fields: [medicineId], references: [id])
+  patientRecord   PatientRecord     @relation(fields: [patientRecordId], references: [id], onDelete: Cascade)
+
+  @@index([patientRecordId])
+  @@index([medicineId])
+  @@map("medicine_usages")
+}
+
+model quiz_answers {
+  id             String       @id
+  questionId     String
+  text           String
+  correct        Boolean      @default(false)
+  order          Int          @default(0)
+  createdAt      DateTime     @default(now())
+  quiz_questions QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+}
+
+model quiz_match_pairs {
+  id             String       @id
+  questionId     String
+  left           String
+  right          String
+  order          Int          @default(0)
+  createdAt      DateTime     @default(now())
+  quiz_questions QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+}
+
+model repositories {
+  id               String           @id
+  name             String
+  assignmentId     String           @unique
+  courseId         String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime
+  activity_logs    ActivityLog[]
+  assignments      Assignment       @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  repository_files RepositoryFile[]
+}
+
+model verification_tokens {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
 enum Role {
   ADMIN
   STAFF
@@ -85,723 +812,4 @@ enum PatientAction {
   FOR_OBSERVATION
   REFERRED_HOSPITAL
   REFERRED_GUIDANCE
-}
-
-model Conversation {
-  id        String       @id @default(cuid())
-  subject   String
-  scope     MessageScope @default(DIRECT)
-  courseId  String?
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
-
-  course       Course?                   @relation(fields: [courseId], references: [id], onDelete: SetNull)
-  participants ConversationParticipant[]
-  messages     Message[]
-
-  @@map("conversations")
-}
-
-model ConversationParticipant {
-  id             String    @id @default(cuid())
-  conversationId String
-  userId         String
-  isAuthor       Boolean   @default(false)
-  deletedAt      DateTime?
-  lastReadAt     DateTime?
-  createdAt      DateTime  @default(now())
-
-  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([conversationId, userId])
-  @@map("conversation_participants")
-}
-
-model Message {
-  id             String   @id @default(cuid())
-  conversationId String
-  senderId       String
-  body           String   @db.Text
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  conversation Conversation        @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  sender       User                @relation(fields: [senderId], references: [id], onDelete: Cascade)
-  attachments  MessageAttachment[]
-
-  @@map("messages")
-}
-
-model MessageAttachment {
-  id        String   @id @default(cuid())
-  messageId String
-  name      String
-  url       String
-  size      Int?
-  mimeType  String?
-  createdAt DateTime @default(now())
-
-  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
-
-  @@map("message_attachments")
-}
-
-model User {
-  id               String         @id @default(cuid())
-  name             String
-  email            String         @unique
-  emailVerified    DateTime?
-  password         String?
-  image            String?
-  role             Role           @default(STAFF)
-  status           ApprovalStatus @default(PENDING)
-  department       String?
-  position         String?
-  pronouns         String?
-  bio              String?
-  contactNumber    String?
-  employmentStatus String?
-  accountType      String?
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
-
-  accounts                 Account[]
-  sessions                 Session[]
-  enrollments              CourseEnrollment[]
-  groupMembers             GroupMember[]
-  submissions              Submission[]
-  formSubmissions          FormSubmission[]
-  resetTokens              PasswordResetToken[]
-  repositoryFiles          RepositoryFile[]
-  activityLogs             ActivityLog[]
-  conversationParticipants ConversationParticipant[]
-  sentMessages             Message[]
-  quizAttempts             QuizAttempt[]
-  quizzesCreated           Quiz[]                    @relation("QuizAuthor")
-  formsCreated             Form[]                    @relation("FormAuthor")
-  gradedSubmissions        Submission[]              @relation("GradedSubmissions")
-  patientRecords           PatientRecord[]           @relation("RecordedBy")
-
-  @@map("users")
-}
-
-model PasswordResetToken {
-  id        String    @id @default(cuid())
-  userId    String
-  token     String
-  via       String
-  expiresAt DateTime
-  usedAt    DateTime?
-  createdAt DateTime  @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("password_reset_tokens")
-}
-
-model Course {
-  id          String       @id @default(cuid())
-  name        String
-  code        String
-  color       String       @default("#cc2a27")
-  image       String?
-  status      CourseStatus @default(UNPUBLISHED)
-  officeType  String?
-  description String?
-  term        String?
-  startDate   DateTime?
-  endDate     DateTime?
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-
-  enrollments       CourseEnrollment[]
-  groups            Group[]
-  groupSets         GroupSet[]
-  assignments       Assignment[]
-  announcements     Announcement[]
-  conversations     Conversation[]
-  quizzes           Quiz[]
-  forms             Form[]
-  patientRecords    PatientRecord[]
-  medicineInventory MedicineInventory[]
-
-  @@map("courses")
-}
-
-model CourseEnrollment {
-  id         String   @id @default(cuid())
-  userId     String
-  courseId   String
-  courseRole String   @default("Student")
-  section    String?
-  createdAt  DateTime @default(now())
-
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, courseId])
-  @@map("course_enrollments")
-}
-
-model GroupSet {
-  id                 String   @id @default(cuid())
-  name               String
-  courseId           String
-  selfSignUp         Boolean  @default(false)
-  requireSameSection Boolean  @default(false)
-  groupStructure     String   @default("Create groups later")
-  createGroupsNow    Int      @default(0)
-  limitGroupMembers  Int      @default(0)
-  autoAssignLeader   Boolean  @default(false)
-  leaderType         String   @default("first")
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
-
-  course Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  groups Group[]
-
-  @@map("group_sets")
-}
-
-model Group {
-  id         String   @id @default(cuid())
-  name       String
-  courseId   String
-  groupSetId String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  course      Course        @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  groupSet    GroupSet?     @relation(fields: [groupSetId], references: [id], onDelete: SetNull)
-  members     GroupMember[]
-  assignments Assignment[]
-
-  @@map("groups")
-}
-
-model GroupMember {
-  id        String   @id @default(cuid())
-  userId    String
-  groupId   String
-  isLeader  Boolean  @default(false)
-  order     Int      @default(0)
-  createdAt DateTime @default(now())
-
-  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, groupId])
-  @@map("group_members")
-}
-
-model Assignment {
-  id                  String       @id @default(cuid())
-  title               String
-  description         String?
-  points              Float        @default(0)
-  dueDate             DateTime?
-  availableFrom       DateTime?
-  availableUntil      DateTime?
-  courseId            String?
-  groupId             String?
-  status              CourseStatus @default(UNPUBLISHED)
-  submissionType      String       @default("Online")
-  assignmentGroup     String       @default("Assignments")
-  displayGradeAs      String       @default("Points")
-  onlineEntryOptions  String[]     @default([])
-  submissionAttempts  String       @default("Unlimited")
-  allowedAttempts     Int?
-  doNotCount          Boolean      @default(false)
-  isGroupAssignment   Boolean      @default(false)
-  groupSetId          String?
-  requirePeerReviews  Boolean      @default(false)
-  anonymousGrading    Boolean      @default(false)
-  peerReviewAssign    String       @default("manually")
-  peerReviewAnonymous Boolean      @default(false)
-  notifyUsers         Boolean      @default(false)
-  assignees           String[]     @default([])
-  createdById         String?
-  createdAt           DateTime     @default(now())
-  updatedAt           DateTime     @updatedAt
-
-  course      Course?      @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  group       Group?       @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  submissions Submission[]
-  repository  Repository?
-  rubric      Rubric?
-
-  @@map("assignments")
-}
-
-model Submission {
-  id           String           @id @default(cuid())
-  userId       String
-  assignmentId String
-  status       AssignmentStatus @default(PENDING)
-  fileUrl      String?
-  textEntry    String?          @db.Text
-  websiteUrl   String?
-  comments     String?          @db.Text
-  grade        Float?
-  feedback     String?          @db.Text
-  submittedAt  DateTime?
-  daysLate     Int?
-  gradedById   String?
-  gradedAt     DateTime?
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
-
-  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  gradedBy       User?           @relation("GradedSubmissions", fields: [gradedById], references: [id], onDelete: SetNull)
-  assignment     Assignment      @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
-  repositoryFile RepositoryFile?
-
-  @@unique([userId, assignmentId])
-  @@map("submissions")
-}
-
-model Repository {
-  id           String   @id @default(cuid())
-  name         String
-  assignmentId String   @unique
-  courseId     String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  assignment Assignment       @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
-  files      RepositoryFile[]
-  logs       ActivityLog[]
-
-  @@map("repositories")
-}
-
-model RepositoryFile {
-  id           String   @id @default(cuid())
-  repositoryId String
-  submissionId String?  @unique
-  userId       String
-  fileName     String
-  fileUrl      String
-  fileSize     Int?
-  mimeType     String?
-  uploadedAt   DateTime @default(now())
-
-  repository Repository  @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
-  submission Submission? @relation(fields: [submissionId], references: [id], onDelete: SetNull)
-  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("repository_files")
-}
-
-model ActivityLog {
-  id           String   @id @default(cuid())
-  repositoryId String?
-  userId       String
-  action       String
-  targetType   String?
-  targetId     String?
-  targetName   String?
-  metadata     Json?
-  createdAt    DateTime @default(now())
-
-  repository Repository? @relation(fields: [repositoryId], references: [id], onDelete: SetNull)
-  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("activity_logs")
-}
-
-model Announcement {
-  id             String    @id @default(cuid())
-  courseId       String
-  title          String
-  bodyText       String    @default("")
-  bodyHtml       String    @default("")
-  author         String    @default("Admin")
-  authorId       String?
-  assignTo       String[]  @default([])
-  allowComment   Boolean   @default(false)
-  locked         Boolean   @default(false)
-  allowLiking    Boolean   @default(false)
-  availableFrom  DateTime?
-  availableUntil DateTime?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-
-  course      Course                   @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  attachments AnnouncementAttachment[]
-
-  @@map("announcements")
-}
-
-model AnnouncementAttachment {
-  id             String   @id @default(cuid())
-  announcementId String
-  name           String
-  url            String
-  size           Int
-  mimeType       String   @default("")
-  createdAt      DateTime @default(now())
-
-  announcement Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
-
-  @@map("announcement_attachments")
-}
-
-model Account {
-  id                String  @id @default(cuid())
-  userId            String
-  type              String
-  provider          String
-  providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
-  expires_at        Int?
-  token_type        String?
-  scope             String?
-  id_token          String? @db.Text
-  session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([provider, providerAccountId])
-  @@map("accounts")
-}
-
-model Session {
-  id           String   @id @default(cuid())
-  sessionToken String   @unique
-  userId       String
-  expires      DateTime
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("sessions")
-}
-
-model VerificationToken {
-  identifier String
-  token      String   @unique
-  expires    DateTime
-
-  @@unique([identifier, token])
-  @@map("verification_tokens")
-}
-
-model Quiz {
-  id                          String    @id @default(cuid())
-  courseId                    String
-  authorId                    String?
-  authorName                  String    @default("Admin")
-  authorRole                  String    @default("Admin")
-  title                       String
-  description                 String?   @db.Text
-  quizType                    QuizType  @default(GRADED_QUIZ)
-  assignmentGroup             String    @default("Assignments")
-  points                      Float     @default(0)
-  shuffleAnswers              Boolean   @default(false)
-  timeLimit                   Int?
-  allowMultipleAttempts       Boolean   @default(false)
-  attemptLimit                Int?
-  scoreToKeep                 String    @default("highest")
-  viewResponses               Boolean   @default(true)
-  onlyOnceAfterAttempt        Boolean   @default(false)
-  showCorrectAnswers          Boolean   @default(true)
-  showCorrectAnswersAt        DateTime?
-  hideCorrectAnswersAt        DateTime?
-  showOneAtATime              Boolean   @default(false)
-  lockQuestionsAfterAnswering Boolean   @default(false)
-  accessCode                  String?
-  ipFilter                    String?
-  assignTo                    String[]  @default([])
-  dueDate                     DateTime?
-  availableFrom               DateTime?
-  availableUntil              DateTime?
-  published                   Boolean   @default(false)
-  createdAt                   DateTime  @default(now())
-  updatedAt                   DateTime  @updatedAt
-
-  course    Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  author    User?          @relation("QuizAuthor", fields: [authorId], references: [id], onDelete: SetNull)
-  questions QuizQuestion[]
-  attempts  QuizAttempt[]
-
-  @@map("quizzes")
-}
-
-model QuizQuestion {
-  id            String           @id @default(cuid())
-  quizId        String
-  type          QuizQuestionType @default(MULTIPLE_CHOICE)
-  question      String           @db.Text
-  description   String?          @db.Text
-  points        Float            @default(1)
-  correctAnswer String?
-  order         Int              @default(0)
-  createdAt     DateTime         @default(now())
-
-  quiz       Quiz            @relation(fields: [quizId], references: [id], onDelete: Cascade)
-  answers    QuizAnswer[]
-  matchPairs QuizMatchPair[]
-
-  @@map("quiz_questions")
-}
-
-model QuizAnswer {
-  id         String   @id @default(cuid())
-  questionId String
-  text       String
-  correct    Boolean  @default(false)
-  order      Int      @default(0)
-  createdAt  DateTime @default(now())
-
-  question QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
-
-  @@map("quiz_answers")
-}
-
-model QuizMatchPair {
-  id         String   @id @default(cuid())
-  questionId String
-  left       String
-  right      String
-  order      Int      @default(0)
-  createdAt  DateTime @default(now())
-
-  question QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
-
-  @@map("quiz_match_pairs")
-}
-
-model QuizAttempt {
-  id              String   @id @default(cuid())
-  quizId          String
-  userId          String
-  score           Float    @default(0)
-  durationSeconds Int      @default(0)
-  submittedAt     DateTime @default(now())
-  answers         Json     @default("{}")
-
-  quiz Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("quiz_attempts")
-}
-
-model Form {
-  id                          String    @id @default(cuid())
-  courseId                    String
-  authorId                    String?
-  authorName                  String    @default("Admin")
-  authorRole                  String    @default("Admin")
-  title                       String
-  description                 String?   @db.Text
-  formType                    FormType  @default(SURVEY_FEEDBACK)
-  assignmentGroup             String    @default("Assignments")
-  points                      Float     @default(0)
-  shuffleAnswers              Boolean   @default(false)
-  allowMultipleResponses      Boolean   @default(false)
-  responseLimit               Int?
-  anonymousResponses          Boolean   @default(false)
-  showResultsToRespondents    Boolean   @default(false)
-  showOneAtATime              Boolean   @default(false)
-  lockQuestionsAfterAnswering Boolean   @default(false)
-  accessCode                  String?
-  confirmationMessage         String?   @db.Text
-  assignTo                    String[]  @default([])
-  dueDate                     DateTime?
-  dueTime                     String?
-  availableFrom               DateTime?
-  availableFromTime           String?
-  availableUntil              DateTime?
-  availableUntilTime          String?
-  published                   Boolean   @default(false)
-  createdAt                   DateTime  @default(now())
-  updatedAt                   DateTime  @updatedAt
-
-  course          Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  author          User?            @relation("FormAuthor", fields: [authorId], references: [id], onDelete: SetNull)
-  questions       FormQuestion[]
-  formSubmissions FormSubmission[]
-
-  @@index([courseId])
-  @@map("forms")
-}
-
-model FormQuestion {
-  id                 String           @id @default(cuid())
-  formId             String
-  type               FormQuestionType @default(SHORT_ANSWER)
-  question           String           @default("") @db.Text
-  description        String?          @db.Text
-  points             Float            @default(0)
-  required           Boolean          @default(false)
-  image              String?          @db.Text
-  options            String[]         @default([])
-  correctAnswer      String?
-  scaleMin           Int?
-  scaleMax           Int?
-  scaleMinLabel      String?
-  scaleMaxLabel      String?
-  rows               String[]         @default([])
-  columns            String[]         @default([])
-  sectionTitle       String?
-  sectionDescription String?          @db.Text
-  order              Int              @default(0)
-
-  form Form @relation(fields: [formId], references: [id], onDelete: Cascade)
-
-  @@index([formId])
-  @@map("form_questions")
-}
-
-model FormSubmission {
-  id        String   @id @default(cuid())
-  formId    String
-  userId    String
-  answers   Json
-  score     Float    @default(0)
-  createdAt DateTime @default(now())
-
-  form Form @relation(fields: [formId], references: [id], onDelete: Cascade)
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([formId, userId])
-  @@map("form_submissions")
-}
-
-// ── Rubric ────────────────────────────────────────────────────────────────────
-
-model Rubric {
-  id                   String   @id @default(cuid())
-  assignmentId         String   @unique
-  courseId             String?
-  title                String
-  type                 String   @default("scale")
-  ratingDisplay        String   @default("level")
-  ratingOrder          String   @default("high_low")
-  scoring              String   @default("scored")
-  doNotPostToGradebook Boolean  @default(false)
-  useForGrading        Boolean  @default(false)
-  hideScoreTotal       Boolean  @default(false)
-  pointsPossible       Float    @default(0)
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
-
-  assignment Assignment        @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
-  criteria   RubricCriterion[]
-
-  @@map("rubrics")
-}
-
-model RubricCriterion {
-  id          String   @id @default(cuid())
-  rubricId    String
-  name        String
-  description String?  @db.Text
-  points      Float    @default(0)
-  enableRange Boolean  @default(false)
-  order       Int      @default(0)
-  createdAt   DateTime @default(now())
-
-  rubric  Rubric         @relation(fields: [rubricId], references: [id], onDelete: Cascade)
-  ratings RubricRating[]
-
-  @@map("rubric_criteria")
-}
-
-model RubricRating {
-  id          String  @id @default(cuid())
-  criterionId String
-  points      Float   @default(0)
-  name        String
-  description String?
-  order       Int     @default(0)
-
-  criterion RubricCriterion @relation(fields: [criterionId], references: [id], onDelete: Cascade)
-
-  @@map("rubric_ratings")
-}
-
-model Student {
-  id            String   @id @default(cuid())
-  studentNumber String   @unique
-  name          String
-  age           Int?
-  gender        String?
-  course        String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  patientRecords PatientRecord[]
-
-  @@map("students")
-}
-
-// ── Patient Records ───────────────────────────────────────────────────────────
-
-model PatientRecord {
-  id            String        @id @default(cuid())
-  courseId      String
-  studentId     String
-  complaint     String        @db.Text
-  temperature   Float?
-  bloodPressure String?
-  pulseRate     Int?
-  weight        Float?
-  diagnosis     String?       @db.Text
-  medicine      String?       @db.Text
-  action        PatientAction
-  notes         String?       @db.Text
-  visitDate     DateTime
-  recordedBy    String
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-
-  course         Course          @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  student        Student         @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  recordedByUser User            @relation("RecordedBy", fields: [recordedBy], references: [id])
-  medicineUsages MedicineUsage[]
-
-  @@index([courseId])
-  @@index([studentId])
-  @@index([courseId, visitDate])
-  @@map("patient_records")
-}
-
-// ── Medicine Inventory ────────────────────────────────────────────────────────
-
-model MedicineInventory {
-  id                String   @id @default(cuid())
-  courseId          String
-  name              String
-  unit              String // e.g. "tablet", "capsule", "ml", "bottle", "box"
-  stockQty          Int      @default(0)
-  lowStockThreshold Int      @default(10)
-  notes             String?  @db.Text
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-
-  course Course          @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  usages MedicineUsage[]
-
-  @@index([courseId])
-  @@map("medicine_inventory")
-}
-
-model MedicineUsage {
-  id              String   @id @default(cuid())
-  patientRecordId String
-  medicineId      String
-  medicineName    String // snapshot of name at time of recording
-  quantityUsed    Int
-  unit            String // snapshot of unit at time of recording
-  createdAt       DateTime @default(now())
-
-  patientRecord PatientRecord     @relation(fields: [patientRecordId], references: [id], onDelete: Cascade)
-  medicine      MedicineInventory @relation(fields: [medicineId], references: [id], onDelete: Restrict)
-
-  @@index([patientRecordId])
-  @@index([medicineId])
-  @@map("medicine_usages")
 }

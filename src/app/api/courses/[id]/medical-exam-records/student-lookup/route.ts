@@ -1,9 +1,8 @@
-// src/app/api/courses/[id]/patient-records/student-lookup/route.ts
+// src/app/api/courses/[id]/medical-exam-records/student-lookup/route.ts
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireCoursePermission } from "@/lib/course-access";
-import { resolveStudentAge } from "@/lib/age";
 
 export async function GET(
   req: NextRequest,
@@ -12,20 +11,9 @@ export async function GET(
   try {
     const { id: courseId } = await params;
 
-    // Only Head, Staff, and Admin can look up students
     const access = await requireCoursePermission(courseId, "view_course");
     if (!access.ok) {
       return NextResponse.json({ error: access.error }, { status: access.status });
-    }
-
-    // Make sure this is a clinic office
-    const course = await prisma.course.findUnique({
-      where: { id: courseId },
-      select: { officeType: true },
-    });
-
-    if (course?.officeType !== "CLINIC") {
-      return NextResponse.json({ error: "Not a clinic office" }, { status: 403 });
     }
 
     const { searchParams } = new URL(req.url);
@@ -54,14 +42,9 @@ export async function GET(
       return NextResponse.json({ error: "Student not found" }, { status: 404 });
     }
 
-    return NextResponse.json({
-      student: {
-        ...student,
-        age: resolveStudentAge(student), // computed from birthDate, falls back to stored age
-      },
-    });
+    return NextResponse.json({ student });
   } catch (err) {
-    console.error("[GET /patient-records/student-lookup]", err);
+    console.error("[GET /medical-exam-records/student-lookup]", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { resolveStudentAge } from "@/lib/age";
 
 export async function GET(_req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -12,7 +13,14 @@ export async function GET(_req: NextRequest) {
     orderBy: { createdAt: "desc" },
   });
 
-  return NextResponse.json({ students });
+  // Resolve display age: computed from birthDate if present, falling back
+  // to the manually-entered `age` for legacy/CSV-imported records.
+  const withComputedAge = students.map((s) => ({
+    ...s,
+    age: resolveStudentAge(s),
+  }));
+
+  return NextResponse.json({ students: withComputedAge });
 }
 
 export async function POST(req: NextRequest) {
@@ -20,7 +28,7 @@ export async function POST(req: NextRequest) {
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json();
-  const { studentNumber, name, email, age, gender, course } = body;
+  const { studentNumber, name, email, address, birthDate, age, gender, course } = body;
 
   if (!studentNumber?.trim()) return NextResponse.json({ error: "Student number is required." }, { status: 400 });
   if (!name?.trim())          return NextResponse.json({ error: "Name is required." }, { status: 400 });
@@ -32,10 +40,12 @@ export async function POST(req: NextRequest) {
     data: {
       studentNumber: studentNumber.trim(),
       name: name.trim(),
-      email:  email  ? String(email).trim() : null,
-      age:    age    ? parseInt(age)    : null,
-      gender: gender ? gender.trim()    : null,
-      course: course ? course.trim()    : null,
+      email:     email     ? String(email).trim()   : null,
+      address:   address   ? String(address).trim() : null,
+      birthDate: birthDate ? new Date(birthDate)     : null,
+      age:       age       ? parseInt(age)           : null, // legacy fallback only
+      gender:    gender    ? gender.trim()           : null,
+      course:    course    ? course.trim()           : null,
     },
   });
 
