@@ -70,9 +70,10 @@ const TEXT_PADDING_BOTTOM = 3;
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { courseId: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id: courseId } = await params;
     const { searchParams } = new URL(req.url);
     const dateFrom = searchParams.get("dateFrom");
     const dateTo   = searchParams.get("dateTo");
@@ -81,7 +82,7 @@ export async function GET(
     // ── Fetch records ──
     const records = await prisma.patientRecord.findMany({
       where: {
-        courseId: params.courseId,
+        courseId,
         ...(dateFrom || dateTo ? {
           visitDate: {
             ...(dateFrom ? { gte: new Date(`${dateFrom}T00:00:00+08:00`) } : {}),
