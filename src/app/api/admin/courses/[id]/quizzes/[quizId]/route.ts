@@ -51,8 +51,8 @@ export async function GET(_req: NextRequest, { params }: Props) {
         questions: {
           orderBy: { order: "asc" },
           include: {
-            answers: { orderBy: { order: "asc" } },
-            matchPairs: { orderBy: { order: "asc" } },
+            quiz_answers: { orderBy: { order: "asc" } },
+            quiz_match_pairs: { orderBy: { order: "asc" } },
           },
         },
         attempts: {
@@ -121,13 +121,13 @@ export async function GET(_req: NextRequest, { params }: Props) {
           points: Number(q.points),
           correctAnswer: q.correctAnswer,
           order: q.order,
-          answers: q.answers.map((a) => ({
+          answers: q.quiz_answers.map((a) => ({
             id: a.id,
             text: a.text,
             correct: a.correct,
             order: a.order,
           })),
-          matchPairs: q.matchPairs.map((mp) => ({
+          matchPairs: q.quiz_match_pairs.map((mp) => ({
             id: mp.id,
             left: mp.left,
             right: mp.right,
@@ -214,14 +214,14 @@ export async function PATCH(req: NextRequest, { params }: Props) {
           points: Number(q.points) || 1,
           correctAnswer: q.correctAnswer ?? null,
           order: q.order ?? idx,
-          answers: {
+          quiz_answers: {
             create: (q.answers ?? []).map((a, ai) => ({
               text: a.text,
               correct: Boolean(a.correct),
               order: a.order ?? ai,
             })),
           },
-          matchPairs: {
+          quiz_match_pairs: {
             create: (q.matchPairs ?? []).map((mp, mi) => ({
               left: mp.left,
               right: mp.right,
@@ -240,8 +240,8 @@ export async function PATCH(req: NextRequest, { params }: Props) {
         questions: {
           orderBy: { order: "asc" },
           include: {
-            answers: { orderBy: { order: "asc" } },
-            matchPairs: { orderBy: { order: "asc" } },
+            quiz_answers: { orderBy: { order: "asc" } },
+            quiz_match_pairs: { orderBy: { order: "asc" } },
           },
         },
         _count: { select: { attempts: true } },
