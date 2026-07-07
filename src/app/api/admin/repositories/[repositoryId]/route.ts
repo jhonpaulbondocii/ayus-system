@@ -15,20 +15,20 @@ export async function GET(
 
   const { repositoryId } = await params;
 
-  const repository = await prisma.repository.findUnique({
+  const repository = await prisma.repositories.findUnique({
     where: { id: repositoryId },
     include: {
-      assignment: {
+      assignments: {
         select: { id: true, title: true, dueDate: true, points: true, status: true, description: true },
       },
-      files: {
+      repository_files: {
         include: {
           user: { select: { id: true, name: true, email: true, image: true } },
-          submission: { select: { id: true, status: true, grade: true, feedback: true, submittedAt: true } },
+          submissions: { select: { id: true, status: true, grade: true, feedback: true, submittedAt: true } },
         },
         orderBy: { uploadedAt: "desc" },
       },
-      logs: {
+      activity_logs: {
         include: {
           user: { select: { id: true, name: true, email: true, image: true } },
         },
@@ -54,7 +54,7 @@ export async function PATCH(
   const body   = await req.json();
   const userId = (session.user as SessionUser)?.id ?? "";
 
-  const repository = await prisma.repository.update({
+  const repository = await prisma.repositories.update({
     where: { id: repositoryId },
     data:  { name: body.name },
   });
@@ -83,7 +83,7 @@ export async function DELETE(
   const { repositoryId } = await params;
   const userId = (session.user as SessionUser)?.id ?? "";
 
-  const repo = await prisma.repository.findUnique({
+  const repo = await prisma.repositories.findUnique({
     where: { id: repositoryId },
     select: { name: true },
   });
@@ -99,7 +99,7 @@ export async function DELETE(
     },
   });
 
-  await prisma.repository.delete({ where: { id: repositoryId } });
+  await prisma.repositories.delete({ where: { id: repositoryId } });
 
   return NextResponse.json({ success: true });
 }
