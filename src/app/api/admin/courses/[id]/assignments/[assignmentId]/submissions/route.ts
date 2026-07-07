@@ -185,11 +185,11 @@
       ...(dbStatus      !== undefined && { status:   dbStatus as never }),
     },
     select: {
-      id:       true,
-      score:    true,
-      feedback: true,
-      status:   true,
-    },
+  id:       true,
+  grade:    true,
+  feedback: true,
+  status:   true,
+},
   });
 
     return NextResponse.json({ submission });

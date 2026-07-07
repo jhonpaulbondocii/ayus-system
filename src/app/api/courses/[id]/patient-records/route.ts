@@ -296,11 +296,12 @@ export async function POST(
               studentNumber: true,
               name:          true,
               age:           true,
+              birthDate:     true,
               gender:        true,
               course:        true,
               email:         true, // ── NEW: kailangan para sa signature email ──
             },
-          },
+          },  
           recordedByUser: {
             select: {
               id:   true,
@@ -382,10 +383,23 @@ export async function POST(
       }
     }
 
+    const today = new Date();
+    let computedAge = record.student.age;
+    if (record.student.birthDate) {
+      computedAge = today.getFullYear() - record.student.birthDate.getFullYear();
+      const m = today.getMonth() - record.student.birthDate.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < record.student.birthDate.getDate())) computedAge--;
+    }
+
     return NextResponse.json(
       {
         record: {
           ...record,
+          student: {
+            ...record.student,
+            age:       computedAge,
+            birthDate: record.student.birthDate?.toISOString() ?? null,
+          },
           medicineUsages: usages,
           signEmailSentAt,
         },

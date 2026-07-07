@@ -123,7 +123,7 @@ export async function GET(
         computeAge(r.student.birthDate, r.student.age),
         [r.student.course, r.section].filter(Boolean).join(" — "),
         r.purpose,
-        [r.remarks, r.placeOfBirth].filter(Boolean).join(" | ") || "",
+        r.remarks ?? "",
         "", // signature handled separately below
       ];
 

@@ -38,6 +38,17 @@ export async function GET(
       return NextResponse.json({ error: "Record not found" }, { status: 404 });
     }
 
+    function computeAge(birthDate: Date | null, fallbackAge: number | null): number | null {
+      if (birthDate) {
+        const today = new Date();
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const m = today.getMonth() - birthDate.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
+        return age;
+      }
+      return fallbackAge;
+    }
+
     // Get all visits of this student in this clinic
     const visits = await prisma.patientRecord.findMany({
       where: {
@@ -63,6 +74,7 @@ export async function GET(
             studentNumber: true,
             name:          true,
             age:           true,
+            birthDate:     true,
             gender:        true,
             course:        true,
           },
@@ -77,7 +89,16 @@ export async function GET(
       orderBy: { visitDate: "desc" },
     });
 
-    return NextResponse.json({ visits });
+    const visitsWithAge = visits.map(v => ({
+      ...v,
+      student: {
+        ...v.student,
+        age:       computeAge(v.student.birthDate, v.student.age),
+        birthDate: v.student.birthDate?.toISOString() ?? null,
+      },
+    }));
+
+    return NextResponse.json({ visits: visitsWithAge });
   } catch (err) {
     console.error("[GET /patient-records/[recordId]]", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
@@ -217,7 +238,24 @@ export async function PATCH(
       },
     });
 
-    return NextResponse.json({ record: updated });
+    const today = new Date();
+    let computedAge = updated.student.age;
+    if (updated.student.birthDate) {
+      computedAge = today.getFullYear() - updated.student.birthDate.getFullYear();
+      const m = today.getMonth() - updated.student.birthDate.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < updated.student.birthDate.getDate())) computedAge--;
+    }
+
+    return NextResponse.json({
+      record: {
+        ...updated,
+        student: {
+          ...updated.student,
+          age:       computedAge,
+          birthDate: updated.student.birthDate?.toISOString() ?? null,
+        },
+      },
+    });
   } catch (err) {
     console.error("[PATCH /patient-records/[recordId]]", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

@@ -166,6 +166,21 @@ function courseAbbrev(course: string | null | undefined): string | null {
   return match ? match[1] : course;
 }
 
+// Compute age from birthDate as a fallback kapag walang laman ang `age` field
+function calcAge(birthDate: string | null | undefined): number | null {
+  if (!birthDate) return null;
+  const dob = new Date(birthDate);
+  if (Number.isNaN(dob.getTime())) return null;
+  const today = new Date();
+  let age = today.getFullYear() - dob.getFullYear();
+  const m = today.getMonth() - dob.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+  return age;
+}
+function studentAge(student: { age: number | null; birthDate?: string | null }): number | null {
+  return student.age ?? calcAge(student.birthDate);
+}
+
 /* ─────────────────────────────────────────────────────────────────────────────
    INPUT STYLES
 ───────────────────────────────────────────────────────────────────────────── */
@@ -721,7 +736,7 @@ function AddVisitModal({
                     ["Name",       student.name],
                     ["Student No.", student.studentNumber],
                     ["Course",     student.course  ?? "—"],
-                    ["Age",        student.age ? `${student.age} yrs` : "—"],
+                    ["Age",        studentAge(student) ? `${studentAge(student)} yrs` : "—"],
                     ["Gender",     student.gender  ?? "—"],
                     ["Address",    student.address ?? "—"],
                   ].map(([label, val]) => (
@@ -877,6 +892,160 @@ function AddVisitModal({
             {saving
               ? <><RefreshCw size={13} className="animate-spin" /> Saving...</>
               : <><Check size={13} /> Save Visit</>}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   MEDICAL CERTIFICATE MODAL
+───────────────────────────────────────────────────────────────────────────── */
+function MedCertModal({
+  courseId, record, onClose,
+}: {
+  courseId: string;
+  record:   PatientRecord;
+  onClose:  () => void;
+}) {
+  const [recommendation, setRecommendation] = useState(
+    record.action === "SENT_HOME"         ? "to be sent home and rest for the day" :
+    record.action === "FOR_OBSERVATION"   ? "to remain under observation" :
+    record.action === "REFERRED_HOSPITAL" ? "to be referred to a hospital for further evaluation" :
+    record.action === "REFERRED_GUIDANCE" ? "to see the Guidance Office for counseling" :
+    ""
+  );
+  const [generating, setGenerating] = useState(false);
+  const [error,      setError]      = useState("");
+
+  const handleGenerate = async () => {
+    if (!recommendation.trim()) { setError("Recommendation is required."); return; }
+    setGenerating(true); setError("");
+    try {
+      const res = await fetch(`/api/courses/${courseId}/patient-records/medical-certificate`, {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          recordId:       record.id,
+          recommendation: recommendation.trim(),
+        }),
+      });
+      if (!res.ok) {
+        const d = await res.json();
+        setError(d.error ?? "Failed to generate.");
+        return;
+      }
+      const blob = await res.blob();
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement("a");
+      a.href     = url;
+      a.download = `medical_certificate_${record.student.name.replace(/\s+/g, "_")}.docx`;
+      a.click();
+      URL.revokeObjectURL(url);
+      onClose();
+    } catch {
+      setError("Network error. Please try again.");
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[300] flex items-end sm:items-center justify-center bg-black/30"
+      style={{ backdropFilter: "blur(4px)", fontFamily: FONT }}
+      onClick={onClose}>
+      <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl border border-gray-100 w-full sm:w-[480px] overflow-hidden"
+        onClick={e => e.stopPropagation()}>
+
+        <div className="sm:hidden flex justify-center pt-3 pb-1">
+          <div className="w-10 h-1 rounded-full bg-gray-200" />
+        </div>
+
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100"
+          style={{ background: MAROON }}>
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+              <FileText size={15} className="text-white" />
+            </div>
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-widest text-white/60">Clinic</p>
+              <p className="text-sm font-black text-white">Generate Medical Certificate</p>
+            </div>
+          </div>
+          <button onClick={onClose}
+            className="w-7 h-7 flex items-center justify-center rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-colors">
+            <X size={15} />
+          </button>
+        </div>
+
+        <div className="px-5 py-5 space-y-4">
+          {error && (
+            <div className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">{error}</div>
+          )}
+
+          <div className="rounded-lg border border-gray-200 overflow-hidden">
+            <div className="px-3 py-2 border-b border-gray-100" style={{ background: "#fef2f2" }}>
+              <p className="text-[10px] font-black uppercase tracking-widest" style={{ color: MAROON }}>Patient</p>
+            </div>
+            <div className="px-3 py-3 grid grid-cols-2 gap-x-4 gap-y-2 bg-white">
+              {[
+                ["Name",      record.student.name],
+                ["Age / Sex", `${studentAge(record.student) ?? "—"} / ${record.student.gender ?? "—"}`],
+                ["Course",    record.student.course ?? "—"],
+                ["Date",      fmtDate(record.visitDate)],
+                ["Diagnosis", record.diagnosis ?? record.complaint ?? "—"],
+              ].map(([label, val]) => (
+                <div key={label} className={label === "Diagnosis" ? "col-span-2" : ""}>
+                  <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-0.5">{label}</p>
+                  <p className="text-xs font-semibold text-gray-800 leading-snug">{val}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <FieldLabel required>Recommendation</FieldLabel>
+            <textarea
+              value={recommendation}
+              onChange={e => setRecommendation(e.target.value)}
+              rows={3}
+              placeholder="e.g. 3 days rest starting June 15, 2026"
+              className={textareaCls}
+            />
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              {[
+                "1 day rest",
+                "2 days rest",
+                "3 days rest",
+                "to be sent home",
+                "to be referred to a hospital for further evaluation",
+              ].map(p => (
+                <button key={p} type="button"
+                  onClick={() => setRecommendation(p)}
+                  className="text-[10px] font-semibold px-2.5 py-1 rounded-full border border-gray-200 text-gray-500 hover:border-gray-400 hover:text-gray-700 transition-all">
+                  {p}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <p className="text-[10px] text-gray-400 leading-relaxed">
+            The certificate will be generated as a Word document (.docx) ready for printing and signing by the University Physician.
+          </p>
+        </div>
+
+        <div className="flex gap-2 px-5 py-4 border-t border-gray-100 bg-gray-50">
+          <button onClick={onClose} disabled={generating}
+            className="flex-1 h-10 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-100 transition-all disabled:opacity-50">
+            Cancel
+          </button>
+          <button onClick={handleGenerate} disabled={generating || !recommendation.trim()}
+            className="flex-1 h-10 rounded-xl text-sm font-black text-white transition-all disabled:opacity-60 flex items-center justify-center gap-1.5"
+            style={{ background: MAROON }}>
+            {generating
+              ? <><RefreshCw size={13} className="animate-spin" /> Generating...</>
+              : <><FileText size={13} /> Generate & Download</>}
           </button>
         </div>
       </div>
@@ -1106,6 +1275,7 @@ function RecordDetailView({
   const [loading,       setLoading]       = useState(true);
   const [deleteTarget,  setDeleteTarget]  = useState<PatientRecord | null>(null);
   const [editTarget,    setEditTarget]    = useState<PatientRecord | null>(null);
+  const [medCertTarget, setMedCertTarget] = useState<PatientRecord | null>(null);
 
   useEffect(() => {
     fetch(`/api/courses/${courseId}/patient-records/${record.id}`)
@@ -1144,7 +1314,7 @@ function RecordDetailView({
             {[
               ["Name",          record.student.name],
               ["Student No.",   record.student.studentNumber],
-              ["Age",           record.student.age ? `${record.student.age} yrs` : "—"],
+              ["Age",           studentAge(record.student) ? `${studentAge(record.student)} yrs` : "—"],
               ["Gender",        record.student.gender ?? "—"],
               ["Course",        record.student.course  ?? "—"],
               ["Address",       record.student.address ?? "—"],
@@ -1183,7 +1353,7 @@ function RecordDetailView({
             <div className="border border-gray-200 rounded-lg overflow-hidden">
               {/* Table header */}
               <div className="grid text-[10px] font-bold uppercase tracking-widest text-gray-400 bg-gray-50 border-b border-gray-200"
-                style={{ gridTemplateColumns: "1fr 2fr 1fr 1fr 2fr 1fr 48px 80px" }}
+                style={{ gridTemplateColumns: "1fr 2fr 1fr 1fr 2fr 1fr 48px 220px" }}
 >
                 {["Date", "Complaint", "Temp", "BP / PR", "Medicine / Dx", "Action", "Sig", ""].map((h, i) => (
                   <div key={i} className="px-3 py-2.5">{h}</div>
@@ -1202,7 +1372,7 @@ function RecordDetailView({
                 return (
                   <div key={v.id}
                     className={`grid text-xs text-gray-700 ${idx !== visits.length - 1 ? "border-b border-gray-100" : ""} hover:bg-gray-50/60 transition-colors`}
-                    style={{ gridTemplateColumns: "1fr 2fr 1fr 1fr 2fr 1fr 48px 80px" }}
+                    style={{ gridTemplateColumns: "1fr 2fr 1fr 1fr 2fr 1fr 48px 220px" }}
 >
                     {/* Date */}
                     <div className="px-3 py-3 flex flex-col gap-0.5">
@@ -1252,9 +1422,14 @@ function RecordDetailView({
                       )}
                     </div>
                     {/* Edit + Delete */}
-                    <div className="px-3 py-3 flex items-center gap-2">
+                    <div className="px-3 py-3 flex items-center gap-3 justify-end">
                       {canDelete(v) && (
                         <>
+                          <button onClick={() => setMedCertTarget(v)}
+                            className="text-[11px] font-semibold hover:underline transition-colors whitespace-nowrap"
+                            style={{ color: MAROON }}>
+                            Med Cert
+                          </button>
                           <button onClick={() => setEditTarget(v)}
                             className="text-[11px] font-semibold text-gray-400 hover:text-gray-700 transition-colors whitespace-nowrap">
                             Edit
@@ -1296,6 +1471,14 @@ function RecordDetailView({
             onDeleted(deleteTarget.id);
             setDeleteTarget(null);
           }}
+        />
+      )}
+
+      {medCertTarget && (
+        <MedCertModal
+          courseId={courseId}
+          record={medCertTarget}
+          onClose={() => setMedCertTarget(null)}
         />
       )}
     </div>
