@@ -17,17 +17,14 @@ export async function GET(
     prisma.assignment.findMany({
       where: { courseId },
       include: {
-        repository: {
+        repositories: {
           include: {
-            files: {
+            repository_files: {
               include: {
                 user: {
                   select: { id: true, name: true, email: true, image: true },
                 },
-                // FIX: removed the conflicting `select` block — Prisma does not
-                // allow `include` and `select` on the same relation at once.
-                // Keep only `include` and list the fields you need via nested select.
-                submission: {
+                submissions: {
                   include: {
                     user: {
                       select: { id: true, name: true, email: true, image: true },
@@ -37,7 +34,7 @@ export async function GET(
               },
               orderBy: { uploadedAt: "desc" },
             },
-            _count: { select: { files: true, logs: true } },
+            _count: { select: { repository_files: true, activity_logs: true } },
           },
         },
         _count: { select: { submissions: true } },
@@ -48,24 +45,24 @@ export async function GET(
   ]);
 
   const repositories = assignments.map((a) => {
-    const repo = a.repository;
+    const repo = a.repositories;
 
-    const files = (repo?.files ?? []).map((f) => ({
+    const files = (repo?.repository_files ?? []).map((f) => ({
       id:         f.id,
       fileName:   f.fileName,
       fileUrl:    f.fileUrl,
       fileSize:   f.fileSize,
       mimeType:   f.mimeType,
       uploadedAt: f.uploadedAt,
-      // prefer submission.user (the student), fallback to file uploader
-      user: f.submission?.user ?? f.user,
-      submission: f.submission
+      // prefer submissions.user (the student), fallback to file uploader
+      user: f.submissions?.user ?? f.user,
+      submission: f.submissions
         ? {
-            id:          f.submission.id,
-            status:      f.submission.status,
-            grade:       f.submission.grade,
-            feedback:    f.submission.feedback,
-            submittedAt: f.submission.submittedAt,
+            id:          f.submissions.id,
+            status:      f.submissions.status,
+            grade:       f.submissions.grade,
+            feedback:    f.submissions.feedback,
+            submittedAt: f.submissions.submittedAt,
           }
         : null,
     }));
@@ -88,8 +85,8 @@ export async function GET(
       },
       files,
       _count: {
-        files: repo?._count.files ?? 0,
-        logs:  repo?._count.logs  ?? 0,
+        files: repo?._count.repository_files ?? 0,
+        logs:  repo?._count.activity_logs  ?? 0,
       },
     };
   });
