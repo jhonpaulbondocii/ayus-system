@@ -1,6 +1,7 @@
 // src/app/api/admin/courses/[id]/quizzes/[quizId]/route.ts
 
 import { NextRequest, NextResponse } from "next/server";
+import { randomUUID } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { requireCoursePermission } from "@/lib/course-access";
 import { QuizQuestionType } from "@/generated/prisma";
@@ -216,6 +217,7 @@ export async function PATCH(req: NextRequest, { params }: Props) {
           order: q.order ?? idx,
           quiz_answers: {
             create: (q.answers ?? []).map((a, ai) => ({
+              id: randomUUID(),
               text: a.text,
               correct: Boolean(a.correct),
               order: a.order ?? ai,
@@ -223,6 +225,7 @@ export async function PATCH(req: NextRequest, { params }: Props) {
           },
           quiz_match_pairs: {
             create: (q.matchPairs ?? []).map((mp, mi) => ({
+              id: randomUUID(),
               left: mp.left,
               right: mp.right,
               order: mp.order ?? mi,

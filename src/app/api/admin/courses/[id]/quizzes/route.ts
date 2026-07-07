@@ -1,6 +1,7 @@
 // src/app/api/admin/courses/[id]/quizzes/route.ts
 
 import { NextRequest, NextResponse } from "next/server";
+import { randomUUID } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { requireCoursePermission } from "@/lib/course-access";
 import { QuizQuestionType } from "@/generated/prisma";
@@ -46,8 +47,8 @@ export async function GET(_req: NextRequest, { params }: Props) {
         questions: {
           orderBy: { order: "asc" },
           include: {
-            answers: { orderBy: { order: "asc" } },
-            matchPairs: { orderBy: { order: "asc" } },
+            quiz_answers: { orderBy: { order: "asc" } },
+            quiz_match_pairs: { orderBy: { order: "asc" } },
           },
         },
         _count: { select: { attempts: true } },
@@ -99,10 +100,10 @@ export async function GET(_req: NextRequest, { params }: Props) {
         points: Number(question.points),
         correctAnswer: question.correctAnswer,
         order: question.order,
-        answers: question.answers.map((a) => ({
+        answers: question.quiz_answers.map((a) => ({
           id: a.id, text: a.text, correct: a.correct, order: a.order,
         })),
-        matchPairs: question.matchPairs.map((mp) => ({
+        matchPairs: question.quiz_match_pairs.map((mp) => ({
           id: mp.id, left: mp.left, right: mp.right, order: mp.order,
         })),
       })),
@@ -222,13 +223,15 @@ export async function POST(req: NextRequest, { params }: Props) {
             points: Number(q.points) || 1,
             correctAnswer: q.correctAnswer ?? null,
             order: q.order ?? idx,
-            answers: {
+            quiz_answers: {
               create: (q.answers ?? []).map((a, ai) => ({
+                id: randomUUID(),
                 text: a.text, correct: Boolean(a.correct), order: a.order ?? ai,
               })),
             },
-            matchPairs: {
+            quiz_match_pairs: {
               create: (q.matchPairs ?? []).map((mp, mi) => ({
+                id: randomUUID(),
                 left: mp.left, right: mp.right, order: mp.order ?? mi,
               })),
             },
@@ -239,8 +242,8 @@ export async function POST(req: NextRequest, { params }: Props) {
         author: { select: { id: true, name: true, role: true, image: true } },
         questions: {
           include: {
-            answers: { orderBy: { order: "asc" } },
-            matchPairs: { orderBy: { order: "asc" } },
+            quiz_answers: { orderBy: { order: "asc" } },
+            quiz_match_pairs: { orderBy: { order: "asc" } },
           },
           orderBy: { order: "asc" },
         },
