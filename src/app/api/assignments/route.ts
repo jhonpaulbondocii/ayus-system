@@ -34,7 +34,7 @@ export async function GET() {
       },
       include: {
         course: { select: { id: true, name: true, code: true, color: true } },
-        group:  { select: { id: true, name: true } },
+        groups: { select: { id: true, name: true } },
         submissions: {
           where: { userId },
           select: { status: true, grade: true, submittedAt: true },
@@ -49,7 +49,7 @@ export async function GET() {
       description: a.description,
       dueDate:     a.dueDate ? a.dueDate.toISOString() : null,
       course:      a.course,
-      group:       a.group,
+      group:       a.groups,
       status:      a.submissions[0]?.status ?? "PENDING",
       grade:       a.submissions[0]?.grade  ?? null,
       submittedAt: a.submissions[0]?.submittedAt ?? null,
