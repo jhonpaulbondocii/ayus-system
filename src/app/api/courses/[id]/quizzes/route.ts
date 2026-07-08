@@ -1,4 +1,4 @@
-  import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
   import { getServerSession } from "next-auth";
   import { authOptions } from "@/lib/auth";
   import { prisma } from "@/lib/prisma";
@@ -120,8 +120,8 @@
               description: true,
               points: true,
               correctAnswer: true,
-              answers: true,
-              matchPairs: true,
+              quiz_answers: true,
+              quiz_match_pairs: true,
             },
             orderBy: {
               order: "asc",
@@ -196,12 +196,12 @@
             points: Number(q.points),
             required: q.points > 0,
             correctAnswer: q.correctAnswer,
-            answers: q.answers.map((a) => ({
+            answers: q.quiz_answers.map((a) => ({
               id: a.id,
               text: a.text,
               correct: a.correct,
             })),
-            matchPairs: q.matchPairs.map((m) => ({
+            matchPairs: q.quiz_match_pairs.map((m) => ({
               id: m.id,
               left: m.left,
               right: m.right,
