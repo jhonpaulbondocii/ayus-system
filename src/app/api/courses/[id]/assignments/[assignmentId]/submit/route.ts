@@ -1,6 +1,7 @@
 // src/app/api/courses/[id]/assignments/[assignmentId]/submit/route.ts
 
 import { NextRequest, NextResponse } from "next/server";
+import { randomUUID } from "crypto";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -94,14 +95,20 @@ async function syncRepositoryFiles(
   // FIX: upsert the repository so it always exists before we try to link files.
   // Previously this returned early if no repo existed, meaning first-time
   // submissions never created repo files.
-  const repository = await prisma.repository.upsert({
+  // NOTE: `repositories` model has no @default on `id`/`updatedAt`, so we
+  // must supply them manually.
+  const repository = await prisma.repositories.upsert({
     where:  { assignmentId },
     create: {
+      id: randomUUID(),
       assignmentId,
       courseId,
       name: assignmentTitle,
+      updatedAt: new Date(),
     },
-    update: {}, // already exists — nothing to change
+    update: {
+      updatedAt: new Date(),
+    },
   });
 
   // Remove old RepositoryFile records for this submission (handles resubmits)
