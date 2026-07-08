@@ -83,7 +83,7 @@ export async function GET(
             order: "asc",
           },
           include: {
-            answers: {
+            quiz_answers: {
               orderBy: {
                 order: "asc",
               },
@@ -93,7 +93,7 @@ export async function GET(
                 order: true,
               },
             },
-            matchPairs: {
+            quiz_match_pairs: {
               orderBy: {
                 order: "asc",
               },
@@ -146,11 +146,11 @@ export async function GET(
       type: question.type,
       question: question.question,
       points: Number(question.points),
-      options: question.answers.map((answer) => ({
+      options: question.quiz_answers.map((answer) => ({
         id: answer.id,
         text: answer.text,
       })),
-      matchPairs: question.matchPairs.map((pair) => ({
+      matchPairs: question.quiz_match_pairs.map((pair) => ({
         id: pair.id,
         left: pair.left,
         right: pair.right,
