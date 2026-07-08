@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { randomUUID } from "crypto";
 import { CourseStatus } from "@/generated/prisma";
 import { prisma } from "@/lib/prisma";
 import { requireCoursePermission } from "@/lib/course-access";
@@ -411,11 +412,15 @@ export async function POST(
     });
 
     // Auto-create repository for this assignment
-    await prisma.repository.create({
+    // NOTE: `repositories` model has no @default on `id`/`updatedAt`, so we
+    // must supply them manually.
+    await prisma.repositories.create({
       data: {
+        id: randomUUID(),
         name: assignment.title,
         assignmentId: assignment.id,
         courseId: courseId,
+        updatedAt: new Date(),
       },
     });
 
