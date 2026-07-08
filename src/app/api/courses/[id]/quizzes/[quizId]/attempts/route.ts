@@ -14,8 +14,8 @@ function autoGrade(
     type: string;
     points: number;
     correctAnswer: string | null;
-    answers: { id: string; text: string; correct: boolean }[];
-    matchPairs: { id: string; left: string; right: string }[];
+    quiz_answers: { id: string; text: string; correct: boolean }[];
+    quiz_match_pairs: { id: string; left: string; right: string }[];
   }[],
   answers: Record<string, string | string[] | Record<string, string>>
 ): number {
@@ -29,7 +29,7 @@ function autoGrade(
       case "MULTIPLE_CHOICE":
       case "TRUE_FALSE": {
         // userAnswer is a string (the text of the chosen option)
-        const correctOption = q.answers.find((a) => a.correct);
+        const correctOption = q.quiz_answers.find((a) => a.correct);
         if (correctOption && userAnswer === correctOption.text) {
           score += q.points;
         }
@@ -53,12 +53,12 @@ function autoGrade(
         if (typeof userAnswer !== "object" || Array.isArray(userAnswer)) break;
         const gridAnswer = userAnswer as Record<string, string>;
         let allCorrect = true;
-        for (const pair of q.matchPairs) {
+        for (const pair of q.quiz_match_pairs) {
           const given = (gridAnswer[pair.left] ?? "").trim().toLowerCase();
           const correct = pair.right.trim().toLowerCase();
           if (given !== correct) { allCorrect = false; break; }
         }
-        if (allCorrect && q.matchPairs.length > 0) {
+        if (allCorrect && q.quiz_match_pairs.length > 0) {
           score += q.points;
         }
         break;
@@ -93,8 +93,8 @@ export async function POST(req: NextRequest, { params }: Props) {
       include: {
         questions: {
           include: {
-            answers: true,
-            matchPairs: true,
+            quiz_answers: true,
+            quiz_match_pairs: true,
           },
           orderBy: { order: "asc" },
         },
