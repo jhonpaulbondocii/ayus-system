@@ -23,7 +23,7 @@ export async function GET() {
           },
         },
       },
-      gradedBy: {
+      users_submissions_gradedByIdTousers: {
         select: { id: true, name: true, image: true, role: true },
       },
     },
@@ -34,10 +34,10 @@ export async function GET() {
     body:      s.feedback!,
     createdAt: (s.gradedAt ?? s.updatedAt).toISOString(),
     author: {
-      id:    s.gradedBy?.id    ?? "system",
-      name:  s.gradedBy?.name  ?? "Instructor",
-      image: s.gradedBy?.image ?? null,
-      role:  s.gradedBy?.role  ?? "staff",
+      id:    s.users_submissions_gradedByIdTousers?.id    ?? "system",
+      name:  s.users_submissions_gradedByIdTousers?.name  ?? "Instructor",
+      image: s.users_submissions_gradedByIdTousers?.image ?? null,
+      role:  s.users_submissions_gradedByIdTousers?.role  ?? "staff",
     },
     assignment: {
       id:    s.assignment.id,
