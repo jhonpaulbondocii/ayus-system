@@ -34,10 +34,10 @@ export async function GET(
     }
 
     // Fetch all repositories for this course, with full file + submission + user data
-    const repositories = await prisma.repository.findMany({
+    const repositories = await prisma.repositories.findMany({
       where: { courseId },
       include: {
-        assignment: {
+        assignments: {
           select: {
             id: true,
             title: true,
@@ -51,7 +51,7 @@ export async function GET(
             },
           },
         },
-        files: {
+        repository_files: {
           include: {
             user: {
               select: {
@@ -61,7 +61,7 @@ export async function GET(
                 image: true,
               },
             },
-            submission: {
+            submissions: {
               select: {
                 id: true,
                 status: true,
@@ -75,8 +75,8 @@ export async function GET(
         },
         _count: {
           select: {
-            files: true,
-            logs: true,
+            repository_files: true,
+            activity_logs: true,
           },
         },
       },
@@ -105,7 +105,7 @@ export async function GET(
 
     // Shape the response to match what the frontend expects
     const shaped = repositories.map((repo) => {
-      const assignment = repo.assignment;
+      const assignment = repo.assignments;
       const assignees = assignment.assignees ?? [];
 
       // Determine enrolled count:
@@ -129,7 +129,7 @@ export async function GET(
           submissionCount: submissionCountMap.get(repo.assignmentId) ?? 0,
           enrollmentCount,
         },
-        files: repo.files.map((f) => ({
+        files: repo.repository_files.map((f) => ({
           id: f.id,
           fileName: f.fileName,
           fileUrl: f.fileUrl,
@@ -142,19 +142,19 @@ export async function GET(
             email: f.user.email,
             image: f.user.image,
           },
-          submission: f.submission
+          submission: f.submissions
             ? {
-                id: f.submission.id,
-                status: f.submission.status,
-                grade: f.submission.grade,
-                feedback: f.submission.feedback,
-                submittedAt: f.submission.submittedAt?.toISOString() ?? null,
+                id: f.submissions.id,
+                status: f.submissions.status,
+                grade: f.submissions.grade,
+                feedback: f.submissions.feedback,
+                submittedAt: f.submissions.submittedAt?.toISOString() ?? null,
               }
             : null,
         })),
         _count: {
-          files: repo._count.files,
-          logs: repo._count.logs,
+          files: repo._count.repository_files,
+          logs: repo._count.activity_logs,
         },
       };
     });
