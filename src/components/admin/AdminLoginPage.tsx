@@ -21,24 +21,22 @@ const styles = `
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
-    --maroon:       #7b1113;
-    --maroon-dark:  #5a0d0f;
-    --maroon-deep:  #3d0809;
-    --maroon-light: #f9ecec;
-    --maroon-mid:   #c0393c;
-    --accent:       #e85d26;
-    --text-primary: #1a1a2e;
-    --text-secondary: #64657a;
-    --text-muted:   #9899a8;
-    --border:       #e8e8f0;
-    --surface:      #ffffff;
-    --bg-soft:      #f7f7fb;
-    --shadow-card:  0 2px 4px rgba(0,0,0,.04), 0 8px 24px rgba(0,0,0,.08), 0 24px 56px rgba(123,17,19,.12);
-    --radius-card:  20px;
-    --radius-input: 10px;
-    --radius-btn:   10px;
-    --transition:   all .22s cubic-bezier(.4,0,.2,1);
-    --font-body:    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    --bg:             #f4f4f5;
+    --surface:        #ffffff;
+    --text-primary:   #18181b;
+    --text-secondary: #71717a;
+    --text-muted:     #a1a1aa;
+    --border:         #e4e4e7;
+    --accent:         #8b2635;
+    --accent-hover:   #6f1e2b;
+    --accent-soft:    #f7ecec;
+    --error-bg:       #fef2f2;
+    --error-border:   #fecaca;
+    --error-text:     #b91c1c;
+    --radius-card:    12px;
+    --radius-input:   8px;
+    --radius-btn:     8px;
+    --font-body:      -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   }
 
   html, body { height: 100%; }
@@ -47,194 +45,85 @@ const styles = `
     font-family: var(--font-body);
     min-height: 100dvh;
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    position: relative;
-    overflow: hidden;
-    padding: 16px;
-    background: #0f0304;
+    background: var(--bg);
+    padding: 24px;
   }
 
-  /* ── animated gradient background ── */
-  .ayus-bg {
-    position: absolute;
-    inset: 0;
-    background:
-      radial-gradient(ellipse 90% 70% at 15% 20%, rgba(123,17,19,.85) 0%, transparent 60%),
-      radial-gradient(ellipse 80% 60% at 85% 80%, rgba(58,6,8,.9) 0%, transparent 55%),
-      radial-gradient(ellipse 60% 50% at 50% 50%, rgba(35,3,4,1) 0%, transparent 80%),
-      #0f0304;
-    animation: bgPulse 8s ease-in-out infinite alternate;
-  }
-
-  @keyframes bgPulse {
-    0%   { filter: brightness(1); }
-    100% { filter: brightness(1.12); }
-  }
-
-  /* ── noise grain texture ── */
-  .ayus-grain {
-    position: absolute;
-    inset: 0;
-    opacity: .035;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-    background-size: 180px;
-    pointer-events: none;
-  }
-
-  /* ── floating orbs ── */
-  .ayus-orb {
-    position: absolute;
-    border-radius: 50%;
-    pointer-events: none;
-    filter: blur(70px);
-  }
-  .ayus-orb-1 {
-    width: clamp(200px, 40vw, 480px);
-    height: clamp(200px, 40vw, 480px);
-    top: -15%;
-    left: -10%;
-    background: radial-gradient(circle, rgba(200,40,44,.5) 0%, transparent 70%);
-    animation: orbDrift1 12s ease-in-out infinite alternate;
-  }
-  .ayus-orb-2 {
-    width: clamp(180px, 35vw, 400px);
-    height: clamp(180px, 35vw, 400px);
-    bottom: -10%;
-    right: -8%;
-    background: radial-gradient(circle, rgba(232,93,38,.35) 0%, transparent 70%);
-    animation: orbDrift2 15s ease-in-out infinite alternate;
-  }
-  .ayus-orb-3 {
-    width: clamp(100px, 20vw, 240px);
-    height: clamp(100px, 20vw, 240px);
-    top: 50%;
-    right: 20%;
-    background: radial-gradient(circle, rgba(160,20,22,.3) 0%, transparent 70%);
-    animation: orbDrift1 18s ease-in-out infinite alternate-reverse;
-  }
-
-  @keyframes orbDrift1 {
-    0%   { transform: translate(0, 0) scale(1); }
-    100% { transform: translate(6%, 8%) scale(1.08); }
-  }
-  @keyframes orbDrift2 {
-    0%   { transform: translate(0, 0) scale(1); }
-    100% { transform: translate(-5%, -6%) scale(1.1); }
-  }
-
-  /* ── decorative lines ── */
-  .ayus-lines {
-    position: absolute;
-    inset: 0;
-    overflow: hidden;
-    pointer-events: none;
-    opacity: .06;
-  }
-  .ayus-lines svg { width: 100%; height: 100%; }
-
-  /* ── admin badge pill ── */
+  /* ── admin badge ── */
   .ayus-admin-badge {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    background: linear-gradient(135deg, rgba(123,17,19,.12), rgba(90,13,15,.08));
-    border: 1px solid rgba(123,17,19,.2);
-    border-radius: 20px;
+    justify-content: center;
+    gap: 6px;
+    background: var(--accent-soft);
+    border: 1px solid var(--border);
+    border-radius: 999px;
     padding: 4px 10px;
     font-size: 11px;
-    font-weight: 700;
-    color: var(--maroon);
-    letter-spacing: .06em;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: .04em;
     text-transform: uppercase;
-    margin-bottom: 20px;
+    margin-bottom: 18px;
   }
   .ayus-admin-badge-dot {
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background: var(--maroon);
-    animation: pulseDot 2s ease-in-out infinite;
-  }
-  @keyframes pulseDot {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50%       { opacity: .5; transform: scale(.7); }
+    background: var(--accent);
   }
 
   /* ── card ── */
   .ayus-card {
-    position: relative;
-    z-index: 10;
     width: 100%;
-    max-width: 420px;
+    max-width: 380px;
     background: var(--surface);
+    border: 1px solid var(--border);
     border-radius: var(--radius-card);
-    box-shadow: var(--shadow-card);
-    padding: clamp(28px, 6vw, 44px) clamp(24px, 6vw, 40px);
-    animation: cardIn .55s cubic-bezier(.22,1,.36,1) both;
-    border: 1px solid rgba(255,255,255,.08);
+    padding: 36px 32px;
   }
 
-  @keyframes cardIn {
-    0%   { opacity: 0; transform: translateY(28px) scale(.97); }
-    100% { opacity: 1; transform: translateY(0)    scale(1); }
-  }
-
-  /* ── logo badge ── */
+  /* ── logo ── */
   .ayus-logo-wrap {
     display: flex;
     align-items: center;
     justify-content: center;
     margin-bottom: 20px;
-    animation: cardIn .55s .05s cubic-bezier(.22,1,.36,1) both;
   }
   .ayus-logo-ring {
-    width: 72px;
-    height: 72px;
+    width: 56px;
+    height: 56px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(145deg, var(--maroon), var(--maroon-dark));
-    box-shadow: 0 4px 20px rgba(123,17,19,.35), inset 0 1px 0 rgba(255,255,255,.15);
-    position: relative;
-  }
-  .ayus-logo-ring::after {
-    content: '';
-    position: absolute;
-    inset: -3px;
-    border-radius: 50%;
-    border: 1.5px solid rgba(123,17,19,.2);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    overflow: hidden;
   }
 
-  /* ── header text ── */
+  /* ── header ── */
+  .ayus-header-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
   .ayus-title {
-    font-family: var(--font-body);
-    font-size: clamp(20px, 4vw, 24px);
-    font-weight: 700;
+    font-size: 20px;
+    font-weight: 600;
     color: var(--text-primary);
     text-align: center;
-    letter-spacing: -.01em;
-    line-height: 1.2;
-    animation: cardIn .55s .08s cubic-bezier(.22,1,.36,1) both;
+    letter-spacing: -0.01em;
     margin-bottom: 4px;
   }
   .ayus-subtitle {
     font-size: 13px;
-    color: var(--text-muted);
+    color: var(--text-secondary);
     text-align: center;
-    margin-bottom: 24px;
-    font-weight: 400;
-    animation: cardIn .55s .1s cubic-bezier(.22,1,.36,1) both;
-    letter-spacing: .01em;
-  }
-
-  /* ── divider ── */
-  .ayus-divider-top {
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--border), transparent);
-    margin-bottom: 24px;
+    margin-bottom: 28px;
   }
 
   /* ── error banner ── */
@@ -242,67 +131,56 @@ const styles = `
     display: flex;
     align-items: flex-start;
     gap: 8px;
-    background: #fff5f5;
-    border: 1px solid #fecaca;
-    border-left: 3px solid #ef4444;
+    background: var(--error-bg);
+    border: 1px solid var(--error-border);
     border-radius: 8px;
     padding: 10px 12px;
     margin-bottom: 18px;
     font-size: 13px;
-    color: #c0392b;
+    color: var(--error-text);
     line-height: 1.45;
-    animation: slideDown .25s cubic-bezier(.22,1,.36,1);
-  }
-
-  @keyframes slideDown {
-    0%   { opacity: 0; transform: translateY(-8px); }
-    100% { opacity: 1; transform: translateY(0); }
   }
 
   /* ── form fields ── */
-  .ayus-field { margin-bottom: 16px; animation: cardIn .55s .12s cubic-bezier(.22,1,.36,1) both; }
-  .ayus-field:last-of-type { animation-delay: .14s; }
+  .ayus-field { margin-bottom: 16px; }
 
   .ayus-label {
     display: block;
     font-size: 13px;
-    font-weight: 600;
+    font-weight: 500;
     color: var(--text-primary);
     margin-bottom: 6px;
-    letter-spacing: .01em;
   }
 
   .ayus-input-wrap { position: relative; }
 
   .ayus-input {
     width: 100%;
-    height: 46px;
-    border: 1.5px solid var(--border);
+    height: 42px;
+    border: 1px solid var(--border);
     border-radius: var(--radius-input);
-    padding: 0 14px;
+    padding: 0 12px;
     font-family: var(--font-body);
     font-size: 14px;
     color: var(--text-primary);
-    background: var(--bg-soft);
-    transition: var(--transition);
+    background: var(--surface);
     outline: none;
     -webkit-appearance: none;
     appearance: none;
+    transition: border-color .15s ease;
   }
   .ayus-input::placeholder { color: var(--text-muted); }
   .ayus-input:focus {
-    border-color: var(--maroon);
-    background: #fff;
-    box-shadow: 0 0 0 3px rgba(123,17,19,.1);
+    border-color: var(--accent);
   }
-  .ayus-input-pw { padding-right: 44px; }
+  .ayus-input-pw { padding-right: 42px; }
 
   .ayus-eye-btn {
     position: absolute;
     right: 0;
     top: 0;
-    height: 46px;
-    width: 44px;
+    height: 42px;
+    width: 42px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -310,55 +188,35 @@ const styles = `
     border: none;
     cursor: pointer;
     color: var(--text-muted);
-    transition: color .18s;
-    border-radius: 0 var(--radius-input) var(--radius-input) 0;
     -webkit-tap-highlight-color: transparent;
   }
-  .ayus-eye-btn:hover { color: var(--maroon); }
+  .ayus-eye-btn:hover { color: var(--text-secondary); }
 
   /* ── submit button ── */
   .ayus-btn-primary {
     width: 100%;
-    height: 48px;
+    height: 44px;
     border: none;
     border-radius: var(--radius-btn);
-    background: linear-gradient(135deg, var(--maroon) 0%, var(--maroon-dark) 100%);
+    background: var(--accent);
     color: #fff;
     font-family: var(--font-body);
     font-size: 14px;
-    font-weight: 700;
-    letter-spacing: .03em;
+    font-weight: 600;
     cursor: pointer;
-    transition: var(--transition);
-    position: relative;
-    overflow: hidden;
-    margin-top: 8px;
-    box-shadow: 0 4px 14px rgba(123,17,19,.35);
+    margin-top: 6px;
     -webkit-tap-highlight-color: transparent;
-    animation: cardIn .55s .16s cubic-bezier(.22,1,.36,1) both;
+    transition: background .15s ease;
   }
-  .ayus-btn-primary::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, rgba(255,255,255,.12) 0%, transparent 60%);
-    opacity: 0;
-    transition: opacity .2s;
-  }
-  .ayus-btn-primary:hover:not(:disabled)::before { opacity: 1; }
-  .ayus-btn-primary:hover:not(:disabled) {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 20px rgba(123,17,19,.4);
-  }
-  .ayus-btn-primary:active:not(:disabled) { transform: translateY(0); }
-  .ayus-btn-primary:disabled { opacity: .65; cursor: not-allowed; }
+  .ayus-btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
+  .ayus-btn-primary:disabled { opacity: .6; cursor: not-allowed; }
 
   /* spinner inside button */
   .ayus-spinner {
     display: inline-block;
-    width: 16px;
-    height: 16px;
-    border: 2px solid rgba(255,255,255,.35);
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255,255,255,.4);
     border-top-color: #fff;
     border-radius: 50%;
     animation: spin .7s linear infinite;
@@ -372,11 +230,10 @@ const styles = `
     display: flex;
     align-items: center;
     gap: 12px;
-    margin: 18px 0;
-    animation: cardIn .55s .18s cubic-bezier(.22,1,.36,1) both;
+    margin: 20px 0;
   }
   .ayus-or-line { flex: 1; height: 1px; background: var(--border); }
-  .ayus-or-text { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+  .ayus-or-text { font-size: 12px; color: var(--text-muted); }
 
   /* ── secondary button ── */
   .ayus-btn-secondary {
@@ -385,51 +242,27 @@ const styles = `
     justify-content: center;
     gap: 8px;
     width: 100%;
-    height: 46px;
-    border: 1.5px solid var(--border);
+    height: 42px;
+    border: 1px solid var(--border);
     border-radius: var(--radius-btn);
     background: transparent;
     color: var(--text-secondary);
     font-family: var(--font-body);
     font-size: 13.5px;
-    font-weight: 600;
+    font-weight: 500;
     cursor: pointer;
     text-decoration: none;
-    transition: var(--transition);
     -webkit-tap-highlight-color: transparent;
-    animation: cardIn .55s .2s cubic-bezier(.22,1,.36,1) both;
+    transition: border-color .15s ease, color .15s ease, background .15s ease;
   }
   .ayus-btn-secondary:hover {
-    border-color: var(--maroon);
-    color: var(--maroon);
-    background: var(--maroon-light);
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-soft);
   }
 
-  /* ── header center flex ── */
-  .ayus-header-center {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-
-  /* ── responsive tweaks ── */
-  @media (max-width: 400px) {
-    .ayus-card { border-radius: 16px; }
-    .ayus-logo-ring { width: 60px; height: 60px; }
-  }
-
-  @media (min-width: 768px) {
-    .ayus-root { padding: 32px; }
-  }
-
-  /* ── reduced motion ── */
   @media (prefers-reduced-motion: reduce) {
-    .ayus-bg, .ayus-orb-1, .ayus-orb-2, .ayus-orb-3 { animation: none; }
-    .ayus-card, .ayus-logo-wrap, .ayus-title, .ayus-subtitle,
-    .ayus-field, .ayus-btn-primary, .ayus-or, .ayus-btn-secondary {
-      animation: none;
-    }
-    .ayus-admin-badge-dot { animation: none; }
+    .ayus-spinner { animation: none; }
   }
 `;
 
@@ -500,24 +333,6 @@ function AdminLoginForm() {
       <style dangerouslySetInnerHTML={{ __html: styles }} />
 
       <div className="ayus-root">
-        {/* Background layers */}
-        <div className="ayus-bg" />
-        <div className="ayus-grain" />
-        <div className="ayus-orb ayus-orb-1" />
-        <div className="ayus-orb ayus-orb-2" />
-        <div className="ayus-orb ayus-orb-3" />
-
-        {/* Decorative diagonal lines */}
-        <div className="ayus-lines" aria-hidden="true">
-          <svg viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice" fill="none"
-            xmlns="http://www.w3.org/2000/svg">
-            <line x1="-100" y1="900" x2="700"  y2="-100" stroke="white" strokeWidth="1"/>
-            <line x1="100"  y1="900" x2="900"  y2="-100" stroke="white" strokeWidth=".5"/>
-            <line x1="500"  y1="900" x2="1300" y2="-100" stroke="white" strokeWidth=".8"/>
-            <line x1="700"  y1="900" x2="1500" y2="-100" stroke="white" strokeWidth=".4"/>
-          </svg>
-        </div>
-
         {/* ── Card ── */}
         <main className="ayus-card" role="main">
 
@@ -527,8 +342,8 @@ function AdminLoginForm() {
               <Image
                 src="/psu-logo.png"
                 alt="PSU Logo"
-                width={44}
-                height={44}
+                width={36}
+                height={36}
                 priority
                 style={{ borderRadius: "50%", objectFit: "cover" }}
               />
@@ -545,8 +360,6 @@ function AdminLoginForm() {
 
           <h1 className="ayus-title">Welcome to AYUS</h1>
           <p className="ayus-subtitle">Admin Portal — Authorized Personnel Only</p>
-
-          <div className="ayus-divider-top" />
 
           {/* Error */}
           {error && (

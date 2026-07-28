@@ -27,6 +27,14 @@ import CourseRepositoriesTab from "./course/CourseRepositoriesTab";
 import CoursePatientRecordsTab from "./course/CoursePatientRecordsTab";
 import CourseMedicalExamRecordTab from "./course/CourseMedicalExamRecordTab";
 import CourseMedicineInventoryTab from "./course/CourseMedicineInventoryTab";
+import CourseMedicalCasesSummaryTab from "./course/CourseMedicalCasesSummaryTab";
+import CourseGuidanceTab from "./course/CourseGuidanceTab";
+import CourseGuidanceLogSheetTab from "./course/CourseGuidanceLogSheetTab";
+import CourseExitInterviewTab from "./course/CourseExitInterviewTab";
+import CourseLibraryTab from "./course/CourseLibraryTab";
+import CourseLibraryLogTab from "./course/CourseLibraryLogTab";
+import CourseBookCatalogTab from "./course/CourseBookCatalogTab";
+import CourseBorrowingTab from "./course/CourseBorrowingTab";
 
 import {
   FONT,
@@ -503,12 +511,22 @@ function CourseViewInner({ courseId }: { courseId: string }) {
   const canManagePeople = membership?.permissions.managePeople ?? false;
   const canManageCourse = membership?.permissions.manageCourse ?? false;
 
-  const isClinic = course?.officeType === "CLINIC";
+  const isClinic    = course?.officeType === "CLINIC";
+  const isGuidance  = course?.officeType === "GUIDANCE";
+  const isLibrary = course?.officeType === "LIBRARY" || course?.officeType === "Library";
 
   const TABS: Tab[] = (
     isHead
-      ? ["Home", "Announcements", "Assignments", "Repositories", "Grades", "People", "Form", ...(isClinic ? ["Patient Records", "Medical Exam Record", "Medicine Inventory"] : [])]
-      : ["Home", "Announcements", "Assignments", "Grades", "People", "Form", ...(isClinic ? ["Patient Records", "Medical Exam Record", "Medicine Inventory"] : [])]
+      ? ["Home", "Announcements", "Assignments", "Repositories", "Grades", "People", "Form",
+          ...(isClinic   ? ["Patient Records", "Medical Exam Record", "Medicine Inventory", "Medical Cases Summary"] : []),
+          ...(isGuidance ? ["Information Sheets", "Log Sheet", "Exit Interviews"] : []),
+          ...(isLibrary  ? ["Library Cards", "Library Log", "Book Catalog", "Borrowing"] : []),
+        ]
+      : ["Home", "Announcements", "Assignments", "Grades", "People", "Form",
+          ...(isClinic   ? ["Patient Records", "Medical Exam Record", "Medicine Inventory", "Medical Cases Summary"] : []),
+          ...(isGuidance ? ["Information Sheets", "Log Sheet", "Exit Interviews"] : []),
+          ...(isLibrary  ? ["Library Cards", "Library Log", "Book Catalog", "Borrowing"] : []),
+        ]
   ) as Tab[];
 
   const handleAddPerson = async () => {
@@ -762,6 +780,73 @@ function CourseViewInner({ courseId }: { courseId: string }) {
           <CourseMedicineInventoryTab
             courseId={courseId}
             isAdmin={isAdmin}
+            isHead={isHead}
+          />
+        </div>
+      )}
+      {activeTab === "Medical Cases Summary" && isClinic && dataLoaded && (
+        <div className="flex-1 overflow-hidden flex flex-col">
+          <CourseMedicalCasesSummaryTab
+            courseId={courseId}
+            isAdmin={isAdmin}
+            isHead={isHead}
+          />
+        </div>
+      )}
+      {activeTab === "Information Sheets" && isGuidance && dataLoaded && (
+        <div className="flex-1 overflow-hidden flex flex-col">
+          <CourseGuidanceTab
+            courseId={courseId}
+            isAdmin={isAdmin}
+            isHead={isHead}
+            currentUserId={currentUserId}
+          />
+        </div>
+      )}
+      {activeTab === "Log Sheet" && isGuidance && dataLoaded && (
+        <div className="flex-1 overflow-hidden flex flex-col">
+          <CourseGuidanceLogSheetTab
+            courseId={courseId}
+            isHead={isHead}
+          />
+        </div>
+      )}
+      {activeTab === "Exit Interviews" && isGuidance && dataLoaded && (
+        <div className="flex-1 overflow-hidden flex flex-col">
+          <CourseExitInterviewTab
+            courseId={courseId}
+            isHead={isHead}
+          />
+        </div>
+      )}
+      {activeTab === "Library Cards" && isLibrary && dataLoaded && (
+        <div className="flex-1 overflow-hidden flex flex-col">
+          <CourseLibraryTab
+            courseId={courseId}
+            isHead={isHead}
+          />
+        </div>
+      )}
+      {activeTab === "Library Log" && isLibrary && dataLoaded && (
+        <div className="flex-1 overflow-hidden flex flex-col">
+          <CourseLibraryLogTab
+            courseId={courseId}
+            isHead={isHead}
+          />
+        </div>
+      )}
+      {activeTab === "Book Catalog" && isLibrary && dataLoaded && (
+        <div className="flex-1 overflow-hidden flex flex-col">
+          <CourseBookCatalogTab
+            courseId={courseId}
+            isHead={isHead}
+          />
+        </div>
+      )}
+      {activeTab === "Borrowing" && isLibrary && dataLoaded && (
+        <div className="flex-1 overflow-hidden flex flex-col">
+          <CourseBorrowingTab
+            courseId={courseId}
             isHead={isHead}
           />
         </div>

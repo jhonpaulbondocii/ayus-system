@@ -5,14 +5,13 @@ import Image from "next/image";
 import ReactDOM from "react-dom";
 import {
   Search, RefreshCw, X, ChevronLeft, ChevronRight,
-  MoreVertical, UserX, UserCheck, Trash2, BookPlus, Eye,
-  SlidersHorizontal, ArrowUpDown, Users, Activity,
+  MoreVertical, Trash2, BookPlus, Eye,
+  SlidersHorizontal, ArrowUpDown, Users,
   UserPlus, Copy, RefreshCcw, EyeOff, KeyRound, Check,
   GraduationCap, Briefcase, ChevronDown,
 } from "lucide-react";
 import EnrollModal from "./EnrollModal";
 
-type Status = "APPROVED" | "REJECTED" | "DEACTIVATED";
 type Role = "ADMIN" | "STAFF" | "FACULTY" | "USER" | string;
 
 const MAROON = "#7b1113";
@@ -31,7 +30,7 @@ interface StaffUser {
   department: string | null; position: string | null;
   employmentStatus: string | null;
   accountType: string | null;
-  status: Status; createdAt: string; role?: Role; image?: string | null;
+  status: string; createdAt: string; role?: Role; image?: string | null;
   plainPassword?: string;
 }
 
@@ -59,23 +58,6 @@ function Avatar({ user, size = "sm" }: { user: StaffUser; size?: "sm" | "md" | "
         <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
       </svg>
     </div>
-  );
-}
-
-const STATUS_CFG: Record<string, { label: string; dot: string; bg: string; text: string; border: string }> = {
-  APPROVED:    { label: "Active",      dot: "#22c55e", bg: "#f0fdf4", text: "#15803d", border: "#bbf7d0" },
-  REJECTED:    { label: "Rejected",    dot: "#ef4444", bg: "#fef2f2", text: "#dc2626", border: "#fecaca" },
-  DEACTIVATED: { label: "Deactivated", dot: "#9ca3af", bg: "#f9fafb", text: "#6b7280", border: "#e5e7eb" },
-};
-
-function StatusPill({ status }: { status: string }) {
-  const cfg = STATUS_CFG[status] ?? STATUS_CFG.APPROVED;
-  return (
-    <span style={{ background: cfg.bg, color: cfg.text, border: `1px solid ${cfg.border}` }}
-      className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full whitespace-nowrap">
-      <span className="w-1.5 h-1.5 rounded-full animate-pulse shrink-0" style={{ background: cfg.dot }}/>
-      {cfg.label}
-    </span>
   );
 }
 
@@ -256,8 +238,10 @@ function buildFullName(firstName: string, middleName: string, lastName: string, 
       ? middleName.trim().split(" ").map(w => w[0]?.toUpperCase() + ".").join(" ")
       : middleName.trim()
     : "";
-  const parts = [firstName.trim(), mid, lastName.trim()].filter(Boolean).join(" ");
-  return suffix ? `${parts}, ${suffix}` : parts;
+  const first = [firstName.trim(), mid].filter(Boolean).join(" ");
+  const last  = lastName.trim();
+  const base  = last && first ? `${last}, ${first}` : (last || first);
+  return suffix ? `${base} ${suffix}` : base;
 }
 
 // ── Create User Modal ─────────────────────────────────────────────────────────
@@ -324,16 +308,15 @@ const CreateUserModal = React.memo(function CreateUserModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-500 flex items-end sm:items-center justify-center bg-black/30"
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/30"
       style={{ backdropFilter: "blur(4px)", fontFamily: FONT }}>
-      <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-lg overflow-hidden max-h-[95vh] flex flex-col">
-        {/* Drag handle mobile */}
+      {/* wider: sm:max-w-xl */}
+      <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-xl overflow-hidden max-h-[95vh] flex flex-col">
         <div className="sm:hidden flex justify-center pt-3 pb-1 shrink-0">
           <div className="w-10 h-1 bg-gray-200 rounded-full"/>
         </div>
 
-        {/* Header */}
-        <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-gray-100 shrink-0" style={{ background: MAROON }}>
+        <div className="flex items-center justify-between px-6 sm:px-6 py-4 border-b border-gray-100 shrink-0" style={{ background: MAROON }}>
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
               <UserPlus size={15} className="text-white"/>
@@ -349,15 +332,14 @@ const CreateUserModal = React.memo(function CreateUserModal({
           </button>
         </div>
 
-        {/* Body */}
-        <div className="px-5 sm:px-6 py-5 space-y-4 overflow-y-auto flex-1">
+        <div className="px-6 py-6 space-y-4 overflow-y-auto flex-1">
           {error && (
             <div className="text-xs font-semibold text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{error}</div>
           )}
 
           <div className="bg-gray-50 border border-gray-200 rounded-xl p-3.5 space-y-3">
             <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Name</p>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-3">
               <Field label="First Name" required>
                 <input value={firstName} onChange={e => setFirstName(e.target.value)} className={inputCls}/>
               </Field>
@@ -365,11 +347,14 @@ const CreateUserModal = React.memo(function CreateUserModal({
                 <input value={lastName} onChange={e => setLastName(e.target.value)} className={inputCls}/>
               </Field>
             </div>
-            <Field label="Middle Name (optional)">
-              <input value={middleName} onChange={e => setMiddleName(e.target.value)} className={inputCls}/>
-            </Field>
-            <div className="flex-1">
-              <SimpleSelect value={suffix} onChange={setSuffix} options={NAME_SUFFIXES} placeholder="Suffix (optional)"/>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Middle Name (optional)">
+                <input value={middleName} onChange={e => setMiddleName(e.target.value)} className={inputCls}/>
+              </Field>
+              <div className="flex-1">
+                <label className="block text-[10px] font-black uppercase tracking-widest mb-1.5" style={{ color: "#9ca3af" }}>Suffix</label>
+                <SimpleSelect value={suffix} onChange={setSuffix} options={NAME_SUFFIXES} placeholder="None"/>
+              </div>
             </div>
             <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-2">
               <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 shrink-0">Preview:</span>
@@ -424,8 +409,7 @@ const CreateUserModal = React.memo(function CreateUserModal({
 
           {staffType === "Teaching" && (
             <Field label="Academic Rank">
-              <SimpleSelect value={academicRank} onChange={setAcademicRank}
-                options={TEACHING_RANKS} placeholder="Select academic rank…"/>
+              <SimpleSelect value={academicRank} onChange={setAcademicRank} options={TEACHING_RANKS} placeholder="Select academic rank…"/>
             </Field>
           )}
           {staffType === "Non-Teaching" && (
@@ -442,13 +426,13 @@ const CreateUserModal = React.memo(function CreateUserModal({
           </div>
         </div>
 
-        <div className="flex gap-2 px-5 sm:px-6 py-4 border-t border-gray-100 bg-gray-50 shrink-0">
+        <div className="flex gap-2 px-6 py-4 border-t border-gray-100 bg-gray-50 shrink-0">
           <button onClick={onClose} disabled={saving}
-            className="flex-1 h-9 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-100 transition-all">
+            className="flex-1 h-10 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-100 transition-all">
             Cancel
           </button>
           <button onClick={handleSubmit} disabled={saving}
-            className="flex-1 h-9 rounded-xl text-sm font-black text-white transition-all disabled:opacity-60 flex items-center justify-center gap-1.5"
+            className="flex-1 h-10 rounded-xl text-sm font-black text-white transition-all disabled:opacity-60 flex items-center justify-center gap-1.5"
             style={{ background: MAROON }}>
             {saving ? <><RefreshCw size={13} className="animate-spin"/> Creating...</> : <><Check size={13}/> Create User</>}
           </button>
@@ -484,13 +468,10 @@ function BulkEnrollModal({ userIds, userCount, onClose, onDone }: {
   };
 
   return (
-    <div className="fixed inset-0 z-500 flex items-end sm:items-center justify-center bg-black/30"
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/30"
       style={{ backdropFilter: "blur(4px)", fontFamily: FONT }}>
       <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-sm overflow-hidden">
-        {/* Drag handle mobile */}
-        <div className="sm:hidden flex justify-center pt-3 pb-1">
-          <div className="w-10 h-1 bg-gray-200 rounded-full"/>
-        </div>
+        <div className="sm:hidden flex justify-center pt-3 pb-1"><div className="w-10 h-1 bg-gray-200 rounded-full"/></div>
         <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-gray-100" style={{ background: MAROON }}>
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
@@ -568,26 +549,19 @@ function BulkDeleteModal({ userIds, userCount, onClose, onDeleted }: {
   };
 
   return (
-    <div className="fixed inset-0 z-500 flex items-end sm:items-center justify-center bg-black/30"
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/30"
       style={{ backdropFilter: "blur(4px)", fontFamily: FONT }}>
       <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:w-80 p-6">
-        {/* Drag handle mobile */}
-        <div className="sm:hidden flex justify-center mb-4">
-          <div className="w-10 h-1 bg-gray-200 rounded-full"/>
-        </div>
+        <div className="sm:hidden flex justify-center mb-4"><div className="w-10 h-1 bg-gray-200 rounded-full"/></div>
         <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4 bg-red-50">
           <Trash2 className="w-5 h-5 text-red-400"/>
         </div>
         <p className="text-sm font-bold text-gray-900 mb-1">Delete {userCount} user{userCount !== 1 ? "s" : ""}?</p>
-        <p className="text-xs text-gray-400 mb-3 font-medium leading-relaxed">
-          This action is permanent and cannot be undone.
-        </p>
+        <p className="text-xs text-gray-400 mb-3 font-medium leading-relaxed">This action is permanent and cannot be undone.</p>
         {error && <div className="text-xs font-semibold text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mb-3">{error}</div>}
         <div className="flex gap-2">
           <button type="button" onClick={onClose} disabled={deleting}
-            className="flex-1 py-2.5 border border-gray-200 rounded-xl text-xs font-semibold text-gray-500 hover:bg-gray-50 transition-all">
-            Cancel
-          </button>
+            className="flex-1 py-2.5 border border-gray-200 rounded-xl text-xs font-semibold text-gray-500 hover:bg-gray-50 transition-all">Cancel</button>
           <button type="button" onClick={handleDelete} disabled={deleting}
             className="flex-1 py-2.5 rounded-xl text-xs font-bold text-white transition-all disabled:opacity-50 flex items-center justify-center gap-1.5"
             style={{ background: "#ef4444" }}>
@@ -602,9 +576,8 @@ function BulkDeleteModal({ userIds, userCount, onClose, onDeleted }: {
 // ── Row Menu ──────────────────────────────────────────────────────────────────
 const PAGE_SIZE = 12;
 
-function RowMenu({ user, onView, onToggleDeactivate, onDelete, onEnroll }: {
-  user: StaffUser; onView: () => void;
-  onToggleDeactivate: () => void; onDelete: () => void; onEnroll: () => void;
+function RowMenu({ onView, onDelete, onEnroll }: {
+  onView: () => void; onDelete: () => void; onEnroll: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const [pos,  setPos]  = useState({ top: 0, left: 0 });
@@ -630,15 +603,13 @@ function RowMenu({ user, onView, onToggleDeactivate, onDelete, onEnroll }: {
   const handleOpen = () => {
     if (!btnRef.current) return;
     const rect  = btnRef.current.getBoundingClientRect();
-    const menuW = 176; const menuH = 180;
+    const menuW = 176; const menuH = 140;
     const vw = window.innerWidth; const vh = window.innerHeight;
-    let left = rect.right - menuW;
-    let top  = rect.bottom + 4;
+    let left = rect.right - menuW; let top  = rect.bottom + 4;
     if (left < 8)          left = rect.left;
     if (top + menuH > vh)  top  = rect.top - menuH - 4;
     if (left + menuW > vw) left = vw - menuW - 8;
-    setPos({ top, left });
-    setOpen(o => !o);
+    setPos({ top, left }); setOpen(o => !o);
   };
 
   const item = (icon: React.ReactNode, label: string, cb: () => void, danger = false) => (
@@ -666,9 +637,6 @@ function RowMenu({ user, onView, onToggleDeactivate, onDelete, onEnroll }: {
           {item(<Eye className="w-3.5 h-3.5"/>,      "View Profile",     onView)}
           {item(<BookPlus className="w-3.5 h-3.5"/>, "Enroll to Course", onEnroll)}
           <div className="my-1 border-t border-gray-100"/>
-          {user.status === "DEACTIVATED"
-            ? item(<UserCheck className="w-3.5 h-3.5"/>, "Reactivate", onToggleDeactivate)
-            : item(<UserX className="w-3.5 h-3.5"/>,     "Deactivate", onToggleDeactivate)}
           {item(<Trash2 className="w-3.5 h-3.5"/>, "Delete", onDelete, true)}
         </div>
       )}
@@ -677,10 +645,10 @@ function RowMenu({ user, onView, onToggleDeactivate, onDelete, onEnroll }: {
 }
 
 // ── Mobile User Card ──────────────────────────────────────────────────────────
-function MobileUserCard({ user, selected, onSelect, onView, onToggleDeactivate, onDelete, onEnroll }: {
+function MobileUserCard({ user, selected, onSelect, onView, onDelete, onEnroll }: {
   user: StaffUser; selected: boolean;
   onSelect: () => void; onView: () => void;
-  onToggleDeactivate: () => void; onDelete: () => void; onEnroll: () => void;
+  onDelete: () => void; onEnroll: () => void;
 }) {
   return (
     <div className={`bg-white rounded-xl border p-4 flex items-start gap-3 transition-colors
@@ -696,10 +664,8 @@ function MobileUserCard({ user, selected, onSelect, onView, onToggleDeactivate, 
           </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <StatusPill status={user.status}/>
           {user.accountType && (
-            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-widest
-              ${user.accountType === "Teaching" ? "bg-blue-50 text-blue-600" : "bg-purple-50 text-purple-600"}`}>
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-widest bg-gray-100 text-gray-600">
               {user.accountType}
             </span>
           )}
@@ -708,15 +674,15 @@ function MobileUserCard({ user, selected, onSelect, onView, onToggleDeactivate, 
           )}
         </div>
       </button>
-      <RowMenu user={user} onView={onView} onToggleDeactivate={onToggleDeactivate} onDelete={onDelete} onEnroll={onEnroll}/>
+      <RowMenu onView={onView} onDelete={onDelete} onEnroll={onEnroll}/>
     </div>
   );
 }
 
 // ── Profile Drawer ────────────────────────────────────────────────────────────
-function ProfileDrawer({ user, onClose, onToggleDeactivate, onDelete, onEnroll }: {
+function ProfileDrawer({ user, onClose, onDelete, onEnroll }: {
   user: StaffUser; onClose: () => void;
-  onToggleDeactivate: () => void; onDelete: () => void; onEnroll: () => void;
+  onDelete: () => void; onEnroll: () => void;
 }) {
   const [showPw,   setShowPw]   = useState(false);
   const [pwCopied, setPwCopied] = useState(false);
@@ -729,18 +695,17 @@ function ProfileDrawer({ user, onClose, onToggleDeactivate, onDelete, onEnroll }
   }, [user.plainPassword]);
 
   return (
-    <div className="fixed inset-0 z-400 flex items-end sm:items-stretch sm:justify-end"
+    <div className="fixed inset-0 z-40 flex items-end sm:items-stretch sm:justify-end"
       style={{ backdropFilter: "blur(4px)", backgroundColor: "rgba(0,0,0,0.2)" }}
       onClick={onClose}>
+      {/* wider: sm:w-80 */}
       <div
-        className="w-full sm:w-72 sm:h-full bg-white border-t sm:border-t-0 sm:border-l border-gray-200 shadow-2xl flex flex-col rounded-t-2xl sm:rounded-none max-h-[88vh] sm:max-h-full"
+        className="w-full sm:w-80 sm:h-full bg-white border-t sm:border-t-0 sm:border-l border-gray-200 shadow-2xl flex flex-col rounded-t-2xl sm:rounded-none max-h-[92vh] sm:max-h-full"
         onClick={e => e.stopPropagation()}>
-        {/* Mobile drag handle */}
         <div className="sm:hidden flex justify-center pt-3 pb-1 shrink-0">
           <div className="w-10 h-1 bg-gray-200 rounded-full"/>
         </div>
 
-        {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 shrink-0">
           <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">Profile</span>
           <button type="button" onClick={onClose}
@@ -749,7 +714,6 @@ function ProfileDrawer({ user, onClose, onToggleDeactivate, onDelete, onEnroll }
           </button>
         </div>
 
-        {/* Avatar + info */}
         <div className="px-5 py-5 border-b border-gray-100 shrink-0">
           <div className="flex items-start gap-3">
             <Avatar user={user} size="lg"/>
@@ -758,27 +722,25 @@ function ProfileDrawer({ user, onClose, onToggleDeactivate, onDelete, onEnroll }
               <p className="text-[11px] text-gray-400 mt-0.5 truncate">{user.email}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 flex-wrap mt-3">
-            <StatusPill status={user.status}/>
-            {user.accountType && (
-              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-widest
-                ${user.accountType === "Teaching" ? "bg-blue-50 text-blue-600" : "bg-purple-50 text-purple-600"}`}>
+          {user.accountType && (
+            <div className="flex items-center gap-2 flex-wrap mt-3">
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-widest bg-gray-100 text-gray-600">
                 {user.accountType}
               </span>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
-        {/* Details */}
         <div className="flex-1 overflow-y-auto px-5 py-2">
           {[
+            { label: "Email",           value: user.email },
             { label: "Staff Type",      value: user.accountType ?? "—" },
             { label: "Position / Rank", value: user.position    ?? "—" },
             { label: "Member Since",    value: formatDate(user.createdAt) },
           ].map(row => (
             <div key={row.label} className="py-3.5 border-b border-gray-50 last:border-0">
               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">{row.label}</p>
-              <p className="text-sm text-gray-800 font-semibold">{row.value}</p>
+              <p className="text-sm text-gray-800 font-semibold break-all">{row.value}</p>
             </div>
           ))}
 
@@ -806,24 +768,15 @@ function ProfileDrawer({ user, onClose, onToggleDeactivate, onDelete, onEnroll }
           )}
         </div>
 
-        {/* Action buttons */}
         <div className="px-5 py-4 border-t border-gray-100 shrink-0 space-y-2">
           <button type="button" onClick={onEnroll}
             className="w-full h-9 flex items-center justify-center gap-1.5 rounded-xl border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50 transition-all">
             <BookPlus className="w-3.5 h-3.5"/> Enroll to Course
           </button>
-          <div className="flex gap-2">
-            <button type="button" onClick={onToggleDeactivate}
-              className="flex-1 h-9 flex items-center justify-center gap-1.5 rounded-xl border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50 transition-all">
-              {user.status === "DEACTIVATED"
-                ? <><UserCheck className="w-3.5 h-3.5"/> Reactivate</>
-                : <><UserX className="w-3.5 h-3.5"/> Deactivate</>}
-            </button>
-            <button type="button" onClick={onDelete}
-              className="flex-1 h-9 flex items-center justify-center gap-1.5 rounded-xl border border-red-200 text-xs font-bold text-red-500 hover:bg-red-50 transition-all">
-              <Trash2 className="w-3.5 h-3.5"/> Delete
-            </button>
-          </div>
+          <button type="button" onClick={onDelete}
+            className="w-full h-9 flex items-center justify-center gap-1.5 rounded-xl border border-red-200 text-xs font-bold text-red-500 hover:bg-red-50 transition-all">
+            <Trash2 className="w-3.5 h-3.5"/> Delete
+          </button>
         </div>
       </div>
     </div>
@@ -832,23 +785,21 @@ function ProfileDrawer({ user, onClose, onToggleDeactivate, onDelete, onEnroll }
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function AdminUsersPage() {
-  const [users,       setUsers]       = useState<StaffUser[]>([]);
-  const [loading,     setLoading]     = useState(true);
-  const [error,       setError]       = useState("");
-  const [search,      setSearch]      = useState("");
-  const [deptFilter,  setDeptFilter]  = useState("");
-  const [page,        setPage]        = useState(1);
-  const [selected,    setSelected]    = useState<Set<string>>(new Set());
-  const [showFilters, setShowFilters] = useState(false);
-  const [showCreate,  setShowCreate]  = useState(false);
-
-  const [viewed,      setViewed]      = useState<StaffUser | null>(null);
-  const [confirm,     setConfirm]     = useState<{ user: StaffUser; action: "deactivate" | "reactivate" | "delete" } | null>(null);
-  const [enrollModal, setEnrollModal] = useState<StaffUser | null>(null);
-  const [acting,      setActing]      = useState(false);
-
-  const [showBulkDelete, setShowBulkDelete] = useState(false);
-  const [showBulkEnroll, setShowBulkEnroll] = useState(false);
+  const [users,         setUsers]         = useState<StaffUser[]>([]);
+  const [loading,       setLoading]       = useState(true);
+  const [error,         setError]         = useState("");
+  const [search,        setSearch]        = useState("");
+  const [deptFilter,    setDeptFilter]    = useState("");
+  const [page,          setPage]          = useState(1);
+  const [selected,      setSelected]      = useState<Set<string>>(new Set());
+  const [showFilters,   setShowFilters]   = useState(false);
+  const [showCreate,    setShowCreate]    = useState(false);
+  const [viewed,        setViewed]        = useState<StaffUser | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<StaffUser | null>(null);
+  const [enrollModal,   setEnrollModal]   = useState<StaffUser | null>(null);
+  const [acting,        setActing]        = useState(false);
+  const [showBulkDelete,setShowBulkDelete]= useState(false);
+  const [showBulkEnroll,setShowBulkEnroll]= useState(false);
 
   const fetchUsers = useCallback(async () => {
     setLoading(true); setError("");
@@ -868,25 +819,13 @@ export default function AdminUsersPage() {
     users.filter(u => u.accountType === "Non-Teaching" && u.position).map(u => u.position as string)
   ));
 
-  const applyAction = async (userId: string, action: "deactivate" | "reactivate" | "delete") => {
+  const handleDelete = async (userId: string) => {
     setActing(true);
     try {
-      if (action === "delete") {
-        const res = await fetch(`/api/admin/users?userId=${userId}`, { method: "DELETE" });
-        if (!res.ok) { const d = await res.json(); alert(d.error ?? "Delete failed"); setActing(false); return; }
-        setUsers(p => p.filter(u => u.id !== userId));
-        setConfirm(null); setViewed(null); setActing(false); return;
-      }
-      const res  = await fetch("/api/admin/users", {
-        method: "PATCH", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, action }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Failed");
-      const next: Status = action === "deactivate" ? "DEACTIVATED" : "APPROVED";
-      setUsers(p => p.map(u => u.id === userId ? { ...u, status: next } : u));
-      setViewed(p => p?.id === userId ? { ...p, status: next } : p);
-      setConfirm(null);
+      const res = await fetch(`/api/admin/users?userId=${userId}`, { method: "DELETE" });
+      if (!res.ok) { const d = await res.json(); alert(d.error ?? "Delete failed"); setActing(false); return; }
+      setUsers(p => p.filter(u => u.id !== userId));
+      setConfirmDelete(null); setViewed(null);
     } catch (e: unknown) { alert(e instanceof Error ? e.message : "Failed"); }
     finally { setActing(false); }
   };
@@ -908,14 +847,14 @@ export default function AdminUsersPage() {
     setShowBulkEnroll(false);
   }, []);
 
-  const total    = users.length;
-  const approved = users.filter(u => u.status === "APPROVED").length;
+  const total       = users.length;
   const departments = [...new Set(users.map(u => u.department).filter(Boolean))] as string[];
 
   const filtered = users.filter(u => {
     const matchDept = !deptFilter || u.department === deptFilter;
     const q = search.toLowerCase();
-    return matchDept && (!q || u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q) || (u.department ?? "").toLowerCase().includes(q));
+    return matchDept && (!q || u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)
+      || (u.department ?? "").toLowerCase().includes(q));
   });
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
@@ -931,12 +870,10 @@ export default function AdminUsersPage() {
   return (
     <div className="h-full bg-[#f8f8f7] flex flex-col overflow-hidden" style={{ fontFamily: FONT }}>
 
-      {/* ── Header ── */}
+      {/* Header */}
       <div className="bg-white border-b border-gray-200 px-4 sm:px-8 py-4 sm:py-5 flex items-center justify-between shrink-0 gap-3">
         <div className="min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.15em] mb-0.5 truncate" style={{ color: MAROON }}>
-            Administration
-          </p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.15em] mb-0.5 truncate" style={{ color: MAROON }}>Administration</p>
           <h1 className="text-lg sm:text-xl font-bold text-gray-900 leading-none">User Management</h1>
         </div>
         <div className="flex items-center gap-2 shrink-0">
@@ -957,16 +894,14 @@ export default function AdminUsersPage() {
 
       <div className="flex-1 overflow-y-auto px-4 sm:px-8 py-4 sm:py-6 flex flex-col gap-4 sm:gap-5">
 
-        {/* ── Stat Cards ── */}
+        {/* Stat Cards */}
         <div className="grid grid-cols-2 gap-3 sm:gap-4">
           {[
-            { label: "Total Users", value: total,    icon: <Users className="w-4 h-4"/>,    accent: "#2d3b45" },
-            { label: "Active",      value: approved, icon: <Activity className="w-4 h-4"/>, accent: "#15803d" },
+            { label: "Total Users",      value: total,           icon: <Users className="w-4 h-4"/> },
+            { label: "Filtered Results", value: filtered.length, icon: <Search className="w-4 h-4"/> },
           ].map(s => (
             <div key={s.label} className="bg-white border border-gray-200 rounded-xl px-4 sm:px-5 py-3 sm:py-4 flex items-center gap-3 sm:gap-4">
-              <div className="rounded-lg p-2 sm:p-2.5 shrink-0" style={{ background: "#f3f4f6", color: s.accent }}>
-                {s.icon}
-              </div>
+              <div className="rounded-lg p-2 sm:p-2.5 shrink-0" style={{ background: "#f3f4f6", color: MAROON }}>{s.icon}</div>
               <div>
                 <p className="text-xl sm:text-2xl font-black tabular-nums leading-none text-gray-900">{s.value}</p>
                 <p className="text-xs sm:text-sm font-semibold mt-0.5 text-gray-500">{s.label}</p>
@@ -975,12 +910,11 @@ export default function AdminUsersPage() {
           ))}
         </div>
 
-        {/* ── Table Card ── */}
+        {/* Table Card */}
         <div className="flex-1 bg-white border border-gray-200 rounded-xl overflow-hidden flex flex-col shadow-sm min-h-0">
 
           {/* Toolbar */}
           <div className="px-4 sm:px-5 py-3 border-b border-gray-100 flex items-center gap-2 bg-white">
-            {/* Mobile: search takes full width */}
             <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-3 py-1.5 flex-1 sm:flex-none sm:w-52 bg-gray-50 focus-within:bg-white focus-within:border-gray-400 transition-all">
               <Search className="w-3.5 h-3.5 text-gray-400 shrink-0"/>
               <input value={search} onChange={e => { setSearch(e.target.value); setPage(1); }}
@@ -1055,7 +989,7 @@ export default function AdminUsersPage() {
           ) : (
             <div className="flex-1 overflow-y-auto">
 
-              {/* ── Desktop Table ── */}
+              {/* Desktop Table */}
               <div className="hidden sm:block">
                 <table className="w-full">
                   <thead>
@@ -1066,13 +1000,12 @@ export default function AdminUsersPage() {
                           onChange={toggleAll}
                           className="w-3.5 h-3.5 cursor-pointer rounded" style={{ accentColor: MAROON }}/>
                       </th>
-                      <th className="text-left px-3 py-3">
-                        <button type="button" className="flex items-center gap-1 text-xs font-bold uppercase tracking-wide text-gray-600 hover:text-gray-900">
-                          Name <ArrowUpDown className="w-3 h-3"/>
-                        </button>
-                      </th>
-                      {["Staff Type", "Position / Rank", "Joined", "Status", ""].map((h, i) => (
-                        <th key={i} className="text-left px-3 py-3 text-xs font-bold uppercase tracking-wide text-gray-600">{h}</th>
+                      {["Name", "Email", "Staff Type", "Position / Rank", "Joined", ""].map((h, i) => (
+                        <th key={i} className="text-left px-3 py-3">
+                          <span className="flex items-center gap-1 text-xs font-bold uppercase tracking-wide text-gray-600">
+                            {h} {h && h !== "" && <ArrowUpDown className="w-3 h-3"/>}
+                          </span>
+                        </th>
                       ))}
                     </tr>
                   </thead>
@@ -1096,17 +1029,17 @@ export default function AdminUsersPage() {
                         <td className="px-3 py-3.5">
                           <button type="button" onClick={() => setViewed(u)} className="flex items-center gap-3 text-left group/name">
                             <Avatar user={u}/>
-                            <div>
-                              <p className="text-sm font-semibold text-gray-900 group-hover/name:underline underline-offset-2 leading-tight"
-                                style={{ textDecorationColor: MAROON }}>{u.name}</p>
-                              <p className="text-[11px] text-gray-400 mt-0.5">{u.email}</p>
-                            </div>
+                            <p className="text-sm font-semibold text-gray-900 group-hover/name:underline underline-offset-2 leading-tight"
+                              style={{ textDecorationColor: MAROON }}>{u.name}</p>
                           </button>
+                        </td>
+                        {/* ── NEW Email column ── */}
+                        <td className="px-3 py-3.5">
+                          <span className="text-xs text-gray-500">{u.email ?? <span className="text-gray-200">—</span>}</span>
                         </td>
                         <td className="px-3 py-3.5">
                           {u.accountType ? (
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-widest
-                              ${u.accountType === "Teaching" ? "bg-blue-50 text-blue-600" : "bg-purple-50 text-purple-600"}`}>
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-widest bg-gray-100 text-gray-600">
                               {u.accountType}
                             </span>
                           ) : <span className="text-gray-200">—</span>}
@@ -1117,13 +1050,11 @@ export default function AdminUsersPage() {
                         <td className="px-3 py-3.5">
                           <span className="text-[11px] text-gray-400 tabular-nums whitespace-nowrap">{formatDate(u.createdAt)}</span>
                         </td>
-                        <td className="px-3 py-3.5"><StatusPill status={u.status}/></td>
                         <td className="px-3 py-3.5 w-12">
-                          <RowMenu user={u}
-                            onView={()             => setViewed(u)}
-                            onToggleDeactivate={() => setConfirm({ user: u, action: u.status === "DEACTIVATED" ? "reactivate" : "deactivate" })}
-                            onDelete={()           => setConfirm({ user: u, action: "delete" })}
-                            onEnroll={()           => setEnrollModal(u)}/>
+                          <RowMenu
+                            onView={() => setViewed(u)}
+                            onDelete={() => setConfirmDelete(u)}
+                            onEnroll={() => setEnrollModal(u)}/>
                         </td>
                       </tr>
                     ))}
@@ -1131,7 +1062,7 @@ export default function AdminUsersPage() {
                 </table>
               </div>
 
-              {/* ── Mobile Cards ── */}
+              {/* Mobile Cards */}
               <div className="sm:hidden p-3 space-y-2">
                 {paginated.length === 0 ? (
                   <div className="flex flex-col items-center gap-2 py-16">
@@ -1152,8 +1083,7 @@ export default function AdminUsersPage() {
                         selected={selected.has(u.id)}
                         onSelect={() => toggleSelect(u.id)}
                         onView={() => setViewed(u)}
-                        onToggleDeactivate={() => setConfirm({ user: u, action: u.status === "DEACTIVATED" ? "reactivate" : "deactivate" })}
-                        onDelete={() => setConfirm({ user: u, action: "delete" })}
+                        onDelete={() => setConfirmDelete(u)}
                         onEnroll={() => setEnrollModal(u)}/>
                     ))}
                   </>
@@ -1194,39 +1124,25 @@ export default function AdminUsersPage() {
         </div>
       </div>
 
-      {/* ── Modals ── */}
+      {/* Modals */}
       <CreateUserModal isOpen={showCreate} onClose={() => setShowCreate(false)}
         onCreated={handleModalCreated} existingNonTeachingRanks={existingNonTeachingRanks}/>
 
-      {confirm && (
-        <div className="fixed inset-0 z-400 flex items-end sm:items-center justify-center bg-black/25 backdrop-blur-sm">
+      {confirmDelete && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/25 backdrop-blur-sm">
           <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl border border-gray-100 p-6 w-full sm:w-80">
-            {/* Drag handle mobile */}
-            <div className="sm:hidden flex justify-center mb-4">
-              <div className="w-10 h-1 bg-gray-200 rounded-full"/>
+            <div className="sm:hidden flex justify-center mb-4"><div className="w-10 h-1 bg-gray-200 rounded-full"/></div>
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4 bg-red-50">
+              <Trash2 className="w-5 h-5 text-red-400"/>
             </div>
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4"
-              style={{ background: confirm.action === "reactivate" ? MAROON : confirm.action === "delete" ? "#fef2f2" : "#f3f4f6" }}>
-              {confirm.action === "reactivate"
-                ? <Check className="w-5 h-5 text-white"/>
-                : confirm.action === "delete"
-                  ? <Trash2 className="w-5 h-5 text-red-400"/>
-                  : <UserX className="w-5 h-5 text-gray-500"/>}
-            </div>
-            <p className="text-sm font-bold text-gray-900 mb-1">
-              {confirm.action === "deactivate" ? "Deactivate this account?"
-                : confirm.action === "reactivate" ? "Reactivate this account?"
-                : "Permanently delete?"}
-            </p>
-            <p className="text-xs text-gray-400 mb-6 font-medium">{confirm.user.name}</p>
+            <p className="text-sm font-bold text-gray-900 mb-1">Permanently delete?</p>
+            <p className="text-xs text-gray-400 mb-6 font-medium">{confirmDelete.name}</p>
             <div className="flex gap-2">
-              <button type="button" onClick={() => setConfirm(null)} disabled={acting}
-                className="flex-1 py-2.5 border border-gray-200 rounded-xl text-xs font-semibold text-gray-500 hover:bg-gray-50 transition-all">
-                Cancel
-              </button>
-              <button type="button" onClick={() => applyAction(confirm.user.id, confirm.action)} disabled={acting}
+              <button type="button" onClick={() => setConfirmDelete(null)} disabled={acting}
+                className="flex-1 py-2.5 border border-gray-200 rounded-xl text-xs font-semibold text-gray-500 hover:bg-gray-50 transition-all">Cancel</button>
+              <button type="button" onClick={() => handleDelete(confirmDelete.id)} disabled={acting}
                 className="flex-1 py-2.5 rounded-xl text-xs font-bold text-white transition-all disabled:opacity-50"
-                style={{ background: confirm.action === "delete" ? "#ef4444" : confirm.action === "reactivate" ? MAROON : "#374151" }}>
+                style={{ background: "#ef4444" }}>
                 {acting ? "..." : "Confirm"}
               </button>
             </div>
@@ -1246,24 +1162,12 @@ export default function AdminUsersPage() {
           onClose={() => setShowBulkEnroll(false)} onDone={handleBulkEnrollDone}/>
       )}
 
-      {/* ── Profile Drawer ── */}
       {viewed && (
         <ProfileDrawer
           user={viewed}
           onClose={() => setViewed(null)}
-          onToggleDeactivate={() => {
-            setViewed(null);
-            setConfirm({ user: viewed, action: viewed.status === "DEACTIVATED" ? "reactivate" : "deactivate" });
-          }}
-          onDelete={() => {
-            setViewed(null);
-            setConfirm({ user: viewed, action: "delete" });
-          }}
-          onEnroll={() => {
-            setViewed(null);
-            setEnrollModal(viewed);
-          }}
-        />
+          onDelete={() => { setViewed(null); setConfirmDelete(viewed); }}
+          onEnroll={() => { setViewed(null); setEnrollModal(viewed); }}/>
       )}
     </div>
   );

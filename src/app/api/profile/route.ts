@@ -22,8 +22,9 @@ export async function GET() {
         position:      true,
         pronouns:      true,
         bio:           true,
-        contactNumber: true, // ← added
-        createdAt:     true,
+        contactNumber:    true,
+        librarySignature: true,
+        createdAt:        true,
       },
     });
 
@@ -44,7 +45,7 @@ export async function PATCH(req: Request) {
     }
 
     const body = await req.json();
-    const { name, pronouns, bio, position, department, contactNumber } = body; // ← added
+    const { name, pronouns, bio, position, department, contactNumber, librarySignature } = body;
 
     const user = await prisma.user.update({
       where: { id: session.user.id },
@@ -54,7 +55,8 @@ export async function PATCH(req: Request) {
         ...(bio           !== undefined && { bio           }),
         ...(position      !== undefined && { position      }),
         ...(department    !== undefined && { department    }),
-        ...(contactNumber !== undefined && { contactNumber }), // ← added
+        ...(contactNumber    !== undefined && { contactNumber    }),
+        ...(librarySignature !== undefined && { librarySignature }),
       },
       select: {
         id:            true,
@@ -64,7 +66,8 @@ export async function PATCH(req: Request) {
         position:      true,
         pronouns:      true,
         bio:           true,
-        contactNumber: true, // ← added
+        contactNumber:    true,
+        librarySignature: true,
       },
     });
 

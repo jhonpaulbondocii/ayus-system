@@ -212,6 +212,15 @@ export type Tab =
   | "Patient Records"
   | "Medical Exam Record"
   | "Medicine Inventory"
+  | "Medical Cases Summary"
+  | "Information Sheets"
+  | "Log Sheet"
+  | "Exit Interviews"
+  | "Library Cards"
+  | "Library Log"
+  | "Book Catalog"
+  | "Inventory"
+  | "Borrowing"
   | "Settings";
 
 export type TabKey = "details" | "submission" | "settings" | "assign";

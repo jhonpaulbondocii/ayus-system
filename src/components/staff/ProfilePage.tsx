@@ -76,7 +76,10 @@ export default function ProfilePage() {
   const [bio,           setBio]           = useState("");
   const [contactNumber, setContactNumber] = useState("");
 
-  const [photoOpen,   setPhotoOpen]   = useState(false);
+  const [librarySig,     setLibrarySig]     = useState<string | null>(null);
+  const [showSigPad,     setShowSigPad]     = useState(false);
+  const [sigSaving,      setSigSaving]      = useState(false);
+  const [photoOpen,      setPhotoOpen]      = useState(false);
   const [photoFile,   setPhotoFile]   = useState<File | null>(null);
   const [photoSaving, setPhotoSaving] = useState(false);
 
@@ -93,6 +96,7 @@ export default function ProfilePage() {
           setPronouns(d.user?.pronouns          ?? "");
           setBio(d.user?.bio                    ?? "");
           setContactNumber(d.user?.contactNumber ?? "");
+          setLibrarySig(d.user?.librarySignature ?? null);
           setLoading(false);
         });
       })
@@ -332,6 +336,44 @@ export default function ProfilePage() {
               }
             </div>
 
+            {/* Library Signature */}
+            <div style={{ marginTop: 16, marginBottom: 16 }}>
+              <p style={{ fontSize: 10, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6, color: MAROON }}>
+                Librarian Signature
+              </p>
+              {librarySig && !showSigPad ? (
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <img src={librarySig} alt="Signature" style={{ height: 48, border: "1px solid #e5e7eb", borderRadius: 8, padding: 4, background: "#fff" }} />
+                  <button type="button" onClick={() => { setLibrarySig(null); setShowSigPad(true); }}
+                    style={{ fontSize: 11, color: "#ef4444", background: "none", border: "none", cursor: "pointer", fontFamily: FONT }}>
+                    Redo
+                  </button>
+                </div>
+              ) : showSigPad ? (
+                <SignaturePad
+                  onSave={async (d) => {
+                    setLibrarySig(d);
+                    setShowSigPad(false);
+                    setSigSaving(true);
+                    try {
+                      await fetch("/api/profile", {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ librarySignature: d }),
+                      });
+                    } finally { setSigSaving(false); }
+                  }}
+                  onCancel={() => setShowSigPad(false)}
+                />
+              ) : (
+                <button type="button" onClick={() => setShowSigPad(true)}
+                  style={{ fontSize: 12, fontWeight: 600, padding: "6px 14px", borderRadius: 8, border: "2px dashed #d1d5db", color: "#6b7280", background: "none", cursor: "pointer", fontFamily: FONT }}>
+                  Draw Signature
+                </button>
+              )}
+              {sigSaving && <p style={{ fontSize: 10, color: "#9ca3af", marginTop: 4 }}>Saving...</p>}
+            </div>
+
             {editing && (
               <button
                 type="button"
@@ -551,6 +593,68 @@ function SelectProfilePictureModal({ open, onClose, file, setFile, onSave, savin
 }
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
+function SignaturePad({ onSave, onCancel }: { onSave: (dataUrl: string) => void; onCancel: () => void }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const drawing   = useRef(false);
+  const [hasDrawn, setHasDrawn] = useState(false);
+
+  const getPos = (e: React.MouseEvent | React.TouchEvent, c: HTMLCanvasElement) => {
+    const r = c.getBoundingClientRect();
+    if ("touches" in e) return { x: e.touches[0].clientX - r.left, y: e.touches[0].clientY - r.top };
+    return { x: (e as React.MouseEvent).clientX - r.left, y: (e as React.MouseEvent).clientY - r.top };
+  };
+  const start = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    const c = canvasRef.current; if (!c) return;
+    const ctx = c.getContext("2d"); if (!ctx) return;
+    drawing.current = true;
+    const p = getPos(e, c); ctx.beginPath(); ctx.moveTo(p.x, p.y);
+  };
+  const move = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    if (!drawing.current) return;
+    const c = canvasRef.current; if (!c) return;
+    const ctx = c.getContext("2d"); if (!ctx) return;
+    const p = getPos(e, c);
+    ctx.lineWidth = 2; ctx.lineCap = "round"; ctx.strokeStyle = "#111";
+    ctx.lineTo(p.x, p.y); ctx.stroke(); setHasDrawn(true);
+  };
+  const end = () => { drawing.current = false; };
+  const clear = () => {
+    const c = canvasRef.current; if (!c) return;
+    c.getContext("2d")?.clearRect(0, 0, c.width, c.height);
+    setHasDrawn(false);
+  };
+
+  return (
+    <div className="space-y-2">
+      <canvas
+        ref={canvasRef} width={340} height={90}
+        className="w-full border-2 border-dashed border-gray-300 rounded-lg bg-white touch-none cursor-crosshair"
+        style={{ maxHeight: 90 }}
+        onMouseDown={start} onMouseMove={move} onMouseUp={end} onMouseLeave={end}
+        onTouchStart={start} onTouchMove={move} onTouchEnd={end}
+      />
+      <div className="flex gap-2">
+        <button type="button" onClick={clear}
+          style={{ fontSize: 11, fontWeight: 600, padding: "4px 10px", borderRadius: 6, border: "1px solid #e5e7eb", color: "#6b7280", background: "#fff", cursor: "pointer", fontFamily: FONT }}>
+          Clear
+        </button>
+        <button type="button"
+          onClick={() => { const c = canvasRef.current; if (c) onSave(c.toDataURL("image/png")); }}
+          disabled={!hasDrawn}
+          style={{ fontSize: 11, fontWeight: 700, padding: "4px 10px", borderRadius: 6, border: "none", color: "#fff", background: MAROON, cursor: "pointer", fontFamily: FONT, opacity: hasDrawn ? 1 : 0.4 }}>
+          Save Signature
+        </button>
+        <button type="button" onClick={onCancel}
+          style={{ fontSize: 11, fontWeight: 600, color: "#9ca3af", background: "none", border: "none", cursor: "pointer", marginLeft: "auto", fontFamily: FONT }}>
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function useObjectUrl(file: File | null) {
   const url = useMemo(() => (file ? URL.createObjectURL(file) : ""), [file]);
   useEffect(() => { return () => { if (url) URL.revokeObjectURL(url); }; }, [url]);

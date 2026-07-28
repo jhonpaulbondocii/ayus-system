@@ -1,0 +1,17 @@
+-- AlterTable
+ALTER TABLE "guidance_info_sheets" ADD COLUMN     "awards" TEXT,
+ADD COLUMN     "characteristics" TEXT,
+ADD COLUMN     "counseling" TEXT,
+ADD COLUMN     "fears" TEXT,
+ADD COLUMN     "goals" TEXT,
+ADD COLUMN     "healthAcademics" TEXT,
+ADD COLUMN     "healthExtracurricular" TEXT,
+ADD COLUMN     "hobbies" TEXT,
+ADD COLUMN     "interests" TEXT,
+ADD COLUMN     "organizations" JSONB DEFAULT '[]',
+ADD COLUMN     "photoUrl" TEXT,
+ADD COLUMN     "principles" TEXT,
+ADD COLUMN     "psychiatricHelp" TEXT,
+ADD COLUMN     "signatureUrl" TEXT,
+ADD COLUMN     "signedAt" TIMESTAMP(3),
+ADD COLUMN     "talents" TEXT;

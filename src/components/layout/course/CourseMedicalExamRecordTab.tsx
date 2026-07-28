@@ -17,6 +17,20 @@
   const FONT      = "system-ui, -apple-system, sans-serif";
   const PAGE_SIZE = 15;
 
+const ALL_COURSES = [
+  "Bachelor of Elementary Education",
+  "Bachelor of Secondary Education Major in Filipino",
+  "Bachelor of Secondary Education Major in Mathematics",
+  "Bachelor of Secondary Education Major in Science",
+  "Bachelor of Secondary Education Major in Social Studies",
+  "Bachelor of Secondary Education Major in Physical Education",
+  "Bachelor of Science in Accountancy",
+  "Bachelor of Science in Business Administration",
+  "Bachelor of Science in Hospitality Management",
+  "Bachelor of Science in Information Technology",
+  "Bachelor of Industrial Technology Major in Automotive Technology",
+];
+
   const TIME_OPTIONS: string[] = [];
   for (let h = 0; h < 24; h++) {
     for (const m of [0, 30]) {
@@ -74,24 +88,25 @@ const CIVIL_STATUS_OPTIONS = [
   }
 
   const PHYSICAL_SIGN_KEYS = [
-    { key: "skin",         label: "Skin" },
-    { key: "abdomen",      label: "Abdomen (GIT)" },
-    { key: "heent",        label: "HEENT" },
-    { key: "gut",          label: "Gut" },
-    { key: "chestLungs",   label: "Chest / Lungs" },
-    { key: "extremities",  label: "Extremities" },
-    { key: "heartCvs",     label: "Heart / CVS" },
-    { key: "neurological", label: "Neurological" },
-    { key: "breast",       label: "Breast" },
-  ] as const;
+  { key: "skin",           label: "Skin" },
+  { key: "nose",            label: "Nose" },
+  { key: "abdomen",         label: "Abdomen" },
+  { key: "head",            label: "Head" },
+  { key: "throat",          label: "Throat" },
+  { key: "kidneyBladder",   label: "Kidney / Bladder" },
+  { key: "eyes",            label: "Eyes" },
+  { key: "chestLungs",      label: "Chest / Lungs" },
+  { key: "brain",           label: "Brain" },
+  { key: "ears",            label: "Ears" },
+  { key: "heart",           label: "Heart" },
+  { key: "mentalDisorder",  label: "Mental Disorder" },
+] as const;
 
   const FITNESS_FOR_OPTIONS = [
-    "Off Campus Procedure",
-    "On-the-job Training",
-    "Field Trip / Educational Tour",
-    "Sports Activities",
-    "Others, Specify:",
-  ] as const;
+  "Field Trip/Educational Tour",
+  "Outbound Activities",
+  "Others, Specify:",
+] as const;
 
   type PhysicalSigns = Partial<Record<typeof PHYSICAL_SIGN_KEYS[number]["key"], boolean>>;
 
@@ -557,14 +572,14 @@ const CIVIL_STATUS_OPTIONS = [
               </div>
             </section>
 
-            {/* Physical Signs — 2-column layout */}
+            {/* Physical Signs — 3-column layout */}
             <section>
               <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-3">
                 Physical Signs Disorder <span className="normal-case font-normal text-gray-300 ml-1">optional</span>
               </p>
               <div className="border border-gray-200 rounded-lg overflow-hidden">
-                <div className="grid grid-cols-2 divide-x divide-gray-100">
-                  {[PHYSICAL_SIGN_KEYS.slice(0, 5), PHYSICAL_SIGN_KEYS.slice(5)].map((col, ci) => (
+                <div className="grid grid-cols-3 divide-x divide-gray-100">
+  {[PHYSICAL_SIGN_KEYS.slice(0, 4), PHYSICAL_SIGN_KEYS.slice(4, 8), PHYSICAL_SIGN_KEYS.slice(8, 12)].map((col, ci) => (
                     <div key={ci}>
                       <div className="grid grid-cols-3 px-3 py-2 bg-gray-50 border-b border-gray-100">
                         <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Area</span>
@@ -732,9 +747,13 @@ const CIVIL_STATUS_OPTIONS = [
       record.fitnessFor?.find(f => f.startsWith("Others:"))?.replace("Others: ", "") ?? ""
     );
     const [clearanceRemarks, setClearanceRemarks] = useState(record.clearanceRemarks ?? "");
-const [civilStatus,      setCivilStatus]      = useState(record.civilStatus ?? "");
+    const [civilStatus,      setCivilStatus]      = useState(record.civilStatus ?? "");
     const [saving,           setSaving]           = useState(false);
     const [saveError,        setSaveError]        = useState("");
+
+    const SLATE = "#0f172a";
+    const MUTED = "#64748b";
+    const RULE  = "#e2e8f0";
 
     const toggleFitnessFor = (opt: string) =>
       setFitnessFor(prev => prev.includes(opt) ? prev.filter(x => x !== opt) : [...prev, opt]);
@@ -749,8 +768,7 @@ const [civilStatus,      setCivilStatus]      = useState(record.civilStatus ?? "
             fitnessStatus: fitnessStatus || null,
             fitnessFor: fitnessFor.map(f =>
               f === "Others, Specify:" && fitnessForOther.trim()
-                ? `Others: ${fitnessForOther.trim()}`
-                : f
+                ? `Others: ${fitnessForOther.trim()}` : f
             ),
             clearanceRemarks: clearanceRemarks || null,
             civilStatus:      civilStatus      || null,
@@ -764,20 +782,21 @@ const [civilStatus,      setCivilStatus]      = useState(record.civilStatus ?? "
       finally { setSaving(false); }
     };
 
-    const signs = record.physicalSigns ?? {};
+    const signs    = record.physicalSigns ?? {};
     const hasVitals = record.height || record.weight || record.heartRate || record.bloodPressure || record.temperature || record.respiratoryRate;
     const hasSigns  = PHYSICAL_SIGN_KEYS.some(({ key }) => signs[key] !== undefined);
 
     return (
       <div className="fixed inset-0 z-[150] flex items-end sm:items-center justify-center bg-black/30"
         style={{ backdropFilter: "blur(4px)", fontFamily: FONT }} onClick={onClose}>
-        <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-lg overflow-hidden max-h-[90vh] flex flex-col border border-gray-100"
+        <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-5xl h-[92vh] sm:h-[82vh] overflow-hidden flex flex-col border border-gray-100"
           onClick={e => e.stopPropagation()}>
 
           <div className="sm:hidden flex justify-center pt-3 pb-1 shrink-0">
             <div className="w-10 h-1 rounded-full bg-gray-200" />
           </div>
 
+          {/* Header */}
           <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 shrink-0" style={{ background: MAROON }}>
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
@@ -788,283 +807,282 @@ const [civilStatus,      setCivilStatus]      = useState(record.civilStatus ?? "
                 <p className="text-sm font-black text-white">Medical Exam Record</p>
               </div>
             </div>
-            <button onClick={onClose} className="w-7 h-7 flex items-center justify-center rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-colors shrink-0">
-              <X size={15} />
-            </button>
+            <div className="flex items-center gap-2 shrink-0">
+              <a href={`/api/courses/${courseId}/medical-exam-records/${record.id}/export-clearance`}
+                target="_blank"
+                className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg bg-white/20 hover:bg-white/30 text-white transition-all">
+                <Download size={12} /> Export Clearance
+              </a>
+              {canDelete && (
+                <button onClick={onAskDelete}
+                  className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg bg-red-500/80 hover:bg-red-500 text-white transition-all">
+                  <Trash2 size={12} /> Delete
+                </button>
+              )}
+              <button onClick={onClose}
+                className="w-7 h-7 flex items-center justify-center rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-colors shrink-0">
+                <X size={15} />
+              </button>
+            </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto px-5 py-5 space-y-4">
+          {/* Body — two column layout */}
+          <div className="flex-1 overflow-hidden flex min-h-0" style={{ background: "#f1f5f9" }}>
 
-            {/* Student Info */}
-            <div className="rounded-xl border border-gray-200 overflow-hidden">
-              <div className="px-4 py-2 border-b border-gray-100" style={{ background: "#fef2f2" }}>
-                <p className="text-[10px] font-black uppercase tracking-widest" style={{ color: MAROON }}>Student Information</p>
+            {/* LEFT: Student Info */}
+            <div className="w-64 shrink-0 border-r border-gray-200 flex flex-col overflow-y-auto" style={{ background: "#fff" }}>
+              <div className="px-5 py-3 border-b border-gray-100" style={{ background: "#fafafa" }}>
+                <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.14em", textTransform: "uppercase", color: MAROON }}>
+                  Student Information
+                </p>
               </div>
-              <div className="px-4 py-3 grid grid-cols-2 gap-x-6 gap-y-2.5 bg-white">
-                {[
-                  ["Name",           record.student.name],
-                  ["Student No.",    record.student.studentNumber],
-                  ["Course",         record.student.course       ?? "—"],
-                  ["Age",            resolveStudentAge(record.student) ? `${resolveStudentAge(record.student)} yrs` : "—"],
-                  ["Gender",         record.student.gender       ?? "—"],
-                  ["Address",        record.student.address      ?? "—"],
-                  ["Place of Birth", record.student.placeOfBirth ?? "—"],
-                ].map(([label, val]) => (
-                  <div key={label}>
-                    <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-0.5">{label}</p>
-                    <p className="text-sm font-semibold text-gray-800">{val}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Exam Details */}
-            <div className="rounded-xl border border-gray-200 overflow-hidden">
-              <div className="px-4 py-2 border-b border-gray-100 bg-gray-50">
-                <p className="text-[10px] font-black uppercase tracking-widest text-gray-500">Exam Details</p>
-              </div>
-              <div className="px-4 py-3 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2.5 bg-white">
-                {[
-                  ["Visit Date",     `${fmtDate(record.visitDate)} · ${fmtTime(record.visitDate)}`],
-                  ["Purpose",        record.purpose],
-                  ["Section",        record.section],
-                  ["Civil Status",   record.civilStatus],
-                  ["Remarks",        record.remarks],
-                  ["Recorded by",    record.recordedByUser.name],
-                ].filter(([, val]) => val != null && val !== "").map(([label, val]) => (
-                  <div key={String(label)}>
-                    <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-0.5">{label}</p>
-                    <p className="text-sm text-gray-700 leading-snug">{val}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Vitals */}
-            {hasVitals && (
-              <div className="rounded-xl border border-gray-200 overflow-hidden">
-                <div className="px-4 py-2 border-b border-gray-100 bg-gray-50 flex items-center gap-2">
-                  <Activity size={12} className="text-gray-400" />
-                  <p className="text-[10px] font-black uppercase tracking-widest text-gray-500">Vitals</p>
+              <div className="px-5 py-4 flex items-start gap-3" style={{ borderBottom: `1px solid ${RULE}` }}>
+                <div>
+                  <p style={{ fontSize: 14, fontWeight: 700, color: SLATE, lineHeight: 1.3 }}>{record.student.name}</p>
+                  <p style={{ fontSize: 11, color: MUTED, marginTop: 2 }}>{record.student.studentNumber}</p>
+                  {record.student.course && (
+                    <p style={{ fontSize: 11, color: MUTED, marginTop: 2 }}>{record.student.course}</p>
+                  )}
                 </div>
-                <div className="px-4 py-3 grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-2.5 bg-white">
-                  {[
-                    ["Height",           record.height          ? `${record.height} cm`  : null],
-                    ["Weight",           record.weight          ? `${record.weight} kg`  : null],
-                    ["Heart Rate",       record.heartRate],
-                    ["Blood Pressure",   record.bloodPressure],
-                    ["Temperature",      record.temperature     ? `${record.temperature} °C` : null],
-                    ["Respiratory Rate", record.respiratoryRate],
-                  ].filter(([, val]) => val != null).map(([label, val]) => (
-                    <div key={String(label)}>
-                      <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-0.5">{label}</p>
-                      <p className="text-sm font-semibold text-gray-800">{val}</p>
+              </div>
+              <div className="flex-1 px-5 py-2">
+                {(
+                  [
+                    ["Age",            resolveStudentAge(record.student) ? `${resolveStudentAge(record.student)} yrs` : null],
+                    ["Gender",         record.student.gender],
+                    ["Address",        record.student.address],
+                    ["Place of Birth", record.student.placeOfBirth],
+                    ["Section",        record.section],
+                    ["Civil Status",   record.civilStatus],
+                  ] as [string, string | null | undefined][]
+                ).map(([label, value]) =>
+                  value ? (
+                    <div key={label} className="py-2.5" style={{ borderBottom: `1px solid ${RULE}` }}>
+                      <p style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: MUTED, marginBottom: 2 }}>{label}</p>
+                      <p style={{ fontSize: 13, fontWeight: 500, color: SLATE, lineHeight: 1.5 }}>{value}</p>
                     </div>
-                  ))}
-                </div>
-              </div>
-            )}
+                  ) : null
+                )}
 
-            {/* Physical Signs */}
-            {hasSigns && (
-              <div className="rounded-xl border border-gray-200 overflow-hidden">
-                <div className="px-4 py-2 border-b border-gray-100 bg-gray-50">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-gray-500">Physical Signs Disorder</p>
-                </div>
-                <div className="px-4 py-3 grid grid-cols-2 gap-2 bg-white">
-                  {PHYSICAL_SIGN_KEYS.filter(({ key }) => signs[key] !== undefined).map(({ key, label }) => (
-                    <div key={key} className="flex items-center justify-between">
-                      <span className="text-xs text-gray-600">{label}</span>
-                      <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${signs[key] ? "bg-red-50 text-red-600" : "bg-green-50 text-green-600"}`}>
-                        {signs[key] ? "YES" : "NO"}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-                {record.isPregnant !== null && record.isPregnant !== undefined && (
-                  <div className="px-4 pb-3 border-t border-gray-50 pt-2">
-                    <span className="text-xs text-gray-600 mr-2">Pregnant:</span>
-                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${record.isPregnant ? "bg-red-50 text-red-600" : "bg-green-50 text-green-600"}`}>
-                      {record.isPregnant ? "YES" : "NO"}
+                {/* Signature */}
+                <div className="py-3" style={{ borderBottom: `1px solid ${RULE}` }}>
+                  <p style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: MUTED, marginBottom: 6 }}>E-Signature</p>
+                  {record.signatureUrl ? (
+                    <>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={record.signatureUrl} alt="signature"
+                        style={{ height: 40, maxWidth: 140, objectFit: "contain", border: `1px solid ${RULE}`, borderRadius: 6, padding: 3, background: "#fff" }} />
+                      <p style={{ fontSize: 10, color: MUTED, marginTop: 4 }}>
+                        Signed {fmtDate(record.signedAt)}
+                        {record.signatureMethod && <span style={{ color: "#cbd5e1" }}> · {record.signatureMethod === "uploaded" ? "Uploaded" : "Drawn"}</span>}
+                      </p>
+                    </>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-600 border border-amber-200">
+                      <PenLine size={10} /> Awaiting signature
                     </span>
-                    {record.isPregnant && record.lastMenstrualPeriod && (
-                      <span className="text-xs text-gray-400 ml-2">LMP: {record.lastMenstrualPeriod}</span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* RIGHT: Exam Details */}
+            <div className="flex-1 overflow-y-auto flex flex-col min-w-0">
+              <div className="px-5 py-3 border-b border-gray-200 sticky top-0 z-10" style={{ background: "#fafafa" }}>
+                <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.14em", textTransform: "uppercase", color: MAROON }}>
+                  Exam Details
+                </p>
+              </div>
+
+              <div className="p-4 space-y-3">
+
+                {/* Visit info card */}
+                <div style={{ background: "#fff", border: `1px solid ${RULE}`, borderRadius: 12, padding: "16px 18px" }}>
+                  <div className="grid grid-cols-2 gap-3">
+                    {[
+                      ["Visit Date",   `${fmtDate(record.visitDate)} · ${fmtTime(record.visitDate)}`],
+                      ["Purpose",      record.purpose],
+                      ["Recorded by",  record.recordedByUser.name],
+                      ["Remarks",      record.remarks],
+                    ].filter(([, v]) => v).map(([label, val]) => (
+                      <div key={String(label)}>
+                        <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.11em", textTransform: "uppercase", color: MAROON, marginBottom: 3 }}>{label}</p>
+                        <p style={{ fontSize: 13, color: SLATE, lineHeight: 1.6 }}>{val}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Vitals card */}
+                {hasVitals && (
+                  <div style={{ background: "#fff", border: `1px solid ${RULE}`, borderRadius: 12, padding: "16px 18px" }}>
+                    <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.11em", textTransform: "uppercase", color: MAROON, marginBottom: 10 }}>Vitals</p>
+                    <div className="grid grid-cols-3 gap-3 rounded-lg px-3 py-2.5" style={{ background: "#f8fafc", border: `1px solid ${RULE}` }}>
+                      {[
+                        ["Height",     record.height          ? `${record.height} cm`      : null],
+                        ["Weight",     record.weight          ? `${record.weight} kg`      : null],
+                        ["Heart Rate", record.heartRate],
+                        ["BP",         record.bloodPressure],
+                        ["Temp",       record.temperature     ? `${record.temperature} °C` : null],
+                        ["Resp. Rate", record.respiratoryRate],
+                      ].filter(([, v]) => v).map(([label, val]) => (
+                        <div key={String(label)}>
+                          <p style={{ fontSize: 9, fontWeight: 700, color: MUTED, textTransform: "uppercase", letterSpacing: "0.08em" }}>{label}</p>
+                          <p style={{ fontSize: 12, fontWeight: 600, color: SLATE }}>{val}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Physical Signs card */}
+                {hasSigns && (
+                  <div style={{ background: "#fff", border: `1px solid ${RULE}`, borderRadius: 12, padding: "16px 18px" }}>
+                    <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.11em", textTransform: "uppercase", color: MAROON, marginBottom: 10 }}>Physical Signs Disorder</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {PHYSICAL_SIGN_KEYS.filter(({ key }) => signs[key] !== undefined).map(({ key, label }) => (
+                        <div key={key} className="flex items-center justify-between px-2 py-1.5 rounded-lg" style={{ background: "#f8fafc" }}>
+                          <span style={{ fontSize: 12, color: SLATE }}>{label}</span>
+                          <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${signs[key] ? "bg-red-50 text-red-600" : "bg-green-50 text-green-600"}`}>
+                            {signs[key] ? "YES" : "NO"}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                    {record.isPregnant !== null && record.isPregnant !== undefined && (
+                      <div className="flex items-center gap-2 mt-2 px-2 py-1.5 rounded-lg" style={{ background: "#f8fafc" }}>
+                        <span style={{ fontSize: 12, color: SLATE }}>Pregnant</span>
+                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${record.isPregnant ? "bg-red-50 text-red-600" : "bg-green-50 text-green-600"}`}>
+                          {record.isPregnant ? "YES" : "NO"}
+                        </span>
+                        {record.isPregnant && record.lastMenstrualPeriod && (
+                          <span style={{ fontSize: 11, color: MUTED }}>LMP: {record.lastMenstrualPeriod}</span>
+                        )}
+                      </div>
                     )}
                   </div>
                 )}
-              </div>
-            )}
 
-            {/* Clearance */}
-            <div className="rounded-xl border border-gray-200 overflow-hidden">
-              <div className="px-4 py-2 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <FileCheck size={12} className="text-gray-400" />
-                  <p className="text-[10px] font-black uppercase tracking-widest text-gray-500">Medical Clearance</p>
-                </div>
-                {!editing && (
-                  <button onClick={() => setEditing(true)}
-                    className="text-[10px] font-bold px-2 py-1 rounded-lg border border-gray-200 text-gray-500 hover:border-gray-400 transition-all">
-                    {record.fitnessStatus ? "Edit" : "Issue Clearance"}
-                  </button>
-                )}
-              </div>
+                {/* Clearance card */}
+                <div style={{ background: "#fff", border: `1px solid ${RULE}`, borderRadius: 12, overflow: "hidden" }}>
+                  <div className="px-4 py-3 flex items-center justify-between" style={{ borderBottom: `1px solid ${RULE}`, background: "#fafafa" }}>
+                    <div className="flex items-center gap-2">
+                      <FileCheck size={12} className="text-gray-400" />
+                      <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.11em", textTransform: "uppercase", color: MAROON }}>Medical Clearance</p>
+                    </div>
+                    {!editing && (
+                      <button onClick={() => setEditing(true)}
+                        className="text-[10px] font-bold px-2 py-1 rounded-lg border border-gray-200 text-gray-500 hover:border-gray-400 transition-all">
+                        {record.fitnessStatus ? "Edit" : "Issue Clearance"}
+                      </button>
+                    )}
+                  </div>
 
-              {editing ? (
-                <div className="px-4 py-4 space-y-4">
-                  {saveError && <div className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{saveError}</div>}
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1.5">Civil Status</p>
-                    <div className="flex gap-3 mb-4">
-                      {["Single", "Married"].map(s => (
-                        <button key={s} type="button"
-                          onClick={() => setCivilStatus(civilStatus === s ? "" : s)}
-                          className={`flex-1 py-2 rounded-xl border-2 text-xs font-black transition-all ${
-                            civilStatus === s
-                              ? "border-[#7b1113] bg-[#7b1113] text-white"
-                              : "border-gray-200 text-gray-400 hover:border-gray-400"
-                          }`}>
-                          {s}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500 mb-2">He/She is physically / mentally:</p>
-                    <div className="flex gap-3">
-                      {(["FIT", "UNFIT"] as const).map(status => (
-                        <button key={status} type="button"
-                          onClick={() => setFitnessStatus(fitnessStatus === status ? "" : status)}
-                          className={`flex-1 py-2 rounded-xl border-2 text-sm font-black transition-all ${fitnessStatus === status
-                            ? status === "FIT" ? "border-green-500 bg-green-500 text-white" : "border-red-500 bg-red-500 text-white"
-                            : "border-gray-200 text-gray-400 hover:border-gray-400"}`}>
-                          {status}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  {fitnessStatus && (
-                    <>
+                  {editing ? (
+                    <div className="px-4 py-4 space-y-4">
+                      {saveError && <div className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{saveError}</div>}
                       <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">To undergo in:</p>
-                        <div className="grid grid-cols-1 gap-2">
-                          {FITNESS_FOR_OPTIONS.map(opt => (
-                            <button key={opt} type="button" onClick={() => toggleFitnessFor(opt)}
-                              className={`text-left px-3 py-2 rounded-lg border text-xs font-semibold transition-all flex items-center gap-2 ${fitnessFor.includes(opt) ? "border-transparent text-white" : "border-gray-200 text-gray-500"}`}
-                              style={fitnessFor.includes(opt) ? { background: MAROON } : {}}>
-                              <div className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 ${fitnessFor.includes(opt) ? "border-white" : "border-gray-300"}`}>
-                                {fitnessFor.includes(opt) && <Check size={10} className="text-white" />}
-                              </div>
-                              {opt}
+                        <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", color: MUTED, marginBottom: 6 }}>Civil Status</p>
+                        <div className="flex gap-3">
+                          {["Single", "Married"].map(s => (
+                            <button key={s} type="button"
+                              onClick={() => setCivilStatus(civilStatus === s ? "" : s)}
+                              className={`flex-1 py-2 rounded-xl border-2 text-xs font-black transition-all ${civilStatus === s ? "border-[#7b1113] bg-[#7b1113] text-white" : "border-gray-200 text-gray-400 hover:border-gray-400"}`}>
+                              {s}
                             </button>
                           ))}
                         </div>
-                        {fitnessFor.includes("Others, Specify:") && (
-                          <div className="mt-2">
-                            <input
-                              value={fitnessForOther}
-                              onChange={e => setFitnessForOther(e.target.value)}
-                              placeholder="Please specify..."
-                              className={inputCls}
-                            />
-                          </div>
-                        )}
                       </div>
                       <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1.5">Clearance Remarks</p>
-                        <textarea value={clearanceRemarks} onChange={e => setClearanceRemarks(e.target.value)}
-                          rows={2} placeholder="Additional clearance notes..." className={textareaCls} />
-                      </div>
-                    </>
-                  )}
-                  <div className="flex gap-2">
-                    <button onClick={() => setEditing(false)} disabled={saving}
-                      className="flex-1 py-2 border border-gray-200 rounded-xl text-xs font-semibold text-gray-500 hover:bg-gray-50 transition-all disabled:opacity-50">
-                      Cancel
-                    </button>
-                    <button onClick={handleSaveClearance} disabled={saving}
-                      className="flex-1 py-2 rounded-xl text-xs font-black text-white transition-all disabled:opacity-60 flex items-center justify-center gap-1.5"
-                      style={{ background: MAROON }}>
-                      {saving ? <><RefreshCw size={12} className="animate-spin" /> Saving...</> : <><Check size={12} /> Save Clearance</>}
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="px-4 py-3 bg-white">
-                  {record.fitnessStatus ? (
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <span className={`text-sm font-black px-3 py-1 rounded-full ${record.fitnessStatus === "FIT" ? "bg-green-50 text-green-600" : "bg-red-50 text-red-600"}`}>
-                          {record.fitnessStatus}
-                        </span>
-                        {record.clearanceIssuedAt && (
-                          <span className="text-[11px] text-gray-400">Issued {fmtDate(record.clearanceIssuedAt)}</span>
-                        )}
-                      </div>
-                      {record.fitnessFor?.length > 0 && (
-                        <div className="flex flex-wrap gap-1">
-                          {record.fitnessFor.map(f => (
-                            <span key={f} className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-gray-100 text-gray-600">{f}</span>
+                        <p className="text-xs text-gray-500 mb-2">He/She is physically / mentally:</p>
+                        <div className="flex gap-3">
+                          {(["FIT", "UNFIT"] as const).map(status => (
+                            <button key={status} type="button"
+                              onClick={() => setFitnessStatus(fitnessStatus === status ? "" : status)}
+                              className={`flex-1 py-2 rounded-xl border-2 text-sm font-black transition-all ${fitnessStatus === status
+                                ? status === "FIT" ? "border-green-500 bg-green-500 text-white" : "border-red-500 bg-red-500 text-white"
+                                : "border-gray-200 text-gray-400 hover:border-gray-400"}`}>
+                              {status}
+                            </button>
                           ))}
                         </div>
+                      </div>
+                      {fitnessStatus && (
+                        <>
+                          <div>
+                            <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", color: MUTED, marginBottom: 8 }}>To undergo in:</p>
+                            <div className="grid grid-cols-1 gap-2">
+                              {FITNESS_FOR_OPTIONS.map(opt => (
+                                <button key={opt} type="button" onClick={() => toggleFitnessFor(opt)}
+                                  className={`text-left px-3 py-2 rounded-lg border text-xs font-semibold transition-all flex items-center gap-2 ${fitnessFor.includes(opt) ? "border-transparent text-white" : "border-gray-200 text-gray-500"}`}
+                                  style={fitnessFor.includes(opt) ? { background: MAROON } : {}}>
+                                  <div className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 ${fitnessFor.includes(opt) ? "border-white" : "border-gray-300"}`}>
+                                    {fitnessFor.includes(opt) && <Check size={10} className="text-white" />}
+                                  </div>
+                                  {opt}
+                                </button>
+                              ))}
+                            </div>
+                            {fitnessFor.includes("Others, Specify:") && (
+                              <div className="mt-2">
+                                <input value={fitnessForOther} onChange={e => setFitnessForOther(e.target.value)}
+                                  placeholder="Please specify..." className={inputCls} />
+                              </div>
+                            )}
+                          </div>
+                          <div>
+                            <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", color: MUTED, marginBottom: 6 }}>Clearance Remarks</p>
+                            <textarea value={clearanceRemarks} onChange={e => setClearanceRemarks(e.target.value)}
+                              rows={2} placeholder="Additional clearance notes..." className={textareaCls} />
+                          </div>
+                        </>
                       )}
-                      {record.clearanceRemarks && (
-                        <p className="text-xs text-gray-500">{record.clearanceRemarks}</p>
-                      )}
+                      <div className="flex gap-2">
+                        <button onClick={() => setEditing(false)} disabled={saving}
+                          className="flex-1 py-2 border border-gray-200 rounded-xl text-xs font-semibold text-gray-500 hover:bg-gray-50 transition-all disabled:opacity-50">
+                          Cancel
+                        </button>
+                        <button onClick={handleSaveClearance} disabled={saving}
+                          className="flex-1 py-2 rounded-xl text-xs font-black text-white transition-all disabled:opacity-60 flex items-center justify-center gap-1.5"
+                          style={{ background: MAROON }}>
+                          {saving ? <><RefreshCw size={12} className="animate-spin" /> Saving...</> : <><Check size={12} /> Save Clearance</>}
+                        </button>
+                      </div>
                     </div>
                   ) : (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full bg-amber-50 text-amber-600 border border-amber-200">
-                      <PenLine size={11} /> No clearance issued yet
-                    </span>
+                    <div className="px-4 py-3">
+                      {record.fitnessStatus ? (
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <span className={`text-sm font-black px-3 py-1 rounded-full ${record.fitnessStatus === "FIT" ? "bg-green-50 text-green-600" : "bg-red-50 text-red-600"}`}>
+                              {record.fitnessStatus}
+                            </span>
+                            {record.clearanceIssuedAt && (
+                              <span style={{ fontSize: 11, color: MUTED }}>Issued {fmtDate(record.clearanceIssuedAt)}</span>
+                            )}
+                          </div>
+                          {record.fitnessFor?.length > 0 && (
+                            <div className="flex flex-wrap gap-1">
+                              {record.fitnessFor.map(f => (
+                                <span key={f} className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-gray-100 text-gray-600">{f}</span>
+                              ))}
+                            </div>
+                          )}
+                          {record.clearanceRemarks && (
+                            <p style={{ fontSize: 12, color: MUTED }}>{record.clearanceRemarks}</p>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full bg-amber-50 text-amber-600 border border-amber-200">
+                          <PenLine size={11} /> No clearance issued yet
+                        </span>
+                      )}
+                    </div>
                   )}
                 </div>
-              )}
-            </div>
 
-            {/* Signature */}
-            <div className="rounded-xl border border-gray-200 overflow-hidden">
-              <div className="px-4 py-2 border-b border-gray-100 bg-gray-50">
-                <p className="text-[9px] font-black uppercase tracking-widest text-gray-400">E-Signature</p>
-              </div>
-              <div className="px-4 py-3 bg-gray-50/50">
-                {record.signatureUrl ? (
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <img src={record.signatureUrl} alt={`${record.student.name} signature`}
-                      className="h-14 max-w-[180px] object-contain border border-gray-200 rounded-lg bg-white px-3 py-1.5" />
-                    <div className="flex items-center gap-1.5 text-[11px] text-gray-400">
-                      <Check size={12} className="text-green-500 shrink-0" />
-                      <span>Signed {fmtDate(record.signedAt)} {fmtTime(record.signedAt)}
-                        {record.signatureMethod && <span className="text-gray-300"> · {record.signatureMethod === "uploaded" ? "Uploaded" : "Drawn"}</span>}
-                      </span>
-                    </div>
-                  </div>
-                ) : (
-                  <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full bg-amber-50 text-amber-600 border border-amber-200">
-                    <PenLine size={11} /> Awaiting student signature
-                  </span>
-                )}
               </div>
             </div>
-          </div>
-
-          <div className="flex gap-2 px-5 py-4 border-t border-gray-100 bg-gray-50 shrink-0">
-            <button onClick={onClose}
-              className="flex-1 h-10 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-100 transition-all">
-              Close
-            </button>
-            <a href={`/api/courses/${courseId}/medical-exam-records/${record.id}/export-clearance`}
-              target="_blank"
-              className="flex-1 h-10 rounded-xl text-sm font-black text-white transition-all flex items-center justify-center gap-1.5"
-              style={{ background: MAROON }}>
-              <Download size={13} /> Export Clearance
-            </a>
-            {canDelete && (
-              <button onClick={onAskDelete}
-                className="flex-1 h-10 rounded-xl text-sm font-black text-white transition-all flex items-center justify-center gap-1.5"
-                style={{ background: "#ef4444" }}>
-                <Trash2 size={13} /> Delete Record
-              </button>
-            )}
           </div>
         </div>
       </div>
@@ -1237,7 +1255,19 @@ const [civilStatus,      setCivilStatus]      = useState(record.civilStatus ?? "
       );
     };
 
-    const courseOptions = [...new Set(records.map(r => r.student.course).filter(Boolean))] as string[];
+    const [allCourses, setAllCourses] = useState<string[]>([]);
+    useEffect(() => {
+      fetch(`/api/courses/${courseId}/guidance-log/courses`)
+        .then(r => r.json())
+        .then(d => {
+          if (d.courses && d.courses.length > 0) setAllCourses(d.courses);
+        })
+        .catch(() => {});
+    }, [courseId]);
+
+    const courseOptions = allCourses.length > 0
+      ? allCourses
+      : ALL_COURSES;
     const filteredRecords = courseFilter ? records.filter(r => r.student.course === courseFilter) : records;
     const totalPages = Math.max(1, Math.ceil(filteredRecords.length / PAGE_SIZE));
     const paginated  = filteredRecords.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);

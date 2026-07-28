@@ -632,3 +632,461 @@ export async function sendMedExamSignatureRequestEmail({
     `,
   });
 }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   GUIDANCE LOG SIGNATURE REQUEST EMAIL
+───────────────────────────────────────────────────────────────────────────── */
+export async function sendGuidanceSignatureRequestEmail({
+  to,
+  name,
+  visitDate,
+  purpose,
+  signToken,
+}: {
+  to:        string;
+  name:      string;
+  visitDate: string;
+  purpose:   string;
+  signToken: string;
+}) {
+  const signUrl = `https://ayus-system-production.up.railway.app/sign/guidance/${signToken}`;
+  const dateStr = new Date(visitDate).toLocaleDateString("en-US", {
+    month: "long", day: "numeric", year: "numeric",
+  });
+
+  await transporter.sendMail({
+    from: `"AYUS - Pampanga State University" <${process.env.GMAIL_USER}>`,
+    to,
+    subject: "Please Confirm & Sign Your Guidance Office Visit Record - AYUS",
+    html: `
+      <!DOCTYPE html>
+      <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>AYUS - Guidance Visit Confirmation</title>
+        </head>
+        <body style="margin:0;padding:0;background:#f5f5f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',sans-serif;">
+          <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f5f5f5;">
+            <tr>
+              <td align="center" style="padding:20px 0;">
+                <table width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;background:#ffffff;">
+
+                  <!-- HEADER -->
+                  <tr>
+                    <td style="background:#7b1113;padding:20px 24px;">
+                      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                        <tr>
+                          <td width="68" style="vertical-align:middle;">
+                            <img src="https://dhvsu.edu.ph/images/VPAA/VPAA%20Logos/Campuses/Mexico%20Campus%20LOGO.png"
+                                 alt="PSU Logo" width="60" height="60"
+                                 style="display:block;border-radius:4px;background:#fff;padding:4px;width:60px;height:60px;">
+                          </td>
+                          <td style="vertical-align:middle;padding-left:14px;">
+                            <p style="margin:0;font-size:15px;font-weight:700;color:#ffffff;line-height:1.3;">Pampanga State University</p>
+                            <p style="margin:3px 0 0;font-size:12px;color:rgba(255,255,255,0.85);">Mexico Campus</p>
+                          </td>
+                          <td style="vertical-align:middle;text-align:right;padding-left:12px;">
+                            <p style="margin:0;font-size:22px;font-weight:800;color:#ffffff;letter-spacing:1px;">AYUS</p>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+
+                  <!-- CONTENT -->
+                  <tr>
+                    <td style="padding:32px 24px 28px;">
+                      <p style="margin:0 0 12px;font-size:16px;font-weight:600;color:#1a1a1a;">Good day, ${name}</p>
+                      <p style="margin:0 0 28px;font-size:14px;color:#555555;line-height:1.6;">
+                        You visited the Guidance & Testing Center on <strong>${dateStr}</strong>. Please review the details below and confirm by signing electronically.
+                      </p>
+
+                      <!-- Visit Details Box -->
+                      <table width="100%" cellpadding="0" cellspacing="0" border="0"
+                             style="background:#f9f9f9;border-left:4px solid #7b1113;margin-bottom:24px;">
+                        <tr>
+                          <td style="padding:20px 24px;">
+                            <p style="margin:0 0 16px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#999999;">Visit Details</p>
+
+                            <p style="margin:0 0 4px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#999999;">Date of Visit</p>
+                            <p style="margin:0 0 18px;font-size:14px;font-weight:700;color:#1a1a1a;">${dateStr}</p>
+
+                            <p style="margin:0 0 4px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#999999;">Purpose</p>
+                            <p style="margin:0;font-size:14px;font-weight:700;color:#1a1a1a;">${purpose}</p>
+                          </td>
+                        </tr>
+                      </table>
+
+                      <p style="margin:0 0 24px;font-size:13px;color:#999999;line-height:1.6;">
+                        Tap the button below to review your visit record and submit your e-signature confirming you received this service.
+                      </p>
+
+                      <!-- Sign Button -->
+                      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                        <tr>
+                          <td>
+                            <a href="${signUrl}"
+                               style="display:block;background:#7b1113;color:#ffffff;padding:14px 24px;border-radius:4px;font-size:14px;font-weight:600;text-decoration:none;text-align:center;">
+                              Review &amp; Sign Record
+                            </a>
+                          </td>
+                        </tr>
+                      </table>
+
+                      <p style="margin:20px 0 0;font-size:11px;color:#999999;line-height:1.5;">
+                        This link is unique to you and will expire in 7 days. If you did not expect this email, you may safely ignore it.
+                      </p>
+                    </td>
+                  </tr>
+
+                  <!-- FOOTER -->
+                  <tr>
+                    <td style="background:#7b1113;padding:24px 20px;text-align:center;">
+                      <p style="margin:0 0 8px;font-size:12px;font-weight:700;color:#ffffff;text-transform:uppercase;letter-spacing:0.5px;">Pampanga State University - Mexico Campus</p>
+                      <p style="margin:0 0 4px;font-size:12px;color:#ffffff;">San Juan, Mexico, Pampanga</p>
+                      <p style="margin:0 0 4px;font-size:12px;"><a href="mailto:dhvsu@psu.edu.ph" style="color:#ffffff;text-decoration:none;">dhvsu@psu.edu.ph</a></p>
+                      <p style="margin:0 0 14px;font-size:12px;"><a href="https://dhvsu.edu.ph" style="color:#ffffff;text-decoration:none;">https://dhvsu.edu.ph</a></p>
+                      <p style="margin:0;font-size:11px;color:rgba(255,255,255,0.8);">This is an automated message. Please do not reply to this email.</p>
+                    </td>
+                  </tr>
+
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+      </html>
+    `,
+  });
+}
+/* ─────────────────────────────────────────────────────────────────────────────
+   LIBRARY CARD — READY FOR PICKUP EMAIL
+───────────────────────────────────────────────────────────────────────────── */
+export async function sendLibraryCardReadyEmail({
+  to,
+  name,
+  applicantType,
+}: {
+  to: string;
+  name: string;
+  applicantType: "STUDENT" | "EMPLOYEE";
+}) {
+  await transporter.sendMail({
+    from: `"AYUS - Pampanga State University" <${process.env.GMAIL_USER}>`,
+    to,
+    subject: "Your Library Card is Ready for Pickup — PSU Library",
+    html: `
+      <!DOCTYPE html>
+      <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Library Card Ready</title>
+        </head>
+        <body style="margin:0;padding:0;background:#f5f5f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',sans-serif;">
+          <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f5f5f5;">
+            <tr>
+              <td align="center" style="padding:20px 0;">
+                <table width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;background:#ffffff;">
+
+                  <!-- HEADER -->
+                  <tr>
+                    <td style="background:#7b1113;padding:20px 24px;">
+                      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                        <tr>
+                          <td width="68" style="vertical-align:middle;">
+                            <img src="https://dhvsu.edu.ph/images/VPAA/VPAA%20Logos/Campuses/Mexico%20Campus%20LOGO.png"
+                                 alt="PSU Logo" width="60" height="60"
+                                 style="display:block;border-radius:4px;background:#fff;padding:4px;width:60px;height:60px;">
+                          </td>
+                          <td style="vertical-align:middle;padding-left:14px;">
+                            <p style="margin:0;font-size:15px;font-weight:700;color:#ffffff;line-height:1.3;">Pampanga State University</p>
+                            <p style="margin:3px 0 0;font-size:12px;color:rgba(255,255,255,0.85);">Mexico Campus — University Library</p>
+                          </td>
+                          <td style="vertical-align:middle;text-align:right;padding-left:12px;">
+                            <p style="margin:0;font-size:22px;font-weight:800;color:#ffffff;letter-spacing:1px;">AYUS</p>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+
+                  <!-- CONTENT -->
+                  <tr>
+                    <td style="padding:32px 24px 28px;">
+                      <p style="margin:0 0 12px;font-size:16px;font-weight:600;color:#1a1a1a;">Good day, ${name}</p>
+                      <p style="margin:0 0 28px;font-size:14px;color:#555555;line-height:1.6;">
+                        Great news! Your <strong>${applicantType === "STUDENT" ? "Student" : "Employee"} Library Card</strong> is now ready for pickup at the University Library Office.
+                      </p>
+
+                      <!-- Info Box -->
+                      <table width="100%" cellpadding="0" cellspacing="0" border="0"
+                             style="background:#f9f9f9;border-left:4px solid #7b1113;margin-bottom:24px;">
+                        <tr>
+                          <td style="padding:20px 24px;">
+                            <p style="margin:0 0 16px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#999999;">Pickup Instructions</p>
+                            <p style="margin:0 0 4px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#999999;">Where</p>
+                            <p style="margin:0 0 18px;font-size:14px;font-weight:700;color:#1a1a1a;">University Library Office — PSU Mexico Campus</p>
+                            <p style="margin:0 0 4px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#999999;">What to bring</p>
+                            <p style="margin:0;font-size:14px;font-weight:700;color:#1a1a1a;">Valid School ID or any government-issued ID</p>
+                          </td>
+                        </tr>
+                      </table>
+
+                      <p style="margin:0;font-size:13px;color:#999999;line-height:1.6;">
+                        Please visit the library during office hours to claim your card. If you have any questions, contact the Library Office directly.
+                      </p>
+                    </td>
+                  </tr>
+
+                  <!-- FOOTER -->
+                  <tr>
+                    <td style="background:#7b1113;padding:24px 20px;text-align:center;">
+                      <p style="margin:0 0 8px;font-size:12px;font-weight:700;color:#ffffff;text-transform:uppercase;letter-spacing:0.5px;">Pampanga State University - Mexico Campus</p>
+                      <p style="margin:0 0 4px;font-size:12px;color:#ffffff;">San Juan, Mexico, Pampanga</p>
+                      <p style="margin:0 0 4px;font-size:12px;"><a href="mailto:dhvsu@psu.edu.ph" style="color:#ffffff;text-decoration:none;">dhvsu@psu.edu.ph</a></p>
+                      <p style="margin:0 0 14px;font-size:12px;"><a href="https://dhvsu.edu.ph" style="color:#ffffff;text-decoration:none;">https://dhvsu.edu.ph</a></p>
+                      <p style="margin:0;font-size:11px;color:rgba(255,255,255,0.8);">This is an automated message. Please do not reply to this email.</p>
+                    </td>
+                  </tr>
+
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+      </html>
+    `,
+  });
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   LIBRARY CARD — REJECTED EMAIL
+───────────────────────────────────────────────────────────────────────────── */
+export async function sendLibraryCardRejectedEmail({
+  to,
+  name,
+  applicantType,
+  formUrl,
+}: {
+  to: string;
+  name: string;
+  applicantType: "STUDENT" | "EMPLOYEE";
+  formUrl: string;
+}) {
+  await transporter.sendMail({
+    from: `"AYUS - Pampanga State University" <${process.env.GMAIL_USER}>`,
+    to,
+    subject: "Library Card Request — Action Required",
+    html: `
+      <!DOCTYPE html>
+      <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Library Card Request Update</title>
+        </head>
+        <body style="margin:0;padding:0;background:#f5f5f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',sans-serif;">
+          <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f5f5f5;">
+            <tr>
+              <td align="center" style="padding:20px 0;">
+                <table width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;background:#ffffff;">
+
+                  <!-- HEADER -->
+                  <tr>
+                    <td style="background:#7b1113;padding:20px 24px;">
+                      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                        <tr>
+                          <td width="68" style="vertical-align:middle;">
+                            <img src="https://dhvsu.edu.ph/images/VPAA/VPAA%20Logos/Campuses/Mexico%20Campus%20LOGO.png"
+                                 alt="PSU Logo" width="60" height="60"
+                                 style="display:block;border-radius:4px;background:#fff;padding:4px;width:60px;height:60px;">
+                          </td>
+                          <td style="vertical-align:middle;padding-left:14px;">
+                            <p style="margin:0;font-size:15px;font-weight:700;color:#ffffff;line-height:1.3;">Pampanga State University</p>
+                            <p style="margin:3px 0 0;font-size:12px;color:rgba(255,255,255,0.85);">Mexico Campus — University Library</p>
+                          </td>
+                          <td style="vertical-align:middle;text-align:right;padding-left:12px;">
+                            <p style="margin:0;font-size:22px;font-weight:800;color:#ffffff;letter-spacing:1px;">AYUS</p>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+
+                  <!-- CONTENT -->
+                  <tr>
+                    <td style="padding:32px 24px 28px;">
+                      <p style="margin:0 0 12px;font-size:16px;font-weight:600;color:#1a1a1a;">Good day, ${name}</p>
+                      <p style="margin:0 0 28px;font-size:14px;color:#555555;line-height:1.6;">
+                        We regret to inform you that your <strong>${applicantType === "STUDENT" ? "Student" : "Employee"} Library Card</strong> request could not be processed at this time. Please submit a new request with complete and correct information.
+                      </p>
+
+                      <!-- Info Box -->
+                      <table width="100%" cellpadding="0" cellspacing="0" border="0"
+                             style="background:#fff5f5;border-left:4px solid #b91c1c;margin-bottom:24px;">
+                        <tr>
+                          <td style="padding:20px 24px;">
+                            <p style="margin:0 0 8px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#b91c1c;">What to do next</p>
+                            <p style="margin:0;font-size:14px;color:#1a1a1a;line-height:1.6;">
+                              Please re-submit your library card request using the link below. Make sure all required documents are complete and clearly uploaded.
+                            </p>
+                          </td>
+                        </tr>
+                      </table>
+
+                      <!-- Resubmit Button -->
+                      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                        <tr>
+                          <td>
+                            <a href="${formUrl}"
+                               style="display:block;background:#7b1113;color:#ffffff;padding:14px 24px;border-radius:4px;font-size:14px;font-weight:600;text-decoration:none;text-align:center;">
+                              Re-submit Library Card Request
+                            </a>
+                          </td>
+                        </tr>
+                      </table>
+
+                      <p style="margin:20px 0 0;font-size:11px;color:#999999;line-height:1.5;">
+                        If you believe this was a mistake or need assistance, please visit the Library Office directly.
+                      </p>
+                    </td>
+                  </tr>
+
+                  <!-- FOOTER -->
+                  <tr>
+                    <td style="background:#7b1113;padding:24px 20px;text-align:center;">
+                      <p style="margin:0 0 8px;font-size:12px;font-weight:700;color:#ffffff;text-transform:uppercase;letter-spacing:0.5px;">Pampanga State University - Mexico Campus</p>
+                      <p style="margin:0 0 4px;font-size:12px;color:#ffffff;">San Juan, Mexico, Pampanga</p>
+                      <p style="margin:0 0 4px;font-size:12px;"><a href="mailto:dhvsu@psu.edu.ph" style="color:#ffffff;text-decoration:none;">dhvsu@psu.edu.ph</a></p>
+                      <p style="margin:0 0 14px;font-size:12px;"><a href="https://dhvsu.edu.ph" style="color:#ffffff;text-decoration:none;">https://dhvsu.edu.ph</a></p>
+                      <p style="margin:0;font-size:11px;color:rgba(255,255,255,0.8);">This is an automated message. Please do not reply to this email.</p>
+                    </td>
+                  </tr>
+
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+      </html>
+    `,
+  });
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   LIBRARY CARD — RELEASED / E-SIGNATURE REQUEST EMAIL
+───────────────────────────────────────────────────────────────────────────── */
+export async function sendLibraryCardReleasedEmail({
+  to,
+  name,
+  applicantType,
+  signUrl,
+}: {
+  to:            string;
+  name:          string;
+  applicantType: "STUDENT" | "EMPLOYEE";
+  signUrl:       string;
+}) {
+  await transporter.sendMail({
+    from: `"AYUS - Pampanga State University" <${process.env.GMAIL_USER}>`,
+    to,
+    subject: "Your Library Card Has Been Released — Please Sign the Receiving Log",
+    html: `
+      <!DOCTYPE html>
+      <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Library Card Released</title>
+        </head>
+        <body style="margin:0;padding:0;background:#f5f5f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',sans-serif;">
+          <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f5f5f5;">
+            <tr>
+              <td align="center" style="padding:20px 0;">
+                <table width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;background:#ffffff;">
+
+                  <!-- HEADER -->
+                  <tr>
+                    <td style="background:#7b1113;padding:20px 24px;">
+                      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                        <tr>
+                          <td width="68" style="vertical-align:middle;">
+                            <img src="https://dhvsu.edu.ph/images/VPAA/VPAA%20Logos/Campuses/Mexico%20Campus%20LOGO.png"
+                                 alt="PSU Logo" width="60" height="60"
+                                 style="display:block;border-radius:4px;background:#fff;padding:4px;width:60px;height:60px;">
+                          </td>
+                          <td style="vertical-align:middle;padding-left:14px;">
+                            <p style="margin:0;font-size:15px;font-weight:700;color:#ffffff;line-height:1.3;">Pampanga State University</p>
+                            <p style="margin:3px 0 0;font-size:12px;color:rgba(255,255,255,0.85);">Mexico Campus — University Library</p>
+                          </td>
+                          <td style="vertical-align:middle;text-align:right;padding-left:12px;">
+                            <p style="margin:0;font-size:22px;font-weight:800;color:#ffffff;letter-spacing:1px;">AYUS</p>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+
+                  <!-- CONTENT -->
+                  <tr>
+                    <td style="padding:32px 24px 28px;">
+                      <p style="margin:0 0 12px;font-size:16px;font-weight:600;color:#1a1a1a;">Good day, ${name}</p>
+                      <p style="margin:0 0 28px;font-size:14px;color:#555555;line-height:1.6;">
+                        Your <strong>${applicantType === "STUDENT" ? "Student" : "Employee"} Library Card</strong> has been successfully released.
+                        Please sign the library receiving log electronically by tapping the button below.
+                      </p>
+
+                      <!-- Info Box -->
+                      <table width="100%" cellpadding="0" cellspacing="0" border="0"
+                             style="background:#f9f9f9;border-left:4px solid #7b1113;margin-bottom:24px;">
+                        <tr>
+                          <td style="padding:20px 24px;">
+                            <p style="margin:0 0 16px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#999999;">What to do</p>
+                            <p style="margin:0 0 4px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#999999;">Step 1</p>
+                            <p style="margin:0 0 18px;font-size:14px;color:#1a1a1a;">Tap the button below to open the e-signature page.</p>
+                            <p style="margin:0 0 4px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#999999;">Step 2</p>
+                            <p style="margin:0;font-size:14px;color:#1a1a1a;">Draw or upload your signature to confirm receipt of your library card.</p>
+                          </td>
+                        </tr>
+                      </table>
+
+                      <!-- Sign Button -->
+                      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                        <tr>
+                          <td>
+                            <a href="${signUrl}"
+                               style="display:block;background:#7b1113;color:#ffffff;padding:14px 24px;border-radius:4px;font-size:14px;font-weight:600;text-decoration:none;text-align:center;">
+                              Sign the Receiving Log
+                            </a>
+                          </td>
+                        </tr>
+                      </table>
+
+                      <p style="margin:20px 0 0;font-size:11px;color:#999999;line-height:1.5;">
+                        This link is unique to you and will expire in 7 days. If you did not expect this email, please contact the Library Office.
+                      </p>
+                    </td>
+                  </tr>
+
+                  <!-- FOOTER -->
+                  <tr>
+                    <td style="background:#7b1113;padding:24px 20px;text-align:center;">
+                      <p style="margin:0 0 8px;font-size:12px;font-weight:700;color:#ffffff;text-transform:uppercase;letter-spacing:0.5px;">Pampanga State University - Mexico Campus</p>
+                      <p style="margin:0 0 4px;font-size:12px;color:#ffffff;">San Juan, Mexico, Pampanga</p>
+                      <p style="margin:0 0 4px;font-size:12px;"><a href="mailto:dhvsu@psu.edu.ph" style="color:#ffffff;text-decoration:none;">dhvsu@psu.edu.ph</a></p>
+                      <p style="margin:0 0 14px;font-size:12px;"><a href="https://dhvsu.edu.ph" style="color:#ffffff;text-decoration:none;">https://dhvsu.edu.ph</a></p>
+                      <p style="margin:0;font-size:11px;color:rgba(255,255,255,0.8);">This is an automated message. Please do not reply to this email.</p>
+                    </td>
+                  </tr>
+
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+      </html>
+    `,
+  });
+}

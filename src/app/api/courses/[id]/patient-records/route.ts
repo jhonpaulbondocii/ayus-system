@@ -171,8 +171,12 @@ export async function POST(
     }
 
     const body = await req.json() as {
-      studentId:      string;
+      studentId?:     string | null;
+      isWalkIn?:      boolean;
+      walkInName?:    string;
       complaint:      string;
+      bodySystemId?:  string | null;
+      medicalConditionId?: string | null;
       temperature?:   number | null;
       bloodPressure?: string | null;
       pulseRate?:     number | null;
@@ -189,7 +193,11 @@ export async function POST(
     };
 
     // ── Validate required fields ──────────────────────────────────────────────
-    if (!body.studentId?.trim()) {
+    if (body.isWalkIn) {
+      if (!body.walkInName?.trim()) {
+        return NextResponse.json({ error: "Patient name is required" }, { status: 400 });
+      }
+    } else if (!body.studentId?.trim()) {
       return NextResponse.json({ error: "Student is required" }, { status: 400 });
     }
     if (!body.complaint?.trim()) {
@@ -217,12 +225,25 @@ export async function POST(
       }
     }
 
-    // ── Verify student exists ─────────────────────────────────────────────────
-    const student = await prisma.student.findUnique({
-      where: { id: body.studentId },
-    });
-    if (!student) {
-      return NextResponse.json({ error: "Student not found" }, { status: 404 });
+    // ── Verify student exists, or create a temporary walk-in record ───────────
+    let student;
+    if (body.isWalkIn) {
+      student = await prisma.student.create({
+        data: {
+          studentNumber: `WALKIN-${Date.now()}`,
+          name:          body.walkInName!.trim(),
+          course:        null,
+          age:           null,
+          gender:        null,
+          address:       null,
+          email:         null,
+        },
+      });
+    } else {
+      student = await prisma.student.findUnique({ where: { id: body.studentId! } });
+      if (!student) {
+        return NextResponse.json({ error: "Student not found" }, { status: 404 });
+      }
     }
 
     // ── Fetch medicines for snapshot + stock check ────────────────────────────
@@ -264,8 +285,10 @@ export async function POST(
       const created = await tx.patientRecord.create({
         data: {
           courseId,
-          studentId:     body.studentId,
+          studentId:     student.id,
           complaint:     body.complaint.trim(),
+          bodySystemId:       body.bodySystemId       ?? null,
+          medicalConditionId: body.medicalConditionId ?? null,
           temperature:   body.temperature   ?? null,
           bloodPressure: body.bloodPressure?.trim() ?? null,
           pulseRate:     body.pulseRate     ?? null,

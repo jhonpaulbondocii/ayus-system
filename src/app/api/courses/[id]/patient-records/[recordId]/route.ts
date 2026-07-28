@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireCoursePermission } from "@/lib/course-access";
+import { PatientAction } from "@/generated/prisma";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // GET /api/courses/[id]/patient-records/[recordId]
@@ -209,33 +210,86 @@ export async function PATCH(
     const {
       complaint, temperature, bloodPressure, pulseRate,
       weight, diagnosis, medicine, action, notes, visitDate,
-    } = body;
+      medicineUsages,
+    } = body as {
+      complaint?: string; temperature?: number | null; bloodPressure?: string | null;
+      pulseRate?: number | null; weight?: number | null; diagnosis?: string | null;
+      medicine?: string | null; action?: string; notes?: string | null; visitDate?: string;
+      medicineUsages?: { medicineId: string; quantityUsed: number }[];
+    };
 
-    const updated = await prisma.patientRecord.update({
-      where: { id: recordId },
-      data: {
-        complaint:     complaint?.trim(),
-        temperature:   temperature   ?? null,
-        bloodPressure: bloodPressure ?? null,
-        pulseRate:     pulseRate     ?? null,
-        weight:        weight        ?? null,
-        diagnosis:     diagnosis?.trim()  || null,
-        medicine:      medicine           || null,
-        action,
-        notes:         notes?.trim()      || null,
-        visitDate:     visitDate ? new Date(visitDate) : undefined,
-      },
-      include: {
-        student: {
-          select: {
-            id: true, studentNumber: true, name: true,
-            email: true, address: true, birthDate: true,
-            age: true, gender: true, course: true,
-          },
+    const updated = await prisma.$transaction(async (tx) => {
+      // Reconcile medicine stock only if medicineUsages was explicitly sent
+      if (Array.isArray(medicineUsages)) {
+        const oldUsages = await tx.medicineUsage.findMany({ where: { patientRecordId: recordId } });
+
+        // Return old quantities back to stock
+        for (const old of oldUsages) {
+          if (old.medicineId) {
+            await tx.medicineInventory.update({
+              where: { id: old.medicineId },
+              data:  { stockQty: { increment: old.quantityUsed } },
+            }).catch(() => { /* medicine may have been deleted from inventory */ });
+          }
+        }
+        await tx.medicineUsage.deleteMany({ where: { patientRecordId: recordId } });
+
+        // Deduct new quantities and re-create usage rows
+        if (medicineUsages.length > 0) {
+          const meds = await tx.medicineInventory.findMany({
+            where: { id: { in: medicineUsages.map(u => u.medicineId) } },
+          });
+          const medMap = new Map(meds.map(m => [m.id, m]));
+
+          await tx.medicineUsage.createMany({
+            data: medicineUsages.map(u => {
+              const med = medMap.get(u.medicineId);
+              return {
+                patientRecordId: recordId,
+                medicineId:      u.medicineId,
+                medicineName:    med?.name ?? "Unknown",
+                quantityUsed:    u.quantityUsed,
+                unit:            med?.unit ?? "",
+              };
+            }),
+          });
+
+          for (const u of medicineUsages) {
+            await tx.medicineInventory.update({
+              where: { id: u.medicineId },
+              data:  { stockQty: { decrement: u.quantityUsed } },
+            }).catch(() => {});
+          }
+        }
+      }
+
+      return tx.patientRecord.update({
+        where: { id: recordId },
+        data: {
+          complaint:     complaint?.trim(),
+          temperature:   temperature   ?? null,
+          bloodPressure: bloodPressure ?? null,
+          pulseRate:     pulseRate     ?? null,
+          weight:        weight        ?? null,
+          diagnosis:     diagnosis?.trim()  || null,
+          // Huwag i-wipe kung hindi naman pinasa ng client
+          ...(medicine !== undefined ? { medicine: medicine?.trim() || null } : {}),
+          action:        action as PatientAction | undefined,
+          notes:         notes?.trim()      || null,
+          visitDate:     visitDate ? new Date(visitDate) : undefined,
         },
-        recordedByUser: { select: { id: true, name: true } },
-        medicineUsages: true,
-      },
+        include: {
+          student: {
+            select: {
+              id: true, studentNumber: true, name: true,
+              email: true, address: true, birthDate: true,
+              age: true, gender: true, course: true,
+            },
+          },
+          recordedByUser: { select: { id: true, name: true } },
+          medicineUsages: true,
+        },
+      });
     });
 
     const today = new Date();

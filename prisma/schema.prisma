@@ -83,6 +83,7 @@ model User {
   contactNumber                             String?
   employmentStatus                          String?
   accountType                               String?
+  librarySignature                          String?
   accounts                                  Account[]
   activityLogs                              ActivityLog[]
   conversationParticipants                  ConversationParticipant[]
@@ -98,6 +99,8 @@ model User {
   quizzesCreated                            Quiz[]                    @relation("QuizAuthor")
   repositoryFiles                           RepositoryFile[]
   sessions                                  Session[]
+  guidanceLogEntries                        GuidanceLogEntry[]        @relation("GuidanceLogRecordedBy")
+  exitInterviewsCounseled                   ExitInterview[]           @relation("ExitInterviewCounselor")
   submissions_submissions_gradedByIdTousers Submission[]              @relation("submissions_gradedByIdTousers")
   submissions                               Submission[]
 
@@ -118,30 +121,39 @@ model PasswordResetToken {
 }
 
 model Course {
-  id                 String              @id @default(cuid())
-  name               String
-  code               String
-  color              String              @default("#cc2a27")
-  status             CourseStatus        @default(UNPUBLISHED)
-  description        String?
-  term               String?
-  startDate          DateTime?
-  endDate            DateTime?
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
-  image              String?
-  officeType         String?
-  announcements      Announcement[]
-  assignments        Assignment[]
-  conversations      Conversation[]
-  enrollments        CourseEnrollment[]
-  forms              Form[]
-  groupSets          GroupSet[]
-  groups             Group[]
-  medicalExamRecords MedicalExamRecord[]
-  medicineInventory  MedicineInventory[]
-  patientRecords     PatientRecord[]
-  quizzes            Quiz[]
+  id                   String                @id @default(cuid())
+  name                 String
+  code                 String
+  color                String                @default("#cc2a27")
+  status               CourseStatus          @default(UNPUBLISHED)
+  description          String?
+  term                 String?
+  startDate            DateTime?
+  endDate              DateTime?
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  image                String?
+  officeType           String?
+  announcements        Announcement[]
+  assignments          Assignment[]
+  conversations        Conversation[]
+  enrollments          CourseEnrollment[]
+  forms                Form[]
+  groupSets            GroupSet[]
+  groups               Group[]
+  medicalExamRecords   MedicalExamRecord[]
+  medicineInventory    MedicineInventory[]
+  patientRecords       PatientRecord[]
+  quizzes              Quiz[]
+  bodySystems          BodySystem[]
+  medicalConditions    MedicalCondition[]
+  guidanceInfoSheets   GuidanceInfoSheet[]
+  guidanceLogEntries   GuidanceLogEntry[]
+  exitInterviews       ExitInterview[]
+  libraryCardRequests  LibraryCardRequest[]
+  libraryReceivingLogs LibraryReceivingLog[]
+  LibraryBook          LibraryBook[]
+  LibraryBorrowRecord  LibraryBorrowRecord[]
 
   @@map("courses")
 }
@@ -573,6 +585,7 @@ model Student {
   name               String
   age                Int?
   gender             String?
+  department         String?
   course             String?
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
@@ -586,7 +599,7 @@ model Student {
 }
 
 model PatientRecord {
-  id                 String          @id @default(cuid())
+  id                 String            @id @default(cuid())
   courseId           String
   studentId          String
   complaint          String
@@ -600,24 +613,58 @@ model PatientRecord {
   notes              String?
   visitDate          DateTime
   recordedBy         String
-  createdAt          DateTime        @default(now())
-  updatedAt          DateTime        @updatedAt
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
   signEmailSentAt    DateTime?
-  signToken          String?         @unique
+  signToken          String?           @unique
   signTokenExpiresAt DateTime?
   signatureMethod    String?
   signatureUrl       String?
   signedAt           DateTime?
+  bodySystemId       String?
+  medicalConditionId String?
   medicineUsages     MedicineUsage[]
-  course             Course          @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  recordedByUser     User            @relation("RecordedBy", fields: [recordedBy], references: [id])
-  student            Student         @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  course             Course            @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  recordedByUser     User              @relation("RecordedBy", fields: [recordedBy], references: [id])
+  student            Student           @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  medicalCondition   MedicalCondition? @relation(fields: [medicalConditionId], references: [id])
 
   @@index([courseId])
   @@index([studentId])
   @@index([courseId, visitDate])
   @@index([signToken])
   @@map("patient_records")
+}
+
+model BodySystem {
+  id         String             @id @default(cuid())
+  courseId   String
+  name       String
+  order      Int                @default(0)
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+  course     Course             @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  conditions MedicalCondition[]
+
+  @@index([courseId])
+  @@map("body_systems")
+}
+
+model MedicalCondition {
+  id             String          @id @default(cuid())
+  bodySystemId   String
+  courseId       String
+  name           String
+  order          Int             @default(0)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  bodySystem     BodySystem      @relation(fields: [bodySystemId], references: [id], onDelete: Cascade)
+  course         Course          @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  patientRecords PatientRecord[]
+
+  @@index([courseId])
+  @@index([bodySystemId])
+  @@map("medical_conditions")
 }
 
 model MedicalExamRecord {
@@ -647,7 +694,7 @@ model MedicalExamRecord {
   physicalSigns       Json?
   isPregnant          Boolean?
   lastMenstrualPeriod String?
-civilStatus         String?
+  civilStatus         String?
   fitnessStatus       String?
   fitnessFor          String[]  @default([])
   clearanceRemarks    String?
@@ -734,6 +781,390 @@ model verification_tokens {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model GuidanceInfoSheet {
+  id       String @id @default(cuid())
+  courseId String
+
+  // Header
+  studentNo     String
+  courseProgram String?
+  yearSection   String?
+
+  // Personal Info
+  name            String
+  nickname        String?
+  age             Int?
+  dateOfBirth     String?
+  placeOfBirth    String?
+  birthOrder      String?
+  mobileNo        String?
+  email           String?
+  sex             String?
+  religion        String?
+  completeAddress String?
+
+  // Parents — Father
+  fatherName        String?
+  fatherDOB         String?
+  fatherAddress     String?
+  fatherContact     String?
+  fatherEduc        String?
+  fatherOccupation  String?
+  fatherIncome      String?
+  fatherLanguage    String?
+  fatherReligion    String?
+  fatherOFW         String?
+  fatherYearsAbroad String?
+
+  // Parents — Mother
+  motherName        String?
+  motherDOB         String?
+  motherAddress     String?
+  motherContact     String?
+  motherEduc        String?
+  motherOccupation  String?
+  motherIncome      String?
+  motherLanguage    String?
+  motherReligion    String?
+  motherOFW         String?
+  motherYearsAbroad String?
+
+  // Marital Status
+  maritalStatus String?
+
+  // Siblings (stored as JSON array)
+  siblings Json? @default("[]")
+
+  // Guardian
+  guardianName     String?
+  guardianContact  String?
+  guardianAddress  String?
+  emergencyPerson  String?
+  emergencyContact String?
+
+  // Educational Background (stored as JSON)
+  educBackground Json? @default("{}")
+
+  // Awards & Organizations
+  awards        String?
+  organizations Json?   @default("[]")
+
+  // Unique Features
+  interests       String?
+  talents         String?
+  hobbies         String?
+  goals           String?
+  principles      String?
+  characteristics String?
+  fears           String?
+
+  // Health Info
+  healthAcademics       String?
+  healthExtracurricular String?
+  psychiatricHelp       String?
+  counseling            String?
+
+  // Photo & Signature
+  photoUrl     String?
+  signatureUrl String?
+  signedAt     DateTime?
+
+  // Status
+  status        String   @default("SUBMITTED")
+  allowResubmit Boolean  @default(false)
+  submittedAt   DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, studentNo])
+  @@index([courseId])
+  @@map("guidance_info_sheets")
+}
+
+model GuidanceLogEntry {
+  id                 String    @id @default(cuid())
+  courseId           String
+  name               String
+  department         String?
+  sex                String?
+  purpose            String    @default("Counseling")
+  email              String?
+  signatureUrl       String?
+  signatureMethod    String?
+  signedAt           DateTime?
+  signToken          String?   @unique
+  signTokenExpiresAt DateTime?
+  signEmailSentAt    DateTime?
+  visitDate          DateTime  @default(now())
+  recordedBy         String
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  course         Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  recordedByUser User   @relation("GuidanceLogRecordedBy", fields: [recordedBy], references: [id])
+
+  @@index([courseId])
+  @@index([courseId, visitDate])
+  @@index([signToken])
+  @@map("guidance_log_entries")
+}
+
+model ExitInterview {
+  id       String @id @default(cuid())
+  courseId String
+
+  // Personal Info
+  studentNo       String?
+  lastName        String
+  firstName       String
+  middleName      String?
+  programSection  String?
+  mobileNo        String?
+  graduationMonth String?
+  campus          String?
+  homeAddress     String?
+  email           String?
+  sex             String?
+  age             Int?
+  dateOfBirth     String?
+
+  // Feelings (Q1)
+  feelHappy      Boolean @default(false)
+  feelExcited    Boolean @default(false)
+  feelSad        Boolean @default(false)
+  feelNervous    Boolean @default(false)
+  feelChallenged Boolean @default(false)
+  feelOthers     String?
+
+  // Influence (Q2)
+  influenceProfessor Boolean @default(false)
+  influenceClassmate Boolean @default(false)
+  influenceFriends   Boolean @default(false)
+  influenceFamily    Boolean @default(false)
+  influenceOthers    String?
+
+  // Plans (Q3)
+  planFindJob     Boolean @default(false)
+  planGradStudies Boolean @default(false)
+  planBoardExam   Boolean @default(false)
+  planOthers      Boolean @default(false)
+
+  // Open-ended
+  honorianValues         String?
+  pressingProblemDetails Json?   @default("{}")
+  likedMost              String?
+  likedLeast             String?
+  recommend              String?
+  suggestions            String?
+
+  // Counselor
+  counselorNotes        String?
+  counselorName         String?
+  counselorSignatureUrl String?
+  counselorSignedAt     DateTime?
+  counselorId           String?
+
+  // Student Signature
+  studentSignatureUrl String?
+  studentSignedAt     DateTime?
+
+  // Photo
+  photoUrl String?
+
+  // Status
+  status      String   @default("SUBMITTED")
+  submittedAt DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  course    Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  counselor User?  @relation("ExitInterviewCounselor", fields: [counselorId], references: [id])
+
+  @@index([courseId])
+  @@map("exit_interviews")
+}
+
+model LibraryCardRequest {
+  id       String @id @default(cuid())
+  courseId String
+
+  // Type
+  requestType   String // "STUDENT_NEW" | "STUDENT_LOST" | "EMPLOYEE"
+  applicantType String // "STUDENT" | "EMPLOYEE"
+  cardType      String // "NEW" | "LOST" | "RENEW"
+
+  // Employee type (for EMPLOYEE requests)
+  employeeType String? // "Academic Personnel" | "Academic-Related Personnel" | "Non-Academic Personnel"
+
+  // Common fields
+  name      String
+  sex       String?
+  address   String?
+  contactNo String?
+  email     String?
+  reason    String? // for lost card
+
+  // Student-specific
+  studentNo     String?
+  courseProgram String?
+  yearSection   String?
+
+  // Employee-specific
+  employeeNo  String?
+  collegeDept String?
+  position    String?
+
+  // Photo
+  photoUrl String? // passport size (student) or 1x1 (employee)
+
+  // Affidavit (for lost card)
+  affidavitUrl String?
+
+  // COR / Validated ID (Student New)
+  corIdUrl String?
+
+  // Director / Head Librarian signature (Step 3)
+  directorSignatureUrl String?
+  directorSignedAt     DateTime?
+  directorName         String?
+
+  // Recipient signature on receiving log
+  recipientSignatureUrl String?
+  recipientSignedAt     DateTime?
+
+  // Status flow
+  status String @default("PENDING")
+  // PENDING → PROCESSING → READY → RELEASED
+
+  // Timestamps
+  dateFiled   DateTime  @default(now())
+  releasedAt  DateTime?
+  submittedAt DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  receivingLog LibraryReceivingLog?
+
+  @@index([courseId])
+  @@index([courseId, status])
+  @@map("library_card_requests")
+}
+
+model LibraryReceivingLog {
+  id        String  @id @default(cuid())
+  courseId  String
+  requestId String? @unique
+
+  // Person info (copied from request or manual)
+  name              String
+  sex               String?
+  courseYearSection String? // for students
+  collegeDept       String? // for employees
+  position          String? // for employees
+  dateReceived      DateTime @default(now())
+  documentReceived  String   @default("Library Card")
+
+  // Signature
+  signatureUrl       String?
+  signatureMethod    String?
+  signedAt           DateTime?
+  signToken          String?   @unique
+  signTokenExpiresAt DateTime?
+  signEmailSentAt    DateTime?
+
+  releasedBy String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  course  Course              @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  request LibraryCardRequest? @relation(fields: [requestId], references: [id])
+
+  @@index([courseId])
+  @@index([signToken])
+  @@map("library_receiving_logs")
+}
+
+model LibraryBook {
+  id       String @id @default(cuid())
+  courseId String
+
+  // Identification
+  accessionNo String
+  callNumber  String?
+  isbn        String?
+
+  // Book details
+  title         String
+  author        String?
+  publisher     String?
+  copyrightYear String?
+  edition       String?
+  pages         Int?
+  volume        String?
+
+  // Classification
+  category String // "Filipiniana" | "Circulation" | "Reserved" | "General References"
+  location String?
+
+  // Copies
+  totalCopies     Int @default(1)
+  availableCopies Int @default(1)
+
+  // Cover
+  coverUrl String?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  course        Course                @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  borrowRecords LibraryBorrowRecord[]
+
+  @@unique([courseId, accessionNo])
+  @@index([courseId])
+  @@index([courseId, category])
+  @@map("library_books")
+}
+
+model LibraryBorrowRecord {
+  id       String @id @default(cuid())
+  courseId String
+  bookId   String
+
+  // Borrower info
+  borrowerType   String // "STUDENT" | "EMPLOYEE" | "WALK_IN"
+  borrowerId     String? // matched user id from system (optional)
+  borrowerNo     String? // student no or employee no
+  borrowerName   String
+  borrowerCourse String?
+  borrowerDept   String?
+
+  // Borrow details
+  borrowedAt DateTime  @default(now())
+  dueDate    DateTime
+  returnedAt DateTime?
+
+  // Status
+  status String @default("BORROWED") // "BORROWED" | "RETURNED" | "OVERDUE"
+
+  remarks String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  course Course      @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  book   LibraryBook @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  @@index([courseId])
+  @@index([bookId])
+  @@index([courseId, status])
+  @@index([borrowerNo])
+  @@map("library_borrow_records")
 }
 
 enum Role {
