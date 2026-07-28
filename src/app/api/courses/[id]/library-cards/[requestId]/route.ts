@@ -42,7 +42,7 @@ export async function PATCH(
       data:  update,
     });
 
-    // ── Auto-create LibraryReceivingLog when status → RELEASED ──────────────
+    // ── Auto-create LibraryReceivingLog when statuss → RELEASED ──────────────
     if (data.status === "RELEASED") {
       const existing = await prisma.libraryReceivingLog.findUnique({
         where: { requestId },
