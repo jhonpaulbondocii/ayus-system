@@ -669,11 +669,12 @@ function CourseViewInner({ courseId }: { courseId: string }) {
       {activeTab === "Repositories" && dataLoaded && (
         <div className="flex-1 overflow-hidden flex flex-col">
           <CourseRepositoriesTab
-            courseId={courseId}
-            isHead={isHead}
-            onNavigateToAssignments={() => handleTabChange("Assignments")}
-            onNavigateToForms={() => handleTabChange("Form")}
-          />
+  courseId={courseId}
+  isHead={isHead}
+  userId={currentUserId ?? ""}
+  onNavigateToAssignments={() => handleTabChange("Assignments")}
+  onNavigateToForms={() => handleTabChange("Form")}
+/>
         </div>
       )}
 
