@@ -7,7 +7,8 @@ type Props = {
   searchParams?: Promise<{ name?: string; points?: string; group?: string }>;
 };
 
-export default async function Page({ params, searchParams }: Props) {
+export default async function Page(props: Props) {
+  const searchParams = await props.searchParams;
   const { id } = await params;
   const sp = searchParams ? await searchParams : {};
 

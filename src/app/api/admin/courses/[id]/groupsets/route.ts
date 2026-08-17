@@ -53,7 +53,7 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  if (!await requireAdmin())
+  if (!(await requireAdmin()))
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id: courseId } = await params;
@@ -151,7 +151,7 @@ export async function DELETE(
   req: NextRequest,
   _ctx: { params: Promise<{ id: string }> }
 ) {
-  if (!await requireAdmin())
+  if (!(await requireAdmin()))
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { searchParams } = new URL(req.url);
