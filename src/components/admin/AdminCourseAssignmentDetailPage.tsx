@@ -4,7 +4,7 @@
 // Route: /admin/courses/[id]/assignments/[assignmentId]
 // Fixed: Full desktop width utilization + fully responsive
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {
   Zap, CheckCircle, Circle, Pencil,
