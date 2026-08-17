@@ -771,8 +771,8 @@ function AssignToSelector({ selected, setSelected, staff }: {
 }
 
 // ─── ThreeDotMenu ─────────────────────────────────────────────────────────────
-function ThreeDotMenu({ onDelete, onToggleLock, locked }: {
-  onDelete: () => void; onToggleLock: () => void; locked?: boolean;
+function ThreeDotMenu({ onDelete }: {
+  onDelete: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -791,11 +791,6 @@ function ThreeDotMenu({ onDelete, onToggleLock, locked }: {
         <div className="absolute right-0 top-full z-50 bg-white border border-gray-200 rounded shadow-lg min-w-44" style={{ marginTop: 2 }}>
           <button type="button" onClick={() => { onDelete(); setOpen(false); }} className="w-full text-left px-4 py-2.5 text-sm flex items-center gap-2 hover:bg-gray-50 text-red-600">
             <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6M14 11v6" /><path d="M9 6V4h6v2" /></svg>Delete
-          </button>
-          <button type="button" onClick={() => { onToggleLock(); setOpen(false); }} className="w-full text-left px-4 py-2.5 text-sm flex items-center gap-2 hover:bg-gray-50 text-gray-700">
-            <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              {locked ? <><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 9.9-1" /></> : <><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></>}
-            </svg>{locked ? "Unlock" : "Lock"}
           </button>
           
         </div>
@@ -876,10 +871,8 @@ function AnnouncementDetailView({ announcement, onBack, onDelete, onToggleLock, 
               </span>
             )}
             <ThreeDotMenu
-              onDelete={() => { onDelete(announcement.id); onBack(); }}
-              onToggleLock={() => onToggleLock(announcement.id)}
-              locked={announcement.locked}
-            />
+  onDelete={() => { onDelete(announcement.id); onBack(); }}
+/>
           </div>
         </div>
 
@@ -1052,10 +1045,8 @@ function AnnouncementsListView({ filter, setFilter, search, setSearch, onAdd, on
               {/* Right side: menu + date */}
               <div className="shrink-0 flex flex-col items-end gap-1">
                 <ThreeDotMenu
-                  onDelete={() => { setPendingDeleteId(a.id); setConfirmDelete("single"); }}
-                  onToggleLock={() => onToggleLock(a.id)}
-                  locked={a.locked}
-                />
+  onDelete={() => { setPendingDeleteId(a.id); setConfirmDelete("single"); }}
+/>
                 <div className="text-right text-xs text-gray-400 leading-snug hidden sm:block">
                   <div>{a.createdAtLabel}</div>
                 </div>
@@ -1198,6 +1189,14 @@ export default function CourseAnnouncementsPage({
   const [search, setSearch] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<string | number>>(new Set());
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
+  const [readIds, setReadIds] = useState<Set<string | number>>(new Set());
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(`read-announcements-${courseId}`);
+      if (saved) setReadIds(new Set(JSON.parse(saved)));
+    } catch {}
+  }, [courseId]);
 
   // Form state
   const [topicTitle, setTopicTitle] = useState("");
@@ -1228,9 +1227,12 @@ export default function CourseAnnouncementsPage({
     fetch(`/api/admin/courses/${courseId}/announcements`)
       .then(async r => { if (!r.ok) throw new Error(); return r.json(); })
       .then(d => {
+        const savedRaw = localStorage.getItem(`read-announcements-${courseId}`);
+        const savedIds: Set<string | number> = savedRaw ? new Set(JSON.parse(savedRaw)) : new Set();
         setAnnouncements((d.announcements ?? []).map((a: {
           id: string; title: string; bodyText: string; bodyHtml: string; author: string;
           createdAt: string; assignTo: string[];
+          read?: boolean;
           attachments: { id: string; name: string; size: number; mimeType: string; url: string }[];
           locked?: boolean; allowComments?: boolean;
           availableFrom?: string | null; availableUntil?: string | null;
@@ -1238,7 +1240,7 @@ export default function CourseAnnouncementsPage({
           id: a.id, title: a.title, bodyText: a.bodyText, bodyHtml: a.bodyHtml, author: a.author,
           createdAtIso: a.createdAt,
           createdAtLabel: new Date(a.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit", hour12: true }),
-          read: false,
+          read: savedIds.has(a.id),
           attachments: (a.attachments ?? []).map(f => ({ id: f.id, name: f.name, size: f.size, type: f.mimeType, url: f.url })),
           assignTo: a.assignTo ?? ["Everyone"],
           locked: a.locked ?? false,
@@ -1262,7 +1264,17 @@ export default function CourseAnnouncementsPage({
       .catch(() => setStaff([]));
   }, [courseId]);
 
-  const onMarkAllRead = () => setAnnouncements(prev => prev.map(a => ({ ...a, read: true })));
+  const onMarkAllRead = () => {
+    const allIds = announcements.map(a => a.id);
+    setReadIds(prev => {
+      const next = new Set([...prev, ...allIds]);
+      try {
+        localStorage.setItem(`read-announcements-${courseId}`, JSON.stringify([...next]));
+      } catch {}
+      return next;
+    });
+    setAnnouncements(prev => prev.map(a => ({ ...a, read: true })));
+  };
 
   const onRemove = async (id: string | number) => {
     setAnnouncements(prev => prev.filter(x => x.id !== id));
@@ -1319,6 +1331,14 @@ export default function CourseAnnouncementsPage({
 
   const onPublish = async () => {
     if (!topicTitle.trim()) return;
+    if (availableFromDate && untilDate) {
+      const from = new Date(`${availableFromDate}T${availableFromTime || "00:00"}`);
+      const until = new Date(`${untilDate}T${untilTime || "00:00"}`);
+      if (until <= from) {
+        alert("Ang 'Until' date ay dapat mas bago kaysa 'Available From'.");
+        return;
+      }
+    }
     const authorName = currentUser?.name ?? "Admin";
     const availableFromIso = availableFromDate ? `${availableFromDate}T${availableFromTime || "00:00"}` : null;
     const availableUntilIso = untilDate ? `${untilDate}T${untilTime || "00:00"}` : null;
@@ -1376,6 +1396,14 @@ export default function CourseAnnouncementsPage({
   const onResetUntil = () => { setUntilDate(""); setUntilTime(""); };
   const onView = (id: string | number) => {
     setViewingId(id); setMode("detail");
+    setReadIds(prev => {
+      const next = new Set(prev);
+      next.add(id);
+      try {
+        localStorage.setItem(`read-announcements-${courseId}`, JSON.stringify([...next]));
+      } catch {}
+      return next;
+    });
     setAnnouncements(prev => prev.map(a => a.id === id ? { ...a, read: true } : a));
   };
 

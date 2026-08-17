@@ -254,7 +254,7 @@ function SubmissionRow({ submission, index, onClick }: { submission: Submission;
 /* ─────────────────────────────────────────────────────────────────────────────
    MOBILE CARD
 ───────────────────────────────────────────────────────────────────────────── */
-function SubmissionCard({ submission, index, onClick }: { submission: Submission; index: number; onClick: () => void }) {
+function SubmissionCard({ submission, onClick }: { submission: Submission; onClick: () => void }) {
   const answerCount = submission.answers?.length ?? 0;
   return (
     <div
@@ -456,7 +456,7 @@ export default function HeadFormResponses({ form, submissions, loading = false, 
             {filtered.map((s, i) => (
               <div key={s.id}>
                 <SubmissionRow submission={s} index={i} onClick={() => setSelected(s)} />
-                <SubmissionCard submission={s} index={i} onClick={() => setSelected(s)} />
+                <SubmissionCard submission={s} onClick={() => setSelected(s)} />
               </div>
             ))}
           </div>

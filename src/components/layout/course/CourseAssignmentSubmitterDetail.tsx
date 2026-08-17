@@ -42,6 +42,8 @@ interface SubmissionEntryExtended {
   type: string;
   allowedFileTypes?: string[];
   maxFiles?: number;
+  maxFileSizeValue?: number | null;
+  maxFileSizeUnit?: string | null;
 }
 
 type AssignmentWithSubmissionEntries = AssignmentWithRole & {
@@ -482,9 +484,15 @@ function FileEntryUpload({
   const types = normalizeFileTypeList(entry.allowedFileTypes);
   const hasRestrictions = types.length > 0;
   const maxFiles = entry.maxFiles ?? 1;
-  const entryLabel = hasRestrictions
+  const maxSizeValue = entry.maxFileSizeValue ?? 1;
+  const maxSizeUnit = entry.maxFileSizeUnit ?? "MB";
+  const maxSizeBytes = maxSizeUnit === "KB"
+    ? maxSizeValue * 1024
+    : maxSizeValue * 1024 * 1024;
+  const entryLabel = entry.label?.trim() ||
+  (hasRestrictions
     ? `${formatAllowedFileTypes(types)} File Upload`
-    : entry.label?.trim() || "File Upload";
+    : "File Upload");
   const acceptAttr = hasRestrictions
     ? types.map((t) => `.${t}`).join(",")
     : undefined;
@@ -523,6 +531,12 @@ function FileEntryUpload({
             }
           >
             {entry.required ? "Required" : "Optional"}
+          </span>
+          <span
+            className="rounded-full px-2 py-0.5 text-[10px] font-bold"
+            style={{ background: "#eff6ff", color: "#1d4ed8", border: "1px solid #bfdbfe" }}
+          >
+            Max {maxSizeValue}{maxSizeUnit}
           </span>
         </div>
       </div>
@@ -585,7 +599,7 @@ function FileEntryUpload({
               {hasRestrictions
                 ? `Accepted: ${types.map((t) => `.${t.toUpperCase()}`).join(", ")}`
                 : "Any file format"}
-              {` · Max ${maxFiles} file${maxFiles !== 1 ? "s" : ""}`}
+              {` · Max ${maxFiles} file${maxFiles !== 1 ? "s" : ""} · Max ${maxSizeValue}${maxSizeUnit} per file`}
             </p>
           </div>
         </div>
@@ -701,6 +715,24 @@ function SubmitterFileUploadSection({
     const { valid, errors } = validateFileTypes(files, allowedTypes);
     if (!valid) {
       setFileErrorsByEntry((prev) => ({ ...prev, [entryKey]: errors }));
+      setSelectedFilesByEntry((prev) => ({ ...prev, [entryKey]: [] }));
+      const ref = inputRefs.current[entryKey];
+      if (ref) ref.value = "";
+      return;
+    }
+    const maxSzValue = entry.maxFileSizeValue ?? 1;
+    const maxSzUnit = entry.maxFileSizeUnit ?? "MB";
+    const maxSzBytes = maxSzUnit === "KB"
+      ? maxSzValue * 1024
+      : maxSzValue * 1024 * 1024;
+    const sizeErrors: string[] = [];
+    for (const file of files) {
+      if (file.size > maxSzBytes) {
+        sizeErrors.push(`"${file.name}" exceeds the maximum file size of ${maxSzValue}${maxSzUnit}.`);
+      }
+    }
+    if (sizeErrors.length > 0) {
+      setFileErrorsByEntry((prev) => ({ ...prev, [entryKey]: sizeErrors }));
       setSelectedFilesByEntry((prev) => ({ ...prev, [entryKey]: [] }));
       const ref = inputRefs.current[entryKey];
       if (ref) ref.value = "";
@@ -924,9 +956,10 @@ function SubmissionRequirementsBox({
                     hasRestrictions ? { color: MAROON } : { color: "#6b7280" }
                   }
                 >
-                  {hasRestrictions
-                    ? `${formatAllowedFileTypes(types)} File Upload`
-                    : "File Upload"}
+                  {entry.label?.trim() ||
+                    (hasRestrictions
+                      ? `${formatAllowedFileTypes(types)} File Upload`
+                      : "File Upload")}
                 </span>
               </div>
               <div className="flex items-center gap-1.5 shrink-0">
@@ -951,6 +984,12 @@ function SubmissionRequirementsBox({
                   }
                 >
                   {entry.required ? "Required" : "Optional"}
+                </span>
+                <span
+                  className="rounded-full px-2 py-0.5 text-[10px] font-bold"
+                  style={{ background: "#eff6ff", color: "#1d4ed8", border: "1px solid #bfdbfe" }}
+                >
+                  Max {entry.maxFileSizeValue ?? 1}{entry.maxFileSizeUnit ?? "MB"}
                 </span>
               </div>
             </div>

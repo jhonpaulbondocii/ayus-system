@@ -240,11 +240,12 @@ function AssignmentIcon() {
 ───────────────────────────────────────────────────────────────────────────── */
 type DropdownAction = "edit" | "duplicate" | "assignTo" | "delete" | "speedgrader";
 
-function AssignmentRowMenu({ assignment, onAction, isManager, courseId }: {
+function AssignmentRowMenu({ assignment, onAction, isManager, courseId, canDelete = false }: {
   assignment: AssignmentWithRole;
   onAction: (action: DropdownAction, a: AssignmentWithRole) => void;
   isManager: boolean;
   courseId: string;
+  canDelete?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [menuStyle, setMenuStyle] = useState<React.CSSProperties>({});
@@ -284,7 +285,7 @@ function AssignmentRowMenu({ assignment, onAction, isManager, courseId }: {
     { label: "Edit", action: "edit", icon: <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" strokeLinecap="round" /><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" strokeLinecap="round" /></svg> },
     { label: "Duplicate", action: "duplicate", icon: <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" /></svg> },
     { label: "Assign To…", action: "assignTo", icon: <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" strokeLinecap="round" /><circle cx="12" cy="7" r="4" /></svg> },
-    { label: "Delete", action: "delete", danger: true, icon: <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6" strokeLinecap="round" /><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" strokeLinecap="round" /><path d="M10 11v6M14 11v6" strokeLinecap="round" /><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2" strokeLinecap="round" /></svg> },
+    ...(canDelete ? [{ label: "Delete", action: "delete" as DropdownAction, danger: true, icon: <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6" strokeLinecap="round" /><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" strokeLinecap="round" /><path d="M10 11v6M14 11v6" strokeLinecap="round" /><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2" strokeLinecap="round" /></svg> }] : []),
   ];
 
   return (
@@ -795,12 +796,13 @@ function AssignToPanel({ assignment, courseId, sections, staff, onClose, onSave 
 /* ─────────────────────────────────────────────────────────────────────────────
    MINE ASSIGNMENT ROW
 ───────────────────────────────────────────────────────────────────────────── */
-function MineAssignmentRow({ a, courseId, currentUserName, currentUserRole, seenIds, onView, onEdit, onDuplicate, onAssignTo, onDelete, onTogglePublish }: {
+function MineAssignmentRow({ a, courseId, currentUserName, currentUserRole, seenIds, canDelete, onView, onEdit, onDuplicate, onAssignTo, onDelete, onTogglePublish }: {
   a: AssignmentWithRole;
   courseId: string;
   currentUserName?: string | null;
   currentUserRole?: string | null;
   seenIds: Set<string>;
+  canDelete?: boolean;
   onView: (a: AssignmentWithRole) => void;
   onEdit: (a: AssignmentWithRole) => void;
   onDuplicate: (a: AssignmentWithRole) => void;
@@ -859,7 +861,7 @@ function MineAssignmentRow({ a, courseId, currentUserName, currentUserRole, seen
 
       {/* Right actions */}
       <div className="shrink-0 flex items-center gap-1" onClick={e => e.stopPropagation()}>
-        <AssignmentRowMenu assignment={a} onAction={handleAction} isManager={true} courseId={courseId} />
+        <AssignmentRowMenu assignment={a} onAction={handleAction} isManager={true} courseId={courseId} canDelete={canDelete} />
       </div>
     </div>
   );
@@ -914,11 +916,12 @@ function OthersAssignmentRow({ a, courseId, seenIds, onView }: {
 /* ─────────────────────────────────────────────────────────────────────────────
    MINE GROUP SECTION
 ───────────────────────────────────────────────────────────────────────────── */
-function MineGroupSection({ title, items, courseId, currentUserName, currentUserRole, seenIds, onAddAssignment, onView, onEdit, onDuplicate, onAssignTo, onDelete, onTogglePublish, onEditGroup, onDeleteGroup, isLastGroup }: {
+function MineGroupSection({ title, items, courseId, currentUserName, currentUserRole, seenIds, canDelete, onAddAssignment, onView, onEdit, onDuplicate, onAssignTo, onDelete, onTogglePublish, onEditGroup, onDeleteGroup, isLastGroup }: {
   title: string; items: AssignmentWithRole[];
   courseId: string;
   currentUserName?: string | null; currentUserRole?: string | null;
   seenIds: Set<string>;
+  canDelete?: boolean;
   onAddAssignment: (group: string) => void;
   onView: (a: AssignmentWithRole) => void;
   onEdit: (a: AssignmentWithRole) => void;
@@ -960,7 +963,7 @@ function MineGroupSection({ title, items, courseId, currentUserName, currentUser
             ? <div className="px-6 py-4 text-sm text-gray-400 text-center">No assignments in this group.</div>
             : items.map(a => (
               <MineAssignmentRow key={a.id} a={a} courseId={courseId} currentUserName={currentUserName} currentUserRole={currentUserRole}
-                seenIds={seenIds}
+                seenIds={seenIds} canDelete={canDelete}
                 onView={onView} onEdit={onEdit} onDuplicate={onDuplicate} onAssignTo={onAssignTo} onDelete={onDelete} onTogglePublish={onTogglePublish} />
             ))}
         </div>
@@ -1042,6 +1045,7 @@ interface CourseAssignmentsListProps {
   currentUserId?: string | null;
   currentUserName?: string | null;
   currentUserRole?: string | null;
+  canDelete?: boolean;
   onViewDetail: (a: AssignmentWithRole) => void;
   onCreateNew: (group?: string) => void;
   onEditFull: (a: AssignmentWithRole) => void;
@@ -1050,6 +1054,7 @@ interface CourseAssignmentsListProps {
 export default function CourseAssignmentsList({
   courseId, assignments, setAssignments, sections, staff,
   currentUserId, currentUserName, currentUserRole,
+  canDelete = false,
   onViewDetail, onCreateNew, onEditFull,
 }: CourseAssignmentsListProps) {
   const [mySearch, setMySearch] = useState("");
@@ -1095,15 +1100,12 @@ export default function CourseAssignmentsList({
   }, [courseId, setAssignments, currentUserId]);
 
   useEffect(() => {
-    const persisted = loadPersistedGroups(courseId);
     const apiGroups = [...new Set(
       assignments
         .filter(a => resolveRole(a, currentUserId) === "manager")
         .map(a => a.assignmentGroup || DEFAULT_GROUP)
     )];
-    const merged = [...new Set([DEFAULT_GROUP, ...persisted, ...apiGroups])];
-    const ordered = [DEFAULT_GROUP, ...merged.filter(g => g !== DEFAULT_GROUP)];
-    persistGroups(courseId, ordered);
+    const ordered = [DEFAULT_GROUP, ...apiGroups.filter(g => g !== DEFAULT_GROUP)];
     setLocalGroups(ordered);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [courseId]);
@@ -1245,6 +1247,7 @@ export default function CourseAssignmentsList({
               courseId={courseId}
               currentUserName={currentUserName} currentUserRole={currentUserRole}
               seenIds={seenIds}
+              canDelete={canDelete}
               onAddAssignment={g => onCreateNew(g)}
               onView={handleView}
               onEdit={a => setQuickEditTarget(a)}

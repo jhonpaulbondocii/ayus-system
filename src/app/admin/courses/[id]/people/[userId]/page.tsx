@@ -7,7 +7,7 @@ type Props = { params: Promise<{ id: string; userId: string }> };
 export default async function Page({ params }: Props) {
   const { id, userId } = await params;
   return (
-    <CourseLayout courseId={id} activeItem="People">
+    <CourseLayout courseId={id} activeItem="Users">
       <UserDetailsPage courseId={id} userId={userId} />
     </CourseLayout>
   );

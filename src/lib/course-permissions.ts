@@ -1,6 +1,6 @@
 // src/lib/course-permissions.ts
 
-export const COURSE_ROLES = ["Staff", "Head"] as const;
+export const COURSE_ROLES = ["Staff", "Head", "Faculty"] as const;
 
 export type CourseRole = (typeof COURSE_ROLES)[number];
 
@@ -27,6 +27,11 @@ const COURSE_ROLE_PERMISSIONS: Record<CourseRole, CoursePermission[]> = {
     "manage_assignments",
     "manage_people",
     "manage_course",
+  ],
+  Faculty: [
+    "view_course",
+    "view_announcements",
+    "submit_assignments",
   ],
 };
 
@@ -61,7 +66,6 @@ export function hasCoursePermission(
   role: unknown,
   permission: CoursePermission
 ): boolean {
-  // Check permission across ALL assigned roles
   const roles = parseRoles(role);
   return roles.some(r => COURSE_ROLE_PERMISSIONS[r].includes(permission));
 }

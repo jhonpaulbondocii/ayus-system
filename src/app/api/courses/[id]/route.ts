@@ -36,6 +36,16 @@ export async function GET(_request: Request, { params }: Props) {
     return NextResponse.json({ error: "Course not found" }, { status: 404 });
   }
 
+  // Block access to unpublished courses for non-admins
+  const requestingUser = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { role: true },
+  });
+
+  if (enrollment.course.status !== "PUBLISHED" && requestingUser?.role !== "ADMIN") {
+    return NextResponse.json({ error: "Course not found" }, { status: 404 });
+  }
+
   const courseRole = normalizeCourseRole(enrollment.courseRole);
 
   const course = {

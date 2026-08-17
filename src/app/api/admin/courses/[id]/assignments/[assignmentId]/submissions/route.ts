@@ -66,11 +66,21 @@
       include: { user: { select: { id: true, name: true, email: true } } },
     });
 
-    // ── 4. Build submission map keyed by userId ──────────────────────────────────
-    const submissionByUserId = new Map(submissions.map(s => [s.userId, s]));
+    // ── 4. Keep only the latest submission per user ──────────────────────────────
+const latestByUser = new Map<string, typeof submissions[number]>();
+for (const s of submissions) {
+  const existing = latestByUser.get(s.userId);
+  if (!existing || (s.submittedAt && (!existing.submittedAt || new Date(s.submittedAt) > new Date(existing.submittedAt)))) {
+    latestByUser.set(s.userId, s);
+  }
+}
+const latestSubmissions = Array.from(latestByUser.values());
 
-    // ── 5. Build submitted rows ──────────────────────────────────────────────────
-    const submittedRows = submissions.map(s => {
+// ── 5. Build submission map keyed by userId ──────────────────────────────────
+const submittedUserIds = new Set(latestSubmissions.map(s => s.userId));
+
+// ── 6. Build submitted rows ──────────────────────────────────────────────────
+const submittedRows = latestSubmissions.map(s => {
       const { isMulti, entries, fileUrl } = parseStoredFileUrl(s.fileUrl);
 
       // Late = submitted after dueDate (your enum has no LATE value, so derive it)
@@ -87,6 +97,17 @@
             (1000 * 60 * 60 * 24)
           )
         : null;
+
+      const allFileUrls = isMulti
+        ? entries.filter(e => e.fileUrl).map(e => ({
+            label: e.fileName ?? e.label ?? "File",
+            url: e.fileUrl!,
+          }))
+        : fileUrl
+          ? [{ label: fileUrl.split("/").pop() ?? "Submission", url: fileUrl }]
+          : [];
+
+      const primaryFile = allFileUrls[0] ?? null;
 
       return {
         id:          s.id,
@@ -109,16 +130,15 @@
         isMissing:   false,
         isMulti,
         entries,
-        fileUrl: isMulti ? (entries.find(e => e.fileUrl)?.fileUrl ?? null) : fileUrl,
-        allFileUrls: isMulti
-          ? entries.filter(e => e.fileUrl).map(e => ({ label: e.label, url: e.fileUrl! }))
-          : s.fileUrl ? [{ label: "Submission", url: s.fileUrl }] : [],
+        fileUrl: primaryFile?.url ?? null,
+        fileName: primaryFile?.label ?? null,
+        allFileUrls,
       };
     });
 
     // ── 6. Missing rows — enrolled users with no submission record ───────────────
     const missingRows = enrollments
-    .filter(e => !submissionByUserId.has(e.userId))
+    .filter(e => !submittedUserIds.has(e.userId))
     .map(e => ({
       id:          null,
       userId:      e.user.id,

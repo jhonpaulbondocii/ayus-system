@@ -41,9 +41,9 @@ import {
   MAROON,
   COLORS,
   ALL_TABS,
-  HIDDEN_FOR_STAFF,
   normalizeAnnouncement,
   normalizeCourseRole,
+  getRoleFlags,
 } from "./course/helpers";
 
 import type {
@@ -105,26 +105,21 @@ function MobileDrawer({
 
   return (
     <>
-      {/* Backdrop */}
       <div
         className="fixed inset-0 z-[400] bg-black/35"
         style={{ backdropFilter: "blur(2px)", WebkitBackdropFilter: "blur(2px)" }}
         onClick={onClose}
       />
-      {/* Drawer panel */}
       <div
         ref={drawerRef}
         className="fixed top-0 left-0 bottom-0 z-[401] bg-white flex flex-col shadow-2xl"
         style={{ width: "min(280px, 80vw)", fontFamily: FONT }}
       >
-        {/* Header */}
         <div
           className="flex items-center justify-between px-4 py-3.5 shrink-0"
           style={{ background: MAROON, borderBottom: "1px solid #a01416" }}
         >
-          <span
-            className="text-sm font-bold text-white truncate flex-1 mr-3"
-          >
+          <span className="text-sm font-bold text-white truncate flex-1 mr-3">
             {courseName || "Course Menu"}
           </span>
           <button
@@ -135,7 +130,6 @@ function MobileDrawer({
           </button>
         </div>
 
-        {/* Role badge */}
         <div className="px-3 pt-3 pb-1 shrink-0">
           <div
             className="rounded-lg border px-3 py-2"
@@ -144,11 +138,10 @@ function MobileDrawer({
             <div className="text-[10px] uppercase tracking-wide text-gray-400 font-bold mb-1">
               Office Role
             </div>
-            <MembershipBadge role={membership?.role ?? "Staff"} />
+            <MembershipBadge role={membership?.role ?? "Faculty"} />
           </div>
         </div>
 
-        {/* Nav items */}
         <div className="flex-1 overflow-y-auto px-2 py-2">
           <nav className="flex flex-col gap-0.5">
             {tabs.map((tab) => {
@@ -180,7 +173,7 @@ function MobileDrawer({
   );
 }
 
-// ── Mobile: top nav (breadcrumb row + scrollable tab strip) ───────────────────
+// ── Mobile: top nav ───────────────────────────────────────────────────────────
 function MobileTopNav({
   courseName,
   courseCode,
@@ -219,116 +212,60 @@ function MobileTopNav({
       className="shrink-0"
       style={{ borderBottom: "1px solid #e5e7eb", background: "#fff" }}
     >
-      {/* ── Breadcrumb row ── */}
       <div
         className="flex items-center"
-        style={{
-          minHeight: 40,
-          borderBottom: "1px solid #f3f4f6",
-          padding: "0 4px 0 0",
-        }}
+        style={{ minHeight: 40, borderBottom: "1px solid #f3f4f6", padding: "0 4px 0 0" }}
       >
-        {/* Hamburger */}
         <button
           onClick={onOpenDrawer}
           className="flex items-center justify-center shrink-0"
-          style={{
-            width: 44,
-            height: 40,
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            color: MAROON,
-          }}
+          style={{ width: 44, height: 40, background: "none", border: "none", cursor: "pointer", color: MAROON }}
           aria-label="Open navigation"
         >
           <Menu size={17} />
         </button>
 
-        {/* Course code/name → goes to Home */}
         <button
           onClick={onGoHome}
           className="text-xs font-semibold truncate shrink-0"
-          style={{
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            fontFamily: FONT,
-            color: MAROON,
-            maxWidth: 120,
-            padding: "0 2px",
-          }}
+          style={{ background: "none", border: "none", cursor: "pointer", fontFamily: FONT, color: MAROON, maxWidth: 120, padding: "0 2px" }}
         >
           {displayName}
         </button>
 
-        {/* Separator */}
         {activeTab !== "Home" && (
           <ChevronRight size={13} style={{ color: "#d1d5db", flexShrink: 0, margin: "0 1px" }} />
         )}
 
-        {/* Active tab — if drilling, it's a back link */}
         {activeTab !== "Home" && (
           drillLabel ? (
             <>
               <button
                 onClick={onGoToTab}
                 className="text-xs font-semibold shrink-0"
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  fontFamily: FONT,
-                  color: MAROON,
-                  maxWidth: 80,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                  padding: "0 2px",
-                }}
+                style={{ background: "none", border: "none", cursor: "pointer", fontFamily: FONT, color: MAROON, maxWidth: 80, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", padding: "0 2px" }}
               >
                 {activeTab}
               </button>
               <ChevronRight size={13} style={{ color: "#d1d5db", flexShrink: 0, margin: "0 1px" }} />
-              <span
-                className="text-xs text-gray-500 truncate flex-1"
-                style={{ fontFamily: FONT, padding: "0 2px" }}
-              >
+              <span className="text-xs text-gray-500 truncate flex-1" style={{ fontFamily: FONT, padding: "0 2px" }}>
                 {drillLabel}
               </span>
             </>
           ) : (
-            <span
-              className="text-xs text-gray-500 flex-1 truncate"
-              style={{ fontFamily: FONT, padding: "0 2px" }}
-            >
+            <span className="text-xs text-gray-500 flex-1 truncate" style={{ fontFamily: FONT, padding: "0 2px" }}>
               {activeTab}
             </span>
           )
         )}
 
-        {activeTab === "Home" && (
-          <span className="flex-1" />
-        )}
+        {activeTab === "Home" && <span className="flex-1" />}
 
-        {/* Back pill — shown when drilling into a detail */}
         {drillLabel && (
           <button
             onClick={onGoToTab}
             className="flex items-center gap-1 shrink-0 ml-auto"
-            style={{
-              height: 28,
-              padding: "0 10px 0 6px",
-              background: "#fef2f2",
-              border: "1px solid #fecaca",
-              borderRadius: 20,
-              cursor: "pointer",
-              fontFamily: FONT,
-              fontSize: 11,
-              fontWeight: 700,
-              color: MAROON,
-              whiteSpace: "nowrap",
-            }}
+            style={{ height: 28, padding: "0 10px 0 6px", background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 20, cursor: "pointer", fontFamily: FONT, fontSize: 11, fontWeight: 700, color: MAROON, whiteSpace: "nowrap" }}
             aria-label={`Back to ${activeTab}`}
           >
             <ChevronLeft size={12} />
@@ -337,17 +274,11 @@ function MobileTopNav({
         )}
       </div>
 
-      {/* ── Scrollable tab strip ── */}
       <div
         ref={tabsScrollRef}
         className="flex items-stretch overflow-x-auto"
-        style={{
-          minHeight: 42,
-          scrollbarWidth: "none",
-          WebkitOverflowScrolling: "touch",
-        }}
+        style={{ minHeight: 42, scrollbarWidth: "none", WebkitOverflowScrolling: "touch" }}
       >
-        <style>{`.mobile-tabs::-webkit-scrollbar { display: none; }`}</style>
         {tabs.map((tab) => {
           const isActive = activeTab === tab;
           return (
@@ -355,22 +286,7 @@ function MobileTopNav({
               key={tab}
               data-active={isActive}
               onClick={() => onTabChange(tab)}
-              style={{
-                padding: "0 14px",
-                background: "none",
-                border: "none",
-                borderBottom: isActive ? `3px solid ${MAROON}` : "3px solid transparent",
-                cursor: "pointer",
-                fontFamily: FONT,
-                whiteSpace: "nowrap",
-                fontSize: 12,
-                fontWeight: isActive ? 700 : 500,
-                color: isActive ? MAROON : "#6b7280",
-                flexShrink: 0,
-                display: "flex",
-                alignItems: "center",
-                transition: "color .15s, border-color .15s",
-              }}
+              style={{ padding: "0 14px", background: "none", border: "none", borderBottom: isActive ? `3px solid ${MAROON}` : "3px solid transparent", cursor: "pointer", fontFamily: FONT, whiteSpace: "nowrap", fontSize: 12, fontWeight: isActive ? 700 : 500, color: isActive ? MAROON : "#6b7280", flexShrink: 0, display: "flex", alignItems: "center", transition: "color .15s, border-color .15s" }}
             >
               {tab}
             </button>
@@ -407,17 +323,15 @@ function CourseViewInner({ courseId }: { courseId: string }) {
   const [showAddPeopleModal, setShowAddPeopleModal] = useState(false);
   const [showAddGroupModal, setShowAddGroupModal] = useState(false);
   const [newPersonEmail, setNewPersonEmail] = useState("");
-  const [newPersonRole, setNewPersonRole] = useState<"Staff" | "Head">("Staff");
+  const [newPersonRole, setNewPersonRole] = useState<"Staff" | "Head" | "Faculty">("Faculty");
   const [newGroupName, setNewGroupName] = useState("");
   const [peopleActionLoading, setPeopleActionLoading] = useState(false);
 
-  // Mobile nav state
   const [isMobile, setIsMobile] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   const [, startTransition] = useTransition();
 
-  /* ── Responsive detection ── */
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
     check();
@@ -452,19 +366,28 @@ function CourseViewInner({ courseId }: { courseId: string }) {
     ]).then(([courseData, assignmentData, announcementData, peopleData, groupData, sectionData]) => {
       if (!isMounted) return;
       setCourse(courseData.course ?? null);
-      const role = normalizeCourseRole(courseData?.membership?.role);
+
+      const isAdmin = (session?.user as { role?: string })?.role === "ADMIN";
+      const rawRole = courseData?.membership?.role;
+      const normalizedRole = isAdmin ? "Head" : normalizeCourseRole(rawRole);
+
+      // Derive permissions from role
+      const { isHead, canManage, canDelete } = getRoleFlags(normalizedRole, isAdmin);
+
       setMembership({
-        role,
+        role: normalizedRole,
         permissions: {
-          viewCourse: Boolean(courseData?.membership?.permissions?.viewCourse),
-          viewAnnouncements: Boolean(courseData?.membership?.permissions?.viewAnnouncements),
-          submitAssignments: Boolean(courseData?.membership?.permissions?.submitAssignments),
-          manageAnnouncements: Boolean(courseData?.membership?.permissions?.manageAnnouncements),
-          manageAssignments: Boolean(courseData?.membership?.permissions?.manageAssignments),
-          managePeople: Boolean(courseData?.membership?.permissions?.managePeople),
-          manageCourse: Boolean(courseData?.membership?.permissions?.manageCourse),
+          viewCourse: true,
+          viewAnnouncements: true,
+          submitAssignments: true,
+          manageAnnouncements: canManage,
+          manageAssignments: canManage,
+          managePeople: isHead,
+          manageCourse: isHead,
+          canDelete,
         },
       });
+
       setAssignments(assignmentData.assignments ?? []);
       const rawAnnouncements =
         announcementData.announcements ??
@@ -495,34 +418,39 @@ function CourseViewInner({ courseId }: { courseId: string }) {
       setLoading(false);
     });
     return () => { isMounted = false; };
-  }, [courseId]);
+  }, [courseId]); // eslint-disable-line
 
   const sessionLoaded = sessionStatus !== "loading";
   const dataLoaded = !loading && sessionLoaded;
 
   const isAdmin = (session?.user as { role?: string })?.role === "ADMIN";
-  const isHead = dataLoaded && (
-    membership?.role === "Head" ||
-    membership?.role?.includes("Head") ||
-    isAdmin
-  );
-  const canManageAssignments = dataLoaded && (membership?.permissions.manageAssignments ?? false);
-  const canManageAnnouncements = membership?.permissions.manageAnnouncements ?? false;
-  const canManagePeople = membership?.permissions.managePeople ?? false;
-  const canManageCourse = membership?.permissions.manageCourse ?? false;
 
-  const isClinic    = course?.officeType === "CLINIC";
-  const isGuidance  = course?.officeType === "GUIDANCE";
-  const isLibrary = course?.officeType === "LIBRARY" || course?.officeType === "Library";
+  // ── Derived role flags ────────────────────────────────────────────────────
+  const roleFlags = getRoleFlags(membership?.role, isAdmin);
+  const isHead    = roleFlags.isHead;
+  const isStaff   = roleFlags.isStaff;
+  const isFaculty = roleFlags.isFaculty;
+  const canDelete = roleFlags.canDelete;
+  const canManage = roleFlags.canManage; // Head or Staff
 
+  const canManageAssignments  = dataLoaded && canManage;
+  const canManageAnnouncements = dataLoaded && canManage;
+  const canManagePeople       = dataLoaded && isHead;
+  const canManageCourse       = dataLoaded && isHead;
+
+  const isClinic   = course?.officeType === "CLINIC";
+  const isGuidance = course?.officeType === "GUIDANCE";
+  const isLibrary  = course?.officeType === "LIBRARY" || course?.officeType === "Library";
+
+  // ── Tab list per role ─────────────────────────────────────────────────────
   const TABS: Tab[] = (
     isHead
-      ? ["Home", "Announcements", "Assignments", "Repositories", "Grades", "People", "Form",
+      ? ["Home", "Announcements", "Assignments", "Repositories", "Grades", "Users", "Form",
           ...(isClinic   ? ["Patient Records", "Medical Exam Record", "Medicine Inventory", "Medical Cases Summary"] : []),
           ...(isGuidance ? ["Information Sheets", "Log Sheet", "Exit Interviews"] : []),
           ...(isLibrary  ? ["Library Cards", "Library Log", "Book Catalog", "Borrowing"] : []),
         ]
-      : ["Home", "Announcements", "Assignments", "Grades", "People", "Form",
+      : ["Home", "Announcements", "Assignments", "Grades", "Users", "Form",
           ...(isClinic   ? ["Patient Records", "Medical Exam Record", "Medicine Inventory", "Medical Cases Summary"] : []),
           ...(isGuidance ? ["Information Sheets", "Log Sheet", "Exit Interviews"] : []),
           ...(isLibrary  ? ["Library Cards", "Library Log", "Book Catalog", "Borrowing"] : []),
@@ -548,7 +476,7 @@ function CourseViewInner({ courseId }: { courseId: string }) {
           ...prev,
         ]);
       setNewPersonEmail("");
-      setNewPersonRole("Staff");
+      setNewPersonRole("Faculty");
       setShowAddPeopleModal(false);
     } catch (err) {
       console.error(err);
@@ -581,15 +509,11 @@ function CourseViewInner({ courseId }: { courseId: string }) {
     }
   };
 
-  /* ── Loading / not found ── */
   if (loading) {
     return (
       <>
         <Navbar />
-        <div
-          className="flex items-center justify-center h-64 text-sm"
-          style={{ color: COLORS.textMuted, fontFamily: FONT }}
-        >
+        <div className="flex items-center justify-center h-64 text-sm" style={{ color: COLORS.textMuted, fontFamily: FONT }}>
           Loading...
         </div>
       </>
@@ -600,43 +524,28 @@ function CourseViewInner({ courseId }: { courseId: string }) {
     return (
       <>
         <Navbar showBack onBack={() => router.back()} />
-        <div
-          className="flex flex-col items-center justify-center h-64 text-center gap-3"
-          style={{ fontFamily: FONT }}
-        >
-          <p className="text-sm" style={{ color: COLORS.textSecondary }}>
-            Course not found.
-          </p>
-          <button
-            onClick={() => router.back()}
-            className="text-sm hover:underline"
-            style={{ color: COLORS.primary }}
-          >
-            ← Go back
-          </button>
+        <div className="flex flex-col items-center justify-center h-64 text-center gap-3" style={{ fontFamily: FONT }}>
+          <p className="text-sm" style={{ color: COLORS.textSecondary }}>Course not found.</p>
+          <button onClick={() => router.back()} className="text-sm hover:underline" style={{ color: COLORS.primary }}>← Go back</button>
         </div>
       </>
     );
   }
 
   const goHome = () => handleTabChange("Home");
-
   const goToTab = () => {
     drillBack?.();
     setDrillLabel(null);
     setDrillBack(null);
   };
 
-  /* ── Desktop breadcrumbs (passed to Navbar) ── */
   const breadcrumbs: BreadcrumbItem[] = [
     { label: course.code ?? "Course", onClick: goHome },
-    ...(activeTab !== "Home"
-      ? [{ label: activeTab, onClick: drillLabel ? goToTab : undefined }]
-      : []),
+    ...(activeTab !== "Home" ? [{ label: activeTab, onClick: drillLabel ? goToTab : undefined }] : []),
     ...(drillLabel ? [{ label: drillLabel }] : []),
   ];
 
-  /* ── Tab content (shared between mobile and desktop) ── */
+  // ── Tab content ───────────────────────────────────────────────────────────
   const tabContent = (
     <>
       {activeTab === "Home" && (
@@ -666,6 +575,10 @@ function CourseViewInner({ courseId }: { courseId: string }) {
             setAnnouncements={setAnnouncements}
             people={people}
             canManageAnnouncements={canManageAnnouncements}
+            canDelete={canDelete}
+            isHead={isHead}
+            isStaff={isStaff}
+            currentUserId={currentUserId ?? ""}
           />
         </div>
       )}
@@ -679,7 +592,10 @@ function CourseViewInner({ courseId }: { courseId: string }) {
             sections={sections}
             staff={staff}
             isHead={isHead}
+            isStaff={isStaff}
+            isFaculty={isFaculty}
             canManageAssignments={canManageAssignments}
+            canDelete={canDelete}
             currentUserId={currentUserId}
             onNavDrillIn={(label: string, backFn: () => void) => {
               setDrillLabel(label);
@@ -698,6 +614,8 @@ function CourseViewInner({ courseId }: { courseId: string }) {
           <CourseGradesTab
             courseId={courseId}
             isHead={isHead}
+            isStaff={isStaff}
+            isFaculty={isFaculty}
             isAdmin={isAdmin}
             currentUserId={currentUserId}
             courseRole={membership?.role}
@@ -705,7 +623,7 @@ function CourseViewInner({ courseId }: { courseId: string }) {
         </div>
       )}
 
-      {activeTab === "People" && (
+      {activeTab === "Users" && (
         <div className="flex-1 overflow-y-auto">
           <CoursePeopleTab
             course={course}
@@ -734,7 +652,10 @@ function CourseViewInner({ courseId }: { courseId: string }) {
           <CourseQuizzesTab
             courseId={courseId}
             isHead={isHead}
+            isStaff={isStaff}
+            isFaculty={isFaculty}
             canManageForms={canManageAssignments}
+            canDelete={canDelete}
             currentUserId={currentUserId}
           />
         </div>
@@ -745,7 +666,7 @@ function CourseViewInner({ courseId }: { courseId: string }) {
         </div>
       )}
 
- {activeTab === "Repositories" && dataLoaded && (
+      {activeTab === "Repositories" && dataLoaded && (
         <div className="flex-1 overflow-hidden flex flex-col">
           <CourseRepositoriesTab
             courseId={courseId}
@@ -755,6 +676,7 @@ function CourseViewInner({ courseId }: { courseId: string }) {
           />
         </div>
       )}
+
       {activeTab === "Patient Records" && isClinic && dataLoaded && (
         <div className="flex-1 overflow-hidden flex flex-col">
           <CoursePatientRecordsTab
@@ -805,57 +727,40 @@ function CourseViewInner({ courseId }: { courseId: string }) {
       )}
       {activeTab === "Log Sheet" && isGuidance && dataLoaded && (
         <div className="flex-1 overflow-hidden flex flex-col">
-          <CourseGuidanceLogSheetTab
-            courseId={courseId}
-            isHead={isHead}
-          />
+          <CourseGuidanceLogSheetTab courseId={courseId} isHead={isHead} />
         </div>
       )}
       {activeTab === "Exit Interviews" && isGuidance && dataLoaded && (
         <div className="flex-1 overflow-hidden flex flex-col">
-          <CourseExitInterviewTab
-            courseId={courseId}
-            isHead={isHead}
-          />
+          <CourseExitInterviewTab courseId={courseId} isHead={isHead} />
         </div>
       )}
       {activeTab === "Library Cards" && isLibrary && dataLoaded && (
         <div className="flex-1 overflow-hidden flex flex-col">
-          <CourseLibraryTab
-            courseId={courseId}
-            isHead={isHead}
-          />
+          <CourseLibraryTab courseId={courseId} isHead={isHead} />
         </div>
       )}
       {activeTab === "Library Log" && isLibrary && dataLoaded && (
         <div className="flex-1 overflow-hidden flex flex-col">
-          <CourseLibraryLogTab
-            courseId={courseId}
-            isHead={isHead}
-          />
+          <CourseLibraryLogTab courseId={courseId} isHead={isHead} />
         </div>
       )}
       {activeTab === "Book Catalog" && isLibrary && dataLoaded && (
         <div className="flex-1 overflow-hidden flex flex-col">
-          <CourseBookCatalogTab
-            courseId={courseId}
-            isHead={isHead}
-          />
+          <CourseBookCatalogTab courseId={courseId} isHead={isHead} />
         </div>
       )}
       {activeTab === "Borrowing" && isLibrary && dataLoaded && (
         <div className="flex-1 overflow-hidden flex flex-col">
-          <CourseBorrowingTab
-            courseId={courseId}
-            isHead={isHead}
-          />
+          <CourseBorrowingTab courseId={courseId} isHead={isHead} />
         </div>
       )}
-      {activeTab === "Settings" && isHead && course && (
+      {activeTab === "Settings" && course && (
         <div className="flex-1 overflow-y-auto">
           <CourseSettingsTab
             courseId={courseId}
             course={course}
+            isHead={isHead}
             onCourseUpdate={(updated) =>
               setCourse((prev) => (prev ? { ...prev, ...updated } : prev))
             }
@@ -866,16 +771,11 @@ function CourseViewInner({ courseId }: { courseId: string }) {
   );
 
   return (
-    <div
-      className="flex flex-col h-full bg-white overflow-hidden"
-      style={{ fontFamily: FONT, fontSize: 13 }}
-    >
-      {/* Navbar with breadcrumbs — desktop only; mobile uses MobileTopNav below */}
-<div className="hidden md:block shrink-0">
-  <Navbar breadcrumbs={breadcrumbs} />
-</div>
+    <div className="flex flex-col h-full bg-white overflow-hidden" style={{ fontFamily: FONT, fontSize: 13 }}>
+      <div className="hidden md:block shrink-0">
+        <Navbar breadcrumbs={breadcrumbs} />
+      </div>
 
-      {/* ── Mobile nav (breadcrumb row + tab strip) ── */}
       {isMobile && (
         <>
           <MobileTopNav
@@ -901,24 +801,14 @@ function CourseViewInner({ courseId }: { courseId: string }) {
         </>
       )}
 
-      {/* ── Desktop layout: sidebar + content ── */}
       {!isMobile && (
         <div className="flex flex-1 overflow-hidden">
-          {/* Sidebar */}
-          <nav
-            className="w-52 border-r bg-white shrink-0 overflow-y-auto py-3"
-            style={{ borderColor: COLORS.border }}
-          >
+          <nav className="w-52 border-r bg-white shrink-0 overflow-y-auto py-3" style={{ borderColor: COLORS.border }}>
             <div className="px-3 pb-3">
-              <div
-                className="rounded-lg border px-3 py-2 bg-[#fdf8f8]"
-                style={{ borderColor: "#f0e4e4" }}
-              >
-                <div className="text-[11px] uppercase tracking-wide text-gray-500 font-semibold">
-                  Office Role
-                </div>
+              <div className="rounded-lg border px-3 py-2 bg-[#fdf8f8]" style={{ borderColor: "#f0e4e4" }}>
+                <div className="text-[11px] uppercase tracking-wide text-gray-500 font-semibold">Office Role</div>
                 <div className="mt-1">
-                  <MembershipBadge role={membership?.role ?? "Staff"} />
+                  <MembershipBadge role={membership?.role ?? "Faculty"} />
                 </div>
               </div>
             </div>
@@ -930,59 +820,57 @@ function CourseViewInner({ courseId }: { courseId: string }) {
                 return (
                   <div key={tab}>
                     <button
-                    onClick={() => handleTabChange(tab)}
-                    className="w-full text-left text-sm py-2 transition-colors flex items-center gap-2"
-                    style={{
-                      fontFamily: FONT,
-                      paddingLeft: isActive ? 13 : 16,
-                      paddingRight: 12,
-                      color: isActive ? COLORS.text : COLORS.primary,
-                      fontWeight: isActive ? 600 : 500,
-                      background: isActive ? COLORS.primarySoft : "transparent",
-                      borderLeft: isActive ? `3px solid ${COLORS.primary}` : "3px solid transparent",
-                    }}
-                    onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = COLORS.primarySoft; }}
-                    onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = "transparent"; }}
-                  >
-                    {tab}
-                  </button>
-                  {isAssignments && isHead && (
-                    <button
-                      onClick={() => handleTabChange("Repositories")}
+                      onClick={() => handleTabChange(tab)}
                       className="w-full text-left text-sm py-2 transition-colors flex items-center gap-2"
                       style={{
-                        paddingLeft: activeTab === "Repositories" ? 25 : 28,
-                        paddingRight: 12,
                         fontFamily: FONT,
-                        color: activeTab === "Repositories" ? COLORS.text : COLORS.primary,
-                        fontWeight: activeTab === "Repositories" ? 600 : 500,
-                        background: activeTab === "Repositories" ? COLORS.primarySoft : "transparent",
-                        borderLeft: activeTab === "Repositories" ? `3px solid ${COLORS.primary}` : "3px solid transparent",
-                        fontSize: 13,
+                        paddingLeft: isActive ? 13 : 16,
+                        paddingRight: 12,
+                        color: isActive ? COLORS.text : COLORS.primary,
+                        fontWeight: isActive ? 600 : 500,
+                        background: isActive ? COLORS.primarySoft : "transparent",
+                        borderLeft: isActive ? `3px solid ${COLORS.primary}` : "3px solid transparent",
                       }}
-                      onMouseEnter={e => { if (activeTab !== "Repositories") e.currentTarget.style.background = COLORS.primarySoft; }}
-                      onMouseLeave={e => { if (activeTab !== "Repositories") e.currentTarget.style.background = "transparent"; }}
+                      onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = COLORS.primarySoft; }}
+                      onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = "transparent"; }}
                     >
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" style={{ color: "#f59e0b", flexShrink: 0 }}>
-                        <path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/>
-                      </svg>
-                      Repositories
+                      {tab}
                     </button>
-                  )}
+                    {isAssignments && isHead && (
+                      <button
+                        onClick={() => handleTabChange("Repositories")}
+                        className="w-full text-left text-sm py-2 transition-colors flex items-center gap-2"
+                        style={{
+                          paddingLeft: activeTab === "Repositories" ? 25 : 28,
+                          paddingRight: 12,
+                          fontFamily: FONT,
+                          color: activeTab === "Repositories" ? COLORS.text : COLORS.primary,
+                          fontWeight: activeTab === "Repositories" ? 600 : 500,
+                          background: activeTab === "Repositories" ? COLORS.primarySoft : "transparent",
+                          borderLeft: activeTab === "Repositories" ? `3px solid ${COLORS.primary}` : "3px solid transparent",
+                          fontSize: 13,
+                        }}
+                        onMouseEnter={e => { if (activeTab !== "Repositories") e.currentTarget.style.background = COLORS.primarySoft; }}
+                        onMouseLeave={e => { if (activeTab !== "Repositories") e.currentTarget.style.background = "transparent"; }}
+                      >
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" style={{ color: "#f59e0b", flexShrink: 0 }}>
+                          <path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/>
+                        </svg>
+                        Repositories
+                      </button>
+                    )}
                   </div>
                 );
               })}
             </div>
           </nav>
 
-          {/* Content area */}
           <div className="flex-1 overflow-hidden flex flex-col bg-white">
             {tabContent}
           </div>
         </div>
       )}
 
-      {/* ── Mobile content area (full width, no sidebar) ── */}
       {isMobile && (
         <div className="flex-1 overflow-hidden flex flex-col bg-white">
           {tabContent}
@@ -999,24 +887,16 @@ function CourseViewInner({ courseId }: { courseId: string }) {
             className="bg-white w-full sm:max-w-md sm:mx-4 rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden border border-gray-100"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Mobile drag handle */}
             <div className="flex justify-center pt-3 sm:hidden">
               <div className="w-10 h-1 rounded-full bg-gray-200" />
             </div>
             <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
               <h2 className="text-sm font-bold text-gray-900">Add People</h2>
-              <button
-                onClick={() => setShowAddPeopleModal(false)}
-                className="w-7 h-7 flex items-center justify-center border border-gray-200 text-gray-400 rounded-lg text-base hover:border-gray-400"
-              >
-                ×
-              </button>
+              <button onClick={() => setShowAddPeopleModal(false)} className="w-7 h-7 flex items-center justify-center border border-gray-200 text-gray-400 rounded-lg text-base hover:border-gray-400">×</button>
             </div>
             <div className="px-5 py-5 space-y-4">
               <div>
-                <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-1.5">
-                  Email
-                </label>
+                <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-1.5">Email</label>
                 <input
                   value={newPersonEmail}
                   onChange={(e) => setNewPersonEmail(e.target.value)}
@@ -1025,27 +905,20 @@ function CourseViewInner({ courseId }: { courseId: string }) {
                 />
               </div>
               <div>
-                <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-1.5">
-                  Role
-                </label>
+                <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-1.5">Role</label>
                 <select
                   value={newPersonRole}
-                  onChange={(e) => setNewPersonRole(e.target.value as "Staff" | "Head")}
+                  onChange={(e) => setNewPersonRole(e.target.value as "Staff" | "Head" | "Faculty")}
                   className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:border-[#7b1113]"
                 >
+                  <option value="Faculty">Faculty</option>
                   <option value="Staff">Staff</option>
                   <option value="Head">Head</option>
                 </select>
               </div>
             </div>
             <div className="flex items-center gap-2 px-5 py-4 bg-gray-50 border-t border-gray-100">
-              <button
-                onClick={() => setShowAddPeopleModal(false)}
-                disabled={peopleActionLoading}
-                className="flex-1 h-11 sm:h-9 border border-gray-200 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-100 disabled:opacity-50"
-              >
-                Cancel
-              </button>
+              <button onClick={() => setShowAddPeopleModal(false)} disabled={peopleActionLoading} className="flex-1 h-11 sm:h-9 border border-gray-200 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-100 disabled:opacity-50">Cancel</button>
               <button
                 onClick={handleAddPerson}
                 disabled={peopleActionLoading || !newPersonEmail.trim()}
@@ -1069,23 +942,15 @@ function CourseViewInner({ courseId }: { courseId: string }) {
             className="bg-white w-full sm:max-w-md sm:mx-4 rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden border border-gray-100"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Mobile drag handle */}
             <div className="flex justify-center pt-3 sm:hidden">
               <div className="w-10 h-1 rounded-full bg-gray-200" />
             </div>
             <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
               <h2 className="text-sm font-bold text-gray-900">Add Group</h2>
-              <button
-                onClick={() => setShowAddGroupModal(false)}
-                className="w-7 h-7 flex items-center justify-center border border-gray-200 text-gray-400 rounded-lg text-base hover:border-gray-400"
-              >
-                ×
-              </button>
+              <button onClick={() => setShowAddGroupModal(false)} className="w-7 h-7 flex items-center justify-center border border-gray-200 text-gray-400 rounded-lg text-base hover:border-gray-400">×</button>
             </div>
             <div className="px-5 py-5">
-              <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-1.5">
-                Group Name
-              </label>
+              <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-1.5">Group Name</label>
               <input
                 value={newGroupName}
                 onChange={(e) => setNewGroupName(e.target.value)}
@@ -1094,13 +959,7 @@ function CourseViewInner({ courseId }: { courseId: string }) {
               />
             </div>
             <div className="flex items-center gap-2 px-5 py-4 bg-gray-50 border-t border-gray-100">
-              <button
-                onClick={() => setShowAddGroupModal(false)}
-                disabled={peopleActionLoading}
-                className="flex-1 h-11 sm:h-9 border border-gray-200 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-100 disabled:opacity-50"
-              >
-                Cancel
-              </button>
+              <button onClick={() => setShowAddGroupModal(false)} disabled={peopleActionLoading} className="flex-1 h-11 sm:h-9 border border-gray-200 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-100 disabled:opacity-50">Cancel</button>
               <button
                 onClick={handleAddGroup}
                 disabled={peopleActionLoading || !newGroupName.trim()}
@@ -1122,10 +981,7 @@ export default function CourseViewPage({ courseId }: { courseId: string }) {
   return (
     <Suspense
       fallback={
-        <div
-          className="flex items-center justify-center h-64 text-sm"
-          style={{ color: COLORS.textMuted, fontFamily: FONT }}
-        >
+        <div className="flex items-center justify-center h-64 text-sm" style={{ color: COLORS.textMuted, fontFamily: FONT }}>
           Loading...
         </div>
       }

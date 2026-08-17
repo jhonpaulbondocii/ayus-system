@@ -26,6 +26,8 @@ import {
 interface Props {
   courseId: string;
   isHead: boolean;
+  isStaff?: boolean;
+  isFaculty?: boolean;
   isAdmin?: boolean;
   currentUserId?: string | null;
   courseRole?: string | null;
@@ -231,7 +233,7 @@ function recalcStaff(
       .filter((a) => !a.doNotCount && a.displayGradeAs !== "Not Graded")
       .reduce((sum, a) => sum + a.points, 0) +
     safeForms.reduce((sum, f) => sum + f.points, 0);
-  const percentage = totalPossible > 0 ? Math.round((totalEarned / totalPossible) * 100) : 0;
+  const percentage = totalPossible > 0 ? Math.round((totalEarned / totalPossible) * 100) : null;
 
   return { ...staff, assignmentGrades: safeGrades, formGrades: safeFormGrades, totalEarned, totalPossible, percentage };
 }
@@ -309,7 +311,7 @@ function FilterPanel({
 
   if (!open) return null;
 
-  const statusOptions = ["Late", "Missing", "Resubmitted", "Dropped", "Excused"];
+  const statusOptions = ["Late", "Missing", "Excused"];
   const submissionOptions = ["Has Ungraded Submissions", "Has Submissions", "Has No Submissions", "Has Unposted Grades"];
 
   const isActive = (type: ActiveFilter["type"], value: string) =>
@@ -766,15 +768,9 @@ function GradePanel({
 
         <div className="px-4 sm:px-5 py-2.5 border-b border-gray-100 shrink-0 bg-gray-50 flex items-center justify-between">
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1 mb-0.5">
-              <button className="w-6 h-6 flex items-center justify-center rounded border border-gray-200 text-gray-400 hover:bg-gray-100">
-                <ChevronLeft size={11} />
-              </button>
-              <p className="text-xs font-black text-gray-800 truncate flex-1 text-center">{panel.assignmentTitle}</p>
-              <button className="w-6 h-6 flex items-center justify-center rounded border border-gray-200 text-gray-400 hover:bg-gray-100">
-                <ChevronRight size={11} />
-              </button>
-            </div>
+            <div className="flex items-center justify-center mb-0.5">
+  <p className="text-xs font-black text-gray-800 truncate text-center">{panel.assignmentTitle}</p>
+</div>
             <div className="flex items-center gap-1.5 mt-0.5 justify-center">
               <span className="text-[10px] text-gray-400">{panel.maxPoints} pts max</span>
               {panel.grade.submittedAt && (
@@ -983,7 +979,7 @@ function FormResponsePanel({
     const submissionId = panel.formGrade.submissionId;
     if (!submissionId) return;
     setLoadingAnswers(true);
-    fetch(`/api/courses/${courseId}/forms/${panel.formId}/submissions`)
+    fetch(`/api/admin/courses/${courseId}/forms/${panel.formId}/submissions`)
       .then(r => r.json())
       .then(data => {
         const subs: { id: string; answers?: FetchedAnswer[] }[] = data.submissions ?? [];
@@ -1199,6 +1195,7 @@ function CellEditor({
   const isPct = dga === "Percentage";
   const inputRef = useRef<HTMLInputElement>(null);
   const savedRef = useRef(false);
+useEffect(() => { savedRef.current = false; }, []);
 
   const [ciVal, setCiVal] = useState<string>(
     score === col.points ? "complete" : score === 0 ? "incomplete" : ""
@@ -1573,7 +1570,7 @@ function MyGradesView({ courseId }: { courseId: string }) {
                   {totalPct !== null && (
                     <div className="text-right">
                       <p className="text-2xl font-black text-white leading-none">{totalPct}%</p>
-                      <p className="text-[10px] text-white/60 mt-0.5">{totalEarned.toFixed(1)} / {totalPossible} pts</p>
+                      <p className="text-[10px] text-white/60 mt-0.5">{Number.isInteger(totalEarned) ? totalEarned : totalEarned.toFixed(1)} / {totalPossible} pts</p>
                     </div>
                   )}
                 </div>
@@ -1780,10 +1777,10 @@ function MyGradesView({ courseId }: { courseId: string }) {
           <span className="text-[10px] text-gray-400">Form</span>
         </div>
         {totalPct !== null && (
-          <span className="ml-auto text-xs font-semibold text-gray-500">
-            Total: {totalEarned.toFixed(1)} / {totalPossible} pts ({totalPct}%)
-          </span>
-        )}
+  <span className="ml-auto text-xs font-semibold text-gray-500">
+    Total: {Number.isInteger(totalEarned) ? totalEarned : totalEarned.toFixed(1)} / {totalPossible} pts ({totalPct}%)
+  </span>
+)}
       </div>
     </div>
   );
@@ -2132,7 +2129,7 @@ function ManageGradesView({ courseId }: { courseId: string }) {
               filter={f}
               onRemove={() => removeFilter(idx)}
               onChangeStatus={f.type === "status" ? (val) => changeFilterStatus(idx, val) : undefined}
-              statusOptions={f.type === "status" ? ["Late", "Missing", "Resubmitted", "Dropped", "Excused"] : undefined}
+              statusOptions={f.type === "status" ? ["Late", "Missing", "Excused"] : undefined}
             />
           ))}
 
@@ -2516,13 +2513,18 @@ function ManageGradesView({ courseId }: { courseId: string }) {
 /* ─────────────────────────────────────────────────────────────────────────────
    MAIN EXPORT
 ───────────────────────────────────────────────────────────────────────────── */
-export default function CourseGradesTab({ courseId, isHead, isAdmin, courseRole }: Props) {
-  const isStaffHead = courseRole?.includes("Staff") && courseRole?.includes("Head");
-  const isHeadOnly = isHead && !isStaffHead && !isAdmin;
+export default function CourseGradesTab({
+  courseId,
+  isHead,
+  isStaff = false,
+  isFaculty = false,
+  isAdmin = false,
+}: Props) {
+  const defaultTab = isHead || isAdmin ? "manage" : "my-grades";
+  const [activeTab, setActiveTab] = useState<"my-grades" | "manage">(defaultTab);
 
-  const [activeTab, setActiveTab] = useState<"my-grades" | "manage">("manage");
-
-  if (!isHead) {
+  // Faculty: MyGrades only
+  if (isFaculty && !isHead && !isStaff && !isAdmin) {
     return (
       <div className="flex flex-col h-full" style={{ fontFamily: FONT }}>
         <MyGradesView courseId={courseId} />
@@ -2530,7 +2532,8 @@ export default function CourseGradesTab({ courseId, isHead, isAdmin, courseRole 
     );
   }
 
-  if (isAdmin || isHeadOnly) {
+  // Head or Admin (pure, not staff): ManageGrades only
+  if ((isHead || isAdmin) && !isStaff) {
     return (
       <div className="flex flex-col h-full" style={{ fontFamily: FONT }}>
         <ManageGradesView courseId={courseId} />
@@ -2538,6 +2541,7 @@ export default function CourseGradesTab({ courseId, isHead, isAdmin, courseRole 
     );
   }
 
+  // Staff (or Head+Staff): both tabs
   return (
     <div className="flex flex-col h-full" style={{ fontFamily: FONT }}>
       <div className="flex border-b shrink-0 px-4 sm:px-8 pt-4 overflow-x-auto" style={{ borderColor: COLORS.border }}>

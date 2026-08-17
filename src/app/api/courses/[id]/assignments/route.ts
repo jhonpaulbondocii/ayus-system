@@ -22,14 +22,25 @@ type SubmissionEntry = {
   type?: string;
   allowedFileTypes?: string[];
   maxFiles?: number | null;
+  maxFileSizeValue?: number | null;
+  maxFileSizeUnit?: "KB" | "MB" | null;
 };
 
 function normalizeFileTypes(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
   return value
     .filter((item): item is string => typeof item === "string")
-    .map((item) => item.replace(".", "").trim().toLowerCase())
+    .map((item) => item.replace(/^\./, "").trim().toLowerCase())
     .filter(Boolean);
+}
+
+function normalizeMaxFileSizeValue(value: unknown): number {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+}
+
+function normalizeMaxFileSizeUnit(value: unknown): "KB" | "MB" {
+  return value === "KB" ? "KB" : "MB";
 }
 
 function parseSubmissionEntries(opts: string[]): SubmissionEntry[] | undefined {
@@ -40,13 +51,17 @@ function parseSubmissionEntries(opts: string[]): SubmissionEntry[] | undefined {
     try { parsed = JSON.parse(opt); } catch { continue; }
     if (parsed && typeof parsed === "object" && !Array.isArray(parsed) && "id" in (parsed as object)) {
       const entry = parsed as SubmissionEntry;
+      const type = entry.type ?? "File Upload";
+      const normalizedType = type === "File Upload" || type === "Media Recording" ? type : "File Upload";
       entries.push({
         id: entry.id,
         label: entry.label ?? "",
         required: entry.required ?? false,
-        type: entry.type ?? "File Upload",
-        allowedFileTypes: normalizeFileTypes(entry.allowedFileTypes),
-        maxFiles: entry.type === "File Upload" ? entry.maxFiles ?? 1 : null,
+        type: normalizedType,
+        allowedFileTypes: normalizedType === "File Upload" || normalizedType === "Media Recording" ? normalizeFileTypes(entry.allowedFileTypes) : [],
+        maxFiles: normalizedType === "File Upload" || normalizedType === "Media Recording" ? (Number(entry.maxFiles ?? 1) > 0 ? Number(entry.maxFiles ?? 1) : 1) : null,
+        maxFileSizeValue: normalizedType === "File Upload" || normalizedType === "Media Recording" ? normalizeMaxFileSizeValue(entry.maxFileSizeValue) : null,
+        maxFileSizeUnit: normalizedType === "File Upload" || normalizedType === "Media Recording" ? normalizeMaxFileSizeUnit(entry.maxFileSizeUnit) : null,
       });
     }
   }
@@ -57,13 +72,16 @@ function normalizeSubmissionEntries(entries?: SubmissionEntry[]): string[] {
   if (!Array.isArray(entries)) return [];
   return entries.map((entry, index) => {
     const type = entry.type ?? "File Upload";
+    const normalizedType = type === "File Upload" || type === "Media Recording" ? type : "File Upload";
     return JSON.stringify({
       id: entry.id,
       label: entry.label?.trim() || `Submission ${index + 1}`,
       required: entry.required ?? false,
-      type,
-      allowedFileTypes: type === "File Upload" ? normalizeFileTypes(entry.allowedFileTypes) : [],
-      maxFiles: type === "File Upload" ? entry.maxFiles ?? 1 : null,
+      type: normalizedType,
+      allowedFileTypes: normalizedType === "File Upload" || normalizedType === "Media Recording" ? normalizeFileTypes(entry.allowedFileTypes) : [],
+      maxFiles: normalizedType === "File Upload" || normalizedType === "Media Recording" ? (Number(entry.maxFiles ?? 1) > 0 ? Number(entry.maxFiles ?? 1) : 1) : null,
+      maxFileSizeValue: normalizedType === "File Upload" || normalizedType === "Media Recording" ? normalizeMaxFileSizeValue(entry.maxFileSizeValue) : null,
+      maxFileSizeUnit: normalizedType === "File Upload" || normalizedType === "Media Recording" ? normalizeMaxFileSizeUnit(entry.maxFileSizeUnit) : null,
     });
   });
 }
@@ -172,6 +190,7 @@ export async function GET(
       assignmentGroup: true,
       displayGradeAs: true,
       onlineEntryOptions: true,
+      submissionEntries: true,
       allowedAttempts: true,
       submissionAttempts: true,
       doNotCount: true,
@@ -268,9 +287,19 @@ export async function GET(
       return assignedToYou;
     })
     .map((assignment) => {
-      const { onlineEntryOptions, createdById, assignees, ...rest } = assignment;
+      const { onlineEntryOptions, createdById, assignees, submissionEntries: _se, ...rest } = assignment as typeof assignment & { submissionEntries?: unknown };
 
-      const submissionEntries = parseSubmissionEntries(onlineEntryOptions);
+      // Prefer the new Json field; fall back to parsing onlineEntryOptions for legacy data
+      const rawJsonEntries = (assignment as Record<string, unknown>).submissionEntries;
+      const jsonEntries: SubmissionEntry[] | undefined = (() => {
+        try {
+          const arr = Array.isArray(rawJsonEntries) ? rawJsonEntries : 
+            (typeof rawJsonEntries === "string" ? JSON.parse(rawJsonEntries) : null);
+          if (Array.isArray(arr) && arr.length > 0) return arr as SubmissionEntry[];
+        } catch { /* ignore */ }
+        return undefined;
+      })();
+      const submissionEntries = jsonEntries ?? parseSubmissionEntries(onlineEntryOptions);
       const isCreator = !!createdById && createdById === userId;
 
       const assignedToYou = isAssignedToUser({

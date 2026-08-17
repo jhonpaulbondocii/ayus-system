@@ -1078,6 +1078,14 @@ function FormCreateEditView({ form, courseId, sections, staff, onCancel, onSave 
                 <option>Registration Form</option>
                 <option>Graded Assessment</option>
               </select>
+              <label className="cft-form-label">Assignment Group</label>
+              <div className="flex items-center gap-2">
+                <select value={assignmentGroup} onChange={e => setAssignmentGroup(e.target.value)} className={sel} style={{ maxWidth: 280 }}>
+                  {groups.map(g => <option key={g.id} value={g.name}>{g.name}</option>)}
+                </select>
+                <button type="button" onClick={() => setGroupModalOpen(true)}
+                  className="h-9 px-2 text-xs border border-gray-300 rounded-sm hover:bg-gray-50 shrink-0" style={{ color: MAROON }}>+ New</button>
+              </div>
               <label className="cft-form-label">Assign</label>
               <div className="border border-gray-200 rounded-sm p-3 space-y-3">
                 <div>
@@ -1394,25 +1402,28 @@ function StaffFormsList({ forms, onView }: { forms: Form[]; onView: (f: Form) =>
 
 // ── resolveFormRole ────────────────────────────────────────────────────────────
 function resolveFormRole(form: Form, currentUserId?: string | null): "manager" | "submitter" {
-  if (form._formRole === "submitter") return "submitter";
   if (form._formRole === "manager") return "manager";
+  if (form._formRole === "submitter") return "submitter";
   if (form._isAssignedToYou) return "submitter";
   const isActualCreator =
     form.isCreator === true ||
     (!!currentUserId && !!form._publisherId && String(form._publisherId) === String(currentUserId));
   if (isActualCreator) return "manager";
-  return "submitter";
+  return "manager";
 }
 
 // ── Main Export ────────────────────────────────────────────────────────────────
 interface CourseFormsPageProps {
   courseId: string;
   isHead?: boolean;
+  isStaff?: boolean;
+  isFaculty?: boolean;
+  canDelete?: boolean;
   canManageForms?: boolean;
   currentUserId?: string | null;
 }
 
-export default function CourseFormsPage({ courseId, isHead, canManageForms, currentUserId }: CourseFormsPageProps) {
+export default function CourseFormsPage({ courseId, isHead, isStaff, isFaculty: _isFaculty, canDelete: _canDelete, canManageForms, currentUserId }: CourseFormsPageProps) {
   const [mode, setMode] = useState<"list" | "create" | "edit" | "detail" | "answer" | "responses">("list");
   const [forms, setForms] = useState<Form[]>([]);
   const [editingForm, setEditingForm] = useState<Form | undefined>(undefined);
@@ -1432,7 +1443,13 @@ export default function CourseFormsPage({ courseId, isHead, canManageForms, curr
   const [submissionsLoading, setSubmissionsLoading] = useState(false);
 
   const canManage = canManageForms ?? viewer?.canManageForms ?? false;
-  const headMode = isHead ?? (viewer?.courseRole === "Head");
+  const headMode = isHead || isStaff || (
+  viewer?.courseRole === "Head" ||
+  viewer?.courseRole === "Staff" ||
+  viewer?.courseRole?.includes("Head") ||
+  viewer?.courseRole?.includes("Staff") ||
+  viewer?.canManageForms === true
+);
 
   const loadForms = useCallback(() => {
     setLoading(true);
@@ -1466,7 +1483,10 @@ export default function CourseFormsPage({ courseId, isHead, canManageForms, curr
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ...data, published: publish }),
     });
-    if (!res.ok) throw new Error("Save failed");
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error((errData as { error?: string })?.error ?? "Save failed");
+    }
     loadForms();
     setMode("list"); setEditingForm(undefined);
   };
@@ -1501,7 +1521,7 @@ export default function CourseFormsPage({ courseId, isHead, canManageForms, curr
   const openForm = (form: Form) => {
     setViewingForm(form);
     const role = resolveFormRole(form, currentUserId);
-    if (headMode && canManage && role === "manager") setMode("detail");
+    if ((headMode || canManage) && role === "manager") setMode("detail");
     else setMode("answer");
   };
 
@@ -1541,6 +1561,8 @@ export default function CourseFormsPage({ courseId, isHead, canManageForms, curr
         <style>{RESPONSIVE_CSS}</style>
         <HeadFormDetail
           form={viewingForm}
+          courseId={courseId}
+          formId={String(viewingForm.id)}
           currentUserId={currentUserId}
           onBack={() => { setMode("list"); setViewingForm(undefined); }}
           onEdit={() => { setEditingForm(viewingForm); setMode("edit"); }}

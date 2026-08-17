@@ -112,9 +112,15 @@ async function syncRepositoryFiles(
   });
 
   // Remove old RepositoryFile records for this submission (handles resubmits)
-  await prisma.repositoryFile.deleteMany({
-    where: { submissionId: submission.id },
-  });
+ // IPAPALIT:
+// Delete ALL existing files for this user in this repo (not just the linked one)
+// This ensures clean slate on every resubmit regardless of submissionId
+await prisma.repositoryFile.deleteMany({
+  where: {
+    repositoryId: repository.id,
+    userId:       submission.userId,
+  },
+});
 
   // Re-create one RepositoryFile per uploaded file
   for (let i = 0; i < filesToSync.length; i++) {
@@ -299,15 +305,17 @@ export async function POST(
     });
 
     // FIX: pass courseId and assignmentTitle so the repo can be created on the fly
-    await syncRepositoryFiles(
-      { id: submission.id, userId },
-      assignmentId,
-      courseId,
-      assignment.title,
-      Array.isArray(entries) && entries.length > 0 ? entries : null,
-      fileUrl ?? null,
-      fileName ?? null,
-    );
+    const entriesToSync = Array.isArray(entries) && entries.length > 0 ? entries : null;
+console.log("[SUBMIT] entries received:", JSON.stringify(entriesToSync?.map(e => ({ entryId: e.entryId, fileName: e.fileName, hasUrl: !!e.fileUrl }))));
+await syncRepositoryFiles(
+  { id: submission.id, userId },
+  assignmentId,
+  courseId,
+  assignment.title,
+  entriesToSync,
+  fileUrl ?? null,
+  fileName ?? null,
+);
 
     return NextResponse.json({ submission });
   } catch (err) {

@@ -119,6 +119,14 @@ function parseStoredFileUrl(raw: string | null): { isMulti: boolean; entries: St
   return { isMulti: false, entries: [], fileUrl: raw };
 }
 
+function getEntryDisplayName(entry: StoredEntry, fallbackIndex = 1) {
+  if (entry.fileName?.trim()) return entry.fileName.trim();
+  if (entry.fileUrl?.trim()) return entry.fileUrl.split("/").pop() || `File ${fallbackIndex}`;
+  if (entry.label?.trim()) return entry.label.trim();
+  if (entry.type?.trim()) return entry.type.trim();
+  return `Entry ${fallbackIndex}`;
+}
+
 function dbStatusToUi(dbStatus: string): SubmissionStatus {
   switch (dbStatus?.toUpperCase()) {
     case "EXCUSED":   return "Excused";
@@ -149,7 +157,7 @@ function FileViewer({ fileUrl, zoom, pdfPage, setPdfTotal }: {
   if (isPdf(url)) return (
   <div className="bg-white shadow-2xl transition-transform" style={{ transform: `scale(${zoom})`, transformOrigin: "top center", width: "min(850px, 100%)", minHeight: 1100 }}>
     <embed
-      src={`${url}#page=${pdfPage}`}
+      src={url}
       type="application/pdf"
       className="w-full"
       style={{ height: Math.round(1100 * zoom) + "px", border: "none" }}
@@ -443,7 +451,8 @@ export default function SpeedGraderClient({ courseId, assignmentId, initialStude
   const [gradeSaving, setGradeSaving] = useState(false);
   const [savedFlash,  setSavedFlash]  = useState(false);
   const [pdfPage,     setPdfPage]     = useState(1);
-  const [pdfTotal,    setPdfTotal]    = useState(1);
+const [pdfTotal,    setPdfTotal]    = useState(1);
+// pdfPage/pdfTotal retained for future pdf.js implementation
   const [zoom,        setZoom]        = useState(1);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeEntryIdx, setActiveEntryIdx] = useState(0);
@@ -490,7 +499,22 @@ export default function SpeedGraderClient({ courseId, assignmentId, initialStude
     ? (() => { if (current.isMulti && current.entries) return { isMulti: true, entries: current.entries }; return parseStoredFileUrl(current.fileUrl); })()
     : null;
 
-  const activeEntry = parsedSubmission?.isMulti ? (parsedSubmission.entries ?? [])[activeEntryIdx] ?? null : null;
+  const fileEntries = parsedSubmission?.isMulti
+    ? (parsedSubmission.entries ?? []).filter(entry => !!entry.fileUrl)
+    : current?.fileUrl
+      ? [{
+          entryId: current.id,
+          label: current.userName ?? "File Upload",
+          type: "File Upload",
+          fileUrl: current.fileUrl,
+          fileName: current.fileUrl.split("/").pop() ?? null,
+          textEntry: null,
+          websiteUrl: null,
+          required: true,
+        } as StoredEntry]
+      : [];
+
+  const activeEntry = parsedSubmission?.isMulti ? (fileEntries[activeEntryIdx] ?? fileEntries[0] ?? null) : null;
   const activeFileUrl = activeEntry ? normalizeFileUrl(activeEntry.fileUrl) : normalizeFileUrl(current?.fileUrl ?? null);
 
   useLayoutEffect(() => {
@@ -616,8 +640,8 @@ export default function SpeedGraderClient({ courseId, assignmentId, initialStude
           onBlur={e  => (e.currentTarget.style.borderColor = "#e5e7eb")}>
           {submissions.length === 0
             ? <option value="">No submissions</option>
-            : submissions.map(s => (
-              <option key={s.id} value={s.id}>
+            : submissions.map((s, idx) => (
+              <option key={s.id ?? `sub-${idx}`} value={s.id ?? ""}>
                 {s.userName ?? s.userEmail}
                 {s.submittedAt ? ` — ${new Date(s.submittedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })} at ${new Date(s.submittedAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }).toLowerCase()}` : " — Not submitted"}
                 {s.status === "EXCUSED" ? " (Excused)" : s.grade != null ? ` (${formatGradeShortForDropdown(s.grade, assignment.points, displayAs, s.status)})` : ""}
@@ -637,16 +661,16 @@ export default function SpeedGraderClient({ courseId, assignmentId, initialStude
           </div>
           {parsedSubmission?.isMulti ? (
             <div className="space-y-2">
-              {(parsedSubmission.entries ?? []).map((entry, idx) => (
+              {fileEntries.map((entry, idx) => (
                 <button key={entry.entryId ?? idx}
                   onClick={() => { setActiveEntryIdx(idx); setPdfPage(1); setMobileSheet("none"); }}
                   className="w-full text-left p-2 rounded-lg border transition-all"
                   style={{ borderColor: activeEntryIdx === idx ? MAROON : "#e5e7eb", background: activeEntryIdx === idx ? "#fdf8f8" : "#fff" }}>
                   <div className="flex items-center justify-between gap-1 mb-0.5">
-                    <span className="text-[11px] font-bold truncate" style={{ color: activeEntryIdx === idx ? MAROON : "#374151" }}>{entry.label || entry.type || `Entry ${idx + 1}`}</span>
+                    <span className="text-[11px] font-bold truncate" style={{ color: activeEntryIdx === idx ? MAROON : "#374151" }}>{getEntryDisplayName(entry, idx + 1)}</span>
                     <span className="text-[9px] font-bold px-1 py-0.5 rounded-full text-white shrink-0" style={{ background: entry.required ? MAROON : "#9ca3af" }}>{entry.required ? "REQ" : "OPT"}</span>
                   </div>
-                  {entry.fileUrl ? <p className="text-[10px] text-gray-500 truncate">📎 {entry.fileName ?? entry.fileUrl.split("/").pop() ?? "File"}</p>
+                  {entry.fileUrl ? <p className="text-[10px] text-gray-500 truncate">📎 {getEntryDisplayName(entry, idx + 1)}</p>
                     : entry.textEntry ? <p className="text-[10px] text-gray-500 truncate">✏️ Text entry</p>
                     : entry.websiteUrl ? <p className="text-[10px] text-gray-500 truncate">🔗 {entry.websiteUrl}</p>
                     : <p className="text-[10px] text-gray-400 italic">Nothing submitted</p>}
@@ -812,36 +836,25 @@ export default function SpeedGraderClient({ courseId, assignmentId, initialStude
         <div className="flex-1 flex flex-col overflow-hidden" style={{ background: "#3a3a38" }}>
           {/* Viewer toolbar */}
           <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 shrink-0 border-b overflow-x-auto" style={{ background: "#2c2c2a", borderColor: "rgba(0,0,0,.3)" }}>
-            {parsedSubmission?.isMulti && (parsedSubmission.entries?.length ?? 0) > 0 && (
+            {parsedSubmission?.isMulti && fileEntries.length > 0 && (
               <div className="flex items-center gap-1 mr-2 shrink-0">
-                {(parsedSubmission.entries ?? []).map((entry, idx) => (
+                {fileEntries.map((entry, idx) => (
                   <button key={entry.entryId ?? idx} onClick={() => { setActiveEntryIdx(idx); setPdfPage(1); }}
                     className="px-2 sm:px-2.5 py-1 rounded text-[10px] sm:text-[11px] font-semibold transition-all whitespace-nowrap"
                     style={activeEntryIdx === idx ? { background: MAROON, color: "#fff" } : { background: "rgba(255,255,255,.1)", color: "rgba(255,255,255,.6)" }}>
-                    {entry.label || entry.type || `Entry ${idx + 1}`}
+                    {getEntryDisplayName(entry, idx + 1)}
                     {entry.required && <span className="ml-1 opacity-70">*</span>}
                   </button>
                 ))}
               </div>
             )}
             {isPdf(activeFileUrl) && (
-              <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
-                <span className="text-[10px] sm:text-[11px]" style={{ color: "rgba(255,255,255,.5)" }}>Pg</span>
-                <button onClick={() => setPdfPage(p => Math.max(1, p - 1))} disabled={pdfPage <= 1}
-                  className="w-5 h-5 flex items-center justify-center disabled:opacity-30" style={{ color: "rgba(255,255,255,.5)" }}>
-                  <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M15 18l-6-6 6-6"/></svg>
-                </button>
-                <input type="number" min={1} max={pdfTotal} value={pdfPage}
-                  onChange={e => setPdfPage(Math.max(1, Math.min(pdfTotal, parseInt(e.target.value) || 1)))}
-                  className="w-8 text-center rounded text-[11px] px-1 py-0.5 focus:outline-none text-white"
-                  style={{ background: "rgba(255,255,255,.1)", border: "1px solid rgba(255,255,255,.2)" }}/>
-                <button onClick={() => setPdfPage(p => Math.min(pdfTotal, p + 1))} disabled={pdfPage >= pdfTotal}
-                  className="w-5 h-5 flex items-center justify-center disabled:opacity-30" style={{ color: "rgba(255,255,255,.5)" }}>
-                  <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 18l6-6-6-6"/></svg>
-                </button>
-                <span className="text-[10px]" style={{ color: "rgba(255,255,255,.35)" }}>/{pdfTotal}</span>
-              </div>
-            )}
+  <div className="flex items-center gap-1 shrink-0">
+    <span className="text-[10px] sm:text-[11px] font-medium" style={{ color: "rgba(255,255,255,.5)" }}>
+      PDF — use browser controls to navigate pages
+    </span>
+  </div>
+)}
             <div className="flex-1"/>
             {/* Zoom — hide on very small screens */}
             <div className="hidden xs:flex items-center gap-1 shrink-0">
@@ -907,7 +920,7 @@ export default function SpeedGraderClient({ courseId, assignmentId, initialStude
                   );
                   return null;
                 })()}
-                {activeFileUrl && <FileViewer fileUrl={activeFileUrl} zoom={zoom} pdfPage={pdfPage} setPdfTotal={setPdfTotal}/>}
+                {activeFileUrl && <FileViewer fileUrl={activeFileUrl} zoom={zoom} pdfPage={1} setPdfTotal={() => {}}/>}
                 {activeEntry && !activeEntry.fileUrl && !activeEntry.textEntry && !activeEntry.websiteUrl && (
                   <div className="flex flex-col items-center justify-center gap-3 mt-16 sm:mt-32" style={{ color: "rgba(255,255,255,.25)" }}>
                     <svg className="w-10 h-10 sm:w-14 sm:h-14 opacity-40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">

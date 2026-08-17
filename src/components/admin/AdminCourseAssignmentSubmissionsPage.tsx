@@ -36,6 +36,8 @@ interface Submission {
   textEntry?: string | null;
   onlineUrl?: string | null;
   feedback?: string | null;
+  allFileUrls?: { label: string; url: string }[];
+  isMulti?: boolean;
 }
 
 type FilterStatus = "all" | "submitted" | "graded" | "missing" | "late";
@@ -285,45 +287,71 @@ function GradeModal({
 
 // ── File Preview Modal ─────────────────────────────────────────────────────────
 function FilePreviewModal({ sub, onClose }: { sub: Submission; onClose: () => void }) {
-  if (!sub.fileUrl) return null;
+  const files = sub.allFileUrls && sub.allFileUrls.length > 0
+    ? sub.allFileUrls
+    : sub.fileUrl
+    ? [{ label: sub.fileName ?? "File", url: sub.fileUrl }]
+    : [];
+  const [activeIdx, setActiveIdx] = useState(0);
+  const active = files[activeIdx];
+  if (!files.length) return null;
   return (
     <div className="fixed inset-0 z-300 flex items-center justify-center bg-black/80 p-4" onClick={onClose}>
       <div className="bg-white rounded-2xl overflow-hidden w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl"
         onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between px-4 py-3 shrink-0" style={{ background: MAROON }}>
-          <div className="flex items-center gap-2">
-            <FileText size={13} className="text-white/70" />
-            <span className="text-sm font-bold text-white truncate">{sub.fileName ?? "File"}</span>
+          <div className="flex items-center gap-2 min-w-0">
+            <FileText size={13} className="text-white/70 shrink-0" />
+            <span className="text-sm font-bold text-white truncate">{active?.label ?? "File"}</span>
           </div>
-          <div className="flex items-center gap-2">
-            <a href={sub.fileUrl} target="_blank" rel="noopener noreferrer"
+          <div className="flex items-center gap-2 shrink-0">
+            <a href={active?.url} target="_blank" rel="noopener noreferrer"
               className="flex items-center gap-1 text-[10px] font-bold text-white/70 hover:text-white transition-colors">
               <ExternalLink size={11} /> Open
             </a>
-            <a href={sub.fileUrl} download={sub.fileName ?? "file"}
+            <a href={active?.url} download
               className="flex items-center gap-1 text-[10px] font-bold text-white/70 hover:text-white transition-colors">
               <Download size={11} /> Download
             </a>
             <button onClick={onClose} className="text-white/60 hover:text-white ml-1"><X size={15} /></button>
           </div>
         </div>
+        {files.length > 1 && (
+          <div className="flex gap-1 px-3 py-2 border-b border-gray-200 bg-gray-50 overflow-x-auto">
+            {files.map((f, i) => {
+              const name = f.url.split("/").pop()?.split("?")[0] ?? f.label;
+              return (
+                <button key={i} onClick={() => setActiveIdx(i)}
+                  className="flex items-center gap-1.5 text-[10px] font-bold px-3 py-1.5 rounded-lg border whitespace-nowrap transition-all shrink-0"
+                  style={{
+                    background: activeIdx === i ? MAROON : "#fff",
+                    color: activeIdx === i ? "#fff" : "#6b7280",
+                    borderColor: activeIdx === i ? MAROON : "#e5e7eb",
+                  }}>
+                  <FileText size={10} />
+                  {name.length > 30 ? name.slice(0, 27) + "..." : name}
+                </button>
+              );
+            })}
+          </div>
+        )}
         <div className="flex-1 overflow-auto bg-gray-900 flex items-center justify-center p-4" style={{ minHeight: 300 }}>
-          {isImage(sub.fileUrl) ? (
+          {active && (isImage(active.url) ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={sub.fileUrl} alt={sub.fileName ?? ""} className="max-w-full max-h-[70vh] object-contain rounded-lg" />
-          ) : isPdf(sub.fileUrl) ? (
-            <iframe src={sub.fileUrl} title={sub.fileName ?? "PDF"} className="w-full rounded-lg border-0" style={{ height: "70vh" }} />
+            <img src={active.url} alt={active.label} className="max-w-full max-h-[70vh] object-contain rounded-lg" />
+          ) : isPdf(active.url) ? (
+            <iframe src={active.url} title={active.label} className="w-full rounded-lg border-0" style={{ height: "70vh" }} />
           ) : (
             <div className="flex flex-col items-center gap-4 text-gray-400">
               <FileText size={48} />
               <p className="text-sm">Preview not available for this file type.</p>
-              <a href={sub.fileUrl} download={sub.fileName ?? "file"}
+              <a href={active.url} download
                 className="flex items-center gap-2 text-sm font-bold px-4 py-2 rounded-lg text-white"
                 style={{ background: MAROON }}>
                 <Download size={13} /> Download to view
               </a>
             </div>
-          )}
+          ))}
         </div>
       </div>
     </div>
@@ -371,22 +399,39 @@ function SubmissionCard({
             </div>
 
             {/* File */}
-            {hasFile && sub.fileName && (
-              <div className="flex items-center gap-2">
-                <FileText size={11} style={{ color: MAROON }} className="shrink-0" />
-                <button
-                  onClick={() => onPreview(sub)}
-                  className="text-xs font-semibold truncate hover:underline text-left"
-                  style={{ color: MAROON }}
-                >
-                  {sub.fileName}
-                </button>
-                <a href={sub.fileUrl!} download={sub.fileName} target="_blank" rel="noopener noreferrer"
-                  className="ml-auto shrink-0 text-gray-400 hover:text-gray-600 transition-colors">
-                  <Download size={11} />
-                </a>
-              </div>
-            )}
+            {(sub.allFileUrls && sub.allFileUrls.length > 0) ? (
+  sub.allFileUrls.map((f, fi) => (
+    <div key={fi} className="flex items-center gap-2">
+      <FileText size={11} style={{ color: MAROON }} className="shrink-0" />
+      <button
+        onClick={() => onPreview(sub)}
+        className="text-xs font-semibold truncate hover:underline text-left"
+        style={{ color: MAROON }}
+      >
+        {f.label}
+      </button>
+      <a href={f.url} download={f.label} target="_blank" rel="noopener noreferrer"
+        className="ml-auto shrink-0 text-gray-400 hover:text-gray-600 transition-colors">
+        <Download size={11} />
+      </a>
+    </div>
+  ))
+) : hasFile && sub.fileName && (
+  <div className="flex items-center gap-2">
+    <FileText size={11} style={{ color: MAROON }} className="shrink-0" />
+    <button
+      onClick={() => onPreview(sub)}
+      className="text-xs font-semibold truncate hover:underline text-left"
+      style={{ color: MAROON }}
+    >
+      {sub.fileName}
+    </button>
+    <a href={sub.fileUrl!} download={sub.fileName} target="_blank" rel="noopener noreferrer"
+      className="ml-auto shrink-0 text-gray-400 hover:text-gray-600 transition-colors">
+      <Download size={11} />
+    </a>
+  </div>
+)}
 
             {/* Online URL */}
             {sub.onlineUrl && (
@@ -425,15 +470,15 @@ function SubmissionCard({
 
       {/* Card footer */}
       <div className="flex items-center gap-2 px-4 py-2.5 border-t border-gray-100 bg-gray-50">
-        {hasFile && (
-          <button
-            onClick={() => onPreview(sub)}
-            className="flex items-center gap-1 text-[10px] font-bold px-2.5 py-1.5 rounded-lg border transition-all hover:border-gray-400"
-            style={{ color: "#6b7280", borderColor: "#e5e7eb" }}
-          >
-            <Eye size={10} /> Preview
-          </button>
-        )}
+        {(hasFile || (sub.allFileUrls && sub.allFileUrls.length > 0)) && (
+  <button
+    onClick={() => onPreview(sub)}
+    className="flex items-center gap-1 text-[10px] font-bold px-2.5 py-1.5 rounded-lg border transition-all hover:border-gray-400"
+    style={{ color: "#6b7280", borderColor: "#e5e7eb" }}
+  >
+    <Eye size={10} /> Preview
+  </button>
+)}
         <button
           onClick={() => onGrade(sub)}
           className="flex items-center gap-1 text-[10px] font-bold px-2.5 py-1.5 rounded-lg border transition-all ml-auto"
@@ -497,7 +542,7 @@ function ZipDownloadButton({ submissions, assignmentTitle }: { submissions: Subm
   const [state, setState] = useState<"idle" | "loading" | "done" | "error">("idle");
   const [progress, setProgress] = useState(0);
 
-  const downloadable = submissions.filter(s => s.fileUrl && s.submittedAt);
+  const downloadable = submissions.filter(s => s.submittedAt && (s.fileUrl || (s.allFileUrls && s.allFileUrls.length > 0)));
 
   const handleDownload = useCallback(async () => {
     if (!downloadable.length) return;
@@ -525,35 +570,36 @@ function ZipDownloadButton({ submissions, assignmentTitle }: { submissions: Subm
         if (!folder) continue;
 
         for (let i = 0; i < subs.length; i++) {
-          const sub = subs[i];
-          if (!sub.fileUrl) continue;
-          const url = sub.fileUrl.startsWith("/") || sub.fileUrl.startsWith("http")
-            ? sub.fileUrl : `/uploads/submissions/${sub.fileUrl}`;
-          try {
-            const res = await fetch(url);
-            const blob = await res.blob();
-            let fileName = sub.fileName?.trim() || "";
-            if (!fileName) {
-              const urlPart = url.split("/").pop()?.split("?")[0] ?? "";
-              const ext = urlPart.includes(".") ? urlPart.split(".").pop() : "bin";
-              fileName = `submission_${i + 1}.${ext}`;
-            }
-            folder.file(fileName, blob);
-          } catch { /* skip unreadable files */ }
-          done++;
-          setProgress(Math.round((done / total) * 100));
-        }
+  const sub = subs[i];
 
-        // Add grade info text file per student
-        const sub = subs[0];
-        const gradeLines = [
-          `Student: ${sub.userName ?? sub.userEmail}`,
-          `Email: ${sub.userEmail}`,
-          `Submitted: ${sub.submittedAt ? fmtDateTime(sub.submittedAt) : "Not submitted"}`,
-          `Score: ${sub.points != null ? sub.points : "Not graded"}`,
-          `Feedback: ${sub.feedback ?? "—"}`,
-        ].join("\n");
-        folder.file("_grade_info.txt", gradeLines);
+  // Get all files — allFileUrls for multi, fileUrl for single
+  const filesToDownload: { url: string; label: string }[] =
+    sub.allFileUrls && sub.allFileUrls.length > 0
+      ? sub.allFileUrls
+      : sub.fileUrl
+        ? [{ url: sub.fileUrl, label: sub.fileName ?? sub.fileUrl.split("/").pop()?.split("?")[0] ?? `file_${i + 1}` }]
+        : [];
+
+  for (let fi = 0; fi < filesToDownload.length; fi++) {
+    const { url: rawUrl, label } = filesToDownload[fi];
+    const url = rawUrl.startsWith("/") || rawUrl.startsWith("http")
+      ? rawUrl : `/uploads/submissions/${rawUrl}`;
+    try {
+      const res = await fetch(url);
+      const blob = await res.blob();
+      const urlPart = url.split("/").pop()?.split("?")[0] ?? "";
+      const ext = urlPart.includes(".") ? `.${urlPart.split(".").pop()}` : "";
+      const safeLabel = label.replace(/[^a-z0-9.\-_ ]/gi, "_").trim();
+      const uniqueLabel = filesToDownload.length > 1 ? `${fi + 1}_${safeLabel}` : safeLabel;
+      const fileName = uniqueLabel.includes(".") ? uniqueLabel : `${uniqueLabel}${ext}`;
+      folder.file(fileName, blob);
+    } catch { /* skip unreadable files */ }
+  }
+
+  done++;
+  setProgress(Math.round((done / total) * 100));
+}
+
       }
 
       const blob = await zip.generateAsync({ type: "blob" }, (meta) => {
@@ -669,8 +715,8 @@ export default function AdminCourseAssignmentSubmissionsPage({
 
   // ── Grade save ─────────────────────────────────────────────────────────────
   const handleSaveGrade = async (userId: string, points: number, feedback: string) => {
-    const sub = submissions.find(s => s.userId === userId);
-    if (!sub?.id) return;
+  const sub = submissions.find(s => s.userId === userId && s.id === gradingTarget?.id);
+  if (!sub?.id) return;
 
     const res = await fetch(
       `/api/admin/courses/${courseId}/assignments/${assignmentId}/submissions`,
@@ -682,10 +728,10 @@ export default function AdminCourseAssignmentSubmissionsPage({
     );
     if (res.ok) {
       setSubmissions(prev =>
-        prev.map(s =>
-          s.userId === userId ? { ...s, points, grade: String(points), feedback } : s
-        )
-      );
+  prev.map(s =>
+    s.id === gradingTarget?.id ? { ...s, points, grade: String(points), feedback } : s
+  )
+);
     }
   };
 
@@ -873,7 +919,7 @@ export default function AdminCourseAssignmentSubmissionsPage({
               <div>
                 <p className="text-sm font-bold text-gray-800">Download Submissions</p>
                 <p className="text-xs text-gray-400">
-                  {submitted.filter(s => s.fileUrl).length} file{submitted.filter(s => s.fileUrl).length !== 1 ? "s" : ""} · Organized by student folder · Includes grade info
+                  {submitted.reduce((acc, s) => acc + (s.allFileUrls?.length || (s.fileUrl ? 1 : 0)), 0)} file{submitted.reduce((acc, s) => acc + (s.allFileUrls?.length || (s.fileUrl ? 1 : 0)), 0) !== 1 ? "s" : ""} · Organized by student folder · Includes grade info
                 </p>
               </div>
             </div>
@@ -911,7 +957,7 @@ export default function AdminCourseAssignmentSubmissionsPage({
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
             {filtered.map((sub, i) => (
               <SubmissionCard
-                key={`${sub.userId}-${i}`}
+                key={sub.id ?? `${sub.userId}-${i}`}
                 sub={sub}
                 assignment={assignment}
                 onGrade={setGradingTarget}

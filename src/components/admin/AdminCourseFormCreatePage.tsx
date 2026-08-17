@@ -456,7 +456,7 @@ function FloatingToolbar({ onAdd }: { onAdd: (type: QuestionType | "section") =>
 
 // ── Questions Tab ─────────────────────────────────────────────────────────────
 function QuestionsTab({ questions, onChange }: {
-  questions: FormQuestion[]; onChange: (qs: FormQuestion[]) => void;
+  questions: FormQuestion[]; isGraded?: boolean; onChange: (qs: FormQuestion[]) => void;
 }) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const idCounter = useRef(1000);
@@ -649,6 +649,8 @@ export default function AdminCourseFormCreateEditPage() {
       .catch(() => {});
   }, [courseId]);
 
+  const isGraded = formType === "Graded Assessment";
+
   const handleSave = async (publish: boolean) => {
     setSaveError(null);
     if (!title.trim()) { setSaveError("Form Title is required."); return; }
@@ -778,6 +780,18 @@ export default function AdminCourseFormCreateEditPage() {
                     <option>Graded Assessment</option>
                   </select>
                 </div>
+                {/* Assignment Group */}
+                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4">
+                  <label className="text-xs text-gray-700 font-medium sm:w-36 sm:text-right shrink-0">Assignment Group</label>
+                  <div className="flex items-center gap-2">
+                    <select value={assignmentGroup} onChange={e => setAssignmentGroup(e.target.value)}
+                      className="h-8 border border-gray-300 rounded-sm px-3 text-xs w-full sm:w-72 bg-white outline-none focus:border-[#7b1113]">
+                      {groups.map(g => <option key={g.id} value={g.name}>{g.name}</option>)}
+                    </select>
+                    <button type="button" onClick={() => setGroupModalOpen(true)}
+                      className="h-8 px-2 text-xs border border-gray-300 rounded-sm hover:bg-gray-50 shrink-0" style={{ color: MAROON }}>+ New</button>
+                  </div>
+                </div>
                 <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-4">
                   <label className="text-xs text-gray-700 font-medium sm:w-36 sm:text-right sm:pt-2 shrink-0">Assign</label>
                   <div className="border border-gray-200 rounded-sm p-3 w-full sm:max-w-lg space-y-3">
@@ -801,7 +815,7 @@ export default function AdminCourseFormCreateEditPage() {
 
         {/* ── QUESTIONS ── */}
         {activeTab === "questions" && (
-          <QuestionsTab questions={questions} onChange={setQuestions} />
+          <QuestionsTab questions={questions} isGraded={isGraded} onChange={setQuestions} />
         )}
 
         {/* ── RESPONSES ── */}

@@ -85,8 +85,6 @@ type SortType = "newest" | "oldest" | "name" | "submissions";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const fmtDate  = (iso: string | null) =>
-  !iso ? "—" : new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" });
 
 const fmtShort = (iso: string) =>
   new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" }) +
@@ -664,6 +662,10 @@ const [loadingForm, setLoadingForm] = useState(false);
 const [previewFile, setPreviewFile] = useState<RepoFile | null>(null);
 const [selectedSub, setSelectedSub] = useState<FormSubmission | null>(null);
 const [isMobile,    setIsMobile]    = useState(false);
+useEffect(() => {
+    setPreviewFile(null);
+    setSelectedSub(null);
+  }, [row.id]);
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 640);
     check();
@@ -802,13 +804,13 @@ const [isMobile,    setIsMobile]    = useState(false);
                 </div>
                 <div style={{ textAlign: "center" }}>
                   <p style={{ fontSize: 14, fontWeight: 700, color: "#4b5563", margin: "0 0 4px" }}>No submissions yet</p>
-                  <p style={{ fontSize: 12, color: "#9ca3af", margin: 0 }}>Files will appear when students submit</p>
+                  <p style={{ fontSize: 12, color: "#9ca3af", margin: 0 }}>Files will appear when staff submit</p>
                 </div>
               </div>
             ) : (
               <>
                 <div style={{ display: "flex", alignItems: "center", padding: "8px 16px", background: "#fef9f9", borderBottom: "1px solid #fce8e8" }}>
-                  <div style={{ flex: 1, fontSize: 10, fontWeight: 800, color: MAROON, textTransform: "uppercase", letterSpacing: "0.1em" }}>Student</div>
+                  <div style={{ flex: 1, fontSize: 10, fontWeight: 800, color: MAROON, textTransform: "uppercase", letterSpacing: "0.1em" }}>Staff</div>
                   <div style={{ fontSize: 10, fontWeight: 800, color: MAROON, textTransform: "uppercase", letterSpacing: "0.1em" }}>Files</div>
                 </div>
                 {Object.entries(filesByUser).map(([uid, uFiles]) => (
@@ -908,13 +910,15 @@ const [isMobile,    setIsMobile]    = useState(false);
 interface Props {
   courseId: string;
   isHead: boolean;
-  onNavigateToAssignments: () => void;
-  onNavigateToForms: () => void;
+  userId: string;
+  onNavigateToAssignments: (id?: string) => void;
+  onNavigateToForms: (id?: string) => void;
 }
 
 export default function CourseRepositoriesTab({
   courseId,
   isHead,
+  userId,
   onNavigateToAssignments,
   onNavigateToForms,
 }: Props) {
@@ -943,15 +947,24 @@ export default function CourseRepositoriesTab({
       fetch(`/api/courses/${courseId}/forms`).then(r => r.ok ? r.json() : { forms: [] }),
     ]).then(([repoData, formData]) => {
       startTransition(() => {
-        setRepos(repoData.repositories ?? []);
-        const headForms = (formData.forms ?? []).filter(
+        const userRepos = (repoData.repositories ?? [])
+          .filter((r: AssignmentRepo) =>
+            r.files?.some((f: RepoFile) => f.user.id === userId) ||
+            r.assignment?.status === "PUBLISHED" && r.files?.length === 0
+          )
+          .map((r: AssignmentRepo) => ({
+            ...r,
+            files: (r.files ?? []).filter((f: RepoFile) => f.user.id === userId),
+          }));
+        setRepos(userRepos);
+        const userForms = (formData.forms ?? []).filter(
           (f: FormItem) => f._formRole === "manager" || f.isCreator === true
         );
-        setForms(headForms);
+        setForms(userForms);
         setLoading(false);
       });
     }).catch(() => startTransition(() => setLoading(false)));
-  }, [courseId]);
+  }, [courseId, userId]);
 
   const fetchRef = useRef(fetchData);
   useEffect(() => { fetchRef.current = fetchData; }, [fetchData]);
@@ -1021,10 +1034,10 @@ export default function CourseRepositoriesTab({
 
   const activeFilterCount = (tab !== "all" ? 1 : 0) + (sort !== "newest" ? 1 : 0);
 
-  const handleNavigate = (kind: "assignment" | "form") => {
+  const handleNavigate = (kind: "assignment" | "form", id: string) => {
     setDrawerRow(null);
-    if (kind === "assignment") onNavigateToAssignments();
-    else onNavigateToForms();
+    if (kind === "assignment") onNavigateToAssignments(id);
+    else onNavigateToForms(id);
   };
 
   return (
@@ -1061,7 +1074,7 @@ export default function CourseRepositoriesTab({
 
           {/* Stat cards */}
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(4, 1fr)", gap: isMobile ? 8 : 12 }}>
-            <StatCard label="Assignments"     value={repos.length}     icon={<Folder size={14} />}      accent={MAROON}   sub={`${repos.length} with repo`} />
+            <StatCard label="Assignments"     value={repos.length}     icon={<Folder size={14} />}      accent={MAROON}   sub={`${repos.filter(r => r.hasRepo).length} with repo`} />
             <StatCard label="Forms"           value={forms.length}     icon={<FileText size={14} />}    accent="#1d4ed8"  sub={`${formResponses} responses`} />
             <StatCard label="Total Submitted" value={totalSubmissions} icon={<TrendingUp size={14} />}  accent="#16a34a" />
             <StatCard label="Published"       value={published}        icon={<CheckCircle size={14} />} accent="#0891b2"  sub={`of ${allRows.length} total`} />

@@ -18,11 +18,13 @@ export async function PATCH(
 
     const { id: courseId, studentId } = await params;
     const body = await req.json();
-    const { assignmentId, grade, feedback } = body as {
-      assignmentId: string;
-      grade: number | null;
-      feedback?: string;
-    };
+    const { assignmentId, grade, feedback, status, daysLate } = body as {
+  assignmentId: string;
+  grade: number | null;
+  feedback?: string;
+  status?: string;
+  daysLate?: number | null;
+};
 
     if (!assignmentId) {
       return NextResponse.json(
@@ -55,8 +57,10 @@ export async function PATCH(
     }
 
     // Determine new status
-    const newStatus =
-      grade !== null ? ("GRADED" as const) : ("PENDING" as const);
+    const validStatuses = ["PENDING","SUBMITTED","GRADED","OVERDUE","LATE","MISSING","EXCUSED"];
+const newStatus = status && validStatuses.includes(status)
+  ? status
+  : grade !== null ? "GRADED" : "PENDING";
 
     // Upsert submission
     const submission = await prisma.submission.upsert({
@@ -67,18 +71,20 @@ export async function PATCH(
         },
       },
       update: {
-        grade,
-        feedback: feedback ?? undefined,
-        status: newStatus,
-        updatedAt: new Date(),
-      },
-      create: {
-        userId: studentId,
-        assignmentId,
-        grade,
-        feedback: feedback ?? null,
-        status: newStatus,
-      },
+  grade,
+  feedback: feedback ?? undefined,
+  status: newStatus as never,
+  ...(daysLate !== undefined && { daysLate: daysLate ?? null }),
+  updatedAt: new Date(),
+},
+create: {
+  userId: studentId,
+  assignmentId,
+  grade,
+  feedback: feedback ?? null,
+  status: newStatus as never,
+  ...(daysLate !== undefined && { daysLate: daysLate ?? null }),
+},
     });
 
     // ── Send grade notification email if a real grade was assigned ────────

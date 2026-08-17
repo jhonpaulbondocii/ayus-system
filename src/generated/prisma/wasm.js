@@ -277,6 +277,13 @@ exports.Prisma.AnnouncementAttachmentScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.AnnouncementReadScalarFieldEnum = {
+  id: 'id',
+  announcementId: 'announcementId',
+  userId: 'userId',
+  readAt: 'readAt'
+};
+
 exports.Prisma.AssignmentScalarFieldEnum = {
   id: 'id',
   title: 'title',
@@ -299,6 +306,7 @@ exports.Prisma.AssignmentScalarFieldEnum = {
   isGroupAssignment: 'isGroupAssignment',
   notifyUsers: 'notifyUsers',
   onlineEntryOptions: 'onlineEntryOptions',
+  submissionEntries: 'submissionEntries',
   peerReviewAnonymous: 'peerReviewAnonymous',
   peerReviewAssign: 'peerReviewAssign',
   requirePeerReviews: 'requirePeerReviews',
@@ -920,12 +928,12 @@ exports.Prisma.SortOrder = {
   desc: 'desc'
 };
 
-exports.Prisma.NullableJsonNullValueInput = {
-  DbNull: Prisma.DbNull,
+exports.Prisma.JsonNullValueInput = {
   JsonNull: Prisma.JsonNull
 };
 
-exports.Prisma.JsonNullValueInput = {
+exports.Prisma.NullableJsonNullValueInput = {
+  DbNull: Prisma.DbNull,
   JsonNull: Prisma.JsonNull
 };
 
@@ -1036,6 +1044,7 @@ exports.Prisma.ModelName = {
   GroupMember: 'GroupMember',
   Announcement: 'Announcement',
   AnnouncementAttachment: 'AnnouncementAttachment',
+  AnnouncementRead: 'AnnouncementRead',
   Assignment: 'Assignment',
   Submission: 'Submission',
   RepositoryFile: 'RepositoryFile',

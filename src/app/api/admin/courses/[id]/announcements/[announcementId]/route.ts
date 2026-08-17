@@ -74,7 +74,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       where: { id: announcementId },
       data: {
         ...(body.locked !== undefined && { locked: body.locked }),
-        ...(body.allowComments !== undefined && { allowComments: body.allowComments }),
+        ...(body.allowComments !== undefined && { allowComment: body.allowComments }),
       },
     });
     return NextResponse.json({ success: true, announcement: updated });

@@ -1,11 +1,11 @@
 // src/lib/course-roles.ts
 // Shared multi-role utilities — used by API routes and frontend helpers
 
-export const AVAILABLE_COURSE_ROLES = ["Staff", "Head"] as const;
+export const AVAILABLE_COURSE_ROLES = ["Staff", "Head", "Faculty"] as const;
 export type CourseRole = (typeof AVAILABLE_COURSE_ROLES)[number];
 
 /**
- * Parse a raw courseRole string (e.g. "Staff", "Head", "Staff,Head") into an array.
+ * Parse a raw courseRole string (e.g. "Staff", "Head", "Faculty") into an array.
  * Always returns at least ["Staff"] as fallback.
  */
 export function parseRoles(raw: string | null | undefined): CourseRole[] {
@@ -40,6 +40,11 @@ export function hasHead(raw: string | null | undefined): boolean {
   return parseRoles(raw).includes("Head");
 }
 
+/** True if the role string includes "Faculty" */
+export function hasFaculty(raw: string | null | undefined): boolean {
+  return parseRoles(raw).includes("Faculty");
+}
+
 /**
  * Human-readable label for a role string.
  * e.g. "Staff,Head" → "Staff · Head"
@@ -52,6 +57,7 @@ export function roleLabel(raw: string | null | undefined): string {
  * Badge color config per role.
  */
 export const ROLE_BADGE: Record<CourseRole, { bg: string; color: string }> = {
-  Staff: { bg: "#eff6ff", color: "#1d4ed8" },
-  Head:  { bg: "#fef2f2", color: "#7b1113" },
+  Staff:   { bg: "#fef2f2", color: "#7b1113" },
+  Head:    { bg: "#fef2f2", color: "#7b1113" },
+  Faculty: { bg: "#fef2f2", color: "#7b1113" },
 };

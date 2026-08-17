@@ -8,7 +8,6 @@ import { useRouter } from "next/navigation";
 import {
   RefreshCw, ChevronLeft, Download, Search,
   Calendar, ChevronDown, ChevronUp, X, FileText,
-  ArrowRight,
 } from "lucide-react";
 
 const MAROON = "#7b1113";
@@ -78,8 +77,11 @@ function exportCSV(submissions: Submission[], formTitle: string) {
   if (inputName === null) return;
   const fileName = (inputName.trim() || defaultName).replace(/\.csv$/i, "") + ".csv";
   const allQuestions = submissions[0]?.answers?.map(a => a.question) ?? [];
-  const header = [...allQuestions];
+  const header = ["Name", "Email", "Submitted At", ...allQuestions];
   const rows = submissions.map(s => [
+    s.user?.name ?? "Anonymous",
+    s.user?.email ?? "",
+    new Date(s.createdAt).toLocaleString(),
     ...(s.answers?.map(a => fmtAnswerValue(a.answer)) ?? []),
   ]);
   const csv = [header, ...rows]
@@ -196,7 +198,7 @@ function SubmissionModal({
                   <span className="text-gray-400 mr-1.5 font-mono">{i + 1}.</span>
                   {ans.question}
                 </p>
-                <p className="text-sm text-gray-900 font-medium pl-4 break-words">
+                <p className="text-sm text-gray-900 font-medium pl-4 wrap-break-word">
                   {fmtAnswerValue(ans.answer)}
                 </p>
               </div>
@@ -267,10 +269,9 @@ function SubmissionRow({
 
 // ── Submission Card — mobile ───────────────────────────────────────────────────
 function SubmissionCard({
-  submission, index, onClick,
+  submission, onClick,
 }: {
   submission: Submission;
-  index: number;
   onClick: () => void;
 }) {
   const answerCount = submission.answers?.length ?? 0;
@@ -383,7 +384,7 @@ export default function AdminCourseFormResponsesPage({
     });
 
   const formTitle = form?.title ?? "Form";
-  const isGraded = form?.formType === "Graded Assessment";
+ const isGraded = form?.formType === "Graded Assessment";
   const avgScore = isGraded && submissions.length
     ? (submissions.reduce((s, sub) => s + (sub.score ?? 0), 0) / submissions.length).toFixed(1)
     : null;
@@ -464,6 +465,12 @@ export default function AdminCourseFormResponsesPage({
           <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 leading-none mb-1">Total</p>
           <p className="text-xl font-black leading-none" style={{ color: MAROON }}>{submissions.length}</p>
         </div>
+        {avgScore && (
+          <div className="shrink-0">
+            <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 leading-none mb-1">Avg Score</p>
+            <p className="text-xl font-black leading-none" style={{ color: MAROON }}>{avgScore}</p>
+          </div>
+        )}
         {search && (
           <div className="shrink-0">
             <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 leading-none mb-1">Results</p>
@@ -554,7 +561,7 @@ export default function AdminCourseFormResponsesPage({
                 {/* Desktop row */}
                 <SubmissionRow submission={s} index={i} onClick={() => setSelected(s)} />
                 {/* Mobile card */}
-                <SubmissionCard submission={s} index={i} onClick={() => setSelected(s)} />
+                <SubmissionCard submission={s} onClick={() => setSelected(s)} />
               </div>
             ))}
           </div>

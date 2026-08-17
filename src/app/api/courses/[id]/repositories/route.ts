@@ -35,7 +35,12 @@ export async function GET(
 
     // Fetch all repositories for this course, with full file + submission + user data
     const repositories = await prisma.repositories.findMany({
-      where: { courseId },
+      where: {
+        courseId,
+        ...(isHead && !isAdmin ? {
+          assignments: { createdById: access.userId }
+        } : {}),
+      },
       include: {
         assignments: {
           select: {

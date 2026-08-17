@@ -396,8 +396,8 @@ function RepositoryDrawer({
           const res  = await fetch(`/api/admin/repositories/${row.repoId}`);
           const json = await res.json();
           setData({
-            files:       json.repository?.files       ?? [],
-            logs:        json.repository?.logs        ?? [],
+            files:       json.repository?.repository_files ?? [],
+            logs:        json.repository?.activity_logs    ?? [],
             submissions: [],
           });
         } else if (row.kind === "assignment" && !row.repoId) {

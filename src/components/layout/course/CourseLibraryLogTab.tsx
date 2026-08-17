@@ -67,11 +67,12 @@ function ExportModal({
   onClose,
 }: {
   courseId: string;
-  type: "student" | "employee";
+  type: "student";
   onClose: () => void;
 }) {
   const [dateFrom,      setDateFrom]      = useState("");
   const [dateTo,        setDateTo]        = useState("");
+  const [filename,      setFilename]      = useState("student_receiving_log");
   const [exporting,     setExporting]     = useState(false);
   const [previewCount,  setPreviewCount]  = useState<number | null>(null);
   const [previewLoading,setPreviewLoading]= useState(false);
@@ -104,9 +105,7 @@ function ExportModal({
       const q = new URLSearchParams();
       if (dateFrom) q.set("dateFrom", dateFrom);
       if (dateTo)   q.set("dateTo",   dateTo);
-      const endpoint = type === "student"
-        ? `/api/courses/${courseId}/library-cards/log-sheet/student?${q}`
-        : `/api/courses/${courseId}/library-cards/log-sheet/employee?${q}`;
+      const endpoint = `/api/courses/${courseId}/library-cards/log-sheet/student?${q}`;
       const res  = await fetch(endpoint);
       if (!res.ok) { alert("Export failed. Please try again."); return; }
       const blob = await res.blob();
@@ -114,7 +113,7 @@ function ExportModal({
       const a    = document.createElement("a");
       const suffix = dateFrom || dateTo ? `_${dateFrom || "start"}_to_${dateTo || "now"}` : "";
       a.href     = url;
-      a.download = `${type}_receiving_log${suffix}.pdf`;
+      a.download = `${filename.trim() || "student_receiving_log"}${suffix}.pdf`;
       a.click();
       URL.revokeObjectURL(url);
       onClose();
@@ -125,7 +124,7 @@ function ExportModal({
     }
   };
 
-  const label = type === "student" ? "Student" : "Employee";
+  const label = "Student";
 
   return (
     <div
@@ -159,6 +158,20 @@ function ExportModal({
         </div>
 
         <div className="px-5 py-5 space-y-4">
+          {/* Filename */}
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">File Name</p>
+            <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-3 py-2 bg-white focus-within:border-[#7b1113] transition-all">
+              <input
+                value={filename}
+                onChange={e => setFilename(e.target.value)}
+                placeholder="student_receiving_log"
+                className="flex-1 text-xs text-gray-700 outline-none bg-transparent"
+              />
+              <span className="text-xs text-gray-400 shrink-0">.pdf</span>
+            </div>
+          </div>
+
           {/* Date Range */}
           <div>
             <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Date Range</p>
@@ -248,7 +261,7 @@ export default function CourseLibraryLogTab({
   const [dateTo,     setDateTo]     = useState("");
   const [showFilters,setShowFilters]= useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [exportType, setExportType] = useState<"student" | "employee" | null>(null);
+  const [exportType, setExportType] = useState<"student" | null>(null);
   const [page,       setPage]       = useState(1);
 
   const fetchLogs = useCallback(async () => {
@@ -310,11 +323,9 @@ export default function CourseLibraryLogTab({
       <div className="flex-1 overflow-y-auto px-4 sm:px-8 py-4 sm:py-6 flex flex-col gap-4 sm:gap-5">
 
         {/* ── Stats ── */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-1 gap-3 max-w-xs">
           {[
             { label: "Total Logs",  value: logs.length },
-            { label: "Students",    value: logs.filter(l => l.request?.applicantType === "STUDENT").length },
-            { label: "Employees",   value: logs.filter(l => l.request?.applicantType === "EMPLOYEE").length },
           ].map(s => (
             <div key={s.label} className="bg-white border border-gray-200 rounded-xl px-4 py-3 flex items-center gap-3">
               <div className="rounded-lg p-2 shrink-0" style={{ background: "#f3f4f6" }}>
@@ -366,15 +377,8 @@ export default function CourseLibraryLogTab({
                 onClick={() => setExportType("student")}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-[11px] font-bold text-gray-600 hover:border-gray-400 hover:text-gray-800 transition-all shrink-0">
                 <Download className="w-3 h-3" />
-                <span className="hidden sm:inline">Student Log</span>
-                <span className="sm:hidden">Student</span>
-              </button>
-              <button
-                onClick={() => setExportType("employee")}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-[11px] font-bold text-gray-600 hover:border-gray-400 hover:text-gray-800 transition-all shrink-0">
-                <Download className="w-3 h-3" />
-                <span className="hidden sm:inline">Employee Log</span>
-                <span className="sm:hidden">Employee</span>
+                <span className="hidden sm:inline">Export Log</span>
+                <span className="sm:hidden">Export</span>
               </button>
             </div>
           </div>
@@ -452,7 +456,7 @@ export default function CourseLibraryLogTab({
                 <table className="w-full border-collapse">
                   <thead>
                     <tr style={{ background: "#fafafa" }}>
-                      {["No.", "Date Received", "Name", "Type", "Sex", "Course / Dept & Position", "Document", "Signature", "Released By", ""].map((h, i) => (
+                      {["No.", "Date Received", "Name", "Sex", "Course / Dept & Position", "Document", "Signature", "Released By", ""].map((h, i) => (
                         <th key={i} className="text-left px-3 py-3 whitespace-nowrap" style={{ border: "1px solid #d1d5db" }}>
                           <span className="text-xs font-bold uppercase tracking-wide text-gray-700">{h}</span>
                         </th>
@@ -484,19 +488,6 @@ export default function CourseLibraryLogTab({
                         </td>
                         <td className="px-3 py-3 text-xs font-semibold text-gray-800 whitespace-nowrap" style={{ border: "1px solid #e5e7eb" }}>
                           {log.name}
-                        </td>
-                        <td className="px-3 py-3" style={{ border: "1px solid #e5e7eb" }}>
-                          {log.request?.applicantType ? (
-                            <span
-                              className="text-[11px] font-bold px-2 py-0.5 rounded-full"
-                              style={log.request.applicantType === "STUDENT"
-                                ? { background: "#ede9fe", color: "#5b21b6" }
-                                : { background: "#fce7f3", color: "#9d174d" }}>
-                              {log.request.applicantType === "STUDENT" ? "Student" : "Employee"}
-                            </span>
-                          ) : (
-                            <span className="text-[10px] text-gray-300">—</span>
-                          )}
                         </td>
                         <td className="px-3 py-3 text-xs text-gray-600 text-center" style={{ border: "1px solid #e5e7eb" }}>
                           {log.sex ?? "—"}
@@ -555,9 +546,7 @@ export default function CourseLibraryLogTab({
                       </div>
                       <span
                         className="text-[11px] font-bold px-2 py-0.5 rounded-full shrink-0"
-                        style={log.request?.applicantType === "STUDENT"
-                          ? { background: "#ede9fe", color: "#5b21b6" }
-                          : { background: "#fce7f3", color: "#9d174d" }}>
+                        style={{ background: "#f3f4f6", color: "#374151" }}>
                         {log.request?.applicantType === "STUDENT" ? "Student" : "Employee"}
                       </span>
                     </div>

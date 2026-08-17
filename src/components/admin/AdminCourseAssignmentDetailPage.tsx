@@ -46,6 +46,7 @@ interface Submission {
   submittedAt: string | null; points?: number | null; grade?: string | null;
   textEntry?: string | null; onlineUrl?: string | null; feedback?: string | null;
   status?: string | null; isLate?: boolean;
+  allFileUrls?: { label: string; url: string }[];
 }
 interface AssignRow {
   id: number; assignees: { id: string; label: string }[];
@@ -345,10 +346,23 @@ function GradeModal({ sub, assignment, onClose, onSave }: {
 
 // ── File Preview Modal ─────────────────────────────────────────────────────────
 function FilePreviewModal({ sub, onClose }: { sub: Submission; onClose: () => void }) {
-  const url = sub.fileUrl ?? sub.onlineUrl ?? null;
-  if (!url && !sub.textEntry) return null;
-  const fileName = sub.fileName ?? "File";
+  const files = useMemo(() => {
+    if (sub.allFileUrls && sub.allFileUrls.length > 0) return sub.allFileUrls;
+    if (sub.fileUrl) return [{ label: sub.fileName ?? "File", url: sub.fileUrl }];
+    return [] as { label: string; url: string }[];
+  }, [sub.allFileUrls, sub.fileUrl, sub.fileName]);
+
+  const [selectedUrl, setSelectedUrl] = useState<string | null>(null);
+  const resolvedSelectedUrl = selectedUrl && files.some(file => file.url === selectedUrl)
+    ? selectedUrl
+    : sub.fileUrl ?? files[0]?.url ?? null;
+  const selectedFile = files.find(file => file.url === resolvedSelectedUrl) ?? files[0] ?? null;
+  const url = selectedFile?.url ?? sub.onlineUrl ?? null;
+
+  if ((!url && !sub.textEntry) || files.length === 0) return null;
+  const fileName = selectedFile?.label ?? sub.fileName ?? "File";
   const isImg = url ? isImage(url) : false;
+
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,.6)", padding: "16px" }} onClick={onClose}>
       <div style={{ background: "#fff", borderRadius: 16, width: "100%", maxWidth: "95vw", height: "90dvh", display: "flex", flexDirection: "column", overflow: "hidden" }} onClick={e => e.stopPropagation()}>
@@ -367,6 +381,29 @@ function FilePreviewModal({ sub, onClose }: { sub: Submission; onClose: () => vo
             <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,.6)" }}><X size={15} /></button>
           </div>
         </div>
+        {files.length > 1 && (
+          <div style={{ display: "flex", gap: 8, padding: "10px 16px 0", overflowX: "auto", background: "#fff", borderBottom: "1px solid #f3f4f6" }}>
+            {files.map((file, idx) => (
+              <button
+                key={`${file.url}-${idx}`}
+                onClick={() => setSelectedUrl(file.url)}
+                style={{
+                  padding: "6px 10px",
+                  borderRadius: 8,
+                  border: resolvedSelectedUrl === file.url ? `1px solid ${MAROON}` : "1px solid #e5e7eb",
+                  background: resolvedSelectedUrl === file.url ? "#fef2f2" : "#fff",
+                  color: resolvedSelectedUrl === file.url ? MAROON : "#374151",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  whiteSpace: "nowrap",
+                  cursor: "pointer",
+                }}
+              >
+                {file.label}
+              </button>
+            ))}
+          </div>
+        )}
         <div style={{ flex: 1, overflow: "hidden", background: "#f3f4f6", minHeight: 300 }}>
           {!url ? (
             <div style={{ height: "100%", overflowY: "auto", padding: "24px 32px" }}>
@@ -856,22 +893,48 @@ export default function AdminCourseAssignmentDetailPage({
   };
 
   const handleDownloadAll = async () => {
-    const downloadable = submissions.filter(s => s.fileUrl && s.submittedAt);
+    const downloadable = submissions.filter(s => (s.allFileUrls && s.allFileUrls.length > 0) || (s.fileUrl && s.submittedAt));
     if (!downloadable.length) return;
     setDownloading(true);
     try {
       const JSZip = (await import("jszip")).default;
       const zip = new JSZip();
       for (const s of downloadable) {
-        if (!s.fileUrl) continue;
-        const safeName = (s.userName ?? s.userEmail).replace(/[^a-zA-Z0-9_\- ]/g, "_");
-        const ext = s.fileUrl.split("?")[0].split(".").pop() ?? "bin";
-        try {
-          const res = await fetch(s.fileUrl);
-          const blob = await res.blob();
-          zip.file(`${safeName}/${safeName}.${ext}`, blob);
-          zip.file(`${safeName}/grade_info.txt`, [`Student: ${s.userName ?? s.userEmail}`, `Email: ${s.userEmail}`, `Score: ${s.points != null ? `${s.points}/${assignment?.points}` : "Not graded"}`, `Feedback: ${s.feedback ?? "—"}`].join("\n"));
-        } catch { /* skip */ }
+        const files = s.allFileUrls && s.allFileUrls.length > 0
+          ? s.allFileUrls
+          : s.fileUrl
+            ? [{ label: s.fileName ?? "Submission", url: s.fileUrl }]
+            : [];
+
+        if (files.length === 0) continue;
+
+        const studentFolder = (s.userName ?? s.userEmail).replace(/[^a-zA-Z0-9_\- ]/g, "_").trim() || "student";
+        const usedNames = new Set<string>();
+
+        for (const file of files) {
+          if (!file?.url) continue;
+          const originalName = (file.label || file.url.split("/").pop() || "file").replace(/[\\/]+/g, "_");
+          const safeBase = originalName.split("?")[0].split("#")[0];
+          const safeFileName = safeBase || "file";
+          const uniqueName = (() => {
+            let candidate = safeFileName;
+            let index = 1;
+            while (usedNames.has(candidate)) {
+              const ext = candidate.includes(".") ? candidate.slice(candidate.lastIndexOf(".")) : "";
+              const base = candidate.includes(".") ? candidate.slice(0, candidate.lastIndexOf(".")) : candidate;
+              candidate = `${base} (${index})${ext}`;
+              index += 1;
+            }
+            usedNames.add(candidate);
+            return candidate;
+          })();
+
+          try {
+            const res = await fetch(file.url);
+            const blob = await res.blob();
+            zip.file(`${studentFolder}/${uniqueName}`, blob);
+          } catch { /* skip */ }
+        }
       }
       const blob = await zip.generateAsync({ type: "blob" });
       const a = document.createElement("a");
@@ -1149,8 +1212,7 @@ export default function AdminCourseAssignmentDetailPage({
                       { label: "Graded",    value: g.length, color: "#15803d", bg: "#f0fdf4", border: "#bbf7d0", cls: "" },
                       { label: "Missing",   value: m.length, color: MAROON,   bg: "#fef2f2", border: "#f0c0c0", cls: "" },
                       { label: "Late",      value: l.length, color: "#dc2626", bg: "#fef2f2", border: "#fecaca", cls: "stat-hide-mobile" },
-                      { label: "Avg",       value: a != null ? `${a}/${assignment.points}` : "—", color: "#6b7280", bg: "#f9fafb", border: "#e5e7eb", cls: "stat-hide-mobile" },
-                    ].map(stat => (
+                      ].map(stat => (
                       <div key={stat.label} className={stat.cls} style={{ background: stat.bg, border: `1px solid ${stat.border}`, borderRadius: 10, padding: "12px 4px", textAlign: "center" }}>
                         <p style={{ fontSize: "clamp(14px, 2.5vw, 22px)", fontWeight: 900, color: stat.color, margin: 0, lineHeight: 1 }}>{stat.value}</p>
                         <p style={{ fontSize: "clamp(8px, 1.2vw, 11px)", fontWeight: 800, color: stat.color, textTransform: "uppercase", letterSpacing: "0.06em", margin: "4px 0 0" }}>{stat.label}</p>
@@ -1289,11 +1351,7 @@ export default function AdminCourseAssignmentDetailPage({
               style={{ display: "flex", alignItems: "center", gap: 5, padding: "6px 12px", fontSize: 12, fontWeight: 600, border: "1px solid #e5e7eb", borderRadius: 8, cursor: "pointer", color: "#374151", background: "#fff", opacity: refreshing ? 0.6 : 1 }}>
               <RefreshCw size={12} style={{ animation: refreshing ? "spin 1s linear infinite" : "none" }} /> Refresh
             </button>
-            <button onClick={() => handleSpeedGrader()}
-              style={{ display: "flex", alignItems: "center", gap: 5, padding: "6px 12px", fontSize: 12, fontWeight: 900, borderRadius: 8, cursor: "pointer", border: "none", background: MAROON, color: "#fff" }}>
-              <Zap size={12} /> SpeedGrader™
-            </button>
-          </div>
+            </div>
 
           {/* Stats bar */}
           {(() => {
@@ -1305,7 +1363,6 @@ export default function AdminCourseAssignmentDetailPage({
                   { label: "Graded",    value: g.length, color: "#15803d", bg: "#f0fdf4", border: "#bbf7d0", cls: "" },
                   { label: "Missing",   value: m.length, color: MAROON,    bg: "#fef2f2", border: "#f0c0c0", cls: "" },
                   { label: "Late",      value: l.length, color: "#dc2626", bg: "#fef2f2", border: "#fecaca", cls: "stat-hide-mobile" },
-                  { label: "Avg",       value: a != null ? `${a}/${assignment.points}` : "—", color: "#6b7280", bg: "#f9fafb", border: "#e5e7eb", cls: "stat-hide-mobile" },
                 ].map(stat => (
                   <div key={stat.label} className={stat.cls} style={{ borderRadius: 10, border: `1px solid ${stat.border}`, background: stat.bg, padding: "12px 4px", textAlign: "center" }}>
                     <p style={{ fontSize: "clamp(14px, 2.5vw, 22px)", fontWeight: 900, color: stat.color, margin: 0, lineHeight: 1 }}>{stat.value}</p>
@@ -1349,17 +1406,16 @@ export default function AdminCourseAssignmentDetailPage({
           {/* Download bar */}
           {submitted.length > 0 && (
             <div style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 12, padding: "12px 14px", marginBottom: 12, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <div style={{ width: 36, height: 36, borderRadius: 10, background: "#fef2f2", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  <PackageOpen size={15} style={{ color: MAROON }} />
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{ width: 34, height: 34, borderRadius: 10, background: "#fef2f2", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <PackageOpen size={14} style={{ color: MAROON }} />
                 </div>
                 <div>
                   <p style={{ fontSize: 13, fontWeight: 700, color: "#111827", margin: 0 }}>Download Submissions</p>
-                  <p style={{ fontSize: 11, color: "#9ca3af", margin: "2px 0 0" }}>{submitted.filter(s => s.fileUrl).length} files · includes grade info</p>
                 </div>
               </div>
               <button onClick={handleDownloadAll} disabled={downloading}
-                style={{ display: "flex", alignItems: "center", gap: 5, padding: "7px 14px", fontSize: 12, fontWeight: 700, border: `1px solid #f0c0c0`, borderRadius: 8, cursor: "pointer", color: MAROON, background: "#fef2f2", whiteSpace: "nowrap", opacity: downloading ? 0.6 : 1 }}>
+                style={{ display: "flex", alignItems: "center", gap: 5, padding: "6px 12px", fontSize: 12, fontWeight: 700, border: `1px solid #f0c0c0`, borderRadius: 8, cursor: "pointer", color: MAROON, background: "#fef2f2", whiteSpace: "nowrap", opacity: downloading ? 0.6 : 1 }}>
                 {downloading ? "Preparing…" : "Download All (.zip)"}
               </button>
             </div>
@@ -1413,13 +1469,48 @@ export default function AdminCourseAssignmentDetailPage({
                             <span style={{ fontSize: 11, color: "#6b7280" }}>{fmtDateTime(sub.submittedAt)}</span>
                             {late && <span style={{ fontSize: 11, fontWeight: 700, color: "#dc2626" }}>· Late</span>}
                           </div>
-                          {sub.fileUrl && sub.fileName && (
-                            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                              <FileText size={11} style={{ color: MAROON, flexShrink: 0 }} />
-                              <button onClick={() => setPreviewTarget(sub)} style={{ fontSize: 11, fontWeight: 600, color: MAROON, background: "none", border: "none", cursor: "pointer", textDecoration: "underline", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textAlign: "left", maxWidth: "calc(100% - 40px)" }}>{sub.fileName}</button>
-                              <a href={sub.fileUrl} download={sub.fileName} target="_blank" rel="noopener noreferrer" style={{ marginLeft: "auto", flexShrink: 0, color: "#9ca3af" }}><Download size={11} /></a>
-                            </div>
-                          )}
+                          {sub.allFileUrls && sub.allFileUrls.length > 0
+  ? sub.allFileUrls.map((f, fi) => (
+      <div key={fi} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+        <FileText size={11} style={{ color: MAROON, flexShrink: 0 }} />
+        <button
+          onClick={() => {
+            if (!f.url) return;
+            setPreviewTarget({
+              ...sub,
+              fileUrl: f.url,
+              fileName: f.label || sub.fileName || "File",
+              onlineUrl: null,
+              textEntry: null,
+              allFileUrls: sub.allFileUrls ?? [{ label: f.label || sub.fileName || "File", url: f.url }],
+            });
+          }}
+          style={{ fontSize: 11, fontWeight: 600, color: MAROON, background: "none", border: "none", cursor: "pointer", textDecoration: "underline", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textAlign: "left", maxWidth: "calc(100% - 40px)" }}>
+          {f.label}
+        </button>
+        <a href={f.url} download={f.label} target="_blank" rel="noopener noreferrer" style={{ marginLeft: "auto", flexShrink: 0, color: "#9ca3af" }}><Download size={11} /></a>
+      </div>
+    ))
+  : (sub.fileUrl && sub.fileName)
+    ? (
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <FileText size={11} style={{ color: MAROON, flexShrink: 0 }} />
+          <button onClick={() => {
+            if (!sub.fileUrl) return;
+            setPreviewTarget({
+              ...sub,
+              fileUrl: sub.fileUrl,
+              fileName: sub.fileName ?? "File",
+              onlineUrl: null,
+              textEntry: null,
+              allFileUrls: [{ label: sub.fileName ?? "File", url: sub.fileUrl }],
+            });
+          }} style={{ fontSize: 11, fontWeight: 600, color: MAROON, background: "none", border: "none", cursor: "pointer", textDecoration: "underline", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textAlign: "left", maxWidth: "calc(100% - 40px)" }}>{sub.fileName}</button>
+          <a href={sub.fileUrl} download={sub.fileName} target="_blank" rel="noopener noreferrer" style={{ marginLeft: "auto", flexShrink: 0, color: "#9ca3af" }}><Download size={11} /></a>
+        </div>
+      )
+    : null
+}
                           {sub.onlineUrl && (
                             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                               <ExternalLink size={11} style={{ flexShrink: 0, color: "#9ca3af" }} />
@@ -1458,14 +1549,6 @@ export default function AdminCourseAssignmentDetailPage({
                   </div>
                 );
               })}
-            </div>
-          )}
-
-          {submitted.length > 0 && (
-            <div style={{ marginTop: 20, display: "flex", justifyContent: "center", paddingBottom: 16 }}>
-              <button onClick={() => handleSpeedGrader()} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, color: MAROON, background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>
-                <Zap size={13} /> Open SpeedGrader™ for all submissions
-              </button>
             </div>
           )}
         </div>

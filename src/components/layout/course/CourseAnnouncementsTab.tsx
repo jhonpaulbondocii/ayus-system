@@ -27,7 +27,6 @@ function useOnClickOutside<T extends HTMLElement>(
   }, [ref, handler]);
 }
 
-// ─── useIsMobile ──────────────────────────────────────────────────────────────
 function useIsMobile(breakpoint = 640) {
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
@@ -39,7 +38,6 @@ function useIsMobile(breakpoint = 640) {
   return isMobile;
 }
 
-// ─── Avatar ───────────────────────────────────────────────────────────────────
 function Avatar({
   name,
   image,
@@ -71,7 +69,6 @@ function Avatar({
   );
 }
 
-// ─── ThreeDot menu ────────────────────────────────────────────────────────────
 function AnnouncementThreeDot({
   read,
   onMarkRead,
@@ -110,7 +107,6 @@ function AnnouncementThreeDot({
   );
 }
 
-
 // ─── Detail View ──────────────────────────────────────────────────────────────
 function StudentAnnouncementDetail({
   announcement,
@@ -127,7 +123,6 @@ function StudentAnnouncementDetail({
 
   return (
     <div className="px-3 sm:px-6 py-4 sm:py-5">
-      {/* Back button */}
       <button
         type="button"
         onClick={onBack}
@@ -141,25 +136,15 @@ function StudentAnnouncementDetail({
       </button>
 
       <div className="border border-gray-200 rounded-xl bg-white shadow-sm overflow-hidden">
-
-        {/* Header */}
         <div className="flex items-start gap-3 px-4 sm:px-5 py-4 border-b border-gray-100">
           <Avatar name={announcement.authorName} image={announcement.authorImage} size={isMobile ? 34 : 40} />
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-sm font-semibold text-gray-800 truncate">
-                {announcement.authorName}
-              </span>
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 font-semibold uppercase tracking-wide shrink-0">
-                Author
-              </span>
+              <span className="text-sm font-semibold text-gray-800 truncate">{announcement.authorName}</span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 font-semibold uppercase tracking-wide shrink-0">Author</span>
             </div>
-            <div className="text-xs text-gray-400 mt-0.5">
-              Posted {fmtDateTime(announcement.createdAt)}
-            </div>
-            <div className="text-xs text-gray-400">
-              To: {announcement.recipientsLabel}
-            </div>
+            <div className="text-xs text-gray-400 mt-0.5">Posted {fmtDateTime(announcement.createdAt)}</div>
+            <div className="text-xs text-gray-400">To: {announcement.recipientsLabel}</div>
           </div>
           <div className="flex items-center gap-1 shrink-0">
             {announcement.locked && (
@@ -175,13 +160,9 @@ function StudentAnnouncementDetail({
           </div>
         </div>
 
-        {/* Body */}
         <div className="px-4 sm:px-5 py-4 sm:py-5">
-          <h1 className="text-lg sm:text-xl font-bold text-gray-900 mb-4 leading-snug">
-            {announcement.title}
-          </h1>
+          <h1 className="text-lg sm:text-xl font-bold text-gray-900 mb-4 leading-snug">{announcement.title}</h1>
 
-          {/* Locked badge on mobile */}
           {announcement.locked && (
             <span className="sm:hidden inline-flex items-center gap-1 text-xs text-gray-500 border border-gray-200 rounded px-2 py-1 mb-3">
               <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
@@ -204,22 +185,14 @@ function StudentAnnouncementDetail({
             <p className="text-sm text-gray-400 italic">No content.</p>
           )}
 
-          {/* Attachments */}
           {announcement.attachments.length > 0 && (
             <div className="mt-4 pt-4 border-t border-gray-100">
-              <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                Attachments
-              </div>
+              <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Attachments</div>
               <div className="flex flex-wrap gap-2">
                 {announcement.attachments.map((f) => (
-                  <a
-                    key={f.id}
-                    href={f.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <a key={f.id} href={f.url} target="_blank" rel="noopener noreferrer"
                     className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 border border-gray-200 rounded-full bg-gray-50 hover:bg-gray-100 active:bg-gray-200 transition-colors"
-                    style={{ color: MAROON }}
-                  >
+                    style={{ color: MAROON }}>
                     📎 {f.name}
                   </a>
                 ))}
@@ -227,26 +200,19 @@ function StudentAnnouncementDetail({
             </div>
           )}
 
-          {/* Like button */}
           {announcement.allowLiking && (
             <div className="mt-4 pt-4 border-t border-gray-100">
               <button
                 type="button"
                 onClick={() => { setLikeCount((c) => (liked ? c - 1 : c + 1)); setLiked((v) => !v); }}
                 className="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded border transition-colors active:scale-95"
-                style={{
-                  borderColor: liked ? MAROON : "#d1d5db",
-                  color: liked ? MAROON : "#6b7280",
-                  background: liked ? "#fef2f2" : "transparent",
-                }}
+                style={{ borderColor: liked ? MAROON : "#d1d5db", color: liked ? MAROON : "#6b7280", background: liked ? "#fef2f2" : "transparent" }}
               >
                 👍 {liked ? "Liked" : "Like"} {likeCount > 0 && `(${likeCount})`}
               </button>
             </div>
           )}
         </div>
-
-      
       </div>
     </div>
   );
@@ -265,6 +231,7 @@ function StudentAnnouncementList({
   onDeleteSelected,
   selectedIds,
   setSelectedIds,
+  canDelete,
 }: {
   announcements: Announcement[];
   filter: string;
@@ -277,6 +244,7 @@ function StudentAnnouncementList({
   onDeleteSelected: (ids: string[]) => void;
   selectedIds: Set<string>;
   setSelectedIds: React.Dispatch<React.SetStateAction<Set<string>>>;
+  canDelete: boolean;
 }) {
   const isMobile = useIsMobile();
   const [showFilters, setShowFilters] = useState(false);
@@ -298,15 +266,15 @@ function StudentAnnouncementList({
     });
   };
 
+  const hasSelection = selectedIds.size > 0;
+
   return (
     <div className="px-3 sm:px-5 py-4">
 
       {/* ── Toolbar ── */}
       {isMobile ? (
-        /* Mobile: search bar + filter toggle row */
         <div className="space-y-2 mb-4">
           <div className="flex items-center gap-2">
-            {/* Search */}
             <div className="relative flex-1">
               <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                 <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" strokeLinecap="round" />
@@ -318,7 +286,6 @@ function StudentAnnouncementList({
                 className="w-full pl-9 pr-3 h-10 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-[#7b1113] transition-colors bg-white"
               />
             </div>
-            {/* Filter toggle button */}
             <button
               type="button"
               onClick={() => setShowFilters((v) => !v)}
@@ -332,9 +299,8 @@ function StudentAnnouncementList({
               )}
             </button>
           </div>
-          {/* Expandable filter row */}
           {showFilters && (
-            <div className="flex items-center gap-2 flex-wrap animate-in slide-in-from-top-1 duration-150">
+            <div className="flex items-center gap-2 flex-wrap">
               <div className="relative">
                 <select
                   value={filter}
@@ -362,7 +328,6 @@ function StudentAnnouncementList({
           )}
         </div>
       ) : (
-        /* Desktop: original single-row toolbar */
         <div className="flex items-center gap-2 mb-4 flex-wrap">
           <div className="relative w-40">
             <select
@@ -398,32 +363,45 @@ function StudentAnnouncementList({
             </svg>
             Mark All as Read
           </button>
+          {/* Bulk action buttons */}
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              disabled={!hasSelection}
+              onClick={() => {
+  if (!hasSelection) return;
+  [...selectedIds].forEach(id => onMarkRead(id));
+  setSelectedIds(new Set());
+}}
+              title="Mark selected as read"
+              className="inline-flex items-center justify-center w-9 h-9 border rounded transition-colors"
+              style={{ borderColor: hasSelection ? "#1d6fa4" : "#d1d5db", color: hasSelection ? "#1d6fa4" : "#d1d5db", background: "white", cursor: hasSelection ? "pointer" : "not-allowed", opacity: hasSelection ? 1 : 0.45 }}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              disabled={!hasSelection}
+              onClick={() => hasSelection && onDeleteSelected([...selectedIds])}
+              title="Delete selected"
+              className="inline-flex items-center justify-center w-9 h-9 border rounded transition-colors"
+              style={{ borderColor: hasSelection ? "#ef4444" : "#d1d5db", color: hasSelection ? "#ef4444" : "#d1d5db", background: "white", cursor: hasSelection ? "pointer" : "not-allowed", opacity: hasSelection ? 1 : 0.45 }}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6M14 11v6" /><path d="M9 6V4h6v2" />
+              </svg>
+            </button>
+          </div>
         </div>
       )}
 
-      {/* ── Bulk action bar ── */}
-      {selectedIds.size > 0 && (
-        <div className="mb-3 flex items-center gap-2 flex-wrap bg-red-50 border border-red-100 rounded-lg px-3 py-2">
-          <span className="text-xs font-semibold" style={{ color: MAROON }}>
-            {selectedIds.size} selected
-          </span>
-          <button
-            type="button"
-            onClick={() => setSelectedIds(new Set())}
-            className="text-xs text-gray-400 hover:text-gray-600 underline hover:no-underline"
-          >
-            Clear
-          </button>
-          <button
-            type="button"
-            onClick={() => onDeleteSelected([...selectedIds])}
-            className="ml-auto inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-red-200 text-red-600 bg-white hover:bg-red-50 active:bg-red-100 transition-colors font-medium"
-          >
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-            Delete
-          </button>
+      {/* ── Selection count ── */}
+      {hasSelection && (
+        <div className="mb-3 flex items-center gap-2 text-xs text-gray-500">
+          <span className="font-medium" style={{ color: MAROON }}>{selectedIds.size}</span> selected
+          <button type="button" onClick={() => setSelectedIds(new Set())} className="underline hover:no-underline text-gray-400">Clear</button>
         </div>
       )}
 
@@ -468,21 +446,23 @@ function StudentAnnouncementList({
                 style={{ accentColor: MAROON }}
               />
 
-              {/* Avatar — hidden on very small screens to save space */}
               <div className="hidden xs:block shrink-0">
                 <Avatar name={a.authorName} image={a.authorImage} size={isMobile ? 30 : 36} />
               </div>
 
-              {/* Content */}
               <div className="flex-1 min-w-0 cursor-pointer" onClick={() => onView(a.id)}>
-                {/* Title row */}
                 <div className="flex items-start gap-1.5 flex-wrap">
+                  {/* Unread indicator dot */}
                   {!a.read && (
                     <span className="w-2 h-2 rounded-full shrink-0 mt-1.5" style={{ background: MAROON }} />
                   )}
                   <h3
-                    className="text-sm font-semibold hover:underline leading-snug"
-                    style={{ color: MAROON }}
+                    className="text-sm leading-snug"
+                    style={{
+                      color: MAROON,
+                      fontWeight: a.read ? 400 : 700,
+                      textDecoration: "underline",
+                    }}
                   >
                     {a.title}
                   </h3>
@@ -497,48 +477,35 @@ function StudentAnnouncementList({
                   )}
                 </div>
 
-                {/* Author + recipients (mobile shows inline) */}
                 <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                   <span className="xs:hidden text-xs font-medium text-gray-600">{a.authorName} ·</span>
                   <span className="text-xs text-gray-500">{a.recipientsLabel}</span>
                 </div>
 
-                {/* Preview body */}
                 {a.body && (
                   <p className="text-sm text-gray-600 mt-1 line-clamp-2 leading-relaxed">{a.body}</p>
                 )}
 
-                {/* Attachments */}
                 {a.attachments.length > 0 && (
                   <div className="flex flex-wrap gap-1.5 mt-2" onClick={(e) => e.stopPropagation()}>
                     {a.attachments.map((f) => (
-                      <a
-                        key={f.id}
-                        href={f.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                      <a key={f.id} href={f.url} target="_blank" rel="noopener noreferrer"
                         className="inline-flex items-center gap-1 text-xs px-2 py-0.5 border border-gray-200 rounded-full bg-gray-50 hover:bg-gray-100 active:bg-gray-200 transition-colors"
-                        style={{ color: MAROON }}
-                      >
+                        style={{ color: MAROON }}>
                         📎 {f.name}
                       </a>
                     ))}
                   </div>
                 )}
-
               </div>
 
-              {/* Right meta column */}
               <div className="shrink-0 flex flex-col items-end gap-1 ml-1">
                 <AnnouncementThreeDot read={a.read} onMarkRead={() => onMarkRead(a.id)} />
                 <div className="text-right leading-snug">
-                  <div className="text-[10px] sm:text-xs text-gray-400">
-                    {/* On mobile show compact date, full on desktop */}
-                    <span className="hidden sm:block text-gray-500 text-[10px]">Posted on:</span>
-                    <span className="text-[10px] sm:text-xs text-gray-400 whitespace-nowrap">
-                      {fmtDateTime(a.createdAt)}
-                    </span>
-                  </div>
+                  <span className="hidden sm:block text-gray-500 text-[10px]">Posted on:</span>
+                  <span className="text-[10px] sm:text-xs text-gray-400 whitespace-nowrap">
+                    {fmtDateTime(a.createdAt)}
+                  </span>
                 </div>
               </div>
             </div>
@@ -559,6 +526,10 @@ interface Props {
   setAnnouncements: React.Dispatch<React.SetStateAction<Announcement[]>>;
   people: Person[];
   canManageAnnouncements: boolean;
+  canDelete: boolean;
+  isHead: boolean;
+  isStaff: boolean;
+  currentUserId: string;
 }
 
 export default function CourseAnnouncementsTab({
@@ -568,6 +539,10 @@ export default function CourseAnnouncementsTab({
   setAnnouncements,
   people,
   canManageAnnouncements,
+  canDelete,
+  isHead,
+  isStaff,
+  currentUserId,
 }: Props) {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All");
@@ -586,23 +561,68 @@ export default function CourseAnnouncementsTab({
   const [untilTime, setUntilTime] = useState("");
   const [isPublishing, setIsPublishing] = useState(false);
 
-  const onMarkAllRead = () =>
-    setAnnouncements((prev) => prev.map((a) => ({ ...a, read: true })));
+  const markReadInDb = async (ids: string[]) => {
+    if (!ids.length) return;
+    await fetch(`/api/courses/${courseId}/announcements`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ announcementIds: ids }),
+    }).catch(() => {});
+  };
 
-  const onMarkRead = (id: string) =>
+  const onMarkAllRead = () => {
+    const unreadIds = announcements.filter((a) => !a.read).map((a) => a.id);
+    setAnnouncements((prev) => prev.map((a) => ({ ...a, read: true })));
+    markReadInDb(unreadIds);
+  };
+
+  const onMarkRead = (id: string) => {
     setAnnouncements((prev) =>
       prev.map((a) => (a.id === id ? { ...a, read: true } : a))
     );
+    markReadInDb([id]);
+  };
 
   const onView = (id: string) => {
     setViewingId(id);
     onMarkRead(id);
   };
 
-  const onDeleteSelected = (ids: string[]) => {
-    if (!confirm(`Delete ${ids.length} announcement${ids.length > 1 ? "s" : ""}?`)) return;
-    setAnnouncements((prev) => prev.filter((a) => !ids.includes(a.id)));
+  // canDelete guards this — component won't render delete UI without it
+  const onDeleteSelected = async (ids: string[]) => {
+    // Head: can delete staff announcements (not head/admin-created ones)
+    // Staff: can only delete their own announcements
+    const deletable = ids.filter((id) => {
+      const ann = announcements.find((a) => a.id === id);
+      if (!ann) return false;
+      if (isHead) {
+        // Head can delete staff-created announcements but not admin/head-created ones
+        return ann.authorRole === "staff" || ann.authorId === currentUserId;
+      }
+      if (isStaff) {
+        // Staff can only delete their own
+        return ann.authorId === currentUserId;
+      }
+      return false;
+    });
+    if (!deletable.length) {
+      alert("You don't have permission to delete the selected announcement(s).");
+      return;
+    }
+    if (!confirm(`Delete ${deletable.length} announcement${deletable.length > 1 ? "s" : ""}?`)) return;
+    setAnnouncements((prev) => prev.filter((a) => !deletable.includes(a.id)));
     setSelectedIds(new Set());
+    try {
+      await Promise.all(
+        deletable.map((id) =>
+          fetch(`/api/admin/courses/${courseId}/announcements/${id}`, {
+            method: "DELETE",
+          })
+        )
+      );
+    } catch (err) {
+      console.error("Delete failed:", err);
+    }
   };
 
   const resetCreateForm = () => {
@@ -629,12 +649,8 @@ export default function CourseAnnouncementsTab({
           bodyText: bodyText.trim(),
           bodyHtml,
           assignTo: assignTo.length ? assignTo : ["Everyone"],
-          availableFrom: availableFromDate
-            ? `${availableFromDate}T${availableFromTime || "00:00"}`
-            : null,
-          availableUntil: untilDate
-            ? `${untilDate}T${untilTime || "00:00"}`
-            : null,
+          availableFrom: availableFromDate ? `${availableFromDate}T${availableFromTime || "00:00"}` : null,
+          availableUntil: untilDate ? `${untilDate}T${untilTime || "00:00"}` : null,
           attachments: attachments.map((f) => ({
             name: f.name,
             url: f.url,
@@ -731,33 +747,21 @@ export default function CourseAnnouncementsTab({
 
   return (
     <div>
-      {/* ── Head Controls (instructor) ── */}
-      {canManageAnnouncements && (
-        <div className="px-3 sm:px-5 pt-4">
-          <div
-            className="rounded-xl border px-4 py-3.5"
-            style={{ borderColor: "#f0e4e4", background: "#fdf8f8" }}
+      {/* ── Create button for Head and Staff only ── */}
+      {(isHead || isStaff) && (
+        <div className="flex justify-end px-3 sm:px-5 pt-4">
+          <button
+            type="button"
+            onClick={() => setShowCreate(true)}
+            className="inline-flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-lg text-white transition-colors"
+            style={{ background: MAROON }}
           >
-            {/* Stack on mobile, row on desktop */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <div>
-                <p className="text-sm font-semibold" style={{ color: COLORS.text }}>
-                  Head Controls
-                </p>
-                <p className="text-xs text-gray-500 mt-0.5">
-                  You can manage announcements for this course.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowCreate(true)}
-                className="w-full sm:w-auto text-sm text-white rounded-lg px-4 py-2.5 sm:py-2 hover:opacity-90 active:opacity-80 transition-opacity font-medium"
-                style={{ background: MAROON }}
-              >
-                Create Announcement
-              </button>
-            </div>
-          </div>
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <line x1="12" y1="5" x2="12" y2="19" strokeLinecap="round"/>
+              <line x1="5" y1="12" x2="19" y2="12" strokeLinecap="round"/>
+            </svg>
+            New Announcement
+          </button>
         </div>
       )}
 
@@ -773,6 +777,7 @@ export default function CourseAnnouncementsTab({
         onDeleteSelected={onDeleteSelected}
         selectedIds={selectedIds}
         setSelectedIds={setSelectedIds}
+        canDelete={canDelete}
       />
     </div>
   );

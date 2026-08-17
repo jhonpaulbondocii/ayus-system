@@ -30,7 +30,6 @@ export interface Assignment {
     status: string;
     grade: number | null;
     submittedAt: string | null;
-    // ✅ Added missing fields used by CourseAssignmentSubmitterDetail
     fileUrl?: string | null;
     fileName?: string | null;
     textEntry?: string | null;
@@ -56,6 +55,8 @@ export interface RawAnnouncement {
   author?: string;
   authorName?: string;
   authorImage?: string | null;
+  authorId?: string | null;
+  authorRole?: string | null;
   postTo?: string | string[];
   assignTo?: string | string[];
   createdAtIso?: string;
@@ -82,6 +83,8 @@ export interface Announcement {
   bodyHtml: string;
   authorName: string;
   authorImage: string | null;
+  authorId: string | null;
+  authorRole: string | null;
   recipientsLabel: string;
   createdAt: string | null;
   read: boolean;
@@ -145,6 +148,7 @@ export interface MembershipPermissions {
   manageAssignments: boolean;
   managePeople: boolean;
   manageCourse: boolean;
+  canDelete: boolean;
 }
 
 export interface Membership {
@@ -197,15 +201,18 @@ export interface Staff {
   name: string;
 }
 
+// ── Course Role ───────────────────────────────────────────────────────────────
+// "Head"    = full access including delete
+// "Staff"   = create/edit own, no delete
+// "Faculty" = view + submit only
+export type CourseRole = "Head" | "Staff" | "Faculty";
+
 export type Tab =
   | "Home"
   | "Announcements"
   | "Assignments"
-  | "Discussions"
   | "Grades"
-  | "People"
-  | "Files"
-  | "Syllabus"
+  | "Users"
   | "Collaborations"
   | "Form"
   | "Repositories"

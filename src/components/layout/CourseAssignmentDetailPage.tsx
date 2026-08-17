@@ -40,6 +40,8 @@ interface SubmissionEntry {
   config?: unknown;
   settings?: unknown;
   maxFiles?: number | null;
+  maxFileSizeValue?: number | null;
+  maxFileSizeUnit?: string | null;
   [key: string]: unknown;
 }
 
@@ -86,6 +88,8 @@ interface EntryState {
   uploading: boolean;
   uploaded: boolean;
   error: string;
+  maxFileSizeValue: number;
+  maxFileSizeUnit: string;
 }
 
 interface StoredEntry {
@@ -519,6 +523,20 @@ function EntryForm({
         return;
       }
     }
+    const maxBytes = state.maxFileSizeUnit === "KB"
+      ? state.maxFileSizeValue * 1024
+      : state.maxFileSizeValue * 1024 * 1024;
+    if (file.size > maxBytes) {
+      onChange({
+        file: null,
+        fileUrl: null,
+        fileName: null,
+        uploaded: false,
+        uploading: false,
+        error: `"${file.name}" exceeds the maximum file size of ${state.maxFileSizeValue}${state.maxFileSizeUnit}. Please upload a smaller file.`,
+      });
+      return;
+    }
     onChange({ file, uploading: true, error: "" });
     try {
       const fd = new FormData();
@@ -559,6 +577,11 @@ function EntryForm({
         {tab === "file_upload" && state.maxFiles > 1 && (
           <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 border border-gray-200">
             Max {state.maxFiles} files
+          </span>
+        )}
+        {(tab === "file_upload" || tab === "media_recording") && (
+          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "#eff6ff", color: "#1d4ed8", border: "1px solid #bfdbfe" }}>
+            Max {state.maxFileSizeValue}{state.maxFileSizeUnit}
           </span>
         )}
       </div>
@@ -694,28 +717,36 @@ function SubmissionEntriesPanel({ entries }: { entries: SubmissionEntry[] }) {
       <div className="space-y-2">
         {entries.map((entry) => {
           const type = entry.type ?? "File Upload";
-          const allowedFileTypes = getAllowedFileTypes(entry as Record<string, unknown> & { label?: string; type?: string });
-          return (
-            <div
-              key={entry.id}
-              className="flex items-center justify-between bg-white rounded-lg border px-3 py-2 gap-3 flex-wrap"
-              style={{ borderColor: MAROON_SOFT_BORDER }}
-            >
-              <div className="flex items-center gap-2 min-w-0 flex-wrap">
-                <span className="text-sm shrink-0">{typeIcon[type] ?? "📄"}</span>
-                <span className="text-xs font-bold text-gray-800">{entry.label?.trim() || type}</span>
-                <span
-                  className="text-[10px] font-bold px-2 py-0.5 rounded-full text-white shrink-0"
-                  style={{ background: entry.required ? MAROON : "#9ca3af" }}
+              const allowedFileTypes = getAllowedFileTypes(entry as Record<string, unknown> & { label?: string; type?: string });
+              const sizeValue = typeof entry.maxFileSizeValue === "number" ? entry.maxFileSizeValue : 1;
+              const sizeUnit = typeof entry.maxFileSizeUnit === "string" ? entry.maxFileSizeUnit : "MB";
+              const showSize = type === "File Upload" || type === "Media Recording";
+              return (
+                <div
+                  key={entry.id}
+                  className="flex items-center justify-between bg-white rounded-lg border px-3 py-2 gap-3 flex-wrap"
+                  style={{ borderColor: MAROON_SOFT_BORDER }}
                 >
-                  {entry.required ? "Required" : "Optional"}
-                </span>
-                {type === "File Upload" && <FileTypePills types={allowedFileTypes} />}
-                {type === "File Upload" && allowedFileTypes.length === 0 && (
-                  <span className="text-[10px] text-gray-400">All file types accepted</span>
-                )}
-              </div>
-            </div>
+                  <div className="flex items-center gap-2 min-w-0 flex-wrap">
+                    <span className="text-sm shrink-0">{typeIcon[type] ?? "📄"}</span>
+                    <span className="text-xs font-bold text-gray-800">{entry.label?.trim() || type}</span>
+                    <span
+                      className="text-[10px] font-bold px-2 py-0.5 rounded-full text-white shrink-0"
+                      style={{ background: entry.required ? MAROON : "#9ca3af" }}
+                    >
+                      {entry.required ? "Required" : "Optional"}
+                    </span>
+                    {type === "File Upload" && <FileTypePills types={allowedFileTypes} />}
+                    {type === "File Upload" && allowedFileTypes.length === 0 && (
+                      <span className="text-[10px] text-gray-400">All file types accepted</span>
+                    )}
+                    {showSize && (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "#eff6ff", color: "#1d4ed8", border: "1px solid #bfdbfe" }}>
+                        Max {sizeValue}{sizeUnit}
+                      </span>
+                    )}
+                  </div>
+                </div>
           );
         })}
       </div>
@@ -960,6 +991,8 @@ export default function CourseAssignmentDetailPage({
               uploading: false,
               uploaded:  false,
               error:     "",
+              maxFileSizeValue: typeof e.maxFileSizeValue === "number" ? e.maxFileSizeValue : 1,
+              maxFileSizeUnit: typeof e.maxFileSizeUnit === "string" ? e.maxFileSizeUnit : "MB",
             };
           }));
         } else {

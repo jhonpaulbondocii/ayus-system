@@ -41,7 +41,10 @@ export async function GET() {
 
   // ── STAFF/HEAD: return only enrolled courses ───────────────────────────────
   const enrollments = await prisma.courseEnrollment.findMany({
-    where:   { userId: user.id },
+    where: {
+      userId: user.id,
+      course: { status: "PUBLISHED" },   // ← PUBLISHED lang ang makikita ng staff
+    },
     include: { course: true },
     orderBy: { createdAt: "desc" },
   });

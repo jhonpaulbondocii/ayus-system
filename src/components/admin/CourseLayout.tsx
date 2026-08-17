@@ -28,7 +28,7 @@ const NAV_ITEMS = [
   { label: "Assignments",   href: (id: string) => `/admin/courses/${id}/assignments`   },
   { label: "Repositories",  href: (id: string) => `/admin/courses/${id}/repositories`  },
   { label: "Grades",        href: (id: string) => `/admin/courses/${id}/grades`        },
-  { label: "People",        href: (id: string) => `/admin/courses/${id}/people`        },
+  { label: "Users",  href: (id: string) => `/admin/courses/${id}/people` },
   { label: "Forms",         href: (id: string) => `/admin/courses/${id}/forms`         },
   { label: "Settings",      href: (id: string) => `/admin/courses/${id}/settings`      },
 ];

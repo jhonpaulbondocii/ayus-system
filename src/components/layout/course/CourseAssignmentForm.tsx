@@ -89,6 +89,8 @@ interface SubmissionEntryItem {
   type: string;
   allowedFileTypes?: string[];
   maxFiles?: number | null;
+  maxFileSizeValue?: number;
+  maxFileSizeUnit?: "KB" | "MB";
 }
 interface AssignmentGroupItem { id: number; name: string; }
 
@@ -501,6 +503,9 @@ function SubmissionEntryCard({ entry, index, canRemove, onRemove, onUpdate }: {
   const isMediaRecording = entry.type === "Media Recording";
   const allowedTypes = normalizeFileTypes(entry.allowedFileTypes);
   const hasTypes = allowedTypes.length > 0;
+  const showSizeLimit = isFileUpload || isMediaRecording;
+  const sizeValue = entry.maxFileSizeValue ?? 1;
+  const sizeUnit = entry.maxFileSizeUnit ?? "MB";
 
   const toggleFileType = (value: string) => {
     const next = allowedTypes.includes(value) ? allowedTypes.filter(t => t !== value) : [...allowedTypes, value];
@@ -522,10 +527,16 @@ function SubmissionEntryCard({ entry, index, canRemove, onRemove, onUpdate }: {
     <div className="border border-gray-200 rounded-md overflow-hidden bg-white relative">
       <div className="flex items-center justify-between px-3 py-2 border-b border-gray-100" style={{ background: "#fef9f9" }}>
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded text-white" style={{ background: MAROON }}>Entry {index}</span>
-          <span className="text-[11px] font-semibold text-gray-600">{entry.type}</span>
-          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded"
-            style={entry.required ? { background: "#fef2f2", color: MAROON, border: "1px solid #f0c0c0" } : { background: "#f3f4f6", color: "#6b7280" }}>
+          <span className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded text-white" style={{ background: MAROON }}>
+            Entry {index}
+          </span>
+          <span className="text-[11px] font-semibold text-gray-600">
+            {entry.label?.trim() ? entry.label.trim() : entry.type}
+          </span>
+          <span
+            className="text-[10px] font-bold px-1.5 py-0.5 rounded"
+            style={entry.required ? { background: "#fef2f2", color: MAROON, border: "1px solid #f0c0c0" } : { background: "#f3f4f6", color: "#6b7280" }}
+          >
             {entry.required ? "Required" : "Optional"}
           </span>
           {(isFileUpload || isMediaRecording) && hasTypes && (
@@ -533,14 +544,35 @@ function SubmissionEntryCard({ entry, index, canRemove, onRemove, onUpdate }: {
               {formatFileTypes(allowedTypes)}
             </span>
           )}
+          {showSizeLimit && (
+            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded" style={{ background: "#eff6ff", color: "#1d4ed8", border: "1px solid #bfdbfe" }}>
+              Max {sizeValue}{sizeUnit}
+            </span>
+          )}
         </div>
         {canRemove && (
-          <button type="button" onClick={onRemove} className="w-6 h-6 flex items-center justify-center rounded hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors">
+          <button type="button" onClick={onRemove} className="w-6 h-6 flex items-center justify-center rounded hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors" aria-label="Remove submission entry">
             <X size={13} />
           </button>
         )}
       </div>
+
       <div className="px-3 py-3 space-y-3">
+        {/* Label */}
+        <div>
+          <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide block mb-1">
+            Label <span className="normal-case font-normal text-gray-400">(optional)</span>
+          </label>
+          <input
+            type="text"
+            value={entry.label}
+            onChange={e => onUpdate("label", e.target.value)}
+            placeholder={`e.g. ${entry.type === "File Upload" ? "Excel File, PDF Report..." : entry.type === "Text Entry" ? "Reflection, Essay..." : "Submission"}`}
+            className="w-full h-8 border border-gray-300 rounded-sm px-2 text-xs outline-none focus:border-[#7b1113]"
+          />
+        </div>
+
+        {/* Submission Type */}
         <div>
           <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide block mb-1">Submission Type</label>
           <div className="relative">
@@ -550,6 +582,8 @@ function SubmissionEntryCard({ entry, index, canRemove, onRemove, onUpdate }: {
             <ChevronDown size={11} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
           </div>
         </div>
+
+        {/* File type checkboxes */}
         {(isFileUpload || isMediaRecording) && (
           <>
             <div>
@@ -565,7 +599,8 @@ function SubmissionEntryCard({ entry, index, canRemove, onRemove, onUpdate }: {
                       <input type="checkbox" checked={checked} onChange={() => toggleFileType(ft.value)} className="sr-only" />
                       <span className={`w-3.5 h-3.5 rounded-sm border flex items-center justify-center shrink-0 ${checked ? "border-[#7b1113] bg-[#7b1113]" : "border-gray-300 bg-white"}`}>
                         {checked && <svg width="8" height="8" viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>}
-                      </span>.{ft.label}
+                      </span>
+                      .{ft.label}
                     </label>
                   );
                 })}
@@ -581,6 +616,38 @@ function SubmissionEntryCard({ entry, index, canRemove, onRemove, onUpdate }: {
             </div>
           </>
         )}
+
+        {/* Max File Size */}
+        {showSizeLimit && (
+          <div>
+            <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide block mb-2">
+              Max File Size
+            </label>
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                min={1}
+                value={sizeValue}
+                onChange={e => onUpdate("maxFileSizeValue", Math.max(1, parseInt(e.target.value) || 1))}
+                className="w-24 h-8 border border-gray-300 rounded-sm px-2 text-xs outline-none focus:border-[#7b1113]"
+              />
+              <div className="relative">
+                <select
+                  value={sizeUnit}
+                  onChange={e => onUpdate("maxFileSizeUnit", e.target.value)}
+                  className="h-8 border border-gray-300 rounded-sm pl-2 pr-6 text-xs bg-white outline-none appearance-none focus:border-[#7b1113]"
+                >
+                  <option value="KB">KB</option>
+                  <option value="MB">MB</option>
+                </select>
+                <ChevronDown size={11} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+              </div>
+              <span className="text-[10px] text-gray-400">Default: 1MB</span>
+            </div>
+          </div>
+        )}
+
+        {/* Required checkbox */}
         <div className="pt-1 border-t border-gray-100">
           <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer pt-1">
             <input type="checkbox" checked={entry.required} onChange={e => onUpdate("required", e.target.checked)} style={{ accentColor: MAROON }} />
@@ -640,7 +707,7 @@ export default function CourseAssignmentForm({
   const [submissionEntries, setSubmissionEntries] = useState<SubmissionEntryItem[]>(() => {
     const existing = existingAssignment?.submissionEntries;
     if (existing && Array.isArray(existing) && existing.length > 0) return existing;
-    return [{ id: 1, label: "", required: false, type: "File Upload", allowedFileTypes: [], maxFiles: 1 }];
+    return [{ id: 1, label: "", required: false, type: "File Upload", allowedFileTypes: [], maxFiles: 1, maxFileSizeValue: 1, maxFileSizeUnit: "MB" }];
   });
   const [submissionAttempts, setSubmissionAttempts] = useState("Unlimited");
   const [allowedAttempts, setAllowedAttempts] = useState(1);
@@ -689,7 +756,7 @@ export default function CourseAssignmentForm({
     return () => document.removeEventListener("mousedown", h);
   }, [openDropdownId]);
 
-  const addEntry = () => setSubmissionEntries(p => [...p, { id: Date.now(), label: "", required: false, type: "File Upload", allowedFileTypes: [], maxFiles: 1 }]);
+  const addEntry = () => setSubmissionEntries(p => [...p, { id: Date.now(), label: "", required: false, type: "File Upload", allowedFileTypes: [], maxFiles: 1, maxFileSizeValue: 1, maxFileSizeUnit: "MB" }]);
   const removeEntry = (id: number) => setSubmissionEntries(p => p.filter(e => e.id !== id));
   const updateEntry = (id: number, field: keyof SubmissionEntryItem, value: string | boolean | string[] | number | null) =>
     setSubmissionEntries(p => p.map(e => e.id === id ? { ...e, [field]: value } : e));
@@ -870,6 +937,11 @@ export default function CourseAssignmentForm({
                                 {e.required ? "Required" : "Optional"}
                               </span>
                               {showTypes && <span className="text-[10px] font-black px-1.5 py-0.5 rounded uppercase" style={{ background: MAROON, color: "#fff" }}>{formatFileTypes(allowed)}</span>}
+                              {(e.type === "File Upload" || e.type === "Media Recording") && (
+                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded" style={{ background: "#eff6ff", color: "#1d4ed8", border: "1px solid #bfdbfe" }}>
+                                  Max {e.maxFileSizeValue ?? 1}{e.maxFileSizeUnit ?? "MB"}
+                                </span>
+                              )}
                             </div>
                           );
                         })}

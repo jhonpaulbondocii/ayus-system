@@ -2,7 +2,7 @@
 
 // src/components/layout/course/CourseHomeTab.tsx
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {
   MAROON, FONT,
@@ -34,10 +34,11 @@ interface Props {
 ───────────────────────────────────────────────────────────────────────────── */
 interface ActivityItem {
   id: string;
-  type: "submission" | "announcement" | "enrollment" | "grade" | "general";
+  type: "submission" | "announcement" | "enrollment" | "grade" | "general" | "form";
   text: string;
   user?: string;
   time: string;
+  ts: number;
 }
 
 interface EnrollmentItem {
@@ -53,6 +54,23 @@ interface Stats {
   announcements: number;
   assignments: number;
   forms: number;
+}
+
+interface PersonItem {
+  id: string;
+  name: string;
+  email: string;
+  image?: string | null;
+  role: string;
+}
+
+interface FormItem {
+  id: string;
+  title: string;
+  dueDate: string | null;
+  published: boolean;
+  _isAssignedToYou?: boolean;
+  _formRole?: string;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -260,7 +278,7 @@ const CSS = `
   }
   .ch-enroll-row:last-child { border-bottom: none; }
 
-  /* ── Row items (staff view) ── */
+  /* ── Row items ── */
   .ch-row {
     display: flex; align-items: center; gap: 10px;
     padding: 9px 14px; border-bottom: 1px solid #f9fafb; transition: background .1s;
@@ -317,6 +335,14 @@ const CSS = `
     align-items: center; justify-content: center; gap: 5px;
   }
   .ch-view-more:hover { background: #fdf2f2; }
+
+  /* ── Avatar ── */
+  .ch-avatar {
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; flex-shrink: 0; overflow: hidden;
+    background: #f0e4e4; color: ${MAROON};
+  }
 
   /* ══════════════════════════════════════
      ACTIVITY DRAWER
@@ -458,6 +484,20 @@ const CSS = `
 `;
 
 /* ─────────────────────────────────────────────────────────────────────────────
+   RELATIVE TIME HELPER
+───────────────────────────────────────────────────────────────────────────── */
+function relativeTime(iso: string | Date): string {
+  const now = Date.now();
+  const then = new Date(iso).getTime();
+  const diff = now - then;
+  if (diff < 60000) return "Just now";
+  if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+  if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
+  if (diff < 604800000) return `${Math.floor(diff / 86400000)}d ago`;
+  return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
    SVG ICONS
 ───────────────────────────────────────────────────────────────────────────── */
 const Icons = {
@@ -466,12 +506,14 @@ const Icons = {
   People:       () => <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" strokeLinecap="round" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" strokeLinecap="round" /></svg>,
   Clock:        () => <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" strokeLinecap="round" /></svg>,
   Chart:        () => <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10" strokeLinecap="round" /><line x1="12" y1="20" x2="12" y2="4" strokeLinecap="round" /><line x1="6" y1="20" x2="6" y2="14" strokeLinecap="round" /></svg>,
+  Form:         () => <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 10h8M8 14h5" strokeLinecap="round"/><circle cx="17" cy="14" r="2.5"/></svg>,
+  Star:         () => <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" strokeLinecap="round" strokeLinejoin="round"/></svg>,
 };
 
 /* ─────────────────────────────────────────────────────────────────────────────
    ACTIVITY ICON
 ───────────────────────────────────────────────────────────────────────────── */
-type ActivityType = "submission" | "announcement" | "enrollment" | "grade" | "general";
+type ActivityType = "submission" | "announcement" | "enrollment" | "grade" | "general" | "form";
 
 function ActivityIcon({ type, large = false }: { type: ActivityType; large?: boolean }) {
   const size     = large ? 36 : 32;
@@ -481,12 +523,30 @@ function ActivityIcon({ type, large = false }: { type: ActivityType; large?: boo
     announcement: { bg: "#fdf2f2", stroke: MAROON,    path: <path d="M22 5v14l-10-3H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h8L22 5z" strokeLinecap="round"/> },
     enrollment:   { bg: "#f0fdf4", stroke: "#16a34a", path: <><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" strokeLinecap="round"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14" strokeLinecap="round"/><line x1="23" y1="11" x2="17" y2="11" strokeLinecap="round"/></> },
     grade:        { bg: "#fefce8", stroke: "#ca8a04", path: <><path d="M12 2L2 7l10 5 10-5-10-5z" strokeLinecap="round"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5" strokeLinecap="round"/></> },
+    form:         { bg: "#f0f9ff", stroke: "#0891b2", path: <><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 10h8M8 14h5" strokeLinecap="round"/><circle cx="17" cy="14" r="2.5"/></> },
     general:      { bg: "#f9fafb", stroke: "#9ca3af", path: <><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12" strokeLinecap="round"/><line x1="12" y1="16" x2="12.01" y2="16" strokeLinecap="round"/></> },
   };
   const c = cfg[type];
   return (
     <div style={{ width: size, height: size, borderRadius: "50%", background: c.bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
       <svg width={iconSize} height={iconSize} fill="none" stroke={c.stroke} strokeWidth={2} viewBox="0 0 24 24">{c.path}</svg>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   AVATAR
+───────────────────────────────────────────────────────────────────────────── */
+function Avatar({ name, image, size = 32 }: { name: string; image?: string | null; size?: number }) {
+  const colors = [MAROON, "#1d4ed8", "#16a34a", "#ea580c", "#7c3aed", "#0891b2"];
+  const color = colors[(name?.charCodeAt(0) ?? 0) % colors.length];
+  if (image) return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={image} alt={name} style={{ width: size, height: size, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
+  );
+  return (
+    <div style={{ width: size, height: size, borderRadius: "50%", background: color, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: size * 0.38, fontWeight: 800, flexShrink: 0 }}>
+      {(name ?? "?")[0]?.toUpperCase()}
     </div>
   );
 }
@@ -611,11 +671,9 @@ function ActivityDrawer({
         {activity.length > 0 && (
           <div className="act-toolbar">
             <div className="act-toolbar-left">
-              <div
-                className="act-cb-row" onClick={toggleAll}
-                role="checkbox" aria-checked={allSelected ? "true" : someSelected ? "mixed" : "false"}
-                tabIndex={0} onKeyDown={e => e.key === " " && (e.preventDefault(), toggleAll())}
-              >
+              <div className="act-cb-row" onClick={toggleAll} role="checkbox"
+                aria-checked={allSelected ? "true" : someSelected ? "mixed" : "false"}
+                tabIndex={0} onKeyDown={e => e.key === " " && (e.preventDefault(), toggleAll())}>
                 <div className={`act-cb ${allSelected ? "on" : someSelected ? "mid" : ""}`}>
                   {allSelected && <svg width="9" height="9" fill="none" stroke="#fff" strokeWidth={2.5} viewBox="0 0 12 12"><polyline points="1.5,6 4.5,9 10.5,3" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                   {someSelected && !allSelected && <svg width="8" height="2" fill="none" stroke="#fff" strokeWidth={2.5} viewBox="0 0 8 2"><line x1="0" y1="1" x2="8" y2="1" strokeLinecap="round"/></svg>}
@@ -673,7 +731,32 @@ function ActivityDrawer({
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   STAFF-VIEW CARDS
+   QUICK ACTIONS CARD
+───────────────────────────────────────────────────────────────────────────── */
+function QuickActionsCard({ actions }: { actions: { label: string; icon: React.ReactNode; onClick: () => void }[] }) {
+  return (
+    <div className="ch-card">
+      <div className="ch-card-header" style={{ paddingBottom: 0 }}>
+        <p className="ch-card-title">Quick Actions</p>
+      </div>
+      <div className="ch-actions-grid">
+        {actions.map(a => (
+          <button key={a.label} type="button" className="ch-action-btn" onClick={a.onClick}>
+            <div className="ch-action-icon">
+              <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+                {a.icon}
+              </svg>
+            </div>
+            <span className="ch-action-label">{a.label}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   ANNOUNCEMENTS CARD
 ───────────────────────────────────────────────────────────────────────────── */
 function AnnouncementsCard({ announcements, onTabChange }: { announcements: Announcement[]; onTabChange: (t: string) => void }) {
   const unread = announcements.filter(a => !a.read).length;
@@ -682,7 +765,7 @@ function AnnouncementsCard({ announcements, onTabChange }: { announcements: Anno
       <div className="ch-card-header">
         <p className="ch-card-title">
           <Icons.Announcement /> Announcements
-          {unread > 0 && <span className="ch-badge" style={{ background: MAROON, color: "#fff", fontSize: 9 }}>{unread} new</span>}
+          {unread > 0 && <span className="ch-badge" style={{ background: MAROON, color: "#fff" }}>{unread} new</span>}
         </p>
         <button className="ch-card-action" onClick={() => onTabChange("Announcements")}>View all →</button>
       </div>
@@ -701,6 +784,9 @@ function AnnouncementsCard({ announcements, onTabChange }: { announcements: Anno
   );
 }
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   UPCOMING DUE CARD
+───────────────────────────────────────────────────────────────────────────── */
 function UpcomingDueCard({ assignments, now, courseId, onTabChange, isHead }: {
   assignments: Assignment[]; now: Date; courseId: string;
   onTabChange: (t: string) => void; isHead: boolean;
@@ -752,6 +838,9 @@ function UpcomingDueCard({ assignments, now, courseId, onTabChange, isHead }: {
   );
 }
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   MY PROGRESS CARD
+───────────────────────────────────────────────────────────────────────────── */
 function MyProgressCard({ assignments, onTabChange }: { assignments: Assignment[]; onTabChange: (t: string) => void }) {
   const submitted = assignments.filter(a => (a.submissions ?? [])[0]?.submittedAt);
   const totalPts  = assignments.reduce((s, a) => s + (a.points || 0), 0);
@@ -788,6 +877,9 @@ function MyProgressCard({ assignments, onTabChange }: { assignments: Assignment[
   );
 }
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   MY GROUPS CARD
+───────────────────────────────────────────────────────────────────────────── */
 function MyGroupsCard({ groups, courseId }: { groups: Group[]; courseId: string }) {
   const router   = useRouter();
   const myGroups = groups.filter(g => g.isMember);
@@ -813,24 +905,32 @@ function MyGroupsCard({ groups, courseId }: { groups: Group[]; courseId: string 
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   QUICK ACTIONS CARD (reusable)
+   RECENT ENROLLMENTS CARD (shared by all roles)
 ───────────────────────────────────────────────────────────────────────────── */
-function QuickActionsCard({ actions }: { actions: { label: string; icon: React.ReactNode; onClick: () => void }[] }) {
+function RecentEnrollmentsCard({ enrollments, onTabChange, canManagePeople }: {
+  enrollments: EnrollmentItem[];
+  onTabChange: (t: string) => void;
+  canManagePeople: boolean;
+}) {
   return (
     <div className="ch-card">
-      <div className="ch-card-header" style={{ paddingBottom: 0 }}>
-        <p className="ch-card-title">Quick Actions</p>
+      <div className="ch-card-header">
+        <p className="ch-card-title">Recent Enrollments</p>
+        {canManagePeople && (
+          <button className="ch-card-action" onClick={() => onTabChange("People")}>View all</button>
+        )}
       </div>
-      <div className="ch-actions-grid">
-        {actions.map(a => (
-          <button key={a.label} type="button" className="ch-action-btn" onClick={a.onClick}>
-            <div className="ch-action-icon">
-              <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-                {a.icon}
-              </svg>
+      <div className="ch-card-body">
+        {enrollments.length === 0 ? (
+          <p style={{ fontSize: 12, color: "#9ca3af", margin: 0 }}>No recent enrollments.</p>
+        ) : enrollments.map(e => (
+          <div key={e.id} className="ch-enroll-row">
+            <Avatar name={e.name} image={e.image} size={32} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontSize: 12, fontWeight: 700, color: "#111827", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.name}</p>
+              <p style={{ fontSize: 10.5, color: "#9ca3af", margin: "1px 0 0" }}>{e.role} · {e.joinedAt}</p>
             </div>
-            <span className="ch-action-label">{a.label}</span>
-          </button>
+          </div>
         ))}
       </div>
     </div>
@@ -838,10 +938,156 @@ function QuickActionsCard({ actions }: { actions: { label: string; icon: React.R
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   MAIN EXPORT
+   RECENT ACTIVITY CARD (shared by all roles)
 ───────────────────────────────────────────────────────────────────────────── */
 const PREVIEW_COUNT = 5;
 
+function RecentActivityCard({ activity, loading, onViewAll }: {
+  activity: ActivityItem[];
+  loading: boolean;
+  onViewAll: () => void;
+}) {
+  const previewActivity = activity.slice(0, PREVIEW_COUNT);
+  const extraCount      = activity.length - PREVIEW_COUNT;
+
+  return (
+    <div className="ch-card">
+      <div className="ch-card-header">
+        <p className="ch-card-title">
+          Recent Activity
+          {activity.length > 0 && (
+            <span style={{ fontSize: 10, fontWeight: 600, color: "#9ca3af", textTransform: "none", letterSpacing: 0 }}>
+              ({activity.length})
+            </span>
+          )}
+        </p>
+        {!loading && activity.length > 0 && (
+          <button className="ch-card-action" onClick={onViewAll}>View all →</button>
+        )}
+      </div>
+      <div className="ch-card-body">
+        {loading ? (
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div className="ch-spinner" />
+            <span style={{ fontSize: 12, color: "#9ca3af" }}>Loading…</span>
+          </div>
+        ) : activity.length === 0 ? (
+          <p style={{ fontSize: 12, color: "#9ca3af", margin: 0 }}>No recent activity.</p>
+        ) : (
+          <>
+            {previewActivity.map(item => (
+              <div key={item.id} className="ch-activity-row">
+                <ActivityIcon type={item.type} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontSize: 12, color: "#374151", margin: 0, lineHeight: 1.5 }}>
+                    {item.user && <span style={{ fontWeight: 700, color: "#111827" }}>{item.user} </span>}
+                    {item.text}
+                  </p>
+                  <p style={{ fontSize: 10.5, color: "#9ca3af", margin: "2px 0 0" }}>{item.time}</p>
+                </div>
+              </div>
+            ))}
+            {extraCount > 0 && (
+              <button className="ch-view-more" onClick={onViewAll}>
+                <svg width="11" height="11" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <line x1="12" y1="5" x2="12" y2="19" strokeLinecap="round"/>
+                  <line x1="5" y1="12" x2="19" y2="12" strokeLinecap="round"/>
+                </svg>
+                {extraCount} more — View all
+              </button>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   BUILD STAFF ACTIVITY FEED (client-side from existing data)
+───────────────────────────────────────────────────────────────────────────── */
+function buildStaffActivity(
+  announcements: Announcement[],
+  assignments: Assignment[],
+  forms: FormItem[],
+  people: PersonItem[],
+  currentUserId: string,
+): ActivityItem[] {
+  const items: ActivityItem[] = [];
+
+  // Announcements not created by the current user
+  for (const a of announcements) {
+    items.push({
+      id: `ann-${a.id}`,
+      type: "announcement",
+      text: `New announcement: "${a.title}"`,
+      user: a.authorName ?? undefined,
+      time: relativeTime(a.createdAt ?? new Date()),
+      ts: a.createdAt ? new Date(a.createdAt).getTime() : Date.now(),
+    });
+  }
+
+  // Assignments assigned to user — new/upcoming
+  for (const a of assignments) {
+    const isCreator = a.createdById === currentUserId;
+    if (isCreator) continue;
+    const ts = a.dueDate ? new Date(a.dueDate).getTime() : Date.now();
+    items.push({
+      id: `asgn-${a.id}`,
+      type: "submission",
+      text: `Assignment assigned to you: "${a.title}"${a.dueDate ? ` — due ${fmtDue(a.dueDate)}` : ""}`,
+      time: relativeTime(new Date(ts)),
+      ts,
+    });
+
+    // Graded submissions
+    const sub = (a.submissions ?? [])[0];
+    if (sub?.grade != null && sub.submittedAt) {
+      const gradeTs = new Date(sub.submittedAt).getTime();
+      items.push({
+        id: `grade-${a.id}`,
+        type: "grade",
+        text: `You received a grade on "${a.title}": ${sub.grade}/${a.points} pts`,
+        time: relativeTime(new Date(gradeTs)),
+        ts: gradeTs,
+      });
+    }
+  }
+
+  // Forms assigned to user
+  for (const f of forms) {
+    if (!f._isAssignedToYou && f._formRole !== "submitter") continue;
+    items.push({
+      id: `form-${f.id}`,
+      type: "form",
+      text: `Form assigned to you: "${f.title}"${f.dueDate ? ` — due ${fmtDue(f.dueDate)}` : ""}`,
+      time: relativeTime(new Date()),
+      ts: Date.now() - 1000,
+    });
+  }
+
+  // Recent enrollments (other people joining)
+  for (const p of people.slice(0, 10)) {
+    if (p.id === currentUserId) continue;
+    items.push({
+      id: `enroll-${p.id}`,
+      type: "enrollment",
+      text: `joined the course as ${p.role}`,
+      user: p.name,
+      time: "Recently",
+      ts: 0,
+    });
+  }
+
+  // Sort by timestamp desc, remove duplicates
+  return items
+    .sort((a, b) => b.ts - a.ts)
+    .slice(0, 50);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   MAIN EXPORT
+───────────────────────────────────────────────────────────────────────────── */
 export default function CourseHomeTab({
   course, membership, groups, courseId,
   canManageAnnouncements, canManageAssignments, canManagePeople,
@@ -852,13 +1098,17 @@ export default function CourseHomeTab({
   const [headView, setHeadView]               = useState<"admin" | "staff">("admin");
   const [assignments, setAssignments]         = useState<Assignment[]>([]);
   const [announcements, setAnnouncements]     = useState<Announcement[]>([]);
-  const [peopleCount, setPeopleCount]         = useState(0);
+  const [forms, setForms]                     = useState<FormItem[]>([]);
+  const [people, setPeople]                   = useState<PersonItem[]>([]);
   const [stats, setStats]                     = useState<Stats>({ people: 0, announcements: 0, assignments: 0, forms: 0 });
-  const [activity, setActivity]               = useState<ActivityItem[]>([]);
+  const [headActivity, setHeadActivity]       = useState<ActivityItem[]>([]);
   const [enrollments, setEnrollments]         = useState<EnrollmentItem[]>([]);
   const [loading, setLoading]                 = useState(true);
   const [loadingActivity, setLoadingActivity] = useState(true);
   const [showDrawer, setShowDrawer]           = useState(false);
+
+  // Track previously seen people to detect new enrollments
+  const prevPeopleCount = useRef(0);
 
   useEffect(() => {
     const base = `/api/courses/${courseId}`;
@@ -866,72 +1116,154 @@ export default function CourseHomeTab({
       fetch(`${base}/assignments`).then(r => r.json()).catch(() => ({ assignments: [] })),
       fetch(`${base}/announcements`).then(r => r.json()).catch(() => ({ announcements: [] })),
       fetch(`${base}/people`).then(r => r.json()).catch(() => ({ people: [] })),
-    ]).then(([aData, anData, pData]) => {
+      fetch(`${base}/forms`).then(r => r.json()).catch(() => ({ forms: [] })),
+    ]).then(([aData, anData, pData, fData]) => {
       setAssignments(aData.assignments ?? []);
       const raw = anData.announcements ?? anData.items ?? anData.data ?? [];
       setAnnouncements(raw.map((item: RawAnnouncement, i: number) => normalizeAnnouncement(item, i)));
-      setPeopleCount((pData.people ?? []).length);
+      const pList: PersonItem[] = (pData.people ?? []).map((p: PersonItem) => p);
+      setPeople(pList);
+      prevPeopleCount.current = pList.length;
+      setForms(fData.forms ?? []);
       setLoading(false);
+      setLoadingActivity(false);
     });
   }, [courseId]);
 
+  // Head-only: fetch admin activity + recent enrollments
   useEffect(() => {
     if (!isHead) return;
     fetch(`/api/admin/courses/${courseId}/activity`)
       .then(r => r.json())
       .then(d => {
-        setActivity(d.activity ?? []);
+        setHeadActivity(d.activity ?? []);
         setStats(d.stats ?? { people: 0, announcements: 0, assignments: 0, forms: 0 });
       })
       .catch(() => {})
       .finally(() => setLoadingActivity(false));
+
     fetch(`/api/admin/courses/${courseId}/enrollments/recent`)
       .then(r => r.json())
       .then(d => setEnrollments(d.enrollments ?? []))
       .catch(() => {});
   }, [courseId, isHead]);
 
-  const handleClearItems = useCallback((ids: string[]) => {
-    setActivity(prev => prev.filter(a => !ids.includes(a.id)));
+  // Build recent enrollments for staff/faculty from people list
+  const staffEnrollments: EnrollmentItem[] = people.slice(0, 8).map(p => ({
+    id: p.id,
+    name: p.name,
+    image: p.image,
+    role: p.role,
+    joinedAt: "Recently",
+  }));
+
+  const handleClearHeadItems = useCallback((ids: string[]) => {
+    setHeadActivity(prev => prev.filter(a => !ids.includes(a.id)));
+  }, []);
+
+  const [clearedStaffIds, setClearedStaffIds] = useState<Set<string>>(new Set());
+
+  const staffActivity = useMemo(() => {
+    if (loading) return [];
+    return buildStaffActivity(announcements, assignments, forms, people, currentUserId)
+      .filter(item => !clearedStaffIds.has(item.id));
+  }, [loading, announcements, assignments, forms, people, currentUserId, clearedStaffIds]);
+
+  const handleClearStaffItems = useCallback((ids: string[]) => {
+    setClearedStaffIds(prev => { const s = new Set(prev); ids.forEach(id => s.add(id)); return s; });
   }, []);
 
   const now = new Date();
 
-  // Derived values used in both head staff view and non-head staff view
+  // Derived values
   const totalAssignments = assignments.length;
   const mySubmitted      = assignments.filter(a => (a.submissions ?? [])[0]?.submittedAt).length;
   const myTotalPts       = assignments.reduce((s, a) => s + (a.points || 0), 0);
   const myEarnedPts      = assignments.reduce((s, a) => s + ((a.submissions ?? [])[0]?.grade ?? 0), 0);
   const myGradePct       = myTotalPts > 0 ? Math.round((myEarnedPts / myTotalPts) * 100) : 0;
   const unreadCount      = announcements.filter(a => !a.read).length;
-  const dueThisWeekAll   = assignments.filter(a =>
+  const dueThisWeek      = assignments.filter(a =>
     a.dueDate && new Date(a.dueDate) > now && new Date(a.dueDate) <= new Date(now.getTime() + 7 * 86400000)
   ).length;
-
-  const previewActivity = activity.slice(0, PREVIEW_COUNT);
-  const extraCount      = activity.length - PREVIEW_COUNT;
 
   if (loading) {
     return (
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 220, color: "#9ca3af", fontSize: 13, fontFamily: FONT, gap: 10 }}>
-        <svg className="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none">
-          <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="40 60" />
-        </svg>
+        <div style={{ width: 16, height: 16, border: `2px solid #f0e4e4`, borderTop: `2px solid ${MAROON}`, borderRadius: "50%", animation: "ch-spin .8s linear infinite" }} />
         Loading dashboard…
+        <style>{`@keyframes ch-spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
   }
+
+  /* ─────────────────────────────────────────────────────────────────────────
+     SHARED STAT ITEMS (My Dashboard — all roles use these)
+  ───────────────────────────────────────────────────────────────────────── */
+  const myDashStats: StatItem[] = [
+    {
+      label: "Submitted",
+      value: `${mySubmitted}/${totalAssignments}`,
+      color: MAROON, bg: "#fdf2f2",
+      icon: <><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="9" strokeLinecap="round"/><line x1="9" y1="13" x2="15" y2="13" strokeLinecap="round"/></>,
+    },
+    {
+      label: "Current Grade",
+      value: `${myGradePct}%`,
+      color: "#0891b2", bg: "#ecfeff",
+      icon: <><line x1="18" y1="20" x2="18" y2="10" strokeLinecap="round"/><line x1="12" y1="20" x2="12" y2="4" strokeLinecap="round"/><line x1="6" y1="20" x2="6" y2="14" strokeLinecap="round"/></>,
+    },
+    {
+      label: "Unread",
+      value: unreadCount,
+      color: unreadCount > 0 ? "#7c3aed" : "#6b7280",
+      bg: unreadCount > 0 ? "#f5f3ff" : "#f9fafb",
+      icon: <path d="M22 5v14l-10-3H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h8L22 5z" strokeLinecap="round"/>,
+      onClick: () => onTabChange("Announcements"),
+    },
+    {
+      label: "Due This Week",
+      value: dueThisWeek,
+      color: dueThisWeek > 0 ? "#b91c1c" : "#6b7280",
+      bg: dueThisWeek > 0 ? "#fef2f2" : "#f9fafb",
+      icon: <><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2" strokeLinecap="round"/></>,
+      onClick: () => onTabChange("Assignments"),
+    },
+  ];
+
+  /* ─────────────────────────────────────────────────────────────────────────
+     SHARED QUICK ACTIONS (My Dashboard — all roles)
+  ───────────────────────────────────────────────────────────────────────── */
+  const myDashActions = [
+    {
+      label: "Grades",
+      icon: <><path d="M12 2L2 7l10 5 10-5-10-5z" strokeLinecap="round" strokeLinejoin="round"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5" strokeLinecap="round" strokeLinejoin="round"/></>,
+      onClick: () => onTabChange("Grades"),
+    },
+    {
+      label: "Announcements",
+      icon: <path d="M22 5v14l-10-3H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h8L22 5z" strokeLinecap="round" strokeLinejoin="round"/>,
+      onClick: () => onTabChange("Announcements"),
+    },
+    {
+      label: "Assignments",
+      icon: <><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="9" strokeLinecap="round"/><line x1="9" y1="13" x2="15" y2="13" strokeLinecap="round"/></>,
+      onClick: () => onTabChange("Assignments"),
+    },
+    {
+      label: "Forms",
+      icon: <><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 10h8M8 14h5" strokeLinecap="round"/><circle cx="17" cy="14" r="2.5"/></>,
+      onClick: () => onTabChange("Forms"),
+    },
+  ];
 
   /* ══════════════════════════════════════════════════════════════════════════
      HEAD VIEW
   ══════════════════════════════════════════════════════════════════════════ */
   if (isHead) {
-
-    // ── Unit Management stats (Staff · Assignments · Forms · Announcements) ──
     const adminStats: StatItem[] = [
       {
         label: "Staff",
-        value: stats.people || peopleCount,
+        value: stats.people || people.length,
         color: "#2563eb", bg: "#eff6ff",
         icon: <><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" strokeLinecap="round"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" strokeLinecap="round"/></>,
         onClick: () => onTabChange("People"),
@@ -945,7 +1277,7 @@ export default function CourseHomeTab({
       },
       {
         label: "Forms",
-        value: stats.forms,
+        value: stats.forms || forms.length,
         color: "#0891b2", bg: "#ecfeff",
         icon: <><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 10h8M8 14h5" strokeLinecap="round"/><circle cx="17" cy="14" r="2.5"/></>,
         onClick: () => onTabChange("Forms"),
@@ -959,7 +1291,6 @@ export default function CourseHomeTab({
       },
     ];
 
-    // ── Unit Management quick actions ──
     const adminActions = [
       ...(canManageAnnouncements ? [{
         label: "New Announcement",
@@ -988,66 +1319,17 @@ export default function CourseHomeTab({
       },
     ];
 
-    // ── My Dashboard stats ──
-    const staffStats: StatItem[] = [
-      {
-        label: "Submitted",
-        value: `${mySubmitted}/${totalAssignments}`,
-        color: MAROON, bg: "#fdf2f2",
-        icon: <><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="9" strokeLinecap="round"/><line x1="9" y1="13" x2="15" y2="13" strokeLinecap="round"/></>,
-      },
-      {
-        label: "Current Grade",
-        value: `${myGradePct}%`,
-        color: "#0891b2", bg: "#ecfeff",
-        icon: <><line x1="18" y1="20" x2="18" y2="10" strokeLinecap="round"/><line x1="12" y1="20" x2="12" y2="4" strokeLinecap="round"/><line x1="6" y1="20" x2="6" y2="14" strokeLinecap="round"/></>,
-      },
-      {
-        label: "Unread Announcements",
-        value: unreadCount,
-        color: unreadCount > 0 ? "#7c3aed" : "#6b7280",
-        bg: unreadCount > 0 ? "#f5f3ff" : "#f9fafb",
-        icon: <path d="M22 5v14l-10-3H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h8L22 5z" strokeLinecap="round"/>,
-      },
-      {
-        label: "Due This Week",
-        value: dueThisWeekAll,
-        color: dueThisWeekAll > 0 ? "#b91c1c" : "#6b7280",
-        bg: dueThisWeekAll > 0 ? "#fef2f2" : "#f9fafb",
-        icon: <><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2" strokeLinecap="round"/></>,
-      },
-    ];
-
-    // ── My Dashboard quick actions: Grades · Announcements · Assignments · Forms ──
-    const myDashboardActions = [
-      {
-        label: "Grades",
-        icon: <><path d="M12 2L2 7l10 5 10-5-10-5z" strokeLinecap="round" strokeLinejoin="round"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5" strokeLinecap="round" strokeLinejoin="round"/></>,
-        onClick: () => onTabChange("Grades"),
-      },
-      {
-        label: "Announcements",
-        icon: <path d="M22 5v14l-10-3H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h8L22 5z" strokeLinecap="round" strokeLinejoin="round"/>,
-        onClick: () => onTabChange("Announcements"),
-      },
-      {
-        label: "Assignments",
-        icon: <><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="9" strokeLinecap="round"/><line x1="9" y1="13" x2="15" y2="13" strokeLinecap="round"/></>,
-        onClick: () => onTabChange("Assignments"),
-      },
-      {
-        label: "Forms",
-        icon: <><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 10h8M8 14h5" strokeLinecap="round"/><circle cx="17" cy="14" r="2.5"/></>,
-        onClick: () => onTabChange("Forms"),
-      },
-    ];
+    // Use head activity for Unit Management, staff activity for My Dashboard
+    const currentActivity = headView === "admin" ? headActivity : staffActivity;
+    const handleClear     = headView === "admin" ? handleClearHeadItems : handleClearStaffItems;
+    const currentEnrollments = headView === "admin"
+      ? enrollments
+      : staffEnrollments;
 
     return (
       <>
         <style>{CSS}</style>
         <div className="ch-root ch-fade">
-
-          {/* Header */}
           <div className="ch-header">
             <div className="ch-header-content">
               <p className="ch-header-eyebrow">Unit Overview</p>
@@ -1066,120 +1348,60 @@ export default function CourseHomeTab({
             </div>
           </div>
 
-          {/* Stat strip */}
-          <StatStrip items={headView === "admin" ? adminStats : staffStats} />
+          <StatStrip items={headView === "admin" ? adminStats : myDashStats} />
 
-          {/* Body */}
           <div className="ch-body">
-
-            {/* ── UNIT MANAGEMENT ── */}
             {headView === "admin" && (
               <div className="ch-layout">
                 <div className="ch-main">
                   <QuickActionsCard actions={adminActions} />
-
-                  {/* Recent Activity */}
-                  <div className="ch-card">
-                    <div className="ch-card-header">
-                      <p className="ch-card-title">
-                        Recent Activity
-                        {activity.length > 0 && (
-                          <span style={{ fontSize: 10, fontWeight: 600, color: "#9ca3af", textTransform: "none", letterSpacing: 0 }}>
-                            ({activity.length})
-                          </span>
-                        )}
-                      </p>
-                      {!loadingActivity && (
-                        <button className="ch-card-action" onClick={() => setShowDrawer(true)}>View all →</button>
-                      )}
-                    </div>
-                    <div className="ch-card-body">
-                      {loadingActivity ? (
-                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                          <div className="ch-spinner" />
-                          <span style={{ fontSize: 12, color: "#9ca3af" }}>Loading…</span>
-                        </div>
-                      ) : activity.length === 0 ? (
-                        <p style={{ fontSize: 12, color: "#9ca3af", margin: 0 }}>No recent activity.</p>
-                      ) : (
-                        <>
-                          {previewActivity.map(item => (
-                            <div key={item.id} className="ch-activity-row">
-                              <ActivityIcon type={item.type} />
-                              <div style={{ flex: 1, minWidth: 0 }}>
-                                <p style={{ fontSize: 12, color: "#374151", margin: 0, lineHeight: 1.5 }}>
-                                  {item.user && <span style={{ fontWeight: 700, color: "#111827" }}>{item.user} </span>}
-                                  {item.text}
-                                </p>
-                                <p style={{ fontSize: 10.5, color: "#9ca3af", margin: "2px 0 0" }}>{item.time}</p>
-                              </div>
-                            </div>
-                          ))}
-                          {extraCount > 0 && (
-                            <button className="ch-view-more" onClick={() => setShowDrawer(true)}>
-                              <svg width="11" height="11" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                                <line x1="12" y1="5" x2="12" y2="19" strokeLinecap="round"/>
-                                <line x1="5" y1="12" x2="19" y2="12" strokeLinecap="round"/>
-                              </svg>
-                              {extraCount} more — View all
-                            </button>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  </div>
+                  <RecentActivityCard
+                    activity={currentActivity}
+                    loading={loadingActivity}
+                    onViewAll={() => setShowDrawer(true)}
+                  />
                 </div>
-
-                {/* Sidebar */}
                 <div className="ch-side">
-                  <div className="ch-card">
-                    <div className="ch-card-header">
-                      <p className="ch-card-title">Recent Enrollments</p>
-                      <button className="ch-card-action" onClick={() => onTabChange("People")}>View all</button>
-                    </div>
-                    <div className="ch-card-body">
-                      {enrollments.length === 0 ? (
-                        <p style={{ fontSize: 12, color: "#9ca3af", margin: 0 }}>No recent enrollments.</p>
-                      ) : enrollments.map(e => (
-                        <div key={e.id} className="ch-enroll-row">
-                          <div style={{ width: 32, height: 32, borderRadius: "50%", background: "#f0e4e4", color: MAROON, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 800, flexShrink: 0 }}>
-                            {e.name?.[0]?.toUpperCase()}
-                          </div>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <p style={{ fontSize: 12, fontWeight: 700, color: "#111827", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.name}</p>
-                            <p style={{ fontSize: 10.5, color: "#9ca3af", margin: "1px 0 0" }}>{e.role} · {e.joinedAt}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                  <RecentEnrollmentsCard
+                    enrollments={currentEnrollments}
+                    onTabChange={onTabChange}
+                    canManagePeople={canManagePeople}
+                  />
                 </div>
               </div>
             )}
 
-            {/* ── MY DASHBOARD ── */}
             {headView === "staff" && (
               <div className="ch-layout">
                 <div className="ch-main">
-                  <QuickActionsCard actions={myDashboardActions} />
+                  <QuickActionsCard actions={myDashActions} />
+                  <RecentActivityCard
+                    activity={currentActivity}
+                    loading={false}
+                    onViewAll={() => setShowDrawer(true)}
+                  />
                   <UpcomingDueCard assignments={assignments} now={now} courseId={courseId} onTabChange={onTabChange} isHead />
                   <AnnouncementsCard announcements={announcements} onTabChange={onTabChange} />
                 </div>
                 <div className="ch-side">
                   <MyProgressCard assignments={assignments} onTabChange={onTabChange} />
+                  <RecentEnrollmentsCard
+                    enrollments={currentEnrollments}
+                    onTabChange={onTabChange}
+                    canManagePeople={canManagePeople}
+                  />
                   <MyGroupsCard groups={groups} courseId={courseId} />
                 </div>
               </div>
             )}
-
           </div>
         </div>
 
         {showDrawer && (
           <ActivityDrawer
-            activity={activity}
+            activity={currentActivity}
             onClose={() => setShowDrawer(false)}
-            onClearItems={handleClearItems}
+            onClearItems={handleClear}
           />
         )}
       </>
@@ -1187,65 +1409,12 @@ export default function CourseHomeTab({
   }
 
   /* ══════════════════════════════════════════════════════════════════════════
-     STAFF (non-head) VIEW
+     STAFF / FACULTY VIEW  (same design as Head's "My Dashboard")
   ══════════════════════════════════════════════════════════════════════════ */
-  const staffStats: StatItem[] = [
-    {
-      label: "Submitted",
-      value: `${mySubmitted}/${totalAssignments}`,
-      color: MAROON, bg: "#fdf2f2",
-      icon: <><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="9" strokeLinecap="round"/><line x1="9" y1="13" x2="15" y2="13" strokeLinecap="round"/></>,
-    },
-    {
-      label: "Current Grade",
-      value: `${myGradePct}%`,
-      color: "#0891b2", bg: "#ecfeff",
-      icon: <><line x1="18" y1="20" x2="18" y2="10" strokeLinecap="round"/><line x1="12" y1="20" x2="12" y2="4" strokeLinecap="round"/><line x1="6" y1="20" x2="6" y2="14" strokeLinecap="round"/></>,
-    },
-    {
-      label: "Unread Announcements",
-      value: unreadCount,
-      color: unreadCount > 0 ? "#7c3aed" : "#6b7280",
-      bg: unreadCount > 0 ? "#f5f3ff" : "#f9fafb",
-      icon: <path d="M22 5v14l-10-3H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h8L22 5z" strokeLinecap="round"/>,
-    },
-    {
-      label: "Due This Week",
-      value: dueThisWeekAll,
-      color: dueThisWeekAll > 0 ? "#b91c1c" : "#6b7280",
-      bg: dueThisWeekAll > 0 ? "#fef2f2" : "#f9fafb",
-      icon: <><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2" strokeLinecap="round"/></>,
-    },
-  ];
-
-  const staffQuickActions = [
-    {
-      label: "View Grades",
-      icon: <><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" strokeLinecap="round" strokeLinejoin="round"/></>,
-      onClick: () => onTabChange("Grades"),
-    },
-    {
-      label: "Announcements",
-      icon: <path d="M22 5v14l-10-3H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h8L22 5z" strokeLinecap="round" strokeLinejoin="round"/>,
-      onClick: () => onTabChange("Announcements"),
-    },
-    {
-      label: "Assignments",
-      icon: <><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="9" strokeLinecap="round"/><line x1="9" y1="13" x2="15" y2="13" strokeLinecap="round"/></>,
-      onClick: () => onTabChange("Assignments"),
-    },
-    {
-      label: "Form",
-      icon: <><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6M12 13H8M16 17H8" strokeLinecap="round" /></>,
-      onClick: () => onTabChange("Form"),
-    },
-  ];
-
   return (
     <>
       <style>{CSS}</style>
       <div className="ch-root ch-fade">
-
         <div className="ch-header">
           <div className="ch-header-content">
             <p className="ch-header-eyebrow">Course Dashboard</p>
@@ -1259,22 +1428,40 @@ export default function CourseHomeTab({
           </div>
         </div>
 
-        <StatStrip items={staffStats} />
+        <StatStrip items={myDashStats} />
 
         <div className="ch-body">
           <div className="ch-layout">
             <div className="ch-main">
-              <QuickActionsCard actions={staffQuickActions} />
+              <QuickActionsCard actions={myDashActions} />
+              <RecentActivityCard
+                activity={staffActivity}
+                loading={false}
+                onViewAll={() => setShowDrawer(true)}
+              />
               <UpcomingDueCard assignments={assignments} now={now} courseId={courseId} onTabChange={onTabChange} isHead={false} />
               <AnnouncementsCard announcements={announcements} onTabChange={onTabChange} />
             </div>
             <div className="ch-side">
               <MyProgressCard assignments={assignments} onTabChange={onTabChange} />
+              <RecentEnrollmentsCard
+                enrollments={staffEnrollments}
+                onTabChange={onTabChange}
+                canManagePeople={false}
+              />
               <MyGroupsCard groups={groups} courseId={courseId} />
             </div>
           </div>
         </div>
       </div>
+
+      {showDrawer && (
+        <ActivityDrawer
+          activity={staffActivity}
+          onClose={() => setShowDrawer(false)}
+          onClearItems={handleClearStaffItems}
+        />
+      )}
     </>
   );
 }

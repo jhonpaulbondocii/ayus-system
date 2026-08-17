@@ -718,6 +718,7 @@ interface CourseAssignmentDetailProps {
   onBack: () => void;
   onEditFull: (a: AssignmentWithRole) => void;
   setAssignments: React.Dispatch<React.SetStateAction<AssignmentWithRole[]>>;
+  canDelete?: boolean;
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -726,6 +727,7 @@ interface CourseAssignmentDetailProps {
 export default function CourseAssignmentDetail({
   assignment, courseId, sections: _sections, staff: _staff,
   currentUserId: _currentUserId, onBack, onEditFull, setAssignments,
+  canDelete = false,
 }: CourseAssignmentDetailProps) {
   const [current, setCurrent]       = useState<AssignmentWithRole>(assignment);
   const [publishing, setPublishing] = useState(false);
@@ -1009,10 +1011,12 @@ export default function CourseAssignmentDetail({
               </button>
               {showDotMenu && (
                 <div style={{ position: "absolute", right: 0, top: "100%", marginTop: 4, width: 180, background: "#fff", border: "1px solid #e5e7eb", borderRadius: 12, boxShadow: "0 8px 24px rgba(0,0,0,.12)", zIndex: 100, overflow: "hidden", padding: "4px 0" }}>
+                  {canDelete && (
                   <button onClick={() => { setShowDotMenu(false); setShowDeleteModal(true); }}
                     style={{ width: "100%", display: "flex", alignItems: "center", gap: 8, padding: "10px 16px", fontSize: 12, fontWeight: 600, color: "#ef4444", cursor: "pointer", background: "none", border: "none", textAlign: "left" }}>
                     <Trash2 size={13} /> Delete Assignment
                   </button>
+                )}
                 </div>
               )}
             </div>
@@ -1258,7 +1262,6 @@ export default function CourseAssignmentDetail({
                 </div>
                 <div>
                   <p style={{ fontSize: 13, fontWeight: 700, color: "#111827", margin: 0 }}>Download Submissions</p>
-                  <p style={{ fontSize: 11, color: "#9ca3af", margin: "2px 0 0" }}>{submitted.filter(s => s.fileUrl).length} files · includes grade info</p>
                 </div>
               </div>
               <button onClick={handleDownloadAll} disabled={downloading}

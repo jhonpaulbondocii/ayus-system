@@ -20,17 +20,60 @@ export async function GET(_req: NextRequest, { params }: Props) {
   const announcements = await prisma.announcement.findMany({
     where: { courseId },
     include: {
-      attachments: {
-        orderBy: { createdAt: "asc" },
-      },
+      attachments: { orderBy: { createdAt: "asc" } },
+      reads: { where: { userId: access.userId }, select: { id: true } },
     },
     orderBy: { createdAt: "desc" },
   });
 
-  return NextResponse.json({ announcements });
+  const enriched = await Promise.all(
+    announcements.map(async (ann) => {
+      const enrollment = ann.authorId
+        ? await prisma.courseEnrollment.findUnique({
+            where: { userId_courseId: { userId: ann.authorId, courseId } },
+            select: { courseRole: true },
+          })
+        : null;
+      return {
+        ...ann,
+        authorRole: enrollment?.courseRole ?? null,
+        read: ann.reads.length > 0,
+        reads: undefined,
+      };
+    })
+  );
+
+  return NextResponse.json({ announcements: enriched });
 }
 
-// 🔴 POST (CREATE ANNOUNCEMENT)
+// ✅ PATCH (MARK AS READ)
+export async function PATCH(req: NextRequest, { params }: Props) {
+  const { id: courseId } = await params;
+
+  const access = await requireCoursePermission(courseId, "view_announcements");
+  if (!access.ok) {
+    return NextResponse.json({ error: access.error }, { status: access.status });
+  }
+
+  const { announcementIds } = await req.json();
+  if (!Array.isArray(announcementIds) || announcementIds.length === 0) {
+    return NextResponse.json({ error: "announcementIds required" }, { status: 400 });
+  }
+
+  await Promise.all(
+    announcementIds.map((id: string) =>
+      prisma.announcementRead.upsert({
+        where: { announcementId_userId: { announcementId: id, userId: access.userId } },
+        create: { announcementId: id, userId: access.userId },
+        update: {},
+      })
+    )
+  );
+
+  return NextResponse.json({ ok: true });
+}
+
+// ✅ POST (CREATE ANNOUNCEMENT)
 export async function POST(req: NextRequest, { params }: Props) {
   try {
     const { id: courseId } = await params;
@@ -57,18 +100,14 @@ export async function POST(req: NextRequest, { params }: Props) {
     } = body;
 
     const finalBodyText =
-      typeof bodyText === "string"
-        ? bodyText
-        : typeof content === "string"
-        ? content
-        : "";
+      typeof bodyText === "string" ? bodyText
+      : typeof content === "string" ? content
+      : "";
 
     const finalBodyHtml =
-      typeof bodyHtml === "string"
-        ? bodyHtml
-        : typeof content === "string"
-        ? content
-        : "";
+      typeof bodyHtml === "string" ? bodyHtml
+      : typeof content === "string" ? content
+      : "";
 
     if (!title || (!finalBodyText.trim() && !finalBodyHtml.trim())) {
       return NextResponse.json(
@@ -77,45 +116,49 @@ export async function POST(req: NextRequest, { params }: Props) {
       );
     }
 
+    const authorUser = await prisma.user.findUnique({
+      where: { id: access.userId },
+      select: { name: true },
+    });
+
     const announcement = await prisma.announcement.create({
       data: {
         courseId,
         title: String(title).trim(),
         bodyText: finalBodyText,
         bodyHtml: finalBodyHtml,
-        author: access.courseRole || access.systemRole || "Admin",
+        author: authorUser?.name ?? "Unknown",
+        authorId: access.userId,
         assignTo: Array.isArray(assignTo) ? assignTo : ["Everyone"],
         allowComment:
-          typeof allowComment === "boolean"
-            ? allowComment
-            : typeof allowComments === "boolean"
-            ? allowComments
-            : true,
+          typeof allowComment === "boolean" ? allowComment
+          : typeof allowComments === "boolean" ? allowComments
+          : true,
         allowLiking: Boolean(allowLiking),
-        availableFrom: availableFrom ? new Date(availableFrom) : null,
-        availableUntil: availableUntil ? new Date(availableUntil) : null,
-        attachments: Array.isArray(attachments) && attachments.length > 0
-          ? {
-              create: attachments.map(
-                (file: {
-                  name?: string;
-                  url?: string;
-                  size?: number;
-                  mimeType?: string;
-                }) => ({
-                  name: file.name ?? "Attachment",
-                  url: file.url ?? "",
-                  size: Number(file.size ?? 0),
-                  mimeType: file.mimeType ?? "",
-                })
-              ),
-            }
-          : undefined,
+        availableFrom:
+          availableFrom && !isNaN(new Date(availableFrom).getTime())
+            ? new Date(availableFrom)
+            : null,
+        availableUntil:
+          availableUntil && !isNaN(new Date(availableUntil).getTime())
+            ? new Date(availableUntil)
+            : null,
+        attachments:
+          Array.isArray(attachments) && attachments.length > 0
+            ? {
+                create: attachments.map(
+                  (file: { name?: string; url?: string; size?: number; mimeType?: string }) => ({
+                    name: file.name ?? "Attachment",
+                    url: file.url ?? "",
+                    size: Number(file.size ?? 0),
+                    mimeType: file.mimeType ?? "",
+                  })
+                ),
+              }
+            : undefined,
       },
       include: {
-        attachments: {
-          orderBy: { createdAt: "asc" },
-        },
+        attachments: { orderBy: { createdAt: "asc" } },
       },
     });
 

@@ -62,7 +62,17 @@ interface FormSubmission {
 
 type TabType   = "all" | "assignments" | "forms";
 type SortType  = "newest" | "oldest" | "name" | "submissions";
-type DrawerTab = "files" | "responses";
+type DrawerTab = "files" | "logs" | "responses";
+
+interface ActivityLog {
+  id: string;
+  action: string;
+  targetType: string | null;
+  targetName: string | null;
+  createdAt: string;
+  metadata: Record<string, string> | null;
+  user: { id: string; name: string | null; email: string; image: string | null };
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const fmtDate  = (iso: string | null) => !iso ? "—" : new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" });
@@ -149,7 +159,7 @@ function DuePill({ dueDate }: { dueDate: string | null }) {
   const m = fmtDue(dueDate);
   if (!m) return <span style={{ fontSize: 11, color: "#d1d5db", fontWeight: 500 }}>No due date</span>;
   return (
-    <span style={{ display: "inline-flex", alignItems: "center", fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 20, background: m.bg, color: m.color, border: `1px solid ${m.border}`, whiteSpace: "nowrap" }}>{m.label}</span>
+    <span style={{ display: "inline-flex", alignItems: "center", fontSize: 11, fontWeight: 700, color: m.color, whiteSpace: "nowrap" }}>{m.label}</span>
   );
 }
 
@@ -170,11 +180,10 @@ function TypeBadge({ kind, subtitle }: { kind: "assignment" | "form"; subtitle: 
   if (kind === "form") return <span style={{ fontSize: 10, fontWeight: 800, padding: "2px 6px", borderRadius: 4, background: "#eff6ff", color: "#1d4ed8", textTransform: "uppercase", letterSpacing: "0.06em", flexShrink: 0 }}>{subtitle}</span>;
   return <span style={{ fontSize: 10, fontWeight: 800, padding: "2px 6px", borderRadius: 4, background: "#fef2f2", color: MAROON, textTransform: "uppercase", letterSpacing: "0.06em", flexShrink: 0 }}>Assignment</span>;
 }
-
 function StatusDot({ status }: { status: string }) {
   const ok = status === "PUBLISHED";
   return (
-    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20, background: ok ? "#f0fdf4" : "#f9fafb", color: ok ? "#15803d" : "#9ca3af", border: `1px solid ${ok ? "#bbf7d0" : "#e5e7eb"}`, textTransform: "uppercase", letterSpacing: "0.08em", whiteSpace: "nowrap" }}>
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10, fontWeight: 700, color: ok ? "#15803d" : "#9ca3af", textTransform: "uppercase", letterSpacing: "0.08em", whiteSpace: "nowrap" }}>
       <span style={{ width: 5, height: 5, borderRadius: "50%", background: ok ? "#22c55e" : "#d1d5db", flexShrink: 0 }}/>
       {ok ? "Live" : "Draft"}
     </span>
@@ -357,7 +366,7 @@ function StudentSection({ user, files, points, onPreview }: {
       {open && (
         <div style={{ margin: "0 16px 10px 52px", border: "1px solid #f3f4f6", borderRadius: 10, overflow: "hidden" }}>
           {files.map((f, i) => (
-            <div key={f.id}
+  <div key={`${f.id}-${i}`}
               style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderBottom: i < files.length - 1 ? "1px solid #f9fafb" : "none", flexWrap: "wrap" }}
               onMouseEnter={e => (e.currentTarget.style.background = "#fef9f9")}
               onMouseLeave={e => (e.currentTarget.style.background = "none")}
@@ -618,7 +627,9 @@ function RepositoryDrawer({ row, courseId, onClose }: { row: Row; courseId: stri
   const router = useRouter();
 
   const [formSubs,      setFormSubs]      = useState<FormSubmission[]>([]);
+  const [activityLogs,  setActivityLogs]  = useState<ActivityLog[]>([]);
   const [loadingForm,   setLoadingForm]   = useState(false);
+  const [loadingLogs,   setLoadingLogs]   = useState(false);
   const [previewFile,   setPreviewFile]   = useState<RepoFile | null>(null);
   const [selectedSub,   setSelectedSub]   = useState<FormSubmission | null>(null);
   const [editingName,   setEditingName]   = useState(false);
@@ -626,7 +637,15 @@ function RepositoryDrawer({ row, courseId, onClose }: { row: Row; courseId: stri
   const [savingName,    setSavingName]    = useState(false);
   const [isMobile,      setIsMobile]      = useState(false);
 
-  const activeTab: DrawerTab = row.kind === "form" ? "responses" : "files";
+  const [activeTab, setActiveTab] = useState<DrawerTab>(
+    row.kind === "form" ? "responses" : "files"
+  );
+
+  useEffect(() => {
+    setActiveTab(row.kind === "form" ? "responses" : "files");
+    setPreviewFile(null);
+    setSelectedSub(null);
+  }, [row.id]);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 640);
@@ -655,6 +674,25 @@ function RepositoryDrawer({ row, courseId, onClose }: { row: Row; courseId: stri
   }, [row.id, row.kind, courseId]);
 
   useEffect(() => {
+    if (row.kind !== "assignment" || !row.repoId) return;
+    const controller = new AbortController();
+    const load = async () => {
+      setLoadingLogs(true);
+      try {
+        const res  = await fetch(`/api/admin/repositories/${row.repoId}`, { signal: controller.signal });
+        const json = await res.json();
+        setActivityLogs(json.repository?.activity_logs ?? []);
+      } catch {
+        if (!controller.signal.aborted) setActivityLogs([]);
+      } finally {
+        if (!controller.signal.aborted) setLoadingLogs(false);
+      }
+    };
+    load();
+    return () => controller.abort();
+  }, [row.id, row.repoId, row.kind]);
+
+  useEffect(() => {
     const h = (e: KeyboardEvent) => {
       if (e.key === "Escape" && !previewFile && !selectedSub) onClose();
     };
@@ -674,6 +712,7 @@ function RepositoryDrawer({ row, courseId, onClose }: { row: Row; courseId: stri
   };
 
   const goFullView = () => {
+    onClose();
     if (row.kind === "assignment") {
       router.push(row.repoId
         ? `/admin/courses/${courseId}/repositories/${row.repoId}`
@@ -689,6 +728,10 @@ function RepositoryDrawer({ row, courseId, onClose }: { row: Row; courseId: stri
     if (!filesByUser[f.user.id]) filesByUser[f.user.id] = [];
     filesByUser[f.user.id].push(f);
   });
+
+  // Per user: keep only files from their latest submission
+  // IPAPALIT — tanggalin na lang ang buong block, wala nang filtering needed
+// (lahat ng files sa row.files ay latest na, galing sa clean submit route)
   const submittedCount = Object.keys(filesByUser).length;
 
   const isLoading = row.kind === "form" ? loadingForm : false;
@@ -738,10 +781,6 @@ function RepositoryDrawer({ row, courseId, onClose }: { row: Row; courseId: stri
               )}
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
-              <button onClick={goFullView}
-                style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 700, padding: "5px 10px", borderRadius: 7, background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.2)", color: "rgba(255,255,255,0.8)", cursor: "pointer" }}>
-                <ArrowUpRight size={12}/>{!isMobile && " Full view"}
-              </button>
               <button onClick={onClose}
                 style={{ width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 7, background: "rgba(255,255,255,0.12)", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.6)" }}>
                 <X size={14}/>
@@ -783,6 +822,18 @@ function RepositoryDrawer({ row, courseId, onClose }: { row: Row; courseId: stri
           </div>
         </div>
 
+        {/* Tab bar */}
+        {row.kind === "assignment" && (
+          <div style={{ display: "flex", borderBottom: "1px solid #f3f4f6", flexShrink: 0, paddingLeft: 4 }}>
+            {(["files", "logs"] as DrawerTab[]).map(t => (
+              <button key={t} onClick={() => setActiveTab(t)}
+                style={{ padding: "8px 16px", fontSize: 12, fontWeight: 700, border: "none", background: "none", cursor: "pointer", borderBottom: `2px solid ${activeTab === t ? MAROON : "transparent"}`, color: activeTab === t ? MAROON : "#9ca3af", textTransform: "capitalize" }}>
+                {t === "files" ? `Files (${files.length})` : `Activity (${row.logCount})`}
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* Assignment info + bulk download */}
         {row.kind === "assignment" && (
           <div style={{ padding: "8px 16px", background: "#fafafa", borderBottom: "1px solid #f3f4f6", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexShrink: 0, flexWrap: "wrap" }}>
@@ -820,13 +871,13 @@ function RepositoryDrawer({ row, courseId, onClose }: { row: Row; courseId: stri
                 </div>
                 <div style={{ textAlign: "center" }}>
                   <p style={{ fontSize: 14, fontWeight: 700, color: "#4b5563", margin: "0 0 4px" }}>No submissions yet</p>
-                  <p style={{ fontSize: 12, color: "#9ca3af", margin: 0 }}>Files will appear when students submit</p>
+                  <p style={{ fontSize: 12, color: "#9ca3af", margin: 0 }}>Files will appear when staff submit</p>
                 </div>
               </div>
             ) : (
               <>
                 <div style={{ display: "flex", alignItems: "center", padding: "8px 16px", background: "#fef9f9", borderBottom: "1px solid #fce8e8" }}>
-                  <div style={{ flex: 1, fontSize: 10, fontWeight: 800, color: MAROON, textTransform: "uppercase", letterSpacing: "0.1em" }}>Student</div>
+                  <div style={{ flex: 1, fontSize: 10, fontWeight: 800, color: MAROON, textTransform: "uppercase", letterSpacing: "0.1em" }}>Staff</div>
                   <div style={{ fontSize: 10, fontWeight: 800, color: MAROON, textTransform: "uppercase", letterSpacing: "0.1em" }}>Files</div>
                 </div>
                 {Object.entries(filesByUser).map(([userId, userFiles]) => (
@@ -841,6 +892,61 @@ function RepositoryDrawer({ row, courseId, onClose }: { row: Row; courseId: stri
               </>
             )
 
+          ) : activeTab === "logs" ? (
+            loadingLogs ? (
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: 200, gap: 12, color: "#9ca3af" }}>
+                <RefreshCw size={18} style={{ animation: "spin 1s linear infinite" }}/>
+                <span style={{ fontSize: 12 }}>Loading activity...</span>
+              </div>
+            ) : activityLogs.length === 0 ? (
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "60px 24px", gap: 14 }}>
+                <div style={{ width: 56, height: 56, borderRadius: "50%", background: "#f9fafb", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <FileText size={22} style={{ color: "#d1d5db" }}/>
+                </div>
+                <p style={{ fontSize: 14, fontWeight: 700, color: "#4b5563", margin: 0 }}>No activity yet</p>
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column" }}>
+                {activityLogs.map(log => {
+                  const cfgMap: Record<string, { bg: string; color: string; border: string }> = {
+                    UPLOAD: { bg: "#eff6ff", color: "#1d4ed8", border: "#bfdbfe" },
+                    DELETE: { bg: "#fef2f2", color: "#dc2626", border: "#fecaca" },
+                    GRADE:  { bg: "#f0fdf4", color: "#16a34a", border: "#bbf7d0" },
+                    CREATE: { bg: "#faf5ff", color: "#7c3aed", border: "#e9d5ff" },
+                    UPDATE: { bg: "#fff7ed", color: "#ea580c", border: "#fed7aa" },
+                    SUBMIT: { bg: "#ecfeff", color: "#0891b2", border: "#a5f3fc" },
+                  };
+                  const lc = cfgMap[log.action] ?? { bg: "#f9fafb", color: "#6b7280", border: "#e5e7eb" };
+                  return (
+                    <div key={log.id}
+                      style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 16px", borderBottom: "1px solid #f9fafb" }}
+                      onMouseEnter={e => (e.currentTarget.style.background = "#f9fafb")}
+                      onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+                    >
+                      <UAv name={log.user.name} image={log.user.image} size={32}/>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                          <span style={{ fontSize: 13, fontWeight: 700, color: "#1f2937", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            {log.user.name ?? log.user.email}
+                          </span>
+                          <span style={{ fontSize: 10, fontWeight: 800, padding: "2px 7px", borderRadius: 20, background: lc.bg, color: lc.color, border: `1px solid ${lc.border}` }}>
+                            {log.action}
+                          </span>
+                        </div>
+                        {log.targetName && (
+                          <p style={{ fontSize: 11, color: "#9ca3af", margin: "2px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            {log.targetName}
+                          </p>
+                        )}
+                      </div>
+                      <span style={{ fontSize: 11, color: "#9ca3af", flexShrink: 0, fontVariantNumeric: "tabular-nums" }}>
+                        {new Date(log.createdAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )
           ) : (
             /* ── Form responses list ── */
             formSubs.length === 0 ? (

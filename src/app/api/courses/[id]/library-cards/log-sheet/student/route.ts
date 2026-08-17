@@ -15,40 +15,57 @@ function fmtDate(d: Date | string | null | undefined): string {
   });
 }
 
-// ── Calibrated from pdfplumber on FO004 (Student Receiving Log Sheet) ────────
-// Page: LANDSCAPE 936 × 612 pt
-// pdf-lib uses bottom-left origin → Y = PAGE_HEIGHT - top
+// ── Calibrated from pdfplumber on actual FO004 template ──────────────────────
+// Page: LANDSCAPE 936 × 612 pt  (pdf-lib origin = bottom-left)
 
-const PAGE_WIDTH  = 936;
-const PAGE_HEIGHT = 612;
+const PAGE_HEIGHT   = 612;
 const ROWS_PER_PAGE = 20;
+const TEXT_SIZE     = 8;
+const MIN_SIZE      = 5;
 
-// Column X positions and max widths (from pdfplumber header measurements)
-// Columns: No. | Name | Sex (M/F) | Course/Year/Section | Date Received | Document Received | Signature | Released By
+function abbreviateCourse(course: string): string {
+  if (!course) return "";
+  // Extract abbreviation from parentheses first: "Bachelor of Science (BSIT) 2-A" → "BSIT 2-A"
+  const parenMatch = course.match(/\(([^)]+)\)\s*(.*)/);
+  if (parenMatch) return `${parenMatch[1]} ${parenMatch[2]}`.trim();
+  // Replace common words with abbreviations
+  return course
+    .replace(/Bachelor of Science in /gi, "BS ")
+    .replace(/Bachelor of Science/gi,    "BS")
+    .replace(/Bachelor of Arts in /gi,   "BA ")
+    .replace(/Bachelor of Arts/gi,       "BA")
+    .replace(/Bachelor of Elementary Education/gi, "BEEd")
+    .replace(/Bachelor of Secondary Education/gi,  "BSEd")
+    .replace(/Bachelor of /gi,           "B")
+    .replace(/Master of /gi,             "M")
+    .replace(/Doctor of /gi,             "Dr.")
+    .trim();
+}
+const ROW_H         = 20;   // height of each data row in pt
+const PAD_LEFT      = 3;    // left padding inside each cell
+const PAD_BOTTOM    = 5;    // baseline lift from row bottom edge
+
+// Column definitions: x = left edge + PAD_LEFT, maxW = col width - 2*PAD_LEFT
 const COLS = {
-  no:       { x: 14.0,  maxW: 25.0  },
-  name:     { x: 45.0,  maxW: 260.0 },
-  sexM:     { x: 300.0, maxW: 30.0  },
-  sexF:     { x: 348.0, maxW: 30.0  },
-  course:   { x: 390.0, maxW: 115.0 },
-  date:     { x: 480.0, maxW: 95.0  },
-  document: { x: 575.0, maxW: 120.0 },
-  sig:      { x: 695.0, maxW: 100.0 },
-  released: { x: 800.0, maxW: 120.0 },
+  no:       { x: 20,  maxW: 27  },
+  name:     { x: 51,  maxW: 244 },
+  sexM:     { x: 299, maxW: 47  },
+  sexF:     { x: 350, maxW: 51  },
+  course:   { x: 405, maxW: 81  },
+  date:     { x: 490, maxW: 59  },
+  document: { x: 553, maxW: 137 },
+  sig:      { x: 694, maxW: 70  },
+  released: { x: 768, maxW: 142 },
 };
 
-// Row Y baselines (pdf-lib bottom-left): PAGE_HEIGHT - pdfplumber_top - 2
-// pdfplumber row tops: 160.2, 180.3, 200.5, 220.6, 240.8, 260.9, 281.1, 301.2,
-//   321.4, 341.5, 361.7, 381.8, 402.0, 422.1, 442.3, 462.4, 482.6, 502.7, 522.9, 543.0
+// Row Y baselines in pdf-lib coords (bottom-left origin)
+// Formula: PAGE_HEIGHT - row_top_from_page_top - ROW_H + PAD_BOTTOM
 const ROW_Y = [
-  449.8, 429.7, 409.5, 389.4, 369.2, 349.1, 328.9, 308.8,
-  288.6, 268.5, 248.3, 228.2, 208.0, 187.9, 167.7, 147.6,
-  127.4, 107.3,  87.1,  67.0,
+  438, 418, 398, 378, 358,
+  337, 317, 297, 277, 257,
+  237, 216, 196, 176, 156,
+  136, 116,  96,  75,  55,
 ];
-
-const ROW_HEIGHT = 18;
-const TEXT_SIZE  = 7;
-const MIN_SIZE   = 4.5;
 
 export async function GET(
   req: NextRequest,
@@ -74,13 +91,11 @@ export async function GET(
     const dateFrom = searchParams.get("dateFrom");
     const dateTo   = searchParams.get("dateTo");
 
-    // ── Fetch student records only ────────────────────────────────────────────
+    // ── Fetch student records ─────────────────────────────────────────────────
     const logs = await prisma.libraryReceivingLog.findMany({
       where: {
         courseId,
-        request: {
-          applicantType: "STUDENT",
-        },
+        request: { applicantType: "STUDENT" },
         ...(dateFrom || dateTo ? {
           dateReceived: {
             ...(dateFrom ? { gte: new Date(`${dateFrom}T00:00:00+08:00`) } : {}),
@@ -97,6 +112,7 @@ export async function GET(
     const templateBytes = fs.readFileSync(templatePath);
     const pdfDoc        = await PDFDocument.load(templateBytes, { ignoreEncryption: true });
     const font          = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    const fontBold      = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
     // ── Helpers ───────────────────────────────────────────────────────────────
     function drawText(
@@ -105,17 +121,22 @@ export async function GET(
       x: number,
       y: number,
       maxW: number,
+      bold = false,
     ) {
       if (!text) return;
+      const f = bold ? fontBold : font;
       let fontSize = TEXT_SIZE;
-      while (fontSize > MIN_SIZE && font.widthOfTextAtSize(text, fontSize) > maxW) {
+      while (fontSize > MIN_SIZE && f.widthOfTextAtSize(text, fontSize) > maxW) {
         fontSize -= 0.25;
       }
       let clipped = text;
-      while (clipped.length > 1 && font.widthOfTextAtSize(clipped, fontSize) > maxW) {
+      while (clipped.length > 1 && f.widthOfTextAtSize(clipped, fontSize) > maxW) {
         clipped = clipped.slice(0, -1);
       }
-      page.drawText(clipped, { x, y, size: fontSize, font, color: rgb(0, 0, 0) });
+      if (clipped.length < text.length && clipped.length > 1) {
+        clipped = clipped.slice(0, -1) + ".";
+      }
+      page.drawText(clipped, { x, y, size: fontSize, font: f, color: rgb(0, 0, 0) });
     }
 
     async function drawSignature(
@@ -135,7 +156,6 @@ export async function GET(
           sigBytes = Buffer.from(signatureUrl.replace(/^data:image\/(jpeg|jpg);base64,/, ""), "base64");
           embedFn  = pdfDoc.embedJpg.bind(pdfDoc);
         } else if (signatureUrl.startsWith("http")) {
-          // Cloudinary URL — fetch it
           const res = await fetch(signatureUrl);
           const buf = await res.arrayBuffer();
           sigBytes  = new Uint8Array(buf);
@@ -144,16 +164,16 @@ export async function GET(
           return;
         }
 
-        const img   = await embedFn(sigBytes);
-        const col   = COLS.sig;
-        const imgH  = ROW_HEIGHT - 2;
+        const img  = await embedFn(sigBytes);
+        const col  = COLS.sig;
+        const imgH = ROW_H - 4;
         const scale = imgH / img.height;
         const imgW  = Math.min(img.width * scale, col.maxW);
-        const y     = ROW_Y[rowIdx];
+        const y     = ROW_Y[rowIdx] - 1;
 
         page.drawImage(img, { x: col.x, y, width: imgW, height: imgH });
       } catch {
-        // Skip if image fails
+        // skip
       }
     }
 
@@ -162,6 +182,7 @@ export async function GET(
     let rowOnPage = 0;
 
     for (let i = 0; i < logs.length; i++) {
+      // Add new page copy of template when current page is full
       if (rowOnPage >= ROWS_PER_PAGE) {
         const [tpl] = await pdfDoc.copyPages(pdfDoc, [0]);
         pdfDoc.addPage(tpl);
@@ -172,21 +193,22 @@ export async function GET(
       const log  = logs[i];
       const page = pdfDoc.getPage(pageIdx);
       const y    = ROW_Y[rowOnPage];
-      const rowNo = (pageIdx * ROWS_PER_PAGE) + rowOnPage + 1;
+      const rowNo = pageIdx * ROWS_PER_PAGE + rowOnPage + 1;
 
-      drawText(page, String(rowNo),                         COLS.no.x,       y, COLS.no.maxW);
-      drawText(page, log.name,                              COLS.name.x,     y, COLS.name.maxW);
-      // Sex — checkmark in Male or Female column
+      drawText(page, log.name,                     COLS.name.x,     y, COLS.name.maxW);
+
+      // Sex — "/" in Male or Female column
       if (log.sex?.toLowerCase().startsWith("m")) {
-        drawText(page, "✓", COLS.sexM.x, y, COLS.sexM.maxW);
+        drawText(page, "/", COLS.sexM.x + 10, y, COLS.sexM.maxW, true);
       } else if (log.sex?.toLowerCase().startsWith("f")) {
-        drawText(page, "✓", COLS.sexF.x, y, COLS.sexF.maxW);
+        drawText(page, "/", COLS.sexF.x + 10, y, COLS.sexF.maxW, true);
       }
-      drawText(page, log.courseYearSection ?? "",           COLS.course.x,   y, COLS.course.maxW);
-      drawText(page, fmtDate(log.dateReceived),             COLS.date.x,     y, COLS.date.maxW);
-      drawText(page, log.documentReceived,                  COLS.document.x, y, COLS.document.maxW);
-      await drawSignature(page, log.signatureUrl,           rowOnPage);
-      drawText(page, log.releasedBy ?? "",                  COLS.released.x, y, COLS.released.maxW);
+
+      drawText(page, abbreviateCourse(log.courseYearSection ?? ""),  COLS.course.x,   y, COLS.course.maxW);
+      drawText(page, fmtDate(log.dateReceived),    COLS.date.x,     y, COLS.date.maxW);
+      drawText(page, log.documentReceived,         COLS.document.x, y, COLS.document.maxW);
+      await drawSignature(page, log.signatureUrl,  rowOnPage);
+      drawText(page, log.releasedBy ?? "",         COLS.released.x, y, COLS.released.maxW);
 
       rowOnPage++;
     }

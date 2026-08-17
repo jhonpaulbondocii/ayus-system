@@ -296,8 +296,17 @@ export default function AdminCourseFormDetailPage({
 
   const openAssignPanel = () => {
     if (!form) return;
-    const isoToDate = (iso: string | null) => iso ? new Date(iso).toISOString().split("T")[0] : "";
-    const isoToTime = (iso: string | null) => iso ? new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }).replace(/\s/, " ") : "11:59 PM";
+    const isoToDate = (iso: string | null) => {
+      if (!iso) return "";
+      // Kung date string na siya (YYYY-MM-DD), ibalik na lang directly
+      if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) return iso;
+      return new Date(iso).toISOString().split("T")[0];
+    };
+    const isoToTime = (iso: string | null) => {
+      if (!iso) return "11:59 PM";
+      if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) return "11:59 PM";
+      return new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }).replace(/\s/, " ");
+    };
     setAssignRows([{
       id: 1,
       assignees: (form.assignTo.length && !form.assignTo.includes("Everyone"))
@@ -351,7 +360,16 @@ export default function AdminCourseFormDetailPage({
     });
     const data = await res.json();
     if (data.form) {
-      setForm(prev => prev ? { ...prev, assignTo: resolvedIds, dueDate: data.form.dueDate ?? prev.dueDate, availableFrom: data.form.availableFrom ?? prev.availableFrom, availableUntil: data.form.availableUntil ?? prev.availableUntil } : null);
+      setForm(prev => prev ? {
+        ...prev,
+        assignTo:          resolvedIds,
+        dueDate:           data.form.dueDate           ?? prev.dueDate,
+        dueTime:           data.form.dueTime           ?? prev.dueTime,
+        availableFrom:     data.form.availableFrom     ?? prev.availableFrom,
+        availableFromTime: data.form.availableFromTime ?? prev.availableFromTime,
+        availableUntil:    data.form.availableUntil    ?? prev.availableUntil,
+        availableUntilTime: data.form.availableUntilTime ?? prev.availableUntilTime,
+      } : null);
     }
     setSavingAssign(false); setShowAssignPanel(false);
   };

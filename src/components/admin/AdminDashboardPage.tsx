@@ -689,20 +689,12 @@ function CourseCard({ course, onTogglePublish, onDelete, onColorChange, onMove, 
         </p>
       </div>
 
-      {/* ── Icons — all always visible, responsive sizing ── */}
-      <div style={{ display:"flex",alignItems:"center",gap:1,padding:"5px 6px 8px",borderTop:"1px solid #f5f5f5",marginTop:"auto" }}>
-        {iconBtn("Assignments", onAssignments,
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg>
-        )}
-        {iconBtn("Discussions", onDiscussions,
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-        )}
-        {iconBtn("Files", onFiles,
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
-        )}
-        {iconBtn("Users", onUsers, <Users size={13}/>)}
-        {iconBtn("History", onHistory, <History size={13}/>)}
-      </div>
+      {/* ── Icons ── */}
+<div style={{ display:"flex",alignItems:"center",gap:1,padding:"5px 6px 8px",borderTop:"1px solid #f5f5f5",marginTop:"auto" }}>
+  {iconBtn("Assignments", onAssignments,
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg>
+  )}
+</div>
 
       {dropdown}
     </div>

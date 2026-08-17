@@ -79,6 +79,11 @@ export type Announcement = $Result.DefaultSelection<Prisma.$AnnouncementPayload>
  */
 export type AnnouncementAttachment = $Result.DefaultSelection<Prisma.$AnnouncementAttachmentPayload>
 /**
+ * Model AnnouncementRead
+ * 
+ */
+export type AnnouncementRead = $Result.DefaultSelection<Prisma.$AnnouncementReadPayload>
+/**
  * Model Assignment
  * 
  */
@@ -649,6 +654,16 @@ export class PrismaClient<
     * ```
     */
   get announcementAttachment(): Prisma.AnnouncementAttachmentDelegate<ExtArgs>;
+
+  /**
+   * `prisma.announcementRead`: Exposes CRUD operations for the **AnnouncementRead** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more AnnouncementReads
+    * const announcementReads = await prisma.announcementRead.findMany()
+    * ```
+    */
+  get announcementRead(): Prisma.AnnouncementReadDelegate<ExtArgs>;
 
   /**
    * `prisma.assignment`: Exposes CRUD operations for the **Assignment** model.
@@ -1433,6 +1448,7 @@ export namespace Prisma {
     GroupMember: 'GroupMember',
     Announcement: 'Announcement',
     AnnouncementAttachment: 'AnnouncementAttachment',
+    AnnouncementRead: 'AnnouncementRead',
     Assignment: 'Assignment',
     Submission: 'Submission',
     RepositoryFile: 'RepositoryFile',
@@ -1481,7 +1497,7 @@ export namespace Prisma {
 
   export type TypeMap<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, ClientOptions = {}> = {
     meta: {
-      modelProps: "conversation" | "conversationParticipant" | "message" | "messageAttachment" | "user" | "passwordResetToken" | "course" | "courseEnrollment" | "groupSet" | "group" | "groupMember" | "announcement" | "announcementAttachment" | "assignment" | "submission" | "repositoryFile" | "activityLog" | "account" | "session" | "quiz" | "quizQuestion" | "quizAttempt" | "form" | "formQuestion" | "formSubmission" | "rubric" | "rubricCriterion" | "rubricRating" | "student" | "patientRecord" | "bodySystem" | "medicalCondition" | "medicalExamRecord" | "medicineInventory" | "medicineUsage" | "quiz_answers" | "quiz_match_pairs" | "repositories" | "verification_tokens" | "guidanceInfoSheet" | "guidanceLogEntry" | "exitInterview" | "libraryCardRequest" | "libraryReceivingLog" | "libraryBook" | "libraryBorrowRecord"
+      modelProps: "conversation" | "conversationParticipant" | "message" | "messageAttachment" | "user" | "passwordResetToken" | "course" | "courseEnrollment" | "groupSet" | "group" | "groupMember" | "announcement" | "announcementAttachment" | "announcementRead" | "assignment" | "submission" | "repositoryFile" | "activityLog" | "account" | "session" | "quiz" | "quizQuestion" | "quizAttempt" | "form" | "formQuestion" | "formSubmission" | "rubric" | "rubricCriterion" | "rubricRating" | "student" | "patientRecord" | "bodySystem" | "medicalCondition" | "medicalExamRecord" | "medicineInventory" | "medicineUsage" | "quiz_answers" | "quiz_match_pairs" | "repositories" | "verification_tokens" | "guidanceInfoSheet" | "guidanceLogEntry" | "exitInterview" | "libraryCardRequest" | "libraryReceivingLog" | "libraryBook" | "libraryBorrowRecord"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -2392,6 +2408,76 @@ export namespace Prisma {
           count: {
             args: Prisma.AnnouncementAttachmentCountArgs<ExtArgs>
             result: $Utils.Optional<AnnouncementAttachmentCountAggregateOutputType> | number
+          }
+        }
+      }
+      AnnouncementRead: {
+        payload: Prisma.$AnnouncementReadPayload<ExtArgs>
+        fields: Prisma.AnnouncementReadFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.AnnouncementReadFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AnnouncementReadPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.AnnouncementReadFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AnnouncementReadPayload>
+          }
+          findFirst: {
+            args: Prisma.AnnouncementReadFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AnnouncementReadPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.AnnouncementReadFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AnnouncementReadPayload>
+          }
+          findMany: {
+            args: Prisma.AnnouncementReadFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AnnouncementReadPayload>[]
+          }
+          create: {
+            args: Prisma.AnnouncementReadCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AnnouncementReadPayload>
+          }
+          createMany: {
+            args: Prisma.AnnouncementReadCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.AnnouncementReadCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AnnouncementReadPayload>[]
+          }
+          delete: {
+            args: Prisma.AnnouncementReadDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AnnouncementReadPayload>
+          }
+          update: {
+            args: Prisma.AnnouncementReadUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AnnouncementReadPayload>
+          }
+          deleteMany: {
+            args: Prisma.AnnouncementReadDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.AnnouncementReadUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.AnnouncementReadUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AnnouncementReadPayload>
+          }
+          aggregate: {
+            args: Prisma.AnnouncementReadAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateAnnouncementRead>
+          }
+          groupBy: {
+            args: Prisma.AnnouncementReadGroupByArgs<ExtArgs>
+            result: $Utils.Optional<AnnouncementReadGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.AnnouncementReadCountArgs<ExtArgs>
+            result: $Utils.Optional<AnnouncementReadCountAggregateOutputType> | number
           }
         }
       }
@@ -4952,6 +5038,7 @@ export namespace Prisma {
     quizzesCreated: number
     repositoryFiles: number
     sessions: number
+    announcementReads: number
     guidanceLogEntries: number
     exitInterviewsCounseled: number
     submissions_submissions_gradedByIdTousers: number
@@ -4974,6 +5061,7 @@ export namespace Prisma {
     quizzesCreated?: boolean | UserCountOutputTypeCountQuizzesCreatedArgs
     repositoryFiles?: boolean | UserCountOutputTypeCountRepositoryFilesArgs
     sessions?: boolean | UserCountOutputTypeCountSessionsArgs
+    announcementReads?: boolean | UserCountOutputTypeCountAnnouncementReadsArgs
     guidanceLogEntries?: boolean | UserCountOutputTypeCountGuidanceLogEntriesArgs
     exitInterviewsCounseled?: boolean | UserCountOutputTypeCountExitInterviewsCounseledArgs
     submissions_submissions_gradedByIdTousers?: boolean | UserCountOutputTypeCountSubmissions_submissions_gradedByIdTousersArgs
@@ -5094,6 +5182,13 @@ export namespace Prisma {
    */
   export type UserCountOutputTypeCountSessionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: SessionWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountAnnouncementReadsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: AnnouncementReadWhereInput
   }
 
   /**
@@ -5404,10 +5499,12 @@ export namespace Prisma {
 
   export type AnnouncementCountOutputType = {
     attachments: number
+    reads: number
   }
 
   export type AnnouncementCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     attachments?: boolean | AnnouncementCountOutputTypeCountAttachmentsArgs
+    reads?: boolean | AnnouncementCountOutputTypeCountReadsArgs
   }
 
   // Custom InputTypes
@@ -5426,6 +5523,13 @@ export namespace Prisma {
    */
   export type AnnouncementCountOutputTypeCountAttachmentsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: AnnouncementAttachmentWhereInput
+  }
+
+  /**
+   * AnnouncementCountOutputType without action
+   */
+  export type AnnouncementCountOutputTypeCountReadsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: AnnouncementReadWhereInput
   }
 
 
@@ -10105,6 +10209,7 @@ export namespace Prisma {
     quizzesCreated?: boolean | User$quizzesCreatedArgs<ExtArgs>
     repositoryFiles?: boolean | User$repositoryFilesArgs<ExtArgs>
     sessions?: boolean | User$sessionsArgs<ExtArgs>
+    announcementReads?: boolean | User$announcementReadsArgs<ExtArgs>
     guidanceLogEntries?: boolean | User$guidanceLogEntriesArgs<ExtArgs>
     exitInterviewsCounseled?: boolean | User$exitInterviewsCounseledArgs<ExtArgs>
     submissions_submissions_gradedByIdTousers?: boolean | User$submissions_submissions_gradedByIdTousersArgs<ExtArgs>
@@ -10170,6 +10275,7 @@ export namespace Prisma {
     quizzesCreated?: boolean | User$quizzesCreatedArgs<ExtArgs>
     repositoryFiles?: boolean | User$repositoryFilesArgs<ExtArgs>
     sessions?: boolean | User$sessionsArgs<ExtArgs>
+    announcementReads?: boolean | User$announcementReadsArgs<ExtArgs>
     guidanceLogEntries?: boolean | User$guidanceLogEntriesArgs<ExtArgs>
     exitInterviewsCounseled?: boolean | User$exitInterviewsCounseledArgs<ExtArgs>
     submissions_submissions_gradedByIdTousers?: boolean | User$submissions_submissions_gradedByIdTousersArgs<ExtArgs>
@@ -10196,6 +10302,7 @@ export namespace Prisma {
       quizzesCreated: Prisma.$QuizPayload<ExtArgs>[]
       repositoryFiles: Prisma.$RepositoryFilePayload<ExtArgs>[]
       sessions: Prisma.$SessionPayload<ExtArgs>[]
+      announcementReads: Prisma.$AnnouncementReadPayload<ExtArgs>[]
       guidanceLogEntries: Prisma.$GuidanceLogEntryPayload<ExtArgs>[]
       exitInterviewsCounseled: Prisma.$ExitInterviewPayload<ExtArgs>[]
       submissions_submissions_gradedByIdTousers: Prisma.$SubmissionPayload<ExtArgs>[]
@@ -10599,6 +10706,7 @@ export namespace Prisma {
     quizzesCreated<T extends User$quizzesCreatedArgs<ExtArgs> = {}>(args?: Subset<T, User$quizzesCreatedArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$QuizPayload<ExtArgs>, T, "findMany"> | Null>
     repositoryFiles<T extends User$repositoryFilesArgs<ExtArgs> = {}>(args?: Subset<T, User$repositoryFilesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RepositoryFilePayload<ExtArgs>, T, "findMany"> | Null>
     sessions<T extends User$sessionsArgs<ExtArgs> = {}>(args?: Subset<T, User$sessionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SessionPayload<ExtArgs>, T, "findMany"> | Null>
+    announcementReads<T extends User$announcementReadsArgs<ExtArgs> = {}>(args?: Subset<T, User$announcementReadsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AnnouncementReadPayload<ExtArgs>, T, "findMany"> | Null>
     guidanceLogEntries<T extends User$guidanceLogEntriesArgs<ExtArgs> = {}>(args?: Subset<T, User$guidanceLogEntriesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$GuidanceLogEntryPayload<ExtArgs>, T, "findMany"> | Null>
     exitInterviewsCounseled<T extends User$exitInterviewsCounseledArgs<ExtArgs> = {}>(args?: Subset<T, User$exitInterviewsCounseledArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ExitInterviewPayload<ExtArgs>, T, "findMany"> | Null>
     submissions_submissions_gradedByIdTousers<T extends User$submissions_submissions_gradedByIdTousersArgs<ExtArgs> = {}>(args?: Subset<T, User$submissions_submissions_gradedByIdTousersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SubmissionPayload<ExtArgs>, T, "findMany"> | Null>
@@ -11261,6 +11369,26 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: SessionScalarFieldEnum | SessionScalarFieldEnum[]
+  }
+
+  /**
+   * User.announcementReads
+   */
+  export type User$announcementReadsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AnnouncementRead
+     */
+    select?: AnnouncementReadSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AnnouncementReadInclude<ExtArgs> | null
+    where?: AnnouncementReadWhereInput
+    orderBy?: AnnouncementReadOrderByWithRelationInput | AnnouncementReadOrderByWithRelationInput[]
+    cursor?: AnnouncementReadWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: AnnouncementReadScalarFieldEnum | AnnouncementReadScalarFieldEnum[]
   }
 
   /**
@@ -18089,6 +18217,7 @@ export namespace Prisma {
     authorId?: boolean
     locked?: boolean
     attachments?: boolean | Announcement$attachmentsArgs<ExtArgs>
+    reads?: boolean | Announcement$readsArgs<ExtArgs>
     course?: boolean | CourseDefaultArgs<ExtArgs>
     _count?: boolean | AnnouncementCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["announcement"]>
@@ -18132,6 +18261,7 @@ export namespace Prisma {
 
   export type AnnouncementInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     attachments?: boolean | Announcement$attachmentsArgs<ExtArgs>
+    reads?: boolean | Announcement$readsArgs<ExtArgs>
     course?: boolean | CourseDefaultArgs<ExtArgs>
     _count?: boolean | AnnouncementCountOutputTypeDefaultArgs<ExtArgs>
   }
@@ -18143,6 +18273,7 @@ export namespace Prisma {
     name: "Announcement"
     objects: {
       attachments: Prisma.$AnnouncementAttachmentPayload<ExtArgs>[]
+      reads: Prisma.$AnnouncementReadPayload<ExtArgs>[]
       course: Prisma.$CoursePayload<ExtArgs>
     }
     scalars: $Extensions.GetPayloadResult<{
@@ -18526,6 +18657,7 @@ export namespace Prisma {
   export interface Prisma__AnnouncementClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     attachments<T extends Announcement$attachmentsArgs<ExtArgs> = {}>(args?: Subset<T, Announcement$attachmentsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AnnouncementAttachmentPayload<ExtArgs>, T, "findMany"> | Null>
+    reads<T extends Announcement$readsArgs<ExtArgs> = {}>(args?: Subset<T, Announcement$readsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AnnouncementReadPayload<ExtArgs>, T, "findMany"> | Null>
     course<T extends CourseDefaultArgs<ExtArgs> = {}>(args?: Subset<T, CourseDefaultArgs<ExtArgs>>): Prisma__CourseClient<$Result.GetResult<Prisma.$CoursePayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -18906,6 +19038,26 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: AnnouncementAttachmentScalarFieldEnum | AnnouncementAttachmentScalarFieldEnum[]
+  }
+
+  /**
+   * Announcement.reads
+   */
+  export type Announcement$readsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AnnouncementRead
+     */
+    select?: AnnouncementReadSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AnnouncementReadInclude<ExtArgs> | null
+    where?: AnnouncementReadWhereInput
+    orderBy?: AnnouncementReadOrderByWithRelationInput | AnnouncementReadOrderByWithRelationInput[]
+    cursor?: AnnouncementReadWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: AnnouncementReadScalarFieldEnum | AnnouncementReadScalarFieldEnum[]
   }
 
   /**
@@ -19915,6 +20067,933 @@ export namespace Prisma {
 
 
   /**
+   * Model AnnouncementRead
+   */
+
+  export type AggregateAnnouncementRead = {
+    _count: AnnouncementReadCountAggregateOutputType | null
+    _min: AnnouncementReadMinAggregateOutputType | null
+    _max: AnnouncementReadMaxAggregateOutputType | null
+  }
+
+  export type AnnouncementReadMinAggregateOutputType = {
+    id: string | null
+    announcementId: string | null
+    userId: string | null
+    readAt: Date | null
+  }
+
+  export type AnnouncementReadMaxAggregateOutputType = {
+    id: string | null
+    announcementId: string | null
+    userId: string | null
+    readAt: Date | null
+  }
+
+  export type AnnouncementReadCountAggregateOutputType = {
+    id: number
+    announcementId: number
+    userId: number
+    readAt: number
+    _all: number
+  }
+
+
+  export type AnnouncementReadMinAggregateInputType = {
+    id?: true
+    announcementId?: true
+    userId?: true
+    readAt?: true
+  }
+
+  export type AnnouncementReadMaxAggregateInputType = {
+    id?: true
+    announcementId?: true
+    userId?: true
+    readAt?: true
+  }
+
+  export type AnnouncementReadCountAggregateInputType = {
+    id?: true
+    announcementId?: true
+    userId?: true
+    readAt?: true
+    _all?: true
+  }
+
+  export type AnnouncementReadAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AnnouncementRead to aggregate.
+     */
+    where?: AnnouncementReadWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AnnouncementReads to fetch.
+     */
+    orderBy?: AnnouncementReadOrderByWithRelationInput | AnnouncementReadOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: AnnouncementReadWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AnnouncementReads from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AnnouncementReads.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned AnnouncementReads
+    **/
+    _count?: true | AnnouncementReadCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: AnnouncementReadMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: AnnouncementReadMaxAggregateInputType
+  }
+
+  export type GetAnnouncementReadAggregateType<T extends AnnouncementReadAggregateArgs> = {
+        [P in keyof T & keyof AggregateAnnouncementRead]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateAnnouncementRead[P]>
+      : GetScalarType<T[P], AggregateAnnouncementRead[P]>
+  }
+
+
+
+
+  export type AnnouncementReadGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: AnnouncementReadWhereInput
+    orderBy?: AnnouncementReadOrderByWithAggregationInput | AnnouncementReadOrderByWithAggregationInput[]
+    by: AnnouncementReadScalarFieldEnum[] | AnnouncementReadScalarFieldEnum
+    having?: AnnouncementReadScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: AnnouncementReadCountAggregateInputType | true
+    _min?: AnnouncementReadMinAggregateInputType
+    _max?: AnnouncementReadMaxAggregateInputType
+  }
+
+  export type AnnouncementReadGroupByOutputType = {
+    id: string
+    announcementId: string
+    userId: string
+    readAt: Date
+    _count: AnnouncementReadCountAggregateOutputType | null
+    _min: AnnouncementReadMinAggregateOutputType | null
+    _max: AnnouncementReadMaxAggregateOutputType | null
+  }
+
+  type GetAnnouncementReadGroupByPayload<T extends AnnouncementReadGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<AnnouncementReadGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof AnnouncementReadGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], AnnouncementReadGroupByOutputType[P]>
+            : GetScalarType<T[P], AnnouncementReadGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type AnnouncementReadSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    announcementId?: boolean
+    userId?: boolean
+    readAt?: boolean
+    announcement?: boolean | AnnouncementDefaultArgs<ExtArgs>
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["announcementRead"]>
+
+  export type AnnouncementReadSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    announcementId?: boolean
+    userId?: boolean
+    readAt?: boolean
+    announcement?: boolean | AnnouncementDefaultArgs<ExtArgs>
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["announcementRead"]>
+
+  export type AnnouncementReadSelectScalar = {
+    id?: boolean
+    announcementId?: boolean
+    userId?: boolean
+    readAt?: boolean
+  }
+
+  export type AnnouncementReadInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    announcement?: boolean | AnnouncementDefaultArgs<ExtArgs>
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type AnnouncementReadIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    announcement?: boolean | AnnouncementDefaultArgs<ExtArgs>
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+
+  export type $AnnouncementReadPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "AnnouncementRead"
+    objects: {
+      announcement: Prisma.$AnnouncementPayload<ExtArgs>
+      user: Prisma.$UserPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      announcementId: string
+      userId: string
+      readAt: Date
+    }, ExtArgs["result"]["announcementRead"]>
+    composites: {}
+  }
+
+  type AnnouncementReadGetPayload<S extends boolean | null | undefined | AnnouncementReadDefaultArgs> = $Result.GetResult<Prisma.$AnnouncementReadPayload, S>
+
+  type AnnouncementReadCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<AnnouncementReadFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: AnnouncementReadCountAggregateInputType | true
+    }
+
+  export interface AnnouncementReadDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['AnnouncementRead'], meta: { name: 'AnnouncementRead' } }
+    /**
+     * Find zero or one AnnouncementRead that matches the filter.
+     * @param {AnnouncementReadFindUniqueArgs} args - Arguments to find a AnnouncementRead
+     * @example
+     * // Get one AnnouncementRead
+     * const announcementRead = await prisma.announcementRead.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends AnnouncementReadFindUniqueArgs>(args: SelectSubset<T, AnnouncementReadFindUniqueArgs<ExtArgs>>): Prisma__AnnouncementReadClient<$Result.GetResult<Prisma.$AnnouncementReadPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one AnnouncementRead that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {AnnouncementReadFindUniqueOrThrowArgs} args - Arguments to find a AnnouncementRead
+     * @example
+     * // Get one AnnouncementRead
+     * const announcementRead = await prisma.announcementRead.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends AnnouncementReadFindUniqueOrThrowArgs>(args: SelectSubset<T, AnnouncementReadFindUniqueOrThrowArgs<ExtArgs>>): Prisma__AnnouncementReadClient<$Result.GetResult<Prisma.$AnnouncementReadPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first AnnouncementRead that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AnnouncementReadFindFirstArgs} args - Arguments to find a AnnouncementRead
+     * @example
+     * // Get one AnnouncementRead
+     * const announcementRead = await prisma.announcementRead.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends AnnouncementReadFindFirstArgs>(args?: SelectSubset<T, AnnouncementReadFindFirstArgs<ExtArgs>>): Prisma__AnnouncementReadClient<$Result.GetResult<Prisma.$AnnouncementReadPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first AnnouncementRead that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AnnouncementReadFindFirstOrThrowArgs} args - Arguments to find a AnnouncementRead
+     * @example
+     * // Get one AnnouncementRead
+     * const announcementRead = await prisma.announcementRead.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends AnnouncementReadFindFirstOrThrowArgs>(args?: SelectSubset<T, AnnouncementReadFindFirstOrThrowArgs<ExtArgs>>): Prisma__AnnouncementReadClient<$Result.GetResult<Prisma.$AnnouncementReadPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more AnnouncementReads that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AnnouncementReadFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all AnnouncementReads
+     * const announcementReads = await prisma.announcementRead.findMany()
+     * 
+     * // Get first 10 AnnouncementReads
+     * const announcementReads = await prisma.announcementRead.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const announcementReadWithIdOnly = await prisma.announcementRead.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends AnnouncementReadFindManyArgs>(args?: SelectSubset<T, AnnouncementReadFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AnnouncementReadPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a AnnouncementRead.
+     * @param {AnnouncementReadCreateArgs} args - Arguments to create a AnnouncementRead.
+     * @example
+     * // Create one AnnouncementRead
+     * const AnnouncementRead = await prisma.announcementRead.create({
+     *   data: {
+     *     // ... data to create a AnnouncementRead
+     *   }
+     * })
+     * 
+     */
+    create<T extends AnnouncementReadCreateArgs>(args: SelectSubset<T, AnnouncementReadCreateArgs<ExtArgs>>): Prisma__AnnouncementReadClient<$Result.GetResult<Prisma.$AnnouncementReadPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many AnnouncementReads.
+     * @param {AnnouncementReadCreateManyArgs} args - Arguments to create many AnnouncementReads.
+     * @example
+     * // Create many AnnouncementReads
+     * const announcementRead = await prisma.announcementRead.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends AnnouncementReadCreateManyArgs>(args?: SelectSubset<T, AnnouncementReadCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many AnnouncementReads and returns the data saved in the database.
+     * @param {AnnouncementReadCreateManyAndReturnArgs} args - Arguments to create many AnnouncementReads.
+     * @example
+     * // Create many AnnouncementReads
+     * const announcementRead = await prisma.announcementRead.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many AnnouncementReads and only return the `id`
+     * const announcementReadWithIdOnly = await prisma.announcementRead.createManyAndReturn({ 
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends AnnouncementReadCreateManyAndReturnArgs>(args?: SelectSubset<T, AnnouncementReadCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AnnouncementReadPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a AnnouncementRead.
+     * @param {AnnouncementReadDeleteArgs} args - Arguments to delete one AnnouncementRead.
+     * @example
+     * // Delete one AnnouncementRead
+     * const AnnouncementRead = await prisma.announcementRead.delete({
+     *   where: {
+     *     // ... filter to delete one AnnouncementRead
+     *   }
+     * })
+     * 
+     */
+    delete<T extends AnnouncementReadDeleteArgs>(args: SelectSubset<T, AnnouncementReadDeleteArgs<ExtArgs>>): Prisma__AnnouncementReadClient<$Result.GetResult<Prisma.$AnnouncementReadPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one AnnouncementRead.
+     * @param {AnnouncementReadUpdateArgs} args - Arguments to update one AnnouncementRead.
+     * @example
+     * // Update one AnnouncementRead
+     * const announcementRead = await prisma.announcementRead.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends AnnouncementReadUpdateArgs>(args: SelectSubset<T, AnnouncementReadUpdateArgs<ExtArgs>>): Prisma__AnnouncementReadClient<$Result.GetResult<Prisma.$AnnouncementReadPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more AnnouncementReads.
+     * @param {AnnouncementReadDeleteManyArgs} args - Arguments to filter AnnouncementReads to delete.
+     * @example
+     * // Delete a few AnnouncementReads
+     * const { count } = await prisma.announcementRead.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends AnnouncementReadDeleteManyArgs>(args?: SelectSubset<T, AnnouncementReadDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AnnouncementReads.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AnnouncementReadUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many AnnouncementReads
+     * const announcementRead = await prisma.announcementRead.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends AnnouncementReadUpdateManyArgs>(args: SelectSubset<T, AnnouncementReadUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one AnnouncementRead.
+     * @param {AnnouncementReadUpsertArgs} args - Arguments to update or create a AnnouncementRead.
+     * @example
+     * // Update or create a AnnouncementRead
+     * const announcementRead = await prisma.announcementRead.upsert({
+     *   create: {
+     *     // ... data to create a AnnouncementRead
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the AnnouncementRead we want to update
+     *   }
+     * })
+     */
+    upsert<T extends AnnouncementReadUpsertArgs>(args: SelectSubset<T, AnnouncementReadUpsertArgs<ExtArgs>>): Prisma__AnnouncementReadClient<$Result.GetResult<Prisma.$AnnouncementReadPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of AnnouncementReads.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AnnouncementReadCountArgs} args - Arguments to filter AnnouncementReads to count.
+     * @example
+     * // Count the number of AnnouncementReads
+     * const count = await prisma.announcementRead.count({
+     *   where: {
+     *     // ... the filter for the AnnouncementReads we want to count
+     *   }
+     * })
+    **/
+    count<T extends AnnouncementReadCountArgs>(
+      args?: Subset<T, AnnouncementReadCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], AnnouncementReadCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a AnnouncementRead.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AnnouncementReadAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends AnnouncementReadAggregateArgs>(args: Subset<T, AnnouncementReadAggregateArgs>): Prisma.PrismaPromise<GetAnnouncementReadAggregateType<T>>
+
+    /**
+     * Group by AnnouncementRead.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AnnouncementReadGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends AnnouncementReadGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: AnnouncementReadGroupByArgs['orderBy'] }
+        : { orderBy?: AnnouncementReadGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, AnnouncementReadGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetAnnouncementReadGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the AnnouncementRead model
+   */
+  readonly fields: AnnouncementReadFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for AnnouncementRead.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__AnnouncementReadClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    announcement<T extends AnnouncementDefaultArgs<ExtArgs> = {}>(args?: Subset<T, AnnouncementDefaultArgs<ExtArgs>>): Prisma__AnnouncementClient<$Result.GetResult<Prisma.$AnnouncementPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    user<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the AnnouncementRead model
+   */ 
+  interface AnnouncementReadFieldRefs {
+    readonly id: FieldRef<"AnnouncementRead", 'String'>
+    readonly announcementId: FieldRef<"AnnouncementRead", 'String'>
+    readonly userId: FieldRef<"AnnouncementRead", 'String'>
+    readonly readAt: FieldRef<"AnnouncementRead", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * AnnouncementRead findUnique
+   */
+  export type AnnouncementReadFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AnnouncementRead
+     */
+    select?: AnnouncementReadSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AnnouncementReadInclude<ExtArgs> | null
+    /**
+     * Filter, which AnnouncementRead to fetch.
+     */
+    where: AnnouncementReadWhereUniqueInput
+  }
+
+  /**
+   * AnnouncementRead findUniqueOrThrow
+   */
+  export type AnnouncementReadFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AnnouncementRead
+     */
+    select?: AnnouncementReadSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AnnouncementReadInclude<ExtArgs> | null
+    /**
+     * Filter, which AnnouncementRead to fetch.
+     */
+    where: AnnouncementReadWhereUniqueInput
+  }
+
+  /**
+   * AnnouncementRead findFirst
+   */
+  export type AnnouncementReadFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AnnouncementRead
+     */
+    select?: AnnouncementReadSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AnnouncementReadInclude<ExtArgs> | null
+    /**
+     * Filter, which AnnouncementRead to fetch.
+     */
+    where?: AnnouncementReadWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AnnouncementReads to fetch.
+     */
+    orderBy?: AnnouncementReadOrderByWithRelationInput | AnnouncementReadOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AnnouncementReads.
+     */
+    cursor?: AnnouncementReadWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AnnouncementReads from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AnnouncementReads.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AnnouncementReads.
+     */
+    distinct?: AnnouncementReadScalarFieldEnum | AnnouncementReadScalarFieldEnum[]
+  }
+
+  /**
+   * AnnouncementRead findFirstOrThrow
+   */
+  export type AnnouncementReadFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AnnouncementRead
+     */
+    select?: AnnouncementReadSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AnnouncementReadInclude<ExtArgs> | null
+    /**
+     * Filter, which AnnouncementRead to fetch.
+     */
+    where?: AnnouncementReadWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AnnouncementReads to fetch.
+     */
+    orderBy?: AnnouncementReadOrderByWithRelationInput | AnnouncementReadOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AnnouncementReads.
+     */
+    cursor?: AnnouncementReadWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AnnouncementReads from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AnnouncementReads.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AnnouncementReads.
+     */
+    distinct?: AnnouncementReadScalarFieldEnum | AnnouncementReadScalarFieldEnum[]
+  }
+
+  /**
+   * AnnouncementRead findMany
+   */
+  export type AnnouncementReadFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AnnouncementRead
+     */
+    select?: AnnouncementReadSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AnnouncementReadInclude<ExtArgs> | null
+    /**
+     * Filter, which AnnouncementReads to fetch.
+     */
+    where?: AnnouncementReadWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AnnouncementReads to fetch.
+     */
+    orderBy?: AnnouncementReadOrderByWithRelationInput | AnnouncementReadOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing AnnouncementReads.
+     */
+    cursor?: AnnouncementReadWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AnnouncementReads from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AnnouncementReads.
+     */
+    skip?: number
+    distinct?: AnnouncementReadScalarFieldEnum | AnnouncementReadScalarFieldEnum[]
+  }
+
+  /**
+   * AnnouncementRead create
+   */
+  export type AnnouncementReadCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AnnouncementRead
+     */
+    select?: AnnouncementReadSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AnnouncementReadInclude<ExtArgs> | null
+    /**
+     * The data needed to create a AnnouncementRead.
+     */
+    data: XOR<AnnouncementReadCreateInput, AnnouncementReadUncheckedCreateInput>
+  }
+
+  /**
+   * AnnouncementRead createMany
+   */
+  export type AnnouncementReadCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many AnnouncementReads.
+     */
+    data: AnnouncementReadCreateManyInput | AnnouncementReadCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * AnnouncementRead createManyAndReturn
+   */
+  export type AnnouncementReadCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AnnouncementRead
+     */
+    select?: AnnouncementReadSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many AnnouncementReads.
+     */
+    data: AnnouncementReadCreateManyInput | AnnouncementReadCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AnnouncementReadIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * AnnouncementRead update
+   */
+  export type AnnouncementReadUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AnnouncementRead
+     */
+    select?: AnnouncementReadSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AnnouncementReadInclude<ExtArgs> | null
+    /**
+     * The data needed to update a AnnouncementRead.
+     */
+    data: XOR<AnnouncementReadUpdateInput, AnnouncementReadUncheckedUpdateInput>
+    /**
+     * Choose, which AnnouncementRead to update.
+     */
+    where: AnnouncementReadWhereUniqueInput
+  }
+
+  /**
+   * AnnouncementRead updateMany
+   */
+  export type AnnouncementReadUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update AnnouncementReads.
+     */
+    data: XOR<AnnouncementReadUpdateManyMutationInput, AnnouncementReadUncheckedUpdateManyInput>
+    /**
+     * Filter which AnnouncementReads to update
+     */
+    where?: AnnouncementReadWhereInput
+  }
+
+  /**
+   * AnnouncementRead upsert
+   */
+  export type AnnouncementReadUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AnnouncementRead
+     */
+    select?: AnnouncementReadSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AnnouncementReadInclude<ExtArgs> | null
+    /**
+     * The filter to search for the AnnouncementRead to update in case it exists.
+     */
+    where: AnnouncementReadWhereUniqueInput
+    /**
+     * In case the AnnouncementRead found by the `where` argument doesn't exist, create a new AnnouncementRead with this data.
+     */
+    create: XOR<AnnouncementReadCreateInput, AnnouncementReadUncheckedCreateInput>
+    /**
+     * In case the AnnouncementRead was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<AnnouncementReadUpdateInput, AnnouncementReadUncheckedUpdateInput>
+  }
+
+  /**
+   * AnnouncementRead delete
+   */
+  export type AnnouncementReadDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AnnouncementRead
+     */
+    select?: AnnouncementReadSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AnnouncementReadInclude<ExtArgs> | null
+    /**
+     * Filter which AnnouncementRead to delete.
+     */
+    where: AnnouncementReadWhereUniqueInput
+  }
+
+  /**
+   * AnnouncementRead deleteMany
+   */
+  export type AnnouncementReadDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AnnouncementReads to delete
+     */
+    where?: AnnouncementReadWhereInput
+  }
+
+  /**
+   * AnnouncementRead without action
+   */
+  export type AnnouncementReadDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AnnouncementRead
+     */
+    select?: AnnouncementReadSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AnnouncementReadInclude<ExtArgs> | null
+  }
+
+
+  /**
    * Model Assignment
    */
 
@@ -20016,6 +21095,7 @@ export namespace Prisma {
     isGroupAssignment: number
     notifyUsers: number
     onlineEntryOptions: number
+    submissionEntries: number
     peerReviewAnonymous: number
     peerReviewAssign: number
     requirePeerReviews: number
@@ -20117,6 +21197,7 @@ export namespace Prisma {
     isGroupAssignment?: true
     notifyUsers?: true
     onlineEntryOptions?: true
+    submissionEntries?: true
     peerReviewAnonymous?: true
     peerReviewAssign?: true
     requirePeerReviews?: true
@@ -20235,6 +21316,7 @@ export namespace Prisma {
     isGroupAssignment: boolean
     notifyUsers: boolean
     onlineEntryOptions: string[]
+    submissionEntries: JsonValue
     peerReviewAnonymous: boolean
     peerReviewAssign: string
     requirePeerReviews: boolean
@@ -20285,6 +21367,7 @@ export namespace Prisma {
     isGroupAssignment?: boolean
     notifyUsers?: boolean
     onlineEntryOptions?: boolean
+    submissionEntries?: boolean
     peerReviewAnonymous?: boolean
     peerReviewAssign?: boolean
     requirePeerReviews?: boolean
@@ -20322,6 +21405,7 @@ export namespace Prisma {
     isGroupAssignment?: boolean
     notifyUsers?: boolean
     onlineEntryOptions?: boolean
+    submissionEntries?: boolean
     peerReviewAnonymous?: boolean
     peerReviewAssign?: boolean
     requirePeerReviews?: boolean
@@ -20355,6 +21439,7 @@ export namespace Prisma {
     isGroupAssignment?: boolean
     notifyUsers?: boolean
     onlineEntryOptions?: boolean
+    submissionEntries?: boolean
     peerReviewAnonymous?: boolean
     peerReviewAssign?: boolean
     requirePeerReviews?: boolean
@@ -20408,6 +21493,7 @@ export namespace Prisma {
       isGroupAssignment: boolean
       notifyUsers: boolean
       onlineEntryOptions: string[]
+      submissionEntries: Prisma.JsonValue
       peerReviewAnonymous: boolean
       peerReviewAssign: string
       requirePeerReviews: boolean
@@ -20834,6 +21920,7 @@ export namespace Prisma {
     readonly isGroupAssignment: FieldRef<"Assignment", 'Boolean'>
     readonly notifyUsers: FieldRef<"Assignment", 'Boolean'>
     readonly onlineEntryOptions: FieldRef<"Assignment", 'String[]'>
+    readonly submissionEntries: FieldRef<"Assignment", 'Json'>
     readonly peerReviewAnonymous: FieldRef<"Assignment", 'Boolean'>
     readonly peerReviewAssign: FieldRef<"Assignment", 'String'>
     readonly requirePeerReviews: FieldRef<"Assignment", 'Boolean'>
@@ -57005,6 +58092,16 @@ export namespace Prisma {
   export type AnnouncementAttachmentScalarFieldEnum = (typeof AnnouncementAttachmentScalarFieldEnum)[keyof typeof AnnouncementAttachmentScalarFieldEnum]
 
 
+  export const AnnouncementReadScalarFieldEnum: {
+    id: 'id',
+    announcementId: 'announcementId',
+    userId: 'userId',
+    readAt: 'readAt'
+  };
+
+  export type AnnouncementReadScalarFieldEnum = (typeof AnnouncementReadScalarFieldEnum)[keyof typeof AnnouncementReadScalarFieldEnum]
+
+
   export const AssignmentScalarFieldEnum: {
     id: 'id',
     title: 'title',
@@ -57027,6 +58124,7 @@ export namespace Prisma {
     isGroupAssignment: 'isGroupAssignment',
     notifyUsers: 'notifyUsers',
     onlineEntryOptions: 'onlineEntryOptions',
+    submissionEntries: 'submissionEntries',
     peerReviewAnonymous: 'peerReviewAnonymous',
     peerReviewAssign: 'peerReviewAssign',
     requirePeerReviews: 'requirePeerReviews',
@@ -57750,19 +58848,19 @@ export namespace Prisma {
   export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
 
 
+  export const JsonNullValueInput: {
+    JsonNull: typeof JsonNull
+  };
+
+  export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
+
+
   export const NullableJsonNullValueInput: {
     DbNull: typeof DbNull,
     JsonNull: typeof JsonNull
   };
 
   export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
-
-
-  export const JsonNullValueInput: {
-    JsonNull: typeof JsonNull
-  };
-
-  export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
 
 
   export const QueryMode: {
@@ -57915,6 +59013,13 @@ export namespace Prisma {
 
 
   /**
+   * Reference to a field of type 'Json'
+   */
+  export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
+    
+
+
+  /**
    * Reference to a field of type 'AssignmentStatus'
    */
   export type EnumAssignmentStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AssignmentStatus'>
@@ -57925,13 +59030,6 @@ export namespace Prisma {
    * Reference to a field of type 'AssignmentStatus[]'
    */
   export type ListEnumAssignmentStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AssignmentStatus[]'>
-    
-
-
-  /**
-   * Reference to a field of type 'Json'
-   */
-  export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
     
 
 
@@ -58313,6 +59411,7 @@ export namespace Prisma {
     quizzesCreated?: QuizListRelationFilter
     repositoryFiles?: RepositoryFileListRelationFilter
     sessions?: SessionListRelationFilter
+    announcementReads?: AnnouncementReadListRelationFilter
     guidanceLogEntries?: GuidanceLogEntryListRelationFilter
     exitInterviewsCounseled?: ExitInterviewListRelationFilter
     submissions_submissions_gradedByIdTousers?: SubmissionListRelationFilter
@@ -58353,6 +59452,7 @@ export namespace Prisma {
     quizzesCreated?: QuizOrderByRelationAggregateInput
     repositoryFiles?: RepositoryFileOrderByRelationAggregateInput
     sessions?: SessionOrderByRelationAggregateInput
+    announcementReads?: AnnouncementReadOrderByRelationAggregateInput
     guidanceLogEntries?: GuidanceLogEntryOrderByRelationAggregateInput
     exitInterviewsCounseled?: ExitInterviewOrderByRelationAggregateInput
     submissions_submissions_gradedByIdTousers?: SubmissionOrderByRelationAggregateInput
@@ -58396,6 +59496,7 @@ export namespace Prisma {
     quizzesCreated?: QuizListRelationFilter
     repositoryFiles?: RepositoryFileListRelationFilter
     sessions?: SessionListRelationFilter
+    announcementReads?: AnnouncementReadListRelationFilter
     guidanceLogEntries?: GuidanceLogEntryListRelationFilter
     exitInterviewsCounseled?: ExitInterviewListRelationFilter
     submissions_submissions_gradedByIdTousers?: SubmissionListRelationFilter
@@ -58592,11 +59693,11 @@ export namespace Prisma {
 
   export type CourseWhereUniqueInput = Prisma.AtLeast<{
     id?: string
+    code?: string
     AND?: CourseWhereInput | CourseWhereInput[]
     OR?: CourseWhereInput[]
     NOT?: CourseWhereInput | CourseWhereInput[]
     name?: StringFilter<"Course"> | string
-    code?: StringFilter<"Course"> | string
     color?: StringFilter<"Course"> | string
     status?: EnumCourseStatusFilter<"Course"> | $Enums.CourseStatus
     description?: StringNullableFilter<"Course"> | string | null
@@ -58627,7 +59728,7 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogListRelationFilter
     LibraryBook?: LibraryBookListRelationFilter
     LibraryBorrowRecord?: LibraryBorrowRecordListRelationFilter
-  }, "id">
+  }, "id" | "code">
 
   export type CourseOrderByWithAggregationInput = {
     id?: SortOrder
@@ -58981,6 +60082,7 @@ export namespace Prisma {
     authorId?: StringNullableFilter<"Announcement"> | string | null
     locked?: BoolFilter<"Announcement"> | boolean
     attachments?: AnnouncementAttachmentListRelationFilter
+    reads?: AnnouncementReadListRelationFilter
     course?: XOR<CourseRelationFilter, CourseWhereInput>
   }
 
@@ -59001,6 +60103,7 @@ export namespace Prisma {
     authorId?: SortOrderInput | SortOrder
     locked?: SortOrder
     attachments?: AnnouncementAttachmentOrderByRelationAggregateInput
+    reads?: AnnouncementReadOrderByRelationAggregateInput
     course?: CourseOrderByWithRelationInput
   }
 
@@ -59024,6 +60127,7 @@ export namespace Prisma {
     authorId?: StringNullableFilter<"Announcement"> | string | null
     locked?: BoolFilter<"Announcement"> | boolean
     attachments?: AnnouncementAttachmentListRelationFilter
+    reads?: AnnouncementReadListRelationFilter
     course?: XOR<CourseRelationFilter, CourseWhereInput>
   }, "id">
 
@@ -59136,6 +60240,60 @@ export namespace Prisma {
     createdAt?: DateTimeWithAggregatesFilter<"AnnouncementAttachment"> | Date | string
   }
 
+  export type AnnouncementReadWhereInput = {
+    AND?: AnnouncementReadWhereInput | AnnouncementReadWhereInput[]
+    OR?: AnnouncementReadWhereInput[]
+    NOT?: AnnouncementReadWhereInput | AnnouncementReadWhereInput[]
+    id?: StringFilter<"AnnouncementRead"> | string
+    announcementId?: StringFilter<"AnnouncementRead"> | string
+    userId?: StringFilter<"AnnouncementRead"> | string
+    readAt?: DateTimeFilter<"AnnouncementRead"> | Date | string
+    announcement?: XOR<AnnouncementRelationFilter, AnnouncementWhereInput>
+    user?: XOR<UserRelationFilter, UserWhereInput>
+  }
+
+  export type AnnouncementReadOrderByWithRelationInput = {
+    id?: SortOrder
+    announcementId?: SortOrder
+    userId?: SortOrder
+    readAt?: SortOrder
+    announcement?: AnnouncementOrderByWithRelationInput
+    user?: UserOrderByWithRelationInput
+  }
+
+  export type AnnouncementReadWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    announcementId_userId?: AnnouncementReadAnnouncementIdUserIdCompoundUniqueInput
+    AND?: AnnouncementReadWhereInput | AnnouncementReadWhereInput[]
+    OR?: AnnouncementReadWhereInput[]
+    NOT?: AnnouncementReadWhereInput | AnnouncementReadWhereInput[]
+    announcementId?: StringFilter<"AnnouncementRead"> | string
+    userId?: StringFilter<"AnnouncementRead"> | string
+    readAt?: DateTimeFilter<"AnnouncementRead"> | Date | string
+    announcement?: XOR<AnnouncementRelationFilter, AnnouncementWhereInput>
+    user?: XOR<UserRelationFilter, UserWhereInput>
+  }, "id" | "announcementId_userId">
+
+  export type AnnouncementReadOrderByWithAggregationInput = {
+    id?: SortOrder
+    announcementId?: SortOrder
+    userId?: SortOrder
+    readAt?: SortOrder
+    _count?: AnnouncementReadCountOrderByAggregateInput
+    _max?: AnnouncementReadMaxOrderByAggregateInput
+    _min?: AnnouncementReadMinOrderByAggregateInput
+  }
+
+  export type AnnouncementReadScalarWhereWithAggregatesInput = {
+    AND?: AnnouncementReadScalarWhereWithAggregatesInput | AnnouncementReadScalarWhereWithAggregatesInput[]
+    OR?: AnnouncementReadScalarWhereWithAggregatesInput[]
+    NOT?: AnnouncementReadScalarWhereWithAggregatesInput | AnnouncementReadScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"AnnouncementRead"> | string
+    announcementId?: StringWithAggregatesFilter<"AnnouncementRead"> | string
+    userId?: StringWithAggregatesFilter<"AnnouncementRead"> | string
+    readAt?: DateTimeWithAggregatesFilter<"AnnouncementRead"> | Date | string
+  }
+
   export type AssignmentWhereInput = {
     AND?: AssignmentWhereInput | AssignmentWhereInput[]
     OR?: AssignmentWhereInput[]
@@ -59161,6 +60319,7 @@ export namespace Prisma {
     isGroupAssignment?: BoolFilter<"Assignment"> | boolean
     notifyUsers?: BoolFilter<"Assignment"> | boolean
     onlineEntryOptions?: StringNullableListFilter<"Assignment">
+    submissionEntries?: JsonFilter<"Assignment">
     peerReviewAnonymous?: BoolFilter<"Assignment"> | boolean
     peerReviewAssign?: StringFilter<"Assignment"> | string
     requirePeerReviews?: BoolFilter<"Assignment"> | boolean
@@ -59197,6 +60356,7 @@ export namespace Prisma {
     isGroupAssignment?: SortOrder
     notifyUsers?: SortOrder
     onlineEntryOptions?: SortOrder
+    submissionEntries?: SortOrder
     peerReviewAnonymous?: SortOrder
     peerReviewAssign?: SortOrder
     requirePeerReviews?: SortOrder
@@ -59236,6 +60396,7 @@ export namespace Prisma {
     isGroupAssignment?: BoolFilter<"Assignment"> | boolean
     notifyUsers?: BoolFilter<"Assignment"> | boolean
     onlineEntryOptions?: StringNullableListFilter<"Assignment">
+    submissionEntries?: JsonFilter<"Assignment">
     peerReviewAnonymous?: BoolFilter<"Assignment"> | boolean
     peerReviewAssign?: StringFilter<"Assignment"> | string
     requirePeerReviews?: BoolFilter<"Assignment"> | boolean
@@ -59272,6 +60433,7 @@ export namespace Prisma {
     isGroupAssignment?: SortOrder
     notifyUsers?: SortOrder
     onlineEntryOptions?: SortOrder
+    submissionEntries?: SortOrder
     peerReviewAnonymous?: SortOrder
     peerReviewAssign?: SortOrder
     requirePeerReviews?: SortOrder
@@ -59311,6 +60473,7 @@ export namespace Prisma {
     isGroupAssignment?: BoolWithAggregatesFilter<"Assignment"> | boolean
     notifyUsers?: BoolWithAggregatesFilter<"Assignment"> | boolean
     onlineEntryOptions?: StringNullableListFilter<"Assignment">
+    submissionEntries?: JsonWithAggregatesFilter<"Assignment">
     peerReviewAnonymous?: BoolWithAggregatesFilter<"Assignment"> | boolean
     peerReviewAssign?: StringWithAggregatesFilter<"Assignment"> | string
     requirePeerReviews?: BoolWithAggregatesFilter<"Assignment"> | boolean
@@ -63306,6 +64469,7 @@ export namespace Prisma {
     quizzesCreated?: QuizCreateNestedManyWithoutAuthorInput
     repositoryFiles?: RepositoryFileCreateNestedManyWithoutUserInput
     sessions?: SessionCreateNestedManyWithoutUserInput
+    announcementReads?: AnnouncementReadCreateNestedManyWithoutUserInput
     guidanceLogEntries?: GuidanceLogEntryCreateNestedManyWithoutRecordedByUserInput
     exitInterviewsCounseled?: ExitInterviewCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
@@ -63346,6 +64510,7 @@ export namespace Prisma {
     quizzesCreated?: QuizUncheckedCreateNestedManyWithoutAuthorInput
     repositoryFiles?: RepositoryFileUncheckedCreateNestedManyWithoutUserInput
     sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
+    announcementReads?: AnnouncementReadUncheckedCreateNestedManyWithoutUserInput
     guidanceLogEntries?: GuidanceLogEntryUncheckedCreateNestedManyWithoutRecordedByUserInput
     exitInterviewsCounseled?: ExitInterviewUncheckedCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
@@ -63386,6 +64551,7 @@ export namespace Prisma {
     quizzesCreated?: QuizUpdateManyWithoutAuthorNestedInput
     repositoryFiles?: RepositoryFileUpdateManyWithoutUserNestedInput
     sessions?: SessionUpdateManyWithoutUserNestedInput
+    announcementReads?: AnnouncementReadUpdateManyWithoutUserNestedInput
     guidanceLogEntries?: GuidanceLogEntryUpdateManyWithoutRecordedByUserNestedInput
     exitInterviewsCounseled?: ExitInterviewUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
@@ -63426,6 +64592,7 @@ export namespace Prisma {
     quizzesCreated?: QuizUncheckedUpdateManyWithoutAuthorNestedInput
     repositoryFiles?: RepositoryFileUncheckedUpdateManyWithoutUserNestedInput
     sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
+    announcementReads?: AnnouncementReadUncheckedUpdateManyWithoutUserNestedInput
     guidanceLogEntries?: GuidanceLogEntryUncheckedUpdateManyWithoutRecordedByUserNestedInput
     exitInterviewsCounseled?: ExitInterviewUncheckedUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
@@ -64071,6 +65238,7 @@ export namespace Prisma {
     authorId?: string | null
     locked?: boolean
     attachments?: AnnouncementAttachmentCreateNestedManyWithoutAnnouncementInput
+    reads?: AnnouncementReadCreateNestedManyWithoutAnnouncementInput
     course: CourseCreateNestedOneWithoutAnnouncementsInput
   }
 
@@ -64091,6 +65259,7 @@ export namespace Prisma {
     authorId?: string | null
     locked?: boolean
     attachments?: AnnouncementAttachmentUncheckedCreateNestedManyWithoutAnnouncementInput
+    reads?: AnnouncementReadUncheckedCreateNestedManyWithoutAnnouncementInput
   }
 
   export type AnnouncementUpdateInput = {
@@ -64109,6 +65278,7 @@ export namespace Prisma {
     authorId?: NullableStringFieldUpdateOperationsInput | string | null
     locked?: BoolFieldUpdateOperationsInput | boolean
     attachments?: AnnouncementAttachmentUpdateManyWithoutAnnouncementNestedInput
+    reads?: AnnouncementReadUpdateManyWithoutAnnouncementNestedInput
     course?: CourseUpdateOneRequiredWithoutAnnouncementsNestedInput
   }
 
@@ -64129,6 +65299,7 @@ export namespace Prisma {
     authorId?: NullableStringFieldUpdateOperationsInput | string | null
     locked?: BoolFieldUpdateOperationsInput | boolean
     attachments?: AnnouncementAttachmentUncheckedUpdateManyWithoutAnnouncementNestedInput
+    reads?: AnnouncementReadUncheckedUpdateManyWithoutAnnouncementNestedInput
   }
 
   export type AnnouncementCreateManyInput = {
@@ -64253,6 +65424,53 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type AnnouncementReadCreateInput = {
+    id?: string
+    readAt?: Date | string
+    announcement: AnnouncementCreateNestedOneWithoutReadsInput
+    user: UserCreateNestedOneWithoutAnnouncementReadsInput
+  }
+
+  export type AnnouncementReadUncheckedCreateInput = {
+    id?: string
+    announcementId: string
+    userId: string
+    readAt?: Date | string
+  }
+
+  export type AnnouncementReadUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    readAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    announcement?: AnnouncementUpdateOneRequiredWithoutReadsNestedInput
+    user?: UserUpdateOneRequiredWithoutAnnouncementReadsNestedInput
+  }
+
+  export type AnnouncementReadUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    announcementId?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    readAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AnnouncementReadCreateManyInput = {
+    id?: string
+    announcementId: string
+    userId: string
+    readAt?: Date | string
+  }
+
+  export type AnnouncementReadUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    readAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AnnouncementReadUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    announcementId?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    readAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type AssignmentCreateInput = {
     id?: string
     title: string
@@ -64273,6 +65491,7 @@ export namespace Prisma {
     isGroupAssignment?: boolean
     notifyUsers?: boolean
     onlineEntryOptions?: AssignmentCreateonlineEntryOptionsInput | string[]
+    submissionEntries?: JsonNullValueInput | InputJsonValue
     peerReviewAnonymous?: boolean
     peerReviewAssign?: string
     requirePeerReviews?: boolean
@@ -64309,6 +65528,7 @@ export namespace Prisma {
     isGroupAssignment?: boolean
     notifyUsers?: boolean
     onlineEntryOptions?: AssignmentCreateonlineEntryOptionsInput | string[]
+    submissionEntries?: JsonNullValueInput | InputJsonValue
     peerReviewAnonymous?: boolean
     peerReviewAssign?: string
     requirePeerReviews?: boolean
@@ -64341,6 +65561,7 @@ export namespace Prisma {
     isGroupAssignment?: BoolFieldUpdateOperationsInput | boolean
     notifyUsers?: BoolFieldUpdateOperationsInput | boolean
     onlineEntryOptions?: AssignmentUpdateonlineEntryOptionsInput | string[]
+    submissionEntries?: JsonNullValueInput | InputJsonValue
     peerReviewAnonymous?: BoolFieldUpdateOperationsInput | boolean
     peerReviewAssign?: StringFieldUpdateOperationsInput | string
     requirePeerReviews?: BoolFieldUpdateOperationsInput | boolean
@@ -64377,6 +65598,7 @@ export namespace Prisma {
     isGroupAssignment?: BoolFieldUpdateOperationsInput | boolean
     notifyUsers?: BoolFieldUpdateOperationsInput | boolean
     onlineEntryOptions?: AssignmentUpdateonlineEntryOptionsInput | string[]
+    submissionEntries?: JsonNullValueInput | InputJsonValue
     peerReviewAnonymous?: BoolFieldUpdateOperationsInput | boolean
     peerReviewAssign?: StringFieldUpdateOperationsInput | string
     requirePeerReviews?: BoolFieldUpdateOperationsInput | boolean
@@ -64411,6 +65633,7 @@ export namespace Prisma {
     isGroupAssignment?: boolean
     notifyUsers?: boolean
     onlineEntryOptions?: AssignmentCreateonlineEntryOptionsInput | string[]
+    submissionEntries?: JsonNullValueInput | InputJsonValue
     peerReviewAnonymous?: boolean
     peerReviewAssign?: string
     requirePeerReviews?: boolean
@@ -64440,6 +65663,7 @@ export namespace Prisma {
     isGroupAssignment?: BoolFieldUpdateOperationsInput | boolean
     notifyUsers?: BoolFieldUpdateOperationsInput | boolean
     onlineEntryOptions?: AssignmentUpdateonlineEntryOptionsInput | string[]
+    submissionEntries?: JsonNullValueInput | InputJsonValue
     peerReviewAnonymous?: BoolFieldUpdateOperationsInput | boolean
     peerReviewAssign?: StringFieldUpdateOperationsInput | string
     requirePeerReviews?: BoolFieldUpdateOperationsInput | boolean
@@ -64471,6 +65695,7 @@ export namespace Prisma {
     isGroupAssignment?: BoolFieldUpdateOperationsInput | boolean
     notifyUsers?: BoolFieldUpdateOperationsInput | boolean
     onlineEntryOptions?: AssignmentUpdateonlineEntryOptionsInput | string[]
+    submissionEntries?: JsonNullValueInput | InputJsonValue
     peerReviewAnonymous?: BoolFieldUpdateOperationsInput | boolean
     peerReviewAssign?: StringFieldUpdateOperationsInput | string
     requirePeerReviews?: BoolFieldUpdateOperationsInput | boolean
@@ -69202,6 +70427,12 @@ export namespace Prisma {
     none?: SessionWhereInput
   }
 
+  export type AnnouncementReadListRelationFilter = {
+    every?: AnnouncementReadWhereInput
+    some?: AnnouncementReadWhereInput
+    none?: AnnouncementReadWhereInput
+  }
+
   export type GuidanceLogEntryListRelationFilter = {
     every?: GuidanceLogEntryWhereInput
     some?: GuidanceLogEntryWhereInput
@@ -69269,6 +70500,10 @@ export namespace Prisma {
   }
 
   export type SessionOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type AnnouncementReadOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -69901,6 +71136,32 @@ export namespace Prisma {
     size?: SortOrder
   }
 
+  export type AnnouncementReadAnnouncementIdUserIdCompoundUniqueInput = {
+    announcementId: string
+    userId: string
+  }
+
+  export type AnnouncementReadCountOrderByAggregateInput = {
+    id?: SortOrder
+    announcementId?: SortOrder
+    userId?: SortOrder
+    readAt?: SortOrder
+  }
+
+  export type AnnouncementReadMaxOrderByAggregateInput = {
+    id?: SortOrder
+    announcementId?: SortOrder
+    userId?: SortOrder
+    readAt?: SortOrder
+  }
+
+  export type AnnouncementReadMinOrderByAggregateInput = {
+    id?: SortOrder
+    announcementId?: SortOrder
+    userId?: SortOrder
+    readAt?: SortOrder
+  }
+
   export type FloatFilter<$PrismaModel = never> = {
     equals?: number | FloatFieldRefInput<$PrismaModel>
     in?: number[] | ListFloatFieldRefInput<$PrismaModel>
@@ -69910,6 +71171,28 @@ export namespace Prisma {
     gt?: number | FloatFieldRefInput<$PrismaModel>
     gte?: number | FloatFieldRefInput<$PrismaModel>
     not?: NestedFloatFilter<$PrismaModel> | number
+  }
+  export type JsonFilter<$PrismaModel = never> = 
+    | PatchUndefined<
+        Either<Required<JsonFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
   }
 
   export type GroupNullableRelationFilter = {
@@ -69949,6 +71232,7 @@ export namespace Prisma {
     isGroupAssignment?: SortOrder
     notifyUsers?: SortOrder
     onlineEntryOptions?: SortOrder
+    submissionEntries?: SortOrder
     peerReviewAnonymous?: SortOrder
     peerReviewAssign?: SortOrder
     requirePeerReviews?: SortOrder
@@ -70040,6 +71324,31 @@ export namespace Prisma {
     _sum?: NestedFloatFilter<$PrismaModel>
     _min?: NestedFloatFilter<$PrismaModel>
     _max?: NestedFloatFilter<$PrismaModel>
+  }
+  export type JsonWithAggregatesFilter<$PrismaModel = never> = 
+    | PatchUndefined<
+        Either<Required<JsonWithAggregatesFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonWithAggregatesFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonWithAggregatesFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonWithAggregatesFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonWithAggregatesFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedJsonFilter<$PrismaModel>
+    _max?: NestedJsonFilter<$PrismaModel>
   }
 
   export type EnumAssignmentStatusFilter<$PrismaModel = never> = {
@@ -70613,28 +71922,6 @@ export namespace Prisma {
     _min?: NestedEnumQuizQuestionTypeFilter<$PrismaModel>
     _max?: NestedEnumQuizQuestionTypeFilter<$PrismaModel>
   }
-  export type JsonFilter<$PrismaModel = never> = 
-    | PatchUndefined<
-        Either<Required<JsonFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonFilterBase<$PrismaModel>>, 'path'>>,
-        Required<JsonFilterBase<$PrismaModel>>
-      >
-    | OptionalFlat<Omit<Required<JsonFilterBase<$PrismaModel>>, 'path'>>
-
-  export type JsonFilterBase<$PrismaModel = never> = {
-    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    path?: string[]
-    string_contains?: string | StringFieldRefInput<$PrismaModel>
-    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
-    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
-    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-  }
 
   export type QuizAttemptCountOrderByAggregateInput = {
     id?: SortOrder
@@ -70672,31 +71959,6 @@ export namespace Prisma {
   export type QuizAttemptSumOrderByAggregateInput = {
     score?: SortOrder
     durationSeconds?: SortOrder
-  }
-  export type JsonWithAggregatesFilter<$PrismaModel = never> = 
-    | PatchUndefined<
-        Either<Required<JsonWithAggregatesFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonWithAggregatesFilterBase<$PrismaModel>>, 'path'>>,
-        Required<JsonWithAggregatesFilterBase<$PrismaModel>>
-      >
-    | OptionalFlat<Omit<Required<JsonWithAggregatesFilterBase<$PrismaModel>>, 'path'>>
-
-  export type JsonWithAggregatesFilterBase<$PrismaModel = never> = {
-    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    path?: string[]
-    string_contains?: string | StringFieldRefInput<$PrismaModel>
-    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
-    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
-    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedJsonFilter<$PrismaModel>
-    _max?: NestedJsonFilter<$PrismaModel>
   }
 
   export type EnumFormTypeFilter<$PrismaModel = never> = {
@@ -72838,6 +74100,13 @@ export namespace Prisma {
     connect?: SessionWhereUniqueInput | SessionWhereUniqueInput[]
   }
 
+  export type AnnouncementReadCreateNestedManyWithoutUserInput = {
+    create?: XOR<AnnouncementReadCreateWithoutUserInput, AnnouncementReadUncheckedCreateWithoutUserInput> | AnnouncementReadCreateWithoutUserInput[] | AnnouncementReadUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: AnnouncementReadCreateOrConnectWithoutUserInput | AnnouncementReadCreateOrConnectWithoutUserInput[]
+    createMany?: AnnouncementReadCreateManyUserInputEnvelope
+    connect?: AnnouncementReadWhereUniqueInput | AnnouncementReadWhereUniqueInput[]
+  }
+
   export type GuidanceLogEntryCreateNestedManyWithoutRecordedByUserInput = {
     create?: XOR<GuidanceLogEntryCreateWithoutRecordedByUserInput, GuidanceLogEntryUncheckedCreateWithoutRecordedByUserInput> | GuidanceLogEntryCreateWithoutRecordedByUserInput[] | GuidanceLogEntryUncheckedCreateWithoutRecordedByUserInput[]
     connectOrCreate?: GuidanceLogEntryCreateOrConnectWithoutRecordedByUserInput | GuidanceLogEntryCreateOrConnectWithoutRecordedByUserInput[]
@@ -72969,6 +74238,13 @@ export namespace Prisma {
     connectOrCreate?: SessionCreateOrConnectWithoutUserInput | SessionCreateOrConnectWithoutUserInput[]
     createMany?: SessionCreateManyUserInputEnvelope
     connect?: SessionWhereUniqueInput | SessionWhereUniqueInput[]
+  }
+
+  export type AnnouncementReadUncheckedCreateNestedManyWithoutUserInput = {
+    create?: XOR<AnnouncementReadCreateWithoutUserInput, AnnouncementReadUncheckedCreateWithoutUserInput> | AnnouncementReadCreateWithoutUserInput[] | AnnouncementReadUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: AnnouncementReadCreateOrConnectWithoutUserInput | AnnouncementReadCreateOrConnectWithoutUserInput[]
+    createMany?: AnnouncementReadCreateManyUserInputEnvelope
+    connect?: AnnouncementReadWhereUniqueInput | AnnouncementReadWhereUniqueInput[]
   }
 
   export type GuidanceLogEntryUncheckedCreateNestedManyWithoutRecordedByUserInput = {
@@ -73215,6 +74491,20 @@ export namespace Prisma {
     update?: SessionUpdateWithWhereUniqueWithoutUserInput | SessionUpdateWithWhereUniqueWithoutUserInput[]
     updateMany?: SessionUpdateManyWithWhereWithoutUserInput | SessionUpdateManyWithWhereWithoutUserInput[]
     deleteMany?: SessionScalarWhereInput | SessionScalarWhereInput[]
+  }
+
+  export type AnnouncementReadUpdateManyWithoutUserNestedInput = {
+    create?: XOR<AnnouncementReadCreateWithoutUserInput, AnnouncementReadUncheckedCreateWithoutUserInput> | AnnouncementReadCreateWithoutUserInput[] | AnnouncementReadUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: AnnouncementReadCreateOrConnectWithoutUserInput | AnnouncementReadCreateOrConnectWithoutUserInput[]
+    upsert?: AnnouncementReadUpsertWithWhereUniqueWithoutUserInput | AnnouncementReadUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: AnnouncementReadCreateManyUserInputEnvelope
+    set?: AnnouncementReadWhereUniqueInput | AnnouncementReadWhereUniqueInput[]
+    disconnect?: AnnouncementReadWhereUniqueInput | AnnouncementReadWhereUniqueInput[]
+    delete?: AnnouncementReadWhereUniqueInput | AnnouncementReadWhereUniqueInput[]
+    connect?: AnnouncementReadWhereUniqueInput | AnnouncementReadWhereUniqueInput[]
+    update?: AnnouncementReadUpdateWithWhereUniqueWithoutUserInput | AnnouncementReadUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: AnnouncementReadUpdateManyWithWhereWithoutUserInput | AnnouncementReadUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: AnnouncementReadScalarWhereInput | AnnouncementReadScalarWhereInput[]
   }
 
   export type GuidanceLogEntryUpdateManyWithoutRecordedByUserNestedInput = {
@@ -73481,6 +74771,20 @@ export namespace Prisma {
     update?: SessionUpdateWithWhereUniqueWithoutUserInput | SessionUpdateWithWhereUniqueWithoutUserInput[]
     updateMany?: SessionUpdateManyWithWhereWithoutUserInput | SessionUpdateManyWithWhereWithoutUserInput[]
     deleteMany?: SessionScalarWhereInput | SessionScalarWhereInput[]
+  }
+
+  export type AnnouncementReadUncheckedUpdateManyWithoutUserNestedInput = {
+    create?: XOR<AnnouncementReadCreateWithoutUserInput, AnnouncementReadUncheckedCreateWithoutUserInput> | AnnouncementReadCreateWithoutUserInput[] | AnnouncementReadUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: AnnouncementReadCreateOrConnectWithoutUserInput | AnnouncementReadCreateOrConnectWithoutUserInput[]
+    upsert?: AnnouncementReadUpsertWithWhereUniqueWithoutUserInput | AnnouncementReadUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: AnnouncementReadCreateManyUserInputEnvelope
+    set?: AnnouncementReadWhereUniqueInput | AnnouncementReadWhereUniqueInput[]
+    disconnect?: AnnouncementReadWhereUniqueInput | AnnouncementReadWhereUniqueInput[]
+    delete?: AnnouncementReadWhereUniqueInput | AnnouncementReadWhereUniqueInput[]
+    connect?: AnnouncementReadWhereUniqueInput | AnnouncementReadWhereUniqueInput[]
+    update?: AnnouncementReadUpdateWithWhereUniqueWithoutUserInput | AnnouncementReadUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: AnnouncementReadUpdateManyWithWhereWithoutUserInput | AnnouncementReadUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: AnnouncementReadScalarWhereInput | AnnouncementReadScalarWhereInput[]
   }
 
   export type GuidanceLogEntryUncheckedUpdateManyWithoutRecordedByUserNestedInput = {
@@ -74642,6 +75946,13 @@ export namespace Prisma {
     connect?: AnnouncementAttachmentWhereUniqueInput | AnnouncementAttachmentWhereUniqueInput[]
   }
 
+  export type AnnouncementReadCreateNestedManyWithoutAnnouncementInput = {
+    create?: XOR<AnnouncementReadCreateWithoutAnnouncementInput, AnnouncementReadUncheckedCreateWithoutAnnouncementInput> | AnnouncementReadCreateWithoutAnnouncementInput[] | AnnouncementReadUncheckedCreateWithoutAnnouncementInput[]
+    connectOrCreate?: AnnouncementReadCreateOrConnectWithoutAnnouncementInput | AnnouncementReadCreateOrConnectWithoutAnnouncementInput[]
+    createMany?: AnnouncementReadCreateManyAnnouncementInputEnvelope
+    connect?: AnnouncementReadWhereUniqueInput | AnnouncementReadWhereUniqueInput[]
+  }
+
   export type CourseCreateNestedOneWithoutAnnouncementsInput = {
     create?: XOR<CourseCreateWithoutAnnouncementsInput, CourseUncheckedCreateWithoutAnnouncementsInput>
     connectOrCreate?: CourseCreateOrConnectWithoutAnnouncementsInput
@@ -74653,6 +75964,13 @@ export namespace Prisma {
     connectOrCreate?: AnnouncementAttachmentCreateOrConnectWithoutAnnouncementInput | AnnouncementAttachmentCreateOrConnectWithoutAnnouncementInput[]
     createMany?: AnnouncementAttachmentCreateManyAnnouncementInputEnvelope
     connect?: AnnouncementAttachmentWhereUniqueInput | AnnouncementAttachmentWhereUniqueInput[]
+  }
+
+  export type AnnouncementReadUncheckedCreateNestedManyWithoutAnnouncementInput = {
+    create?: XOR<AnnouncementReadCreateWithoutAnnouncementInput, AnnouncementReadUncheckedCreateWithoutAnnouncementInput> | AnnouncementReadCreateWithoutAnnouncementInput[] | AnnouncementReadUncheckedCreateWithoutAnnouncementInput[]
+    connectOrCreate?: AnnouncementReadCreateOrConnectWithoutAnnouncementInput | AnnouncementReadCreateOrConnectWithoutAnnouncementInput[]
+    createMany?: AnnouncementReadCreateManyAnnouncementInputEnvelope
+    connect?: AnnouncementReadWhereUniqueInput | AnnouncementReadWhereUniqueInput[]
   }
 
   export type AnnouncementUpdateassignToInput = {
@@ -74672,6 +75990,20 @@ export namespace Prisma {
     update?: AnnouncementAttachmentUpdateWithWhereUniqueWithoutAnnouncementInput | AnnouncementAttachmentUpdateWithWhereUniqueWithoutAnnouncementInput[]
     updateMany?: AnnouncementAttachmentUpdateManyWithWhereWithoutAnnouncementInput | AnnouncementAttachmentUpdateManyWithWhereWithoutAnnouncementInput[]
     deleteMany?: AnnouncementAttachmentScalarWhereInput | AnnouncementAttachmentScalarWhereInput[]
+  }
+
+  export type AnnouncementReadUpdateManyWithoutAnnouncementNestedInput = {
+    create?: XOR<AnnouncementReadCreateWithoutAnnouncementInput, AnnouncementReadUncheckedCreateWithoutAnnouncementInput> | AnnouncementReadCreateWithoutAnnouncementInput[] | AnnouncementReadUncheckedCreateWithoutAnnouncementInput[]
+    connectOrCreate?: AnnouncementReadCreateOrConnectWithoutAnnouncementInput | AnnouncementReadCreateOrConnectWithoutAnnouncementInput[]
+    upsert?: AnnouncementReadUpsertWithWhereUniqueWithoutAnnouncementInput | AnnouncementReadUpsertWithWhereUniqueWithoutAnnouncementInput[]
+    createMany?: AnnouncementReadCreateManyAnnouncementInputEnvelope
+    set?: AnnouncementReadWhereUniqueInput | AnnouncementReadWhereUniqueInput[]
+    disconnect?: AnnouncementReadWhereUniqueInput | AnnouncementReadWhereUniqueInput[]
+    delete?: AnnouncementReadWhereUniqueInput | AnnouncementReadWhereUniqueInput[]
+    connect?: AnnouncementReadWhereUniqueInput | AnnouncementReadWhereUniqueInput[]
+    update?: AnnouncementReadUpdateWithWhereUniqueWithoutAnnouncementInput | AnnouncementReadUpdateWithWhereUniqueWithoutAnnouncementInput[]
+    updateMany?: AnnouncementReadUpdateManyWithWhereWithoutAnnouncementInput | AnnouncementReadUpdateManyWithWhereWithoutAnnouncementInput[]
+    deleteMany?: AnnouncementReadScalarWhereInput | AnnouncementReadScalarWhereInput[]
   }
 
   export type CourseUpdateOneRequiredWithoutAnnouncementsNestedInput = {
@@ -74696,6 +76028,20 @@ export namespace Prisma {
     deleteMany?: AnnouncementAttachmentScalarWhereInput | AnnouncementAttachmentScalarWhereInput[]
   }
 
+  export type AnnouncementReadUncheckedUpdateManyWithoutAnnouncementNestedInput = {
+    create?: XOR<AnnouncementReadCreateWithoutAnnouncementInput, AnnouncementReadUncheckedCreateWithoutAnnouncementInput> | AnnouncementReadCreateWithoutAnnouncementInput[] | AnnouncementReadUncheckedCreateWithoutAnnouncementInput[]
+    connectOrCreate?: AnnouncementReadCreateOrConnectWithoutAnnouncementInput | AnnouncementReadCreateOrConnectWithoutAnnouncementInput[]
+    upsert?: AnnouncementReadUpsertWithWhereUniqueWithoutAnnouncementInput | AnnouncementReadUpsertWithWhereUniqueWithoutAnnouncementInput[]
+    createMany?: AnnouncementReadCreateManyAnnouncementInputEnvelope
+    set?: AnnouncementReadWhereUniqueInput | AnnouncementReadWhereUniqueInput[]
+    disconnect?: AnnouncementReadWhereUniqueInput | AnnouncementReadWhereUniqueInput[]
+    delete?: AnnouncementReadWhereUniqueInput | AnnouncementReadWhereUniqueInput[]
+    connect?: AnnouncementReadWhereUniqueInput | AnnouncementReadWhereUniqueInput[]
+    update?: AnnouncementReadUpdateWithWhereUniqueWithoutAnnouncementInput | AnnouncementReadUpdateWithWhereUniqueWithoutAnnouncementInput[]
+    updateMany?: AnnouncementReadUpdateManyWithWhereWithoutAnnouncementInput | AnnouncementReadUpdateManyWithWhereWithoutAnnouncementInput[]
+    deleteMany?: AnnouncementReadScalarWhereInput | AnnouncementReadScalarWhereInput[]
+  }
+
   export type AnnouncementCreateNestedOneWithoutAttachmentsInput = {
     create?: XOR<AnnouncementCreateWithoutAttachmentsInput, AnnouncementUncheckedCreateWithoutAttachmentsInput>
     connectOrCreate?: AnnouncementCreateOrConnectWithoutAttachmentsInput
@@ -74708,6 +76054,34 @@ export namespace Prisma {
     upsert?: AnnouncementUpsertWithoutAttachmentsInput
     connect?: AnnouncementWhereUniqueInput
     update?: XOR<XOR<AnnouncementUpdateToOneWithWhereWithoutAttachmentsInput, AnnouncementUpdateWithoutAttachmentsInput>, AnnouncementUncheckedUpdateWithoutAttachmentsInput>
+  }
+
+  export type AnnouncementCreateNestedOneWithoutReadsInput = {
+    create?: XOR<AnnouncementCreateWithoutReadsInput, AnnouncementUncheckedCreateWithoutReadsInput>
+    connectOrCreate?: AnnouncementCreateOrConnectWithoutReadsInput
+    connect?: AnnouncementWhereUniqueInput
+  }
+
+  export type UserCreateNestedOneWithoutAnnouncementReadsInput = {
+    create?: XOR<UserCreateWithoutAnnouncementReadsInput, UserUncheckedCreateWithoutAnnouncementReadsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutAnnouncementReadsInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type AnnouncementUpdateOneRequiredWithoutReadsNestedInput = {
+    create?: XOR<AnnouncementCreateWithoutReadsInput, AnnouncementUncheckedCreateWithoutReadsInput>
+    connectOrCreate?: AnnouncementCreateOrConnectWithoutReadsInput
+    upsert?: AnnouncementUpsertWithoutReadsInput
+    connect?: AnnouncementWhereUniqueInput
+    update?: XOR<XOR<AnnouncementUpdateToOneWithWhereWithoutReadsInput, AnnouncementUpdateWithoutReadsInput>, AnnouncementUncheckedUpdateWithoutReadsInput>
+  }
+
+  export type UserUpdateOneRequiredWithoutAnnouncementReadsNestedInput = {
+    create?: XOR<UserCreateWithoutAnnouncementReadsInput, UserUncheckedCreateWithoutAnnouncementReadsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutAnnouncementReadsInput
+    upsert?: UserUpsertWithoutAnnouncementReadsInput
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutAnnouncementReadsInput, UserUpdateWithoutAnnouncementReadsInput>, UserUncheckedUpdateWithoutAnnouncementReadsInput>
   }
 
   export type AssignmentCreateonlineEntryOptionsInput = {
@@ -76742,6 +78116,28 @@ export namespace Prisma {
     _min?: NestedFloatFilter<$PrismaModel>
     _max?: NestedFloatFilter<$PrismaModel>
   }
+  export type NestedJsonFilter<$PrismaModel = never> = 
+    | PatchUndefined<
+        Either<Required<NestedJsonFilterBase<$PrismaModel>>, Exclude<keyof Required<NestedJsonFilterBase<$PrismaModel>>, 'path'>>,
+        Required<NestedJsonFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<NestedJsonFilterBase<$PrismaModel>>, 'path'>>
+
+  export type NestedJsonFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
 
   export type NestedEnumAssignmentStatusFilter<$PrismaModel = never> = {
     equals?: $Enums.AssignmentStatus | EnumAssignmentStatusFieldRefInput<$PrismaModel>
@@ -76830,28 +78226,6 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumQuizQuestionTypeFilter<$PrismaModel>
     _max?: NestedEnumQuizQuestionTypeFilter<$PrismaModel>
-  }
-  export type NestedJsonFilter<$PrismaModel = never> = 
-    | PatchUndefined<
-        Either<Required<NestedJsonFilterBase<$PrismaModel>>, Exclude<keyof Required<NestedJsonFilterBase<$PrismaModel>>, 'path'>>,
-        Required<NestedJsonFilterBase<$PrismaModel>>
-      >
-    | OptionalFlat<Omit<Required<NestedJsonFilterBase<$PrismaModel>>, 'path'>>
-
-  export type NestedJsonFilterBase<$PrismaModel = never> = {
-    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    path?: string[]
-    string_contains?: string | StringFieldRefInput<$PrismaModel>
-    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
-    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
-    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
   }
 
   export type NestedEnumFormTypeFilter<$PrismaModel = never> = {
@@ -77245,6 +78619,7 @@ export namespace Prisma {
     quizzesCreated?: QuizCreateNestedManyWithoutAuthorInput
     repositoryFiles?: RepositoryFileCreateNestedManyWithoutUserInput
     sessions?: SessionCreateNestedManyWithoutUserInput
+    announcementReads?: AnnouncementReadCreateNestedManyWithoutUserInput
     guidanceLogEntries?: GuidanceLogEntryCreateNestedManyWithoutRecordedByUserInput
     exitInterviewsCounseled?: ExitInterviewCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
@@ -77284,6 +78659,7 @@ export namespace Prisma {
     quizzesCreated?: QuizUncheckedCreateNestedManyWithoutAuthorInput
     repositoryFiles?: RepositoryFileUncheckedCreateNestedManyWithoutUserInput
     sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
+    announcementReads?: AnnouncementReadUncheckedCreateNestedManyWithoutUserInput
     guidanceLogEntries?: GuidanceLogEntryUncheckedCreateNestedManyWithoutRecordedByUserInput
     exitInterviewsCounseled?: ExitInterviewUncheckedCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
@@ -77370,6 +78746,7 @@ export namespace Prisma {
     quizzesCreated?: QuizUpdateManyWithoutAuthorNestedInput
     repositoryFiles?: RepositoryFileUpdateManyWithoutUserNestedInput
     sessions?: SessionUpdateManyWithoutUserNestedInput
+    announcementReads?: AnnouncementReadUpdateManyWithoutUserNestedInput
     guidanceLogEntries?: GuidanceLogEntryUpdateManyWithoutRecordedByUserNestedInput
     exitInterviewsCounseled?: ExitInterviewUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
@@ -77409,6 +78786,7 @@ export namespace Prisma {
     quizzesCreated?: QuizUncheckedUpdateManyWithoutAuthorNestedInput
     repositoryFiles?: RepositoryFileUncheckedUpdateManyWithoutUserNestedInput
     sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
+    announcementReads?: AnnouncementReadUncheckedUpdateManyWithoutUserNestedInput
     guidanceLogEntries?: GuidanceLogEntryUncheckedUpdateManyWithoutRecordedByUserNestedInput
     exitInterviewsCounseled?: ExitInterviewUncheckedUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
@@ -77501,6 +78879,7 @@ export namespace Prisma {
     quizzesCreated?: QuizCreateNestedManyWithoutAuthorInput
     repositoryFiles?: RepositoryFileCreateNestedManyWithoutUserInput
     sessions?: SessionCreateNestedManyWithoutUserInput
+    announcementReads?: AnnouncementReadCreateNestedManyWithoutUserInput
     guidanceLogEntries?: GuidanceLogEntryCreateNestedManyWithoutRecordedByUserInput
     exitInterviewsCounseled?: ExitInterviewCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
@@ -77540,6 +78919,7 @@ export namespace Prisma {
     quizzesCreated?: QuizUncheckedCreateNestedManyWithoutAuthorInput
     repositoryFiles?: RepositoryFileUncheckedCreateNestedManyWithoutUserInput
     sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
+    announcementReads?: AnnouncementReadUncheckedCreateNestedManyWithoutUserInput
     guidanceLogEntries?: GuidanceLogEntryUncheckedCreateNestedManyWithoutRecordedByUserInput
     exitInterviewsCounseled?: ExitInterviewUncheckedCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
@@ -77655,6 +79035,7 @@ export namespace Prisma {
     quizzesCreated?: QuizUpdateManyWithoutAuthorNestedInput
     repositoryFiles?: RepositoryFileUpdateManyWithoutUserNestedInput
     sessions?: SessionUpdateManyWithoutUserNestedInput
+    announcementReads?: AnnouncementReadUpdateManyWithoutUserNestedInput
     guidanceLogEntries?: GuidanceLogEntryUpdateManyWithoutRecordedByUserNestedInput
     exitInterviewsCounseled?: ExitInterviewUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
@@ -77694,6 +79075,7 @@ export namespace Prisma {
     quizzesCreated?: QuizUncheckedUpdateManyWithoutAuthorNestedInput
     repositoryFiles?: RepositoryFileUncheckedUpdateManyWithoutUserNestedInput
     sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
+    announcementReads?: AnnouncementReadUncheckedUpdateManyWithoutUserNestedInput
     guidanceLogEntries?: GuidanceLogEntryUncheckedUpdateManyWithoutRecordedByUserNestedInput
     exitInterviewsCounseled?: ExitInterviewUncheckedUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
@@ -78359,6 +79741,28 @@ export namespace Prisma {
 
   export type SessionCreateManyUserInputEnvelope = {
     data: SessionCreateManyUserInput | SessionCreateManyUserInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type AnnouncementReadCreateWithoutUserInput = {
+    id?: string
+    readAt?: Date | string
+    announcement: AnnouncementCreateNestedOneWithoutReadsInput
+  }
+
+  export type AnnouncementReadUncheckedCreateWithoutUserInput = {
+    id?: string
+    announcementId: string
+    readAt?: Date | string
+  }
+
+  export type AnnouncementReadCreateOrConnectWithoutUserInput = {
+    where: AnnouncementReadWhereUniqueInput
+    create: XOR<AnnouncementReadCreateWithoutUserInput, AnnouncementReadUncheckedCreateWithoutUserInput>
+  }
+
+  export type AnnouncementReadCreateManyUserInputEnvelope = {
+    data: AnnouncementReadCreateManyUserInput | AnnouncementReadCreateManyUserInput[]
     skipDuplicates?: boolean
   }
 
@@ -79113,6 +80517,32 @@ export namespace Prisma {
     expires?: DateTimeFilter<"Session"> | Date | string
   }
 
+  export type AnnouncementReadUpsertWithWhereUniqueWithoutUserInput = {
+    where: AnnouncementReadWhereUniqueInput
+    update: XOR<AnnouncementReadUpdateWithoutUserInput, AnnouncementReadUncheckedUpdateWithoutUserInput>
+    create: XOR<AnnouncementReadCreateWithoutUserInput, AnnouncementReadUncheckedCreateWithoutUserInput>
+  }
+
+  export type AnnouncementReadUpdateWithWhereUniqueWithoutUserInput = {
+    where: AnnouncementReadWhereUniqueInput
+    data: XOR<AnnouncementReadUpdateWithoutUserInput, AnnouncementReadUncheckedUpdateWithoutUserInput>
+  }
+
+  export type AnnouncementReadUpdateManyWithWhereWithoutUserInput = {
+    where: AnnouncementReadScalarWhereInput
+    data: XOR<AnnouncementReadUpdateManyMutationInput, AnnouncementReadUncheckedUpdateManyWithoutUserInput>
+  }
+
+  export type AnnouncementReadScalarWhereInput = {
+    AND?: AnnouncementReadScalarWhereInput | AnnouncementReadScalarWhereInput[]
+    OR?: AnnouncementReadScalarWhereInput[]
+    NOT?: AnnouncementReadScalarWhereInput | AnnouncementReadScalarWhereInput[]
+    id?: StringFilter<"AnnouncementRead"> | string
+    announcementId?: StringFilter<"AnnouncementRead"> | string
+    userId?: StringFilter<"AnnouncementRead"> | string
+    readAt?: DateTimeFilter<"AnnouncementRead"> | Date | string
+  }
+
   export type GuidanceLogEntryUpsertWithWhereUniqueWithoutRecordedByUserInput = {
     where: GuidanceLogEntryWhereUniqueInput
     update: XOR<GuidanceLogEntryUpdateWithoutRecordedByUserInput, GuidanceLogEntryUncheckedUpdateWithoutRecordedByUserInput>
@@ -79308,6 +80738,7 @@ export namespace Prisma {
     quizzesCreated?: QuizCreateNestedManyWithoutAuthorInput
     repositoryFiles?: RepositoryFileCreateNestedManyWithoutUserInput
     sessions?: SessionCreateNestedManyWithoutUserInput
+    announcementReads?: AnnouncementReadCreateNestedManyWithoutUserInput
     guidanceLogEntries?: GuidanceLogEntryCreateNestedManyWithoutRecordedByUserInput
     exitInterviewsCounseled?: ExitInterviewCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
@@ -79347,6 +80778,7 @@ export namespace Prisma {
     quizzesCreated?: QuizUncheckedCreateNestedManyWithoutAuthorInput
     repositoryFiles?: RepositoryFileUncheckedCreateNestedManyWithoutUserInput
     sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
+    announcementReads?: AnnouncementReadUncheckedCreateNestedManyWithoutUserInput
     guidanceLogEntries?: GuidanceLogEntryUncheckedCreateNestedManyWithoutRecordedByUserInput
     exitInterviewsCounseled?: ExitInterviewUncheckedCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
@@ -79402,6 +80834,7 @@ export namespace Prisma {
     quizzesCreated?: QuizUpdateManyWithoutAuthorNestedInput
     repositoryFiles?: RepositoryFileUpdateManyWithoutUserNestedInput
     sessions?: SessionUpdateManyWithoutUserNestedInput
+    announcementReads?: AnnouncementReadUpdateManyWithoutUserNestedInput
     guidanceLogEntries?: GuidanceLogEntryUpdateManyWithoutRecordedByUserNestedInput
     exitInterviewsCounseled?: ExitInterviewUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
@@ -79441,6 +80874,7 @@ export namespace Prisma {
     quizzesCreated?: QuizUncheckedUpdateManyWithoutAuthorNestedInput
     repositoryFiles?: RepositoryFileUncheckedUpdateManyWithoutUserNestedInput
     sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
+    announcementReads?: AnnouncementReadUncheckedUpdateManyWithoutUserNestedInput
     guidanceLogEntries?: GuidanceLogEntryUncheckedUpdateManyWithoutRecordedByUserNestedInput
     exitInterviewsCounseled?: ExitInterviewUncheckedUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
@@ -79463,6 +80897,7 @@ export namespace Prisma {
     authorId?: string | null
     locked?: boolean
     attachments?: AnnouncementAttachmentCreateNestedManyWithoutAnnouncementInput
+    reads?: AnnouncementReadCreateNestedManyWithoutAnnouncementInput
   }
 
   export type AnnouncementUncheckedCreateWithoutCourseInput = {
@@ -79481,6 +80916,7 @@ export namespace Prisma {
     authorId?: string | null
     locked?: boolean
     attachments?: AnnouncementAttachmentUncheckedCreateNestedManyWithoutAnnouncementInput
+    reads?: AnnouncementReadUncheckedCreateNestedManyWithoutAnnouncementInput
   }
 
   export type AnnouncementCreateOrConnectWithoutCourseInput = {
@@ -79513,6 +80949,7 @@ export namespace Prisma {
     isGroupAssignment?: boolean
     notifyUsers?: boolean
     onlineEntryOptions?: AssignmentCreateonlineEntryOptionsInput | string[]
+    submissionEntries?: JsonNullValueInput | InputJsonValue
     peerReviewAnonymous?: boolean
     peerReviewAssign?: string
     requirePeerReviews?: boolean
@@ -79547,6 +80984,7 @@ export namespace Prisma {
     isGroupAssignment?: boolean
     notifyUsers?: boolean
     onlineEntryOptions?: AssignmentCreateonlineEntryOptionsInput | string[]
+    submissionEntries?: JsonNullValueInput | InputJsonValue
     peerReviewAnonymous?: boolean
     peerReviewAssign?: string
     requirePeerReviews?: boolean
@@ -80693,6 +82131,7 @@ export namespace Prisma {
     isGroupAssignment?: BoolFilter<"Assignment"> | boolean
     notifyUsers?: BoolFilter<"Assignment"> | boolean
     onlineEntryOptions?: StringNullableListFilter<"Assignment">
+    submissionEntries?: JsonFilter<"Assignment">
     peerReviewAnonymous?: BoolFilter<"Assignment"> | boolean
     peerReviewAssign?: StringFilter<"Assignment"> | string
     requirePeerReviews?: BoolFilter<"Assignment"> | boolean
@@ -81361,6 +82800,7 @@ export namespace Prisma {
     quizzesCreated?: QuizCreateNestedManyWithoutAuthorInput
     repositoryFiles?: RepositoryFileCreateNestedManyWithoutUserInput
     sessions?: SessionCreateNestedManyWithoutUserInput
+    announcementReads?: AnnouncementReadCreateNestedManyWithoutUserInput
     guidanceLogEntries?: GuidanceLogEntryCreateNestedManyWithoutRecordedByUserInput
     exitInterviewsCounseled?: ExitInterviewCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
@@ -81400,6 +82840,7 @@ export namespace Prisma {
     quizzesCreated?: QuizUncheckedCreateNestedManyWithoutAuthorInput
     repositoryFiles?: RepositoryFileUncheckedCreateNestedManyWithoutUserInput
     sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
+    announcementReads?: AnnouncementReadUncheckedCreateNestedManyWithoutUserInput
     guidanceLogEntries?: GuidanceLogEntryUncheckedCreateNestedManyWithoutRecordedByUserInput
     exitInterviewsCounseled?: ExitInterviewUncheckedCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
@@ -81536,6 +82977,7 @@ export namespace Prisma {
     quizzesCreated?: QuizUpdateManyWithoutAuthorNestedInput
     repositoryFiles?: RepositoryFileUpdateManyWithoutUserNestedInput
     sessions?: SessionUpdateManyWithoutUserNestedInput
+    announcementReads?: AnnouncementReadUpdateManyWithoutUserNestedInput
     guidanceLogEntries?: GuidanceLogEntryUpdateManyWithoutRecordedByUserNestedInput
     exitInterviewsCounseled?: ExitInterviewUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
@@ -81575,6 +83017,7 @@ export namespace Prisma {
     quizzesCreated?: QuizUncheckedUpdateManyWithoutAuthorNestedInput
     repositoryFiles?: RepositoryFileUncheckedUpdateManyWithoutUserNestedInput
     sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
+    announcementReads?: AnnouncementReadUncheckedUpdateManyWithoutUserNestedInput
     guidanceLogEntries?: GuidanceLogEntryUncheckedUpdateManyWithoutRecordedByUserNestedInput
     exitInterviewsCounseled?: ExitInterviewUncheckedUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
@@ -81803,6 +83246,7 @@ export namespace Prisma {
     isGroupAssignment?: boolean
     notifyUsers?: boolean
     onlineEntryOptions?: AssignmentCreateonlineEntryOptionsInput | string[]
+    submissionEntries?: JsonNullValueInput | InputJsonValue
     peerReviewAnonymous?: boolean
     peerReviewAssign?: string
     requirePeerReviews?: boolean
@@ -81837,6 +83281,7 @@ export namespace Prisma {
     isGroupAssignment?: boolean
     notifyUsers?: boolean
     onlineEntryOptions?: AssignmentCreateonlineEntryOptionsInput | string[]
+    submissionEntries?: JsonNullValueInput | InputJsonValue
     peerReviewAnonymous?: boolean
     peerReviewAssign?: string
     requirePeerReviews?: boolean
@@ -82207,6 +83652,7 @@ export namespace Prisma {
     quizzesCreated?: QuizCreateNestedManyWithoutAuthorInput
     repositoryFiles?: RepositoryFileCreateNestedManyWithoutUserInput
     sessions?: SessionCreateNestedManyWithoutUserInput
+    announcementReads?: AnnouncementReadCreateNestedManyWithoutUserInput
     guidanceLogEntries?: GuidanceLogEntryCreateNestedManyWithoutRecordedByUserInput
     exitInterviewsCounseled?: ExitInterviewCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
@@ -82246,6 +83692,7 @@ export namespace Prisma {
     quizzesCreated?: QuizUncheckedCreateNestedManyWithoutAuthorInput
     repositoryFiles?: RepositoryFileUncheckedCreateNestedManyWithoutUserInput
     sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
+    announcementReads?: AnnouncementReadUncheckedCreateNestedManyWithoutUserInput
     guidanceLogEntries?: GuidanceLogEntryUncheckedCreateNestedManyWithoutRecordedByUserInput
     exitInterviewsCounseled?: ExitInterviewUncheckedCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
@@ -82332,6 +83779,7 @@ export namespace Prisma {
     quizzesCreated?: QuizUpdateManyWithoutAuthorNestedInput
     repositoryFiles?: RepositoryFileUpdateManyWithoutUserNestedInput
     sessions?: SessionUpdateManyWithoutUserNestedInput
+    announcementReads?: AnnouncementReadUpdateManyWithoutUserNestedInput
     guidanceLogEntries?: GuidanceLogEntryUpdateManyWithoutRecordedByUserNestedInput
     exitInterviewsCounseled?: ExitInterviewUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
@@ -82371,6 +83819,7 @@ export namespace Prisma {
     quizzesCreated?: QuizUncheckedUpdateManyWithoutAuthorNestedInput
     repositoryFiles?: RepositoryFileUncheckedUpdateManyWithoutUserNestedInput
     sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
+    announcementReads?: AnnouncementReadUncheckedUpdateManyWithoutUserNestedInput
     guidanceLogEntries?: GuidanceLogEntryUncheckedUpdateManyWithoutRecordedByUserNestedInput
     exitInterviewsCounseled?: ExitInterviewUncheckedUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
@@ -82402,6 +83851,28 @@ export namespace Prisma {
 
   export type AnnouncementAttachmentCreateManyAnnouncementInputEnvelope = {
     data: AnnouncementAttachmentCreateManyAnnouncementInput | AnnouncementAttachmentCreateManyAnnouncementInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type AnnouncementReadCreateWithoutAnnouncementInput = {
+    id?: string
+    readAt?: Date | string
+    user: UserCreateNestedOneWithoutAnnouncementReadsInput
+  }
+
+  export type AnnouncementReadUncheckedCreateWithoutAnnouncementInput = {
+    id?: string
+    userId: string
+    readAt?: Date | string
+  }
+
+  export type AnnouncementReadCreateOrConnectWithoutAnnouncementInput = {
+    where: AnnouncementReadWhereUniqueInput
+    create: XOR<AnnouncementReadCreateWithoutAnnouncementInput, AnnouncementReadUncheckedCreateWithoutAnnouncementInput>
+  }
+
+  export type AnnouncementReadCreateManyAnnouncementInputEnvelope = {
+    data: AnnouncementReadCreateManyAnnouncementInput | AnnouncementReadCreateManyAnnouncementInput[]
     skipDuplicates?: boolean
   }
 
@@ -82509,6 +83980,22 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"AnnouncementAttachment"> | Date | string
   }
 
+  export type AnnouncementReadUpsertWithWhereUniqueWithoutAnnouncementInput = {
+    where: AnnouncementReadWhereUniqueInput
+    update: XOR<AnnouncementReadUpdateWithoutAnnouncementInput, AnnouncementReadUncheckedUpdateWithoutAnnouncementInput>
+    create: XOR<AnnouncementReadCreateWithoutAnnouncementInput, AnnouncementReadUncheckedCreateWithoutAnnouncementInput>
+  }
+
+  export type AnnouncementReadUpdateWithWhereUniqueWithoutAnnouncementInput = {
+    where: AnnouncementReadWhereUniqueInput
+    data: XOR<AnnouncementReadUpdateWithoutAnnouncementInput, AnnouncementReadUncheckedUpdateWithoutAnnouncementInput>
+  }
+
+  export type AnnouncementReadUpdateManyWithWhereWithoutAnnouncementInput = {
+    where: AnnouncementReadScalarWhereInput
+    data: XOR<AnnouncementReadUpdateManyMutationInput, AnnouncementReadUncheckedUpdateManyWithoutAnnouncementInput>
+  }
+
   export type CourseUpsertWithoutAnnouncementsInput = {
     update: XOR<CourseUpdateWithoutAnnouncementsInput, CourseUncheckedUpdateWithoutAnnouncementsInput>
     create: XOR<CourseCreateWithoutAnnouncementsInput, CourseUncheckedCreateWithoutAnnouncementsInput>
@@ -82605,6 +84092,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     authorId?: string | null
     locked?: boolean
+    reads?: AnnouncementReadCreateNestedManyWithoutAnnouncementInput
     course: CourseCreateNestedOneWithoutAnnouncementsInput
   }
 
@@ -82624,6 +84112,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     authorId?: string | null
     locked?: boolean
+    reads?: AnnouncementReadUncheckedCreateNestedManyWithoutAnnouncementInput
   }
 
   export type AnnouncementCreateOrConnectWithoutAttachmentsInput = {
@@ -82657,6 +84146,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     authorId?: NullableStringFieldUpdateOperationsInput | string | null
     locked?: BoolFieldUpdateOperationsInput | boolean
+    reads?: AnnouncementReadUpdateManyWithoutAnnouncementNestedInput
     course?: CourseUpdateOneRequiredWithoutAnnouncementsNestedInput
   }
 
@@ -82676,6 +84166,275 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     authorId?: NullableStringFieldUpdateOperationsInput | string | null
     locked?: BoolFieldUpdateOperationsInput | boolean
+    reads?: AnnouncementReadUncheckedUpdateManyWithoutAnnouncementNestedInput
+  }
+
+  export type AnnouncementCreateWithoutReadsInput = {
+    id?: string
+    title: string
+    bodyText?: string
+    bodyHtml?: string
+    author?: string
+    assignTo?: AnnouncementCreateassignToInput | string[]
+    allowComment?: boolean
+    allowLiking?: boolean
+    availableFrom?: Date | string | null
+    availableUntil?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    authorId?: string | null
+    locked?: boolean
+    attachments?: AnnouncementAttachmentCreateNestedManyWithoutAnnouncementInput
+    course: CourseCreateNestedOneWithoutAnnouncementsInput
+  }
+
+  export type AnnouncementUncheckedCreateWithoutReadsInput = {
+    id?: string
+    courseId: string
+    title: string
+    bodyText?: string
+    bodyHtml?: string
+    author?: string
+    assignTo?: AnnouncementCreateassignToInput | string[]
+    allowComment?: boolean
+    allowLiking?: boolean
+    availableFrom?: Date | string | null
+    availableUntil?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    authorId?: string | null
+    locked?: boolean
+    attachments?: AnnouncementAttachmentUncheckedCreateNestedManyWithoutAnnouncementInput
+  }
+
+  export type AnnouncementCreateOrConnectWithoutReadsInput = {
+    where: AnnouncementWhereUniqueInput
+    create: XOR<AnnouncementCreateWithoutReadsInput, AnnouncementUncheckedCreateWithoutReadsInput>
+  }
+
+  export type UserCreateWithoutAnnouncementReadsInput = {
+    id?: string
+    name: string
+    email: string
+    emailVerified?: Date | string | null
+    password?: string | null
+    image?: string | null
+    role?: $Enums.Role
+    status?: $Enums.ApprovalStatus
+    department?: string | null
+    position?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    bio?: string | null
+    pronouns?: string | null
+    contactNumber?: string | null
+    employmentStatus?: string | null
+    accountType?: string | null
+    librarySignature?: string | null
+    accounts?: AccountCreateNestedManyWithoutUserInput
+    activityLogs?: ActivityLogCreateNestedManyWithoutUserInput
+    conversationParticipants?: ConversationParticipantCreateNestedManyWithoutUserInput
+    enrollments?: CourseEnrollmentCreateNestedManyWithoutUserInput
+    formSubmissions?: FormSubmissionCreateNestedManyWithoutUserInput
+    formsCreated?: FormCreateNestedManyWithoutAuthorInput
+    groupMembers?: GroupMemberCreateNestedManyWithoutUserInput
+    medicalExamRecords?: MedicalExamRecordCreateNestedManyWithoutRecordedByUserInput
+    sentMessages?: MessageCreateNestedManyWithoutSenderInput
+    resetTokens?: PasswordResetTokenCreateNestedManyWithoutUserInput
+    patientRecords?: PatientRecordCreateNestedManyWithoutRecordedByUserInput
+    quizAttempts?: QuizAttemptCreateNestedManyWithoutUserInput
+    quizzesCreated?: QuizCreateNestedManyWithoutAuthorInput
+    repositoryFiles?: RepositoryFileCreateNestedManyWithoutUserInput
+    sessions?: SessionCreateNestedManyWithoutUserInput
+    guidanceLogEntries?: GuidanceLogEntryCreateNestedManyWithoutRecordedByUserInput
+    exitInterviewsCounseled?: ExitInterviewCreateNestedManyWithoutCounselorInput
+    submissions_submissions_gradedByIdTousers?: SubmissionCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
+    submissions?: SubmissionCreateNestedManyWithoutUserInput
+  }
+
+  export type UserUncheckedCreateWithoutAnnouncementReadsInput = {
+    id?: string
+    name: string
+    email: string
+    emailVerified?: Date | string | null
+    password?: string | null
+    image?: string | null
+    role?: $Enums.Role
+    status?: $Enums.ApprovalStatus
+    department?: string | null
+    position?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    bio?: string | null
+    pronouns?: string | null
+    contactNumber?: string | null
+    employmentStatus?: string | null
+    accountType?: string | null
+    librarySignature?: string | null
+    accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
+    activityLogs?: ActivityLogUncheckedCreateNestedManyWithoutUserInput
+    conversationParticipants?: ConversationParticipantUncheckedCreateNestedManyWithoutUserInput
+    enrollments?: CourseEnrollmentUncheckedCreateNestedManyWithoutUserInput
+    formSubmissions?: FormSubmissionUncheckedCreateNestedManyWithoutUserInput
+    formsCreated?: FormUncheckedCreateNestedManyWithoutAuthorInput
+    groupMembers?: GroupMemberUncheckedCreateNestedManyWithoutUserInput
+    medicalExamRecords?: MedicalExamRecordUncheckedCreateNestedManyWithoutRecordedByUserInput
+    sentMessages?: MessageUncheckedCreateNestedManyWithoutSenderInput
+    resetTokens?: PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
+    patientRecords?: PatientRecordUncheckedCreateNestedManyWithoutRecordedByUserInput
+    quizAttempts?: QuizAttemptUncheckedCreateNestedManyWithoutUserInput
+    quizzesCreated?: QuizUncheckedCreateNestedManyWithoutAuthorInput
+    repositoryFiles?: RepositoryFileUncheckedCreateNestedManyWithoutUserInput
+    sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
+    guidanceLogEntries?: GuidanceLogEntryUncheckedCreateNestedManyWithoutRecordedByUserInput
+    exitInterviewsCounseled?: ExitInterviewUncheckedCreateNestedManyWithoutCounselorInput
+    submissions_submissions_gradedByIdTousers?: SubmissionUncheckedCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
+    submissions?: SubmissionUncheckedCreateNestedManyWithoutUserInput
+  }
+
+  export type UserCreateOrConnectWithoutAnnouncementReadsInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutAnnouncementReadsInput, UserUncheckedCreateWithoutAnnouncementReadsInput>
+  }
+
+  export type AnnouncementUpsertWithoutReadsInput = {
+    update: XOR<AnnouncementUpdateWithoutReadsInput, AnnouncementUncheckedUpdateWithoutReadsInput>
+    create: XOR<AnnouncementCreateWithoutReadsInput, AnnouncementUncheckedCreateWithoutReadsInput>
+    where?: AnnouncementWhereInput
+  }
+
+  export type AnnouncementUpdateToOneWithWhereWithoutReadsInput = {
+    where?: AnnouncementWhereInput
+    data: XOR<AnnouncementUpdateWithoutReadsInput, AnnouncementUncheckedUpdateWithoutReadsInput>
+  }
+
+  export type AnnouncementUpdateWithoutReadsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    bodyText?: StringFieldUpdateOperationsInput | string
+    bodyHtml?: StringFieldUpdateOperationsInput | string
+    author?: StringFieldUpdateOperationsInput | string
+    assignTo?: AnnouncementUpdateassignToInput | string[]
+    allowComment?: BoolFieldUpdateOperationsInput | boolean
+    allowLiking?: BoolFieldUpdateOperationsInput | boolean
+    availableFrom?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    availableUntil?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    authorId?: NullableStringFieldUpdateOperationsInput | string | null
+    locked?: BoolFieldUpdateOperationsInput | boolean
+    attachments?: AnnouncementAttachmentUpdateManyWithoutAnnouncementNestedInput
+    course?: CourseUpdateOneRequiredWithoutAnnouncementsNestedInput
+  }
+
+  export type AnnouncementUncheckedUpdateWithoutReadsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    courseId?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    bodyText?: StringFieldUpdateOperationsInput | string
+    bodyHtml?: StringFieldUpdateOperationsInput | string
+    author?: StringFieldUpdateOperationsInput | string
+    assignTo?: AnnouncementUpdateassignToInput | string[]
+    allowComment?: BoolFieldUpdateOperationsInput | boolean
+    allowLiking?: BoolFieldUpdateOperationsInput | boolean
+    availableFrom?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    availableUntil?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    authorId?: NullableStringFieldUpdateOperationsInput | string | null
+    locked?: BoolFieldUpdateOperationsInput | boolean
+    attachments?: AnnouncementAttachmentUncheckedUpdateManyWithoutAnnouncementNestedInput
+  }
+
+  export type UserUpsertWithoutAnnouncementReadsInput = {
+    update: XOR<UserUpdateWithoutAnnouncementReadsInput, UserUncheckedUpdateWithoutAnnouncementReadsInput>
+    create: XOR<UserCreateWithoutAnnouncementReadsInput, UserUncheckedCreateWithoutAnnouncementReadsInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutAnnouncementReadsInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutAnnouncementReadsInput, UserUncheckedUpdateWithoutAnnouncementReadsInput>
+  }
+
+  export type UserUpdateWithoutAnnouncementReadsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    password?: NullableStringFieldUpdateOperationsInput | string | null
+    image?: NullableStringFieldUpdateOperationsInput | string | null
+    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    status?: EnumApprovalStatusFieldUpdateOperationsInput | $Enums.ApprovalStatus
+    department?: NullableStringFieldUpdateOperationsInput | string | null
+    position?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    bio?: NullableStringFieldUpdateOperationsInput | string | null
+    pronouns?: NullableStringFieldUpdateOperationsInput | string | null
+    contactNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    employmentStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    accountType?: NullableStringFieldUpdateOperationsInput | string | null
+    librarySignature?: NullableStringFieldUpdateOperationsInput | string | null
+    accounts?: AccountUpdateManyWithoutUserNestedInput
+    activityLogs?: ActivityLogUpdateManyWithoutUserNestedInput
+    conversationParticipants?: ConversationParticipantUpdateManyWithoutUserNestedInput
+    enrollments?: CourseEnrollmentUpdateManyWithoutUserNestedInput
+    formSubmissions?: FormSubmissionUpdateManyWithoutUserNestedInput
+    formsCreated?: FormUpdateManyWithoutAuthorNestedInput
+    groupMembers?: GroupMemberUpdateManyWithoutUserNestedInput
+    medicalExamRecords?: MedicalExamRecordUpdateManyWithoutRecordedByUserNestedInput
+    sentMessages?: MessageUpdateManyWithoutSenderNestedInput
+    resetTokens?: PasswordResetTokenUpdateManyWithoutUserNestedInput
+    patientRecords?: PatientRecordUpdateManyWithoutRecordedByUserNestedInput
+    quizAttempts?: QuizAttemptUpdateManyWithoutUserNestedInput
+    quizzesCreated?: QuizUpdateManyWithoutAuthorNestedInput
+    repositoryFiles?: RepositoryFileUpdateManyWithoutUserNestedInput
+    sessions?: SessionUpdateManyWithoutUserNestedInput
+    guidanceLogEntries?: GuidanceLogEntryUpdateManyWithoutRecordedByUserNestedInput
+    exitInterviewsCounseled?: ExitInterviewUpdateManyWithoutCounselorNestedInput
+    submissions_submissions_gradedByIdTousers?: SubmissionUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
+    submissions?: SubmissionUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutAnnouncementReadsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    password?: NullableStringFieldUpdateOperationsInput | string | null
+    image?: NullableStringFieldUpdateOperationsInput | string | null
+    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    status?: EnumApprovalStatusFieldUpdateOperationsInput | $Enums.ApprovalStatus
+    department?: NullableStringFieldUpdateOperationsInput | string | null
+    position?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    bio?: NullableStringFieldUpdateOperationsInput | string | null
+    pronouns?: NullableStringFieldUpdateOperationsInput | string | null
+    contactNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    employmentStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    accountType?: NullableStringFieldUpdateOperationsInput | string | null
+    librarySignature?: NullableStringFieldUpdateOperationsInput | string | null
+    accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
+    activityLogs?: ActivityLogUncheckedUpdateManyWithoutUserNestedInput
+    conversationParticipants?: ConversationParticipantUncheckedUpdateManyWithoutUserNestedInput
+    enrollments?: CourseEnrollmentUncheckedUpdateManyWithoutUserNestedInput
+    formSubmissions?: FormSubmissionUncheckedUpdateManyWithoutUserNestedInput
+    formsCreated?: FormUncheckedUpdateManyWithoutAuthorNestedInput
+    groupMembers?: GroupMemberUncheckedUpdateManyWithoutUserNestedInput
+    medicalExamRecords?: MedicalExamRecordUncheckedUpdateManyWithoutRecordedByUserNestedInput
+    sentMessages?: MessageUncheckedUpdateManyWithoutSenderNestedInput
+    resetTokens?: PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
+    patientRecords?: PatientRecordUncheckedUpdateManyWithoutRecordedByUserNestedInput
+    quizAttempts?: QuizAttemptUncheckedUpdateManyWithoutUserNestedInput
+    quizzesCreated?: QuizUncheckedUpdateManyWithoutAuthorNestedInput
+    repositoryFiles?: RepositoryFileUncheckedUpdateManyWithoutUserNestedInput
+    sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
+    guidanceLogEntries?: GuidanceLogEntryUncheckedUpdateManyWithoutRecordedByUserNestedInput
+    exitInterviewsCounseled?: ExitInterviewUncheckedUpdateManyWithoutCounselorNestedInput
+    submissions_submissions_gradedByIdTousers?: SubmissionUncheckedUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
+    submissions?: SubmissionUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type CourseCreateWithoutAssignmentsInput = {
@@ -83141,6 +84900,7 @@ export namespace Prisma {
     isGroupAssignment?: boolean
     notifyUsers?: boolean
     onlineEntryOptions?: AssignmentCreateonlineEntryOptionsInput | string[]
+    submissionEntries?: JsonNullValueInput | InputJsonValue
     peerReviewAnonymous?: boolean
     peerReviewAssign?: string
     requirePeerReviews?: boolean
@@ -83176,6 +84936,7 @@ export namespace Prisma {
     isGroupAssignment?: boolean
     notifyUsers?: boolean
     onlineEntryOptions?: AssignmentCreateonlineEntryOptionsInput | string[]
+    submissionEntries?: JsonNullValueInput | InputJsonValue
     peerReviewAnonymous?: boolean
     peerReviewAssign?: string
     requirePeerReviews?: boolean
@@ -83226,6 +84987,7 @@ export namespace Prisma {
     quizzesCreated?: QuizCreateNestedManyWithoutAuthorInput
     repositoryFiles?: RepositoryFileCreateNestedManyWithoutUserInput
     sessions?: SessionCreateNestedManyWithoutUserInput
+    announcementReads?: AnnouncementReadCreateNestedManyWithoutUserInput
     guidanceLogEntries?: GuidanceLogEntryCreateNestedManyWithoutRecordedByUserInput
     exitInterviewsCounseled?: ExitInterviewCreateNestedManyWithoutCounselorInput
     submissions?: SubmissionCreateNestedManyWithoutUserInput
@@ -83265,6 +85027,7 @@ export namespace Prisma {
     quizzesCreated?: QuizUncheckedCreateNestedManyWithoutAuthorInput
     repositoryFiles?: RepositoryFileUncheckedCreateNestedManyWithoutUserInput
     sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
+    announcementReads?: AnnouncementReadUncheckedCreateNestedManyWithoutUserInput
     guidanceLogEntries?: GuidanceLogEntryUncheckedCreateNestedManyWithoutRecordedByUserInput
     exitInterviewsCounseled?: ExitInterviewUncheckedCreateNestedManyWithoutCounselorInput
     submissions?: SubmissionUncheckedCreateNestedManyWithoutUserInput
@@ -83309,6 +85072,7 @@ export namespace Prisma {
     quizzesCreated?: QuizCreateNestedManyWithoutAuthorInput
     repositoryFiles?: RepositoryFileCreateNestedManyWithoutUserInput
     sessions?: SessionCreateNestedManyWithoutUserInput
+    announcementReads?: AnnouncementReadCreateNestedManyWithoutUserInput
     guidanceLogEntries?: GuidanceLogEntryCreateNestedManyWithoutRecordedByUserInput
     exitInterviewsCounseled?: ExitInterviewCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
@@ -83348,6 +85112,7 @@ export namespace Prisma {
     quizzesCreated?: QuizUncheckedCreateNestedManyWithoutAuthorInput
     repositoryFiles?: RepositoryFileUncheckedCreateNestedManyWithoutUserInput
     sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
+    announcementReads?: AnnouncementReadUncheckedCreateNestedManyWithoutUserInput
     guidanceLogEntries?: GuidanceLogEntryUncheckedCreateNestedManyWithoutRecordedByUserInput
     exitInterviewsCounseled?: ExitInterviewUncheckedCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
@@ -83422,6 +85187,7 @@ export namespace Prisma {
     isGroupAssignment?: BoolFieldUpdateOperationsInput | boolean
     notifyUsers?: BoolFieldUpdateOperationsInput | boolean
     onlineEntryOptions?: AssignmentUpdateonlineEntryOptionsInput | string[]
+    submissionEntries?: JsonNullValueInput | InputJsonValue
     peerReviewAnonymous?: BoolFieldUpdateOperationsInput | boolean
     peerReviewAssign?: StringFieldUpdateOperationsInput | string
     requirePeerReviews?: BoolFieldUpdateOperationsInput | boolean
@@ -83457,6 +85223,7 @@ export namespace Prisma {
     isGroupAssignment?: BoolFieldUpdateOperationsInput | boolean
     notifyUsers?: BoolFieldUpdateOperationsInput | boolean
     onlineEntryOptions?: AssignmentUpdateonlineEntryOptionsInput | string[]
+    submissionEntries?: JsonNullValueInput | InputJsonValue
     peerReviewAnonymous?: BoolFieldUpdateOperationsInput | boolean
     peerReviewAssign?: StringFieldUpdateOperationsInput | string
     requirePeerReviews?: BoolFieldUpdateOperationsInput | boolean
@@ -83513,6 +85280,7 @@ export namespace Prisma {
     quizzesCreated?: QuizUpdateManyWithoutAuthorNestedInput
     repositoryFiles?: RepositoryFileUpdateManyWithoutUserNestedInput
     sessions?: SessionUpdateManyWithoutUserNestedInput
+    announcementReads?: AnnouncementReadUpdateManyWithoutUserNestedInput
     guidanceLogEntries?: GuidanceLogEntryUpdateManyWithoutRecordedByUserNestedInput
     exitInterviewsCounseled?: ExitInterviewUpdateManyWithoutCounselorNestedInput
     submissions?: SubmissionUpdateManyWithoutUserNestedInput
@@ -83552,6 +85320,7 @@ export namespace Prisma {
     quizzesCreated?: QuizUncheckedUpdateManyWithoutAuthorNestedInput
     repositoryFiles?: RepositoryFileUncheckedUpdateManyWithoutUserNestedInput
     sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
+    announcementReads?: AnnouncementReadUncheckedUpdateManyWithoutUserNestedInput
     guidanceLogEntries?: GuidanceLogEntryUncheckedUpdateManyWithoutRecordedByUserNestedInput
     exitInterviewsCounseled?: ExitInterviewUncheckedUpdateManyWithoutCounselorNestedInput
     submissions?: SubmissionUncheckedUpdateManyWithoutUserNestedInput
@@ -83602,6 +85371,7 @@ export namespace Prisma {
     quizzesCreated?: QuizUpdateManyWithoutAuthorNestedInput
     repositoryFiles?: RepositoryFileUpdateManyWithoutUserNestedInput
     sessions?: SessionUpdateManyWithoutUserNestedInput
+    announcementReads?: AnnouncementReadUpdateManyWithoutUserNestedInput
     guidanceLogEntries?: GuidanceLogEntryUpdateManyWithoutRecordedByUserNestedInput
     exitInterviewsCounseled?: ExitInterviewUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
@@ -83641,6 +85411,7 @@ export namespace Prisma {
     quizzesCreated?: QuizUncheckedUpdateManyWithoutAuthorNestedInput
     repositoryFiles?: RepositoryFileUncheckedUpdateManyWithoutUserNestedInput
     sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
+    announcementReads?: AnnouncementReadUncheckedUpdateManyWithoutUserNestedInput
     guidanceLogEntries?: GuidanceLogEntryUncheckedUpdateManyWithoutRecordedByUserNestedInput
     exitInterviewsCounseled?: ExitInterviewUncheckedUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
@@ -83747,6 +85518,7 @@ export namespace Prisma {
     quizAttempts?: QuizAttemptCreateNestedManyWithoutUserInput
     quizzesCreated?: QuizCreateNestedManyWithoutAuthorInput
     sessions?: SessionCreateNestedManyWithoutUserInput
+    announcementReads?: AnnouncementReadCreateNestedManyWithoutUserInput
     guidanceLogEntries?: GuidanceLogEntryCreateNestedManyWithoutRecordedByUserInput
     exitInterviewsCounseled?: ExitInterviewCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
@@ -83786,6 +85558,7 @@ export namespace Prisma {
     quizAttempts?: QuizAttemptUncheckedCreateNestedManyWithoutUserInput
     quizzesCreated?: QuizUncheckedCreateNestedManyWithoutAuthorInput
     sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
+    announcementReads?: AnnouncementReadUncheckedCreateNestedManyWithoutUserInput
     guidanceLogEntries?: GuidanceLogEntryUncheckedCreateNestedManyWithoutRecordedByUserInput
     exitInterviewsCounseled?: ExitInterviewUncheckedCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
@@ -83921,6 +85694,7 @@ export namespace Prisma {
     quizAttempts?: QuizAttemptUpdateManyWithoutUserNestedInput
     quizzesCreated?: QuizUpdateManyWithoutAuthorNestedInput
     sessions?: SessionUpdateManyWithoutUserNestedInput
+    announcementReads?: AnnouncementReadUpdateManyWithoutUserNestedInput
     guidanceLogEntries?: GuidanceLogEntryUpdateManyWithoutRecordedByUserNestedInput
     exitInterviewsCounseled?: ExitInterviewUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
@@ -83960,6 +85734,7 @@ export namespace Prisma {
     quizAttempts?: QuizAttemptUncheckedUpdateManyWithoutUserNestedInput
     quizzesCreated?: QuizUncheckedUpdateManyWithoutAuthorNestedInput
     sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
+    announcementReads?: AnnouncementReadUncheckedUpdateManyWithoutUserNestedInput
     guidanceLogEntries?: GuidanceLogEntryUncheckedUpdateManyWithoutRecordedByUserNestedInput
     exitInterviewsCounseled?: ExitInterviewUncheckedUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
@@ -84024,6 +85799,7 @@ export namespace Prisma {
     quizzesCreated?: QuizCreateNestedManyWithoutAuthorInput
     repositoryFiles?: RepositoryFileCreateNestedManyWithoutUserInput
     sessions?: SessionCreateNestedManyWithoutUserInput
+    announcementReads?: AnnouncementReadCreateNestedManyWithoutUserInput
     guidanceLogEntries?: GuidanceLogEntryCreateNestedManyWithoutRecordedByUserInput
     exitInterviewsCounseled?: ExitInterviewCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
@@ -84063,6 +85839,7 @@ export namespace Prisma {
     quizzesCreated?: QuizUncheckedCreateNestedManyWithoutAuthorInput
     repositoryFiles?: RepositoryFileUncheckedCreateNestedManyWithoutUserInput
     sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
+    announcementReads?: AnnouncementReadUncheckedCreateNestedManyWithoutUserInput
     guidanceLogEntries?: GuidanceLogEntryUncheckedCreateNestedManyWithoutRecordedByUserInput
     exitInterviewsCounseled?: ExitInterviewUncheckedCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
@@ -84149,6 +85926,7 @@ export namespace Prisma {
     quizzesCreated?: QuizUpdateManyWithoutAuthorNestedInput
     repositoryFiles?: RepositoryFileUpdateManyWithoutUserNestedInput
     sessions?: SessionUpdateManyWithoutUserNestedInput
+    announcementReads?: AnnouncementReadUpdateManyWithoutUserNestedInput
     guidanceLogEntries?: GuidanceLogEntryUpdateManyWithoutRecordedByUserNestedInput
     exitInterviewsCounseled?: ExitInterviewUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
@@ -84188,6 +85966,7 @@ export namespace Prisma {
     quizzesCreated?: QuizUncheckedUpdateManyWithoutAuthorNestedInput
     repositoryFiles?: RepositoryFileUncheckedUpdateManyWithoutUserNestedInput
     sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
+    announcementReads?: AnnouncementReadUncheckedUpdateManyWithoutUserNestedInput
     guidanceLogEntries?: GuidanceLogEntryUncheckedUpdateManyWithoutRecordedByUserNestedInput
     exitInterviewsCounseled?: ExitInterviewUncheckedUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
@@ -84227,6 +86006,7 @@ export namespace Prisma {
     quizzesCreated?: QuizCreateNestedManyWithoutAuthorInput
     repositoryFiles?: RepositoryFileCreateNestedManyWithoutUserInput
     sessions?: SessionCreateNestedManyWithoutUserInput
+    announcementReads?: AnnouncementReadCreateNestedManyWithoutUserInput
     guidanceLogEntries?: GuidanceLogEntryCreateNestedManyWithoutRecordedByUserInput
     exitInterviewsCounseled?: ExitInterviewCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
@@ -84266,6 +86046,7 @@ export namespace Prisma {
     quizzesCreated?: QuizUncheckedCreateNestedManyWithoutAuthorInput
     repositoryFiles?: RepositoryFileUncheckedCreateNestedManyWithoutUserInput
     sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
+    announcementReads?: AnnouncementReadUncheckedCreateNestedManyWithoutUserInput
     guidanceLogEntries?: GuidanceLogEntryUncheckedCreateNestedManyWithoutRecordedByUserInput
     exitInterviewsCounseled?: ExitInterviewUncheckedCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
@@ -84321,6 +86102,7 @@ export namespace Prisma {
     quizzesCreated?: QuizUpdateManyWithoutAuthorNestedInput
     repositoryFiles?: RepositoryFileUpdateManyWithoutUserNestedInput
     sessions?: SessionUpdateManyWithoutUserNestedInput
+    announcementReads?: AnnouncementReadUpdateManyWithoutUserNestedInput
     guidanceLogEntries?: GuidanceLogEntryUpdateManyWithoutRecordedByUserNestedInput
     exitInterviewsCounseled?: ExitInterviewUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
@@ -84360,6 +86142,7 @@ export namespace Prisma {
     quizzesCreated?: QuizUncheckedUpdateManyWithoutAuthorNestedInput
     repositoryFiles?: RepositoryFileUncheckedUpdateManyWithoutUserNestedInput
     sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
+    announcementReads?: AnnouncementReadUncheckedUpdateManyWithoutUserNestedInput
     guidanceLogEntries?: GuidanceLogEntryUncheckedUpdateManyWithoutRecordedByUserNestedInput
     exitInterviewsCounseled?: ExitInterviewUncheckedUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
@@ -84399,6 +86182,7 @@ export namespace Prisma {
     quizAttempts?: QuizAttemptCreateNestedManyWithoutUserInput
     quizzesCreated?: QuizCreateNestedManyWithoutAuthorInput
     repositoryFiles?: RepositoryFileCreateNestedManyWithoutUserInput
+    announcementReads?: AnnouncementReadCreateNestedManyWithoutUserInput
     guidanceLogEntries?: GuidanceLogEntryCreateNestedManyWithoutRecordedByUserInput
     exitInterviewsCounseled?: ExitInterviewCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
@@ -84438,6 +86222,7 @@ export namespace Prisma {
     quizAttempts?: QuizAttemptUncheckedCreateNestedManyWithoutUserInput
     quizzesCreated?: QuizUncheckedCreateNestedManyWithoutAuthorInput
     repositoryFiles?: RepositoryFileUncheckedCreateNestedManyWithoutUserInput
+    announcementReads?: AnnouncementReadUncheckedCreateNestedManyWithoutUserInput
     guidanceLogEntries?: GuidanceLogEntryUncheckedCreateNestedManyWithoutRecordedByUserInput
     exitInterviewsCounseled?: ExitInterviewUncheckedCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
@@ -84493,6 +86278,7 @@ export namespace Prisma {
     quizAttempts?: QuizAttemptUpdateManyWithoutUserNestedInput
     quizzesCreated?: QuizUpdateManyWithoutAuthorNestedInput
     repositoryFiles?: RepositoryFileUpdateManyWithoutUserNestedInput
+    announcementReads?: AnnouncementReadUpdateManyWithoutUserNestedInput
     guidanceLogEntries?: GuidanceLogEntryUpdateManyWithoutRecordedByUserNestedInput
     exitInterviewsCounseled?: ExitInterviewUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
@@ -84532,6 +86318,7 @@ export namespace Prisma {
     quizAttempts?: QuizAttemptUncheckedUpdateManyWithoutUserNestedInput
     quizzesCreated?: QuizUncheckedUpdateManyWithoutAuthorNestedInput
     repositoryFiles?: RepositoryFileUncheckedUpdateManyWithoutUserNestedInput
+    announcementReads?: AnnouncementReadUncheckedUpdateManyWithoutUserNestedInput
     guidanceLogEntries?: GuidanceLogEntryUncheckedUpdateManyWithoutRecordedByUserNestedInput
     exitInterviewsCounseled?: ExitInterviewUncheckedUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
@@ -84635,6 +86422,7 @@ export namespace Prisma {
     quizAttempts?: QuizAttemptCreateNestedManyWithoutUserInput
     repositoryFiles?: RepositoryFileCreateNestedManyWithoutUserInput
     sessions?: SessionCreateNestedManyWithoutUserInput
+    announcementReads?: AnnouncementReadCreateNestedManyWithoutUserInput
     guidanceLogEntries?: GuidanceLogEntryCreateNestedManyWithoutRecordedByUserInput
     exitInterviewsCounseled?: ExitInterviewCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
@@ -84674,6 +86462,7 @@ export namespace Prisma {
     quizAttempts?: QuizAttemptUncheckedCreateNestedManyWithoutUserInput
     repositoryFiles?: RepositoryFileUncheckedCreateNestedManyWithoutUserInput
     sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
+    announcementReads?: AnnouncementReadUncheckedCreateNestedManyWithoutUserInput
     guidanceLogEntries?: GuidanceLogEntryUncheckedCreateNestedManyWithoutRecordedByUserInput
     exitInterviewsCounseled?: ExitInterviewUncheckedCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
@@ -84851,6 +86640,7 @@ export namespace Prisma {
     quizAttempts?: QuizAttemptUpdateManyWithoutUserNestedInput
     repositoryFiles?: RepositoryFileUpdateManyWithoutUserNestedInput
     sessions?: SessionUpdateManyWithoutUserNestedInput
+    announcementReads?: AnnouncementReadUpdateManyWithoutUserNestedInput
     guidanceLogEntries?: GuidanceLogEntryUpdateManyWithoutRecordedByUserNestedInput
     exitInterviewsCounseled?: ExitInterviewUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
@@ -84890,6 +86680,7 @@ export namespace Prisma {
     quizAttempts?: QuizAttemptUncheckedUpdateManyWithoutUserNestedInput
     repositoryFiles?: RepositoryFileUncheckedUpdateManyWithoutUserNestedInput
     sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
+    announcementReads?: AnnouncementReadUncheckedUpdateManyWithoutUserNestedInput
     guidanceLogEntries?: GuidanceLogEntryUncheckedUpdateManyWithoutRecordedByUserNestedInput
     exitInterviewsCounseled?: ExitInterviewUncheckedUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
@@ -85349,6 +87140,7 @@ export namespace Prisma {
     quizzesCreated?: QuizCreateNestedManyWithoutAuthorInput
     repositoryFiles?: RepositoryFileCreateNestedManyWithoutUserInput
     sessions?: SessionCreateNestedManyWithoutUserInput
+    announcementReads?: AnnouncementReadCreateNestedManyWithoutUserInput
     guidanceLogEntries?: GuidanceLogEntryCreateNestedManyWithoutRecordedByUserInput
     exitInterviewsCounseled?: ExitInterviewCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
@@ -85388,6 +87180,7 @@ export namespace Prisma {
     quizzesCreated?: QuizUncheckedCreateNestedManyWithoutAuthorInput
     repositoryFiles?: RepositoryFileUncheckedCreateNestedManyWithoutUserInput
     sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
+    announcementReads?: AnnouncementReadUncheckedCreateNestedManyWithoutUserInput
     guidanceLogEntries?: GuidanceLogEntryUncheckedCreateNestedManyWithoutRecordedByUserInput
     exitInterviewsCounseled?: ExitInterviewUncheckedCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
@@ -85524,6 +87317,7 @@ export namespace Prisma {
     quizzesCreated?: QuizUpdateManyWithoutAuthorNestedInput
     repositoryFiles?: RepositoryFileUpdateManyWithoutUserNestedInput
     sessions?: SessionUpdateManyWithoutUserNestedInput
+    announcementReads?: AnnouncementReadUpdateManyWithoutUserNestedInput
     guidanceLogEntries?: GuidanceLogEntryUpdateManyWithoutRecordedByUserNestedInput
     exitInterviewsCounseled?: ExitInterviewUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
@@ -85563,6 +87357,7 @@ export namespace Prisma {
     quizzesCreated?: QuizUncheckedUpdateManyWithoutAuthorNestedInput
     repositoryFiles?: RepositoryFileUncheckedUpdateManyWithoutUserNestedInput
     sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
+    announcementReads?: AnnouncementReadUncheckedUpdateManyWithoutUserNestedInput
     guidanceLogEntries?: GuidanceLogEntryUncheckedUpdateManyWithoutRecordedByUserNestedInput
     exitInterviewsCounseled?: ExitInterviewUncheckedUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
@@ -85680,6 +87475,7 @@ export namespace Prisma {
     quizzesCreated?: QuizCreateNestedManyWithoutAuthorInput
     repositoryFiles?: RepositoryFileCreateNestedManyWithoutUserInput
     sessions?: SessionCreateNestedManyWithoutUserInput
+    announcementReads?: AnnouncementReadCreateNestedManyWithoutUserInput
     guidanceLogEntries?: GuidanceLogEntryCreateNestedManyWithoutRecordedByUserInput
     exitInterviewsCounseled?: ExitInterviewCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
@@ -85719,6 +87515,7 @@ export namespace Prisma {
     quizzesCreated?: QuizUncheckedCreateNestedManyWithoutAuthorInput
     repositoryFiles?: RepositoryFileUncheckedCreateNestedManyWithoutUserInput
     sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
+    announcementReads?: AnnouncementReadUncheckedCreateNestedManyWithoutUserInput
     guidanceLogEntries?: GuidanceLogEntryUncheckedCreateNestedManyWithoutRecordedByUserInput
     exitInterviewsCounseled?: ExitInterviewUncheckedCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
@@ -85906,6 +87703,7 @@ export namespace Prisma {
     quizzesCreated?: QuizUpdateManyWithoutAuthorNestedInput
     repositoryFiles?: RepositoryFileUpdateManyWithoutUserNestedInput
     sessions?: SessionUpdateManyWithoutUserNestedInput
+    announcementReads?: AnnouncementReadUpdateManyWithoutUserNestedInput
     guidanceLogEntries?: GuidanceLogEntryUpdateManyWithoutRecordedByUserNestedInput
     exitInterviewsCounseled?: ExitInterviewUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
@@ -85945,6 +87743,7 @@ export namespace Prisma {
     quizzesCreated?: QuizUncheckedUpdateManyWithoutAuthorNestedInput
     repositoryFiles?: RepositoryFileUncheckedUpdateManyWithoutUserNestedInput
     sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
+    announcementReads?: AnnouncementReadUncheckedUpdateManyWithoutUserNestedInput
     guidanceLogEntries?: GuidanceLogEntryUncheckedUpdateManyWithoutRecordedByUserNestedInput
     exitInterviewsCounseled?: ExitInterviewUncheckedUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
@@ -86284,6 +88083,7 @@ export namespace Prisma {
     quizzesCreated?: QuizCreateNestedManyWithoutAuthorInput
     repositoryFiles?: RepositoryFileCreateNestedManyWithoutUserInput
     sessions?: SessionCreateNestedManyWithoutUserInput
+    announcementReads?: AnnouncementReadCreateNestedManyWithoutUserInput
     guidanceLogEntries?: GuidanceLogEntryCreateNestedManyWithoutRecordedByUserInput
     exitInterviewsCounseled?: ExitInterviewCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
@@ -86323,6 +88123,7 @@ export namespace Prisma {
     quizzesCreated?: QuizUncheckedCreateNestedManyWithoutAuthorInput
     repositoryFiles?: RepositoryFileUncheckedCreateNestedManyWithoutUserInput
     sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
+    announcementReads?: AnnouncementReadUncheckedCreateNestedManyWithoutUserInput
     guidanceLogEntries?: GuidanceLogEntryUncheckedCreateNestedManyWithoutRecordedByUserInput
     exitInterviewsCounseled?: ExitInterviewUncheckedCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
@@ -86455,6 +88256,7 @@ export namespace Prisma {
     quizzesCreated?: QuizUpdateManyWithoutAuthorNestedInput
     repositoryFiles?: RepositoryFileUpdateManyWithoutUserNestedInput
     sessions?: SessionUpdateManyWithoutUserNestedInput
+    announcementReads?: AnnouncementReadUpdateManyWithoutUserNestedInput
     guidanceLogEntries?: GuidanceLogEntryUpdateManyWithoutRecordedByUserNestedInput
     exitInterviewsCounseled?: ExitInterviewUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
@@ -86494,6 +88296,7 @@ export namespace Prisma {
     quizzesCreated?: QuizUncheckedUpdateManyWithoutAuthorNestedInput
     repositoryFiles?: RepositoryFileUncheckedUpdateManyWithoutUserNestedInput
     sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
+    announcementReads?: AnnouncementReadUncheckedUpdateManyWithoutUserNestedInput
     guidanceLogEntries?: GuidanceLogEntryUncheckedUpdateManyWithoutRecordedByUserNestedInput
     exitInterviewsCounseled?: ExitInterviewUncheckedUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
@@ -86552,6 +88355,7 @@ export namespace Prisma {
     isGroupAssignment?: boolean
     notifyUsers?: boolean
     onlineEntryOptions?: AssignmentCreateonlineEntryOptionsInput | string[]
+    submissionEntries?: JsonNullValueInput | InputJsonValue
     peerReviewAnonymous?: boolean
     peerReviewAssign?: string
     requirePeerReviews?: boolean
@@ -86587,6 +88391,7 @@ export namespace Prisma {
     isGroupAssignment?: boolean
     notifyUsers?: boolean
     onlineEntryOptions?: AssignmentCreateonlineEntryOptionsInput | string[]
+    submissionEntries?: JsonNullValueInput | InputJsonValue
     peerReviewAnonymous?: boolean
     peerReviewAssign?: string
     requirePeerReviews?: boolean
@@ -86664,6 +88469,7 @@ export namespace Prisma {
     isGroupAssignment?: BoolFieldUpdateOperationsInput | boolean
     notifyUsers?: BoolFieldUpdateOperationsInput | boolean
     onlineEntryOptions?: AssignmentUpdateonlineEntryOptionsInput | string[]
+    submissionEntries?: JsonNullValueInput | InputJsonValue
     peerReviewAnonymous?: BoolFieldUpdateOperationsInput | boolean
     peerReviewAssign?: StringFieldUpdateOperationsInput | string
     requirePeerReviews?: BoolFieldUpdateOperationsInput | boolean
@@ -86699,6 +88505,7 @@ export namespace Prisma {
     isGroupAssignment?: BoolFieldUpdateOperationsInput | boolean
     notifyUsers?: BoolFieldUpdateOperationsInput | boolean
     onlineEntryOptions?: AssignmentUpdateonlineEntryOptionsInput | string[]
+    submissionEntries?: JsonNullValueInput | InputJsonValue
     peerReviewAnonymous?: BoolFieldUpdateOperationsInput | boolean
     peerReviewAssign?: StringFieldUpdateOperationsInput | string
     requirePeerReviews?: BoolFieldUpdateOperationsInput | boolean
@@ -87216,6 +89023,7 @@ export namespace Prisma {
     quizzesCreated?: QuizCreateNestedManyWithoutAuthorInput
     repositoryFiles?: RepositoryFileCreateNestedManyWithoutUserInput
     sessions?: SessionCreateNestedManyWithoutUserInput
+    announcementReads?: AnnouncementReadCreateNestedManyWithoutUserInput
     guidanceLogEntries?: GuidanceLogEntryCreateNestedManyWithoutRecordedByUserInput
     exitInterviewsCounseled?: ExitInterviewCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
@@ -87255,6 +89063,7 @@ export namespace Prisma {
     quizzesCreated?: QuizUncheckedCreateNestedManyWithoutAuthorInput
     repositoryFiles?: RepositoryFileUncheckedCreateNestedManyWithoutUserInput
     sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
+    announcementReads?: AnnouncementReadUncheckedCreateNestedManyWithoutUserInput
     guidanceLogEntries?: GuidanceLogEntryUncheckedCreateNestedManyWithoutRecordedByUserInput
     exitInterviewsCounseled?: ExitInterviewUncheckedCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
@@ -87482,6 +89291,7 @@ export namespace Prisma {
     quizzesCreated?: QuizUpdateManyWithoutAuthorNestedInput
     repositoryFiles?: RepositoryFileUpdateManyWithoutUserNestedInput
     sessions?: SessionUpdateManyWithoutUserNestedInput
+    announcementReads?: AnnouncementReadUpdateManyWithoutUserNestedInput
     guidanceLogEntries?: GuidanceLogEntryUpdateManyWithoutRecordedByUserNestedInput
     exitInterviewsCounseled?: ExitInterviewUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
@@ -87521,6 +89331,7 @@ export namespace Prisma {
     quizzesCreated?: QuizUncheckedUpdateManyWithoutAuthorNestedInput
     repositoryFiles?: RepositoryFileUncheckedUpdateManyWithoutUserNestedInput
     sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
+    announcementReads?: AnnouncementReadUncheckedUpdateManyWithoutUserNestedInput
     guidanceLogEntries?: GuidanceLogEntryUncheckedUpdateManyWithoutRecordedByUserNestedInput
     exitInterviewsCounseled?: ExitInterviewUncheckedUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
@@ -88199,6 +90010,7 @@ export namespace Prisma {
     quizzesCreated?: QuizCreateNestedManyWithoutAuthorInput
     repositoryFiles?: RepositoryFileCreateNestedManyWithoutUserInput
     sessions?: SessionCreateNestedManyWithoutUserInput
+    announcementReads?: AnnouncementReadCreateNestedManyWithoutUserInput
     guidanceLogEntries?: GuidanceLogEntryCreateNestedManyWithoutRecordedByUserInput
     exitInterviewsCounseled?: ExitInterviewCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
@@ -88238,6 +90050,7 @@ export namespace Prisma {
     quizzesCreated?: QuizUncheckedCreateNestedManyWithoutAuthorInput
     repositoryFiles?: RepositoryFileUncheckedCreateNestedManyWithoutUserInput
     sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
+    announcementReads?: AnnouncementReadUncheckedCreateNestedManyWithoutUserInput
     guidanceLogEntries?: GuidanceLogEntryUncheckedCreateNestedManyWithoutRecordedByUserInput
     exitInterviewsCounseled?: ExitInterviewUncheckedCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
@@ -88411,6 +90224,7 @@ export namespace Prisma {
     quizzesCreated?: QuizUpdateManyWithoutAuthorNestedInput
     repositoryFiles?: RepositoryFileUpdateManyWithoutUserNestedInput
     sessions?: SessionUpdateManyWithoutUserNestedInput
+    announcementReads?: AnnouncementReadUpdateManyWithoutUserNestedInput
     guidanceLogEntries?: GuidanceLogEntryUpdateManyWithoutRecordedByUserNestedInput
     exitInterviewsCounseled?: ExitInterviewUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
@@ -88450,6 +90264,7 @@ export namespace Prisma {
     quizzesCreated?: QuizUncheckedUpdateManyWithoutAuthorNestedInput
     repositoryFiles?: RepositoryFileUncheckedUpdateManyWithoutUserNestedInput
     sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
+    announcementReads?: AnnouncementReadUncheckedUpdateManyWithoutUserNestedInput
     guidanceLogEntries?: GuidanceLogEntryUncheckedUpdateManyWithoutRecordedByUserNestedInput
     exitInterviewsCounseled?: ExitInterviewUncheckedUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
@@ -89075,6 +90890,7 @@ export namespace Prisma {
     isGroupAssignment?: boolean
     notifyUsers?: boolean
     onlineEntryOptions?: AssignmentCreateonlineEntryOptionsInput | string[]
+    submissionEntries?: JsonNullValueInput | InputJsonValue
     peerReviewAnonymous?: boolean
     peerReviewAssign?: string
     requirePeerReviews?: boolean
@@ -89110,6 +90926,7 @@ export namespace Prisma {
     isGroupAssignment?: boolean
     notifyUsers?: boolean
     onlineEntryOptions?: AssignmentCreateonlineEntryOptionsInput | string[]
+    submissionEntries?: JsonNullValueInput | InputJsonValue
     peerReviewAnonymous?: boolean
     peerReviewAssign?: string
     requirePeerReviews?: boolean
@@ -89205,6 +91022,7 @@ export namespace Prisma {
     isGroupAssignment?: BoolFieldUpdateOperationsInput | boolean
     notifyUsers?: BoolFieldUpdateOperationsInput | boolean
     onlineEntryOptions?: AssignmentUpdateonlineEntryOptionsInput | string[]
+    submissionEntries?: JsonNullValueInput | InputJsonValue
     peerReviewAnonymous?: BoolFieldUpdateOperationsInput | boolean
     peerReviewAssign?: StringFieldUpdateOperationsInput | string
     requirePeerReviews?: BoolFieldUpdateOperationsInput | boolean
@@ -89240,6 +91058,7 @@ export namespace Prisma {
     isGroupAssignment?: BoolFieldUpdateOperationsInput | boolean
     notifyUsers?: BoolFieldUpdateOperationsInput | boolean
     onlineEntryOptions?: AssignmentUpdateonlineEntryOptionsInput | string[]
+    submissionEntries?: JsonNullValueInput | InputJsonValue
     peerReviewAnonymous?: BoolFieldUpdateOperationsInput | boolean
     peerReviewAssign?: StringFieldUpdateOperationsInput | string
     requirePeerReviews?: BoolFieldUpdateOperationsInput | boolean
@@ -89532,6 +91351,7 @@ export namespace Prisma {
     quizzesCreated?: QuizCreateNestedManyWithoutAuthorInput
     repositoryFiles?: RepositoryFileCreateNestedManyWithoutUserInput
     sessions?: SessionCreateNestedManyWithoutUserInput
+    announcementReads?: AnnouncementReadCreateNestedManyWithoutUserInput
     exitInterviewsCounseled?: ExitInterviewCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
     submissions?: SubmissionCreateNestedManyWithoutUserInput
@@ -89571,6 +91391,7 @@ export namespace Prisma {
     quizzesCreated?: QuizUncheckedCreateNestedManyWithoutAuthorInput
     repositoryFiles?: RepositoryFileUncheckedCreateNestedManyWithoutUserInput
     sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
+    announcementReads?: AnnouncementReadUncheckedCreateNestedManyWithoutUserInput
     exitInterviewsCounseled?: ExitInterviewUncheckedCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
     submissions?: SubmissionUncheckedCreateNestedManyWithoutUserInput
@@ -89707,6 +91528,7 @@ export namespace Prisma {
     quizzesCreated?: QuizUpdateManyWithoutAuthorNestedInput
     repositoryFiles?: RepositoryFileUpdateManyWithoutUserNestedInput
     sessions?: SessionUpdateManyWithoutUserNestedInput
+    announcementReads?: AnnouncementReadUpdateManyWithoutUserNestedInput
     exitInterviewsCounseled?: ExitInterviewUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
     submissions?: SubmissionUpdateManyWithoutUserNestedInput
@@ -89746,6 +91568,7 @@ export namespace Prisma {
     quizzesCreated?: QuizUncheckedUpdateManyWithoutAuthorNestedInput
     repositoryFiles?: RepositoryFileUncheckedUpdateManyWithoutUserNestedInput
     sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
+    announcementReads?: AnnouncementReadUncheckedUpdateManyWithoutUserNestedInput
     exitInterviewsCounseled?: ExitInterviewUncheckedUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
     submissions?: SubmissionUncheckedUpdateManyWithoutUserNestedInput
@@ -89860,6 +91683,7 @@ export namespace Prisma {
     quizzesCreated?: QuizCreateNestedManyWithoutAuthorInput
     repositoryFiles?: RepositoryFileCreateNestedManyWithoutUserInput
     sessions?: SessionCreateNestedManyWithoutUserInput
+    announcementReads?: AnnouncementReadCreateNestedManyWithoutUserInput
     guidanceLogEntries?: GuidanceLogEntryCreateNestedManyWithoutRecordedByUserInput
     submissions_submissions_gradedByIdTousers?: SubmissionCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
     submissions?: SubmissionCreateNestedManyWithoutUserInput
@@ -89899,6 +91723,7 @@ export namespace Prisma {
     quizzesCreated?: QuizUncheckedCreateNestedManyWithoutAuthorInput
     repositoryFiles?: RepositoryFileUncheckedCreateNestedManyWithoutUserInput
     sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
+    announcementReads?: AnnouncementReadUncheckedCreateNestedManyWithoutUserInput
     guidanceLogEntries?: GuidanceLogEntryUncheckedCreateNestedManyWithoutRecordedByUserInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
     submissions?: SubmissionUncheckedCreateNestedManyWithoutUserInput
@@ -90035,6 +91860,7 @@ export namespace Prisma {
     quizzesCreated?: QuizUpdateManyWithoutAuthorNestedInput
     repositoryFiles?: RepositoryFileUpdateManyWithoutUserNestedInput
     sessions?: SessionUpdateManyWithoutUserNestedInput
+    announcementReads?: AnnouncementReadUpdateManyWithoutUserNestedInput
     guidanceLogEntries?: GuidanceLogEntryUpdateManyWithoutRecordedByUserNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
     submissions?: SubmissionUpdateManyWithoutUserNestedInput
@@ -90074,6 +91900,7 @@ export namespace Prisma {
     quizzesCreated?: QuizUncheckedUpdateManyWithoutAuthorNestedInput
     repositoryFiles?: RepositoryFileUncheckedUpdateManyWithoutUserNestedInput
     sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
+    announcementReads?: AnnouncementReadUncheckedUpdateManyWithoutUserNestedInput
     guidanceLogEntries?: GuidanceLogEntryUncheckedUpdateManyWithoutRecordedByUserNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
     submissions?: SubmissionUncheckedUpdateManyWithoutUserNestedInput
@@ -91451,6 +93278,12 @@ export namespace Prisma {
     expires: Date | string
   }
 
+  export type AnnouncementReadCreateManyUserInput = {
+    id?: string
+    announcementId: string
+    readAt?: Date | string
+  }
+
   export type GuidanceLogEntryCreateManyRecordedByUserInput = {
     id?: string
     courseId: string
@@ -92239,6 +94072,24 @@ export namespace Prisma {
     expires?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type AnnouncementReadUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    readAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    announcement?: AnnouncementUpdateOneRequiredWithoutReadsNestedInput
+  }
+
+  export type AnnouncementReadUncheckedUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    announcementId?: StringFieldUpdateOperationsInput | string
+    readAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AnnouncementReadUncheckedUpdateManyWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    announcementId?: StringFieldUpdateOperationsInput | string
+    readAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type GuidanceLogEntryUpdateWithoutRecordedByUserInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
@@ -92593,6 +94444,7 @@ export namespace Prisma {
     isGroupAssignment?: boolean
     notifyUsers?: boolean
     onlineEntryOptions?: AssignmentCreateonlineEntryOptionsInput | string[]
+    submissionEntries?: JsonNullValueInput | InputJsonValue
     peerReviewAnonymous?: boolean
     peerReviewAssign?: string
     requirePeerReviews?: boolean
@@ -93036,6 +94888,7 @@ export namespace Prisma {
     authorId?: NullableStringFieldUpdateOperationsInput | string | null
     locked?: BoolFieldUpdateOperationsInput | boolean
     attachments?: AnnouncementAttachmentUpdateManyWithoutAnnouncementNestedInput
+    reads?: AnnouncementReadUpdateManyWithoutAnnouncementNestedInput
   }
 
   export type AnnouncementUncheckedUpdateWithoutCourseInput = {
@@ -93054,6 +94907,7 @@ export namespace Prisma {
     authorId?: NullableStringFieldUpdateOperationsInput | string | null
     locked?: BoolFieldUpdateOperationsInput | boolean
     attachments?: AnnouncementAttachmentUncheckedUpdateManyWithoutAnnouncementNestedInput
+    reads?: AnnouncementReadUncheckedUpdateManyWithoutAnnouncementNestedInput
   }
 
   export type AnnouncementUncheckedUpdateManyWithoutCourseInput = {
@@ -93093,6 +94947,7 @@ export namespace Prisma {
     isGroupAssignment?: BoolFieldUpdateOperationsInput | boolean
     notifyUsers?: BoolFieldUpdateOperationsInput | boolean
     onlineEntryOptions?: AssignmentUpdateonlineEntryOptionsInput | string[]
+    submissionEntries?: JsonNullValueInput | InputJsonValue
     peerReviewAnonymous?: BoolFieldUpdateOperationsInput | boolean
     peerReviewAssign?: StringFieldUpdateOperationsInput | string
     requirePeerReviews?: BoolFieldUpdateOperationsInput | boolean
@@ -93127,6 +94982,7 @@ export namespace Prisma {
     isGroupAssignment?: BoolFieldUpdateOperationsInput | boolean
     notifyUsers?: BoolFieldUpdateOperationsInput | boolean
     onlineEntryOptions?: AssignmentUpdateonlineEntryOptionsInput | string[]
+    submissionEntries?: JsonNullValueInput | InputJsonValue
     peerReviewAnonymous?: BoolFieldUpdateOperationsInput | boolean
     peerReviewAssign?: StringFieldUpdateOperationsInput | string
     requirePeerReviews?: BoolFieldUpdateOperationsInput | boolean
@@ -93160,6 +95016,7 @@ export namespace Prisma {
     isGroupAssignment?: BoolFieldUpdateOperationsInput | boolean
     notifyUsers?: BoolFieldUpdateOperationsInput | boolean
     onlineEntryOptions?: AssignmentUpdateonlineEntryOptionsInput | string[]
+    submissionEntries?: JsonNullValueInput | InputJsonValue
     peerReviewAnonymous?: BoolFieldUpdateOperationsInput | boolean
     peerReviewAssign?: StringFieldUpdateOperationsInput | string
     requirePeerReviews?: BoolFieldUpdateOperationsInput | boolean
@@ -94510,6 +96367,7 @@ export namespace Prisma {
     isGroupAssignment?: boolean
     notifyUsers?: boolean
     onlineEntryOptions?: AssignmentCreateonlineEntryOptionsInput | string[]
+    submissionEntries?: JsonNullValueInput | InputJsonValue
     peerReviewAnonymous?: boolean
     peerReviewAssign?: string
     requirePeerReviews?: boolean
@@ -94547,6 +96405,7 @@ export namespace Prisma {
     isGroupAssignment?: BoolFieldUpdateOperationsInput | boolean
     notifyUsers?: BoolFieldUpdateOperationsInput | boolean
     onlineEntryOptions?: AssignmentUpdateonlineEntryOptionsInput | string[]
+    submissionEntries?: JsonNullValueInput | InputJsonValue
     peerReviewAnonymous?: BoolFieldUpdateOperationsInput | boolean
     peerReviewAssign?: StringFieldUpdateOperationsInput | string
     requirePeerReviews?: BoolFieldUpdateOperationsInput | boolean
@@ -94581,6 +96440,7 @@ export namespace Prisma {
     isGroupAssignment?: BoolFieldUpdateOperationsInput | boolean
     notifyUsers?: BoolFieldUpdateOperationsInput | boolean
     onlineEntryOptions?: AssignmentUpdateonlineEntryOptionsInput | string[]
+    submissionEntries?: JsonNullValueInput | InputJsonValue
     peerReviewAnonymous?: BoolFieldUpdateOperationsInput | boolean
     peerReviewAssign?: StringFieldUpdateOperationsInput | string
     requirePeerReviews?: BoolFieldUpdateOperationsInput | boolean
@@ -94614,6 +96474,7 @@ export namespace Prisma {
     isGroupAssignment?: BoolFieldUpdateOperationsInput | boolean
     notifyUsers?: BoolFieldUpdateOperationsInput | boolean
     onlineEntryOptions?: AssignmentUpdateonlineEntryOptionsInput | string[]
+    submissionEntries?: JsonNullValueInput | InputJsonValue
     peerReviewAnonymous?: BoolFieldUpdateOperationsInput | boolean
     peerReviewAssign?: StringFieldUpdateOperationsInput | string
     requirePeerReviews?: BoolFieldUpdateOperationsInput | boolean
@@ -94656,6 +96517,12 @@ export namespace Prisma {
     createdAt?: Date | string
   }
 
+  export type AnnouncementReadCreateManyAnnouncementInput = {
+    id?: string
+    userId: string
+    readAt?: Date | string
+  }
+
   export type AnnouncementAttachmentUpdateWithoutAnnouncementInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
@@ -94681,6 +96548,24 @@ export namespace Prisma {
     size?: IntFieldUpdateOperationsInput | number
     mimeType?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AnnouncementReadUpdateWithoutAnnouncementInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    readAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    user?: UserUpdateOneRequiredWithoutAnnouncementReadsNestedInput
+  }
+
+  export type AnnouncementReadUncheckedUpdateWithoutAnnouncementInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    readAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AnnouncementReadUncheckedUpdateManyWithoutAnnouncementInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    readAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type SubmissionCreateManyAssignmentInput = {
@@ -95846,6 +97731,10 @@ export namespace Prisma {
      * @deprecated Use AnnouncementAttachmentDefaultArgs instead
      */
     export type AnnouncementAttachmentArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = AnnouncementAttachmentDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use AnnouncementReadDefaultArgs instead
+     */
+    export type AnnouncementReadArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = AnnouncementReadDefaultArgs<ExtArgs>
     /**
      * @deprecated Use AssignmentDefaultArgs instead
      */

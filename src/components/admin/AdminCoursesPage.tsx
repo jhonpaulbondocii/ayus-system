@@ -392,7 +392,9 @@ export default function AdminCoursesPage() {
                 >
                   <option value="">— Standard Office —</option>
                   <option value="CLINIC">Clinic</option>
+                  <option value="FACULTY">Faculty</option>
                   <option value="GUIDANCE">Guidance</option>
+                  <option value="LIBRARY">Library</option>
                 </select>
               </div>
 

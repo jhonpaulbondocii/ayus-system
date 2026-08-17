@@ -41,7 +41,8 @@ function CreateCourseModal({
     if (!name.trim()) return;
     setCreating(true);
     const color = PRESET_COLORS[Math.floor(Math.random() * PRESET_COLORS.length)];
-    const code  = name.trim().toUpperCase().replace(/\s+/g, "-");
+    const suffix = Math.random().toString(36).substring(2, 6).toUpperCase();
+    const code  = name.trim().toUpperCase().replace(/\s+/g, "-") + "-" + suffix;
     const res   = await fetch("/api/admin/courses", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: name.trim(), code, color, status: "UNPUBLISHED", officeType: officeType || null }),
@@ -103,6 +104,7 @@ function CreateCourseModal({
           >
             <option value="">— Standard Office —</option>
             <option value="CLINIC">Clinic</option>
+            <option value="FACULTY">Faculty</option>
             <option value="GUIDANCE">Guidance</option>
             <option value="LIBRARY">Library</option>
           </select>
@@ -203,15 +205,15 @@ function AdminSidebar({
         </Link>
 
         {/* 3. Offices */}
-        <button onClick={handleCoursesClick}
-          className={`flex flex-col items-center justify-center w-full py-2.5 px-1 transition-colors ${coursesActive ? ACTIVE_CLS : INACTIVE_CLS}`}>
+        <button onClick={handleCoursesClick} suppressHydrationWarning
+  className={`flex flex-col items-center justify-center w-full py-2.5 px-1 transition-colors ${coursesActive ? ACTIVE_CLS : INACTIVE_CLS}`}>
           <BookOpen size={18} />
           <span className="text-[10px] mt-1 text-center leading-tight">Offices</span>
         </button>
 
         {/* 4. Groups */}
-        <button onClick={onGroupsClick}
-          className={`flex flex-col items-center justify-center w-full py-2.5 px-1 transition-colors ${groupsActive ? ACTIVE_CLS : INACTIVE_CLS}`}>
+        <button onClick={onGroupsClick} suppressHydrationWarning
+  className={`flex flex-col items-center justify-center w-full py-2.5 px-1 transition-colors ${groupsActive ? ACTIVE_CLS : INACTIVE_CLS}`}>
           <FolderKanban size={18} />
           <span className="text-[10px] mt-1 text-center leading-tight">Groups</span>
         </button>
@@ -245,8 +247,8 @@ function AdminSidebar({
         </Link>
 
         {/* 8. History */}
-        <button onClick={handleHistoryClick}
-          className={`flex flex-col items-center justify-center w-full py-2.5 px-1 transition-colors ${historyIsOpen ? ACTIVE_CLS : INACTIVE_CLS}`}>
+        <button onClick={handleHistoryClick} suppressHydrationWarning
+  className={`flex flex-col items-center justify-center w-full py-2.5 px-1 transition-colors ${historyIsOpen ? ACTIVE_CLS : INACTIVE_CLS}`}>
           <Clock size={18} />
           <span className="text-[10px] mt-1 text-center leading-tight">History</span>
         </button>
@@ -255,8 +257,13 @@ function AdminSidebar({
 
       {/* 9. Logout */}
       <div className="mt-auto mb-2 w-full">
-        <button onClick={() => signOut({ callbackUrl: "/admin/login" })}
-          className={`flex flex-col items-center justify-center w-full py-2.5 px-1 transition-colors ${INACTIVE_CLS}`}>
+        <button suppressHydrationWarning
+  onClick={() => {
+    if (window.confirm("Are you sure you want to logout?")) {
+      signOut({ callbackUrl: "/admin/login" });
+    }
+  }}
+  className={`flex flex-col items-center justify-center w-full py-2.5 px-1 transition-colors ${INACTIVE_CLS}`}>
           <LogOut size={18} />
           <span className="text-[10px] mt-1">Logout</span>
         </button>
@@ -319,18 +326,21 @@ function MobileBottomNav({
     const atEnd   = el.scrollLeft + el.clientWidth >= el.scrollWidth - 4;
     setShowFadeLeft(!atStart);
     setShowFadeRight(!atEnd);
-    // compute current page (each "page" = clientWidth worth of scroll)
     const page = Math.round(el.scrollLeft / el.clientWidth);
     setScrollPage(page);
   };
 
-  useEffect(() => { updateFades(); }, []);
+  useEffect(() => {
+    updateFades();
+    window.addEventListener("resize", updateFades);
+    return () => window.removeEventListener("resize", updateFades);
+  }, []); // eslint-disable-line
 
-  // total pages = ceil(9 items * 72px / clientWidth) — approximated as 2 for dot display
-  const TOTAL_PAGES = 2;
+  const TOTAL_PAGES = 2; // approximate; updated dynamically via scroll
 
   const NAV_ITEM_STYLE = (active: boolean): React.CSSProperties => ({
     flex: "0 0 72px",
+    scrollSnapAlign: "start",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
@@ -472,7 +482,13 @@ function MobileBottomNav({
           </button>
 
           {/* 9. Logout */}
-          <button onClick={() => signOut({ callbackUrl: "/admin/login" })} style={NAV_ITEM_STYLE(false)}>
+          <button
+            onClick={() => {
+              if (window.confirm("Are you sure you want to logout?")) {
+                signOut({ callbackUrl: "/admin/login" });
+              }
+            }}
+            style={NAV_ITEM_STYLE(false)}>
             <LogOut size={20} color={iconColor(false)} />
             <span style={LABEL_STYLE(false)}>Logout</span>
           </button>
@@ -546,7 +562,10 @@ function AdminInner({ children }: { children: React.ReactNode }) {
       {!isMobile && (
         <AdminSidebar
           groupsPanelOpen={groupsPanelOpen}
-          onGroupsClick={() => setGroupsPanelOpen(prev => !prev)}
+          onGroupsClick={() => {
+            closeCourses();
+            setGroupsPanelOpen(prev => !prev);
+          }}
         />
       )}
 
@@ -564,7 +583,7 @@ function AdminInner({ children }: { children: React.ReactNode }) {
       <div className="flex-1 flex overflow-hidden">
         <main
           className="flex-1 overflow-y-auto"
-          style={{ paddingBottom: isMobile ? 72 : 0 }}
+          style={{ paddingBottom: isMobile ? 96 : 0 }}
         >
           {children}
         </main>
@@ -573,7 +592,10 @@ function AdminInner({ children }: { children: React.ReactNode }) {
       {isMobile && (
         <MobileBottomNav
           groupsPanelOpen={groupsPanelOpen}
-          onGroupsClick={() => setGroupsPanelOpen(prev => !prev)}
+          onGroupsClick={() => {
+            closeCourses();
+            setGroupsPanelOpen(prev => !prev);
+          }}
         />
       )}
 

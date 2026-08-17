@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { sendWelcomeEmail } from "@/lib/mailer";
+import { autoEnrollInFacultyOffice } from "@/lib/faculty-office"; // ← NEW
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 
@@ -82,7 +83,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid request", details: parsed.error.flatten() }, { status: 400 });
   }
 
-  const { name, email, password, department, position, employmentStatus, accountType, contactNumber, status } = parsed.data;
+  const {
+    name, email, password,
+    department, position,
+    employmentStatus, accountType,
+    contactNumber, status,
+  } = parsed.data;
 
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
@@ -90,6 +96,9 @@ export async function POST(req: NextRequest) {
   }
 
   const hashedPassword = await bcrypt.hash(password, 12);
+
+  // Determine the final status — admin-created users default to APPROVED
+  const finalStatus = status ?? "APPROVED";
 
   const user = await prisma.user.create({
     data: {
@@ -101,7 +110,7 @@ export async function POST(req: NextRequest) {
       employmentStatus: employmentStatus ?? null,
       accountType:      accountType      ?? null,
       contactNumber:    contactNumber    ?? null,
-      status:           status           ?? "APPROVED",
+      status:           finalStatus,
       role:             "STAFF",
     },
     select: {
@@ -119,6 +128,12 @@ export async function POST(req: NextRequest) {
       image:            true,
     },
   });
+
+  // ── AUTO-ENROLL in Faculty office (always, regardless of status) ──────────
+  // Admin-created users are added to Faculty immediately.
+  autoEnrollInFacultyOffice(user.id).catch((err) =>
+    console.error("[Faculty Office] Auto-enroll failed for new admin-created user:", err)
+  );
 
   sendWelcomeEmail({ to: email, name, email, password })
     .catch((err) => console.error("Failed to send welcome email:", err));
@@ -148,7 +163,7 @@ export async function PATCH(req: NextRequest) {
     action === "approve"    ? ("APPROVED"    as const) :
     action === "reject"     ? ("REJECTED"    as const) :
     action === "deactivate" ? ("DEACTIVATED" as const) :
-                              ("APPROVED"    as const);
+                              ("APPROVED"    as const);   // reactivate
 
   const user = await prisma.user.update({
     where: { id: userId },
@@ -169,6 +184,14 @@ export async function PATCH(req: NextRequest) {
     },
   });
 
+  // ── AUTO-ENROLL in Faculty office when a self-registered user is APPROVED ──
+  // (Admin-created users are enrolled in POST above; this covers self-register.)
+  if (action === "approve") {
+    autoEnrollInFacultyOffice(userId).catch((err) =>
+      console.error("[Faculty Office] Auto-enroll failed on approve:", err)
+    );
+  }
+
   return NextResponse.json({ message: `User ${action}d successfully`, user });
 }
 
@@ -177,7 +200,6 @@ export async function DELETE(req: NextRequest) {
   const session = await requireAdmin();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  // Try body first (bulk), then query param (single)
   let userIds: string[] = [];
   let userId: string | null = null;
 
@@ -196,13 +218,11 @@ export async function DELETE(req: NextRequest) {
     if (q) userIds = q.split(",").map(id => id.trim()).filter(Boolean);
   }
 
-  // Bulk delete
   if (userIds.length > 0) {
     await prisma.user.deleteMany({ where: { id: { in: userIds } } });
     return NextResponse.json({ success: true, message: `${userIds.length} user(s) deleted` });
   }
 
-  // Single delete
   if (!userId) return NextResponse.json({ error: "userId or userIds required" }, { status: 400 });
   await prisma.user.delete({ where: { id: userId } });
   return NextResponse.json({ success: true, message: "User deleted successfully" });

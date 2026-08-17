@@ -16,6 +16,8 @@ type SubmissionEntryInput = {
   required?: boolean;
   allowedFileTypes?: string[];
   maxFiles?: number | null;
+  maxFileSizeValue?: number;
+  maxFileSizeUnit?: string;
 };
 
 type SessionUser = {
@@ -46,14 +48,16 @@ function serializeSubmissionEntries(
 
     return JSON.stringify({
       id: entry.id ?? index + 1,
-      label: entry.label?.trim() || `Submission ${index + 1}`,
+      label: entry.label?.trim() || "",
       required: entry.required ?? false,
       type,
       allowedFileTypes:
-        type === "File Upload"
+        type === "File Upload" || type === "Media Recording"
           ? normalizeFileTypes(entry.allowedFileTypes)
           : [],
-      maxFiles: type === "File Upload" ? (entry.maxFiles ?? 1) : null,
+      maxFiles: type === "File Upload" || type === "Media Recording" ? (entry.maxFiles ?? 1) : null,
+      maxFileSizeValue: (type === "File Upload" || type === "Media Recording") ? ((entry as SubmissionEntryInput & { maxFileSizeValue?: number }).maxFileSizeValue ?? 1) : null,
+      maxFileSizeUnit: (type === "File Upload" || type === "Media Recording") ? ((entry as SubmissionEntryInput & { maxFileSizeUnit?: string }).maxFileSizeUnit ?? "MB") : null,
     });
   });
 }

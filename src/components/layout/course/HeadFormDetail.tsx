@@ -342,12 +342,38 @@ export default function HeadFormDetail({
   const removeAssignRow = (id: number) => setAssignRows(p => p.filter(r => r.id !== id));
 
   const saveAssignTo = async () => {
+    if (!courseId) { setShowAssignPanel(false); return; }
     setSavingAssign(true);
-    // Caller should pass an onSaveAssign prop for real API calls.
-    // For now, just close after a short delay.
-    await new Promise(r => setTimeout(r, 600));
-    setSavingAssign(false);
-    setShowAssignPanel(false);
+    try {
+      const row = assignRows[0];
+      const allEveryone = assignRows.every(r =>
+        !r.assignees.length || r.assignees.some(a => a.id === "everyone")
+      );
+      const resolvedIds = allEveryone
+        ? ["Everyone"]
+        : assignRows.flatMap(r =>
+            r.assignees.filter(a => a.id !== "everyone").map(a => a.label)
+          );
+
+      await fetch(`/api/courses/${courseId}/forms/${formId ?? form.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          assignTo:          resolvedIds,
+          dueDate:           row.dueDate           || null,
+          dueTime:           row.dueTime           || null,
+          availableFrom:     row.availableFrom     || null,
+          availableFromTime: row.availableFromTime || null,
+          availableUntil:    row.until             || null,
+          availableUntilTime: row.untilTime        || null,
+        }),
+      });
+    } catch (e) {
+      console.error("saveAssignTo error", e);
+    } finally {
+      setSavingAssign(false);
+      setShowAssignPanel(false);
+    }
   };
 
   return (

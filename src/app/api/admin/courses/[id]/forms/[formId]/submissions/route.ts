@@ -7,7 +7,15 @@ export async function GET(
 ) {
   const { id: courseId, formId } = await params;
 
-  const [submissions, questions, form] = await Promise.all([
+  const form = await prisma.form.findFirst({
+    where: { id: formId, courseId },
+    select: { id: true },
+  });
+  if (!form) {
+    return NextResponse.json({ error: "Form not found" }, { status: 404 });
+  }
+
+  const [submissions, questions] = await Promise.all([
     prisma.formSubmission.findMany({
       where: { formId },
       include: {
@@ -28,15 +36,11 @@ export async function GET(
       where: { formId },
       orderBy: { order: "asc" },
     }),
-    // ── Fetch form to get the overall points ──
-    prisma.form.findUnique({
-      where: { id: formId },
-      select: { points: true },
-    }),
+    Promise.resolve(null),
   ]);
 
   const questionMap = new Map(questions.map(q => [q.id, q]));
-  const totalPoints = form?.points ?? 0;
+  const totalPoints = questions.reduce((sum, q) => sum + (q.points ?? 0), 0);
 
   const enriched = submissions.map(sub => {
     const raw = sub.answers as { questionId: string; value: string }[];
@@ -50,7 +54,7 @@ export async function GET(
             question: q?.question ?? "Unknown question",
             type: q?.type ?? "short_answer",
             points: q?.points ?? 0,
-            answer: a.value ?? null,
+            answer: (a.value ?? (a as Record<string, string>).answer) ?? null,
           };
         })
       : [];
@@ -61,7 +65,7 @@ export async function GET(
       user: {
         name: sub.user?.name ?? null,
         email: sub.user?.email ?? "",
-        courseRole: enrollment?.courseRole ?? "Unknown",
+        courseRole: enrollment?.courseRole ?? "Staff",
         section: enrollment?.section ?? null,
       },
       score: sub.score,
@@ -78,8 +82,16 @@ export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string; formId: string }> }
 ) {
-  const { formId } = await params;
+  const { id: courseId, formId } = await params;
   const body = await req.json();
+
+  const formExists = await prisma.form.findFirst({
+    where: { id: formId, courseId },
+    select: { id: true },
+  });
+  if (!formExists) {
+    return NextResponse.json({ error: "Form not found" }, { status: 404 });
+  }
   const { submissionId, score } = body;
 
   if (!submissionId || score === undefined) {

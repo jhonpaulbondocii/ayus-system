@@ -179,19 +179,20 @@ const boxW = 80.0;
 const boxH = 17.71;
 
         const barcodeBuffer = await bwipjs.toBuffer({
-          bcid:            "code128",
-          text:            request.studentNo,
-          scale:           3,
-          height:          8,          // mm — renders cleanly then scaled to boxH
-          includetext:     false,
-          paddingwidth:    0,
-          paddingheight:   0,
-          backgroundcolor: "ffffff",
-        });
+  bcid:            "code128",
+  text:            request.studentNo,
+  scale:           3,
+  height:          6,
+  includetext:     true,
+  textxalign:      "center",
+  textsize:        8,
+  paddingwidth:    0,
+  paddingheight:   0,
+  backgroundcolor: "ffffff",
+});
 
-        const barcodeImg = await pdfDoc.embedPng(barcodeBuffer);
-        // Stretch to fill the inner box exactly
-        page.drawImage(barcodeImg, { x: boxX, y: boxY, width: boxW, height: boxH });
+const barcodeImg = await pdfDoc.embedPng(barcodeBuffer);
+page.drawImage(barcodeImg, { x: boxX, y: boxY, width: boxW, height: boxH });
       } catch (err) {
         console.error("[barcode] FAILED:", err);
       }

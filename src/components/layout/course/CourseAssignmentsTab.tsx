@@ -1,6 +1,5 @@
-"use client";
-
 // src/components/layout/course/CourseAssignmentsTab.tsx
+"use client";
 
 import { useState, useCallback, useMemo } from "react";
 import type { Assignment, Section, Staff } from "./types";
@@ -12,9 +11,6 @@ import StaffAssignmentList from "./CourseAssignmentsStaffList";
 import CourseAssignmentSubmissions from "./CourseAssignmentSubmissions";
 import { FONT } from "./helpers";
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   TYPES
-───────────────────────────────────────────────────────────────────────────── */
 type AssignmentWithRole = Assignment & {
   _assignmentRole?: "manager" | "submitter";
   _publisherName?: string | null;
@@ -29,9 +25,6 @@ type AssignmentWithRole = Assignment & {
 
 type AssignView = "list" | "detail" | "submitter-detail" | "create" | "edit" | "submissions";
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   ROLE RESOLUTION
-───────────────────────────────────────────────────────────────────────────── */
 function getBool(v: unknown): boolean { return v === true; }
 
 function resolveRole(a: AssignmentWithRole, currentUserId?: string | null): "manager" | "submitter" {
@@ -44,9 +37,6 @@ function resolveRole(a: AssignmentWithRole, currentUserId?: string | null): "man
   return "submitter";
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   PROPS
-───────────────────────────────────────────────────────────────────────────── */
 interface Props {
   courseId: string;
   assignments: Assignment[];
@@ -54,6 +44,9 @@ interface Props {
   sections: Section[];
   staff: Staff[];
   isHead: boolean;
+  isStaff?: boolean;
+  isFaculty?: boolean;
+  canDelete?: boolean;
   canManageAssignments: boolean;
   currentUserId?: string | null;
   currentUserName?: string | null;
@@ -62,9 +55,6 @@ interface Props {
   onNavDrillOut?: () => void;
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   MAIN EXPORT
-───────────────────────────────────────────────────────────────────────────── */
 export default function CourseAssignmentsTab({
   courseId,
   assignments: rawAssignments,
@@ -72,6 +62,9 @@ export default function CourseAssignmentsTab({
   sections,
   staff,
   isHead,
+  isStaff = false,
+  isFaculty = false,
+  canDelete = false,
   canManageAssignments,
   currentUserId,
   currentUserName,
@@ -90,7 +83,7 @@ export default function CourseAssignmentsTab({
     fetch(`/api/courses/${courseId}/assignments`)
       .then(r => r.json())
       .then(d => setAssignments(d.assignments ?? []))
-      .catch(() => { });
+      .catch(() => {});
   }, [courseId, setAssignments]);
 
   const resolvedAssignments = useMemo(
@@ -98,7 +91,6 @@ export default function CourseAssignmentsTab({
     [assignments, currentUserId]
   );
 
-  // ── Helpers for drill-in/out ──────────────────────────────────────────────
   const drillInToDetail = useCallback((a: AssignmentWithRole) => {
     onNavDrillIn?.(a.title ?? "Assignment", () => {
       setAssignView("list");
@@ -113,61 +105,41 @@ export default function CourseAssignmentsTab({
     onNavDrillOut?.();
   }, [onNavDrillOut]);
 
-  // ── SUBMISSIONS VIEW ──────────────────────────────────────────────────────
+  // ── SUBMISSIONS VIEW ──
   if (assignView === "submissions" && viewTarget) {
     return (
       <CourseAssignmentSubmissions
         assignment={viewTarget}
         courseId={courseId}
-        onBack={() => {
-          setAssignView("detail");
-        }}
+        onBack={() => setAssignView("detail")}
       />
     );
   }
 
-  /* ── NON-HEAD PATH ── */
-  if (!isHead || !canManageAssignments) {
-
+  // ── FACULTY PATH: view + submit only, walang create/edit/delete ──
+  if (isFaculty && !canManageAssignments) {
     if (assignView === "submitter-detail" && viewTarget) {
       return (
         <CourseAssignmentSubmitterDetail
           assignment={viewTarget}
           courseId={courseId}
           currentUserId={currentUserId}
-          onBack={drillOut}
-        />
-      );
-    }
-
-    if (assignView === "detail" && viewTarget) {
-      return (
-        <CourseAssignmentDetail
-          assignment={viewTarget}
-          courseId={courseId}
-          sections={sections}
-          staff={staff}
-          currentUserId={currentUserId}
-          onBack={drillOut}
-          onEditFull={a => {
-            setViewTarget({ ...a, _assignmentRole: "manager" });
-            setAssignView("edit");
+          onBack={() => {
+            reloadAssignments();
+            drillOut();
           }}
-          setAssignments={setAssignments}
         />
       );
     }
-
     return (
       <div style={{ fontFamily: FONT, height: "100%" }}>
         <StaffAssignmentList
           assignments={resolvedAssignments}
           courseId={courseId}
           onSelectAssignment={a => {
-            const role = resolveRole(a, currentUserId);
-            const resolved = { ...a, _assignmentRole: role };
+            const resolved = { ...a, _assignmentRole: "submitter" as const };
             setViewTarget(resolved);
-            setAssignView(role === "manager" ? "detail" : "submitter-detail");
+            setAssignView("submitter-detail");
             drillInToDetail(resolved);
           }}
         />
@@ -175,20 +147,27 @@ export default function CourseAssignmentsTab({
     );
   }
 
-  /* ── HEAD: SUBMITTER DETAIL VIEW ── */
+  // ── STAFF PATH: create ✅, edit sarili lang ✅, delete ❌ ──
+  // ── HEAD PATH: full access ──
+  // Both use CourseAssignmentsList, difference is canDelete prop
+
   if (assignView === "submitter-detail" && viewTarget) {
     return (
       <CourseAssignmentSubmitterDetail
         assignment={viewTarget}
         courseId={courseId}
         currentUserId={currentUserId}
-        onBack={drillOut}
+        onBack={() => {
+          reloadAssignments();
+          drillOut();
+        }}
       />
     );
   }
 
-  /* ── HEAD: MANAGER DETAIL VIEW ── */
-  if (assignView === "detail" && viewTarget && viewTarget._assignmentRole === "manager") {
+  if (assignView === "detail" && viewTarget) {
+    // Staff can only edit their own assignments
+    const canEditThis = isHead || (isStaff && viewTarget._publisherId === currentUserId);
     return (
       <CourseAssignmentDetail
         assignment={viewTarget}
@@ -197,16 +176,16 @@ export default function CourseAssignmentsTab({
         staff={staff}
         currentUserId={currentUserId}
         onBack={drillOut}
-        onEditFull={a => {
+        onEditFull={canEditThis ? (a => {
           setViewTarget({ ...a, _assignmentRole: "manager" });
           setAssignView("edit");
-        }}
+        }) : () => {}}
         setAssignments={setAssignments}
+        canDelete={canDelete}
       />
     );
   }
 
-  /* ── HEAD: CREATE ── */
   if (assignView === "create") {
     return (
       <HeadCreateAssignment
@@ -228,7 +207,6 @@ export default function CourseAssignmentsTab({
     );
   }
 
-  /* ── HEAD: EDIT ── */
   if (assignView === "edit" && viewTarget) {
     const normalizedAssignment = {
       ...viewTarget,
@@ -255,7 +233,7 @@ export default function CourseAssignmentsTab({
     );
   }
 
-  /* ── HEAD: ASSIGNMENT LIST (default) ── */
+  // ── DEFAULT: Assignment List (Head + Staff) ──
   return (
     <CourseAssignmentsList
       courseId={courseId}
@@ -266,6 +244,7 @@ export default function CourseAssignmentsTab({
       currentUserId={currentUserId}
       currentUserName={currentUserName}
       currentUserRole={currentUserRole}
+      canDelete={canDelete}
       onViewDetail={a => {
         const role = resolveRole(a, currentUserId);
         const resolved = { ...a, _assignmentRole: role };
@@ -273,7 +252,7 @@ export default function CourseAssignmentsTab({
         setAssignView(role === "submitter" ? "submitter-detail" : "detail");
         drillInToDetail(resolved);
       }}
-      onCreateNew={group => {
+      onCreateNew={canManageAssignments ? (group => {
         setCreateGroup(group);
         setAssignView("create");
         onNavDrillIn?.("New Assignment", () => {
@@ -281,8 +260,10 @@ export default function CourseAssignmentsTab({
           setCreateGroup(undefined);
           onNavDrillOut?.();
         });
-      }}
-      onEditFull={a => {
+      }) : () => {}}
+      onEditFull={canManageAssignments ? (a => {
+        // Staff: only edit their own
+        if (isStaff && a._publisherId !== currentUserId) return;
         setViewTarget({ ...a, _assignmentRole: "manager" });
         setAssignView("edit");
         onNavDrillIn?.(a.title ?? "Edit Assignment", () => {
@@ -290,7 +271,7 @@ export default function CourseAssignmentsTab({
           setViewTarget(null);
           onNavDrillOut?.();
         });
-      }}
+      }) : () => {}}
     />
   );
 }

@@ -180,6 +180,7 @@ function HeadImageModal({
 interface Props {
   courseId: string;
   course: Course;
+  isHead?: boolean;
   onCourseUpdate: (updated: Partial<Course>) => void;
 }
 

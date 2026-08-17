@@ -400,10 +400,18 @@ export default function AdminCourseFormsPage({ courseId, currentUserId, currentU
     const form = forms.find(f => f.id === id);
     if (!form) return;
     setForms(prev => prev.map(f => f.id === id ? { ...f, published: !f.published } : f));
-    await fetch(`/api/admin/courses/${courseId}/forms/${id}`, {
-      method: "PATCH", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ published: !form.published }),
-    }).catch(() => {});
+    try {
+      const res = await fetch(`/api/admin/courses/${courseId}/forms/${id}`, {
+        method: "PATCH", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ published: !form.published }),
+      });
+      if (!res.ok) {
+        // I-revert ang optimistic update kapag nag-fail
+        setForms(prev => prev.map(f => f.id === id ? { ...f, published: form.published } : f));
+      }
+    } catch {
+      setForms(prev => prev.map(f => f.id === id ? { ...f, published: form.published } : f));
+    }
   };
 
   if (loading) {

@@ -1,4 +1,3 @@
-// src/app/api/admin/courses/[id]/repositories/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -46,16 +45,42 @@ export async function GET(
 
   const repositories = assignments.map((a) => {
     const repo = a.repositories;
+    const allFiles = repo?.repository_files ?? [];
 
-    const files = (repo?.repository_files ?? []).map((f) => ({
+    const byUser: Record<string, typeof allFiles> = {};
+    for (const f of allFiles) {
+      const uid = f.user.id;
+      if (!byUser[uid]) byUser[uid] = [];
+      byUser[uid].push(f);
+    }
+
+    // IPAPALIT:
+const latestFiles: typeof allFiles = [];
+for (const userFiles of Object.values(byUser)) {
+  const linkedFile = userFiles.find(f => f.submissions !== null);
+
+  if (linkedFile && linkedFile.submissions?.submittedAt) {
+    const submittedAt = new Date(linkedFile.submissions.submittedAt).getTime();
+    const batch = userFiles.filter(f =>
+      new Date(f.uploadedAt).getTime() >= submittedAt - 5000
+    );
+    latestFiles.push(...batch);
+  } else {
+    latestFiles.push(userFiles[0]);
+  }
+}
+for (const userFiles of Object.values(byUser)) {
+  latestFiles.push(...userFiles);
+}
+
+    const files = latestFiles.map((f) => ({
       id:         f.id,
       fileName:   f.fileName,
       fileUrl:    f.fileUrl,
       fileSize:   f.fileSize,
       mimeType:   f.mimeType,
       uploadedAt: f.uploadedAt,
-      // prefer submissions.user (the student), fallback to file uploader
-      user: f.submissions?.user ?? f.user,
+      user:       f.submissions?.user ?? f.user,
       submission: f.submissions
         ? {
             id:          f.submissions.id,
@@ -86,7 +111,7 @@ export async function GET(
       files,
       _count: {
         files: repo?._count.repository_files ?? 0,
-        logs:  repo?._count.activity_logs  ?? 0,
+        logs:  repo?._count.activity_logs    ?? 0,
       },
     };
   });

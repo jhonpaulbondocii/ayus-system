@@ -19,25 +19,26 @@ import type { Course, Person, Group, Membership } from "./types";
 /* ─────────────────────────────────────────────────────────────────────────────
    ROLE HELPERS
 ───────────────────────────────────────────────────────────────────────────── */
-type CourseRole = "Staff" | "Head";
-const ALL_ROLES: CourseRole[] = ["Staff", "Head"];
+type CourseRole = "Staff" | "Head" | "Faculty";
+const ALL_ROLES: CourseRole[] = ["Staff", "Head", "Faculty"];
 
 function parseRoles(raw: string | null | undefined): CourseRole[] {
-  if (!raw) return ["Staff"];
+  if (!raw) return ["Faculty"];
   const parts = raw.split(",").map(r => r.trim()).filter((r): r is CourseRole => ALL_ROLES.includes(r as CourseRole));
-  return parts.length > 0 ? parts : ["Staff"];
+  return parts.length > 0 ? parts : ["Faculty"];
 }
 function serializeRoles(roles: CourseRole[]): string {
   return [...new Set(roles)].filter(r => ALL_ROLES.includes(r)).join(",") || "Staff";
 }
 export function normalizeCourseRole(raw: string | null | undefined): string {
-  const roles = (raw ?? "").split(",").map(r => r.trim()).filter(r => r === "Staff" || r === "Head");
-  return roles.length > 0 ? roles.join(",") : "Staff";
+  const roles = (raw ?? "").split(",").map(r => r.trim()).filter(r => r === "Staff" || r === "Head" || r === "Faculty");
+  return roles.length > 0 ? roles.join(",") : "Faculty";
 }
 
 const ROLE_BADGE: Record<CourseRole, { bg: string; color: string }> = {
-  Staff: { bg: "#eff6ff", color: "#1d4ed8" },
-  Head:  { bg: "#fef2f2", color: "#7b1113" },
+  Staff:   { bg: "#eff6ff", color: "#1d4ed8" },
+  Head:    { bg: "#fef2f2", color: "#7b1113" },
+  Faculty: { bg: "#f0fdf4", color: "#15803d" },
 };
 
 /* ─────────────────────────────────────────────────────────────────────────────

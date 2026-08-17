@@ -99,6 +99,7 @@ model User {
   quizzesCreated                            Quiz[]                    @relation("QuizAuthor")
   repositoryFiles                           RepositoryFile[]
   sessions                                  Session[]
+  announcementReads                         AnnouncementRead[]
   guidanceLogEntries                        GuidanceLogEntry[]        @relation("GuidanceLogRecordedBy")
   exitInterviewsCounseled                   ExitInterview[]           @relation("ExitInterviewCounselor")
   submissions_submissions_gradedByIdTousers Submission[]              @relation("submissions_gradedByIdTousers")
@@ -123,7 +124,7 @@ model PasswordResetToken {
 model Course {
   id                   String                @id @default(cuid())
   name                 String
-  code                 String
+  code                 String                @unique
   color                String                @default("#cc2a27")
   status               CourseStatus          @default(UNPUBLISHED)
   description          String?
@@ -237,6 +238,7 @@ model Announcement {
   authorId       String?
   locked         Boolean                  @default(false)
   attachments    AnnouncementAttachment[]
+  reads          AnnouncementRead[]
   course         Course                   @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   @@map("announcements")
@@ -253,6 +255,18 @@ model AnnouncementAttachment {
   announcement   Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
 
   @@map("announcement_attachments")
+}
+
+model AnnouncementRead {
+  id             String       @id @default(cuid())
+  announcementId String
+  userId         String
+  readAt         DateTime     @default(now())
+  announcement   Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([announcementId, userId])
+  @@map("announcement_reads")
 }
 
 model Assignment {
@@ -277,6 +291,7 @@ model Assignment {
   isGroupAssignment   Boolean       @default(false)
   notifyUsers         Boolean       @default(false)
   onlineEntryOptions  String[]      @default([])
+  submissionEntries   Json          @default("[]")
   peerReviewAnonymous Boolean       @default(false)
   peerReviewAssign    String        @default("manually")
   requirePeerReviews  Boolean       @default(false)

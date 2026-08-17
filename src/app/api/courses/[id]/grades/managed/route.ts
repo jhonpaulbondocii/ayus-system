@@ -32,7 +32,8 @@ export async function GET(
     }
     const roles = enrollment.courseRole.split(",").map((r) => r.trim().toLowerCase());
     const isHead = roles.includes("head");
-    if (!isHead) {
+    const isStaff = roles.includes("staff");
+    if (!isHead && !isStaff) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
   }

@@ -263,7 +263,7 @@ function FilterPanel({
 
   if (!open) return null;
 
-  const statusOptions     = ["Late", "Missing", "Resubmitted", "Dropped", "Excused"];
+  const statusOptions = ["Late", "Missing", "Excused"];
   const submissionOptions = ["Has Ungraded Submissions", "Has Submissions", "Has No Submissions", "Has Unposted Grades"];
 
   const isActive = (type: ActiveFilter["type"], value: string) =>
@@ -729,11 +729,9 @@ function GradePanel({
       {/* Assignment title bar */}
       <div className="px-4 py-2 border-b border-gray-100 shrink-0 bg-gray-50 flex items-center justify-between">
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1 mb-0.5">
-            <button className="w-5 h-5 flex items-center justify-center rounded border border-gray-200 text-gray-400 hover:bg-gray-100"><ChevronLeft size={11} /></button>
-            <p className="text-xs font-black text-gray-800 truncate flex-1 text-center">{panel.assignmentTitle}</p>
-            <button className="w-5 h-5 flex items-center justify-center rounded border border-gray-200 text-gray-400 hover:bg-gray-100"><ChevronRight size={11} /></button>
-          </div>
+          <div className="flex items-center justify-center mb-0.5">
+  <p className="text-xs font-black text-gray-800 truncate text-center">{panel.assignmentTitle}</p>
+</div>
           <div className="flex items-center gap-1.5 mt-0.5 justify-center flex-wrap">
             <span className="text-[10px] text-gray-400">{panel.maxPoints} pts max</span>
             {panel.grade.submittedAt && (
@@ -990,6 +988,7 @@ function CellEditor({ col, score, onSave, onOpenPanel, onDismiss }: {
   const isPct = dga === "Percentage";
   const inputRef     = useRef<HTMLInputElement>(null);
   const committedRef = useRef(false);
+useEffect(() => { committedRef.current = false; }, []);
   const [ciVal, setCiVal] = useState<string>(
     score === col.points ? "complete" : score === 0 ? "incomplete" : ""
   );
@@ -1535,7 +1534,7 @@ export default function CourseGradesPage({ courseId }: { courseId: string }) {
             {activeFilters.map((f, idx) => (
               <FilterChip key={idx} filter={f} onRemove={() => removeFilter(idx)}
                 onChangeStatus={f.type === "status" ? (val) => changeFilterStatus(idx, val) : undefined}
-                statusOptions={f.type === "status" ? ["Late", "Missing", "Resubmitted", "Dropped", "Excused"] : undefined}
+                statusOptions={f.type === "status" ? ["Late", "Missing", "Excused"] : undefined}
               />
             ))}
           </div>
@@ -1711,9 +1710,9 @@ export default function CourseGradesPage({ courseId }: { courseId: string }) {
                         };
 
                         const handleCellClick = () => {
-                          if (isNG) return;
-                          setActiveCell(isActive ? null : { staffId: staff.id, colId: col.id });
-                        };
+  if (isNG || !gradeEntry) return;
+  setActiveCell(isActive ? null : { staffId: staff.id, colId: col.id });
+};
 
                         return (
                           <td key={col.id} data-grade-cell
