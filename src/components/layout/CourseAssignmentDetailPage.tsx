@@ -998,21 +998,23 @@ export default function CourseAssignmentDetailPage({
         } else {
           const opts = a?.onlineEntryOptions ?? [];
           setEntryStates(opts.map((opt, idx) => ({
-            entryId: `entry-${idx}`,
-            label: TAB_LABELS[normalizeOpt(opt)] ?? opt,
-            type: opt,
-            required: false,
-            allowedFileTypes: [],
-            maxFiles: 1,
-            file: null,
-            fileUrl:   null,
-            fileName:  null,
-            textEntry: "",
-            websiteUrl:"",
-            uploading: false,
-            uploaded:  false,
-            error:     "",
-          })));
+  entryId: `entry-${idx}`,
+  label: TAB_LABELS[normalizeOpt(opt)] ?? opt,
+  type: opt,
+  required: false,
+  allowedFileTypes: [],
+  maxFiles: 1,
+  file: null,
+  fileUrl:   null,
+  fileName:  null,
+  textEntry: "",
+  websiteUrl:"",
+  uploading: false,
+  uploaded:  false,
+  error:     "",
+  maxFileSizeValue: 1,   // ✅ idagdag
+  maxFileSizeUnit: "MB", // ✅ idagdag
+})));
         }
       })
       .catch(() => setLoading(false));
