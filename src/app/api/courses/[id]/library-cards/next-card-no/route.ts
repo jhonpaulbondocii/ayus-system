@@ -1,14 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma"; // adjust import to match your project
+import { prisma } from "@/lib/prisma";
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
+
     const count = await prisma.libraryCardRequest.count({
       where: {
-        courseId: params.id,
+        courseId: id,
         status: { in: ["READY", "RELEASED"] },
       },
     });
@@ -18,6 +20,9 @@ export async function GET(
 
     return NextResponse.json({ cardNo: padded });
   } catch (e) {
-    return NextResponse.json({ error: "Failed to generate card number" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to generate card number" },
+      { status: 500 }
+    );
   }
 }
