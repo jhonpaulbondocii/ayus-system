@@ -9,7 +9,7 @@ type Props = {
 
 export default async function Page(props: Props) {
   const searchParams = await props.searchParams;
-  const { id } = await params;
+  const { id } = await props.params;
   const sp = searchParams ? await searchParams : {};
 
   return (
