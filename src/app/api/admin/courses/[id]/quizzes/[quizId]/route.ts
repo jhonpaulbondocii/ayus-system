@@ -268,8 +268,7 @@ export async function PATCH(req: NextRequest, { params }: Props) {
 
 // ✅ PUT — full update/replace quiz (used by edit modal)
 export async function PUT(req: NextRequest, props: Props) {
-  const params = await props.params;
-  return PATCH(req, { params });
+  return PATCH(req, props);
 }
 
 // ✅ DELETE — delete quiz (Head + Admin)
