@@ -66,6 +66,8 @@ export interface RawAnnouncement {
   locked?: boolean;
   allowComments?: boolean;
   allowLiking?: boolean;
+  availableFrom?: string | null;
+  availableUntil?: string | null;
   attachments?: {
     id: string;
     name: string;
@@ -91,6 +93,8 @@ export interface Announcement {
   locked: boolean;
   allowComments: boolean;
   allowLiking: boolean;
+  availableFrom: string | null;
+  availableUntil: string | null;
   attachments: {
     id: string;
     name: string;

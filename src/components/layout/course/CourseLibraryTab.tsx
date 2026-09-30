@@ -8,6 +8,7 @@ import {
   Trash2, Check, ArrowLeft, Filter, X,
   BookOpen, Download, Users, Clock,
   ExternalLink, FileText, QrCode, FileDown, AlertCircle,
+  MoreVertical,
 } from "lucide-react";
 
 const MAROON    = "#7b1113";
@@ -72,7 +73,7 @@ function StatusBadge({ status }: { status: Status }) {
   const m = STATUS_META[status];
   return (
     <span
-      className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full"
+      className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full shrink-0"
       style={{ color: m.color, background: m.bg }}
     >
       {m.icon} {m.label}
@@ -130,7 +131,7 @@ function SignaturePad({ onSave, onCancel }: { onSave: (dataUrl: string) => void;
         onMouseDown={start} onMouseMove={move} onMouseUp={end} onMouseLeave={end}
         onTouchStart={start} onTouchMove={move} onTouchEnd={end}
       />
-      <div className="flex gap-2">
+      <div className="flex gap-2 flex-wrap">
         <button type="button" onClick={clear}
           className="flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50">
           <X size={11} /> Clear
@@ -143,9 +144,56 @@ function SignaturePad({ onSave, onCancel }: { onSave: (dataUrl: string) => void;
           <Check size={11} /> Save Signature
         </button>
         <button type="button" onClick={onCancel}
-          className="ml-auto text-xs font-semibold text-gray-400 hover:text-gray-600 px-2">
+          className="sm:ml-auto text-xs font-semibold text-gray-400 hover:text-gray-600 px-2">
           Cancel
         </button>
+      </div>
+    </div>
+  );
+}
+
+// ── Generic bottom-sheet shell (mobile) / centered modal (desktop) ────────────
+function SheetModal({
+  onClose, headerColor = MAROON, icon, eyebrow, title, children, footer, maxWidth = "max-w-sm",
+}: {
+  onClose: () => void;
+  headerColor?: string;
+  icon?: React.ReactNode;
+  eyebrow: string;
+  title: string;
+  children: React.ReactNode;
+  footer?: React.ReactNode;
+  maxWidth?: string;
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/30"
+      style={{ backdropFilter: "blur(4px)", fontFamily: FONT }}
+      onClick={onClose}
+    >
+      <div
+        className={`bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl border border-gray-100 w-full ${maxWidth} sm:mx-4 overflow-hidden flex flex-col max-h-[92vh]`}
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="flex justify-center pt-2.5 pb-1 sm:hidden shrink-0">
+          <div className="w-9 h-1 rounded-full bg-gray-300" />
+        </div>
+        <div className="flex items-center justify-between px-5 py-3.5 sm:py-4 border-b border-gray-100 shrink-0" style={{ background: headerColor }}>
+          <div className="flex items-center gap-2.5 min-w-0">
+            {icon && (
+              <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center shrink-0">{icon}</div>
+            )}
+            <div className="min-w-0">
+              <p className="text-[10px] font-black uppercase tracking-widest text-white/60 truncate">{eyebrow}</p>
+              <p className="text-sm font-black text-white truncate">{title}</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="w-7 h-7 flex items-center justify-center rounded-lg text-white/60 hover:text-white hover:bg-white/10 shrink-0">
+            <X size={15} />
+          </button>
+        </div>
+        <div className="overflow-y-auto">{children}</div>
+        {footer && <div className="border-t border-gray-100 bg-gray-50 shrink-0">{footer}</div>}
       </div>
     </div>
   );
@@ -185,52 +233,45 @@ function ShareLinkModal({ courseId, onClose }: { courseId: string; onClose: () =
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/30"
-      style={{ backdropFilter: "blur(4px)", fontFamily: FONT }} onClick={onClose}>
-      <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl border border-gray-100 w-full sm:w-96 overflow-hidden"
-        onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100" style={{ background: MAROON }}>
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center"><BookOpen size={15} className="text-white" /></div>
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-white/60">Library</p>
-              <p className="text-sm font-black text-white">Request Form Link</p>
-            </div>
-          </div>
-          <button onClick={onClose} className="w-7 h-7 flex items-center justify-center rounded-lg text-white/60 hover:text-white hover:bg-white/10"><X size={15} /></button>
+    <SheetModal
+      onClose={onClose}
+      icon={<BookOpen size={15} className="text-white" />}
+      eyebrow="Library"
+      title="Request Form Link"
+      footer={
+        <button onClick={onClose} className="w-full h-11 sm:h-10 text-xs font-semibold text-gray-600 hover:bg-gray-100">
+          Close
+        </button>
+      }
+    >
+      <div className="px-5 py-5 space-y-4">
+        <p className="text-xs text-gray-500 leading-relaxed">Share this link or QR code so students and employees can submit a library card request online.</p>
+        <div className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 flex items-center gap-3">
+          <p className="text-xs text-gray-700 font-mono flex-1 break-all">{url}</p>
+          <button onClick={copy}
+            className="shrink-0 flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-lg transition-all"
+            style={copied ? { background: "#dcfce7", color: "#15803d" } : { background: "#fef2f2", color: MAROON }}>
+            {copied ? <><Check size={11} /> Copied!</> : "Copy"}
+          </button>
         </div>
-        <div className="px-5 py-5 space-y-4">
-          <p className="text-xs text-gray-500 leading-relaxed">Share this link or QR code so students and employees can submit a library card request online.</p>
-          <div className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 flex items-center gap-3">
-            <p className="text-xs text-gray-700 font-mono flex-1 break-all">{url}</p>
-            <button onClick={copy}
-              className="shrink-0 flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-lg transition-all"
-              style={copied ? { background: "#dcfce7", color: "#15803d" } : { background: "#fef2f2", color: MAROON }}>
-              {copied ? <><Check size={11} /> Copied!</> : "Copy"}
-            </button>
+        <div className="flex flex-col items-center gap-3 py-2">
+          <p className="text-[10px] font-black uppercase tracking-widest self-start" style={{ color: MAROON }}>QR Code</p>
+          <div className="w-44 h-44 sm:w-48 sm:h-48 rounded-xl border-2 border-gray-100 flex items-center justify-center bg-white shadow-sm overflow-hidden">
+            {qrLoading
+              ? <div className="w-8 h-8 rounded-full border-2 border-gray-200 animate-spin" style={{ borderTopColor: MAROON }} />
+              : qrDataUrl
+                // eslint-disable-next-line @next/next/no-img-element
+                ? <img src={qrDataUrl} alt="QR Code" className="w-full h-full object-contain" />
+                : <p className="text-[10px] text-gray-400 text-center px-4">Failed to generate QR code</p>}
           </div>
-          <div className="flex flex-col items-center gap-3 py-2">
-            <p className="text-[10px] font-black uppercase tracking-widest self-start" style={{ color: MAROON }}>QR Code</p>
-            <div className="w-48 h-48 rounded-xl border-2 border-gray-100 flex items-center justify-center bg-white shadow-sm overflow-hidden">
-              {qrLoading
-                ? <div className="w-8 h-8 rounded-full border-2 border-gray-200 animate-spin" style={{ borderTopColor: MAROON }} />
-                : qrDataUrl
-                  // eslint-disable-next-line @next/next/no-img-element
-                  ? <img src={qrDataUrl} alt="QR Code" className="w-full h-full object-contain" />
-                  : <p className="text-[10px] text-gray-400 text-center px-4">Failed to generate QR code</p>}
-            </div>
-            <button onClick={downloadQR} disabled={!qrDataUrl || qrLoading}
-              className="flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-lg border transition-all disabled:opacity-40"
-              style={{ borderColor: MAROON, color: MAROON }}>
-              <Download size={12} /> Download QR Code
-            </button>
-          </div>
-        </div>
-        <div className="px-5 py-4 border-t border-gray-100 bg-gray-50">
-          <button onClick={onClose} className="w-full h-10 border border-gray-200 rounded-xl text-xs font-semibold text-gray-600 hover:bg-gray-100">Close</button>
+          <button onClick={downloadQR} disabled={!qrDataUrl || qrLoading}
+            className="flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-lg border transition-all disabled:opacity-40"
+            style={{ borderColor: MAROON, color: MAROON }}>
+            <Download size={12} /> Download QR Code
+          </button>
         </div>
       </div>
-    </div>
+    </SheetModal>
   );
 }
 
@@ -245,28 +286,28 @@ function ExportCardModal({ request, courseId, onClose }: { request: LibraryCardR
   const [downloading,   setDownloading]   = useState(false);
   const [error,         setError]         = useState("");
 
-useEffect(() => {
-  const fetchNextCardNo = async () => {
-    setCardNoLoading(true);
-    try {
-      const res  = await fetch(`/api/courses/${courseId}/library-cards/next-card-no`);
-      const data = await res.json();
-      if (res.ok && data.cardNo) setCardNo(data.cardNo);
-    } catch { /* leave blank, librarian can type manually */ }
-    finally { setCardNoLoading(false); }
-  };
-  fetchNextCardNo();
-}, [courseId]);
+  useEffect(() => {
+    const fetchNextCardNo = async () => {
+      setCardNoLoading(true);
+      try {
+        const res  = await fetch(`/api/courses/${courseId}/library-cards/next-card-no`);
+        const data = await res.json();
+        if (res.ok && data.cardNo) setCardNo(data.cardNo);
+      } catch { /* leave blank, librarian can type manually */ }
+      finally { setCardNoLoading(false); }
+    };
+    fetchNextCardNo();
+  }, [courseId]);
 
-useEffect(() => {
-  fetch("/api/profile")
-    .then(r => r.json())
-    .then(d => {
-      if (d.user?.name)             setLibrarian(d.user.name);
-      if (d.user?.librarySignature) setLibrarianSig(d.user.librarySignature);
-    })
-    .catch(() => {});
-}, []);
+  useEffect(() => {
+    fetch("/api/profile")
+      .then(r => r.json())
+      .then(d => {
+        if (d.user?.name)             setLibrarian(d.user.name);
+        if (d.user?.librarySignature) setLibrarianSig(d.user.librarySignature);
+      })
+      .catch(() => {});
+  }, []);
 
   const handleDownload = async () => {
     if (!campus.trim()) { setError("Campus is required."); return; }
@@ -274,8 +315,8 @@ useEffect(() => {
     setError(""); setDownloading(true);
     try {
       const q   = new URLSearchParams({ campus: campus.trim(), cardNo: cardNo.trim() });
-if (librarian.trim())    q.set("librarian",    librarian.trim());
-if (librarianSig)        q.set("librarianSig", librarianSig);
+      if (librarian.trim()) q.set("librarian",    librarian.trim());
+      if (librarianSig)     q.set("librarianSig", librarianSig);
       const res = await fetch(`/api/courses/${courseId}/library-cards/${request.id}/export-card?${q}`);
       if (!res.ok) { setError("Export failed. Please try again."); return; }
       const blob = await res.blob();
@@ -288,83 +329,124 @@ if (librarianSig)        q.set("librarianSig", librarianSig);
     finally  { setDownloading(false); }
   };
 
-  const inputCls = "w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-[#7b1113] focus:ring-2 focus:ring-[#7b1113]/10 transition-all bg-white";
+  const inputCls = "w-full border border-gray-200 rounded-lg px-3 py-2.5 sm:py-2 text-sm outline-none focus:border-[#7b1113] focus:ring-2 focus:ring-[#7b1113]/10 transition-all bg-white";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30"
-      style={{ backdropFilter: "blur(4px)", fontFamily: FONT }} onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100" style={{ background: MAROON }}>
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center"><FileDown size={15} className="text-white" /></div>
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-white/60">Library Card</p>
-              <p className="text-sm font-black text-white">Export / Print Card</p>
-            </div>
-          </div>
-          <button onClick={onClose} className="w-7 h-7 flex items-center justify-center rounded-lg text-white/60 hover:text-white hover:bg-white/10"><X size={15} /></button>
-        </div>
-        <div className="px-5 py-5 space-y-4">
-          <div className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 space-y-1">
-            <p className="text-xs font-bold text-gray-800">{request.name}</p>
-            {request.studentNo    && <p className="text-[11px] text-gray-500">Student No.: {request.studentNo}</p>}
-            {request.courseProgram && <p className="text-[11px] text-gray-500">{request.courseProgram} {request.yearSection}</p>}
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1">Campus <span className="text-red-500">*</span></label>
-            <input value={campus} onChange={e => { setCampus(e.target.value); setError(""); }} placeholder="e.g. Main, San Fernando, Apalit" className={inputCls} />
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1">Card No. <span className="text-red-500">*</span></label>
-            <div className="relative">
-              <input value={cardNo} onChange={e => { setCardNo(e.target.value); setError(""); }}
-                placeholder={cardNoLoading ? "Generating…" : "e.g. 2024-00001"}
-                disabled={cardNoLoading}
-                className={inputCls + (cardNoLoading ? " opacity-50" : "")} />
-              {cardNoLoading && (
-                <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                  <RefreshCw size={13} className="animate-spin text-gray-400" />
-                </div>
-              )}
-            </div>
-            <p className="text-[10px] text-gray-400 mt-1">Auto-generated based on total cards issued. You may edit if needed.</p>
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1">Librarian Name</label>
-            <input value={librarian} onChange={e => setLibrarian(e.target.value)} placeholder="Full name of librarian" className={inputCls} />
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1">Librarian Signature</label>
-            {librarianSig ? (
-              <div className="flex items-center gap-3">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={librarianSig} alt="Librarian sig" className="h-12 border border-gray-200 rounded-lg bg-white p-1" />
-                <button onClick={() => { setLibrarianSig(""); setShowSigPad(true); }}
-                  className="text-xs text-red-500 hover:text-red-700 flex items-center gap-1">
-                  <X size={11} /> Redo
-                </button>
-              </div>
-            ) : showSigPad ? (
-              <SignaturePad
-                onSave={d => { setLibrarianSig(d); setShowSigPad(false); }}
-                onCancel={() => setShowSigPad(false)}
-              />
-            ) : (
-              <button type="button" onClick={() => setShowSigPad(true)}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-dashed border-gray-300 text-xs font-semibold text-gray-500 hover:border-gray-400 w-full justify-center">
-                Draw Signature
-              </button>
-            )}
-          </div>
-          {error && <div className="flex items-center gap-2 text-xs text-red-500 font-semibold"><AlertCircle size={13} /> {error}</div>}
-        </div>
-        <div className="px-5 py-4 border-t border-gray-100 flex gap-2">
+    <SheetModal
+      onClose={onClose}
+      icon={<FileDown size={15} className="text-white" />}
+      eyebrow="Library Card"
+      title="Export / Print Card"
+      maxWidth="max-w-sm"
+      footer={
+        <div className="px-5 py-4 flex gap-2">
           <button onClick={onClose} className="flex-1 py-2.5 rounded-xl text-xs font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50">Cancel</button>
           <button onClick={handleDownload} disabled={downloading}
             className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold text-white disabled:opacity-60 transition-all"
             style={{ background: MAROON }}>
             {downloading ? <><RefreshCw size={13} className="animate-spin" /> Generating...</> : <><FileDown size={13} /> Download PDF</>}
           </button>
+        </div>
+      }
+    >
+      <div className="px-5 py-5 space-y-4">
+        <div className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 space-y-1">
+          <p className="text-xs font-bold text-gray-800">{request.name}</p>
+          {request.studentNo     && <p className="text-[11px] text-gray-500">Student No.: {request.studentNo}</p>}
+          {request.courseProgram && <p className="text-[11px] text-gray-500">{request.courseProgram} {request.yearSection}</p>}
+        </div>
+        <div>
+          <label className="block text-xs font-semibold text-gray-600 mb-1">Campus <span className="text-red-500">*</span></label>
+          <input value={campus} onChange={e => { setCampus(e.target.value); setError(""); }} placeholder="e.g. Main, San Fernando, Apalit" className={inputCls} />
+        </div>
+        <div>
+          <label className="block text-xs font-semibold text-gray-600 mb-1">Card No. <span className="text-red-500">*</span></label>
+          <div className="relative">
+            <input value={cardNo} onChange={e => { setCardNo(e.target.value); setError(""); }}
+              placeholder={cardNoLoading ? "Generating…" : "e.g. 2024-00001"}
+              disabled={cardNoLoading}
+              className={inputCls + (cardNoLoading ? " opacity-50" : "")} />
+            {cardNoLoading && (
+              <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                <RefreshCw size={13} className="animate-spin text-gray-400" />
+              </div>
+            )}
+          </div>
+          <p className="text-[10px] text-gray-400 mt-1">Auto-generated based on total cards issued. You may edit if needed.</p>
+        </div>
+        <div>
+          <label className="block text-xs font-semibold text-gray-600 mb-1">Librarian Name</label>
+          <input value={librarian} onChange={e => setLibrarian(e.target.value)} placeholder="Full name of librarian" className={inputCls} />
+        </div>
+        <div>
+          <label className="block text-xs font-semibold text-gray-600 mb-1">Librarian Signature</label>
+          {librarianSig ? (
+            <div className="flex items-center gap-3">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={librarianSig} alt="Librarian sig" className="h-12 border border-gray-200 rounded-lg bg-white p-1" />
+              <button onClick={() => { setLibrarianSig(""); setShowSigPad(true); }}
+                className="text-xs text-red-500 hover:text-red-700 flex items-center gap-1">
+                <X size={11} /> Redo
+              </button>
+            </div>
+          ) : showSigPad ? (
+            <SignaturePad
+              onSave={d => { setLibrarianSig(d); setShowSigPad(false); }}
+              onCancel={() => setShowSigPad(false)}
+            />
+          ) : (
+            <button type="button" onClick={() => setShowSigPad(true)}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-dashed border-gray-300 text-xs font-semibold text-gray-500 hover:border-gray-400 w-full justify-center">
+              Draw Signature
+            </button>
+          )}
+        </div>
+        {error && <div className="flex items-center gap-2 text-xs text-red-500 font-semibold"><AlertCircle size={13} /> {error}</div>}
+      </div>
+    </SheetModal>
+  );
+}
+
+// ── Mobile action sheet: lists secondary actions (Reject / Export / Affidavit / Delete) ──
+interface SheetAction {
+  key: string;
+  label: string;
+  icon: React.ReactNode;
+  onClick: () => void;
+  danger?: boolean;
+  disabled?: boolean;
+}
+
+function ActionSheet({ actions, onClose }: { actions: SheetAction[]; onClose: () => void }) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/30 sm:hidden"
+      style={{ backdropFilter: "blur(4px)", fontFamily: FONT }}
+      onClick={onClose}
+    >
+      <div className="bg-white rounded-t-2xl shadow-2xl w-full overflow-hidden" onClick={e => e.stopPropagation()}>
+        <div className="flex justify-center pt-2.5 pb-1">
+          <div className="w-9 h-1 rounded-full bg-gray-300" />
+        </div>
+        <div className="px-5 pb-2 pt-1">
+          <p className="text-[11px] font-black uppercase tracking-widest text-gray-400">More Actions</p>
+        </div>
+        <div className="pb-2">
+          {actions.map(a => (
+            <button
+              key={a.key}
+              onClick={() => { if (!a.disabled) { a.onClick(); onClose(); } }}
+              disabled={a.disabled}
+              className="w-full flex items-center gap-3 px-5 py-3.5 text-sm font-semibold text-left disabled:opacity-40"
+              style={{ color: a.danger ? "#dc2626" : "#1f2937" }}
+            >
+              <span className="w-5 flex items-center justify-center">{a.icon}</span>
+              {a.label}
+            </button>
+          ))}
+        </div>
+        <div className="border-t border-gray-100 px-5 py-3.5" style={{ paddingBottom: "calc(14px + env(safe-area-inset-bottom))" }}>
+          <button onClick={onClose} className="w-full text-center text-sm font-bold text-gray-500">Cancel</button>
         </div>
       </div>
     </div>
@@ -384,6 +466,7 @@ function RequestDetailView({
   const [patching,         setPatching]        = useState(false);
   const [showExportModal,  setShowExportModal] = useState(false);
   const [affidavitDl,      setAffidavitDl]     = useState(false);
+  const [showMoreSheet,    setShowMoreSheet]   = useState(false);
 
   useEffect(() => {
     fetch("/api/profile")
@@ -441,54 +524,60 @@ function RequestDetailView({
       </div>
     ) : null;
 
+  // ── Derive available actions once, shared between desktop inline bar & mobile sheet ──
+  const progressAction =
+    local.status === "PENDING"    ? { label: "Approve",          color: MAROON,     icon: <Check size={12} />,    onClick: () => patch({ status: "PROCESSING" }) } :
+    local.status === "PROCESSING" ? { label: "Mark as Ready",    color: "#065f46",  icon: <Check size={12} />,    onClick: () => patch({ status: "READY" }) } :
+    local.status === "READY"      ? { label: "Mark as Released", color: "#1d4ed8",  icon: <Download size={12} />, onClick: () => patch({ status: "RELEASED", releasedAt: new Date().toISOString(), _releasedBy: currentUserName }) } :
+    null;
+
+  const canReject   = local.status !== "RELEASED" && local.status !== "REJECTED";
+  const canExport   = local.applicantType === "STUDENT";
+  const canAffidavit = local.requestType === "STUDENT_LOST";
+
+  const secondaryActions: SheetAction[] = [
+    ...(canReject ? [{ key: "reject", label: "Reject Request", icon: <X size={15} />, onClick: handleReject, danger: true, disabled: patching }] : []),
+    ...(canExport ? [{ key: "export", label: "Export Card", icon: <FileDown size={15} />, onClick: () => setShowExportModal(true) }] : []),
+    ...(canAffidavit ? [{ key: "affidavit", label: affidavitDl ? "Generating…" : "Download Affidavit", icon: <FileText size={15} />, onClick: handleDownloadAffidavit, disabled: affidavitDl }] : []),
+    { key: "delete", label: "Delete Request", icon: <Trash2 size={15} />, onClick: () => setShowDelete(true), danger: true },
+  ];
+
   return (
     <div className="flex flex-col h-full" style={{ fontFamily: FONT, background: "#f8fafc" }}>
 
-      {/* ── Top bar ── */}
+      {/* ── Top bar (compact on mobile, full actions inline on desktop) ── */}
       <div style={{ background: "#fff", borderBottom: `1px solid ${RULE}` }}
-        className="flex items-center gap-3 px-6 py-3 shrink-0 flex-wrap">
-        <button onClick={onBack} className="flex items-center gap-1.5 text-sm font-semibold transition-colors" style={{ color: MAROON }}>
+        className="flex items-center gap-3 px-4 sm:px-6 py-3 shrink-0">
+        <button onClick={onBack} className="flex items-center gap-1.5 text-sm font-semibold transition-colors shrink-0" style={{ color: MAROON }}>
           <ArrowLeft size={14} /> Back
         </button>
-        <span style={{ width: 1, height: 16, background: RULE }} />
-        <p className="text-sm font-bold flex-1 truncate" style={{ color: SLATE }}>{local.name}</p>
+        <span style={{ width: 1, height: 16, background: RULE }} className="shrink-0" />
+        <p className="text-sm font-bold flex-1 truncate min-w-0" style={{ color: SLATE }}>{local.name}</p>
         <StatusBadge status={local.status} />
+
+        {/* Desktop: full inline action set */}
         {isHead && (
-          <div className="flex items-center gap-2 flex-wrap">
-            {local.status === "PENDING" && (
-  <button onClick={() => patch({ status: "PROCESSING" })} disabled={patching}
-    className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg text-white transition-all disabled:opacity-50"
-    style={{ background: MAROON }}>
-    <Check size={12} /> Approve
-  </button>
-)}
-{local.status === "PROCESSING" && (
-  <button onClick={() => patch({ status: "READY" })} disabled={patching}
-    className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg text-white transition-all disabled:opacity-50"
-    style={{ background: "#065f46" }}>
-    <Check size={12} /> Mark as Ready
-  </button>
-)}
-{local.status === "READY" && (
-  <button onClick={() => patch({ status: "RELEASED", releasedAt: new Date().toISOString(), _releasedBy: currentUserName })} disabled={patching}
-    className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg text-white transition-all disabled:opacity-50"
-    style={{ background: "#1d4ed8" }}>
-    <Download size={12} /> Mark as Released
-  </button>
-)}
-{local.status !== "RELEASED" && local.status !== "REJECTED" && (
+          <div className="hidden sm:flex items-center gap-2 flex-wrap">
+            {progressAction && (
+              <button onClick={progressAction.onClick} disabled={patching}
+                className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg text-white transition-all disabled:opacity-50"
+                style={{ background: progressAction.color }}>
+                {progressAction.icon} {progressAction.label}
+              </button>
+            )}
+            {canReject && (
               <button onClick={handleReject} disabled={patching}
                 className="flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 transition-all disabled:opacity-50">
                 <X size={12} /> Reject
               </button>
             )}
-            {local.applicantType === "STUDENT" && (
+            {canExport && (
               <button onClick={() => setShowExportModal(true)}
                 className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-all">
                 <FileDown size={13} /> Export Card
               </button>
             )}
-            {local.requestType === "STUDENT_LOST" && (
+            {canAffidavit && (
               <button onClick={handleDownloadAffidavit} disabled={affidavitDl}
                 className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-all disabled:opacity-50">
                 {affidavitDl ? <><RefreshCw size={13} className="animate-spin" /> Generating...</> : <><FileText size={13} /> Affidavit</>}
@@ -500,18 +589,29 @@ function RequestDetailView({
             </button>
           </div>
         )}
+
+        {/* Mobile: kebab opens the action sheet */}
+        {isHead && (
+          <button
+            onClick={() => setShowMoreSheet(true)}
+            className="sm:hidden w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 shrink-0"
+            aria-label="More actions"
+          >
+            <MoreVertical size={17} />
+          </button>
+        )}
       </div>
 
       {/* ── Body ── */}
       <div className="flex-1 overflow-y-auto" style={{ background: "#f1f5f9" }}>
         <div className="grid grid-cols-1 gap-0 h-full">
 
-          {/* LEFT COLUMN */}
+          {/* Applicant Info */}
           <div className="flex flex-col" style={{ background: "#fff" }}>
-            <div className="px-5 py-3 border-b border-gray-100" style={{ background: "#fafafa" }}>
+            <div className="px-4 sm:px-5 py-3 border-b border-gray-100" style={{ background: "#fafafa" }}>
               <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.14em", textTransform: "uppercase", color: MAROON }}>Applicant Information</p>
             </div>
-            <div className="px-5 py-4" style={{ borderBottom: `1px solid ${RULE}` }}>
+            <div className="px-4 sm:px-5 py-4" style={{ borderBottom: `1px solid ${RULE}` }}>
               <p style={{ fontSize: 14, fontWeight: 700, color: SLATE, lineHeight: 1.3 }}>{local.name}</p>
               <p style={{ fontSize: 11, color: MUTED, marginTop: 2 }}>{TYPE_LABELS[local.requestType]}</p>
               <span className="inline-flex items-center mt-2 text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wide"
@@ -519,7 +619,7 @@ function RequestDetailView({
                 {local.cardType ?? "—"}
               </span>
             </div>
-            <div className="flex-1 overflow-y-auto px-5 py-2">
+            <div className="flex-1 overflow-y-auto px-4 sm:px-5 py-2">
               <InfoRow label="Sex"          value={local.sex} />
               <InfoRow label="Contact No."  value={local.contactNo} />
               <InfoRow label="Email"        value={local.email} />
@@ -544,10 +644,10 @@ function RequestDetailView({
 
             {/* Attachments */}
             <div style={{ borderTop: `1px solid ${RULE}` }}>
-              <div className="px-5 py-3 border-b border-gray-100" style={{ background: "#fafafa" }}>
+              <div className="px-4 sm:px-5 py-3 border-b border-gray-100" style={{ background: "#fafafa" }}>
                 <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.14em", textTransform: "uppercase", color: MAROON }}>Attachments</p>
               </div>
-              <div className="px-5 py-4 flex gap-3 flex-wrap">
+              <div className="px-4 sm:px-5 py-4 flex gap-3 flex-wrap">
                 {local.photoUrl ? (
                   <a href={local.photoUrl} target="_blank" rel="noreferrer"
                     className="group relative w-16 h-20 rounded-lg border border-gray-200 overflow-hidden bg-gray-100 shrink-0">
@@ -583,37 +683,60 @@ function RequestDetailView({
             </div>
 
             {local.status === "RELEASED" && (
-              <div className="px-5 py-4" style={{ borderTop: `1px solid ${RULE}`, background: "#f8fafc" }}>
+              <div className="px-4 sm:px-5 py-4" style={{ borderTop: `1px solid ${RULE}`, background: "#f8fafc" }}>
                 <p style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: MUTED, marginBottom: 8 }}>Released</p>
                 <p style={{ fontSize: 10, color: MUTED }}>{fmtDate(local.releasedAt)}</p>
               </div>
             )}
+
+            {/* spacer so content isn't hidden behind the mobile sticky action bar */}
+            {isHead && progressAction && <div className="h-16 sm:hidden" />}
           </div>
-
-
         </div>
       </div>
+
+      {/* ── Mobile sticky primary action bar ── */}
+      {isHead && progressAction && (
+        <div
+          className="sm:hidden shrink-0 border-t border-gray-100 bg-white px-4 py-3 flex items-center gap-2"
+          style={{ paddingBottom: "calc(12px + env(safe-area-inset-bottom))" }}
+        >
+          <button onClick={progressAction.onClick} disabled={patching}
+            className="flex-1 flex items-center justify-center gap-1.5 h-11 rounded-xl text-sm font-bold text-white disabled:opacity-50"
+            style={{ background: progressAction.color }}>
+            {progressAction.icon} {progressAction.label}
+          </button>
+        </div>
+      )}
+
+      {showMoreSheet && (
+        <ActionSheet actions={secondaryActions} onClose={() => setShowMoreSheet(false)} />
+      )}
 
       {showExportModal && <ExportCardModal request={local} courseId={courseId} onClose={() => setShowExportModal(false)} />}
 
       {showDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30"
-          style={{ backdropFilter: "blur(4px)", fontFamily: FONT }} onClick={() => setShowDelete(false)}>
-          <div className="bg-white rounded-2xl shadow-2xl w-80 p-6" style={{ border: `1px solid ${RULE}` }} onClick={e => e.stopPropagation()}>
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4" style={{ background: "#fef2f2" }}>
-              <Trash2 className="w-5 h-5 text-red-400" />
-            </div>
-            <p className="text-sm font-bold mb-1" style={{ color: SLATE }}>Delete this request?</p>
-            <p className="text-xs mb-5" style={{ color: MUTED }}>
-              {local.name} — {TYPE_LABELS[local.requestType]}<br />This cannot be undone.
-            </p>
-            <div className="flex gap-2">
-              <button onClick={() => setShowDelete(false)} className="flex-1 py-2.5 rounded-xl text-xs font-semibold"
-                style={{ border: `1px solid ${RULE}`, color: MUTED }}>Cancel</button>
+        <SheetModal
+          onClose={() => setShowDelete(false)}
+          headerColor="#dc2626"
+          icon={<Trash2 size={15} className="text-white" />}
+          eyebrow="Library Card"
+          title="Delete Request"
+          maxWidth="max-w-xs"
+          footer={
+            <div className="px-5 py-4 flex gap-2">
+              <button onClick={() => setShowDelete(false)} className="flex-1 py-2.5 rounded-xl text-xs font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50">Cancel</button>
               <button onClick={handleDelete} className="flex-1 py-2.5 rounded-xl text-xs font-bold text-white bg-red-500 hover:bg-red-600">Delete</button>
             </div>
+          }
+        >
+          <div className="px-5 py-5">
+            <p className="text-sm font-bold mb-1" style={{ color: SLATE }}>Delete this request?</p>
+            <p className="text-xs" style={{ color: MUTED }}>
+              {local.name} — {TYPE_LABELS[local.requestType]}<br />This cannot be undone.
+            </p>
           </div>
-        </div>
+        </SheetModal>
       )}
     </div>
   );
@@ -624,7 +747,7 @@ export default function CourseLibraryTab({ courseId, isHead }: Props) {
   const [loading,      setLoading]      = useState(true);
   const [error,        setError]        = useState("");
   const [search,       setSearch]       = useState("");
- const [statusFilter, setStatusFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
   const [typeFilter,   setTypeFilter]   = useState("");
   const [courseFilter, setCourseFilter] = useState("");
   const [dateFrom,     setDateFrom]     = useState("");
@@ -653,7 +776,7 @@ export default function CourseLibraryTab({ courseId, isHead }: Props) {
   }, [courseId, search, statusFilter, typeFilter]);
 
   useEffect(() => { fetchRequests(); }, [fetchRequests]);
- useEffect(() => { setPage(1); }, [search, statusFilter, typeFilter, courseFilter, dateFrom, dateTo]);
+  useEffect(() => { setPage(1); }, [search, statusFilter, typeFilter, courseFilter, dateFrom, dateTo]);
 
   const filteredRequests = requests.filter(r => {
     if (courseFilter && r.courseProgram !== courseFilter) return false;
@@ -664,6 +787,9 @@ export default function CourseLibraryTab({ courseId, isHead }: Props) {
   const hasActiveFilter = !!(statusFilter || typeFilter || courseFilter || dateFrom || dateTo);
   const totalPages = Math.max(1, Math.ceil(filteredRequests.length / PAGE_SIZE));
   const paginated  = filteredRequests.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  const selectCls = "w-full text-xs border border-gray-200 rounded-lg px-3 py-2 bg-white text-gray-700 outline-none focus:border-[#7b1113]";
+  const filterLabelCls = "block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1";
 
   if (detail) {
     return (
@@ -680,23 +806,23 @@ export default function CourseLibraryTab({ courseId, isHead }: Props) {
     <div className="h-full bg-[#f8f8f7] flex flex-col overflow-hidden" style={{ fontFamily: FONT }}>
 
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-4 sm:px-8 py-4 sm:py-5 flex items-center justify-between shrink-0 gap-3">
+      <div className="bg-white border-b border-gray-200 px-4 sm:px-8 py-3.5 sm:py-5 flex items-center justify-between shrink-0 gap-3">
         <div className="min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.15em] mb-0.5" style={{ color: MAROON }}>Library</p>
-          <h1 className="text-lg sm:text-xl font-bold text-gray-900 leading-none">Library Cards</h1>
+          <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.15em] mb-0.5" style={{ color: MAROON }}>Library</p>
+          <h1 className="text-base sm:text-xl font-bold text-gray-900 leading-none">Library Cards</h1>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <button onClick={fetchRequests}
-            className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 border border-gray-200 hover:border-gray-400 hover:text-gray-700 px-2.5 sm:px-3 py-1.5 rounded-lg transition-all">
+            className="flex items-center justify-center gap-1.5 text-xs font-semibold text-gray-500 border border-gray-200 hover:border-gray-400 hover:text-gray-700 w-8 h-8 sm:w-auto sm:h-auto sm:px-3 sm:py-1.5 rounded-lg transition-all">
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
             <span className="hidden sm:inline">Refresh</span>
           </button>
           <button onClick={() => setShowShare(true)}
-            className="flex items-center gap-1.5 text-xs font-bold px-3 sm:px-4 py-1.5 rounded-lg text-white transition-all"
+            className="flex items-center gap-1.5 text-xs font-bold px-3 sm:px-4 h-8 sm:h-auto sm:py-1.5 rounded-lg text-white transition-all"
             style={{ background: MAROON }}>
             <QrCode className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Share Form Link</span>
-            <span className="sm:hidden">Share</span>
+            <span>Share</span>
+            <span className="hidden sm:inline">&nbsp;Form Link</span>
           </button>
         </div>
       </div>
@@ -704,40 +830,40 @@ export default function CourseLibraryTab({ courseId, isHead }: Props) {
       <div className="flex-1 overflow-y-auto px-4 sm:px-8 py-4 sm:py-6 flex flex-col gap-4 sm:gap-5">
 
         {/* Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
           {[
-            { label: "Total",      value: requests.length },
-            { label: "Pending",    value: requests.filter(r => r.status === "PENDING").length },
-            { label: "Ready",      value: requests.filter(r => r.status === "READY").length },
-            { label: "Released",   value: requests.filter(r => r.status === "RELEASED").length },
+            { label: "Total",    value: requests.length },
+            { label: "Pending",  value: requests.filter(r => r.status === "PENDING").length },
+            { label: "Ready",    value: requests.filter(r => r.status === "READY").length },
+            { label: "Released", value: requests.filter(r => r.status === "RELEASED").length },
           ].map(s => (
-            <div key={s.label} className="bg-white border border-gray-200 rounded-xl px-4 py-3 flex items-center gap-3">
-              <div className="rounded-lg p-2 shrink-0" style={{ background: "#f3f4f6" }}>
-                <BookOpen className="w-4 h-4" style={{ color: MAROON }} />
+            <div key={s.label} className="bg-white border border-gray-200 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 flex items-center gap-2.5 sm:gap-3">
+              <div className="rounded-lg p-1.5 sm:p-2 shrink-0" style={{ background: "#f3f4f6" }}>
+                <BookOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4" style={{ color: MAROON }} />
               </div>
-              <div>
-                <p className="text-xl font-black tabular-nums text-gray-900">{s.value}</p>
-                <p className="text-xs font-semibold text-gray-500">{s.label}</p>
+              <div className="min-w-0">
+                <p className="text-lg sm:text-xl font-black tabular-nums text-gray-900 leading-tight">{s.value}</p>
+                <p className="text-[11px] sm:text-xs font-semibold text-gray-500 truncate">{s.label}</p>
               </div>
             </div>
           ))}
         </div>
 
-        {/* Table */}
+        {/* Table / list */}
         <div className="flex-1 bg-white border border-gray-200 rounded-xl overflow-hidden flex flex-col shadow-sm min-h-0">
 
           {/* Toolbar */}
-          <div className="px-4 sm:px-5 py-3 border-b border-gray-100 flex items-center gap-2 flex-wrap">
-            <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-3 py-1.5 flex-1 sm:flex-none sm:w-64 bg-gray-50 focus-within:bg-white focus-within:border-gray-400 transition-all">
+          <div className="px-3 sm:px-5 py-2.5 sm:py-3 border-b border-gray-100 flex items-center gap-2">
+            <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-3 py-1.5 flex-1 bg-gray-50 focus-within:bg-white focus-within:border-gray-400 transition-all min-w-0">
               <Search className="w-3.5 h-3.5 text-gray-400 shrink-0" />
               <input value={search} onChange={e => setSearch(e.target.value)}
                 placeholder="Search name, student no., email…"
                 className="flex-1 text-xs text-gray-700 placeholder:text-gray-400 outline-none bg-transparent min-w-0" />
-              {search && <button onClick={() => setSearch("")} className="text-gray-300 hover:text-gray-500"><X className="w-3 h-3" /></button>}
+              {search && <button onClick={() => setSearch("")} className="text-gray-300 hover:text-gray-500 shrink-0"><X className="w-3 h-3" /></button>}
             </div>
             <button onClick={() => setShowFilters(f => !f)}
               style={(showFilters || hasActiveFilter) ? { background: MAROON, color: "#fff", borderColor: MAROON } : {}}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[11px] font-bold transition-all shrink-0 ${!(showFilters || hasActiveFilter) ? "border-gray-200 text-gray-500 hover:border-gray-400" : ""}`}>
+              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg border text-[11px] font-bold transition-all shrink-0 ${!(showFilters || hasActiveFilter) ? "border-gray-200 text-gray-500 hover:border-gray-400" : ""}`}>
               <Filter className="w-3 h-3" />
               <span className="hidden sm:inline">Filters</span>
               {hasActiveFilter && <span className="w-1.5 h-1.5 rounded-full bg-white/70" />}
@@ -745,45 +871,47 @@ export default function CourseLibraryTab({ courseId, isHead }: Props) {
           </div>
 
           {showFilters && (
-            <div className="px-4 sm:px-5 py-3 border-b border-gray-100 bg-gray-50 space-y-2.5">
-              <div className="flex items-center gap-3 flex-wrap">
-                <span className="text-xs font-bold text-gray-500 uppercase tracking-wide shrink-0">Type</span>
-                <select value={typeFilter} onChange={e => setTypeFilter(e.target.value)}
-                  className="text-xs border border-gray-200 rounded-lg pl-3 pr-7 py-1.5 bg-white text-gray-700 outline-none">
-                  <option value="">All Types</option>
-                  <option value="STUDENT_NEW">Student (New)</option>
-                  <option value="STUDENT_LOST">Student (Lost)</option>
-                  <option value="EMPLOYEE">Employee</option>
-                </select>
-                <span className="text-xs font-bold text-gray-500 uppercase tracking-wide shrink-0">Status</span>
-                <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}
-                  className="text-xs border border-gray-200 rounded-lg pl-3 pr-7 py-1.5 bg-white text-gray-700 outline-none">
-                  <option value="">All Statuses</option>
-                  {(Object.keys(STATUS_META) as Status[]).map(s => (
-                    <option key={s} value={s}>{STATUS_META[s].label}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex items-center gap-3 flex-wrap">
-                <span className="text-xs font-bold text-gray-500 uppercase tracking-wide shrink-0">Course</span>
-                <select value={courseFilter} onChange={e => setCourseFilter(e.target.value)}
-                  className="text-xs border border-gray-200 rounded-lg pl-3 pr-7 py-1.5 bg-white text-gray-700 outline-none max-w-[260px]">
-                  <option value="">All Courses</option>
-                  {[...new Set(requests.map(r => r.courseProgram).filter(Boolean))].map(c => (
-                    <option key={c} value={c!}>{c}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex items-center gap-3 flex-wrap">
-                <span className="text-xs font-bold text-gray-500 uppercase tracking-wide shrink-0">Date Range</span>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)}
-                    className="text-xs border border-gray-200 rounded-lg px-3 py-1.5 bg-white text-gray-700 outline-none" />
-                  <span className="text-xs text-gray-400">to</span>
-                  <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)}
-                    className="text-xs border border-gray-200 rounded-lg px-3 py-1.5 bg-white text-gray-700 outline-none" />
+            <div className="px-3 sm:px-5 py-4 border-b border-gray-100 bg-gray-50 space-y-3.5">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
+                <div>
+                  <label className={filterLabelCls}>Type</label>
+                  <select value={typeFilter} onChange={e => setTypeFilter(e.target.value)} className={selectCls}>
+                    <option value="">All Types</option>
+                    <option value="STUDENT_NEW">Student (New)</option>
+                    <option value="STUDENT_LOST">Student (Lost)</option>
+                    <option value="EMPLOYEE">Employee</option>
+                  </select>
                 </div>
-                <div className="flex items-center gap-1.5 flex-wrap">
+                <div>
+                  <label className={filterLabelCls}>Status</label>
+                  <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className={selectCls}>
+                    <option value="">All Statuses</option>
+                    {(Object.keys(STATUS_META) as Status[]).map(s => (
+                      <option key={s} value={s}>{STATUS_META[s].label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="col-span-2 sm:col-span-2">
+                  <label className={filterLabelCls}>Course</label>
+                  <select value={courseFilter} onChange={e => setCourseFilter(e.target.value)} className={selectCls}>
+                    <option value="">All Courses</option>
+                    {[...new Set(requests.map(r => r.courseProgram).filter(Boolean))].map(c => (
+                      <option key={c} value={c!}>{c}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className={filterLabelCls}>Date Range</label>
+                <div className="flex items-center gap-2">
+                  <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)}
+                    className="flex-1 min-w-0 text-xs border border-gray-200 rounded-lg px-2.5 py-2 bg-white text-gray-700 outline-none" />
+                  <span className="text-xs text-gray-400 shrink-0">to</span>
+                  <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)}
+                    className="flex-1 min-w-0 text-xs border border-gray-200 rounded-lg px-2.5 py-2 bg-white text-gray-700 outline-none" />
+                </div>
+                <div className="flex items-center gap-1.5 flex-wrap mt-2">
                   {[
                     { label: "Today",      fn: () => { const d = new Date().toISOString().split("T")[0]; setDateFrom(d); setDateTo(d); } },
                     { label: "This Week",  fn: () => { const now = new Date(); const mon = new Date(now); mon.setDate(now.getDate() - now.getDay() + 1); setDateFrom(mon.toISOString().split("T")[0]); setDateTo(new Date().toISOString().split("T")[0]); } },
@@ -796,6 +924,7 @@ export default function CourseLibraryTab({ courseId, isHead }: Props) {
                   ))}
                 </div>
               </div>
+
               {hasActiveFilter && (
                 <button onClick={() => { setStatusFilter(""); setTypeFilter(""); setCourseFilter(""); setDateFrom(""); setDateTo(""); }}
                   className="flex items-center gap-1 text-[11px] font-bold hover:underline" style={{ color: MAROON }}>
@@ -810,7 +939,7 @@ export default function CourseLibraryTab({ courseId, isHead }: Props) {
               {Array.from({ length: 8 }).map((_, i) => (
                 <div key={i} className="flex items-center gap-4 px-5 py-3.5">
                   <div className="h-3 w-28 bg-gray-100 rounded" />
-                  <div className="h-3 w-20 bg-gray-100 rounded" />
+                  <div className="h-3 w-20 bg-gray-100 rounded hidden sm:block" />
                   <div className="h-3 flex-1 bg-gray-100 rounded" />
                 </div>
               ))}
@@ -819,6 +948,7 @@ export default function CourseLibraryTab({ courseId, isHead }: Props) {
             <div className="flex-1 flex items-center justify-center text-xs font-medium text-red-500 py-20">{error}</div>
           ) : (
             <div className="flex-1 overflow-y-auto">
+              {/* Desktop table */}
               <table className="w-full border-collapse hidden sm:table">
                 <thead>
                   <tr style={{ background: "#fafafa" }}>
@@ -847,7 +977,7 @@ export default function CourseLibraryTab({ courseId, isHead }: Props) {
                       </td>
                     </tr>
                   )}
-                  {filteredRequests.length === 0 && (
+                  {requests.length > 0 && filteredRequests.length === 0 && (
                     <tr>
                       <td colSpan={8} className="px-3 py-16">
                         <div className="flex flex-col items-center justify-center gap-3">
@@ -884,52 +1014,70 @@ export default function CourseLibraryTab({ courseId, isHead }: Props) {
                 </tbody>
               </table>
 
-              <div className="sm:hidden p-3 space-y-2">
+              {/* Mobile card list */}
+              <div className="sm:hidden divide-y divide-gray-100">
                 {requests.length === 0 && (
-                  <div className="flex flex-col items-center justify-center py-14 gap-3">
+                  <div className="flex flex-col items-center justify-center py-14 gap-3 px-4">
                     <BookOpen className="w-8 h-8" style={{ color: MAROON }} />
                     <p className="text-sm text-gray-400 font-medium text-center">No requests yet.</p>
                     <button onClick={() => setShowShare(true)} className="text-xs font-bold hover:underline" style={{ color: MAROON }}>Share link →</button>
                   </div>
                 )}
-                {paginated.map(r => (
-                  <div key={r.id} className="bg-white rounded-xl border border-gray-200 p-4" onClick={() => setDetail(r)}>
-                    <div className="flex items-start justify-between gap-2 mb-1">
-                      <div>
-                        <p className="text-sm font-bold text-gray-900">{r.name}</p>
-                        <p className="text-[10px] text-gray-400 mt-0.5">{TYPE_LABELS[r.requestType]}</p>
-                      </div>
-                      <StatusBadge status={r.status} />
-                    </div>
-                    <div className="flex items-center gap-2 mt-2">
-                      <p className="text-[11px] text-gray-400">{fmtDate(r.submittedAt)}</p>
-                    </div>
+                {requests.length > 0 && filteredRequests.length === 0 && (
+                  <div className="flex flex-col items-center justify-center py-14 gap-3 px-4">
+                    <BookOpen className="w-8 h-8" style={{ color: MAROON }} />
+                    <p className="text-sm text-gray-400 font-medium text-center">No requests found.</p>
                   </div>
+                )}
+                {paginated.map(r => (
+                  <button
+                    key={r.id}
+                    onClick={() => setDetail(r)}
+                    className="w-full text-left px-4 py-3.5 flex items-center gap-3 active:bg-gray-50 transition-colors"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-gray-900 truncate">{r.name}</p>
+                      <p className="text-[11px] text-gray-500 truncate mt-0.5">
+                        {TYPE_LABELS[r.requestType]} · {r.studentNo ?? r.employeeNo ?? "—"}
+                      </p>
+                      <div className="flex items-center gap-2 mt-1.5">
+                        <StatusBadge status={r.status} />
+                        <span className="text-[10px] text-gray-400 truncate">{fmtDate(r.submittedAt)}</span>
+                      </div>
+                    </div>
+                    <ChevronRight size={16} className="text-gray-300 shrink-0" />
+                  </button>
                 ))}
               </div>
             </div>
           )}
 
           {!loading && filteredRequests.length > PAGE_SIZE && (
-            <div className="flex items-center justify-between px-5 py-3 border-t border-gray-100 bg-white shrink-0 flex-wrap gap-2">
-              <span className="text-[11px] text-gray-400 font-medium tabular-nums">
+            <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-t border-gray-100 bg-white shrink-0 gap-2">
+              <span className="text-[11px] text-gray-400 font-medium tabular-nums truncate">
                 {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filteredRequests.length)} of {filteredRequests.length}
               </span>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 shrink-0">
                 <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
                   className="w-7 h-7 flex items-center justify-center rounded-lg border border-gray-200 text-gray-400 hover:border-gray-400 disabled:opacity-25">
                   <ChevronLeft className="w-3 h-3" />
                 </button>
-                {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                  const n = totalPages <= 5 ? i + 1 : page <= 3 ? i + 1 : page >= totalPages - 2 ? totalPages - 4 + i : page - 2 + i;
-                  return (
-                    <button key={n} onClick={() => setPage(n)}
-                      style={page === n ? { background: MAROON, color: "#fff", borderColor: MAROON } : {}}
-                      className={`w-7 h-7 flex items-center justify-center rounded-lg text-[11px] font-semibold border transition-all ${page !== n ? "border-gray-200 text-gray-500 hover:border-gray-400" : ""}`}>
-                      {n}
-                    </button>
-                  );
-                })}
+                {/* Numbered pages: desktop only, keeps mobile bar compact */}
+                <div className="hidden sm:flex items-center gap-1">
+                  {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                    const n = totalPages <= 5 ? i + 1 : page <= 3 ? i + 1 : page >= totalPages - 2 ? totalPages - 4 + i : page - 2 + i;
+                    return (
+                      <button key={n} onClick={() => setPage(n)}
+                        style={page === n ? { background: MAROON, color: "#fff", borderColor: MAROON } : {}}
+                        className={`w-7 h-7 flex items-center justify-center rounded-lg text-[11px] font-semibold border transition-all ${page !== n ? "border-gray-200 text-gray-500 hover:border-gray-400" : ""}`}>
+                        {n}
+                      </button>
+                    );
+                  })}
+                </div>
+                <span className="sm:hidden text-[11px] font-semibold text-gray-500 px-1 tabular-nums">
+                  {page} / {totalPages}
+                </span>
                 <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
                   className="w-7 h-7 flex items-center justify-center rounded-lg border border-gray-200 text-gray-400 hover:border-gray-400 disabled:opacity-25">
                   <ChevronRight className="w-3 h-3" />

@@ -178,6 +178,23 @@ function getScoreBg(score: number | null, max: number): string {
   return "#fef2f2";
 }
 
+// Mirrors the letter-grade scale used in the admin gradebook, so mobile
+// summary badges read the same way across both surfaces.
+function getLetterGrade(pct: number | null): string {
+  if (pct === null) return "—";
+  if (pct >= 93) return "A";
+  if (pct >= 90) return "A-";
+  if (pct >= 87) return "B+";
+  if (pct >= 83) return "B";
+  if (pct >= 80) return "B-";
+  if (pct >= 77) return "C+";
+  if (pct >= 73) return "C";
+  if (pct >= 70) return "C-";
+  if (pct >= 67) return "D+";
+  if (pct >= 60) return "D";
+  return "F";
+}
+
 function getInitials(name: string): string {
   return name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
 }
@@ -273,7 +290,7 @@ function ArrowBtn({ onOpenPanel }: { onOpenPanel: () => void }) {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   FILTER PANEL
+   FILTER PANEL — bottom sheet on mobile, dropdown on desktop
 ───────────────────────────────────────────────────────────────────────────── */
 function FilterPanel({
   open, onClose, assignmentGroups, staffGroups,
@@ -345,148 +362,164 @@ function FilterPanel({
   };
 
   return (
-    <div ref={ref}
-      className="absolute left-0 top-full mt-1 z-50 bg-white border border-gray-200 rounded-xl shadow-2xl overflow-hidden"
-      style={{ minWidth: 260, maxWidth: "calc(100vw - 2rem)", fontFamily: FONT }}>
+    <>
+      {/* Mobile backdrop — desktop just relies on outside-click */}
+      <div className="fixed inset-0 z-40 bg-black/30 sm:hidden" onClick={onClose} />
 
-      {section === "root" && (
-        <div>
-          <button onClick={onManagePresets}
-            className="w-full flex items-center gap-2 px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-200">
-            <Settings2 size={13} className="text-gray-500" />
-            <span className="text-sm font-semibold text-gray-700">Create & Manage Filter Presets</span>
+      <div
+        ref={ref}
+        className="fixed inset-x-0 bottom-0 z-50 sm:absolute sm:inset-x-auto sm:bottom-auto sm:left-0 sm:top-full sm:mt-1 bg-white border-t sm:border border-gray-200 rounded-t-2xl sm:rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] sm:max-h-none"
+        style={{ minWidth: 260, maxWidth: "calc(100vw - 2rem)", fontFamily: FONT }}
+      >
+        {/* Mobile-only sheet header */}
+        <div className="flex items-center justify-between px-4 py-3.5 border-b border-gray-100 sm:hidden shrink-0">
+          <p className="text-sm font-black text-gray-900">Filter</p>
+          <button onClick={onClose} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+            <X size={13} className="text-gray-500" />
           </button>
-          <div className="px-4 py-2 bg-gray-50 border-b border-gray-100">
-            <p className="text-xs font-black text-gray-600 uppercase tracking-wider">Filters</p>
-          </div>
-          {[
-            { id: "assignmentGroups" as FilterSection, label: "Assignment Groups", count: activeFilters.filter(f => f.type === "assignmentGroup").length },
-            { id: "studentGroups" as FilterSection, label: "Staff Groups", count: activeFilters.filter(f => f.type === "studentGroup").length },
-            { id: "status" as FilterSection, label: "Status", count: activeFilters.filter(f => f.type === "status").length },
-            { id: "submissions" as FilterSection, label: "Submissions", count: activeFilters.filter(f => f.type === "submissions").length },
-            { id: "startEndDate" as FilterSection, label: "Start & End Date", count: activeFilters.filter(f => f.type === "dateRange").length },
-          ].map(item => (
-            <button key={item.id} onClick={() => setSection(item.id)}
-              className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors text-left">
-              <span className="text-sm text-gray-700 font-medium">{item.label}</span>
-              <div className="flex items-center gap-2">
-                {item.count > 0 && (
-                  <span className="w-4 h-4 rounded-full text-[9px] font-black text-white flex items-center justify-center"
-                    style={{ background: MAROON }}>{item.count}</span>
-                )}
-                <ChevronRight size={14} className="text-gray-400" />
-              </div>
-            </button>
-          ))}
-          {activeFilters.length > 0 && (
-            <div className="border-t border-gray-100 px-4 py-2">
-              <button onClick={() => { onClearAll(); onClose(); }}
-                className="text-xs font-semibold hover:underline" style={{ color: MAROON }}>
-                Clear All Filters
+        </div>
+
+        <div className="overflow-y-auto">
+          {section === "root" && (
+            <div>
+              <button onClick={onManagePresets}
+                className="w-full flex items-center gap-2 px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-200">
+                <Settings2 size={13} className="text-gray-500" />
+                <span className="text-sm font-semibold text-gray-700">Create & Manage Filter Presets</span>
               </button>
+              <div className="px-4 py-2 bg-gray-50 border-b border-gray-100">
+                <p className="text-xs font-black text-gray-600 uppercase tracking-wider">Filters</p>
+              </div>
+              {[
+                { id: "assignmentGroups" as FilterSection, label: "Assignment Groups", count: activeFilters.filter(f => f.type === "assignmentGroup").length },
+                { id: "studentGroups" as FilterSection, label: "Staff Groups", count: activeFilters.filter(f => f.type === "studentGroup").length },
+                { id: "status" as FilterSection, label: "Status", count: activeFilters.filter(f => f.type === "status").length },
+                { id: "submissions" as FilterSection, label: "Submissions", count: activeFilters.filter(f => f.type === "submissions").length },
+                { id: "startEndDate" as FilterSection, label: "Start & End Date", count: activeFilters.filter(f => f.type === "dateRange").length },
+              ].map(item => (
+                <button key={item.id} onClick={() => setSection(item.id)}
+                  className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors text-left">
+                  <span className="text-sm text-gray-700 font-medium">{item.label}</span>
+                  <div className="flex items-center gap-2">
+                    {item.count > 0 && (
+                      <span className="w-4 h-4 rounded-full text-[9px] font-black text-white flex items-center justify-center"
+                        style={{ background: MAROON }}>{item.count}</span>
+                    )}
+                    <ChevronRight size={14} className="text-gray-400" />
+                  </div>
+                </button>
+              ))}
+              {activeFilters.length > 0 && (
+                <div className="border-t border-gray-100 px-4 py-2">
+                  <button onClick={() => { onClearAll(); onClose(); }}
+                    className="text-xs font-semibold hover:underline" style={{ color: MAROON }}>
+                    Clear All Filters
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {section === "assignmentGroups" && (
+            <div>
+              <BackButton to="root" onNavigate={setSection} />
+              <div className="px-4 py-2 border-b border-gray-100">
+                <p className="text-xs font-black text-gray-700">Assignment Groups</p>
+              </div>
+              <div className="max-h-64 overflow-y-auto py-1">
+                {assignmentGroups.length === 0
+                  ? <p className="px-4 py-3 text-xs text-gray-400 italic">No assignment groups available</p>
+                  : assignmentGroups.map(g => <OptionButton key={g} type="assignmentGroup" value={g} />)}
+              </div>
+            </div>
+          )}
+
+          {section === "studentGroups" && (
+            <div>
+              <BackButton to="root" onNavigate={setSection} />
+              <div className="px-4 py-2 border-b border-gray-100">
+                <p className="text-xs font-black text-gray-700">Student Groups</p>
+              </div>
+              <div className="max-h-64 overflow-y-auto py-1">
+                {staffGroups.length === 0
+                  ? <p className="px-4 py-3 text-xs text-gray-400 italic">No groups available</p>
+                  : staffGroups.map(g => <OptionButton key={g} type="studentGroup" value={g} />)}
+              </div>
+            </div>
+          )}
+
+          {section === "status" && (
+            <div>
+              <BackButton to="root" onNavigate={setSection} />
+              <div className="px-4 py-2 border-b border-gray-100">
+                <p className="text-xs font-black text-gray-700">Status</p>
+              </div>
+              <div className="py-1">
+                {statusOptions.map(s => <OptionButton key={s} type="status" value={s} />)}
+              </div>
+            </div>
+          )}
+
+          {section === "submissions" && (
+            <div>
+              <BackButton to="root" onNavigate={setSection} />
+              <div className="px-4 py-2 border-b border-gray-100">
+                <p className="text-xs font-black text-gray-700">Submissions</p>
+              </div>
+              <div className="py-1">
+                {submissionOptions.map(s => <OptionButton key={s} type="submissions" value={s} />)}
+              </div>
+            </div>
+          )}
+
+          {section === "startEndDate" && (
+            <div className="sm:min-w-[300px]">
+              <BackButton to="root" onNavigate={setSection} />
+              <div className="px-4 py-3 border-b border-gray-100">
+                <p className="text-xs font-black text-gray-700">Start & End Dates</p>
+              </div>
+              <div className="p-4 space-y-3">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1.5">Start Date</label>
+                  <div className="relative">
+                    <input type="date" value={startDate} onChange={e => { setStartDate(e.target.value); setDateError(""); }}
+                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 outline-none focus:border-gray-400 pr-9"
+                      style={{ fontFamily: FONT }} />
+                    <Calendar size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1.5">End Date</label>
+                  <div className="relative">
+                    <input type="date" value={endDate} onChange={e => { setEndDate(e.target.value); setDateError(""); }}
+                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 outline-none focus:border-gray-400 pr-9"
+                      style={{ fontFamily: FONT }} />
+                    <Calendar size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                  </div>
+                </div>
+                {dateError && <p className="text-[10px] text-red-500 font-semibold">{dateError}</p>}
+                <div className="flex gap-2 pt-1">
+                  <button onClick={() => setSection("root")}
+                    className="flex-1 h-10 border border-gray-200 rounded-lg text-xs font-semibold text-gray-600 hover:bg-gray-50 transition-colors">
+                    Cancel
+                  </button>
+                  <button onClick={applyDateFilter}
+                    className="flex-1 h-10 rounded-lg text-xs font-black text-white transition-all hover:opacity-90"
+                    style={{ background: MAROON }}>
+                    Apply
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </div>
-      )}
-
-      {section === "assignmentGroups" && (
-        <div>
-          <BackButton to="root" onNavigate={setSection} />
-          <div className="px-4 py-2 border-b border-gray-100">
-            <p className="text-xs font-black text-gray-700">Assignment Groups</p>
-          </div>
-          <div className="max-h-64 overflow-y-auto py-1">
-            {assignmentGroups.length === 0
-              ? <p className="px-4 py-3 text-xs text-gray-400 italic">No assignment groups available</p>
-              : assignmentGroups.map(g => <OptionButton key={g} type="assignmentGroup" value={g} />)}
-          </div>
-        </div>
-      )}
-
-      {section === "studentGroups" && (
-        <div>
-          <BackButton to="root" onNavigate={setSection} />
-          <div className="px-4 py-2 border-b border-gray-100">
-            <p className="text-xs font-black text-gray-700">Student Groups</p>
-          </div>
-          <div className="max-h-64 overflow-y-auto py-1">
-            {staffGroups.length === 0
-              ? <p className="px-4 py-3 text-xs text-gray-400 italic">No groups available</p>
-              : staffGroups.map(g => <OptionButton key={g} type="studentGroup" value={g} />)}
-          </div>
-        </div>
-      )}
-
-      {section === "status" && (
-        <div>
-          <BackButton to="root" onNavigate={setSection} />
-          <div className="px-4 py-2 border-b border-gray-100">
-            <p className="text-xs font-black text-gray-700">Status</p>
-          </div>
-          <div className="py-1">
-            {statusOptions.map(s => <OptionButton key={s} type="status" value={s} />)}
-          </div>
-        </div>
-      )}
-
-      {section === "submissions" && (
-        <div>
-          <BackButton to="root" onNavigate={setSection} />
-          <div className="px-4 py-2 border-b border-gray-100">
-            <p className="text-xs font-black text-gray-700">Submissions</p>
-          </div>
-          <div className="py-1">
-            {submissionOptions.map(s => <OptionButton key={s} type="submissions" value={s} />)}
-          </div>
-        </div>
-      )}
-
-      {section === "startEndDate" && (
-        <div style={{ minWidth: 300 }}>
-          <BackButton to="root" onNavigate={setSection} />
-          <div className="px-4 py-3 border-b border-gray-100">
-            <p className="text-xs font-black text-gray-700">Start & End Dates</p>
-          </div>
-          <div className="p-4 space-y-3">
-            <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1.5">Start Date</label>
-              <div className="relative">
-                <input type="date" value={startDate} onChange={e => { setStartDate(e.target.value); setDateError(""); }}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 outline-none focus:border-gray-400 pr-9"
-                  style={{ fontFamily: FONT }} />
-                <Calendar size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-              </div>
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1.5">End Date</label>
-              <div className="relative">
-                <input type="date" value={endDate} onChange={e => { setEndDate(e.target.value); setDateError(""); }}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 outline-none focus:border-gray-400 pr-9"
-                  style={{ fontFamily: FONT }} />
-                <Calendar size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-              </div>
-            </div>
-            {dateError && <p className="text-[10px] text-red-500 font-semibold">{dateError}</p>}
-            <div className="flex gap-2 pt-1">
-              <button onClick={() => setSection("root")}
-                className="flex-1 h-10 border border-gray-200 rounded-lg text-xs font-semibold text-gray-600 hover:bg-gray-50 transition-colors">
-                Cancel
-              </button>
-              <button onClick={applyDateFilter}
-                className="flex-1 h-10 rounded-lg text-xs font-black text-white transition-all hover:opacity-90"
-                style={{ background: MAROON }}>
-                Apply
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+      </div>
+    </>
   );
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   FILTER PRESETS MODAL
+   FILTER PRESETS MODAL — bottom sheet on mobile, centered card on desktop
 ───────────────────────────────────────────────────────────────────────────── */
 function FilterPresetsModal({
   open, onClose, presets, activeFilters,
@@ -514,10 +547,13 @@ function FilterPresetsModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
-      <div ref={ref} className="bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-md max-h-[85vh] flex flex-col"
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/30 sm:p-4">
+      <div ref={ref} className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl border border-gray-200 w-full sm:max-w-md max-h-[85vh] flex flex-col"
         style={{ fontFamily: FONT }}>
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+        <div className="flex justify-center pt-2.5 pb-1 sm:hidden shrink-0">
+          <div className="w-9 h-1 rounded-full bg-gray-300" />
+        </div>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 shrink-0">
           <div className="flex items-center gap-2">
             <Settings2 size={15} style={{ color: MAROON }} />
             <p className="text-sm font-black text-gray-800">Filter Presets</p>
@@ -657,7 +693,7 @@ function FilterChip({ filter, onRemove, onChangeStatus, statusOptions }: {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   GRADE PANEL
+   GRADE PANEL — bottom sheet on mobile, right-hand panel on desktop
 ───────────────────────────────────────────────────────────────────────────── */
 function GradePanel({
   panel, onClose, onSave, onOpenSpeedgrader,
@@ -740,8 +776,13 @@ function GradePanel({
   return (
     <>
       <div className="fixed inset-0 z-40 bg-black/20" onClick={onClose} />
-      <div className="fixed inset-0 sm:inset-auto sm:right-0 sm:top-0 sm:h-full z-50 bg-white shadow-2xl border-l border-gray-200 flex flex-col overflow-hidden"
-        style={{ width: "100%", maxWidth: 400, fontFamily: FONT }}>
+      <div
+        className="fixed inset-x-0 bottom-0 sm:inset-x-auto sm:bottom-auto sm:right-0 sm:top-0 sm:h-full z-50 bg-white shadow-2xl border-t sm:border-t-0 sm:border-l border-gray-200 rounded-t-2xl sm:rounded-none flex flex-col overflow-hidden max-h-[92vh] sm:max-h-none"
+        style={{ width: "100%", maxWidth: 400, fontFamily: FONT }}
+      >
+        <div className="flex justify-center pt-2 pb-0.5 sm:hidden shrink-0">
+          <div className="w-9 h-1 rounded-full bg-gray-300" />
+        </div>
         <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-b border-gray-200 shrink-0" style={{ background: MAROON }}>
           <div className="flex items-center gap-3 min-w-0">
             {panel.staffImage
@@ -929,7 +970,8 @@ function GradePanel({
           </div>
         </div>
 
-        <div className="shrink-0 border-t border-gray-200 px-4 sm:px-5 py-3 bg-gray-50 flex items-center justify-between gap-3">
+        <div className="shrink-0 border-t border-gray-200 px-4 sm:px-5 pt-3 bg-gray-50 flex items-center justify-between gap-3"
+          style={{ paddingBottom: "calc(12px + env(safe-area-inset-bottom))" }}>
           <button onClick={onClose}
             className="h-10 px-4 border border-gray-200 rounded-lg text-xs font-semibold text-gray-600 hover:bg-white transition-colors">
             Cancel
@@ -950,7 +992,7 @@ function GradePanel({
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   FORM RESPONSE PANEL
+   FORM RESPONSE PANEL — bottom sheet on mobile, right-hand panel on desktop
 ───────────────────────────────────────────────────────────────────────────── */
 interface FetchedAnswer {
   questionId: string;
@@ -1015,8 +1057,13 @@ function FormResponsePanel({
   return (
     <>
       <div className="fixed inset-0 z-40 bg-black/20" onClick={onClose} />
-      <div className="fixed inset-0 sm:inset-auto sm:right-0 sm:top-0 sm:h-full z-50 bg-white shadow-2xl border-l border-gray-200 flex flex-col"
-        style={{ width: "100%", maxWidth: 460, fontFamily: FONT }}>
+      <div
+        className="fixed inset-x-0 bottom-0 sm:inset-x-auto sm:bottom-auto sm:right-0 sm:top-0 sm:h-full z-50 bg-white shadow-2xl border-t sm:border-t-0 sm:border-l border-gray-200 rounded-t-2xl sm:rounded-none flex flex-col overflow-hidden max-h-[92vh] sm:max-h-none"
+        style={{ width: "100%", maxWidth: 460, fontFamily: FONT }}
+      >
+        <div className="flex justify-center pt-2 pb-0.5 sm:hidden shrink-0">
+          <div className="w-9 h-1 rounded-full bg-gray-300" />
+        </div>
         <div className="flex items-center justify-between px-4 sm:px-5 py-4 border-b border-gray-200 shrink-0" style={{ background: MAROON }}>
           <div className="flex items-center gap-3 min-w-0">
             {panel.staffImage
@@ -1107,7 +1154,8 @@ function FormResponsePanel({
           </div>
         </div>
 
-        <div className="shrink-0 border-t border-gray-200 px-4 sm:px-5 py-4 bg-gray-50 flex items-center gap-2">
+        <div className="shrink-0 border-t border-gray-200 px-4 sm:px-5 pt-4 bg-gray-50 flex items-center gap-2"
+          style={{ paddingBottom: "calc(16px + env(safe-area-inset-bottom))" }}>
           <button onClick={onClose} className="h-10 px-4 border border-gray-200 rounded-xl text-xs font-semibold text-gray-600 hover:bg-white transition-colors shrink-0">Close</button>
           {panel.formGrade.hasSubmission && (
             <button onClick={onViewResponses}
@@ -1321,6 +1369,10 @@ function MobileStaffGradeCard({
     return { group, earned, possible, pct };
   }).filter(Boolean) as { group: string; earned: number; possible: number; pct: number | null }[];
 
+  const hasTotal = staff.percentage !== null && staff.totalPossible > 0;
+  const totalColor = getScoreColor(staff.totalEarned, staff.totalPossible);
+  const totalBg = getScoreBg(staff.totalEarned, staff.totalPossible);
+
   return (
     <div className="border border-gray-200 rounded-xl overflow-hidden mb-3 bg-white shadow-sm">
       {/* Header row */}
@@ -1339,16 +1391,31 @@ function MobileStaffGradeCard({
           </div>
         </div>
         <div className="flex items-center gap-3 shrink-0">
-          <div className="text-right">
-            <p className="text-sm font-black"
-              style={{ color: staff.percentage !== null ? getScoreColor(staff.totalEarned, staff.totalPossible) : "#9ca3af" }}>
-              {staff.percentage !== null && staff.totalPossible > 0 ? `${staff.percentage}%` : "—"}
-            </p>
-            <p className="text-[10px] text-gray-400">{staff.totalEarned}/{staff.totalPossible} pts</p>
-          </div>
+          {hasTotal ? (
+            <div className="flex flex-col items-center justify-center min-w-[52px] h-11 rounded-lg px-2"
+              style={{ background: totalBg, border: `1.5px solid ${totalColor}30` }}>
+              <span className="text-sm font-black leading-none" style={{ color: totalColor }}>{staff.percentage}%</span>
+              <span className="text-[9px] font-bold leading-none mt-0.5" style={{ color: totalColor }}>{getLetterGrade(staff.percentage)}</span>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center min-w-[52px] h-11 rounded-lg px-2 bg-gray-50 border border-gray-100">
+              <span className="text-sm font-black text-gray-300">—</span>
+            </div>
+          )}
           <ChevronDown size={16} className={`text-gray-400 transition-transform ${expanded ? "rotate-180" : ""}`} />
         </div>
       </button>
+
+      {/* Progress bar */}
+      {staff.totalPossible > 0 && (
+        <div className="flex items-center gap-2.5 px-4 pb-3 -mt-1">
+          <div className="flex-1 h-1.5 rounded-full bg-gray-100 overflow-hidden">
+            <div className="h-full rounded-full transition-all"
+              style={{ width: `${Math.min(staff.percentage ?? 0, 100)}%`, background: totalColor }} />
+          </div>
+          <span className="text-[10px] font-semibold text-gray-400 shrink-0 tabular-nums">{staff.totalEarned}/{staff.totalPossible} pts</span>
+        </div>
+      )}
 
       {expanded && (
         <div className="border-t border-gray-100">
@@ -1441,7 +1508,7 @@ function MobileStaffGradeCard({
                   background: staff.percentage !== null ? getScoreBg(staff.totalEarned, staff.totalPossible) : "#f9fafb",
                   color: staff.percentage !== null ? getScoreColor(staff.totalEarned, staff.totalPossible) : "#9ca3af",
                 }}>
-                {staff.percentage !== null && staff.totalPossible > 0 ? `${staff.percentage}%` : "—"}
+                {staff.percentage !== null && staff.totalPossible > 0 ? `${staff.percentage}% · ${getLetterGrade(staff.percentage)}` : "—"}
               </span>
             </div>
           </div>
@@ -1521,7 +1588,7 @@ function MyGradesView({ courseId }: { courseId: string }) {
         <div className="flex items-center gap-2">
           {totalPct !== null && (
             <span className="text-xs font-black text-white bg-white/20 px-2.5 py-1 rounded-full">
-              {totalPct}%
+              {totalPct}% · {getLetterGrade(totalPct)}
             </span>
           )}
           <button onClick={load}
@@ -1569,7 +1636,10 @@ function MyGradesView({ courseId }: { courseId: string }) {
                   </div>
                   {totalPct !== null && (
                     <div className="text-right">
-                      <p className="text-2xl font-black text-white leading-none">{totalPct}%</p>
+                      <div className="flex items-center gap-1.5 justify-end">
+                        <p className="text-2xl font-black text-white leading-none">{totalPct}%</p>
+                        <span className="text-[10px] font-bold text-white/80 bg-white/15 px-1.5 py-0.5 rounded">{getLetterGrade(totalPct)}</span>
+                      </div>
                       <p className="text-[10px] text-white/60 mt-0.5">{Number.isInteger(totalEarned) ? totalEarned : totalEarned.toFixed(1)} / {totalPossible} pts</p>
                     </div>
                   )}
@@ -1778,7 +1848,7 @@ function MyGradesView({ courseId }: { courseId: string }) {
         </div>
         {totalPct !== null && (
   <span className="ml-auto text-xs font-semibold text-gray-500">
-    Total: {Number.isInteger(totalEarned) ? totalEarned : totalEarned.toFixed(1)} / {totalPossible} pts ({totalPct}%)
+    Total: {Number.isInteger(totalEarned) ? totalEarned : totalEarned.toFixed(1)} / {totalPossible} pts ({totalPct}% · {getLetterGrade(totalPct)})
   </span>
 )}
       </div>
@@ -2048,7 +2118,7 @@ function ManageGradesView({ courseId }: { courseId: string }) {
           )}
           {classOverallPct !== null && (
             <span className="text-xs font-black text-white bg-white/20 px-2 py-0.5 rounded-full hidden sm:inline">
-              Class avg: {classOverallPct}%
+              Class avg: {classOverallPct}% · {getLetterGrade(classOverallPct)}
             </span>
           )}
         </div>
@@ -2172,7 +2242,10 @@ function ManageGradesView({ courseId }: { courseId: string }) {
                   </div>
                   {classOverallPct !== null && (
                     <div className="text-right">
-                      <p className="text-2xl font-black text-white leading-none">{classOverallPct}%</p>
+                      <div className="flex items-center gap-1.5 justify-end">
+                        <p className="text-2xl font-black text-white leading-none">{classOverallPct}%</p>
+                        <span className="text-[10px] font-bold text-white/80 bg-white/15 px-1.5 py-0.5 rounded">{getLetterGrade(classOverallPct)}</span>
+                      </div>
                       <p className="text-[10px] text-white/60 mt-0.5">class avg</p>
                     </div>
                   )}
@@ -2307,7 +2380,7 @@ function ManageGradesView({ courseId }: { courseId: string }) {
                         {classOverallPct !== null && (
                           <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full mt-0.5 inline-block"
                             style={{ background: getScoreBg(classOverallPct, 100), color: getScoreColor(classOverallPct, 100) }}>
-                            avg {classOverallPct}%
+                            avg {classOverallPct}% · {getLetterGrade(classOverallPct)}
                           </span>
                         )}
                       </div>
@@ -2468,7 +2541,7 @@ function ManageGradesView({ courseId }: { courseId: string }) {
           </div>
           {classOverallPct !== null && (
             <span className="text-[10px] font-semibold text-gray-500 sm:hidden">
-              Class avg: {classOverallPct}%
+              Class avg: {classOverallPct}% · {getLetterGrade(classOverallPct)}
             </span>
           )}
         </div>

@@ -14,6 +14,19 @@ import { useSession } from "next-auth/react";
 const MAROON = "#7b1113";
 const FONT = "'Plus Jakarta Sans','Helvetica Neue',Arial,sans-serif";
 
+const CREATEEDIT_CSS = `
+  *, *::before, *::after { box-sizing: border-box; }
+  @media (max-width: 767px) { input, textarea, select { font-size: 16px !important; } }
+  button, [role="button"] { -webkit-tap-highlight-color: transparent; }
+
+  .frmedit-tabstrip { scrollbar-width: none; }
+  .frmedit-tabstrip::-webkit-scrollbar { display: none; }
+
+  @supports (padding-bottom: env(safe-area-inset-bottom)) {
+    .frmedit-actionbar { padding-bottom: calc(10px + env(safe-area-inset-bottom)) !important; }
+  }
+`;
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 type FormType = "Survey / Feedback" | "Evaluation" | "Registration Form" | "Graded Assessment";
 type QuestionType =
@@ -583,7 +596,6 @@ function RichTextEditor({ onChange, placeholder = "Start typing...", initialHtml
 
       <div ref={wrapRef} className="border border-gray-300 rounded overflow-hidden flex flex-col" style={{ minHeight: 220 }}>
         {isMobile ? (
-          /* Mobile: streamlined single-row scrollable toolbar */
           <MobileRichToolbar
             exec={exec}
             fmt={fmt}
@@ -749,7 +761,6 @@ function QuestionTypeMenu({ current, onChange }: { current: QuestionType; onChan
   useOnClickOutside(ref, () => setOpen(false));
   const cur = ALL_Q_TYPES.find(t => t.value === current);
 
-  // On mobile, render as a native select for better UX
   const isMobile = useIsMobile(640);
   if (isMobile) {
     return (
@@ -1007,11 +1018,12 @@ function QuestionCard({ question, isActive, isGraded, onActivate, onChange, onDu
   );
 }
 
-// ── Floating Toolbar ──────────────────────────────────────────────────────────
-function FloatingToolbar({ onAdd }: { onAdd: (type: QuestionType | "section") => void }) {
+// ── Inline Add Question Bar (replaces FloatingToolbar) ────────────────────────
+function InlineAddQuestionBar({ onAdd }: { onAdd: (type: QuestionType | "section") => void }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   useOnClickOutside(ref, () => setOpen(false));
+
   const groups = [
     { group: "Choice", options: [
       { label: "Multiple Choice", action: () => onAdd("multiple_choice") },
@@ -1036,10 +1048,15 @@ function FloatingToolbar({ onAdd }: { onAdd: (type: QuestionType | "section") =>
       { label: "Section Divider", action: () => onAdd("section") },
     ]},
   ];
+
   return (
-    <div ref={ref} className="fixed right-3 sm:right-8 bottom-18 z-40 flex flex-col items-end gap-2">
+    <div ref={ref} className="relative">
+      {/* Dropdown opens upward */}
       {open && (
-        <div className="bg-white border border-gray-200 rounded-xl shadow-2xl w-48 sm:w-56 overflow-hidden mb-1" style={{ maxHeight: "55vh", overflowY: "auto" }}>
+        <div
+          className="absolute left-0 bottom-full mb-2 bg-white border border-gray-200 rounded-xl shadow-2xl w-48 sm:w-52 overflow-hidden"
+          style={{ maxHeight: "55vh", overflowY: "auto" }}
+        >
           <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white">
             <span className="text-xs font-semibold text-gray-700">Add Question</span>
             <button type="button" onClick={() => setOpen(false)} className="w-5 h-5 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 text-sm">×</button>
@@ -1048,18 +1065,32 @@ function FloatingToolbar({ onAdd }: { onAdd: (type: QuestionType | "section") =>
             <div key={g.group}>
               <div className="px-4 pt-3 pb-1 text-[10px] font-bold text-gray-400 uppercase tracking-widest">{g.group}</div>
               {g.options.map(item => (
-                <button key={item.label} type="button" onClick={() => { item.action(); setOpen(false); }}
-                  className="w-full text-left px-4 py-2.5 hover:bg-gray-50 text-xs text-gray-700 min-h-9">{item.label}</button>
+                <button key={item.label} type="button"
+                  onClick={() => { item.action(); setOpen(false); }}
+                  className="w-full text-left px-4 py-2.5 hover:bg-gray-50 text-xs text-gray-700 min-h-9">
+                  {item.label}
+                </button>
               ))}
             </div>
           ))}
           <div className="h-2" />
         </div>
       )}
-      <button type="button" onClick={() => setOpen(v => !v)}
-        className="flex items-center gap-2 px-4 h-10 rounded-full text-white text-sm font-medium shadow-lg hover:opacity-90 active:scale-95 transition-transform"
-        style={{ background: MAROON }}>
-        {open ? "✕ Close" : "+ Add Question"}
+
+      <button
+        type="button"
+        onClick={() => setOpen(v => !v)}
+        className="flex items-center gap-1.5 h-9 px-3 sm:px-4 rounded text-xs font-medium border transition-colors whitespace-nowrap"
+        style={open
+          ? { background: MAROON, color: "#fff", borderColor: MAROON }
+          : { background: "#fff", color: MAROON, borderColor: MAROON }
+        }
+      >
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+          <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+        <span className="hidden sm:inline">Add Question</span>
+        <span className="sm:hidden">Add</span>
       </button>
     </div>
   );
@@ -1088,19 +1119,48 @@ function QuestionsTab({ questions, isGraded, onChange }: {
   const moveUp = (idx: number) => { if (!idx) return; const u = [...questions]; [u[idx - 1], u[idx]] = [u[idx], u[idx - 1]]; onChange(u); };
   const moveDown = (idx: number) => { if (idx === questions.length - 1) return; const u = [...questions]; [u[idx], u[idx + 1]] = [u[idx + 1], u[idx]]; onChange(u); };
 
+  // Expose addQuestion for the action bar
+  // We use a callback ref pattern so the parent can call it
   return (
-    <div className="relative">
+    <_QuestionsTabInner
+      questions={questions}
+      isGraded={isGraded}
+      activeId={activeId}
+      setActiveId={setActiveId}
+      addQuestion={addQuestion}
+      duplicate={duplicate}
+      deleteQ={deleteQ}
+      update={update}
+      moveUp={moveUp}
+      moveDown={moveDown}
+    />
+  );
+}
+
+// Internal component — separates logic so addQuestion can be passed up
+function _QuestionsTabInner({ questions, isGraded, activeId, setActiveId, addQuestion, duplicate, deleteQ, update, moveUp, moveDown }: {
+  questions: FormQuestion[]; isGraded: boolean; activeId: string | null;
+  setActiveId: (id: string | null) => void;
+  addQuestion: (type: QuestionType | "section") => void;
+  duplicate: (idx: number) => void;
+  deleteQ: (idx: number) => void;
+  update: (idx: number, q: FormQuestion) => void;
+  moveUp: (idx: number) => void;
+  moveDown: (idx: number) => void;
+}) {
+  return (
+    <div>
       {questions.length > 0 && (
         <div className="flex items-center justify-between mb-3 text-xs text-gray-500">
           <span>{questions.filter(q => q.type !== "section").length} question(s)</span>
         </div>
       )}
-      <div className="space-y-3 pb-24">
+      <div className="space-y-3 pb-4">
         {questions.length === 0 && (
           <div className="text-center py-10 sm:py-16 bg-white rounded-lg border border-dashed border-gray-300">
             <div className="text-3xl mb-3">📋</div>
             <p className="text-sm text-gray-400 mb-1">No questions yet</p>
-            <p className="text-xs text-gray-300">Use the + button to add questions</p>
+            <p className="text-xs text-gray-300">Use the + Add Question button below to get started</p>
           </div>
         )}
         {questions.map((q, idx) => (
@@ -1110,7 +1170,6 @@ function QuestionsTab({ questions, isGraded, onChange }: {
             onMoveUp={() => moveUp(idx)} onMoveDown={() => moveDown(idx)} />
         ))}
       </div>
-      <FloatingToolbar onAdd={addQuestion} />
     </div>
   );
 }
@@ -1215,6 +1274,9 @@ export default function AdminCourseFormCreateEditPage() {
   const [groupModalOpen, setGroupModalOpen] = useState(false);
   const [newGroupName, setNewGroupName] = useState("");
 
+  // Ref so the action bar can trigger addQuestion without prop drilling
+  const addQuestionRef = useRef<((type: QuestionType | "section") => void) | null>(null);
+
   const isGraded = formType === "Graded Assessment";
 
   useEffect(() => { setMounted(true); }, []);
@@ -1304,14 +1366,52 @@ export default function AdminCourseFormCreateEditPage() {
     setAssignmentGroup(n); setGroupModalOpen(false); setNewGroupName("");
   };
 
-  // ── Date/Time Row (responsive) ────────────────────────────────────────────
+  // ── Questions state + logic (hoisted for action bar access) ───────────────
+  const [activeQId, setActiveQId] = useState<string | null>(null);
+  const idCounter = useRef(1000);
+
+  const newQuestion = (type: QuestionType | "section"): FormQuestion => {
+    const id = String(idCounter.current++);
+    if (type === "section") return { id, type: "section", question: "", required: false, sectionTitle: "New Section", sectionDescription: "" };
+    const defaults: Partial<FormQuestion> = {};
+    if (["multiple_choice", "checkboxes", "dropdown"].includes(type)) defaults.options = ["Option 1", "Option 2", "Option 3"];
+    if (["mc_grid", "checkbox_grid"].includes(type)) { defaults.rows = ["Row 1", "Row 2"]; defaults.columns = ["Column 1", "Column 2"]; }
+    if (type === "linear_scale") { defaults.scaleMin = 1; defaults.scaleMax = 5; }
+    return { id, type: type as QuestionType, question: "", required: false, ...defaults };
+  };
+
+  const addQuestion = useCallback((type: QuestionType | "section") => {
+    const q = newQuestion(type);
+    setQuestions(prev => [...prev, q]);
+    setActiveQId(q.id);
+    // Switch to questions tab if not already there
+    setActiveTab("questions");
+    // Scroll to bottom after render
+    setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" }), 50);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Keep ref in sync
+  useEffect(() => { addQuestionRef.current = addQuestion; }, [addQuestion]);
+
+  const duplicateQ = (idx: number) => {
+    const q = { ...questions[idx], id: String(idCounter.current++) };
+    const u = [...questions]; u.splice(idx + 1, 0, q);
+    setQuestions(u); setActiveQId(q.id);
+  };
+  const deleteQ = (idx: number) => { setQuestions(questions.filter((_, i) => i !== idx)); setActiveQId(null); };
+  const updateQ = (idx: number, q: FormQuestion) => { const u = [...questions]; u[idx] = q; setQuestions(u); };
+  const moveUp = (idx: number) => { if (!idx) return; const u = [...questions]; [u[idx - 1], u[idx]] = [u[idx], u[idx - 1]]; setQuestions(u); };
+  const moveDown = (idx: number) => { if (idx === questions.length - 1) return; const u = [...questions]; [u[idx], u[idx + 1]] = [u[idx + 1], u[idx]]; setQuestions(u); };
+
+  // ── Date/Time Row ─────────────────────────────────────────────────────────
   const DateTimeRow = ({ label, date, onDateChange, time, onTimeChange, onClear }: {
     label: string; date: string; onDateChange: (v: string) => void;
     time: string; onTimeChange: (v: string) => void; onClear: () => void;
   }) => (
     <div>
       <p className="text-xs font-medium text-gray-700 mb-1">{label}</p>
-      <div className="flex border border-gray-300 rounded-sm overflow-hidden">
+      <div className="flex border border-gray-300 rounded-lg overflow-hidden">
         <input type="date" value={date} onChange={e => onDateChange(e.target.value)}
           className="flex-1 h-9 border-0 px-2 text-xs outline-none bg-white min-w-0" />
         <div className="w-px bg-gray-200 self-stretch shrink-0" />
@@ -1335,32 +1435,34 @@ export default function AdminCourseFormCreateEditPage() {
 
   return (
     <div className="w-full h-full bg-white flex flex-col" style={{ fontFamily: FONT }} suppressHydrationWarning>
+      <style>{CREATEEDIT_CSS}</style>
 
       {/* ── Top bar ── */}
-      <div className="flex items-center justify-between px-3 sm:px-6 py-2 sm:py-2.5 border-b border-gray-200 bg-white shrink-0 gap-2">
-        <h1 className="text-sm font-semibold text-gray-800 truncate min-w-0">
+      <div className="flex items-center justify-between px-3 sm:px-6 py-2.5 border-b border-gray-200 bg-white shrink-0 gap-2">
+        <h1 className="text-sm font-bold text-gray-800 truncate min-w-0">
           {isEditing ? "Edit Form" : "New Form"}
         </h1>
-        <div className="flex items-center gap-2 sm:gap-4 text-xs text-gray-600 shrink-0">
-          <div className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full border shrink-0" style={published ? { background: "#22c55e", borderColor: "#22c55e" } : { borderColor: "#9ca3af" }} />
-            <span className="hidden xs:inline">{published ? "Published" : "Unpublished"}</span>
-          </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold"
+            style={published ? { background: "#f0fdf4", color: "#16a34a" } : { background: "#f3f4f6", color: "#6b7280" }}>
+            <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: published ? "#22c55e" : "#9ca3af" }} />
+            {published ? "Published" : "Unpublished"}
+          </span>
         </div>
       </div>
 
-      {/* ── Tab bar (scrollable on mobile) ── */}
-      <div className="border-b border-gray-200 bg-white shrink-0 overflow-x-auto">
-        <div className="flex items-end px-3 sm:px-6 min-w-max">
+      {/* ── Tab bar ── */}
+      <div className="frmedit-tabstrip border-b border-gray-200 bg-white shrink-0 overflow-x-auto">
+        <div className="flex items-center px-3 sm:px-6 min-w-max gap-1">
           {TABS.map(tab => (
             <button key={tab.key} onClick={() => setActiveTab(tab.key)}
-              className={`px-3 sm:px-4 py-2.5 text-xs border border-b-0 -mb-px mr-0.5 transition-colors rounded-t whitespace-nowrap ${
-                activeTab === tab.key
-                  ? "bg-white border-gray-200 text-gray-900 font-medium"
-                  : "border-transparent text-gray-500 hover:text-gray-700"
-              }`}>
+              className="px-3 py-2.5 text-xs font-semibold whitespace-nowrap transition-colors"
+              style={{
+                color: activeTab === tab.key ? MAROON : "#6b7280",
+                borderBottom: activeTab === tab.key ? `2px solid ${MAROON}` : "2px solid transparent",
+              }}>
               {tab.key === "questions" ? (
-                <span className="flex items-center gap-1">
+                <span className="flex items-center gap-1.5">
                   Questions
                   {questions.length > 0 && (
                     <span className="inline-flex items-center justify-center w-4 h-4 rounded-full text-[10px] text-white" style={{ background: MAROON }}>
@@ -1380,26 +1482,24 @@ export default function AdminCourseFormCreateEditPage() {
         {/* ── DETAILS TAB ── */}
         {activeTab === "details" && (
           <div className="max-w-2xl w-full mx-auto sm:mx-0">
-            {/* Title */}
             <div className="mb-4">
-              <label className="text-xs text-gray-500 block mb-1">Form Title <span className="text-red-500">*</span></label>
+              <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1.5">
+                Form Title<span style={{ color: MAROON, marginLeft: 2 }}>*</span>
+              </label>
               <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Untitled Form"
-                className="w-full h-9 border rounded-sm px-3 text-sm outline-none" style={{ borderColor: MAROON }} />
+                className="w-full h-10 border rounded-lg px-3 text-sm outline-none" style={{ borderColor: MAROON }} />
             </div>
 
-            {/* Description */}
             <div className="mb-5">
-              <label className="text-xs text-gray-500 block mb-1">Form Description / Instructions</label>
+              <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1.5">Form Description / Instructions</label>
               <RichTextEditor onChange={setDescription} placeholder="Form description or instructions..." initialHtml={initialDescription} />
             </div>
 
-            {/* Form fields */}
             <div className="space-y-4">
-              {/* Form Type */}
-              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4">
-                <label className="text-xs text-gray-700 font-medium sm:w-36 sm:text-right shrink-0">Form Type</label>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-4">
+                <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider sm:w-36 sm:text-right sm:normal-case sm:font-medium sm:text-gray-700 sm:text-xs shrink-0">Form Type</label>
                 <select value={formType} onChange={e => setFormType(e.target.value as FormType)}
-                  className="h-9 border border-gray-300 rounded-sm px-3 text-xs w-full sm:w-72 bg-white outline-none focus:border-[#7b1113]">
+                  className="h-10 border border-gray-300 rounded-lg px-3 text-xs w-full sm:w-72 bg-white outline-none focus:border-[#7b1113]">
                   <option>Survey / Feedback</option>
                   <option>Evaluation</option>
                   <option>Registration Form</option>
@@ -1407,11 +1507,9 @@ export default function AdminCourseFormCreateEditPage() {
                 </select>
               </div>
 
-
-              {/* Assign section */}
-              <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-4">
-                <label className="text-xs text-gray-700 font-medium sm:w-36 sm:text-right sm:pt-2 shrink-0">Assign</label>
-                <div className="border border-gray-200 rounded-sm p-3 w-full space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-start gap-1.5 sm:gap-4">
+                <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider sm:w-36 sm:text-right sm:pt-2.5 sm:normal-case sm:font-medium sm:text-gray-700 sm:text-xs shrink-0">Assign</label>
+                <div className="border rounded-xl p-3 sm:p-4 w-full space-y-3" style={{ borderColor: "#ececec" }}>
                   <div>
                     <p className="text-xs font-medium text-gray-700 mb-1">Assign To</p>
                     <AssignToDropdown selected={assignTo} setSelected={setAssignTo} staff={staff} />
@@ -1431,7 +1529,28 @@ export default function AdminCourseFormCreateEditPage() {
 
         {/* ── QUESTIONS TAB ── */}
         {activeTab === "questions" && (
-          <QuestionsTab questions={questions} isGraded={isGraded} onChange={setQuestions} />
+          <div>
+            {questions.length > 0 && (
+              <div className="flex items-center justify-between mb-3 text-xs text-gray-500">
+                <span>{questions.filter(q => q.type !== "section").length} question(s)</span>
+              </div>
+            )}
+            <div className="space-y-3 pb-4">
+              {questions.length === 0 && (
+                <div className="text-center py-10 sm:py-16 bg-white rounded-lg border border-dashed border-gray-300">
+                  <div className="text-3xl mb-3">📋</div>
+                  <p className="text-sm text-gray-400 mb-1">No questions yet</p>
+                  <p className="text-xs text-gray-300">Use the + Add Question button below to get started</p>
+                </div>
+              )}
+              {questions.map((q, idx) => (
+                <QuestionCard key={q.id} question={q} isActive={activeQId === q.id} isGraded={isGraded}
+                  onActivate={() => setActiveQId(q.id)} onChange={u => updateQ(idx, u)}
+                  onDuplicate={() => duplicateQ(idx)} onDelete={() => deleteQ(idx)}
+                  onMoveUp={() => moveUp(idx)} onMoveDown={() => moveDown(idx)} />
+              ))}
+            </div>
+          </div>
         )}
 
         {/* ── AFTER SUBMISSION TAB ── */}
@@ -1458,54 +1577,54 @@ export default function AdminCourseFormCreateEditPage() {
 
       {/* ── Group modal ── */}
       {groupModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 p-4">
-          <div className="w-full max-w-sm bg-white shadow-xl border border-gray-200 rounded">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/30" onClick={() => setGroupModalOpen(false)} style={{ backdropFilter: "blur(2px)" }}>
+          <div className="w-full sm:max-w-sm bg-white shadow-2xl border border-gray-200 rounded-t-2xl sm:rounded-xl overflow-hidden" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-center pt-2.5 pb-1 sm:hidden">
+              <div className="w-9 h-1 rounded-full bg-gray-300" />
+            </div>
             <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
-              <div className="text-sm font-semibold text-gray-800">Add Assignment Group</div>
-              <button onClick={() => setGroupModalOpen(false)} className="w-6 h-6 flex items-center justify-center border rounded text-sm" style={{ borderColor: MAROON, color: MAROON }}>×</button>
+              <div className="text-sm font-bold text-gray-800">Add Assignment Group</div>
+              <button onClick={() => setGroupModalOpen(false)} className="w-7 h-7 flex items-center justify-center border border-gray-200 rounded-lg text-sm text-gray-500 hover:bg-gray-100">×</button>
             </div>
             <div className="px-4 sm:px-6 py-5">
-              <label className="text-xs text-gray-700 block mb-1.5">Group Name</label>
+              <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1.5">Group Name</label>
               <input value={newGroupName} onChange={e => setNewGroupName(e.target.value)} onKeyDown={e => e.key === "Enter" && saveGroup()}
                 placeholder="e.g., Evaluation Group 1"
-                className="w-full h-9 border border-gray-300 px-3 text-xs outline-none focus:border-[#7b1113] rounded-sm" />
+                className="w-full h-10 border border-gray-300 px-3 text-xs outline-none focus:border-[#7b1113] rounded-lg" />
             </div>
             <div className="bg-gray-50 border-t border-gray-200 px-4 py-3 flex justify-end gap-2">
-              <button onClick={() => setGroupModalOpen(false)} className="h-8 px-4 border border-gray-300 bg-white text-xs text-gray-700 hover:bg-gray-50 rounded">Cancel</button>
-              <button onClick={saveGroup} style={{ background: MAROON }} className="h-8 px-4 text-white text-xs rounded hover:opacity-90">Add Group</button>
+              <button onClick={() => setGroupModalOpen(false)} className="h-9 px-4 border border-gray-300 bg-white text-xs font-medium text-gray-700 hover:bg-gray-50 rounded-lg">Cancel</button>
+              <button onClick={saveGroup} style={{ background: MAROON }} className="h-9 px-4 text-white text-xs font-bold rounded-lg hover:opacity-90">Add Group</button>
             </div>
           </div>
         </div>
       )}
 
       {/* ── Bottom action bar ── */}
-      <div className="shrink-0 border-t border-gray-200 bg-white px-3 sm:px-8 py-3 flex items-center justify-between gap-2">
-        <div className="min-w-0 flex-1">
+      <div className="frmedit-actionbar shrink-0 border-t border-gray-200 bg-white px-3 sm:px-8 py-3 flex items-center justify-between gap-2">
+        {/* Left side: Add Question (only on Questions tab) */}
+        <div className="flex items-center gap-2 min-w-0">
+          {activeTab === "questions" && (
+            <InlineAddQuestionBar onAdd={addQuestion} />
+          )}
           {saveError && (
-            <span className="text-xs text-red-600 font-medium flex items-center gap-1">
-              <span>⚠</span>
+            <span className="text-xs text-red-600 font-medium flex items-center gap-1 min-w-0">
+              <span className="shrink-0">⚠</span>
               <span className="truncate">{saveError}</span>
             </span>
           )}
         </div>
+
+        {/* Right side: action buttons */}
         <div className="flex items-center gap-2 shrink-0">
           <button onClick={() => router.push(`/admin/courses/${courseId}/forms`)} disabled={saving}
             className="h-9 px-3 sm:px-5 border border-gray-300 bg-white text-xs text-gray-700 rounded hover:bg-gray-50 disabled:opacity-50 min-w-15">
             Cancel
           </button>
-          {/* Save & Publish: hidden on mobile to save space, shown on sm+ */}
           <button onClick={() => handleSave(true)} disabled={saving}
-            className="h-9 px-3 sm:px-5 border border-gray-300 bg-gray-50 text-xs text-gray-700 rounded hover:bg-gray-100 disabled:opacity-50 hidden sm:block">
+            style={{ touchAction: "manipulation" }}
+            className="h-10 px-3 sm:px-5 border border-gray-300 bg-gray-50 text-xs font-medium text-gray-700 rounded-lg hover:bg-gray-100 disabled:opacity-50 whitespace-nowrap">
             {saving ? "Saving…" : "Save & Publish"}
-          </button>
-          {/* On mobile: show a publish icon button */}
-          <button onClick={() => handleSave(true)} disabled={saving}
-            title="Save & Publish"
-            className="h-9 w-9 border border-gray-300 bg-gray-50 text-gray-600 rounded hover:bg-gray-100 disabled:opacity-50 flex sm:hidden items-center justify-center"
-            aria-label="Save & Publish">
-            <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path d="M12 19V5M5 12l7-7 7 7" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
           </button>
           <button onClick={() => handleSave(false)} disabled={saving}
             style={{ background: MAROON }} className="h-9 px-3 sm:px-5 text-white text-xs rounded hover:opacity-90 disabled:opacity-50 min-w-15">

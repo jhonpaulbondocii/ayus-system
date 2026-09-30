@@ -273,8 +273,8 @@ function GradeModal({ sub, assignment, onClose, onSave }: {
   };
 
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 200, display: "flex", alignItems: "flex-end", justifyContent: "center", background: "rgba(0,0,0,.4)" }} onClick={onClose}>
-      <div style={{ background: "#fff", borderRadius: "20px 20px 0 0", boxShadow: "0 -8px 32px rgba(0,0,0,.2)", width: "100%", maxWidth: 480, overflow: "hidden", fontFamily: FONT, maxHeight: "95dvh", display: "flex", flexDirection: "column" }} onClick={e => e.stopPropagation()}>
+    <div style={{ position: "fixed", inset: 0, zIndex: 9999, display: "flex", alignItems: "flex-end", justifyContent: "center", background: "rgba(0,0,0,.4)" }} onClick={onClose}>
+      <div style={{ background: "#fff", borderRadius: "20px 20px 0 0", boxShadow: "0 -8px 32px rgba(0,0,0,.2)", width: "100%", maxWidth: 480, overflow: "hidden", fontFamily: FONT, maxHeight: "calc(100dvh - 100px)", display: "flex", flexDirection: "column" }} onClick={e => e.stopPropagation()}>
         <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "16px 20px", background: MAROON, flexShrink: 0 }}>
           <Avatar name={sub.userName ?? sub.userEmail} size={36} />
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -1063,12 +1063,57 @@ export default function AdminCourseAssignmentDetailPage({
 
         /* ── Mobile (≤767px) ── */
         @media (max-width: 767px) {
-          .overview-main { padding: 12px 10px; }
-          .details-grid { grid-template-columns: 1fr !important; }
-          .stats-grid { grid-template-columns: repeat(3, 1fr) !important; }
+          .overview-main { padding: 10px 8px; }
+          .details-grid { grid-template-columns: 1fr !important; gap: 8px; }
+          .stats-grid { grid-template-columns: repeat(3, 1fr) !important; gap: 6px; }
           .stats-grid .stat-hide-mobile { display: none; }
           .action-label { display: none !important; }
-          .submissions-grid { grid-template-columns: 1fr; }
+          .submissions-grid { grid-template-columns: 1fr; gap: 8px; }
+
+          /* Top bar: tabs full row, actions own row below as one connected toolbar */
+          .top-bar-wrap { flex-direction: column !important; align-items: stretch !important; padding: 0 8px !important; min-height: auto !important; }
+          .tabs-row { width: 100%; }
+          .tabs-row button { flex: 1; justify-content: center; padding: 8px 6px !important; font-size: 12px !important; }
+
+          .tab-actions-wrap {
+            width: 100%;
+            padding: 8px 0 10px !important;
+            gap: 0 !important;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            overflow: hidden;
+            background: #fff;
+          }
+          .tab-actions-wrap > button,
+          .tab-actions-wrap > div {
+            flex: 1;
+            margin: 0 !important;
+            border-radius: 0 !important;
+            border: none !important;
+            border-right: 1px solid #e5e7eb !important;
+            justify-content: center !important;
+            height: 38px !important;
+          }
+          .tab-actions-wrap > button:last-child,
+          .tab-actions-wrap > div:last-child { border-right: none !important; }
+          .tab-actions-wrap > div > button {
+            width: 100% !important;
+            height: 100% !important;
+            border-radius: 0 !important;
+          }
+          /* SpeedGrader keeps maroon fill, spans remaining space, no border-right needed since it's last visually */
+          .tab-actions-wrap > button[data-speedgrader] {
+            flex: 1.4;
+          }
+
+          .assign-hero { padding: 14px !important; border-radius: 12px !important; }
+          .detail-card-body { gap: 10px 12px !important; }
+
+          /* Submissions tab: horizontal-scroll filter pills, stacked download bar */
+          .filter-pills-row { overflow-x: auto !important; flex-wrap: nowrap !important; -webkit-overflow-scrolling: touch; }
+          .filter-pills-row::-webkit-scrollbar { display: none; }
+          .dl-bar { flex-direction: column !important; align-items: stretch !important; }
+          .dl-bar button { width: 100%; justify-content: center; }
         }
 
         /* ── Small mobile (≤480px) ── */
@@ -1092,9 +1137,9 @@ export default function AdminCourseAssignmentDetailPage({
       )}
 
       {/* ── Top action bar ── */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid #e5e7eb", padding: "0 8px 0 12px", background: "#fff", flexShrink: 0, flexWrap: "wrap", gap: 0, minHeight: 48 }}>
+      <div className="top-bar-wrap" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid #e5e7eb", padding: "0 8px 0 12px", background: "#fff", flexShrink: 0, flexWrap: "wrap", gap: 0, minHeight: 48 }}>
         {/* Tabs */}
-        <div style={{ display: "flex", alignItems: "flex-end" }}>
+        <div className="tabs-row" style={{ display: "flex", alignItems: "flex-end" }}>
           {(["overview", "submissions"] as ActiveTab[]).map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab)}
               style={{ padding: "10px 12px", fontSize: 13, marginBottom: -1, marginRight: 2, borderRadius: "6px 6px 0 0", cursor: "pointer", display: "flex", alignItems: "center", gap: 5, whiteSpace: "nowrap", textTransform: "capitalize", transition: "all 0.15s",
@@ -1129,9 +1174,9 @@ export default function AdminCourseAssignmentDetailPage({
             style={{ display: "flex", alignItems: "center", gap: 4, padding: "6px 10px", fontSize: 12, fontWeight: 700, borderRadius: 8, cursor: "pointer", border: "1px solid #e5e7eb", background: "#fff", color: "#374151" }}>
             <Pencil size={13} /><span className="action-label">Edit</span>
           </button>
-          <button onClick={() => handleSpeedGrader()}
-            style={{ display: "flex", alignItems: "center", gap: 4, padding: "6px 10px", fontSize: 12, fontWeight: 900, borderRadius: 8, cursor: "pointer", border: "none", background: MAROON, color: "#fff" }}>
-            <Zap size={13} /><span>SpeedGrader™</span>
+          <button data-speedgrader onClick={() => handleSpeedGrader()}
+            style={{ display: "flex", alignItems: "center", gap: 4, padding: "6px 10px", fontSize: 12, fontWeight: 900, borderRadius: 8, cursor: "pointer", border: "none", background: MAROON, color: "#fff", flexShrink: 0 }}>
+            <Zap size={13} /><span style={{ whiteSpace: "nowrap" }}>SpeedGrader™</span>
           </button>
           <div style={{ position: "relative" }} ref={dotMenuRef}>
             <button onClick={() => setShowDotMenu(p => !p)}
@@ -1155,52 +1200,39 @@ export default function AdminCourseAssignmentDetailPage({
         <div className="overview-layout">
           {/* Main content — fills all available space */}
           <div className="overview-main">
-            <div style={{ display: "flex", flexDirection: "column", gap: 16, width: "100%" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, width: "100%" }}>
 
-              {/* Hero */}
-              <div className="assign-hero" style={{ background: `linear-gradient(135deg, ${MAROON} 0%, #5a0d0f 100%)`, borderRadius: 14, padding: "20px 20px", position: "relative", overflow: "hidden" }}>
-                <div style={{ position: "absolute", top: -30, right: -30, width: 120, height: 120, borderRadius: "50%", background: "rgba(255,255,255,.04)" }} />
-                <div style={{ position: "absolute", bottom: -20, left: -20, width: 80, height: 80, borderRadius: "50%", background: "rgba(255,255,255,.03)" }} />
-                <div style={{ display: "flex", alignItems: "flex-start", gap: 14, position: "relative", flexWrap: "wrap" }}>
-                  <div style={{ width: 44, height: 44, borderRadius: 12, background: "rgba(255,255,255,.15)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    <FileText size={20} color="#fff" />
+              {/* Hero — compact single row */}
+              <div className="assign-hero" style={{ background: `linear-gradient(135deg, ${MAROON} 0%, #5a0d0f 100%)`, borderRadius: 12, padding: "12px 14px", position: "relative", overflow: "hidden" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, position: "relative", flexWrap: "wrap" }}>
+                  <div style={{ width: 34, height: 34, borderRadius: 9, background: "rgba(255,255,255,.15)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <FileText size={16} color="#fff" />
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 6 }}>
-                      <h1 style={{ fontSize: "clamp(16px, 2.5vw, 22px)", fontWeight: 900, color: "#fff", margin: 0, letterSpacing: "-0.02em", lineHeight: 1.2, wordBreak: "break-word" }}>{assignment.title}</h1>
-                      <span style={{ fontSize: 10, fontWeight: 800, padding: "3px 10px", borderRadius: 20, background: "rgba(255,255,255,.15)", color: "rgba(255,255,255,.9)", letterSpacing: "0.06em", textTransform: "uppercase", whiteSpace: "nowrap" }}>
+                    <h1 style={{ fontSize: 15, fontWeight: 900, color: "#fff", margin: 0, letterSpacing: "-0.01em", lineHeight: 1.25, wordBreak: "break-word" }}>{assignment.title}</h1>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginTop: 3 }}>
+                      <span style={{ fontSize: 9, fontWeight: 800, padding: "2px 7px", borderRadius: 20, background: "rgba(255,255,255,.15)", color: "rgba(255,255,255,.85)", letterSpacing: "0.04em", textTransform: "uppercase", whiteSpace: "nowrap" }}>
                         {assignment.assignmentGroup || "Assignment"}
                       </span>
+                      {assignment.publisherName && (
+                        <span style={{ fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,.75)" }}>{assignment.publisherName}</span>
+                      )}
                     </div>
-                    {assignment.publisherName && (
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                        <div style={{ width: 22, height: 22, borderRadius: "50%", background: "rgba(255,255,255,.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 900, color: "#fff", flexShrink: 0, overflow: "hidden" }}>
-                          {assignment.publisherImage
-                            // eslint-disable-next-line @next/next/no-img-element
-                            ? <img src={assignment.publisherImage} alt={assignment.publisherName} style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }} />
-                            : assignment.publisherName.charAt(0).toUpperCase()}
-                        </div>
-                        <span style={{ fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,.9)" }}>{assignment.publisherName}</span>
-                        {assignment.publisherRole && <RoleBadge role={assignment.publisherRole} />}
-                      </div>
-                    )}
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 5, background: "rgba(255,255,255,.12)", borderRadius: 20, padding: "5px 12px", flexShrink: 0, alignSelf: "flex-start" }}>
-                    <div style={{ width: 7, height: 7, borderRadius: "50%", background: availability.statusColor }} />
-                    <span style={{ fontSize: 11, fontWeight: 800, color: "#fff", whiteSpace: "nowrap" }}>{availability.statusLabel}</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: 4, background: "rgba(255,255,255,.12)", borderRadius: 20, padding: "4px 9px", flexShrink: 0 }}>
+                    <div style={{ width: 6, height: 6, borderRadius: "50%", background: availability.statusColor }} />
+                    <span style={{ fontSize: 10, fontWeight: 800, color: "#fff", whiteSpace: "nowrap" }}>{availability.statusLabel}</span>
                   </div>
                 </div>
               </div>
 
               {/* Description */}
               {assignment.description ? (
-                <div style={{ background: "#fff", border: "1px solid #f0e4e4", borderLeft: `4px solid ${MAROON}`, borderRadius: "0 12px 12px 0", padding: "14px 16px" }}>
-                  <p style={{ fontSize: 10, fontWeight: 800, color: MAROON, textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 8px" }}>Description</p>
+                <div style={{ background: "#fff", border: "1px solid #f0e4e4", borderLeft: `3px solid ${MAROON}`, borderRadius: "0 10px 10px 0", padding: "10px 12px" }}>
+                  <p style={{ fontSize: 9, fontWeight: 800, color: MAROON, textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 5px" }}>Description</p>
                   <div className="assign-desc" dangerouslySetInnerHTML={{ __html: assignment.description }} />
                 </div>
-              ) : (
-                <p style={{ fontSize: 13, color: "#9ca3af", fontStyle: "italic", margin: 0 }}>No description provided.</p>
-              )}
+              ) : null}
 
               {/* Stats */}
               {submissions.length > 0 && (() => {
@@ -1213,73 +1245,45 @@ export default function AdminCourseAssignmentDetailPage({
                       { label: "Missing",   value: m.length, color: MAROON,   bg: "#fef2f2", border: "#f0c0c0", cls: "" },
                       { label: "Late",      value: l.length, color: "#dc2626", bg: "#fef2f2", border: "#fecaca", cls: "stat-hide-mobile" },
                       ].map(stat => (
-                      <div key={stat.label} className={stat.cls} style={{ background: stat.bg, border: `1px solid ${stat.border}`, borderRadius: 10, padding: "12px 4px", textAlign: "center" }}>
-                        <p style={{ fontSize: "clamp(14px, 2.5vw, 22px)", fontWeight: 900, color: stat.color, margin: 0, lineHeight: 1 }}>{stat.value}</p>
-                        <p style={{ fontSize: "clamp(8px, 1.2vw, 11px)", fontWeight: 800, color: stat.color, textTransform: "uppercase", letterSpacing: "0.06em", margin: "4px 0 0" }}>{stat.label}</p>
+                      <div key={stat.label} className={stat.cls} style={{ background: stat.bg, border: `1px solid ${stat.border}`, borderRadius: 9, padding: "8px 4px", textAlign: "center" }}>
+                        <p style={{ fontSize: "clamp(13px, 2.5vw, 18px)", fontWeight: 900, color: stat.color, margin: 0, lineHeight: 1 }}>{stat.value}</p>
+                        <p style={{ fontSize: "clamp(7.5px, 1.2vw, 10px)", fontWeight: 800, color: stat.color, textTransform: "uppercase", letterSpacing: "0.05em", margin: "3px 0 0" }}>{stat.label}</p>
                       </div>
                     ))}
                   </div>
                 );
               })()}
 
-              {/* Details + Schedule — 2-col on desktop */}
-              <div className="details-grid">
-                <div style={{ background: "#fff", border: "1px solid #f0e4e4", borderRadius: 14, overflow: "hidden" }}>
-                  <div style={{ padding: "10px 14px", background: "linear-gradient(90deg,#fef2f2,#fff)", borderBottom: "1px solid #fce8e8", display: "flex", alignItems: "center", gap: 8 }}>
-                    <div style={{ width: 24, height: 24, borderRadius: 7, background: MAROON, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                    </div>
-                    <p style={{ fontSize: 10, fontWeight: 800, color: MAROON, textTransform: "uppercase", letterSpacing: "0.1em", margin: 0 }}>Details</p>
-                  </div>
-                  <div style={{ padding: "14px 16px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px 16px" }}>
-                    {([
-                      ["Points", `${assignment.points} pts`],
-                      ["Submission", submittingLabel],
-                      ["Group", assignment.assignmentGroup || "—"],
-                      ["Attempts", assignment.allowedAttempts != null ? String(assignment.allowedAttempts) : "Unlimited"],
-                      ["Status", isPublished ? "Published" : "Unpublished"],
-                      ["Can Submit", availability.canSubmit ? "Yes" : "No"],
-                    ] as [string, string][]).map(([k, v]) => (
-                      <div key={k}>
-                        <p style={{ fontSize: 9, fontWeight: 800, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 3px" }}>{k}</p>
-                        <p style={{ fontSize: 13, fontWeight: 700, color: "#111827", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{v}</p>
-                      </div>
-                    ))}
-                  </div>
+              {/* Details + Schedule — merged into one compact card */}
+              <div style={{ background: "#fff", border: "1px solid #f0e4e4", borderRadius: 12, overflow: "hidden" }}>
+                <div style={{ padding: "8px 12px", background: "linear-gradient(90deg,#fef2f2,#fff)", borderBottom: "1px solid #fce8e8" }}>
+                  <p style={{ fontSize: 9, fontWeight: 800, color: MAROON, textTransform: "uppercase", letterSpacing: "0.08em", margin: 0 }}>Details &amp; Schedule</p>
                 </div>
-
-                <div style={{ background: "#fff", border: "1px solid #f0e4e4", borderRadius: 14, overflow: "hidden" }}>
-                  <div style={{ padding: "10px 14px", background: "linear-gradient(90deg,#fef2f2,#fff)", borderBottom: "1px solid #fce8e8", display: "flex", alignItems: "center", gap: 8 }}>
-                    <div style={{ width: 24, height: 24, borderRadius: 7, background: MAROON, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                <div className="detail-card-body" style={{ padding: "10px 12px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px 14px" }}>
+                  {([
+                    ["Points", `${assignment.points} pts`],
+                    ["Due Date", fmtDue(assignment.dueDate) || "No due date"],
+                    ["Submission", submittingLabel],
+                    ["Assigned To", forLabel],
+                    ["Group", assignment.assignmentGroup || "—"],
+                    ["Available From", assignment.availableFrom ? fmtDate(assignment.availableFrom) : "—"],
+                    ["Attempts", assignment.allowedAttempts != null ? String(assignment.allowedAttempts) : "Unlimited"],
+                    ["Until", assignment.availableUntil ? fmtDate(assignment.availableUntil) : "—"],
+                  ] as [string, string][]).map(([k, v]) => (
+                    <div key={k}>
+                      <p style={{ fontSize: 8.5, fontWeight: 800, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 2px" }}>{k}</p>
+                      <p style={{ fontSize: 12, fontWeight: 700, color: "#111827", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{v}</p>
                     </div>
-                    <p style={{ fontSize: 10, fontWeight: 800, color: MAROON, textTransform: "uppercase", letterSpacing: "0.1em", margin: 0 }}>Schedule</p>
-                  </div>
-                  <div style={{ padding: "14px 16px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px 16px" }}>
-                    {([
-                      ["Due Date", fmtDue(assignment.dueDate) || "No due date"],
-                      ["Assigned To", forLabel],
-                      ["Available From", assignment.availableFrom ? fmtDate(assignment.availableFrom) : "—"],
-                      ["Until", assignment.availableUntil ? fmtDate(assignment.availableUntil) : "—"],
-                    ] as [string, string][]).map(([k, v]) => (
-                      <div key={k}>
-                        <p style={{ fontSize: 9, fontWeight: 800, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 3px" }}>{k}</p>
-                        <p style={{ fontSize: 13, fontWeight: 700, color: "#111827", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{v}</p>
-                      </div>
-                    ))}
-                  </div>
+                  ))}
                 </div>
               </div>
 
               {/* Rubric Section */}
-              <div style={{ background: "#fff", border: "1px solid #f0e4e4", borderRadius: 14, overflow: "hidden" }}>
-                <div style={{ padding: "10px 14px", background: "linear-gradient(90deg,#fef2f2,#fff)", borderBottom: "1px solid #fce8e8", display: "flex", alignItems: "center", gap: 8 }}>
-                  <div style={{ width: 24, height: 24, borderRadius: 7, background: MAROON, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="9" x2="9" y2="21"/></svg>
-                  </div>
-                  <p style={{ fontSize: 10, fontWeight: 800, color: MAROON, textTransform: "uppercase", letterSpacing: "0.1em", margin: 0 }}>Rubric</p>
+              <div style={{ background: "#fff", border: "1px solid #f0e4e4", borderRadius: 12, overflow: "hidden" }}>
+                <div style={{ padding: "8px 12px", background: "linear-gradient(90deg,#fef2f2,#fff)", borderBottom: "1px solid #fce8e8" }}>
+                  <p style={{ fontSize: 9, fontWeight: 800, color: MAROON, textTransform: "uppercase", letterSpacing: "0.08em", margin: 0 }}>Rubric</p>
                 </div>
-                <div style={{ padding: "14px 16px" }}>
+                <div style={{ padding: "10px 12px" }}>
                   <RubricSection courseId={courseId} assignmentId={assignmentId} />
                 </div>
               </div>
@@ -1287,17 +1291,17 @@ export default function AdminCourseAssignmentDetailPage({
               {/* Submissions CTA */}
               {submitted.length > 0 && (
                 <button onClick={() => setActiveTab("submissions")}
-                  style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 18px", borderRadius: 14, border: "1px solid #f0c0c0", background: "linear-gradient(90deg,#fef2f2,#fff)", cursor: "pointer", fontFamily: FONT, boxSizing: "border-box" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                    <div style={{ width: 40, height: 40, borderRadius: 10, background: MAROON, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                      <FileText size={18} color="#fff" />
+                  style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", borderRadius: 12, border: "1px solid #f0c0c0", background: "linear-gradient(90deg,#fef2f2,#fff)", cursor: "pointer", fontFamily: FONT, boxSizing: "border-box" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <div style={{ width: 32, height: 32, borderRadius: 9, background: MAROON, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <FileText size={15} color="#fff" />
                     </div>
                     <div style={{ textAlign: "left" }}>
-                      <p style={{ fontSize: 15, fontWeight: 900, color: MAROON, margin: 0 }}>{submitted.length} Submission{submitted.length !== 1 ? "s" : ""}</p>
-                      <p style={{ fontSize: 12, color: "#9ca3af", margin: "2px 0 0" }}>Click to view, grade, and download</p>
+                      <p style={{ fontSize: 13, fontWeight: 900, color: MAROON, margin: 0 }}>{submitted.length} Submission{submitted.length !== 1 ? "s" : ""}</p>
+                      <p style={{ fontSize: 11, color: "#9ca3af", margin: "1px 0 0" }}>View, grade, and download</p>
                     </div>
                   </div>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={MAROON} strokeWidth="2.5"><path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={MAROON} strokeWidth="2.5"><path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round"/></svg>
                 </button>
               )}
             </div>
@@ -1389,7 +1393,7 @@ export default function AdminCourseAssignmentDetailPage({
                 <option value="grade">Grade</option>
               </select>
             </div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 5, alignItems: "center" }}>
+            <div className="filter-pills-row" style={{ display: "flex", flexWrap: "wrap", gap: 5, alignItems: "center" }}>
               {(["all", "submitted", "graded", "missing", "late", "excused"] as FilterStatus[]).map(f => (
                 <button key={f} onClick={() => setFilterStatus(f)}
                   style={{ padding: "4px 10px", fontSize: 11, fontWeight: 700, border: "1px solid", borderRadius: 8, cursor: "pointer", textTransform: "capitalize", whiteSpace: "nowrap",
@@ -1405,7 +1409,7 @@ export default function AdminCourseAssignmentDetailPage({
 
           {/* Download bar */}
           {submitted.length > 0 && (
-            <div style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 12, padding: "12px 14px", marginBottom: 12, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+            <div className="dl-bar" style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 12, padding: "12px 14px", marginBottom: 12, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <div style={{ width: 34, height: 34, borderRadius: 10, background: "#fef2f2", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                   <PackageOpen size={14} style={{ color: MAROON }} />

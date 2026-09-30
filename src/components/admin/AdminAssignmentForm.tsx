@@ -303,8 +303,8 @@ function RichTextEditor({ onChange, placeholder = "Start typing...", initialHtml
       {showFR && <FindReplaceModal html={editorHtml} onUpdate={h => { if (editorRef.current) editorRef.current.innerHTML = h; }} onClose={() => setShowFR(false)} />}
       {showHTML && <HTMLEditorModal html={editorHtml} onUpdate={h => { if (editorRef.current) editorRef.current.innerHTML = h; }} onClose={() => setShowHTML(false)} />}
       {showColor && <ColorPickerModal type={showColor} onClose={() => setShowColor(null)} />}
-      <div ref={wrapRef} className="border border-gray-300 rounded overflow-hidden flex flex-col" style={{ minHeight: 320 }}>
-        <div data-menubar className="flex items-center gap-0.5 px-1 py-0.5 bg-[#f7f9fb] border-b border-gray-200 select-none flex-wrap">
+      <div ref={wrapRef} className="border border-gray-300 rounded overflow-hidden flex flex-col" style={{ minHeight: 220 }}>
+        <div data-menubar className="flex items-center gap-0.5 px-1 py-0.5 bg-[#f7f9fb] border-b border-gray-200 select-none overflow-x-auto flex-nowrap sm:flex-wrap" style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "none" }}>
           {menus.map(m => (
             <div key={m.label} className="relative">
               <button type="button" onMouseDown={e => { e.preventDefault(); setOpenMenu(openMenu === m.label ? null : m.label); }}
@@ -318,7 +318,7 @@ function RichTextEditor({ onChange, placeholder = "Start typing...", initialHtml
             </div>
           ))}
         </div>
-        <div className="flex flex-wrap items-center gap-0.5 px-2 py-1 bg-[#f7f9fb] border-b border-gray-200">
+        <div className="flex items-center gap-0.5 px-2 py-1 bg-[#f7f9fb] border-b border-gray-200 overflow-x-auto flex-nowrap sm:flex-wrap" style={{ WebkitOverflowScrolling: "touch" }}>
           {TBGroups.map((group, gi) => (
             <div key={gi} className="flex items-center gap-0.5">
               {gi > 0 && <div className="w-px h-5 bg-gray-300 mx-1" />}
@@ -329,7 +329,7 @@ function RichTextEditor({ onChange, placeholder = "Start typing...", initialHtml
             </div>
           ))}
         </div>
-        <div ref={editorRef} contentEditable suppressContentEditableWarning onInput={updateWC} onKeyUp={updateWC} onMouseUp={updateWC} data-placeholder={placeholder} className="flex-1 px-4 py-3 text-sm text-gray-800 outline-none overflow-y-auto" style={{ minHeight: 260, lineHeight: 1.7 }} />
+        <div ref={editorRef} contentEditable suppressContentEditableWarning onInput={updateWC} onKeyUp={updateWC} onMouseUp={updateWC} data-placeholder={placeholder} className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 text-sm text-gray-800 outline-none overflow-y-auto" style={{ minHeight: 160, lineHeight: 1.7 }} />
         <div className="flex items-center gap-4 px-3 py-1 bg-[#f7f9fb] border-t border-gray-200 text-xs text-gray-400">
           <span>{wordCount} word{wordCount !== 1 ? "s" : ""}</span>
           <span className="ml-auto cursor-pointer hover:text-gray-600" onClick={() => { setEditorHtml(editorRef.current?.innerHTML ?? ""); setShowHTML(true); }} title="HTML Editor">&lt;/&gt;</span>
@@ -798,33 +798,33 @@ export default function AdminAssignmentForm({
     <div className="w-full h-full bg-white flex flex-col" suppressHydrationWarning>
 
       {/* Top bar */}
-      <div className="flex items-center justify-between px-4 sm:px-6 py-2.5 border-b border-gray-200 bg-white shrink-0">
-        <div className="flex items-center gap-2 text-xs text-gray-500">
-          <span>{isEdit ? "Editing:" : "New Assignment"}</span>
-          {isEdit && <span className="font-semibold text-gray-700 truncate max-w-xs">{name || "Assignment"}</span>}
+      <div className="flex items-center justify-between px-3 sm:px-6 py-2 sm:py-2.5 border-b border-gray-200 bg-white shrink-0 gap-2">
+        <div className="flex items-center gap-2 text-[11px] sm:text-xs text-gray-500 min-w-0">
+          <span className="shrink-0">{isEdit ? "Editing:" : "New Assignment"}</span>
+          {isEdit && <span className="font-semibold text-gray-700 truncate">{name || "Assignment"}</span>}
         </div>
-        <div className="flex items-center gap-1.5 text-xs text-gray-600">
-          <span className="w-3 h-3 rounded-full border shrink-0" style={published ? { background: "#22c55e", borderColor: "#22c55e" } : { borderColor: "#9ca3af" }} />
+        <div className="flex items-center gap-1.5 text-[11px] sm:text-xs text-gray-600 shrink-0">
+          <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full border shrink-0" style={published ? { background: "#22c55e", borderColor: "#22c55e" } : { borderColor: "#9ca3af" }} />
           {published ? "Published" : "Not Published"}
         </div>
       </div>
 
       {/* Tab bar */}
-      <div className="flex items-end border-b border-gray-200 px-2 sm:px-6 bg-white shrink-0 overflow-x-auto">
+      <div className="grid grid-cols-4 sm:flex sm:items-end border-b border-gray-200 px-0 sm:px-6 bg-white shrink-0">
         {TABS.map(t => (
           <button key={t.key} onClick={() => setActiveTab(t.key)}
-            className={`px-3 sm:px-5 py-2 text-xs border border-b-0 -mb-px mr-0.5 rounded-t transition-colors whitespace-nowrap ${activeTab === t.key ? "bg-white border-gray-200 text-gray-900 font-medium" : "border-transparent text-gray-500 hover:text-gray-700"}`}>
+            className={`px-1 sm:px-5 py-2.5 sm:py-2 text-[11px] sm:text-xs text-center sm:text-left border-b-2 sm:border sm:border-b-0 sm:-mb-px sm:mr-0.5 sm:rounded-t transition-colors whitespace-nowrap truncate ${activeTab === t.key ? "border-[#7b1113] sm:border-gray-200 sm:bg-white text-[#7b1113] sm:text-gray-900 font-semibold sm:font-medium" : "border-transparent text-gray-500 hover:text-gray-700"}`}>
             {t.label}
           </button>
         ))}
       </div>
 
       {/* Scrollable body */}
-      <div className="flex-1 overflow-y-auto px-4 sm:px-10 py-6">
+      <div className="flex-1 overflow-y-auto px-3 sm:px-10 py-4 sm:py-6">
 
         {/* ══ DETAILS ══ */}
         {activeTab === "details" && (
-          <div className="space-y-5 max-w-3xl">
+          <div className="space-y-4 sm:space-y-5 max-w-3xl">
             <div>
               <label className="text-xs text-gray-500 block mb-1">Assignment Name <span className="text-red-500">*</span></label>
               <input value={name} onChange={e => setName(e.target.value)} placeholder="Assignment Name"
@@ -837,8 +837,8 @@ export default function AdminAssignmentForm({
               <label className="text-xs text-gray-500 block mb-1">Description</label>
               <RichTextEditor key={initialDescKey} onChange={setDescription} placeholder="Assignment description..." initialHtml={initialDesc} />
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] items-start gap-y-4 gap-x-4">
-              <label className="text-xs text-gray-700 sm:text-right pt-2">Points</label>
+            <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] items-start gap-y-3 sm:gap-y-4 gap-x-4">
+              <label className="text-xs text-gray-700 sm:text-right pt-2 pb-0.5 sm:pb-0">Points</label>
               <input type="number" min={0} value={points} onChange={e => setPoints(e.target.value)}
                 className="h-8 border border-gray-300 rounded-sm px-3 text-xs w-full sm:w-80 outline-none focus:border-[#7b1113]" />
               <label className="text-xs text-gray-700 sm:text-right pt-2">Assignment Group</label>
@@ -854,8 +854,8 @@ export default function AdminAssignmentForm({
 
         {/* ══ SUBMISSION ══ */}
         {activeTab === "submission" && (
-          <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] items-start gap-y-5 gap-x-4 max-w-3xl">
-            <label className="text-xs text-gray-700 sm:text-right pt-2">Submission Type</label>
+          <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] items-start gap-y-3 sm:gap-y-5 gap-x-4 max-w-3xl">
+            <label className="text-xs text-gray-700 sm:text-right pt-2 pb-0.5 sm:pb-0">Submission Type</label>
             <select value={submissionType} onChange={e => setSubmissionType(e.target.value)}
               className="h-8 border border-gray-300 rounded-sm px-3 text-xs w-full sm:w-80 bg-white outline-none focus:border-[#7b1113]">
               {SUBMISSION_TYPES.map(o => <option key={o}>{o}</option>)}
@@ -921,8 +921,8 @@ export default function AdminAssignmentForm({
 
         {/* ══ SETTINGS ══ */}
         {activeTab === "settings" && (
-          <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] items-start gap-y-5 gap-x-4 max-w-3xl">
-            <label className="text-xs text-gray-700 sm:text-right pt-2">Display Grade as</label>
+          <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] items-start gap-y-3 sm:gap-y-5 gap-x-4 max-w-3xl">
+            <label className="text-xs text-gray-700 sm:text-right pt-2 pb-0.5 sm:pb-0">Display Grade as</label>
             <select value={displayGradeAs} onChange={e => setDisplayGradeAs(e.target.value)}
               className="h-8 border border-gray-300 rounded-sm px-3 text-xs w-full sm:w-80 bg-white outline-none focus:border-[#7b1113]">
               {GRADE_OPTIONS.map(o => <option key={o}>{o}</option>)}
@@ -961,8 +961,8 @@ export default function AdminAssignmentForm({
 
         {/* ══ ASSIGN ══ */}
         {activeTab === "assign" && (
-          <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] items-start gap-y-5 gap-x-4 max-w-3xl">
-            <label className="text-xs text-gray-700 sm:text-right pt-2">Assign Access</label>
+          <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] items-start gap-y-3 sm:gap-y-5 gap-x-4 max-w-3xl">
+            <label className="text-xs text-gray-700 sm:text-right pt-2 pb-0.5 sm:pb-0">Assign Access</label>
             <div className="space-y-3 w-full">
               {assignRows.map((row, idx) => (
                 <div key={row.id} className="border border-gray-200 rounded-sm p-3 space-y-3 w-full sm:max-w-xl relative">
@@ -1185,27 +1185,27 @@ export default function AdminAssignmentForm({
       )}
 
       {/* ── Bottom Bar ── */}
-      <div className="shrink-0 border-t border-gray-200 bg-white px-4 sm:px-8 py-3 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
-        <div>{saveError && <span className="text-xs text-red-600 font-medium">⚠ {saveError}</span>}</div>
-        <div className="flex items-center gap-2 justify-end flex-wrap">
+      <div className="shrink-0 border-t border-gray-200 bg-white px-3 sm:px-8 py-2.5 sm:py-3 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-2">
+        {saveError && <span className="text-[11px] sm:text-xs text-red-600 font-medium">⚠ {saveError}</span>}
+        <div className="grid grid-cols-2 sm:flex sm:items-center gap-1.5 sm:gap-2 sm:justify-end w-full sm:w-auto">
           <button onClick={onCancel} disabled={saving}
-            className="h-8 px-4 border border-gray-300 bg-white text-xs text-gray-700 rounded hover:bg-gray-50 disabled:opacity-50">Cancel</button>
+            className="h-9 sm:h-8 px-3 sm:px-4 border border-gray-300 bg-white text-xs text-gray-700 rounded hover:bg-gray-50 disabled:opacity-50">Cancel</button>
           {prevTab && (
             <button type="button" onClick={() => setActiveTab(prevTab)}
-              className="h-8 px-4 border border-gray-300 bg-white text-xs text-gray-700 rounded hover:bg-gray-50">← Back</button>
+              className="h-9 sm:h-8 px-3 sm:px-4 border border-gray-300 bg-white text-xs text-gray-700 rounded hover:bg-gray-50">← Back</button>
           )}
           {nextTab && (
             <button type="button" onClick={() => setActiveTab(nextTab)}
-              className="h-8 px-4 border border-gray-300 bg-gray-50 text-xs text-gray-700 rounded hover:bg-gray-100">Next →</button>
+              className="h-9 sm:h-8 px-3 sm:px-4 border border-gray-300 bg-gray-50 text-xs text-gray-700 rounded hover:bg-gray-100 col-span-2 sm:col-span-1">Next →</button>
           )}
           {activeTab === "assign" && (
             <>
               <button onClick={() => handleSave(true)} disabled={saving}
-                className="h-8 px-4 border border-gray-300 bg-gray-50 text-xs text-gray-700 rounded hover:bg-gray-100 disabled:opacity-50">
+                className="h-9 sm:h-8 px-3 sm:px-4 border border-gray-300 bg-gray-50 text-xs text-gray-700 rounded hover:bg-gray-100 disabled:opacity-50">
                 {saving ? "Saving..." : "Save & Publish"}
               </button>
               <button onClick={() => handleSave(false)} disabled={saving} style={{ background: MAROON }}
-                className="h-8 px-4 text-white text-xs rounded hover:opacity-90 disabled:opacity-50">
+                className="h-9 sm:h-8 px-3 sm:px-4 text-white text-xs rounded hover:opacity-90 disabled:opacity-50">
                 {saving ? "Saving..." : "Save"}
               </button>
             </>

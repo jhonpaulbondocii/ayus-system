@@ -129,6 +129,28 @@ export async function POST(
       sheet = await prisma.guidanceInfoSheet.create({ data });
     }
 
+    // ── Auto-sync to Student Records (skip if studentNumber already exists) ──
+    try {
+      await prisma.student.upsert({
+        where:  { studentNumber: studentNo },
+        update: {}, // already exists → skip, no overwrite
+        create: {
+          studentNumber: studentNo,
+          name:          data.name,
+          email:         data.email          ?? null,
+          address:       data.completeAddress ?? null,
+          birthDate:     data.dateOfBirth
+                           ? new Date(data.dateOfBirth) : null,
+          gender:        data.sex            ?? null,
+          course:        data.courseProgram  ?? null,
+          age:           data.age            ?? null,
+        },
+      });
+    } catch (syncErr) {
+      // Non-fatal — guidance sheet was saved successfully, just log the sync failure
+      console.error("[POST /guidance/submit] Student sync failed:", syncErr);
+    }
+
     return NextResponse.json({ success: true, id: sheet.id }, { status: 201 });
 
   } catch (err) {

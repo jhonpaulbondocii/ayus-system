@@ -69,6 +69,7 @@ for (const userFiles of Object.values(byUser)) {
     latestFiles.push(userFiles[0]);
   }
 }
+// TANGGALIN YUNG PANGALAWANG LOOP — wala na siya dito
 for (const userFiles of Object.values(byUser)) {
   latestFiles.push(...userFiles);
 }

@@ -1,10 +1,9 @@
 // src/components/layout/course/CourseAnnouncementsTab.tsx
 "use client";
 
-import { useState, useRef, useEffect, useMemo } from "react";
-import Image from "next/image";
+import { useState, useRef, useMemo, useCallback } from "react";
 import { AnnouncementCreateView } from "@/components/admin/CourseAnnouncementsPage";
-import { COLORS, MAROON, fmtDateTime, normalizeAnnouncement } from "./helpers";
+import { fmtDateTime, normalizeAnnouncement } from "./helpers";
 import type {
   Announcement,
   AnnouncementCreateAttachment,
@@ -12,213 +11,553 @@ import type {
   RawAnnouncement,
 } from "./types";
 
-function useOnClickOutside<T extends HTMLElement>(
-  ref: React.RefObject<T | null>,
-  handler: () => void
-) {
-  useEffect(() => {
-    function listener(e: MouseEvent) {
-      const el = ref.current;
-      if (!el || el.contains(e.target as Node)) return;
-      handler();
-    }
-    document.addEventListener("mousedown", listener);
-    return () => document.removeEventListener("mousedown", listener);
-  }, [ref, handler]);
+const MAROON = "#7b1113";
+const FONT = "'Plus Jakarta Sans','Helvetica Neue',Arial,sans-serif";
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function groupByDate(announcements: Announcement[]): { label: string; items: Announcement[] }[] {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1);
+  const weekAgo = new Date(today); weekAgo.setDate(weekAgo.getDate() - 7);
+
+  const groups: Record<string, Announcement[]> = {
+    Today: [],
+    Yesterday: [],
+    "This week": [],
+    Older: [],
+  };
+
+  for (const a of announcements) {
+    if (!a.createdAt) continue;
+    const d = new Date(a.createdAt);
+    const day = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    if (day >= today) groups["Today"].push(a);
+    else if (day >= yesterday) groups["Yesterday"].push(a);
+    else if (day >= weekAgo) groups["This week"].push(a);
+    else groups["Older"].push(a);
+  }
+
+  return Object.entries(groups)
+    .filter(([, items]) => items.length > 0)
+    .map(([label, items]) => ({ label, items }));
 }
 
-function useIsMobile(breakpoint = 640) {
-  const [isMobile, setIsMobile] = useState(false);
-  useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < breakpoint);
-    check();
-    window.addEventListener("resize", check);
-    return () => window.removeEventListener("resize", check);
-  }, [breakpoint]);
-  return isMobile;
-}
-
-function Avatar({
+// ─── AuthorAvatar ──────────────────────────────────────────────────────────────
+function AuthorAvatar({
   name,
   image,
   size = 36,
 }: {
   name: string | null;
-  image: string | null;
+  image?: string | null;
   size?: number;
 }) {
   if (image) {
     return (
-      <Image
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
         src={image}
         alt={name ?? ""}
         width={size}
         height={size}
-        className="rounded-full object-cover shrink-0"
-        style={{ width: size, height: size }}
+        style={{
+          width: size, height: size, borderRadius: "50%",
+          objectFit: "cover", flexShrink: 0,
+        }}
       />
     );
   }
+  const words = (name ?? "?").trim().split(/\s+/);
+  const initials =
+    words.length >= 2
+      ? (words[0][0] + words[words.length - 1][0]).toUpperCase()
+      : words[0].charAt(0).toUpperCase();
+  const colors = [MAROON, "#4f46e5", "#0e7490", "#15803d", "#b45309", "#7c3aed"];
+  const bg = name ? colors[name.charCodeAt(0) % colors.length] : MAROON;
   return (
     <div
-      className="rounded-full flex items-center justify-center shrink-0 text-white font-semibold"
-      style={{ width: size, height: size, background: MAROON, fontSize: size * 0.4 }}
+      style={{
+        width: size, height: size, borderRadius: "50%",
+        background: bg, color: "#fff",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        fontSize: size * 0.36, fontWeight: 700, flexShrink: 0,
+        fontFamily: FONT, letterSpacing: "-0.02em",
+      }}
     >
-      {name?.charAt(0)?.toUpperCase() ?? "A"}
+      {initials}
     </div>
   );
 }
 
-function AnnouncementThreeDot({
-  read,
-  onMarkRead,
+// ─── ConfirmModal ──────────────────────────────────────────────────────────────
+function ConfirmModal({
+  title, message, confirmLabel = "Confirm", danger = false, onConfirm, onCancel,
 }: {
-  read: boolean;
-  onMarkRead: () => void;
+  title: string; message: string; confirmLabel?: string;
+  danger?: boolean; onConfirm: () => void; onCancel: () => void;
 }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  useOnClickOutside(ref, () => setOpen(false));
-  if (read) return null;
   return (
-    <div ref={ref} className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors text-xl leading-none"
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+      onClick={onCancel}
+    >
+      <div
+        className="bg-white rounded-xl shadow-xl w-full max-w-sm border border-gray-200"
+        onClick={(e) => e.stopPropagation()}
+        style={{ fontFamily: FONT }}
       >
-        ⋮
-      </button>
-      {open && (
-        <div className="absolute right-0 top-full z-50 bg-white border border-gray-200 rounded-lg shadow-lg min-w-[160px] py-1" style={{ marginTop: 4 }}>
+        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+          <span className="text-sm font-semibold text-gray-800">{title}</span>
+          <button onClick={onCancel} className="text-gray-400 hover:text-gray-600 text-xl leading-none">×</button>
+        </div>
+        <div className="px-4 py-4">
+          <p className="text-sm text-gray-600">{message}</p>
+        </div>
+        <div className="px-4 py-3 border-t border-gray-100 flex justify-end gap-2">
           <button
-            type="button"
-            onClick={() => { onMarkRead(); setOpen(false); }}
-            className="w-full text-left px-4 py-2.5 text-sm flex items-center gap-2 hover:bg-gray-50 text-gray-700"
+            onClick={onCancel}
+            className="h-9 px-4 border border-gray-300 text-xs text-gray-700 rounded-lg hover:bg-gray-50"
           >
-            <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-            </svg>
-            Mark as Read
+            Cancel
           </button>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── Detail View ──────────────────────────────────────────────────────────────
-function StudentAnnouncementDetail({
-  announcement,
-  onBack,
-  onMarkRead,
-}: {
-  announcement: Announcement;
-  onBack: () => void;
-  onMarkRead: (id: string) => void;
-}) {
-  const [liked, setLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(0);
-  const isMobile = useIsMobile();
-
-  return (
-    <div className="px-3 sm:px-6 py-4 sm:py-5">
-      <button
-        type="button"
-        onClick={onBack}
-        className="inline-flex items-center gap-1.5 text-sm mb-4 hover:underline font-medium"
-        style={{ color: MAROON }}
-      >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-        </svg>
-        Back to Announcements
-      </button>
-
-      <div className="border border-gray-200 rounded-xl bg-white shadow-sm overflow-hidden">
-        <div className="flex items-start gap-3 px-4 sm:px-5 py-4 border-b border-gray-100">
-          <Avatar name={announcement.authorName} image={announcement.authorImage} size={isMobile ? 34 : 40} />
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-sm font-semibold text-gray-800 truncate">{announcement.authorName}</span>
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 font-semibold uppercase tracking-wide shrink-0">Author</span>
-            </div>
-            <div className="text-xs text-gray-400 mt-0.5">Posted {fmtDateTime(announcement.createdAt)}</div>
-            <div className="text-xs text-gray-400">To: {announcement.recipientsLabel}</div>
-          </div>
-          <div className="flex items-center gap-1 shrink-0">
-            {announcement.locked && (
-              <span className="hidden sm:inline-flex items-center gap-1 text-xs text-gray-500 border border-gray-200 rounded px-2 py-1">
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                  <rect x="3" y="11" width="18" height="11" rx="2" />
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                </svg>
-                Locked
-              </span>
-            )}
-            <AnnouncementThreeDot read={announcement.read} onMarkRead={() => onMarkRead(announcement.id)} />
-          </div>
-        </div>
-
-        <div className="px-4 sm:px-5 py-4 sm:py-5">
-          <h1 className="text-lg sm:text-xl font-bold text-gray-900 mb-4 leading-snug">{announcement.title}</h1>
-
-          {announcement.locked && (
-            <span className="sm:hidden inline-flex items-center gap-1 text-xs text-gray-500 border border-gray-200 rounded px-2 py-1 mb-3">
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <rect x="3" y="11" width="18" height="11" rx="2" />
-                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-              </svg>
-              Locked
-            </span>
-          )}
-
-          {announcement.bodyHtml ? (
-            <div
-              className="prose prose-sm max-w-none text-gray-700 leading-relaxed"
-              dangerouslySetInnerHTML={{ __html: announcement.bodyHtml }}
-              style={{ lineHeight: 1.8 }}
-            />
-          ) : announcement.body ? (
-            <p className="text-sm text-gray-700 leading-relaxed">{announcement.body}</p>
-          ) : (
-            <p className="text-sm text-gray-400 italic">No content.</p>
-          )}
-
-          {announcement.attachments.length > 0 && (
-            <div className="mt-4 pt-4 border-t border-gray-100">
-              <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Attachments</div>
-              <div className="flex flex-wrap gap-2">
-                {announcement.attachments.map((f) => (
-                  <a key={f.id} href={f.url} target="_blank" rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 border border-gray-200 rounded-full bg-gray-50 hover:bg-gray-100 active:bg-gray-200 transition-colors"
-                    style={{ color: MAROON }}>
-                    📎 {f.name}
-                  </a>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {announcement.allowLiking && (
-            <div className="mt-4 pt-4 border-t border-gray-100">
-              <button
-                type="button"
-                onClick={() => { setLikeCount((c) => (liked ? c - 1 : c + 1)); setLiked((v) => !v); }}
-                className="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded border transition-colors active:scale-95"
-                style={{ borderColor: liked ? MAROON : "#d1d5db", color: liked ? MAROON : "#6b7280", background: liked ? "#fef2f2" : "transparent" }}
-              >
-                👍 {liked ? "Liked" : "Like"} {likeCount > 0 && `(${likeCount})`}
-              </button>
-            </div>
-          )}
+          <button
+            onClick={onConfirm}
+            className="h-9 px-4 text-white text-xs rounded-lg hover:opacity-90"
+            style={{ background: danger ? "#dc2626" : MAROON }}
+          >
+            {confirmLabel}
+          </button>
         </div>
       </div>
     </div>
   );
 }
 
-// ─── List View ────────────────────────────────────────────────────────────────
+// ─── SwipeableCard ─────────────────────────────────────────────────────────────
+function SwipeableCard({
+  children,
+  onDelete,
+  onMarkRead,
+  isRead,
+}: {
+  children: React.ReactNode;
+  onDelete: () => void;
+  onMarkRead: () => void;
+  isRead: boolean;
+}) {
+  const [offset, setOffset] = useState(0);
+  const [swiping, setSwiping] = useState(false);
+  const startX = useRef(0);
+  const startY = useRef(0);
+  const isDragging = useRef(false);
+  const ACTION_WIDTH = 120;
+  const THRESHOLD = 60;
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    startX.current = e.touches[0].clientX;
+    startY.current = e.touches[0].clientY;
+    isDragging.current = false;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    const dx = e.touches[0].clientX - startX.current;
+    const dy = Math.abs(e.touches[0].clientY - startY.current);
+    if (!isDragging.current && dy > Math.abs(dx)) return;
+    if (dx < 0) {
+      isDragging.current = true;
+      setSwiping(true);
+      setOffset(Math.max(dx, -ACTION_WIDTH));
+    }
+  };
+
+  const handleTouchEnd = () => {
+    setOffset(Math.abs(offset) > THRESHOLD ? -ACTION_WIDTH : 0);
+    setSwiping(false);
+    isDragging.current = false;
+  };
+
+  const close = () => setOffset(0);
+
+  return (
+    <div style={{ position: "relative", overflow: "hidden" }}>
+      <div style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: ACTION_WIDTH, display: "flex" }}>
+        <button
+          type="button"
+          onClick={() => { onMarkRead(); close(); }}
+          style={{
+            flex: 1, background: "#3b82f6", color: "#fff",
+            border: "none", cursor: "pointer",
+            display: "flex", flexDirection: "column",
+            alignItems: "center", justifyContent: "center",
+            gap: 3, fontSize: 10, fontFamily: FONT, fontWeight: 600,
+          }}
+        >
+          <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+          </svg>
+          {isRead ? "Unread" : "Read"}
+        </button>
+        <button
+          type="button"
+          onClick={() => { onDelete(); close(); }}
+          style={{
+            flex: 1, background: "#ef4444", color: "#fff",
+            border: "none", cursor: "pointer",
+            display: "flex", flexDirection: "column",
+            alignItems: "center", justifyContent: "center",
+            gap: 3, fontSize: 10, fontFamily: FONT, fontWeight: 600,
+          }}
+        >
+          <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6M14 11v6" /><path d="M9 6V4h6v2" />
+          </svg>
+          Delete
+        </button>
+      </div>
+      <div
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        style={{
+          transform: `translateX(${offset}px)`,
+          transition: swiping ? "none" : "transform 0.2s ease",
+          position: "relative", background: "#fff",
+        }}
+      >
+        {children}
+        {offset < -10 && (
+          <button
+            type="button"
+            onClick={close}
+            style={{
+              position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
+              background: "transparent", border: "none", cursor: "default",
+            }}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── AnnouncementCard (list item) ──────────────────────────────────────────────
+function AnnouncementCard({
+  a,
+  selected,
+  onToggleSelect,
+  onView,
+  onDelete,
+  onToggleRead,
+  canDelete,
+}: {
+  a: Announcement;
+  selected: boolean;
+  onToggleSelect: () => void;
+  onView: () => void;
+  onDelete: () => void;
+  onToggleRead: () => void;
+  canDelete: boolean;
+}) {
+  const fileIcon = (name: string) =>
+    /\.(png|jpe?g|gif|webp|svg)$/i.test(name) ? "🖼️"
+    : /\.pdf$/i.test(name) ? "📄"
+    : /\.(docx?)$/i.test(name) ? "📝"
+    : /\.(xlsx?|csv)$/i.test(name) ? "📊"
+    : "📎";
+
+  const inner = (
+    <div
+      style={{
+        display: "flex", alignItems: "flex-start", gap: 10,
+        padding: "12px 14px",
+        background: selected ? "#fef9f9" : a.read ? "#fff" : "#fffbfb",
+        borderBottom: "1px solid #f3f4f6",
+        cursor: "pointer", transition: "background 0.15s",
+        fontFamily: FONT,
+      }}
+      onClick={onView}
+    >
+      {/* Checkbox */}
+      <div onClick={(e) => { e.stopPropagation(); onToggleSelect(); }} style={{ paddingTop: 2, flexShrink: 0 }}>
+        <input
+          type="checkbox"
+          checked={selected}
+          onChange={() => {}}
+          style={{ width: 15, height: 15, accentColor: MAROON, cursor: "pointer" }}
+        />
+      </div>
+
+      {/* Avatar */}
+      <AuthorAvatar name={a.authorName} image={a.authorImage} size={34} />
+
+      {/* Content */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 5, marginBottom: 2 }}>
+          {!a.read && (
+            <div style={{ width: 7, height: 7, borderRadius: "50%", background: MAROON, flexShrink: 0, marginTop: 4 }} />
+          )}
+          {a.locked && (
+            <svg style={{ width: 11, height: 11, flexShrink: 0, marginTop: 3, color: "#9ca3af" }} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+          )}
+          <span style={{ fontSize: 13, fontWeight: a.read ? 500 : 700, color: MAROON, lineHeight: 1.35, wordBreak: "break-word" }}>
+            {a.title}
+          </span>
+        </div>
+
+        <div style={{ fontSize: 11, color: "#6b7280", marginBottom: 3 }}>
+          <span style={{ fontWeight: 600, color: "#374151" }}>{a.authorName}</span>
+          <span style={{ margin: "0 4px" }}>·</span>
+          <span>To: {a.recipientsLabel ?? "Everyone"}</span>
+        </div>
+
+        {a.body && (
+          <p style={{
+            fontSize: 12, color: "#6b7280", lineHeight: 1.45,
+            display: "-webkit-box", WebkitLineClamp: 2,
+            WebkitBoxOrient: "vertical", overflow: "hidden", margin: 0,
+          }}>
+            {a.body}
+          </p>
+        )}
+
+        {a.attachments.length > 0 && (
+          <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginTop: 6 }} onClick={(e) => e.stopPropagation()}>
+            {a.attachments.slice(0, 2).map((f) => (
+              <a key={f.id} href={f.url} target="_blank" rel="noopener noreferrer"
+                style={{
+                  display: "inline-flex", alignItems: "center", gap: 3,
+                  fontSize: 10, padding: "2px 7px",
+                  border: "1px solid #e5e7eb", borderRadius: 20,
+                  background: "#f9fafb", color: MAROON, textDecoration: "none",
+                }}>
+                {fileIcon(f.name)} {f.name.length > 14 ? f.name.slice(0, 12) + "…" : f.name}
+              </a>
+            ))}
+            {a.attachments.length > 2 && (
+              <span style={{ fontSize: 10, padding: "2px 7px", border: "1px solid #e5e7eb", borderRadius: 20, background: "#f9fafb", color: "#6b7280" }}>
+                +{a.attachments.length - 2} more
+              </span>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Date */}
+      <div style={{ flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
+        <span style={{ fontSize: 10, color: "#9ca3af", whiteSpace: "nowrap" }}>
+          {fmtDateTime(a.createdAt).split(",")[0]}
+        </span>
+      </div>
+    </div>
+  );
+
+  if (canDelete) {
+    return (
+      <SwipeableCard onDelete={onDelete} onMarkRead={onToggleRead} isRead={a.read}>
+        {inner}
+      </SwipeableCard>
+    );
+  }
+  return inner;
+}
+
+// ─── Detail View ───────────────────────────────────────────────────────────────
+function StudentAnnouncementDetail({
+  announcement,
+  onBack,
+  onDelete,
+  canDelete,
+}: {
+  announcement: Announcement;
+  onBack: () => void;
+  onDelete?: (id: string) => void;
+  canDelete: boolean;
+}) {
+  const [liked, setLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  const fileIcon = (name: string) =>
+    /\.(png|jpe?g|gif|webp|svg)$/i.test(name) ? "🖼️"
+    : /\.pdf$/i.test(name) ? "📄"
+    : /\.(docx?)$/i.test(name) ? "📝"
+    : /\.(xlsx?|csv)$/i.test(name) ? "📊"
+    : "📎";
+
+  return (
+    <div style={{ fontFamily: FONT }}>
+      {confirmDelete && (
+        <ConfirmModal
+          title="Delete announcement"
+          message="Delete this announcement? This cannot be undone."
+          confirmLabel="Delete"
+          danger
+          onConfirm={() => { onDelete?.(announcement.id); onBack(); }}
+          onCancel={() => setConfirmDelete(false)}
+        />
+      )}
+
+      {/* Sticky top bar */}
+      <div style={{
+        position: "sticky", top: 0, zIndex: 10,
+        background: "#fff", borderBottom: "1px solid #f0e4e4",
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        padding: "0 14px", height: 46,
+      }}>
+        <button
+          type="button"
+          onClick={onBack}
+          style={{
+            display: "flex", alignItems: "center", gap: 4,
+            background: "none", border: "none", cursor: "pointer",
+            color: MAROON, fontSize: 13, fontWeight: 600, fontFamily: FONT,
+            padding: "6px 0",
+          }}
+        >
+          <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+          Announcements
+        </button>
+
+        {canDelete && (
+          <button
+            type="button"
+            onClick={() => setConfirmDelete(true)}
+            style={{
+              display: "flex", alignItems: "center", gap: 4,
+              background: "#fef2f2", border: "1px solid #fecaca",
+              borderRadius: 8, padding: "5px 10px",
+              cursor: "pointer", color: "#dc2626", fontSize: 11, fontWeight: 600, fontFamily: FONT,
+            }}
+          >
+            <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6M14 11v6" /><path d="M9 6V4h6v2" />
+            </svg>
+            Delete
+          </button>
+        )}
+      </div>
+
+      {/* Author card */}
+      <div style={{
+        display: "flex", alignItems: "center", gap: 10,
+        padding: "14px 16px", borderBottom: "1px solid #f3f4f6",
+        background: "#fff",
+      }}>
+        <AuthorAvatar name={announcement.authorName} image={announcement.authorImage} size={40} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: "#111827" }}>{announcement.authorName}</span>
+            {announcement.locked && (
+              <span style={{
+                display: "inline-flex", alignItems: "center", gap: 3,
+                fontSize: 10, color: "#6b7280", background: "#f3f4f6",
+                padding: "1px 6px", borderRadius: 4, fontWeight: 500,
+              }}>
+                <svg width="10" height="10" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+                Locked
+              </span>
+            )}
+          </div>
+          <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 2 }}>
+            {fmtDateTime(announcement.createdAt)}
+          </div>
+          <div style={{ fontSize: 11, color: "#9ca3af" }}>
+            To: <span style={{ color: "#6b7280", fontWeight: 500 }}>{announcement.recipientsLabel ?? "Everyone"}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Body */}
+      <div style={{ padding: "16px 16px 32px", background: "#fff" }}>
+        <h1 style={{
+          fontSize: 17, fontWeight: 800, color: "#111827",
+          lineHeight: 1.35, marginBottom: 12, fontFamily: FONT,
+        }}>
+          {announcement.title}
+        </h1>
+
+        {announcement.bodyHtml ? (
+          <div
+            className="prose prose-sm max-w-none"
+            dangerouslySetInnerHTML={{ __html: announcement.bodyHtml }}
+            style={{ fontSize: 14, color: "#374151", lineHeight: 1.75 }}
+          />
+        ) : announcement.body ? (
+          <p style={{ fontSize: 14, color: "#374151", lineHeight: 1.75 }}>{announcement.body}</p>
+        ) : (
+          <p style={{ fontSize: 13, color: "#9ca3af", fontStyle: "italic" }}>No content.</p>
+        )}
+
+        {/* Attachments */}
+        {announcement.attachments.length > 0 && (
+          <div style={{ marginTop: 20, paddingTop: 16, borderTop: "1px solid #f3f4f6" }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>
+              Attachments
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {announcement.attachments.map((f) => (
+                <a
+                  key={f.id}
+                  href={f.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: "flex", alignItems: "center", gap: 8,
+                    padding: "10px 12px",
+                    border: "1px solid #e5e7eb", borderRadius: 10,
+                    background: "#f9fafb", textDecoration: "none", color: MAROON,
+                  }}
+                >
+                  <span style={{ fontSize: 18 }}>{fileIcon(f.name)}</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: MAROON, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {f.name}
+                    </div>
+                  </div>
+                  <svg width="14" height="14" fill="none" stroke={MAROON} strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Like */}
+        {announcement.allowLiking && (
+          <div style={{ marginTop: 20, paddingTop: 16, borderTop: "1px solid #f3f4f6" }}>
+            <button
+              type="button"
+              onClick={() => { setLikeCount((c) => (liked ? c - 1 : c + 1)); setLiked((v) => !v); }}
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 6,
+                padding: "7px 14px", borderRadius: 20,
+                border: `1.5px solid ${liked ? MAROON : "#d1d5db"}`,
+                background: liked ? "#fef2f2" : "transparent",
+                color: liked ? MAROON : "#6b7280",
+                fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: FONT,
+                transition: "all 0.15s",
+              }}
+            >
+              👍 {liked ? "Liked" : "Like"} {likeCount > 0 && `(${likeCount})`}
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── List View ─────────────────────────────────────────────────────────────────
+type FilterType = "All" | "Unread" | "Recent";
+
 function StudentAnnouncementList({
   announcements,
   filter,
@@ -227,287 +566,286 @@ function StudentAnnouncementList({
   setSearch,
   onMarkAllRead,
   onView,
-  onMarkRead,
+  onToggleRead,
   onDeleteSelected,
+  onDeleteOne,
   selectedIds,
   setSelectedIds,
   canDelete,
+  onAdd,
+  canCreate,
 }: {
   announcements: Announcement[];
-  filter: string;
-  setFilter: (v: string) => void;
+  filter: FilterType;
+  setFilter: (v: FilterType) => void;
   search: string;
   setSearch: (v: string) => void;
   onMarkAllRead: () => void;
   onView: (id: string) => void;
-  onMarkRead: (id: string) => void;
+  onToggleRead: (id: string) => void;
   onDeleteSelected: (ids: string[]) => void;
+  onDeleteOne: (id: string) => void;
   selectedIds: Set<string>;
   setSelectedIds: React.Dispatch<React.SetStateAction<Set<string>>>;
   canDelete: boolean;
+  onAdd: () => void;
+  canCreate: boolean;
 }) {
-  const isMobile = useIsMobile();
-  const [showFilters, setShowFilters] = useState(false);
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
+  const [confirmSingleId, setConfirmSingleId] = useState<string | null>(null);
+  const [searchFocused, setSearchFocused] = useState(false);
 
-  const allChecked =
-    announcements.length > 0 && announcements.every((a) => selectedIds.has(a.id));
+  const hasSelection = selectedIds.size > 0;
+  const allChecked = announcements.length > 0 && announcements.every((a) => selectedIds.has(a.id));
+  const unreadCount = announcements.filter((a) => !a.read).length;
 
   const toggleAll = () => {
     if (allChecked) setSelectedIds(new Set());
     else setSelectedIds(new Set(announcements.map((a) => a.id)));
   };
-
-  const toggleOne = (id: string) => {
+  const toggleOne = (id: string) =>
     setSelectedIds((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      if (next.has(id)) next.delete(id); else next.add(id);
       return next;
     });
-  };
 
-  const hasSelection = selectedIds.size > 0;
+  const grouped = useMemo(() => groupByDate(announcements), [announcements]);
+
+  const FILTER_PILLS: { label: string; value: FilterType; count?: number }[] = [
+    { label: "All", value: "All" },
+    { label: "Unread", value: "Unread", count: unreadCount },
+    { label: "Recent", value: "Recent" },
+  ];
 
   return (
-    <div className="px-3 sm:px-5 py-4">
+    <div style={{ fontFamily: FONT, display: "flex", flexDirection: "column", minHeight: "100%" }}>
+      {confirmBulkDelete && (
+        <ConfirmModal
+          title="Delete announcements"
+          message={`Delete ${selectedIds.size} announcement${selectedIds.size !== 1 ? "s" : ""}? This cannot be undone.`}
+          confirmLabel="Delete"
+          danger
+          onConfirm={() => { onDeleteSelected([...selectedIds]); setSelectedIds(new Set()); setConfirmBulkDelete(false); }}
+          onCancel={() => setConfirmBulkDelete(false)}
+        />
+      )}
+      {confirmSingleId && (
+        <ConfirmModal
+          title="Delete announcement"
+          message="Delete this announcement? This cannot be undone."
+          confirmLabel="Delete"
+          danger
+          onConfirm={() => { onDeleteOne(confirmSingleId); setConfirmSingleId(null); }}
+          onCancel={() => setConfirmSingleId(null)}
+        />
+      )}
 
-      {/* ── Toolbar ── */}
-      {isMobile ? (
-        <div className="space-y-2 mb-4">
-          <div className="flex items-center gap-2">
-            <div className="relative flex-1">
-              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" strokeLinecap="round" />
-              </svg>
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search announcements..."
-                className="w-full pl-9 pr-3 h-10 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-[#7b1113] transition-colors bg-white"
-              />
-            </div>
+      {/* ── Sticky Header ── */}
+      <div style={{ position: "sticky", top: 0, zIndex: 10, background: "#fff", borderBottom: "1px solid #f0e4e4" }}>
+
+        {/* Filter pills */}
+        <div style={{
+          display: "flex", alignItems: "center", gap: 6,
+          padding: "8px 14px 0", overflowX: "auto", scrollbarWidth: "none",
+        }}>
+          {FILTER_PILLS.map((pill) => (
             <button
+              key={pill.value}
               type="button"
-              onClick={() => setShowFilters((v) => !v)}
-              className="h-10 px-3 border border-gray-300 rounded-lg text-sm text-gray-600 bg-white flex items-center gap-1.5 shrink-0 hover:bg-gray-50 active:bg-gray-100 transition-colors"
+              onClick={() => setFilter(pill.value)}
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 5,
+                padding: "5px 12px", borderRadius: 20, flexShrink: 0,
+                border: filter === pill.value ? `1.5px solid ${MAROON}` : "1.5px solid #e5e7eb",
+                background: filter === pill.value ? "#fef2f2" : "#fff",
+                color: filter === pill.value ? MAROON : "#6b7280",
+                fontSize: 12, fontWeight: filter === pill.value ? 700 : 500,
+                cursor: "pointer", fontFamily: FONT, transition: "all 0.15s",
+              }}
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h18M7 12h10M11 20h2" />
-              </svg>
-              {filter !== "All" && (
-                <span className="w-2 h-2 rounded-full shrink-0" style={{ background: MAROON }} />
+              {pill.label}
+              {pill.count !== undefined && pill.count > 0 && (
+                <span style={{
+                  background: filter === pill.value ? MAROON : "#e5e7eb",
+                  color: filter === pill.value ? "#fff" : "#374151",
+                  fontSize: 10, fontWeight: 700, padding: "0 5px",
+                  borderRadius: 10, minWidth: 16, textAlign: "center",
+                }}>
+                  {pill.count}
+                </span>
               )}
             </button>
-          </div>
-          {showFilters && (
-            <div className="flex items-center gap-2 flex-wrap">
-              <div className="relative">
-                <select
-                  value={filter}
-                  onChange={(e) => setFilter(e.target.value)}
-                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none appearance-none pr-8 h-9"
-                >
-                  <option value="All">All</option>
-                  <option value="Unread">Unread</option>
-                </select>
-                <svg className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500 pointer-events-none" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                </svg>
-              </div>
-              <button
-                type="button"
-                onClick={onMarkAllRead}
-                className="h-9 inline-flex items-center gap-1.5 text-sm border border-gray-300 px-3 rounded-lg hover:bg-gray-50 active:bg-gray-100 text-gray-700 transition-colors"
-              >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                  <path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-                Mark All Read
-              </button>
-            </div>
-          )}
-        </div>
-      ) : (
-        <div className="flex items-center gap-2 mb-4 flex-wrap">
-          <div className="relative w-40">
-            <select
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none appearance-none pr-8"
+          ))}
+          <div style={{ marginLeft: "auto", flexShrink: 0 }}>
+            <button
+              type="button"
+              onClick={onMarkAllRead}
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 5,
+                padding: "5px 10px", borderRadius: 20,
+                border: "1.5px solid #e5e7eb", background: "#fff",
+                color: "#6b7280", fontSize: 11, fontWeight: 500,
+                cursor: "pointer", fontFamily: FONT, whiteSpace: "nowrap",
+              }}
             >
-              <option value="All">All</option>
-              <option value="Unread">Unread</option>
-            </select>
-            <svg className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-            </svg>
+              <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+              Mark all read
+            </button>
           </div>
-          <div className="relative flex-1">
-            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+        </div>
+
+        {/* Search + actions */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 14px 10px" }}>
+          <div style={{ flex: 1, position: "relative", display: "flex", alignItems: "center" }}>
+            <svg style={{ position: "absolute", left: 10, color: "#9ca3af", flexShrink: 0 }}
+              width="14" height="14" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
               <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" strokeLinecap="round" />
             </svg>
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search..."
-              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-[#7b1113] transition-colors"
+              onFocus={() => setSearchFocused(true)}
+              onBlur={() => setSearchFocused(false)}
+              placeholder="Search announcements…"
+              style={{
+                width: "100%", height: 36, paddingLeft: 32, paddingRight: 10,
+                border: `1.5px solid ${searchFocused ? MAROON : "#e5e7eb"}`,
+                borderRadius: 20, fontSize: 13, outline: "none",
+                background: "#f9fafb", color: "#111827", fontFamily: FONT,
+                transition: "border-color 0.15s",
+              }}
             />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch("")}
+                style={{ position: "absolute", right: 10, background: "none", border: "none", cursor: "pointer", color: "#9ca3af", fontSize: 14, lineHeight: 1, padding: 0 }}
+              >×</button>
+            )}
           </div>
-          <button
-            type="button"
-            onClick={onMarkAllRead}
-            className="inline-flex items-center gap-2 text-sm border border-gray-300 px-3 py-2 rounded-lg hover:bg-gray-50 text-gray-700 shrink-0 transition-colors"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-            </svg>
-            Mark All as Read
-          </button>
-          {/* Bulk action buttons */}
-          <div className="flex items-center gap-1.5">
+
+          {canCreate && (
             <button
               type="button"
-              disabled={!hasSelection}
-              onClick={() => {
-  if (!hasSelection) return;
-  [...selectedIds].forEach(id => onMarkRead(id));
-  setSelectedIds(new Set());
-}}
-              title="Mark selected as read"
-              className="inline-flex items-center justify-center w-9 h-9 border rounded transition-colors"
-              style={{ borderColor: hasSelection ? "#1d6fa4" : "#d1d5db", color: hasSelection ? "#1d6fa4" : "#d1d5db", background: "white", cursor: hasSelection ? "pointer" : "not-allowed", opacity: hasSelection ? 1 : 0.45 }}
+              onClick={onAdd}
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 5,
+                height: 36, padding: "0 14px", borderRadius: 20,
+                background: MAROON, color: "#fff",
+                border: "none", cursor: "pointer",
+                fontSize: 13, fontWeight: 700, fontFamily: FONT,
+                flexShrink: 0, whiteSpace: "nowrap",
+              }}
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
+              <span style={{ fontSize: 16, lineHeight: 1 }}>＋</span>
+              <span>New</span>
             </button>
+          )}
+
+          {canDelete && hasSelection && (
             <button
               type="button"
-              disabled={!hasSelection}
-              onClick={() => hasSelection && onDeleteSelected([...selectedIds])}
-              title="Delete selected"
-              className="inline-flex items-center justify-center w-9 h-9 border rounded transition-colors"
-              style={{ borderColor: hasSelection ? "#ef4444" : "#d1d5db", color: hasSelection ? "#ef4444" : "#d1d5db", background: "white", cursor: hasSelection ? "pointer" : "not-allowed", opacity: hasSelection ? 1 : 0.45 }}
+              onClick={() => setConfirmBulkDelete(true)}
+              style={{
+                display: "inline-flex", alignItems: "center", justifyContent: "center",
+                width: 36, height: 36, borderRadius: "50%",
+                background: "#fef2f2", border: "1px solid #fecaca",
+                cursor: "pointer", color: "#dc2626", flexShrink: 0,
+              }}
+              title={`Delete ${selectedIds.size} selected`}
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                 <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6M14 11v6" /><path d="M9 6V4h6v2" />
               </svg>
             </button>
+          )}
+        </div>
+
+        {/* Selection bar */}
+        {hasSelection && (
+          <div style={{
+            display: "flex", alignItems: "center", gap: 8,
+            padding: "6px 14px 8px",
+            background: "#fef9f9", borderTop: "1px solid #fde8e8",
+          }}>
+            <input type="checkbox" checked={allChecked} onChange={toggleAll} style={{ width: 15, height: 15, accentColor: MAROON }} />
+            <span style={{ fontSize: 12, color: MAROON, fontWeight: 600 }}>{selectedIds.size} selected</span>
+            <button
+              type="button"
+              onClick={() => setSelectedIds(new Set())}
+              style={{ background: "none", border: "none", cursor: "pointer", fontSize: 11, color: "#9ca3af", fontFamily: FONT, textDecoration: "underline" }}
+            >
+              Clear
+            </button>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
-      {/* ── Selection count ── */}
-      {hasSelection && (
-        <div className="mb-3 flex items-center gap-2 text-xs text-gray-500">
-          <span className="font-medium" style={{ color: MAROON }}>{selectedIds.size}</span> selected
-          <button type="button" onClick={() => setSelectedIds(new Set())} className="underline hover:no-underline text-gray-400">Clear</button>
-        </div>
-      )}
-
-      {/* ── List ── */}
+      {/* ── Body ── */}
       {announcements.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 sm:py-20 text-center">
-          <div className="w-14 h-14 rounded-full flex items-center justify-center mb-3" style={{ background: "#fdf8f8" }}>
-            <svg className="w-7 h-7" fill="none" stroke={MAROON} strokeWidth={1.5} viewBox="0 0 24 24" style={{ opacity: 0.5 }}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
-            </svg>
+        <div style={{
+          display: "flex", flexDirection: "column", alignItems: "center",
+          justifyContent: "center", padding: "60px 20px",
+          textAlign: "center", color: "#9ca3af", flex: 1,
+        }}>
+          <div style={{ fontSize: 44, marginBottom: 12 }}>📢</div>
+          <div style={{ fontSize: 15, fontWeight: 700, color: "#374151", marginBottom: 4 }}>No announcements</div>
+          <div style={{ fontSize: 13, color: "#9ca3af", marginBottom: 16 }}>
+            {search ? `No results for "${search}"` : filter !== "All" ? `No ${filter.toLowerCase()} announcements` : "Nothing here yet."}
           </div>
-          <div className="text-base font-semibold text-gray-600">No Announcements</div>
-          <div className="text-sm text-gray-400 mt-1">Nothing to show here yet.</div>
+          {!search && filter === "All" && canCreate && (
+            <button
+              type="button"
+              onClick={onAdd}
+              style={{
+                padding: "9px 20px", borderRadius: 20,
+                background: MAROON, color: "#fff",
+                border: "none", cursor: "pointer",
+                fontSize: 13, fontWeight: 700, fontFamily: FONT,
+              }}
+            >
+              ＋ New Announcement
+            </button>
+          )}
         </div>
       ) : (
-        <div className="divide-y divide-gray-100 border border-gray-200 rounded-xl overflow-hidden bg-white">
+        <div>
           {/* Select-all row */}
-          <div className="flex items-center gap-3 py-2.5 px-3 sm:px-4 bg-gray-50">
-            <input
-              type="checkbox"
-              checked={allChecked}
-              onChange={toggleAll}
-              className="h-4 w-4 rounded border-gray-300"
-              style={{ accentColor: MAROON }}
-              title="Select all"
-            />
-            <span className="text-xs text-gray-400">Select all</span>
+          <div style={{
+            display: "flex", alignItems: "center", gap: 8,
+            padding: "8px 14px", borderBottom: "1px solid #f3f4f6", background: "#f9fafb",
+          }}>
+            <input type="checkbox" checked={allChecked} onChange={toggleAll} style={{ width: 15, height: 15, accentColor: MAROON }} />
+            <span style={{ fontSize: 11, color: "#9ca3af" }}>Select all</span>
           </div>
 
-          {announcements.map((a) => (
-            <div
-              key={a.id}
-              className="flex items-start gap-2.5 sm:gap-3 py-3.5 sm:py-4 px-3 sm:px-4 hover:bg-gray-50 active:bg-gray-100 transition-colors"
-              style={{ background: selectedIds.has(a.id) ? "#fef9f9" : undefined }}
-            >
-              {/* Checkbox */}
-              <input
-                type="checkbox"
-                checked={selectedIds.has(a.id)}
-                onChange={() => toggleOne(a.id)}
-                className="mt-1 h-4 w-4 rounded border-gray-300 shrink-0"
-                style={{ accentColor: MAROON }}
-              />
-
-              <div className="hidden xs:block shrink-0">
-                <Avatar name={a.authorName} image={a.authorImage} size={isMobile ? 30 : 36} />
+          {grouped.map(({ label, items }) => (
+            <div key={label}>
+              <div style={{
+                padding: "8px 14px 4px",
+                fontSize: 10, fontWeight: 700, color: "#9ca3af",
+                textTransform: "uppercase", letterSpacing: "0.07em",
+                background: "#f9fafb", borderBottom: "1px solid #f3f4f6",
+              }}>
+                {label}
               </div>
-
-              <div className="flex-1 min-w-0 cursor-pointer" onClick={() => onView(a.id)}>
-                <div className="flex items-start gap-1.5 flex-wrap">
-                  {/* Unread indicator dot */}
-                  {!a.read && (
-                    <span className="w-2 h-2 rounded-full shrink-0 mt-1.5" style={{ background: MAROON }} />
-                  )}
-                  <h3
-                    className="text-sm leading-snug"
-                    style={{
-                      color: MAROON,
-                      fontWeight: a.read ? 400 : 700,
-                      textDecoration: "underline",
-                    }}
-                  >
-                    {a.title}
-                  </h3>
-                  {a.locked && (
-                    <span className="inline-flex items-center gap-1 text-xs text-gray-500 shrink-0">
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                        <rect x="3" y="11" width="18" height="11" rx="2" />
-                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                      </svg>
-                      <span className="hidden sm:inline">Locked</span>
-                    </span>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                  <span className="xs:hidden text-xs font-medium text-gray-600">{a.authorName} ·</span>
-                  <span className="text-xs text-gray-500">{a.recipientsLabel}</span>
-                </div>
-
-                {a.body && (
-                  <p className="text-sm text-gray-600 mt-1 line-clamp-2 leading-relaxed">{a.body}</p>
-                )}
-
-                {a.attachments.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 mt-2" onClick={(e) => e.stopPropagation()}>
-                    {a.attachments.map((f) => (
-                      <a key={f.id} href={f.url} target="_blank" rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-xs px-2 py-0.5 border border-gray-200 rounded-full bg-gray-50 hover:bg-gray-100 active:bg-gray-200 transition-colors"
-                        style={{ color: MAROON }}>
-                        📎 {f.name}
-                      </a>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <div className="shrink-0 flex flex-col items-end gap-1 ml-1">
-                <AnnouncementThreeDot read={a.read} onMarkRead={() => onMarkRead(a.id)} />
-                <div className="text-right leading-snug">
-                  <span className="hidden sm:block text-gray-500 text-[10px]">Posted on:</span>
-                  <span className="text-[10px] sm:text-xs text-gray-400 whitespace-nowrap">
-                    {fmtDateTime(a.createdAt)}
-                  </span>
-                </div>
-              </div>
+              {items.map((a) => (
+                <AnnouncementCard
+                  key={a.id}
+                  a={a}
+                  selected={selectedIds.has(a.id)}
+                  onToggleSelect={() => toggleOne(a.id)}
+                  onView={() => onView(a.id)}
+                  onDelete={() => {
+                    if (canDelete) setConfirmSingleId(a.id);
+                  }}
+                  onToggleRead={() => onToggleRead(a.id)}
+                  canDelete={canDelete}
+                />
+              ))}
             </div>
           ))}
         </div>
@@ -538,14 +876,13 @@ export default function CourseAnnouncementsTab({
   announcements,
   setAnnouncements,
   people,
-  canManageAnnouncements,
   canDelete,
   isHead,
   isStaff,
   currentUserId,
 }: Props) {
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState("All");
+  const [filter, setFilter] = useState<FilterType>("All");
   const [viewingId, setViewingId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [showCreate, setShowCreate] = useState(false);
@@ -561,14 +898,16 @@ export default function CourseAnnouncementsTab({
   const [untilTime, setUntilTime] = useState("");
   const [isPublishing, setIsPublishing] = useState(false);
 
-  const markReadInDb = async (ids: string[]) => {
+  const canCreate = isHead || isStaff;
+
+  const markReadInDb = useCallback(async (ids: string[]) => {
     if (!ids.length) return;
     await fetch(`/api/courses/${courseId}/announcements`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ announcementIds: ids }),
     }).catch(() => {});
-  };
+  }, [courseId]);
 
   const onMarkAllRead = () => {
     const unreadIds = announcements.filter((a) => !a.read).map((a) => a.id);
@@ -577,10 +916,13 @@ export default function CourseAnnouncementsTab({
   };
 
   const onMarkRead = (id: string) => {
-    setAnnouncements((prev) =>
-      prev.map((a) => (a.id === id ? { ...a, read: true } : a))
-    );
+    setAnnouncements((prev) => prev.map((a) => (a.id === id ? { ...a, read: true } : a)));
     markReadInDb([id]);
+  };
+
+  const onToggleRead = (id: string) => {
+    setAnnouncements((prev) => prev.map((a) => (a.id === id ? { ...a, read: !a.read } : a)));
+    // optimistic — no separate unread API needed for student tab
   };
 
   const onView = (id: string) => {
@@ -588,53 +930,43 @@ export default function CourseAnnouncementsTab({
     onMarkRead(id);
   };
 
-  // canDelete guards this — component won't render delete UI without it
+  const onDeleteOne = async (id: string) => {
+    const ann = announcements.find((a) => a.id === id);
+    if (!ann) return;
+    const canDo =
+      isHead
+        ? ann.authorRole === "staff" || ann.authorId === currentUserId
+        : isStaff
+        ? ann.authorId === currentUserId
+        : false;
+    if (!canDo) { alert("You don't have permission to delete this announcement."); return; }
+    setAnnouncements((prev) => prev.filter((a) => a.id !== id));
+    setSelectedIds((prev) => { const n = new Set(prev); n.delete(id); return n; });
+    await fetch(`/api/admin/courses/${courseId}/announcements/${id}`, { method: "DELETE" }).catch(() => {});
+  };
+
   const onDeleteSelected = async (ids: string[]) => {
-    // Head: can delete staff announcements (not head/admin-created ones)
-    // Staff: can only delete their own announcements
     const deletable = ids.filter((id) => {
       const ann = announcements.find((a) => a.id === id);
       if (!ann) return false;
-      if (isHead) {
-        // Head can delete staff-created announcements but not admin/head-created ones
-        return ann.authorRole === "staff" || ann.authorId === currentUserId;
-      }
-      if (isStaff) {
-        // Staff can only delete their own
-        return ann.authorId === currentUserId;
-      }
+      if (isHead) return ann.authorRole === "staff" || ann.authorId === currentUserId;
+      if (isStaff) return ann.authorId === currentUserId;
       return false;
     });
-    if (!deletable.length) {
-      alert("You don't have permission to delete the selected announcement(s).");
-      return;
-    }
-    if (!confirm(`Delete ${deletable.length} announcement${deletable.length > 1 ? "s" : ""}?`)) return;
+    if (!deletable.length) { alert("You don't have permission to delete the selected announcement(s)."); return; }
     setAnnouncements((prev) => prev.filter((a) => !deletable.includes(a.id)));
     setSelectedIds(new Set());
-    try {
-      await Promise.all(
-        deletable.map((id) =>
-          fetch(`/api/admin/courses/${courseId}/announcements/${id}`, {
-            method: "DELETE",
-          })
-        )
-      );
-    } catch (err) {
-      console.error("Delete failed:", err);
-    }
+    await Promise.all(
+      deletable.map((id) =>
+        fetch(`/api/admin/courses/${courseId}/announcements/${id}`, { method: "DELETE" })
+      )
+    ).catch(console.error);
   };
 
   const resetCreateForm = () => {
-    setTopicTitle("");
-    setBodyHtml("");
-    setBodyText("");
-    setAttachments([]);
+    setTopicTitle(""); setBodyHtml(""); setBodyText(""); setAttachments([]);
     setAssignTo(["Everyone"]);
-    setAvailableFromDate("");
-    setAvailableFromTime("");
-    setUntilDate("");
-    setUntilTime("");
+    setAvailableFromDate(""); setAvailableFromTime(""); setUntilDate(""); setUntilTime("");
   };
 
   const handlePublish = async () => {
@@ -651,21 +983,13 @@ export default function CourseAnnouncementsTab({
           assignTo: assignTo.length ? assignTo : ["Everyone"],
           availableFrom: availableFromDate ? `${availableFromDate}T${availableFromTime || "00:00"}` : null,
           availableUntil: untilDate ? `${untilDate}T${untilTime || "00:00"}` : null,
-          attachments: attachments.map((f) => ({
-            name: f.name,
-            url: f.url,
-            size: f.size,
-            mimeType: f.type,
-          })),
+          attachments: attachments.map((f) => ({ name: f.name, url: f.url, size: f.size, mimeType: f.type })),
         }),
       });
       if (!res.ok) throw new Error("Failed to publish");
       const d = await res.json();
       const raw = d.announcement ?? d;
-      setAnnouncements((prev) => [
-        normalizeAnnouncement(raw as RawAnnouncement, Date.now()),
-        ...prev,
-      ]);
+      setAnnouncements((prev) => [normalizeAnnouncement(raw as RawAnnouncement, Date.now()), ...prev]);
       resetCreateForm();
       setShowCreate(false);
     } catch (err) {
@@ -678,15 +1002,27 @@ export default function CourseAnnouncementsTab({
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
-    return announcements.filter((a) => {
-      const matchesSearch =
-        !q ||
-        a.title.toLowerCase().includes(q) ||
-        a.body.toLowerCase().includes(q) ||
-        a.authorName.toLowerCase().includes(q);
-      const matchesFilter = filter === "All" || (filter === "Unread" && !a.read);
-      return matchesSearch && matchesFilter;
-    });
+    const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
+    const latest = announcements.reduce<number | null>((acc, a) => {
+      if (!a.createdAt) return acc;
+      const t = Date.parse(a.createdAt);
+      return isNaN(t) ? acc : acc === null ? t : Math.max(acc, t);
+    }, null);
+    const now = new Date();
+return announcements.filter((a) => {
+  const matchSearch =
+    !q ||
+    a.title.toLowerCase().includes(q) ||
+    a.body.toLowerCase().includes(q) ||
+    a.authorName.toLowerCase().includes(q);
+  const matchFilter =
+    filter === "All" ||
+    (filter === "Unread" && !a.read) ||
+    (filter === "Recent" && latest !== null && a.createdAt !== null && latest - Date.parse(a.createdAt) <= sevenDaysMs);
+  const matchAvailableFrom = !a.availableFrom || new Date(a.availableFrom) <= now;
+  const matchUntil = !a.availableUntil || new Date(a.availableUntil) >= now;
+  return matchSearch && matchFilter && matchAvailableFrom && matchUntil;
+});
   }, [announcements, search, filter]);
 
   const viewingAnnouncement = announcements.find((a) => a.id === viewingId) ?? null;
@@ -696,7 +1032,8 @@ export default function CourseAnnouncementsTab({
       <StudentAnnouncementDetail
         announcement={viewingAnnouncement}
         onBack={() => setViewingId(null)}
-        onMarkRead={onMarkRead}
+        onDelete={canDelete ? onDeleteOne : undefined}
+        canDelete={canDelete}
       />
     );
   }
@@ -723,9 +1060,7 @@ export default function CourseAnnouncementsTab({
             })),
           ])
         }
-        onRemoveAttachment={(id) =>
-          setAttachments((prev) => prev.filter((f) => f.id !== id))
-        }
+        onRemoveAttachment={(id) => setAttachments((prev) => prev.filter((f) => f.id !== id))}
         assignTo={assignTo}
         setAssignTo={setAssignTo}
         staff={people.map((p) => ({ id: p.id, name: p.name ?? p.email }))}
@@ -746,39 +1081,22 @@ export default function CourseAnnouncementsTab({
   }
 
   return (
-    <div>
-      {/* ── Create button for Head and Staff only ── */}
-      {(isHead || isStaff) && (
-        <div className="flex justify-end px-3 sm:px-5 pt-4">
-          <button
-            type="button"
-            onClick={() => setShowCreate(true)}
-            className="inline-flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-lg text-white transition-colors"
-            style={{ background: MAROON }}
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <line x1="12" y1="5" x2="12" y2="19" strokeLinecap="round"/>
-              <line x1="5" y1="12" x2="19" y2="12" strokeLinecap="round"/>
-            </svg>
-            New Announcement
-          </button>
-        </div>
-      )}
-
-      <StudentAnnouncementList
-        announcements={filtered}
-        filter={filter}
-        setFilter={setFilter}
-        search={search}
-        setSearch={setSearch}
-        onMarkAllRead={onMarkAllRead}
-        onView={onView}
-        onMarkRead={onMarkRead}
-        onDeleteSelected={onDeleteSelected}
-        selectedIds={selectedIds}
-        setSelectedIds={setSelectedIds}
-        canDelete={canDelete}
-      />
-    </div>
+    <StudentAnnouncementList
+      announcements={filtered}
+      filter={filter}
+      setFilter={setFilter}
+      search={search}
+      setSearch={setSearch}
+      onMarkAllRead={onMarkAllRead}
+      onView={onView}
+      onToggleRead={onToggleRead}
+      onDeleteSelected={onDeleteSelected}
+      onDeleteOne={onDeleteOne}
+      selectedIds={selectedIds}
+      setSelectedIds={setSelectedIds}
+      canDelete={canDelete}
+      onAdd={() => setShowCreate(true)}
+      canCreate={canCreate}
+    />
   );
 }

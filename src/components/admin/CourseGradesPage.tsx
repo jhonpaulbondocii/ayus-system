@@ -3,13 +3,12 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import {
-  Search, Filter,
+  Search,
   ChevronDown, BookOpen, FileText, RotateCcw, CheckCircle2,
   Clock, AlertCircle, Minus, X, ExternalLink,
   Eye, ChevronRight, ChevronLeft,
-  GraduationCap, ArrowRight,
+  GraduationCap,
   Calendar, Settings2, SlidersHorizontal,
 } from "lucide-react";
 import {
@@ -118,14 +117,6 @@ function getScoreColor(score: number | null, max: number): string {
   if (pct >= 0.5) return "#c2410c";
   return "#b91c1c";
 }
-function getScoreBg(score: number | null, max: number): string {
-  if (score === null) return "transparent";
-  const pct = max > 0 ? score / max : 0;
-  if (pct >= 0.9) return "#f0fdf4";
-  if (pct >= 0.7) return "#fffbeb";
-  if (pct >= 0.5) return "#fff7ed";
-  return "#fef2f2";
-}
 function getPctColor(pct: number | null): string {
   if (pct === null) return "#9ca3af";
   if (pct >= 90) return "#15803d";
@@ -142,13 +133,6 @@ function getPctBg(pct: number | null): string {
 }
 function getInitials(name: string): string {
   return name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
-}
-function fmtDate(iso: string | null): string {
-  if (!iso) return "—";
-  return new Date(iso).toLocaleDateString("en-US", {
-    month: "short", day: "numeric", year: "numeric",
-    hour: "numeric", minute: "2-digit",
-  });
 }
 function dbStatusToUiStatus(dbStatus: string): SubmissionStatus {
   switch (dbStatus?.toUpperCase()) {
@@ -196,10 +180,18 @@ function BackButton({ to, onNavigate }: { to: FilterSection; onNavigate: (s: Fil
   return (
     <button
       onClick={() => onNavigate(to)}
-      className="flex items-center gap-2 px-4 py-3 border-b border-gray-100 w-full hover:bg-gray-50 transition-colors"
+      style={{
+        display: "flex", alignItems: "center", gap: 8,
+        padding: "10px 16px",
+        width: "100%", background: "none", border: "none",
+        borderBottom: "1px solid #f3f4f6",
+        cursor: "pointer", fontFamily: FONT,
+      }}
+      onMouseEnter={e => (e.currentTarget.style.background = "#f9fafb")}
+      onMouseLeave={e => (e.currentTarget.style.background = "none")}
     >
-      <ChevronLeft size={14} className="text-gray-500" />
-      <span className="text-xs font-semibold text-gray-600">Back</span>
+      <ChevronLeft size={13} style={{ color: "#9ca3af" }} />
+      <span style={{ fontSize: 12, fontWeight: 700, color: "#6b7280" }}>Back</span>
     </button>
   );
 }
@@ -212,9 +204,17 @@ function ArrowBtn({ onOpenPanel }: { onOpenPanel: () => void }) {
     <button
       data-arrow-btn
       onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
-      onClick={(e)     => { e.stopPropagation(); onOpenPanel(); }}
-      className="w-6 h-9 flex items-center justify-center text-white text-[10px] font-black shrink-0 transition-all hover:opacity-80"
-      style={{ background: MAROON }}
+      onClick={(e) => { e.stopPropagation(); onOpenPanel(); }}
+      style={{
+        width: 22, height: 36,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        background: MAROON, color: "white",
+        fontSize: 11, fontWeight: 900,
+        border: "none", cursor: "pointer", flexShrink: 0,
+        transition: "opacity 0.15s",
+      }}
+      onMouseEnter={e => (e.currentTarget.style.opacity = "0.85")}
+      onMouseLeave={e => (e.currentTarget.style.opacity = "1")}
       title="Open grade panel"
     >→</button>
   );
@@ -287,11 +287,23 @@ function FilterPanel({
   const OptionButton = ({ type, value, label }: { type: ActiveFilter["type"]; value: string; label?: string }) => {
     const active = isActive(type, value);
     return (
-      <button onClick={() => toggleFilter(type, value)}
-        className="w-full text-left px-4 py-3 text-sm transition-colors flex items-center justify-between"
-        style={active ? { background: MAROON, color: "white", fontWeight: 700 } : { color: "#374151", fontWeight: 500 }}>
+      <button
+        onClick={() => toggleFilter(type, value)}
+        style={{
+          width: "100%", textAlign: "left",
+          padding: "10px 16px",
+          fontSize: 13, fontFamily: FONT, fontWeight: active ? 700 : 500,
+          background: active ? MAROON : "none",
+          color: active ? "white" : "#374151",
+          border: "none", cursor: "pointer",
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          transition: "background 0.1s",
+        }}
+        onMouseEnter={e => { if (!active) e.currentTarget.style.background = "#f9fafb"; }}
+        onMouseLeave={e => { if (!active) e.currentTarget.style.background = "none"; }}
+      >
         <span>{label ?? value}</span>
-        {active && <CheckCircle2 size={14} />}
+        {active && <CheckCircle2 size={13} />}
       </button>
     );
   };
@@ -300,14 +312,27 @@ function FilterPanel({
     <div style={{ fontFamily: FONT }}>
       {section === "root" && (
         <div>
-          <button onClick={onManagePresets}
-            className="w-full flex items-center gap-2 px-4 py-3.5 hover:bg-gray-50 transition-colors border-b border-gray-200">
-            <Settings2 size={14} className="text-gray-500" />
-            <span className="text-sm font-semibold text-gray-700">Manage Filter Presets</span>
+          <button
+            onClick={onManagePresets}
+            style={{
+              width: "100%", display: "flex", alignItems: "center", gap: 8,
+              padding: "12px 16px", borderBottom: "1px solid #e5e7eb",
+              background: "none", border: "none",
+              cursor: "pointer", fontFamily: FONT,
+            }}
+            onMouseEnter={e => (e.currentTarget.style.background = "#f9fafb")}
+            onMouseLeave={e => (e.currentTarget.style.background = "none")}
+          >
+            <Settings2 size={13} style={{ color: "#9ca3af" }} />
+            <span style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>Manage Filter Presets</span>
           </button>
-          <div className="px-4 py-2.5 bg-gray-50 border-b border-gray-100">
-            <p className="text-xs font-black text-gray-600 uppercase tracking-wider">Filters</p>
+
+          <div style={{ padding: "8px 16px 6px", background: "#f9fafb", borderBottom: "1px solid #f0f0f0" }}>
+            <p style={{ fontSize: 10, fontWeight: 800, color: "#9ca3af", letterSpacing: "0.08em", textTransform: "uppercase", margin: 0 }}>
+              Filters
+            </p>
           </div>
+
           {[
             { id: "assignmentGroups" as FilterSection, label: "Assignment Groups", count: activeFilters.filter(f => f.type === "assignmentGroup").length },
             { id: "studentGroups"   as FilterSection, label: "Staff Groups",       count: activeFilters.filter(f => f.type === "studentGroup").length },
@@ -315,21 +340,38 @@ function FilterPanel({
             { id: "submissions"     as FilterSection, label: "Submissions",        count: activeFilters.filter(f => f.type === "submissions").length },
             { id: "startEndDate"    as FilterSection, label: "Start & End Date",   count: activeFilters.filter(f => f.type === "dateRange").length },
           ].map(item => (
-            <button key={item.id} onClick={() => setSection(item.id)}
-              className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors text-left border-b border-gray-50">
-              <span className="text-sm text-gray-700 font-medium">{item.label}</span>
-              <div className="flex items-center gap-2">
+            <button
+              key={item.id}
+              onClick={() => setSection(item.id)}
+              style={{
+                width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
+                padding: "11px 16px", background: "none", border: "none",
+                borderBottom: "1px solid #f9fafb", cursor: "pointer", fontFamily: FONT,
+              }}
+              onMouseEnter={e => (e.currentTarget.style.background = "#f9fafb")}
+              onMouseLeave={e => (e.currentTarget.style.background = "none")}
+            >
+              <span style={{ fontSize: 13, color: "#374151", fontWeight: 500 }}>{item.label}</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 {item.count > 0 && (
-                  <span className="w-5 h-5 rounded-full text-[10px] font-black text-white flex items-center justify-center"
-                    style={{ background: MAROON }}>{item.count}</span>
+                  <span style={{
+                    width: 18, height: 18, borderRadius: "50%",
+                    fontSize: 9, fontWeight: 900, color: "white",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    background: MAROON,
+                  }}>{item.count}</span>
                 )}
-                <ChevronRight size={14} className="text-gray-400" />
+                <ChevronRight size={13} style={{ color: "#d1d5db" }} />
               </div>
             </button>
           ))}
+
           {activeFilters.length > 0 && (
-            <div className="border-t border-gray-100 px-4 py-3">
-              <button onClick={() => { onClearAll(); onClose(); }} className="text-sm font-semibold hover:underline" style={{ color: MAROON }}>
+            <div style={{ borderTop: "1px solid #f3f4f6", padding: "10px 16px" }}>
+              <button
+                onClick={() => { onClearAll(); onClose(); }}
+                style={{ fontSize: 12, fontWeight: 700, color: MAROON, background: "none", border: "none", cursor: "pointer", fontFamily: FONT }}
+              >
                 Clear All Filters
               </button>
             </div>
@@ -340,10 +382,12 @@ function FilterPanel({
       {section === "assignmentGroups" && (
         <div>
           <BackButton to="root" onNavigate={setSection} />
-          <div className="px-4 py-2.5 border-b border-gray-100"><p className="text-xs font-black text-gray-700">Assignment Groups</p></div>
-          <div className="max-h-72 overflow-y-auto py-1">
+          <div style={{ padding: "8px 16px 6px", borderBottom: "1px solid #f0f0f0" }}>
+            <p style={{ fontSize: 11, fontWeight: 800, color: "#374151", margin: 0 }}>Assignment Groups</p>
+          </div>
+          <div style={{ maxHeight: 280, overflowY: "auto", paddingTop: 4 }}>
             {assignmentGroups.length === 0
-              ? <p className="px-4 py-3 text-xs text-gray-400 italic">No assignment groups available</p>
+              ? <p style={{ padding: "12px 16px", fontSize: 12, color: "#9ca3af", fontStyle: "italic" }}>No assignment groups available</p>
               : assignmentGroups.map(g => <OptionButton key={g} type="assignmentGroup" value={g} />)}
           </div>
         </div>
@@ -352,10 +396,12 @@ function FilterPanel({
       {section === "studentGroups" && (
         <div>
           <BackButton to="root" onNavigate={setSection} />
-          <div className="px-4 py-2.5 border-b border-gray-100"><p className="text-xs font-black text-gray-700">Staff Groups</p></div>
-          <div className="max-h-72 overflow-y-auto py-1">
+          <div style={{ padding: "8px 16px 6px", borderBottom: "1px solid #f0f0f0" }}>
+            <p style={{ fontSize: 11, fontWeight: 800, color: "#374151", margin: 0 }}>Staff Groups</p>
+          </div>
+          <div style={{ maxHeight: 280, overflowY: "auto", paddingTop: 4 }}>
             {staffGroups.length === 0
-              ? <p className="px-4 py-3 text-xs text-gray-400 italic">No groups available</p>
+              ? <p style={{ padding: "12px 16px", fontSize: 12, color: "#9ca3af", fontStyle: "italic" }}>No groups available</p>
               : staffGroups.map(g => <OptionButton key={g} type="studentGroup" value={g} />)}
           </div>
         </div>
@@ -364,53 +410,84 @@ function FilterPanel({
       {section === "status" && (
         <div>
           <BackButton to="root" onNavigate={setSection} />
-          <div className="px-4 py-2.5 border-b border-gray-100"><p className="text-xs font-black text-gray-700">Status</p></div>
-          <div className="py-1">{statusOptions.map(s => <OptionButton key={s} type="status" value={s} />)}</div>
+          <div style={{ padding: "8px 16px 6px", borderBottom: "1px solid #f0f0f0" }}>
+            <p style={{ fontSize: 11, fontWeight: 800, color: "#374151", margin: 0 }}>Status</p>
+          </div>
+          <div style={{ paddingTop: 4 }}>
+            {statusOptions.map(s => <OptionButton key={s} type="status" value={s} />)}
+          </div>
         </div>
       )}
 
       {section === "submissions" && (
         <div>
           <BackButton to="root" onNavigate={setSection} />
-          <div className="px-4 py-2.5 border-b border-gray-100"><p className="text-xs font-black text-gray-700">Submissions</p></div>
-          <div className="py-1">{submissionOptions.map(s => <OptionButton key={s} type="submissions" value={s} />)}</div>
+          <div style={{ padding: "8px 16px 6px", borderBottom: "1px solid #f0f0f0" }}>
+            <p style={{ fontSize: 11, fontWeight: 800, color: "#374151", margin: 0 }}>Submissions</p>
+          </div>
+          <div style={{ paddingTop: 4 }}>
+            {submissionOptions.map(s => <OptionButton key={s} type="submissions" value={s} />)}
+          </div>
         </div>
       )}
 
       {section === "startEndDate" && (
         <div>
           <BackButton to="root" onNavigate={setSection} />
-          <div className="px-4 py-3 border-b border-gray-100"><p className="text-xs font-black text-gray-700">Start & End Dates</p></div>
-          <div className="p-4 space-y-3">
+          <div style={{ padding: "8px 16px 6px", borderBottom: "1px solid #f0f0f0" }}>
+            <p style={{ fontSize: 11, fontWeight: 800, color: "#374151", margin: 0 }}>Start & End Dates</p>
+          </div>
+          <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 12 }}>
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1.5">Start Date</label>
-              <div className="relative">
+              <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "#6b7280", marginBottom: 6 }}>Start Date</label>
+              <div style={{ position: "relative" }}>
                 <input type="date" value={startDate} onChange={e => { setStartDate(e.target.value); setDateError(""); }}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-3 text-sm text-gray-700 outline-none focus:border-gray-400 pr-9"
-                  style={{ fontFamily: FONT }} />
-                <Calendar size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                  style={{
+                    width: "100%", border: "1px solid #e5e7eb", borderRadius: 8,
+                    padding: "9px 36px 9px 12px", fontSize: 13, outline: "none",
+                    boxSizing: "border-box", fontFamily: FONT,
+                  }}
+                  onFocus={e => (e.currentTarget.style.borderColor = MAROON)}
+                  onBlur={e => (e.currentTarget.style.borderColor = "#e5e7eb")}
+                />
+                <Calendar size={12} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", color: "#9ca3af", pointerEvents: "none" }} />
               </div>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1.5">End Date</label>
-              <div className="relative">
+              <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "#6b7280", marginBottom: 6 }}>End Date</label>
+              <div style={{ position: "relative" }}>
                 <input type="date" value={endDate} onChange={e => { setEndDate(e.target.value); setDateError(""); }}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-3 text-sm text-gray-700 outline-none focus:border-gray-400 pr-9"
-                  style={{ fontFamily: FONT }} />
-                <Calendar size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                  style={{
+                    width: "100%", border: "1px solid #e5e7eb", borderRadius: 8,
+                    padding: "9px 36px 9px 12px", fontSize: 13, outline: "none",
+                    boxSizing: "border-box", fontFamily: FONT,
+                  }}
+                  onFocus={e => (e.currentTarget.style.borderColor = MAROON)}
+                  onBlur={e => (e.currentTarget.style.borderColor = "#e5e7eb")}
+                />
+                <Calendar size={12} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", color: "#9ca3af", pointerEvents: "none" }} />
               </div>
             </div>
-            {dateError && <p className="text-[10px] text-red-500 font-semibold">{dateError}</p>}
-            <div className="flex gap-2 pt-1">
+            {dateError && <p style={{ fontSize: 10, color: "#ef4444", fontWeight: 600 }}>{dateError}</p>}
+            <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
               <button onClick={() => setSection("root")}
-                className="flex-1 h-11 border border-gray-200 rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors">
-                Cancel
-              </button>
+                style={{
+                  flex: 1, height: 40, border: "1px solid #e5e7eb", borderRadius: 8,
+                  fontSize: 12, fontWeight: 700, color: "#6b7280", background: "#fff",
+                  cursor: "pointer", fontFamily: FONT,
+                }}
+                onMouseEnter={e => (e.currentTarget.style.background = "#f9fafb")}
+                onMouseLeave={e => (e.currentTarget.style.background = "#fff")}
+              >Cancel</button>
               <button onClick={applyDateFilter}
-                className="flex-1 h-11 rounded-lg text-sm font-black text-white transition-all hover:opacity-90"
-                style={{ background: MAROON }}>
-                Apply
-              </button>
+                style={{
+                  flex: 1, height: 40, borderRadius: 8,
+                  fontSize: 12, fontWeight: 800, color: "white", background: MAROON,
+                  border: "none", cursor: "pointer", fontFamily: FONT,
+                }}
+                onMouseEnter={e => (e.currentTarget.style.opacity = "0.88")}
+                onMouseLeave={e => (e.currentTarget.style.opacity = "1")}
+              >Apply</button>
             </div>
           </div>
         </div>
@@ -421,23 +498,39 @@ function FilterPanel({
   if (isMobile) {
     return (
       <>
-        <div className="fixed inset-0 z-50 bg-black/40" onClick={onClose} />
-        <div className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl shadow-2xl max-h-[85vh] flex flex-col"
-          style={{ fontFamily: FONT }}>
-          <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100">
-            <p className="text-sm font-black text-gray-800">Filter</p>
-            <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500"><X size={14} /></button>
+        <div style={{ position: "fixed", inset: 0, zIndex: 50, background: "rgba(0,0,0,0.4)" }} onClick={onClose} />
+        <div style={{
+          position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 50,
+          background: "white", borderRadius: "18px 18px 0 0",
+          boxShadow: "0 -4px 32px rgba(0,0,0,0.15)",
+          maxHeight: "85vh", display: "flex", flexDirection: "column",
+          fontFamily: FONT,
+        }}>
+          <div style={{
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            padding: "16px 16px 14px", borderBottom: "1px solid #f3f4f6",
+          }}>
+            <p style={{ fontSize: 14, fontWeight: 800, color: "#111827", margin: 0 }}>Filter</p>
+            <button onClick={onClose} style={{
+              width: 30, height: 30, borderRadius: "50%", background: "#f3f4f6",
+              border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+            }}>
+              <X size={13} style={{ color: "#6b7280" }} />
+            </button>
           </div>
-          <div className="flex-1 overflow-y-auto">{inner}</div>
+          <div style={{ flex: 1, overflowY: "auto" }}>{inner}</div>
         </div>
       </>
     );
   }
 
   return (
-    <div ref={ref}
-      className="absolute left-0 top-full mt-1 z-50 bg-white border border-gray-200 rounded-xl shadow-2xl overflow-hidden"
-      style={{ minWidth: 280, fontFamily: FONT }}>
+    <div ref={ref} style={{
+      position: "absolute", left: 0, top: "calc(100% + 4px)", zIndex: 50,
+      background: "white", border: "1px solid #e5e7eb",
+      borderRadius: 12, boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
+      overflow: "hidden", minWidth: 260, fontFamily: FONT,
+    }}>
       {inner}
     </div>
   );
@@ -472,56 +565,112 @@ function FilterPresetsModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/30 p-0 sm:p-4">
-      <div ref={ref}
-        className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl border border-gray-200 w-full sm:max-w-md max-h-[80vh] flex flex-col"
-        style={{ fontFamily: FONT }}>
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-          <div className="flex items-center gap-2">
-            <Settings2 size={15} style={{ color: MAROON }} />
-            <p className="text-sm font-black text-gray-800">Filter Presets</p>
+    <div style={{
+      position: "fixed", inset: 0, zIndex: 50,
+      display: "flex", alignItems: "flex-end",
+      justifyContent: "center",
+      background: "rgba(0,0,0,0.3)",
+      padding: "0 0 0 0",
+    }}>
+      <div ref={ref} style={{
+        background: "white",
+        borderRadius: "18px 18px 0 0",
+        boxShadow: "0 -4px 40px rgba(0,0,0,0.15)",
+        border: "1px solid #e5e7eb",
+        width: "100%",
+        maxWidth: 480,
+        maxHeight: "80vh",
+        display: "flex",
+        flexDirection: "column",
+        fontFamily: FONT,
+      }}
+        className="sm:rounded-2xl sm:mb-8"
+      >
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: "16px 20px", borderBottom: "1px solid #f3f4f6",
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <Settings2 size={14} style={{ color: MAROON }} />
+            <p style={{ fontSize: 14, fontWeight: 800, color: "#111827", margin: 0 }}>Filter Presets</p>
           </div>
-          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-400"><X size={13} /></button>
+          <button onClick={onClose} style={{
+            width: 30, height: 30, borderRadius: "50%", background: "#f3f4f6",
+            border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            <X size={13} style={{ color: "#6b7280" }} />
+          </button>
         </div>
-        <div className="flex-1 overflow-y-auto p-5 space-y-4">
+        <div style={{ flex: 1, overflowY: "auto", padding: 20, display: "flex", flexDirection: "column", gap: 20 }}>
           <div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Save Current Filters as Preset</p>
+            <p style={{ fontSize: 10, fontWeight: 800, color: "#9ca3af", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 8 }}>
+              Save Current Filters as Preset
+            </p>
             {activeFilters.length === 0
-              ? <p className="text-xs text-gray-400 italic">No active filters to save.</p>
+              ? <p style={{ fontSize: 12, color: "#9ca3af", fontStyle: "italic" }}>No active filters to save.</p>
               : (
-                <div className="flex gap-2">
+                <div style={{ display: "flex", gap: 8 }}>
                   <input value={newName} onChange={e => setNewName(e.target.value)} placeholder="Preset name…"
-                    className="flex-1 h-10 border border-gray-200 rounded-lg px-3 text-sm text-gray-700 outline-none"
-                    style={{ fontFamily: FONT }}
+                    style={{
+                      flex: 1, height: 38, border: "1px solid #e5e7eb", borderRadius: 8,
+                      padding: "0 12px", fontSize: 13, outline: "none", fontFamily: FONT,
+                    }}
                     onFocus={e => (e.currentTarget.style.borderColor = MAROON)}
-                    onBlur={e  => (e.currentTarget.style.borderColor = "#e5e7eb")}
-                    onKeyDown={e => { if (e.key === "Enter" && newName.trim()) { onSavePreset(newName.trim()); setNewName(""); } }} />
-                  <button onClick={() => { if (newName.trim()) { onSavePreset(newName.trim()); setNewName(""); } }}
+                    onBlur={e => (e.currentTarget.style.borderColor = "#e5e7eb")}
+                    onKeyDown={e => { if (e.key === "Enter" && newName.trim()) { onSavePreset(newName.trim()); setNewName(""); } }}
+                  />
+                  <button
+                    onClick={() => { if (newName.trim()) { onSavePreset(newName.trim()); setNewName(""); } }}
                     disabled={!newName.trim()}
-                    className="h-10 px-4 rounded-lg text-xs font-black text-white disabled:opacity-40"
-                    style={{ background: MAROON }}>Save</button>
+                    style={{
+                      height: 38, padding: "0 14px", borderRadius: 8,
+                      fontSize: 12, fontWeight: 800, color: "white",
+                      background: !newName.trim() ? "#d1d5db" : MAROON,
+                      border: "none", cursor: !newName.trim() ? "default" : "pointer",
+                      fontFamily: FONT,
+                    }}
+                  >Save</button>
                 </div>
               )}
           </div>
           <div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Saved Presets</p>
+            <p style={{ fontSize: 10, fontWeight: 800, color: "#9ca3af", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 8 }}>
+              Saved Presets
+            </p>
             {presets.length === 0
-              ? <p className="text-xs text-gray-400 italic">No presets saved yet.</p>
+              ? <p style={{ fontSize: 12, color: "#9ca3af", fontStyle: "italic" }}>No presets saved yet.</p>
               : (
-                <div className="space-y-2">
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                   {presets.map(p => (
-                    <div key={p.id} className="flex items-center justify-between px-3 py-3 border border-gray-200 rounded-xl hover:border-gray-300 transition-colors">
-                      <div className="min-w-0">
-                        <p className="text-xs font-bold text-gray-700 truncate">{p.name}</p>
-                        <p className="text-[10px] text-gray-400">{p.filters.length} filter{p.filters.length !== 1 ? "s" : ""}</p>
+                    <div key={p.id} style={{
+                      display: "flex", alignItems: "center", justifyContent: "space-between",
+                      padding: "10px 12px", border: "1px solid #e5e7eb",
+                      borderRadius: 10,
+                    }}>
+                      <div style={{ minWidth: 0 }}>
+                        <p style={{ fontSize: 12, fontWeight: 700, color: "#374151", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</p>
+                        <p style={{ fontSize: 10, color: "#9ca3af", margin: "2px 0 0" }}>{p.filters.length} filter{p.filters.length !== 1 ? "s" : ""}</p>
                       </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <button onClick={() => { onLoadPreset(p); onClose(); }}
-                          className="h-8 px-3 rounded-lg text-xs font-black text-white"
-                          style={{ background: MAROON }}>Apply</button>
-                        <button onClick={() => onDeletePreset(p.id)}
-                          className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors">
-                          <X size={12} />
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+                        <button
+                          onClick={() => { onLoadPreset(p); onClose(); }}
+                          style={{
+                            height: 30, padding: "0 12px", borderRadius: 8,
+                            fontSize: 11, fontWeight: 800, color: "white", background: MAROON,
+                            border: "none", cursor: "pointer", fontFamily: FONT,
+                          }}
+                        >Apply</button>
+                        <button
+                          onClick={() => onDeletePreset(p.id)}
+                          style={{
+                            width: 30, height: 30, borderRadius: 8, background: "none",
+                            border: "1px solid #f3f4f6", cursor: "pointer",
+                            display: "flex", alignItems: "center", justifyContent: "center", color: "#9ca3af",
+                          }}
+                          onMouseEnter={e => { e.currentTarget.style.background = "#fef2f2"; e.currentTarget.style.color = "#ef4444"; }}
+                          onMouseLeave={e => { e.currentTarget.style.background = "none"; e.currentTarget.style.color = "#9ca3af"; }}
+                        >
+                          <X size={11} />
                         </button>
                       </div>
                     </div>
@@ -577,30 +726,69 @@ function FilterChip({ filter, onRemove, onChangeStatus, statusOptions }: FilterC
   })();
 
   return (
-    <div ref={ref} className="relative">
-      <button onClick={() => canChange ? setOpen(o => !o) : undefined}
-        className="flex items-center gap-1.5 h-7 px-2 rounded-full border text-xs font-semibold transition-all"
-        style={{ background: chipStyle.bg, borderColor: chipStyle.border, color: chipStyle.color }}>
-        <span className="text-[9px] font-black opacity-60 uppercase hidden sm:inline">{typeLabel}:</span>
-        <span className="max-w-[80px] truncate">{filter.label}</span>
-        {canChange && <ChevronDown size={10} />}
-        <span onClick={e => { e.stopPropagation(); onRemove(); }}
-          className="ml-0.5 w-3.5 h-3.5 flex items-center justify-center rounded-full hover:bg-black/10 transition-colors cursor-pointer">
+    <div ref={ref} style={{ position: "relative" }}>
+      <button
+        onClick={() => canChange ? setOpen(o => !o) : undefined}
+        style={{
+          display: "flex", alignItems: "center", gap: 5,
+          height: 26, padding: "0 8px",
+          borderRadius: 20, border: `1px solid ${chipStyle.border}`,
+          background: chipStyle.bg, color: chipStyle.color,
+          fontSize: 11, fontWeight: 600, fontFamily: FONT, cursor: "pointer",
+          whiteSpace: "nowrap",
+        }}
+      >
+        <span style={{ fontSize: 9, fontWeight: 800, opacity: 0.6, textTransform: "uppercase", display: "none" }}>{typeLabel}:</span>
+        <span style={{ maxWidth: 80, overflow: "hidden", textOverflow: "ellipsis" }}>{filter.label}</span>
+        {canChange && <ChevronDown size={9} />}
+        <span
+          onClick={e => { e.stopPropagation(); onRemove(); }}
+          style={{
+            width: 14, height: 14, borderRadius: "50%",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            cursor: "pointer", marginLeft: 2,
+          }}
+          onMouseEnter={e => (e.currentTarget.style.background = "rgba(0,0,0,0.1)")}
+          onMouseLeave={e => (e.currentTarget.style.background = "none")}
+        >
           <X size={8} />
         </span>
       </button>
       {open && canChange && statusOptions && (
-        <div className="absolute left-0 top-full mt-1 z-50 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden"
-          style={{ minWidth: 160, fontFamily: FONT }}>
-          <button onClick={() => { onRemove(); setOpen(false); }}
-            className="w-full flex items-center gap-2 px-3 py-2.5 text-xs text-gray-600 hover:bg-gray-50 border-b border-gray-100">
-            <X size={11} /> Remove Filter
+        <div style={{
+          position: "absolute", left: 0, top: "calc(100% + 4px)", zIndex: 50,
+          background: "white", border: "1px solid #e5e7eb",
+          borderRadius: 10, boxShadow: "0 4px 16px rgba(0,0,0,0.1)",
+          overflow: "hidden", minWidth: 160, fontFamily: FONT,
+        }}>
+          <button
+            onClick={() => { onRemove(); setOpen(false); }}
+            style={{
+              width: "100%", display: "flex", alignItems: "center", gap: 8,
+              padding: "10px 12px", fontSize: 12, color: "#6b7280",
+              background: "none", border: "none", borderBottom: "1px solid #f3f4f6",
+              cursor: "pointer", fontFamily: FONT,
+            }}
+            onMouseEnter={e => (e.currentTarget.style.background = "#f9fafb")}
+            onMouseLeave={e => (e.currentTarget.style.background = "none")}
+          >
+            <X size={10} /> Remove Filter
           </button>
           {statusOptions.map(s => (
-            <button key={s} onClick={() => { onChangeStatus!(s); setOpen(false); }}
-              className="w-full flex items-center px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-              {filter.value === s && <span className="text-[#4338ca] mr-2">✓</span>}
-              <span className={filter.value === s ? "font-bold text-[#4338ca]" : ""}>{s}</span>
+            <button
+              key={s}
+              onClick={() => { onChangeStatus!(s); setOpen(false); }}
+              style={{
+                width: "100%", display: "flex", alignItems: "center",
+                padding: "10px 12px", fontSize: 13, color: "#374151",
+                background: "none", border: "none", cursor: "pointer",
+                fontFamily: FONT, fontWeight: filter.value === s ? 700 : 400,
+              }}
+              onMouseEnter={e => (e.currentTarget.style.background = "#f9fafb")}
+              onMouseLeave={e => (e.currentTarget.style.background = "none")}
+            >
+              {filter.value === s && <span style={{ color: "#4338ca", marginRight: 6 }}>✓</span>}
+              <span style={{ color: filter.value === s ? "#4338ca" : "#374151" }}>{s}</span>
             </button>
           ))}
         </div>
@@ -702,147 +890,219 @@ function GradePanel({
   const panelContent = (
     <>
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 shrink-0" style={{ background: MAROON }}>
-        <div className="flex items-center gap-3 min-w-0">
+      <div style={{
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,0.1)",
+        background: MAROON, flexShrink: 0,
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
           {panel.staffImage
-            ? <Image src={panel.staffImage} alt={panel.staffName} width={32} height={32} className="rounded-full object-cover shrink-0 ring-2 ring-white/30" />
-            : <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[10px] font-black shrink-0 ring-2 ring-white/30"
-                style={{ background: MAROON_DARK }}>{getInitials(panel.staffName)}</div>}
-          <div className="min-w-0">
-            <p className="text-sm font-black text-white truncate">{panel.staffName}</p>
-            <p className="text-[10px] text-white/60 truncate">{panel.staffEmail}</p>
+            ? <Image src={panel.staffImage} alt={panel.staffName} width={34} height={34}
+                style={{ borderRadius: "50%", objectFit: "cover", flexShrink: 0, border: "2px solid rgba(255,255,255,0.25)" }} />
+            : <div style={{
+                width: 34, height: 34, borderRadius: "50%",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                background: MAROON_DARK, color: "white", fontSize: 11, fontWeight: 800,
+                flexShrink: 0, border: "2px solid rgba(255,255,255,0.2)",
+              }}>{getInitials(panel.staffName)}</div>}
+          <div style={{ minWidth: 0 }}>
+            <p style={{ fontSize: 13, fontWeight: 800, color: "white", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {panel.staffName}
+            </p>
+            <p style={{ fontSize: 10, color: "rgba(255,255,255,0.55)", margin: "1px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {panel.staffEmail}
+            </p>
           </div>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
           {panel.grade.submissionId && (
-            <button onClick={() => onOpenSpeedgrader(panel.staffId, panel.assignmentId, panel.grade.submissionId!)}
-              className="flex items-center gap-1 h-7 px-2 rounded-lg text-[10px] font-black text-white bg-white/15 hover:bg-white/25 transition-all">
-              <Eye size={10} /> <span className="hidden sm:inline">SpeedGrader</span>
+            <button
+              onClick={() => onOpenSpeedgrader(panel.staffId, panel.assignmentId, panel.grade.submissionId!)}
+              style={{
+                display: "flex", alignItems: "center", gap: 4,
+                height: 28, padding: "0 8px", borderRadius: 8,
+                fontSize: 10, fontWeight: 800, color: "white",
+                background: "rgba(255,255,255,0.15)", border: "none", cursor: "pointer",
+              }}
+              onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.25)")}
+              onMouseLeave={e => (e.currentTarget.style.background = "rgba(255,255,255,0.15)")}
+            >
+              <Eye size={10} />
+              <span>Speedgrader</span>
             </button>
           )}
-          <button onClick={onClose} className="w-7 h-7 flex items-center justify-center rounded-lg bg-white/15 hover:bg-white/25 text-white transition-all">
+          <button onClick={onClose} style={{
+            width: 28, height: 28, borderRadius: 8, background: "rgba(255,255,255,0.15)",
+            border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "white",
+          }}
+            onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.25)")}
+            onMouseLeave={e => (e.currentTarget.style.background = "rgba(255,255,255,0.15)")}
+          >
             <X size={13} />
           </button>
         </div>
       </div>
 
       {/* Assignment title bar */}
-      <div className="px-4 py-2 border-b border-gray-100 shrink-0 bg-gray-50 flex items-center justify-between">
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center justify-center mb-0.5">
-  <p className="text-xs font-black text-gray-800 truncate text-center">{panel.assignmentTitle}</p>
-</div>
-          <div className="flex items-center gap-1.5 mt-0.5 justify-center flex-wrap">
-            <span className="text-[10px] text-gray-400">{panel.maxPoints} pts max</span>
-            {panel.grade.submittedAt && (
-              <span className="text-[10px] text-gray-400">
-                · Submitted {new Date(panel.grade.submittedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-              </span>
-            )}
-          </div>
+      <div style={{
+        padding: "10px 16px", borderBottom: "1px solid #f3f4f6",
+        background: "#fafafa", flexShrink: 0,
+      }}>
+        <p style={{ fontSize: 13, fontWeight: 700, color: "#111827", margin: 0, textAlign: "center" }}>{panel.assignmentTitle}</p>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 4, flexWrap: "wrap" }}>
+          <span style={{ fontSize: 11, color: "#9ca3af" }}>{panel.maxPoints} pts max</span>
+          {panel.grade.submittedAt && (
+            <span style={{ fontSize: 11, color: "#9ca3af" }}>
+              · Submitted {new Date(panel.grade.submittedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+            </span>
+          )}
         </div>
-        {panel.grade.submissionId && (
-          <button onClick={() => onOpenSpeedgrader(panel.staffId, panel.assignmentId, panel.grade.submissionId!)}
-            className="ml-2 flex items-center gap-1 h-7 px-2 rounded-lg text-[10px] font-black border shrink-0 transition-all hover:opacity-80"
-            style={{ borderColor: MAROON, color: MAROON, background: MAROON_LIGHT }}>
-            <Eye size={10} /> SpeedGrader
-          </button>
-        )}
       </div>
 
       {/* Body */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="px-4 py-4 border-b border-gray-100">
-          <p className="text-[10px] font-black uppercase tracking-widest mb-3" style={{ color: MAROON }}>{gradeLabelForHeader}</p>
+      <div style={{ flex: 1, overflowY: "auto" }}>
+
+        {/* Grade input */}
+        <div style={{ padding: "16px", borderBottom: "1px solid #f3f4f6" }}>
+          <p style={{ fontSize: 10, fontWeight: 800, color: MAROON, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 10 }}>
+            {gradeLabelForHeader}
+          </p>
+
           {isNG && (
-            <div className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-center">
-              <p className="text-xs font-semibold text-gray-400">This assignment is set to <strong>Not Graded</strong> and does not appear in the gradebook.</p>
+            <div style={{
+              background: "#f9fafb", border: "1px solid #e5e7eb",
+              borderRadius: 10, padding: "12px 16px", textAlign: "center",
+            }}>
+              <p style={{ fontSize: 12, color: "#9ca3af", margin: 0 }}>
+                This assignment is set to <strong>Not Graded</strong> and does not appear in the gradebook.
+              </p>
             </div>
           )}
+
           {isCI && (
-            <div className="relative">
+            <div style={{ position: "relative" }}>
               <select value={ciValue} onChange={e => setCiValue(e.target.value as "complete" | "incomplete" | "ungraded")}
-                className="w-full h-11 border-2 rounded-xl px-3 text-sm font-bold text-gray-700 bg-white focus:outline-none appearance-none cursor-pointer"
-                style={{ borderColor: MAROON, fontFamily: FONT }}>
+                style={{
+                  width: "100%", height: 42, border: `2px solid ${MAROON}`,
+                  borderRadius: 10, padding: "0 36px 0 12px", fontSize: 13,
+                  fontWeight: 700, color: "#374151", background: "white",
+                  outline: "none", appearance: "none", cursor: "pointer", fontFamily: FONT,
+                }}>
                 <option value="ungraded">Ungraded</option>
                 <option value="complete">Complete</option>
                 <option value="incomplete">Incomplete</option>
               </select>
-              <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
+              <ChevronDown size={13} style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", color: "#6b7280", pointerEvents: "none" }} />
             </div>
           )}
+
           {isPct && (
             <div>
-              <div className="flex items-center gap-2">
-                <div className="relative flex-1">
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <div style={{ position: "relative", flex: 1 }}>
                   <input type="number" min={0} max={100} step={1} value={pctInput}
                     onChange={e => { setPctInput(e.target.value); setError(null); }}
                     placeholder="—"
-                    className="w-full h-11 border-2 rounded-xl px-3 pr-9 text-sm font-bold text-gray-800 outline-none"
-                    style={{ borderColor: pctInput ? MAROON : "#e5e7eb", fontFamily: FONT }}
+                    style={{
+                      width: "100%", height: 42,
+                      border: `2px solid ${pctInput ? MAROON : "#e5e7eb"}`,
+                      borderRadius: 10, padding: "0 36px 0 12px",
+                      fontSize: 14, fontWeight: 700, color: "#111827",
+                      outline: "none", boxSizing: "border-box", fontFamily: FONT,
+                    }}
                     onFocus={e => (e.currentTarget.style.borderColor = MAROON)}
-                    onBlur={e  => (e.currentTarget.style.borderColor = pctInput ? MAROON : "#e5e7eb")} />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-bold text-gray-400">%</span>
+                    onBlur={e => (e.currentTarget.style.borderColor = pctInput ? MAROON : "#e5e7eb")}
+                  />
+                  <span style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", fontSize: 13, fontWeight: 700, color: "#9ca3af" }}>%</span>
                 </div>
                 {pctInput !== "" && !isNaN(parseFloat(pctInput)) && (
-                  <div className="h-11 px-3 rounded-xl flex flex-col items-center justify-center shrink-0 border"
-                    style={{ background: gradeBg, borderColor: gradeColor + "40" }}>
-                    <span className="text-xs font-black leading-none" style={{ color: gradeColor }}>{currentGrade} pts</span>
-                    {letterGrade !== "—" && <span className="text-[9px] font-bold leading-none mt-0.5" style={{ color: gradeColor }}>{letterGrade}</span>}
+                  <div style={{
+                    height: 42, padding: "0 12px", borderRadius: 10,
+                    display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+                    background: gradeBg, border: `1px solid ${gradeColor}30`, flexShrink: 0,
+                  }}>
+                    <span style={{ fontSize: 12, fontWeight: 800, lineHeight: 1, color: gradeColor }}>{currentGrade} pts</span>
+                    {letterGrade !== "—" && <span style={{ fontSize: 9, fontWeight: 700, lineHeight: 1, marginTop: 2, color: gradeColor }}>{letterGrade}</span>}
                   </div>
                 )}
               </div>
-              <p className="text-[10px] text-gray-400 mt-1.5">Calculated from {panel.maxPoints} pts</p>
+              <p style={{ fontSize: 10, color: "#9ca3af", marginTop: 6 }}>Calculated from {panel.maxPoints} pts</p>
             </div>
           )}
+
           {!isNG && !isCI && !isPct && (
-            <div className="flex items-center gap-2">
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <input type="number" min={0} max={panel.maxPoints} step={0.5} value={pointsInput}
                 onChange={e => { setPointsInput(e.target.value); setError(null); }}
                 placeholder="—"
-                className="flex-1 h-11 border-2 rounded-xl px-3 text-sm font-bold text-gray-800 outline-none"
-                style={{ borderColor: pointsInput ? MAROON : "#e5e7eb", fontFamily: FONT }}
+                style={{
+                  flex: 1, height: 42,
+                  border: `2px solid ${pointsInput ? MAROON : "#e5e7eb"}`,
+                  borderRadius: 10, padding: "0 12px",
+                  fontSize: 14, fontWeight: 700, color: "#111827",
+                  outline: "none", fontFamily: FONT,
+                }}
                 onFocus={e => (e.currentTarget.style.borderColor = MAROON)}
-                onBlur={e  => (e.currentTarget.style.borderColor = pointsInput ? MAROON : "#e5e7eb")} />
-              <span className="text-sm font-bold text-gray-500 shrink-0">/ {panel.maxPoints}</span>
+                onBlur={e => (e.currentTarget.style.borderColor = pointsInput ? MAROON : "#e5e7eb")}
+              />
+              <span style={{ fontSize: 13, fontWeight: 700, color: "#9ca3af", flexShrink: 0 }}>/ {panel.maxPoints}</span>
               {pointsInput !== "" && !isNaN(parseFloat(pointsInput)) && (
-                <div className="h-11 px-2.5 rounded-xl flex flex-col items-center justify-center shrink-0 border"
-                  style={{ background: gradeBg, borderColor: gradeColor + "40" }}>
-                  <span className="text-xs font-black leading-none" style={{ color: gradeColor }}>{pctValue}%</span>
-                  {letterGrade !== "—" && <span className="text-[9px] font-bold leading-none mt-0.5" style={{ color: gradeColor }}>{letterGrade}</span>}
+                <div style={{
+                  height: 42, padding: "0 10px", borderRadius: 10,
+                  display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+                  background: gradeBg, border: `1px solid ${gradeColor}30`, flexShrink: 0,
+                }}>
+                  <span style={{ fontSize: 12, fontWeight: 800, lineHeight: 1, color: gradeColor }}>{pctValue}%</span>
+                  {letterGrade !== "—" && <span style={{ fontSize: 9, fontWeight: 700, lineHeight: 1, marginTop: 2, color: gradeColor }}>{letterGrade}</span>}
                 </div>
               )}
             </div>
           )}
-          {error && <p className="text-[10px] text-red-500 mt-2 font-semibold">{error}</p>}
+
+          {error && <p style={{ fontSize: 11, color: "#ef4444", marginTop: 8, fontWeight: 600 }}>{error}</p>}
         </div>
 
+        {/* Status */}
         {!isNG && (
-          <div className="px-4 py-4 border-b border-gray-100">
-            <p className="text-[10px] font-black uppercase tracking-widest mb-3" style={{ color: MAROON }}>Status</p>
-            <div className="space-y-2">
+          <div style={{ padding: "16px", borderBottom: "1px solid #f3f4f6" }}>
+            <p style={{ fontSize: 10, fontWeight: 800, color: MAROON, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 10 }}>Status</p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               {(["None", "Late", "Missing", "Excused"] as SubmissionStatus[]).map(s => {
                 const sc = statusColors[s];
                 const isSelected = statusInput === s;
                 return (
-                  <label key={s}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all border"
-                    style={{ background: isSelected ? sc.bg : "white", borderColor: isSelected ? sc.border : "#e5e7eb", color: isSelected ? sc.color : "#6b7280" }}>
+                  <label key={s} style={{
+                    display: "flex", alignItems: "center", gap: 10,
+                    padding: "10px 12px", borderRadius: 8, cursor: "pointer",
+                    border: `1px solid ${isSelected ? sc.border : "#e5e7eb"}`,
+                    background: isSelected ? sc.bg : "white",
+                    color: isSelected ? sc.color : "#6b7280",
+                    transition: "all 0.1s",
+                  }}>
                     <input type="radio" name="status" value={s} checked={isSelected}
                       onChange={() => { setStatusInput(s); if (s !== "Late") setDaysLate(""); }}
-                      className="sr-only" />
-                    <div className="w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-all"
-                      style={{ borderColor: isSelected ? sc.color : "#d1d5db" }}>
-                      {isSelected && <div className="w-2 h-2 rounded-full" style={{ background: sc.color }} />}
+                      style={{ display: "none" }} />
+                    <div style={{
+                      width: 16, height: 16, borderRadius: "50%",
+                      border: `2px solid ${isSelected ? sc.color : "#d1d5db"}`,
+                      display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                    }}>
+                      {isSelected && <div style={{ width: 8, height: 8, borderRadius: "50%", background: sc.color }} />}
                     </div>
-                    <span className="text-xs font-bold">{s}</span>
+                    <span style={{ fontSize: 12, fontWeight: 700 }}>{s}</span>
                     {s === "Late" && isSelected && (
-                      <div className="flex items-center gap-1.5 ml-auto">
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, marginLeft: "auto" }}>
                         <input type="number" min={0} value={daysLate} onChange={e => setDaysLate(e.target.value)}
                           placeholder="0"
-                          className="w-14 h-7 border border-blue-200 rounded-md px-2 text-xs font-bold text-blue-700 outline-none focus:border-blue-400 bg-white"
-                          onClick={e => e.stopPropagation()} />
-                        <span className="text-[10px] font-semibold text-blue-600">days</span>
+                          style={{
+                            width: 52, height: 28, border: "1px solid #bfdbfe",
+                            borderRadius: 6, padding: "0 8px",
+                            fontSize: 12, fontWeight: 700, color: "#1d4ed8",
+                            outline: "none", background: "white", fontFamily: FONT,
+                          }}
+                          onClick={e => e.stopPropagation()}
+                        />
+                        <span style={{ fontSize: 10, fontWeight: 600, color: "#3b82f6" }}>days</span>
                       </div>
                     )}
                   </label>
@@ -852,58 +1112,106 @@ function GradePanel({
           </div>
         )}
 
+        {/* Submission */}
         {(panel.grade.fileUrl || panel.grade.textEntry || panel.grade.websiteUrl) && (
-          <div className="px-4 py-4 border-b border-gray-100">
-            <p className="text-[10px] font-black uppercase tracking-widest mb-2" style={{ color: MAROON }}>Submission</p>
+          <div style={{ padding: "16px", borderBottom: "1px solid #f3f4f6" }}>
+            <p style={{ fontSize: 10, fontWeight: 800, color: MAROON, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 10 }}>Submission</p>
             {panel.grade.fileUrl && (
-              <button onClick={() => panel.grade.submissionId && onOpenSpeedgrader(panel.staffId, panel.assignmentId, panel.grade.submissionId!)}
-                className="flex items-center gap-2.5 px-3 py-3 rounded-lg border border-gray-200 hover:border-gray-400 transition-colors group w-full text-left">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: MAROON_LIGHT }}>
+              <button
+                onClick={() => panel.grade.submissionId && onOpenSpeedgrader(panel.staffId, panel.assignmentId, panel.grade.submissionId!)}
+                style={{
+                  display: "flex", alignItems: "center", gap: 10,
+                  padding: "10px 12px", borderRadius: 8,
+                  border: "1px solid #e5e7eb", background: "white",
+                  cursor: "pointer", width: "100%", textAlign: "left", fontFamily: FONT,
+                }}
+                onMouseEnter={e => (e.currentTarget.style.borderColor = "#9ca3af")}
+                onMouseLeave={e => (e.currentTarget.style.borderColor = "#e5e7eb")}
+              >
+                <div style={{
+                  width: 32, height: 32, borderRadius: 8,
+                  background: MAROON_LIGHT, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                }}>
                   <FileText size={13} style={{ color: MAROON }} />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-bold text-gray-700 truncate">{panel.grade.fileUrl.split("/").pop() ?? "View File"}</p>
-                  <p className="text-[10px] text-gray-400">Click to open SpeedGrader</p>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontSize: 12, fontWeight: 700, color: "#374151", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {panel.grade.fileUrl.split("/").pop() ?? "View File"}
+                  </p>
+                  <p style={{ fontSize: 10, color: "#9ca3af", margin: "2px 0 0" }}>Click to open SpeedGrader</p>
                 </div>
               </button>
             )}
             {panel.grade.textEntry && (
-              <div className="mt-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-700 max-h-24 overflow-y-auto"
-                dangerouslySetInnerHTML={{ __html: panel.grade.textEntry }} />
+              <div style={{
+                marginTop: 8, background: "#f9fafb", border: "1px solid #e5e7eb",
+                borderRadius: 8, padding: "10px 12px",
+                fontSize: 12, color: "#374151", maxHeight: 96, overflowY: "auto",
+              }}
+                dangerouslySetInnerHTML={{ __html: panel.grade.textEntry }}
+              />
             )}
             {panel.grade.websiteUrl && (
               <a href={panel.grade.websiteUrl} target="_blank" rel="noopener noreferrer"
-                className="mt-2 flex items-center gap-1.5 text-xs text-blue-600 hover:underline font-medium">
+                style={{
+                  display: "flex", alignItems: "center", gap: 5, marginTop: 8,
+                  fontSize: 12, color: "#2563eb", textDecoration: "none", fontWeight: 500,
+                }}>
                 <ExternalLink size={10} />{panel.grade.websiteUrl}
               </a>
             )}
           </div>
         )}
 
-        <div className="px-4 py-4">
-          <p className="text-[10px] font-black uppercase tracking-widest mb-2" style={{ color: MAROON }}>Comments</p>
-          <textarea value={feedback} onChange={e => setFeedback(e.target.value)}
-            placeholder="Add comments or feedback…" rows={3}
-            className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-700 outline-none resize-none leading-relaxed"
-            style={{ fontFamily: FONT }}
+        {/* Comments */}
+        <div style={{ padding: "16px" }}>
+          <p style={{ fontSize: 10, fontWeight: 800, color: MAROON, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 10 }}>Comments</p>
+          <textarea
+            value={feedback} onChange={e => setFeedback(e.target.value)}
+            placeholder="Add comments or feedback…"
+            rows={3}
+            style={{
+              width: "100%", border: "1px solid #e5e7eb", borderRadius: 10,
+              padding: "10px 12px", fontSize: 12, color: "#374151",
+              outline: "none", resize: "none", lineHeight: 1.6,
+              boxSizing: "border-box", fontFamily: FONT,
+            }}
             onFocus={e => (e.currentTarget.style.borderColor = MAROON)}
-            onBlur={e  => (e.currentTarget.style.borderColor = "#e5e7eb")} />
+            onBlur={e => (e.currentTarget.style.borderColor = "#e5e7eb")}
+          />
         </div>
       </div>
 
       {/* Footer */}
-      <div className="shrink-0 border-t border-gray-200 px-4 py-3 bg-gray-50 flex items-center justify-between gap-3">
-        <button onClick={onClose}
-          className="h-10 px-4 border border-gray-200 rounded-lg text-sm font-semibold text-gray-600 hover:bg-white transition-colors">
-          Cancel
-        </button>
+      <div style={{
+        flexShrink: 0, borderTop: "1px solid #f3f4f6",
+        padding: "12px 16px", background: "#fafafa",
+        display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10,
+      }}>
+        <button onClick={onClose} style={{
+          height: 40, padding: "0 16px",
+          border: "1px solid #e5e7eb", borderRadius: 8,
+          fontSize: 13, fontWeight: 600, color: "#6b7280",
+          background: "white", cursor: "pointer", fontFamily: FONT,
+        }}
+          onMouseEnter={e => (e.currentTarget.style.background = "#f9fafb")}
+          onMouseLeave={e => (e.currentTarget.style.background = "white")}
+        >Cancel</button>
         {!isNG && (
-          <button onClick={handleSave} disabled={saving}
-            className="flex-1 h-10 rounded-lg text-sm font-black text-white transition-all disabled:opacity-60 flex items-center justify-center gap-2"
-            style={{ background: saved ? "#15803d" : MAROON }}>
-            {saving ? <><RotateCcw size={12} className="animate-spin" /> Saving…</>
-             : saved  ? <><CheckCircle2 size={12} /> Saved!</>
-             : "Update Grade"}
+          <button onClick={handleSave} disabled={saving} style={{
+            flex: 1, height: 40, borderRadius: 8,
+            fontSize: 13, fontWeight: 800, color: "white",
+            background: saved ? "#15803d" : MAROON,
+            border: "none", cursor: saving ? "default" : "pointer",
+            opacity: saving ? 0.7 : 1,
+            display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+            fontFamily: FONT, transition: "background 0.2s",
+          }}>
+            {saving
+              ? <><RotateCcw size={12} style={{ animation: "spin 1s linear infinite" }} /> Saving…</>
+              : saved
+                ? <><CheckCircle2 size={12} /> Saved!</>
+                : "Update Grade"}
           </button>
         )}
       </div>
@@ -913,9 +1221,14 @@ function GradePanel({
   if (isMobile) {
     return (
       <>
-        <div className="fixed inset-0 z-40 bg-black/30" onClick={onClose} />
-        <div className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl shadow-2xl flex flex-col overflow-hidden"
-          style={{ maxHeight: "92dvh", fontFamily: FONT }}>
+        <div style={{ position: "fixed", inset: 0, zIndex: 9998, background: "rgba(0,0,0,0.3)" }} onClick={onClose} />
+        <div style={{
+          position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 9999,
+          background: "white", borderRadius: "18px 18px 0 0",
+          boxShadow: "0 -4px 32px rgba(0,0,0,0.15)",
+          display: "flex", flexDirection: "column", overflow: "hidden",
+          maxHeight: "calc(100dvh - 100px)", fontFamily: FONT,
+        }}>
           {panelContent}
         </div>
       </>
@@ -924,9 +1237,14 @@ function GradePanel({
 
   return (
     <>
-      <div className="fixed inset-0 z-40 bg-black/20" onClick={onClose} />
-      <div className="fixed right-0 top-0 h-full z-50 bg-white shadow-2xl border-l border-gray-200 flex flex-col overflow-hidden"
-        style={{ width: "min(400px, 95vw)", fontFamily: FONT }}>
+      <div style={{ position: "fixed", inset: 0, zIndex: 40, background: "rgba(0,0,0,0.15)" }} onClick={onClose} />
+      <div style={{
+        position: "fixed", right: 0, top: 0, height: "100%", zIndex: 50,
+        background: "white", boxShadow: "-4px 0 32px rgba(0,0,0,0.12)",
+        borderLeft: "1px solid #e5e7eb",
+        display: "flex", flexDirection: "column", overflow: "hidden",
+        width: "min(400px, 95vw)", fontFamily: FONT,
+      }}>
         {panelContent}
       </div>
     </>
@@ -944,35 +1262,36 @@ function CellDisplay({ col, score, status, hasSubmission, isSaving }: {
   const isCI  = dga === "Complete/Incomplete";
   const isPct = dga === "Percentage";
 
-  if (isSaving)             return <RotateCcw size={10} className="animate-spin text-gray-400" />;
-  if (isNG)                 return <span className="text-xs text-gray-400">-</span>;
-  if (status === "EXCUSED") return <span className="text-xs font-bold text-amber-600">EX</span>;
-  if (status === "MISSING") return <AlertCircle size={14} className="text-red-400" />;
+  if (isSaving)             return <RotateCcw size={10} style={{ color: "#9ca3af", animation: "spin 1s linear infinite" }} />;
+  if (isNG)                 return <span style={{ fontSize: 11, color: "#d1d5db" }}>—</span>;
+  if (status === "EXCUSED") return <span style={{ fontSize: 11, fontWeight: 700, color: "#b45309" }}>EX</span>;
+  if (status === "MISSING") return <AlertCircle size={13} style={{ color: "#f87171" }} />;
 
   if (isCI) {
-    if (score === col.points) return <span className="text-base font-bold text-green-600">✓</span>;
-    if (score === 0)          return <span className="text-base font-bold text-red-500">✗</span>;
-    return <Minus size={14} className="text-gray-300" />;
+    if (score === col.points) return <span style={{ fontSize: 15, fontWeight: 700, color: "#16a34a" }}>✓</span>;
+    if (score === 0)          return <span style={{ fontSize: 15, fontWeight: 700, color: "#ef4444" }}>✗</span>;
+    return <Minus size={13} style={{ color: "#d1d5db" }} />;
   }
 
   if (score !== null) {
+    const color = getScoreColor(score, col.points);
     if (isPct) {
       const pct = col.points > 0 ? Math.round((score / col.points) * 100) : 0;
-      return <span className="text-sm font-semibold text-gray-700">{pct}%</span>;
+      return <span style={{ fontSize: 12, fontWeight: 700, color }}>{pct}%</span>;
     }
-    return <span className="text-sm font-semibold text-gray-700">{score}</span>;
+    return <span style={{ fontSize: 12, fontWeight: 700, color }}>{score}</span>;
   }
 
-  if (status === "LATE") return <span className="text-xs font-semibold text-blue-500">Late</span>;
+  if (status === "LATE") return <span style={{ fontSize: 10, fontWeight: 700, color: "#3b82f6" }}>Late</span>;
 
   if (hasSubmission) return (
-    <div className="flex items-center gap-0.5">
-      <Eye size={11} style={{ color: "#1d4ed8" }} />
-      <span className="text-[9px] font-bold" style={{ color: "#1d4ed8" }}>Sub</span>
+    <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
+      <Eye size={10} style={{ color: "#1d4ed8" }} />
+      <span style={{ fontSize: 9, fontWeight: 700, color: "#1d4ed8" }}>Sub</span>
     </div>
   );
 
-  return <span className="text-xs text-gray-300">-</span>;
+  return <span style={{ fontSize: 11, color: "#e5e7eb" }}>—</span>;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -988,7 +1307,7 @@ function CellEditor({ col, score, onSave, onOpenPanel, onDismiss }: {
   const isPct = dga === "Percentage";
   const inputRef     = useRef<HTMLInputElement>(null);
   const committedRef = useRef(false);
-useEffect(() => { committedRef.current = false; }, []);
+  useEffect(() => { committedRef.current = false; }, []);
   const [ciVal, setCiVal] = useState<string>(
     score === col.points ? "complete" : score === 0 ? "incomplete" : ""
   );
@@ -1031,10 +1350,14 @@ useEffect(() => { committedRef.current = false; }, []);
 
   if (isCI) {
     return (
-      <div data-cell-editor className="flex w-full">
-        <div className="flex items-stretch w-full border-2 rounded" style={{ borderColor: "#2563eb" }}>
+      <div data-cell-editor style={{ display: "flex", width: "100%" }}>
+        <div style={{ display: "flex", alignItems: "stretch", width: "100%", border: "2px solid #2563eb", borderRadius: 4 }}>
           <select autoFocus value={ciVal} onChange={e => setCiVal(e.target.value)}
-            className="flex-1 h-9 text-xs font-bold bg-white outline-none px-1 cursor-pointer"
+            style={{
+              flex: 1, height: 36, fontSize: 11, fontWeight: 700,
+              background: "white", outline: "none", padding: "0 4px", cursor: "pointer",
+              border: "none", fontFamily: FONT,
+            }}
             onClick={e => e.stopPropagation()}>
             <option value="" disabled>Select…</option>
             <option value="complete">✓ Complete</option>
@@ -1050,17 +1373,21 @@ useEffect(() => { committedRef.current = false; }, []);
   if (isPct) {
     const initPct = score !== null && col.points > 0 ? String(Math.round((score / col.points) * 100)) : "";
     return (
-      <div data-cell-editor className="flex w-full">
-        <div className="flex items-stretch w-full border-2 rounded" style={{ borderColor: "#2563eb" }}>
+      <div data-cell-editor style={{ display: "flex", width: "100%" }}>
+        <div style={{ display: "flex", alignItems: "stretch", width: "100%", border: "2px solid #2563eb", borderRadius: 4 }}>
           <input ref={inputRef} autoFocus type="number" min={0} max={100} step={1}
             defaultValue={initPct}
-            className="flex-1 h-9 text-sm font-semibold text-center bg-white outline-none w-0"
+            style={{
+              flex: 1, height: 36, fontSize: 12, fontWeight: 600, textAlign: "center",
+              background: "white", outline: "none", width: 0, border: "none", fontFamily: FONT,
+            }}
             onClick={e => e.stopPropagation()}
             onKeyDown={e => {
               if (e.key === "Escape") { onDismiss(); return; }
               if (e.key === "Enter")  { e.preventDefault(); void commitPct(); }
-            }} />
-          <span className="text-[10px] font-bold text-gray-400 self-center px-1">%</span>
+            }}
+          />
+          <span style={{ fontSize: 9, fontWeight: 700, color: "#9ca3af", alignSelf: "center", padding: "0 3px" }}>%</span>
           <ArrowBtn onOpenPanel={onOpenPanel} />
         </div>
       </div>
@@ -1068,17 +1395,21 @@ useEffect(() => { committedRef.current = false; }, []);
   }
 
   return (
-    <div data-cell-editor className="flex w-full">
-      <div className="flex items-stretch w-full border-2 rounded" style={{ borderColor: "#2563eb" }}>
+    <div data-cell-editor style={{ display: "flex", width: "100%" }}>
+      <div style={{ display: "flex", alignItems: "stretch", width: "100%", border: "2px solid #2563eb", borderRadius: 4 }}>
         <input ref={inputRef} autoFocus type="number" min={0} max={col.points} step={0.5}
           defaultValue={score ?? ""}
-          className="flex-1 h-9 text-sm font-semibold text-center bg-white outline-none w-0"
+          style={{
+            flex: 1, height: 36, fontSize: 12, fontWeight: 600, textAlign: "center",
+            background: "white", outline: "none", width: 0, border: "none", fontFamily: FONT,
+          }}
           onClick={e => e.stopPropagation()}
           onKeyDown={e => {
             if (e.key === "Escape") { onDismiss(); return; }
             if (e.key === "Enter")  { e.preventDefault(); void commitPts(); }
-          }} />
-        <span className="text-[10px] font-bold text-gray-400 self-center pr-1 shrink-0">/{col.points}</span>
+          }}
+        />
+        <span style={{ fontSize: 9, fontWeight: 700, color: "#9ca3af", alignSelf: "center", paddingRight: 3, flexShrink: 0 }}>/{col.points}</span>
         <ArrowBtn onOpenPanel={onOpenPanel} />
       </div>
     </div>
@@ -1103,57 +1434,90 @@ function MobileStaffCard({
   const letter   = getLetterGrade(staff.percentage);
 
   return (
-    <div className="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm" style={{ fontFamily: FONT }}>
+    <div style={{
+      border: "1px solid #e5e7eb", borderRadius: 14,
+      overflow: "hidden", background: "white",
+      boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
+      fontFamily: FONT,
+    }}>
       {/* Card header */}
       <button
         onClick={() => setExpanded(e => !e)}
-        className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50/80 active:bg-gray-100 transition-colors text-left"
+        style={{
+          width: "100%", display: "flex", alignItems: "center", gap: 12,
+          padding: "12px 14px", background: "none", border: "none",
+          cursor: "pointer", textAlign: "left", fontFamily: FONT,
+        }}
+        onMouseEnter={e => (e.currentTarget.style.background = "#f9fafb")}
+        onMouseLeave={e => (e.currentTarget.style.background = "none")}
       >
         {staff.image
-          ? <Image src={staff.image} alt={staff.name} width={40} height={40} className="rounded-full object-cover shrink-0 ring-2 ring-gray-100" />
-          : <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-xs font-black shrink-0"
-              style={{ background: MAROON }}>{getInitials(staff.name)}</div>}
+          ? <Image src={staff.image} alt={staff.name} width={40} height={40}
+              style={{ borderRadius: "50%", objectFit: "cover", flexShrink: 0, border: "2px solid #f3f4f6" }} />
+          : <div style={{
+              width: 40, height: 40, borderRadius: "50%",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              background: MAROON, color: "white", fontSize: 12, fontWeight: 800, flexShrink: 0,
+            }}>{getInitials(staff.name)}</div>}
 
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-bold text-gray-900 truncate leading-tight">{staff.name}</p>
-          <p className="text-[11px] text-gray-400 truncate mt-0.5">{staff.position ?? staff.courseRole}</p>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{ fontSize: 14, fontWeight: 700, color: "#111827", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {staff.name}
+          </p>
+          <p style={{ fontSize: 11, color: "#9ca3af", margin: "2px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {staff.position ?? staff.courseRole}
+          </p>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
           {staff.percentage !== null ? (
-            <div className="flex flex-col items-center justify-center min-w-[52px] h-[44px] rounded-xl px-2"
-              style={{ background: pctBg, border: `1.5px solid ${pctColor}20` }}>
-              <span className="text-sm font-black leading-tight" style={{ color: pctColor }}>{staff.percentage}%</span>
-              <span className="text-[9px] font-bold leading-none" style={{ color: pctColor }}>{letter}</span>
+            <div style={{
+              display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+              minWidth: 52, height: 44, borderRadius: 10, padding: "0 8px",
+              background: pctBg, border: `1.5px solid ${pctColor}20`,
+            }}>
+              <span style={{ fontSize: 14, fontWeight: 800, lineHeight: 1, color: pctColor }}>{staff.percentage}%</span>
+              <span style={{ fontSize: 9, fontWeight: 700, lineHeight: 1, marginTop: 2, color: pctColor }}>{letter}</span>
             </div>
           ) : (
-            <div className="flex items-center justify-center min-w-[52px] h-[44px] rounded-xl px-2 bg-gray-50 border border-gray-100">
-              <span className="text-sm text-gray-300 font-bold">—</span>
+            <div style={{
+              display: "flex", alignItems: "center", justifyContent: "center",
+              minWidth: 52, height: 44, borderRadius: 10, padding: "0 8px",
+              background: "#f9fafb", border: "1.5px solid #f0f0f0",
+            }}>
+              <span style={{ fontSize: 14, color: "#d1d5db", fontWeight: 700 }}>—</span>
             </div>
           )}
-          <ChevronRight size={16} className={`text-gray-300 transition-transform duration-200 ${expanded ? "rotate-90" : ""}`} />
+          <ChevronRight size={15} style={{
+            color: "#d1d5db",
+            transform: expanded ? "rotate(90deg)" : "rotate(0deg)",
+            transition: "transform 0.2s",
+          }} />
         </div>
       </button>
 
       {/* Progress bar */}
       {staff.totalPossible > 0 && (
-        <div className="flex items-center gap-3 px-4 pb-3 -mt-1">
-          <div className="flex-1 h-1.5 rounded-full bg-gray-100 overflow-hidden">
-            <div className="h-full rounded-full transition-all duration-300"
-              style={{ width: `${Math.min(staff.percentage ?? 0, 100)}%`, background: pctColor }} />
+        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "0 14px 12px", marginTop: -4 }}>
+          <div style={{ flex: 1, height: 5, borderRadius: 3, background: "#f3f4f6", overflow: "hidden" }}>
+            <div style={{
+              height: "100%", borderRadius: 3,
+              width: `${Math.min(staff.percentage ?? 0, 100)}%`,
+              background: pctColor, transition: "width 0.3s",
+            }} />
           </div>
-          <span className="text-[10px] font-semibold text-gray-400 shrink-0 tabular-nums">
+          <span style={{ fontSize: 10, fontWeight: 600, color: "#9ca3af", flexShrink: 0, fontVariantNumeric: "tabular-nums" }}>
             {staff.totalEarned}/{staff.totalPossible} pts
           </span>
         </div>
       )}
 
-      {/* Expanded assignments list */}
+      {/* Expanded assignments */}
       {expanded && (
-        <div className="border-t border-gray-100 bg-gray-50/50 divide-y divide-gray-100">
+        <div style={{ borderTop: "1px solid #f3f4f6", background: "#fafafa" }}>
           {filteredColumns.length === 0 ? (
-            <p className="px-4 py-3 text-xs text-gray-400 italic">No assignments</p>
-          ) : filteredColumns.map(col => {
+            <p style={{ padding: "12px 14px", fontSize: 12, color: "#9ca3af", fontStyle: "italic" }}>No assignments</p>
+          ) : filteredColumns.map((col, idx) => {
             const gradeEntry    = staff.assignmentGrades?.find(g => g.assignmentId === col.id);
             const score: number | null = gradeEntry?.grade ?? null;
             const status        = gradeEntry?.status ?? null;
@@ -1169,44 +1533,54 @@ function MobileStaffCard({
               return score;
             })();
 
-            const handleTap = () => {
-              if (isNG || !gradeEntry) return;
-              onOpenGradePanel(staff, col);
-            };
-
             return (
-              <button key={col.id} onClick={handleTap}
-                className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${isNG ? "opacity-40 cursor-default" : "hover:bg-white active:bg-white"}`}>
-                <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
-                  style={{ background: "#eff6ff" }}>
-                  <BookOpen size={12} className="text-blue-600" />
+              <button
+                key={col.id}
+                onClick={() => { if (isNG || !gradeEntry) return; onOpenGradePanel(staff, col); }}
+                style={{
+                  width: "100%", display: "flex", alignItems: "center", gap: 10,
+                  padding: "11px 14px", textAlign: "left",
+                  background: "none", border: "none", borderBottom: idx < filteredColumns.length - 1 ? "1px solid #f3f4f6" : "none",
+                  cursor: isNG ? "default" : "pointer", fontFamily: FONT,
+                  opacity: isNG ? 0.4 : 1,
+                }}
+                onMouseEnter={e => { if (!isNG) e.currentTarget.style.background = "white"; }}
+                onMouseLeave={e => (e.currentTarget.style.background = "none")}
+              >
+                <div style={{
+                  width: 28, height: 28, borderRadius: 8,
+                  background: "#eff6ff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                }}>
+                  <BookOpen size={12} style={{ color: "#3b82f6" }} />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-gray-800 truncate leading-tight">{col.title}</p>
-                  <p className="text-[10px] text-gray-400 mt-0.5">{col.assignmentGroup} · {col.points} pts</p>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontSize: 12, fontWeight: 600, color: "#374151", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {col.title}
+                  </p>
+                  <p style={{ fontSize: 10, color: "#9ca3af", margin: "2px 0 0" }}>{col.assignmentGroup} · {col.points} pts</p>
                 </div>
-                <div className="flex items-center gap-1.5 shrink-0">
+                <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
                   {isSaving ? (
-                    <RotateCcw size={12} className="animate-spin text-gray-400" />
+                    <RotateCcw size={12} style={{ color: "#9ca3af" }} />
                   ) : displayScore !== null ? (
-                    <div className="flex flex-col items-end">
-                      <span className="text-sm font-black tabular-nums" style={{ color: getScoreColor(score, col.points) }}>
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
+                      <span style={{ fontSize: 14, fontWeight: 800, fontVariantNumeric: "tabular-nums", color: getScoreColor(score, col.points) }}>
                         {isPct ? `${displayScore}%` : displayScore}
                       </span>
                       {!isPct && col.points > 0 && (
-                        <span className="text-[9px] text-gray-400 leading-none">/{col.points}</span>
+                        <span style={{ fontSize: 9, color: "#9ca3af", lineHeight: 1 }}>/{col.points}</span>
                       )}
                     </div>
                   ) : status === "EXCUSED" ? (
-                    <span className="text-xs font-bold text-amber-500">EX</span>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: "#b45309" }}>EX</span>
                   ) : status === "MISSING" ? (
-                    <AlertCircle size={13} className="text-red-400" />
+                    <AlertCircle size={13} style={{ color: "#f87171" }} />
                   ) : hasSubmission ? (
-                    <span className="text-[10px] font-bold" style={{ color: MAROON }}>Ungraded</span>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: MAROON }}>Ungraded</span>
                   ) : (
-                    <span className="text-xs text-gray-300">—</span>
+                    <span style={{ fontSize: 12, color: "#d1d5db" }}>—</span>
                   )}
-                  {!isNG && <ChevronRight size={12} className="text-gray-300" />}
+                  {!isNG && <ChevronRight size={12} style={{ color: "#d1d5db" }} />}
                 </div>
               </button>
             );
@@ -1214,15 +1588,21 @@ function MobileStaffCard({
 
           {/* Footer total */}
           {staff.totalPossible > 0 && (
-            <div className="flex items-center justify-between px-4 py-3 bg-white/80">
-              <span className="text-xs font-black text-gray-500 uppercase tracking-wider">Overall</span>
-              <div className="flex items-center gap-2 flex-wrap justify-end">
-                <span className="text-xs font-semibold text-gray-500 tabular-nums">
+            <div style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              padding: "12px 14px", background: "white", borderTop: "1px solid #f3f4f6",
+            }}>
+              <span style={{ fontSize: 11, fontWeight: 800, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.06em" }}>Overall</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
+                <span style={{ fontSize: 11, color: "#6b7280", fontVariantNumeric: "tabular-nums" }}>
                   {staff.totalEarned}/{staff.totalPossible} pts
                 </span>
                 {staff.percentage !== null && (
-                  <span className="text-sm font-black tabular-nums px-2 py-0.5 rounded-lg"
-                    style={{ color: pctColor, background: pctBg }}>
+                  <span style={{
+                    fontSize: 13, fontWeight: 800, fontVariantNumeric: "tabular-nums",
+                    padding: "3px 8px", borderRadius: 8,
+                    color: pctColor, background: pctBg,
+                  }}>
                     {staff.percentage}% · {letter}
                   </span>
                 )}
@@ -1239,8 +1619,6 @@ function MobileStaffCard({
    MAIN COMPONENT
 ───────────────────────────────────────────────────────────────────────────── */
 export default function CourseGradesPage({ courseId }: { courseId: string }) {
-  const router = useRouter();
-
   const [data,      setData]      = useState<GradesData>(EMPTY_GRADES_DATA);
   const [loadError, setLoadError] = useState(false);
   const [loading,   setLoading]   = useState(true);
@@ -1257,7 +1635,6 @@ export default function CourseGradesPage({ courseId }: { courseId: string }) {
   const [filterPresets,   setFilterPresets]   = useState<FilterPreset[]>([]);
   const filterBtnRef = useRef<HTMLDivElement>(null);
 
-  // Mobile below 1024px
   const [isMobile,       setIsMobile]       = useState(false);
   const [searchExpanded, setSearchExpanded] = useState(false);
 
@@ -1325,22 +1702,25 @@ export default function CourseGradesPage({ courseId }: { courseId: string }) {
 
   /* ── Loading / Error ── */
   if (loading) return (
-    <div className="flex items-center justify-center h-64 gap-3 text-gray-400" style={{ fontFamily: FONT }}>
-      <RotateCcw size={16} className="animate-spin" />
-      <span className="text-sm font-semibold">Loading gradebook…</span>
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 256, gap: 10, color: "#9ca3af", fontFamily: FONT }}>
+      <RotateCcw size={16} style={{ animation: "spin 1s linear infinite" }} />
+      <span style={{ fontSize: 13, fontWeight: 600 }}>Loading gradebook…</span>
     </div>
   );
   if (loadError) return (
-    <div className="flex items-center justify-center h-64 text-gray-400" style={{ fontFamily: FONT }}>
-      <div className="flex flex-col items-center gap-3">
-        <AlertCircle size={28} className="opacity-40" />
-        <p className="text-sm font-semibold">Failed to load grades.</p>
-        <button onClick={fetchGrades} className="text-xs font-bold px-4 py-2 rounded-lg text-white" style={{ background: MAROON }}>Retry</button>
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 256, fontFamily: FONT }}>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
+        <AlertCircle size={28} style={{ color: "#d1d5db" }} />
+        <p style={{ fontSize: 13, color: "#9ca3af", fontWeight: 600, margin: 0 }}>Failed to load grades.</p>
+        <button onClick={fetchGrades} style={{
+          fontSize: 12, fontWeight: 800, padding: "8px 16px", borderRadius: 8,
+          color: "white", background: MAROON, border: "none", cursor: "pointer", fontFamily: FONT,
+        }}>Retry</button>
       </div>
     </div>
   );
 
-  /* ── Derived data — assignments only ── */
+  /* ── Derived data ── */
   const allColumns: GradeColumn[] = data.assignments ?? [];
 
   const assignmentGroups: string[] = Array.from(
@@ -1425,8 +1805,8 @@ export default function CourseGradesPage({ courseId }: { courseId: string }) {
 
   /* ── Column widths ── */
   const COL_W   = 88;
-  const STAFF_W = 180;
-  const TOTAL_W = 100;
+  const STAFF_W = 186;
+  const TOTAL_W = 96;
 
   /* ── Mobile panel helper ── */
   const openGradePanelForStaff = (staff: StaffRow, col: GradeColumn) => {
@@ -1440,78 +1820,137 @@ export default function CourseGradesPage({ courseId }: { courseId: string }) {
     }
   };
 
-  /* ────────────────────────────────────────────────────────────────────────
-     RENDER
-  ──────────────────────────────────────────────────────────────────────── */
+  /* ── RENDER ── */
   return (
-    <div className="flex flex-col h-full bg-white" style={{ fontFamily: FONT }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "white", fontFamily: FONT }}>
 
       {/* ── TOP HEADER ── */}
-      <div className="border-b border-gray-200 px-3 py-2 flex items-center justify-between shrink-0 gap-2" style={{ background: MAROON }}>
-        <div className="flex items-center gap-2 min-w-0 flex-1">
-          <div className="flex items-center gap-1.5 shrink-0">
-            <GraduationCap size={14} className="text-white" />
-            <span className="text-sm font-black text-white">Gradebook</span>
+      <div style={{
+        borderBottom: "1px solid rgba(255,255,255,0.1)",
+        padding: "10px 14px",
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        flexShrink: 0, gap: 8,
+        background: MAROON,
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0, flex: 1 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+            <GraduationCap size={15} style={{ color: "rgba(255,255,255,0.85)" }} />
+            <span style={{ fontSize: 14, fontWeight: 800, color: "white" }}>Gradebook</span>
           </div>
-          <span className="text-white/30 hidden sm:inline">|</span>
-          <span className="text-xs text-white/70 font-medium hidden sm:inline truncate">
+
+          <div style={{ width: 1, height: 14, background: "rgba(255,255,255,0.2)", flexShrink: 0, display: isMobile ? "none" : "block" }} />
+
+          <span style={{ fontSize: 12, color: "rgba(255,255,255,0.6)", display: isMobile ? "none" : "block" }}>
             {filteredStaff.length} member{filteredStaff.length !== 1 ? "s" : ""}
           </span>
+
           {totalPending > 0 && (
-            <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black text-white bg-white/20 shrink-0">
-              <Clock size={9} />{totalPending}
-              <span className="hidden sm:inline"> pending</span>
-            </span>
+            <div style={{
+              display: "flex", alignItems: "center", gap: 4,
+              padding: "3px 8px", borderRadius: 20,
+              background: "rgba(255,255,255,0.15)", flexShrink: 0,
+            }}>
+              <Clock size={9} style={{ color: "rgba(255,255,255,0.8)" }} />
+              <span style={{ fontSize: 10, fontWeight: 800, color: "white" }}>
+                {totalPending}{!isMobile && " pending"}
+              </span>
+            </div>
           )}
         </div>
-        <div className="flex items-center gap-1.5 shrink-0">
-          <button onClick={() => setSearchExpanded(e => !e)}
-            className={`w-8 h-8 flex items-center justify-center border border-white/20 rounded-lg transition-all lg:hidden ${searchExpanded ? "bg-white/20 text-white" : "text-white/70 hover:text-white hover:bg-white/10"}`}>
-            <Search size={14} />
-          </button>
-          <button onClick={fetchGrades}
-            className="w-8 h-8 flex items-center justify-center text-white/70 hover:text-white border border-white/20 rounded-lg hover:bg-white/10 transition-all"
-            title="Refresh">
-            <RotateCcw size={12} />
+
+        <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+          {isMobile && (
+            <button
+              onClick={() => setSearchExpanded(e => !e)}
+              style={{
+                width: 32, height: 32,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                border: "1px solid rgba(255,255,255,0.2)", borderRadius: 8,
+                background: searchExpanded ? "rgba(255,255,255,0.2)" : "none",
+                cursor: "pointer", color: "rgba(255,255,255,0.8)",
+              }}
+            >
+              <Search size={14} />
+            </button>
+          )}
+          <button onClick={fetchGrades} style={{
+            width: 32, height: 32,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            border: "1px solid rgba(255,255,255,0.2)", borderRadius: 8,
+            background: "none", cursor: "pointer", color: "rgba(255,255,255,0.7)",
+          }}
+            title="Refresh"
+            onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.1)")}
+            onMouseLeave={e => (e.currentTarget.style.background = "none")}
+          >
+            <RotateCcw size={13} />
           </button>
         </div>
       </div>
 
       {/* ── SEARCH + FILTER BAR ── */}
-      <div className={`bg-white border-b border-gray-200 px-3 py-3 shrink-0 ${isMobile && !searchExpanded ? "hidden" : "block"}`}>
-        <div className="flex items-center gap-2">
-          <div className="flex-1 relative">
-            <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+      <div style={{
+        background: "white", borderBottom: "1px solid #f0f0f0",
+        padding: "10px 14px", flexShrink: 0,
+        display: isMobile && !searchExpanded ? "none" : "block",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          {/* Staff search */}
+          <div style={{ flex: 1, position: "relative" }}>
+            <Search size={12} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "#9ca3af", pointerEvents: "none" }} />
             <input value={staffSearch} onChange={e => setStaffSearch(e.target.value)} placeholder="Search staff…"
-              className="w-full pl-8 pr-3 h-9 border border-gray-200 rounded-lg text-xs bg-white focus:outline-none text-gray-700"
-              style={{ fontFamily: FONT }}
-              onFocus={e => (e.currentTarget.style.borderColor = "#6b7280")}
-              onBlur={e  => (e.currentTarget.style.borderColor = "#e5e7eb")} />
+              style={{
+                width: "100%", height: 36, paddingLeft: 30, paddingRight: 10,
+                border: "1px solid #e5e7eb", borderRadius: 8,
+                fontSize: 12, background: "white", outline: "none",
+                color: "#374151", boxSizing: "border-box", fontFamily: FONT,
+              }}
+              onFocus={e => (e.currentTarget.style.borderColor = "#9ca3af")}
+              onBlur={e => (e.currentTarget.style.borderColor = "#e5e7eb")}
+            />
           </div>
-          <div className="flex-1 relative">
-            <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          {/* Assignment search */}
+          <div style={{ flex: 1, position: "relative" }}>
+            <Search size={12} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "#9ca3af", pointerEvents: "none" }} />
             <input value={assignSearch} onChange={e => setAssignSearch(e.target.value)} placeholder="Search assignments…"
-              className="w-full pl-8 pr-3 h-9 border border-gray-200 rounded-lg text-xs bg-white focus:outline-none text-gray-700"
-              style={{ fontFamily: FONT }}
-              onFocus={e => (e.currentTarget.style.borderColor = "#6b7280")}
-              onBlur={e  => (e.currentTarget.style.borderColor = "#e5e7eb")} />
+              style={{
+                width: "100%", height: 36, paddingLeft: 30, paddingRight: 10,
+                border: "1px solid #e5e7eb", borderRadius: 8,
+                fontSize: 12, background: "white", outline: "none",
+                color: "#374151", boxSizing: "border-box", fontFamily: FONT,
+              }}
+              onFocus={e => (e.currentTarget.style.borderColor = "#9ca3af")}
+              onBlur={e => (e.currentTarget.style.borderColor = "#e5e7eb")}
+            />
           </div>
         </div>
 
-        <div className="flex items-center gap-2 mt-2 flex-wrap">
-          <div ref={filterBtnRef} className="relative shrink-0">
-            <button onClick={() => setFilterPanelOpen(o => !o)}
-              className="flex items-center gap-1.5 h-8 px-2.5 rounded-lg border text-xs font-semibold transition-colors bg-white"
+        {/* Filter row */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
+          <div ref={filterBtnRef} style={{ position: "relative", flexShrink: 0 }}>
+            <button
+              onClick={() => setFilterPanelOpen(o => !o)}
               style={{
-                fontFamily: FONT,
-                borderColor: activeFilters.length > 0 ? MAROON : "#d1d5db",
+                display: "flex", alignItems: "center", gap: 6,
+                height: 30, padding: "0 10px",
+                border: `1px solid ${activeFilters.length > 0 ? MAROON : "#e5e7eb"}`,
+                borderRadius: 8, background: "white",
+                fontSize: 12, fontWeight: 600,
                 color: activeFilters.length > 0 ? MAROON : "#374151",
-              }}>
-              <SlidersHorizontal size={12} style={activeFilters.length > 0 ? { color: MAROON } : { color: "#6b7280" }} />
+                cursor: "pointer", fontFamily: FONT,
+              }}
+              onMouseEnter={e => (e.currentTarget.style.background = "#f9fafb")}
+              onMouseLeave={e => (e.currentTarget.style.background = "white")}
+            >
+              <SlidersHorizontal size={12} style={{ color: activeFilters.length > 0 ? MAROON : "#9ca3af" }} />
               <span>Filters</span>
               {activeFilters.length > 0 && (
-                <span className="w-4 h-4 rounded-full text-[9px] font-black text-white flex items-center justify-center"
-                  style={{ background: MAROON }}>{activeFilters.length}</span>
+                <span style={{
+                  width: 16, height: 16, borderRadius: "50%",
+                  fontSize: 9, fontWeight: 900, color: "white",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  background: MAROON, flexShrink: 0,
+                }}>{activeFilters.length}</span>
               )}
             </button>
             {!isMobile && (
@@ -1530,7 +1969,8 @@ export default function CourseGradesPage({ courseId }: { courseId: string }) {
             )}
           </div>
 
-          <div className="flex items-center gap-1.5 flex-1 overflow-x-auto min-w-0" style={{ scrollbarWidth: "none" }}>
+          {/* Active filter chips */}
+          <div style={{ display: "flex", alignItems: "center", gap: 6, flex: 1, overflowX: "auto", minWidth: 0, scrollbarWidth: "none" }}>
             {activeFilters.map((f, idx) => (
               <FilterChip key={idx} filter={f} onRemove={() => removeFilter(idx)}
                 onChangeStatus={f.type === "status" ? (val) => changeFilterStatus(idx, val) : undefined}
@@ -1540,11 +1980,11 @@ export default function CourseGradesPage({ courseId }: { courseId: string }) {
           </div>
 
           {activeFilters.length > 0 && (
-            <button onClick={clearAllFilters}
-              className="text-xs font-semibold hover:underline transition-colors shrink-0"
-              style={{ color: MAROON }}>
-              Clear
-            </button>
+            <button onClick={clearAllFilters} style={{
+              fontSize: 11, fontWeight: 700, color: MAROON,
+              background: "none", border: "none", cursor: "pointer",
+              fontFamily: FONT, flexShrink: 0,
+            }}>Clear</button>
           )}
         </div>
       </div>
@@ -1566,25 +2006,24 @@ export default function CourseGradesPage({ courseId }: { courseId: string }) {
       )}
 
       {/* ── MAIN CONTENT ── */}
-      <div className="flex-1 overflow-auto">
+      <div style={{ flex: 1, overflow: "auto" }}>
         {filteredStaff.length === 0 || filteredColumns.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full gap-3 text-gray-400 p-8">
-            <BookOpen size={32} className="opacity-30" />
-            <p className="text-sm font-semibold text-center">
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", gap: 12, color: "#9ca3af", padding: 32 }}>
+            <BookOpen size={32} style={{ opacity: 0.3 }} />
+            <p style={{ fontSize: 13, fontWeight: 600, textAlign: "center", margin: 0 }}>
               {filteredStaff.length === 0 ? "No staff members found." : "No assignments found."}
             </p>
             {activeFilters.length > 0 && (
-              <button onClick={clearAllFilters}
-                className="text-xs font-bold px-4 py-2 rounded-lg text-white"
-                style={{ background: MAROON }}>
-                Clear Filters
-              </button>
+              <button onClick={clearAllFilters} style={{
+                fontSize: 12, fontWeight: 800, padding: "8px 16px", borderRadius: 8,
+                color: "white", background: MAROON, border: "none", cursor: "pointer", fontFamily: FONT,
+              }}>Clear Filters</button>
             )}
           </div>
         ) : isMobile ? (
-          /* ──── MOBILE: Card list ──── */
-          <div className="p-3 space-y-2 pb-6">
-            <p className="text-xs font-bold text-gray-400 px-1 pt-1">
+          /* ─── MOBILE: Card list ─── */
+          <div style={{ padding: "12px", display: "flex", flexDirection: "column", gap: 8, paddingBottom: 24 }}>
+            <p style={{ fontSize: 11, fontWeight: 700, color: "#9ca3af", padding: "4px 2px 0", margin: 0 }}>
               {filteredStaff.length} member{filteredStaff.length !== 1 ? "s" : ""} · {filteredColumns.length} assignment{filteredColumns.length !== 1 ? "s" : ""}
             </p>
             {filteredStaff.map(staff => (
@@ -1598,17 +2037,25 @@ export default function CourseGradesPage({ courseId }: { courseId: string }) {
             ))}
           </div>
         ) : (
-          /* ──── DESKTOP: Scrollable table ──── */
-          <div className="w-full h-full overflow-auto">
-            <table className="border-collapse"
-              style={{ width: STAFF_W + filteredColumns.length * COL_W + visibleGroups.length * TOTAL_W + TOTAL_W }}>
+          /* ─── DESKTOP: Scrollable table ─── */
+          <div style={{ width: "100%", height: "100%", overflow: "auto" }}>
+            <table style={{
+              borderCollapse: "collapse",
+              width: STAFF_W + filteredColumns.length * COL_W + visibleGroups.length * TOTAL_W + TOTAL_W,
+            }}>
               <thead>
                 <tr>
-                  <th className="sticky left-0 z-20 bg-white border-b-2 border-r border-gray-200 text-left px-3 py-2.5"
-                    style={{ width: STAFF_W, minWidth: STAFF_W, borderBottomColor: "#d1d5db" }}>
-                    <span className="text-xs font-bold text-gray-700">Staff Name</span>
+                  {/* Staff name column header */}
+                  <th style={{
+                    position: "sticky", left: 0, zIndex: 20, background: "white",
+                    borderBottom: "2px solid #e5e7eb", borderRight: "1px solid #e5e7eb",
+                    textAlign: "left", padding: "10px 12px",
+                    width: STAFF_W, minWidth: STAFF_W,
+                  }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: "#374151" }}>Staff</span>
                   </th>
 
+                  {/* Assignment column headers */}
                   {filteredColumns.map(col => {
                     const dga   = col.displayGradeAs ?? "Points";
                     const isNG  = dga === "Not Graded";
@@ -1622,44 +2069,60 @@ export default function CourseGradesPage({ courseId }: { courseId: string }) {
                     }).length;
 
                     return (
-                      <th key={col.id}
-                        className="border-b-2 border-r border-gray-200 px-1 py-0 align-bottom text-center"
-                        style={{ width: COL_W, minWidth: COL_W, borderBottomColor: "#d1d5db", background: "white" }}>
-                        <div className="flex flex-col items-center justify-end pb-2 pt-2 gap-0.5 px-1">
-                          <div className="flex items-center gap-0.5 mb-0.5 w-full justify-center">
-                            <BookOpen size={8} className="text-gray-400 shrink-0" />
-                            <span className="text-[9px] font-semibold text-gray-600 truncate max-w-[72px]" title={col.title}>{col.title}</span>
+                      <th key={col.id} style={{
+                        borderBottom: "2px solid #e5e7eb", borderRight: "1px solid #e5e7eb",
+                        padding: "8px 4px", verticalAlign: "bottom", textAlign: "center",
+                        width: COL_W, minWidth: COL_W, background: "white",
+                      }}>
+                        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end", paddingBottom: 6, paddingTop: 6, gap: 3 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 3, justifyContent: "center", width: "100%" }}>
+                            <BookOpen size={8} style={{ color: "#9ca3af", flexShrink: 0 }} />
+                            <span style={{
+                              fontSize: 9, fontWeight: 600, color: "#6b7280",
+                              overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 72,
+                            }} title={col.title}>{col.title}</span>
                           </div>
-                          <div className="flex items-center gap-1">
-                            <span className="text-[8px] text-gray-400">{subLabel}</span>
-                            <span className="text-[9px] font-bold text-gray-600">{outOfLabel}</span>
+                          <div style={{ display: "flex", alignItems: "center", gap: 3 }}>
+                            <span style={{ fontSize: 8, color: "#9ca3af" }}>{subLabel}</span>
+                            <span style={{ fontSize: 9, fontWeight: 700, color: "#6b7280" }}>{outOfLabel}</span>
                           </div>
                           {needsGrading > 0 && (
-                            <span className="text-[7px] font-black px-1 py-0.5 rounded-full text-white mt-0.5"
-                              style={{ background: "#b45309" }}>{needsGrading}</span>
+                            <span style={{
+                              fontSize: 7, fontWeight: 900, color: "white",
+                              padding: "1px 5px", borderRadius: 10,
+                              background: "#d97706", marginTop: 1,
+                            }}>{needsGrading}</span>
                           )}
-                          {col.doNotCount && <span className="text-[7px] text-gray-300 italic">skip</span>}
+                          {col.doNotCount && <span style={{ fontSize: 7, color: "#d1d5db", fontStyle: "italic" }}>skip</span>}
                         </div>
                       </th>
                     );
                   })}
 
+                  {/* Group total headers */}
                   {visibleGroups.map(group => (
-                    <th key={`group-total-${group}`}
-                      className="border-b-2 border-r border-l border-gray-200 px-2 py-0 text-center align-bottom"
-                      style={{ width: TOTAL_W, minWidth: TOTAL_W, borderBottomColor: "#d1d5db", background: "#f9fafb" }}>
-                      <div className="pb-2 pt-2">
-                        <p className="text-[9px] font-black text-gray-500 truncate max-w-[80px] mx-auto" title={group}>{group}</p>
-                        <p className="text-[8px] text-gray-400 font-normal">0 if ungraded</p>
+                    <th key={`group-total-${group}`} style={{
+                      borderBottom: "2px solid #e5e7eb", borderRight: "1px solid #e5e7eb", borderLeft: "1px solid #e5e7eb",
+                      padding: "8px 8px", textAlign: "center", verticalAlign: "bottom",
+                      width: TOTAL_W, minWidth: TOTAL_W, background: "#f9fafb",
+                    }}>
+                      <div style={{ paddingBottom: 6, paddingTop: 6 }}>
+                        <p style={{ fontSize: 9, fontWeight: 800, color: "#6b7280", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 80 }} title={group}>{group}</p>
+                        <p style={{ fontSize: 8, color: "#9ca3af", margin: "2px 0 0" }}>0 if ungraded</p>
                       </div>
                     </th>
                   ))}
 
-                  <th className="sticky right-0 z-20 border-b-2 border-l border-gray-200 px-3 py-0 text-center align-bottom"
-                    style={{ width: TOTAL_W, minWidth: TOTAL_W, borderBottomColor: "#d1d5db", background: "#f9fafb" }}>
-                    <div className="pb-2 pt-2">
-                      <p className="text-xs font-black text-gray-700">Total</p>
-                      <p className="text-[8px] text-gray-400 font-normal">0 if ungraded</p>
+                  {/* Total header */}
+                  <th style={{
+                    position: "sticky", right: 0, zIndex: 20,
+                    borderBottom: "2px solid #e5e7eb", borderLeft: "1px solid #e5e7eb",
+                    padding: "8px 12px", textAlign: "center", verticalAlign: "bottom",
+                    width: TOTAL_W, minWidth: TOTAL_W, background: "#f9fafb",
+                  }}>
+                    <div style={{ paddingBottom: 6, paddingTop: 6 }}>
+                      <p style={{ fontSize: 11, fontWeight: 800, color: "#374151", margin: 0 }}>Total</p>
+                      <p style={{ fontSize: 8, color: "#9ca3af", margin: "2px 0 0" }}>0 if ungraded</p>
                     </div>
                   </th>
                 </tr>
@@ -1671,23 +2134,45 @@ export default function CourseGradesPage({ courseId }: { courseId: string }) {
                   const pctBg    = getPctBg(staff.percentage);
 
                   return (
-                    <tr key={staff.id} className="group hover:bg-blue-50/30 transition-colors border-b border-gray-100">
-                      <td className="sticky left-0 z-10 bg-white group-hover:bg-blue-50/30 border-r border-gray-200 px-3 py-2 transition-colors"
-                        style={{ width: STAFF_W }}>
-                        <div className="flex items-center gap-2">
+                    <tr key={staff.id} style={{ borderBottom: "1px solid #f3f4f6" }}
+                      onMouseEnter={e => {
+                        const tds = e.currentTarget.querySelectorAll("td");
+                        tds.forEach(td => { if (!td.hasAttribute("data-grade-cell") || !td.querySelector("[data-cell-editor]")) td.style.background = "#f8faff"; });
+                      }}
+                      onMouseLeave={e => {
+                        const tds = e.currentTarget.querySelectorAll("td");
+                        tds.forEach(td => { if (!td.hasAttribute("data-grade-cell") || !td.querySelector("[data-cell-editor]")) td.style.background = ""; });
+                      }}
+                    >
+                      {/* Staff name cell */}
+                      <td style={{
+                        position: "sticky", left: 0, zIndex: 10,
+                        background: "white", borderRight: "1px solid #e5e7eb",
+                        padding: "8px 12px",
+                        width: STAFF_W,
+                      }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                           {staff.image
-                            ? <Image src={staff.image} alt={staff.name} width={26} height={26} className="rounded-full object-cover shrink-0" />
-                            : <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[8px] font-black shrink-0"
-                                style={{ background: MAROON, opacity: 0.7 + (si % 3) * 0.1 }}>
-                                {getInitials(staff.name)}
-                              </div>}
-                          <div className="min-w-0">
-                            <p className="text-xs font-bold truncate" style={{ color: "#0770A3" }}>{staff.name}</p>
-                            <p className="text-[9px] text-gray-400 truncate">{staff.position ?? staff.courseRole}</p>
+                            ? <Image src={staff.image} alt={staff.name} width={26} height={26}
+                                style={{ borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
+                            : <div style={{
+                                width: 26, height: 26, borderRadius: "50%",
+                                display: "flex", alignItems: "center", justifyContent: "center",
+                                background: MAROON, color: "white", fontSize: 8, fontWeight: 800, flexShrink: 0,
+                                opacity: 0.7 + (si % 3) * 0.1,
+                              }}>{getInitials(staff.name)}</div>}
+                          <div style={{ minWidth: 0 }}>
+                            <p style={{ fontSize: 12, fontWeight: 700, color: "#0770A3", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                              {staff.name}
+                            </p>
+                            <p style={{ fontSize: 9, color: "#9ca3af", margin: "1px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                              {staff.position ?? staff.courseRole}
+                            </p>
                           </div>
                         </div>
                       </td>
 
+                      {/* Grade cells */}
                       {filteredColumns.map(col => {
                         const dga        = col.displayGradeAs ?? "Points";
                         const isNG       = dga === "Not Graded";
@@ -1710,14 +2195,19 @@ export default function CourseGradesPage({ courseId }: { courseId: string }) {
                         };
 
                         const handleCellClick = () => {
-  if (isNG || !gradeEntry) return;
-  setActiveCell(isActive ? null : { staffId: staff.id, colId: col.id });
-};
+                          if (isNG || !gradeEntry) return;
+                          setActiveCell(isActive ? null : { staffId: staff.id, colId: col.id });
+                        };
 
                         return (
                           <td key={col.id} data-grade-cell
-                            className="border-r border-gray-200 px-0 py-0 relative group/cell"
-                            style={{ width: COL_W, minWidth: COL_W, background: isActive ? "#e0f2fe" : "transparent" }}>
+                            style={{
+                              borderRight: "1px solid #f3f4f6", padding: 0,
+                              position: "relative",
+                              width: COL_W, minWidth: COL_W,
+                              background: isActive ? "#e0f2fe" : "transparent",
+                            }}
+                          >
                             {isActive ? (
                               <CellEditor col={col} score={score}
                                 onSave={async (grade) => { await saveGrade(staff.id, col.id, grade); }}
@@ -1725,27 +2215,37 @@ export default function CourseGradesPage({ courseId }: { courseId: string }) {
                                 onDismiss={() => setActiveCell(null)}
                               />
                             ) : (
-                              <div className="flex items-center justify-center w-full h-9 cursor-pointer relative"
-                                onClick={handleCellClick}>
-                                <div className="flex items-center justify-center h-9 text-xs font-semibold px-1">
-                                  <CellDisplay col={col} score={score} status={status} hasSubmission={hasSubmission} isSaving={isSaving} />
-                                </div>
+                              <div
+                                onClick={handleCellClick}
+                                style={{
+                                  display: "flex", alignItems: "center", justifyContent: "center",
+                                  width: "100%", height: 36, cursor: isNG ? "default" : "pointer",
+                                  position: "relative",
+                                }}
+                              >
+                                <CellDisplay col={col} score={score} status={status} hasSubmission={hasSubmission} isSaving={isSaving} />
                                 {!isNG && (
                                   <button
                                     onMouseDown={e => { e.preventDefault(); e.stopPropagation(); }}
                                     onClick={openPanel}
-                                    className="absolute right-0 top-0 bottom-0 w-5 flex items-center justify-center text-white text-[9px] font-black opacity-0 group-hover/cell:opacity-100 transition-opacity"
-                                    style={{ background: MAROON }}
-                                    title="Open grade panel">
-                                    →
-                                  </button>
+                                    style={{
+                                      position: "absolute", right: 0, top: 0, bottom: 0, width: 18,
+                                      display: "none", alignItems: "center", justifyContent: "center",
+                                      background: MAROON, color: "white",
+                                      fontSize: 9, fontWeight: 900, border: "none", cursor: "pointer",
+                                    }}
+                                    className="grade-panel-btn"
+                                    title="Open grade panel"
+                                  >→</button>
                                 )}
                               </div>
                             )}
+                            <style>{`.group:hover .grade-panel-btn, tr:hover td[data-grade-cell]:hover .grade-panel-btn { display: flex !important; }`}</style>
                           </td>
                         );
                       })}
 
+                      {/* Group totals */}
                       {visibleGroups.map(group => {
                         const groupCols = allColumns.filter(c =>
                           (c.assignmentGroup || "Ungrouped") === group && !c.doNotCount && c.displayGradeAs !== "Not Graded"
@@ -1755,25 +2255,36 @@ export default function CourseGradesPage({ courseId }: { courseId: string }) {
                         const groupPossible = groupCols.reduce((sum, col) => sum + col.points, 0);
                         const groupPct      = groupPossible > 0 ? Math.round((groupEarned / groupPossible) * 100) : null;
                         return (
-                          <td key={`group-total-${group}`}
-                            className="border-r border-l border-gray-200 px-3 py-2 text-center"
-                            style={{ width: TOTAL_W, background: "#f9fafb" }}>
+                          <td key={`group-total-${group}`} style={{
+                            borderRight: "1px solid #e5e7eb", borderLeft: "1px solid #e5e7eb",
+                            padding: "8px 12px", textAlign: "center",
+                            width: TOTAL_W, background: "#f9fafb",
+                          }}>
                             {groupPct !== null
-                              ? <span className="text-sm font-semibold" style={{ color: getPctColor(groupPct) }}>{groupPct}%</span>
-                              : <span className="text-sm text-gray-400">—</span>}
+                              ? <span style={{ fontSize: 12, fontWeight: 700, color: getPctColor(groupPct) }}>{groupPct}%</span>
+                              : <span style={{ fontSize: 13, color: "#d1d5db" }}>—</span>}
                           </td>
                         );
                       })}
 
-                      <td className="sticky right-0 z-10 border-l border-gray-200 px-3 py-2 text-center transition-colors"
-                        style={{ width: TOTAL_W, background: staff.percentage !== null ? pctBg : "#f9fafb" }}>
+                      {/* Total cell */}
+                      <td style={{
+                        position: "sticky", right: 0, zIndex: 10,
+                        borderLeft: "1px solid #e5e7eb", padding: "8px 12px", textAlign: "center",
+                        width: TOTAL_W,
+                        background: staff.percentage !== null ? pctBg : "#f9fafb",
+                      }}>
                         {staff.percentage !== null ? (
-                          <div className="flex flex-col items-center">
-                            <span className="text-sm font-black tabular-nums" style={{ color: pctColor }}>{staff.percentage}%</span>
-                            <span className="text-[9px] font-bold leading-none" style={{ color: pctColor }}>{getLetterGrade(staff.percentage)}</span>
+                          <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                            <span style={{ fontSize: 13, fontWeight: 800, fontVariantNumeric: "tabular-nums", color: pctColor }}>
+                              {staff.percentage}%
+                            </span>
+                            <span style={{ fontSize: 9, fontWeight: 700, lineHeight: 1, color: pctColor }}>
+                              {getLetterGrade(staff.percentage)}
+                            </span>
                           </div>
                         ) : (
-                          <span className="text-sm text-gray-400">—</span>
+                          <span style={{ fontSize: 13, color: "#d1d5db" }}>—</span>
                         )}
                       </td>
                     </tr>
@@ -1787,14 +2298,18 @@ export default function CourseGradesPage({ courseId }: { courseId: string }) {
 
       {/* ── STATUS BAR (desktop only) ── */}
       {!isMobile && (
-        <div className="border-t border-gray-200 px-4 py-2 flex items-center gap-4 shrink-0 bg-gray-50 flex-wrap">
-          <div className="flex items-center gap-1.5">
-            <Eye size={10} className="text-gray-400" />
-            <span className="text-[10px] font-medium text-gray-400">Click cell to edit · Enter or click away to save · Esc to cancel</span>
+        <div style={{
+          borderTop: "1px solid #f0f0f0", padding: "7px 14px",
+          display: "flex", alignItems: "center", gap: 16,
+          flexShrink: 0, background: "#fafafa", flexWrap: "wrap",
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <Eye size={10} style={{ color: "#9ca3af" }} />
+            <span style={{ fontSize: 10, color: "#9ca3af", fontWeight: 500 }}>Click cell to edit · Enter or click away to save · Esc to cancel</span>
           </div>
-          <div className="flex items-center gap-1.5">
-            <BookOpen size={10} className="text-gray-400" />
-            <span className="text-[10px] font-medium text-gray-400">Click → to open grade panel</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <BookOpen size={10} style={{ color: "#9ca3af" }} />
+            <span style={{ fontSize: 10, color: "#9ca3af", fontWeight: 500 }}>Hover cell then click → to open grade panel</span>
           </div>
         </div>
       )}
@@ -1822,6 +2337,9 @@ export default function CourseGradesPage({ courseId }: { courseId: string }) {
           isMobile={isMobile}
         />
       )}
+
+      {/* Spin keyframe for loading icons */}
+      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }

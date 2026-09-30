@@ -459,7 +459,7 @@ const [pdfTotal,    setPdfTotal]    = useState(1);
   const [rubricSelectionsMap, setRubricSelectionsMap] = useState<Record<string, RubricSelections>>({});
 
   // Mobile: bottom sheet state
-  const [mobileSheet, setMobileSheet] = useState<"none" | "grade" | "students" | "file">("none");
+  const [mobileSheet, setMobileSheet] = useState<"none" | "grade" | "staff" | "file">("none");
 
   const displayAs: DisplayGradeAs = assignment?.displayGradeAs ?? "Points";
 
@@ -955,7 +955,7 @@ const [pdfTotal,    setPdfTotal]    = useState(1);
               <div className="flex items-center justify-between px-4 pt-3 pb-2 border-b border-gray-100 shrink-0">
                 <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto absolute left-1/2 -translate-x-1/2 top-2"/>
                 <p className="text-[11px] font-black uppercase tracking-widest" style={{ color: MAROON }}>
-                  {mobileSheet === "grade" ? "Grade & Assess" : "Students"}
+                  {mobileSheet === "grade" ? "Grade & Assess" : "Staff"}
                 </p>
                 <button onClick={() => setMobileSheet("none")} className="text-gray-400 ml-auto">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -977,14 +977,14 @@ const [pdfTotal,    setPdfTotal]    = useState(1);
       {/* ── Mobile Bottom Nav ── */}
       <div className="sm:hidden flex items-center border-t border-gray-200 bg-white shrink-0" style={{ height: 52 }}>
         <button
-          onClick={() => setMobileSheet(mobileSheet === "students" ? "none" : "students")}
+          onClick={() => setMobileSheet(mobileSheet === "staff" ? "none" : "staff")}
           className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2"
-          style={{ color: mobileSheet === "students" ? MAROON : "#9ca3af" }}>
+          style={{ color: mobileSheet === "staff" ? MAROON : "#9ca3af" }}>
           <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
             <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
           </svg>
-          <span className="text-[9px] font-bold">Students</span>
+          <span className="text-[9px] font-bold">Staff</span>
         </button>
         <button
           onClick={() => setCurrentIdx(i => Math.max(0, i - 1))} disabled={currentIdx === 0}

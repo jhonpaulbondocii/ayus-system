@@ -280,36 +280,7 @@ const [repoFetched,   setRepoFetched]   = useState(false);
           </span>
         )}
 
-        {/* Back button — only shows when there's a subItem (i.e. we're deep in a section) */}
-        {subItem && (
-          <button
-            type="button"
-            onClick={() => router.push(activeNavHref)}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 3,
-              height: 30,
-              padding: "0 10px 0 6px",
-              marginLeft: "auto",
-              flexShrink: 0,
-              background: "#fef2f2",
-              border: `1px solid #fecaca`,
-              borderRadius: 20,
-              cursor: "pointer",
-              fontFamily: FONT,
-              fontSize: 11,
-              fontWeight: 700,
-              color: MAROON,
-              whiteSpace: "nowrap",
-            }}
-            aria-label={`Back to ${activeItem}`}
-          >
-            <ChevronLeft size={12} />
-            {activeItem}
-          </button>
-        )}
-      </div>
+        </div>
 
       {/* ── Scrollable tab bar ── */}
       <div

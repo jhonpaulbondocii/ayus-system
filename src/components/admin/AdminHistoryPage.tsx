@@ -391,6 +391,15 @@ export default function HistoryPanel() {
   const [tick,  setTick]    = useState(0);
   const [, startTransition] = useTransition();
 
+  // Detect mobile (< 640px)
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
   useEffect(() => {
     if (!isActive) return;
     const loaded = loadHistory(false);
@@ -431,30 +440,78 @@ export default function HistoryPanel() {
   return (
     <>
       {isOpen && (
-        <div className="fixed top-0 bottom-0 left-16 w-64 bg-white border-r border-gray-200 shadow-xl z-[110] flex flex-col">
-          <div className="flex items-center justify-between px-4 py-3.5 border-b border-gray-100 shrink-0">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: "#7B1113" }}>
-                <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                  <circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3" strokeLinecap="round"/>
-                </svg>
-              </div>
-              <h1 className="text-sm font-semibold text-gray-800">Recent History</h1>
-            </div>
-            <button onClick={close}
-              className="w-6 h-6 flex items-center justify-center rounded-md text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors text-xs">
-              ✕
-            </button>
-          </div>
-          <div className="flex-1 overflow-y-auto flex flex-col">
-            <HistoryList
-              items={items}
-              onRemove={removeItem}
-              onClear={clearHistory}
-              closePanel={closePanel}
+        <>
+          {/* Backdrop on mobile */}
+          {isMobile && (
+            <div
+              className="fixed inset-0 bg-black/20 z-[109]"
+              onClick={close}
             />
+          )}
+
+          <div
+            style={{
+              position: "fixed",
+              ...(isMobile
+                ? {
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    height: "75vh",
+                    borderRadius: "16px 16px 0 0",
+                    borderTop: "1px solid #e8d5d5",
+                    borderRight: "none",
+                    boxShadow: "0 -4px 20px rgba(123,17,19,0.08)",
+                  }
+                : {
+                    top: 0,
+                    left: 64,
+                    height: "100%",
+                    width: 256,
+                    borderRight: "1px solid #e5e7eb",
+                    boxShadow: "2px 0 10px rgba(0,0,0,0.08)",
+                  }
+              ),
+              background: "#fff",
+              zIndex: 110,
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            {/* Mobile drag handle */}
+            {isMobile && (
+              <div className="flex justify-center pt-3 pb-1 shrink-0">
+                <div className="w-10 h-1 bg-gray-200 rounded-full" />
+              </div>
+            )}
+
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-3.5 border-b border-gray-100 shrink-0">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: "#7B1113" }}>
+                  <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3" strokeLinecap="round"/>
+                  </svg>
+                </div>
+                <h1 className="text-sm font-semibold text-gray-800">Recent History</h1>
+              </div>
+              <button
+                onClick={close}
+                className="w-6 h-6 flex items-center justify-center rounded-md text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors text-xs">
+                ✕
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto flex flex-col">
+              <HistoryList
+                items={items}
+                onRemove={removeItem}
+                onClear={clearHistory}
+                closePanel={closePanel}
+              />
+            </div>
           </div>
-        </div>
+        </>
       )}
     </>
   );
@@ -648,6 +705,15 @@ export function AdminHistoryPanel() {
   const [, startTransition] = useTransition();
   const { isOpen, close, closePanel } = useHistory();
 
+  // Detect mobile (< 640px)
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
   useEffect(() => {
     const loaded = loadHistory(true);
     startTransition(() => setItems(loaded));
@@ -685,29 +751,77 @@ export function AdminHistoryPanel() {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed top-0 bottom-0 left-16 w-64 bg-white border-r border-gray-200 shadow-xl z-[110] flex flex-col">
-      <div className="flex items-center justify-between px-4 py-3.5 border-b border-gray-100 shrink-0">
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: "#7B1113" }}>
-            <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3" strokeLinecap="round"/>
-            </svg>
-          </div>
-          <h1 className="text-sm font-semibold text-gray-800">Recent History</h1>
-        </div>
-        <button onClick={close}
-          className="w-6 h-6 flex items-center justify-center rounded-md text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors text-xs">
-          ✕
-        </button>
-      </div>
-      <div className="flex-1 overflow-y-auto flex flex-col">
-        <HistoryList
-          items={items}
-          onRemove={removeItem}
-          onClear={clearHistory}
-          closePanel={closePanel}
+    <>
+      {/* Backdrop on mobile */}
+      {isMobile && (
+        <div
+          className="fixed inset-0 bg-black/20 z-[109]"
+          onClick={close}
         />
+      )}
+
+      <div
+        style={{
+          position: "fixed",
+          ...(isMobile
+            ? {
+                bottom: 0,
+                left: 0,
+                right: 0,
+                height: "75vh",
+                borderRadius: "16px 16px 0 0",
+                borderTop: "1px solid #e8d5d5",
+                borderRight: "none",
+                boxShadow: "0 -4px 20px rgba(123,17,19,0.08)",
+              }
+            : {
+                top: 0,
+                left: 64,
+                height: "100%",
+                width: 256,
+                borderRight: "1px solid #e5e7eb",
+                boxShadow: "2px 0 10px rgba(0,0,0,0.08)",
+              }
+          ),
+          background: "#fff",
+          zIndex: 110,
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        {/* Mobile drag handle */}
+        {isMobile && (
+          <div className="flex justify-center pt-3 pb-1 shrink-0">
+            <div className="w-10 h-1 bg-gray-200 rounded-full" />
+          </div>
+        )}
+
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-3.5 border-b border-gray-100 shrink-0">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: "#7B1113" }}>
+              <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3" strokeLinecap="round"/>
+              </svg>
+            </div>
+            <h1 className="text-sm font-semibold text-gray-800">Recent History</h1>
+          </div>
+          <button
+            onClick={close}
+            className="w-6 h-6 flex items-center justify-center rounded-md text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors text-xs">
+            ✕
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto flex flex-col">
+          <HistoryList
+            items={items}
+            onRemove={removeItem}
+            onClear={clearHistory}
+            closePanel={closePanel}
+          />
+        </div>
       </div>
-    </div>
+    </>
   );
 }

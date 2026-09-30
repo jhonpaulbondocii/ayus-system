@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 
 const MAROON = "#7b1113";
+const FONT = "'Plus Jakarta Sans','Helvetica Neue',Arial,sans-serif";
 
 interface Announcement {
   id: string | number;
@@ -19,6 +20,7 @@ interface Announcement {
   allowComments?: boolean;
   availableFrom?: string | null;
   availableUntil?: string | null;
+  pinned?: boolean;
 }
 
 interface AttachedFile {
@@ -69,8 +71,34 @@ function useOnClickOutside<T extends HTMLElement>(
   }, [ref, handler]);
 }
 
+function groupAnnouncementsByDate(announcements: Announcement[]): { label: string; items: Announcement[] }[] {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1);
+  const weekAgo = new Date(today); weekAgo.setDate(weekAgo.getDate() - 7);
+
+  const groups: Record<string, Announcement[]> = {
+    Today: [],
+    Yesterday: [],
+    "This week": [],
+    Older: [],
+  };
+
+  for (const a of announcements) {
+    const d = new Date(a.createdAtIso);
+    const day = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    if (day >= today) groups["Today"].push(a);
+    else if (day >= yesterday) groups["Yesterday"].push(a);
+    else if (day >= weekAgo) groups["This week"].push(a);
+    else groups["Older"].push(a);
+  }
+
+  return Object.entries(groups)
+    .filter(([, items]) => items.length > 0)
+    .map(([label, items]) => ({ label, items }));
+}
+
 // ─── DateTimeRow ──────────────────────────────────────────────────────────────
-// FIXED: stacked layout on mobile, no overflow
 function DateTimeRow({
   label, date, time, onDateChange, onTimeChange, onClear, error,
 }: {
@@ -81,7 +109,6 @@ function DateTimeRow({
   return (
     <div className="w-full">
       <p className="text-xs font-medium text-gray-700 mb-1">{label}</p>
-      {/* Stack vertically on mobile, horizontal on sm+ */}
       <div className={`flex flex-col gap-1.5 sm:flex-row sm:gap-0 border rounded-sm overflow-hidden ${error ? "border-red-500" : "border-gray-300"}`}>
         <input
           type="date"
@@ -229,7 +256,7 @@ function TablePicker({ onPick }: { onPick: (r: number, c: number) => void; }) {
   );
 }
 
-const ChevronRight = () => (<svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="9 18 15 12 9 6" /></svg>);
+const ChevronRightIcon = () => (<svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="9 18 15 12 9 6" /></svg>);
 
 type MAction = { type: "action"; icon?: string; label: string; shortcut?: string; action: () => void; disabled?: boolean };
 type MSep = { type: "sep" };
@@ -261,7 +288,7 @@ function SubMenuItem({ item, onClose }: { item: MSub; onClose: () => void; }) {
       <button type="button" className="w-full text-left px-3 py-1.5 text-xs flex items-center gap-2 text-gray-700 hover:bg-blue-600 hover:text-white">
         <span className="w-4 text-center text-sm shrink-0">{item.icon ?? ""}</span>
         <span className="flex-1">{item.label}</span>
-        <ChevronRight />
+        <ChevronRightIcon />
       </button>
       {open && (
         <div className="absolute left-full top-0 bg-white border border-gray-200 shadow-lg rounded-sm min-w-44 py-1 z-[200]">
@@ -530,11 +557,7 @@ function RichTextEditor({ valueHtml, onChangeHtml, onChangeText, placeholder = "
       {showColor && <ColorPickerModal type={showColor} onClose={() => setShowColor(null)} />}
 
       <div ref={wrapRef} className="border border-gray-300 rounded overflow-hidden flex flex-col" style={{ minHeight: 300 }}>
-        {/* Menu bar — scrollable on small screens */}
-        <div
-          data-menubar
-          className="rte-menubar flex items-center gap-0.5 px-1 py-0.5 bg-[#f7f9fb] border-b border-gray-200 select-none overflow-x-auto"
-        >
+        <div data-menubar className="rte-menubar flex items-center gap-0.5 px-1 py-0.5 bg-[#f7f9fb] border-b border-gray-200 select-none overflow-x-auto">
           {menuDefs.map(m => (
             <div key={m.label} className="relative shrink-0">
               <button
@@ -554,7 +577,6 @@ function RichTextEditor({ valueHtml, onChangeHtml, onChangeText, placeholder = "
           ))}
         </div>
 
-        {/* Toolbar — wraps on mobile */}
         <div className="flex flex-wrap items-center gap-0.5 px-2 py-1 bg-[#f7f9fb] border-b border-gray-200">
           {toolbarDefs.map((group, gi) => (
             <div key={gi} className="flex items-center gap-0.5 flex-wrap">
@@ -574,7 +596,6 @@ function RichTextEditor({ valueHtml, onChangeHtml, onChangeText, placeholder = "
           ))}
         </div>
 
-        {/* Editor area */}
         <div
           ref={editorRef}
           contentEditable
@@ -587,7 +608,6 @@ function RichTextEditor({ valueHtml, onChangeHtml, onChangeText, placeholder = "
           style={{ minHeight: 200, lineHeight: 1.7 }}
         />
 
-        {/* Status bar */}
         <div className="flex items-center gap-4 px-3 py-1 bg-[#f7f9fb] border-t border-gray-200 text-xs text-gray-400">
           <span>{wordCount} word{wordCount !== 1 ? "s" : ""}</span>
           <span
@@ -612,9 +632,6 @@ function RichTextEditor({ valueHtml, onChangeHtml, onChangeText, placeholder = "
         [contenteditable] img{max-width:100%;border-radius:4px;}
         [contenteditable] hr{border:none;border-top:2px solid #dee2e6;margin:12px 0;}
         input[type="date"]::-webkit-calendar-picker-indicator{cursor:pointer;opacity:0.7;}
-        input[type="date"]::-webkit-datetime-edit-day-field:focus,
-        input[type="date"]::-webkit-datetime-edit-month-field:focus,
-        input[type="date"]::-webkit-datetime-edit-year-field:focus{background-color:#7b1113;color:#fff;border-radius:2px;}
       `}</style>
     </>
   );
@@ -770,66 +787,322 @@ function AssignToSelector({ selected, setSelected, staff }: {
   );
 }
 
-// ─── ThreeDotMenu ─────────────────────────────────────────────────────────────
-function ThreeDotMenu({ onDelete }: {
-  onDelete: () => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  useOnClickOutside(ref, () => setOpen(false));
-  return (
-    <div ref={ref} style={{ position: "relative" }}>
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="text-gray-400 hover:text-gray-700 text-xl leading-none px-1 py-1 min-w-[32px] min-h-[32px] flex items-center justify-center"
-        aria-label="More options"
-      >
-        ⋮
-      </button>
-      {open && (
-        <div className="absolute right-0 top-full z-50 bg-white border border-gray-200 rounded shadow-lg min-w-44" style={{ marginTop: 2 }}>
-          <button type="button" onClick={() => { onDelete(); setOpen(false); }} className="w-full text-left px-4 py-2.5 text-sm flex items-center gap-2 hover:bg-gray-50 text-red-600">
-            <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6M14 11v6" /><path d="M9 6V4h6v2" /></svg>Delete
-          </button>
-          
-        </div>
-      )}
-    </div>
-  );
-}
-
 // ─── Badges ───────────────────────────────────────────────────────────────────
 function RoleBadge({ role }: { role?: string }) {
   if (!role) return null;
   const n = role.toUpperCase();
   const styles: Record<string, React.CSSProperties> = {
-    ADMIN: { background: "#fef2f2", color: MAROON, border: "1px solid #fecaca" },
-    STAFF: { background: "#eff6ff", color: "#1d4ed8", border: "1px solid #bfdbfe" },
+    ADMIN:   { background: "#fef2f2", color: MAROON,    border: "1px solid #fecaca" },
+    STAFF:   { background: "#eff6ff", color: "#1d4ed8", border: "1px solid #bfdbfe" },
     TEACHER: { background: "#f5f3ff", color: "#6d28d9", border: "1px solid #ddd6fe" },
     STUDENT: { background: "#f0fdf4", color: "#15803d", border: "1px solid #bbf7d0" },
   };
   return (
-    <span style={{ ...(styles[n] ?? { background: "#f3f4f6", color: "#374151", border: "1px solid #e5e7eb" }), fontSize: 9, fontWeight: 800, letterSpacing: "0.12em", padding: "1px 6px", borderRadius: 4, textTransform: "uppercase" }}>{n}</span>
+    <span style={{
+      ...(styles[n] ?? { background: "#f3f4f6", color: "#374151", border: "1px solid #e5e7eb" }),
+      fontSize: 9, fontWeight: 800, letterSpacing: "0.12em",
+      padding: "1px 6px", borderRadius: 4, textTransform: "uppercase",
+    }}>{n}</span>
   );
 }
 
-function AuthorAvatar({ name, size = 36 }: { name: string; size?: number }) {
+function AuthorAvatar({ name, size = 36, color }: { name: string; size?: number; color?: string }) {
+  const words = (name ?? "?").trim().split(/\s+/);
+  const initials = words.length >= 2
+    ? (words[0][0] + words[words.length - 1][0]).toUpperCase()
+    : words[0].charAt(0).toUpperCase();
+
+  const colors = [MAROON, "#4f46e5", "#0e7490", "#15803d", "#b45309", "#7c3aed"];
+  const colorIndex = name ? name.charCodeAt(0) % colors.length : 0;
+  const bg = color ?? colors[colorIndex];
+
   return (
-    <div style={{ width: size, height: size, borderRadius: "50%", background: MAROON, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: size * 0.38, fontWeight: 700, flexShrink: 0 }}>
-      {(name ?? "?").trim().charAt(0).toUpperCase()}
+    <div style={{
+      width: size, height: size, borderRadius: "50%",
+      background: bg, color: "#fff",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      fontSize: size * 0.36, fontWeight: 700, flexShrink: 0,
+      fontFamily: FONT, letterSpacing: "-0.02em",
+    }}>
+      {initials}
     </div>
   );
 }
 
+// ─── SwipeableCard ────────────────────────────────────────────────────────────
+function SwipeableCard({
+  children,
+  onDelete,
+  onMarkRead,
+  isRead,
+}: {
+  children: React.ReactNode;
+  onDelete: () => void;
+  onMarkRead: () => void;
+  isRead: boolean;
+}) {
+  const [offset, setOffset] = useState(0);
+  const [swiping, setSwiping] = useState(false);
+  const startX = useRef(0);
+  const startY = useRef(0);
+  const isDragging = useRef(false);
+  const ACTION_WIDTH = 120;
+  const THRESHOLD = 60;
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    startX.current = e.touches[0].clientX;
+    startY.current = e.touches[0].clientY;
+    isDragging.current = false;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    const dx = e.touches[0].clientX - startX.current;
+    const dy = Math.abs(e.touches[0].clientY - startY.current);
+    if (!isDragging.current && dy > Math.abs(dx)) return;
+    if (dx < 0) {
+      isDragging.current = true;
+      setSwiping(true);
+      setOffset(Math.max(dx, -ACTION_WIDTH));
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (Math.abs(offset) > THRESHOLD) {
+      setOffset(-ACTION_WIDTH);
+    } else {
+      setOffset(0);
+    }
+    setSwiping(false);
+    isDragging.current = false;
+  };
+
+  const close = () => setOffset(0);
+
+  return (
+    <div style={{ position: "relative", overflow: "hidden" }}>
+      {/* Action buttons behind */}
+      <div style={{
+        position: "absolute", right: 0, top: 0, bottom: 0,
+        width: ACTION_WIDTH, display: "flex",
+      }}>
+        <button
+          type="button"
+          onClick={() => { onMarkRead(); close(); }}
+          style={{
+            flex: 1, background: "#3b82f6", color: "#fff",
+            border: "none", cursor: "pointer", display: "flex",
+            flexDirection: "column", alignItems: "center", justifyContent: "center",
+            gap: 3, fontSize: 10, fontFamily: FONT, fontWeight: 600,
+          }}
+        >
+          <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+          </svg>
+          {isRead ? "Unread" : "Read"}
+        </button>
+        <button
+          type="button"
+          onClick={() => { onDelete(); close(); }}
+          style={{
+            flex: 1, background: "#ef4444", color: "#fff",
+            border: "none", cursor: "pointer", display: "flex",
+            flexDirection: "column", alignItems: "center", justifyContent: "center",
+            gap: 3, fontSize: 10, fontFamily: FONT, fontWeight: 600,
+          }}
+        >
+          <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6M14 11v6" /><path d="M9 6V4h6v2" />
+          </svg>
+          Delete
+        </button>
+      </div>
+
+      {/* Card content — slides left */}
+      <div
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        style={{
+          transform: `translateX(${offset}px)`,
+          transition: swiping ? "none" : "transform 0.2s ease",
+          position: "relative", background: "#fff",
+        }}
+      >
+        {children}
+        {offset < -10 && (
+          <button
+            type="button"
+            onClick={close}
+            style={{
+              position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
+              background: "transparent", border: "none", cursor: "default",
+            }}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── AnnouncementCard (list item) ─────────────────────────────────────────────
+function AnnouncementCard({
+  a,
+  selected,
+  onToggleSelect,
+  onView,
+  onDelete,
+  onToggleRead,
+}: {
+  a: Announcement;
+  selected: boolean;
+  onToggleSelect: () => void;
+  onView: () => void;
+  onDelete: () => void;
+  onToggleRead: () => void;
+}) {
+  const fileIcon = (type: string) =>
+    type.startsWith("image/") ? "🖼️" : type === "application/pdf" ? "📄" :
+    type.includes("word") ? "📝" : type.includes("sheet") || type.includes("excel") ? "📊" : "📎";
+
+  const formatAudience = (assignTo?: string[]) =>
+    !assignTo || assignTo.length === 0 ? "Everyone" : assignTo.join(", ");
+
+  return (
+    <SwipeableCard onDelete={onDelete} onMarkRead={onToggleRead} isRead={a.read}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "flex-start",
+          gap: 10,
+          padding: "12px 14px",
+          background: selected ? "#fef9f9" : a.read ? "#fff" : "#fffbfb",
+          borderBottom: "1px solid #f3f4f6",
+          cursor: "pointer",
+          transition: "background 0.15s",
+          fontFamily: FONT,
+        }}
+        onClick={onView}
+      >
+        {/* Checkbox — stop propagation */}
+        <div
+          onClick={(e) => { e.stopPropagation(); onToggleSelect(); }}
+          style={{ paddingTop: 2, flexShrink: 0 }}
+        >
+          <input
+            type="checkbox"
+            checked={selected}
+            onChange={() => {}}
+            style={{ width: 15, height: 15, accentColor: MAROON, cursor: "pointer" }}
+          />
+        </div>
+
+        {/* Avatar */}
+        <AuthorAvatar name={a.author} size={34} />
+
+        {/* Content */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {/* Title row */}
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 6, marginBottom: 2 }}>
+            {!a.read && (
+              <div style={{
+                width: 7, height: 7, borderRadius: "50%",
+                background: MAROON, flexShrink: 0, marginTop: 4,
+              }} />
+            )}
+            {a.pinned && (
+              <span style={{ fontSize: 11, flexShrink: 0 }} title="Pinned">📌</span>
+            )}
+            <span style={{
+              fontSize: 13, fontWeight: a.read ? 500 : 700,
+              color: MAROON, lineHeight: 1.35,
+              wordBreak: "break-word",
+            }}>
+              {a.title}
+            </span>
+            {a.locked && (
+              <svg style={{ width: 11, height: 11, flexShrink: 0, marginTop: 3, color: "#9ca3af" }} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+            )}
+          </div>
+
+          {/* Author + audience */}
+          <div style={{ fontSize: 11, color: "#6b7280", marginBottom: 3 }}>
+            <span style={{ fontWeight: 600, color: "#374151" }}>{a.author}</span>
+            <span style={{ margin: "0 4px" }}>·</span>
+            <span>To: {formatAudience(a.assignTo)}</span>
+          </div>
+
+          {/* Preview */}
+          {a.bodyText && (
+            <p style={{
+              fontSize: 12, color: "#6b7280", lineHeight: 1.45,
+              display: "-webkit-box", WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical", overflow: "hidden",
+              margin: 0,
+            }}>
+              {a.bodyText}
+            </p>
+          )}
+
+          {/* Attachment badge */}
+          {a.attachments && a.attachments.length > 0 && (
+            <div
+              style={{ display: "flex", gap: 4, flexWrap: "wrap", marginTop: 6 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {a.attachments.slice(0, 2).map((f) => (
+                <a
+                  key={f.id}
+                  href={f.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: "inline-flex", alignItems: "center", gap: 3,
+                    fontSize: 10, padding: "2px 7px",
+                    border: "1px solid #e5e7eb", borderRadius: 20,
+                    background: "#f9fafb", color: MAROON,
+                    textDecoration: "none",
+                  }}
+                >
+                  {fileIcon(f.type)} {f.name.length > 14 ? f.name.slice(0, 12) + "…" : f.name}
+                </a>
+              ))}
+              {a.attachments.length > 2 && (
+                <span style={{
+                  fontSize: 10, padding: "2px 7px",
+                  border: "1px solid #e5e7eb", borderRadius: 20,
+                  background: "#f9fafb", color: "#6b7280",
+                }}>
+                  +{a.attachments.length - 2} more
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Right: date */}
+        <div style={{
+          flexShrink: 0, display: "flex", flexDirection: "column",
+          alignItems: "flex-end", gap: 4,
+        }}>
+          <span style={{ fontSize: 10, color: "#9ca3af", whiteSpace: "nowrap" }}>
+            {a.createdAtLabel.split(",")[0]}
+          </span>
+        </div>
+      </div>
+    </SwipeableCard>
+  );
+}
+
 // ─── AnnouncementDetailView ───────────────────────────────────────────────────
-function AnnouncementDetailView({ announcement, onBack, onDelete, onToggleLock, courseId }: {
+function AnnouncementDetailView({ announcement, onBack, onDelete, courseId }: {
   announcement: Announcement; onBack: () => void;
   onDelete: (id: string | number) => void;
-  onToggleLock: (id: string | number) => void;
   courseId: string;
 }) {
   const [authorRole, setAuthorRole] = useState<string | undefined>(undefined);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => {
     if (!courseId) return;
@@ -842,219 +1115,465 @@ function AnnouncementDetailView({ announcement, onBack, onDelete, onToggleLock, 
       }).catch(() => {});
   }, [courseId, announcement.author]);
 
-  const formatAudience = (assignTo?: string[]) => !assignTo || assignTo.length === 0 ? "Everyone" : assignTo.join(", ");
-
+  const formatAudience = (assignTo?: string[]) =>
+    !assignTo || assignTo.length === 0 ? "Everyone" : assignTo.join(", ");
 
   return (
-    <div className="px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
-      <button type="button" onClick={onBack} className="inline-flex items-center gap-1 text-sm mb-4 hover:underline" style={{ color: MAROON }}>
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
-        Back to Announcements
-      </button>
+    <div style={{ fontFamily: FONT }}>
+      {confirmDelete && (
+        <ConfirmModal
+          title="Delete announcement"
+          message="Delete this announcement? This cannot be undone."
+          confirmLabel="Delete"
+          danger
+          onConfirm={() => { onDelete(announcement.id); onBack(); }}
+          onCancel={() => setConfirmDelete(false)}
+        />
+      )}
 
-      <div className="border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm">
-        {/* Header */}
-        <div className="flex items-start gap-3 px-4 sm:px-8 py-4 sm:py-5 border-b border-gray-100">
-          <AuthorAvatar name={announcement.author} size={38} />
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-sm font-semibold text-gray-800">{announcement.author}</span>
-              {authorRole && <RoleBadge role={authorRole} />}
-            </div>
-            <div className="text-xs text-gray-400 mt-0.5">Posted {announcement.createdAtLabel}</div>
-            <div className="text-xs text-gray-400 mt-0.5">To: {formatAudience(announcement.assignTo)}</div>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
+      {/* Sticky top bar */}
+      <div style={{
+        position: "sticky", top: 0, zIndex: 10,
+        background: "#fff", borderBottom: "1px solid #f0e4e4",
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        padding: "0 14px", height: 46, flexShrink: 0,
+      }}>
+        <button
+          type="button"
+          onClick={onBack}
+          style={{
+            display: "flex", alignItems: "center", gap: 4,
+            background: "none", border: "none", cursor: "pointer",
+            color: MAROON, fontSize: 13, fontWeight: 600, fontFamily: FONT,
+            padding: "6px 0",
+          }}
+        >
+          <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+          Announcements
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setConfirmDelete(true)}
+          style={{
+            display: "flex", alignItems: "center", gap: 4,
+            background: "#fef2f2", border: "1px solid #fecaca",
+            borderRadius: 8, padding: "5px 10px",
+            cursor: "pointer", color: "#dc2626", fontSize: 11, fontWeight: 600, fontFamily: FONT,
+          }}
+        >
+          <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6M14 11v6" /><path d="M9 6V4h6v2" />
+          </svg>
+          Delete
+        </button>
+      </div>
+
+      {/* Author card */}
+      <div style={{
+        display: "flex", alignItems: "center", gap: 10,
+        padding: "14px 16px", borderBottom: "1px solid #f3f4f6",
+        background: "#fff",
+      }}>
+        <AuthorAvatar name={announcement.author} size={40} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: "#111827" }}>{announcement.author}</span>
+            {authorRole && <RoleBadge role={authorRole} />}
             {announcement.locked && (
-              <span className="hidden sm:inline-flex items-center gap-1 text-xs text-gray-500 border border-gray-200 rounded px-2 py-1">
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>Locked
+              <span style={{
+                display: "inline-flex", alignItems: "center", gap: 3,
+                fontSize: 10, color: "#6b7280", background: "#f3f4f6",
+                padding: "1px 6px", borderRadius: 4, fontWeight: 500,
+              }}>
+                <svg width="10" height="10" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+                Locked
               </span>
             )}
-            <ThreeDotMenu
-  onDelete={() => { onDelete(announcement.id); onBack(); }}
-/>
+          </div>
+          <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 2 }}>
+            {announcement.createdAtLabel}
+          </div>
+          <div style={{ fontSize: 11, color: "#9ca3af" }}>
+            To: <span style={{ color: "#6b7280", fontWeight: 500 }}>{formatAudience(announcement.assignTo)}</span>
           </div>
         </div>
+      </div>
 
-        {/* Body */}
-        <div className="px-4 sm:px-8 py-5 sm:py-7">
-          <h1 className="text-lg sm:text-xl font-bold text-gray-900 mb-4">{announcement.title}</h1>
-          {announcement.bodyHtml
-            ? <div className="prose prose-sm max-w-none text-gray-700 leading-relaxed" dangerouslySetInnerHTML={{ __html: announcement.bodyHtml }} style={{ lineHeight: 1.8 }} />
-            : announcement.bodyText
-              ? <p className="text-sm text-gray-700 leading-relaxed">{announcement.bodyText}</p>
-              : <p className="text-sm text-gray-400 italic">No content.</p>}
-          {announcement.attachments && announcement.attachments.length > 0 && (
-            <div className="mt-4 pt-4 border-t border-gray-100">
-              <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Attachments</div>
-              <div className="flex flex-wrap gap-2">
-                {announcement.attachments.map((f) => (
-                  <a key={f.id} href={f.url} target="_blank" rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 border border-gray-200 rounded-full bg-gray-50 hover:bg-gray-100 transition-colors" style={{ color: MAROON }}>
-                    📎 {f.name}
-                  </a>
-                ))}
-              </div>
+      {/* Body */}
+      <div style={{ padding: "16px 16px 24px", background: "#fff" }}>
+        <h1 style={{
+          fontSize: 17, fontWeight: 800, color: "#111827",
+          lineHeight: 1.35, marginBottom: 12, fontFamily: FONT,
+        }}>
+          {announcement.title}
+        </h1>
+
+        {announcement.bodyHtml ? (
+          <div
+            className="prose prose-sm max-w-none"
+            dangerouslySetInnerHTML={{ __html: announcement.bodyHtml }}
+            style={{ fontSize: 14, color: "#374151", lineHeight: 1.75 }}
+          />
+        ) : announcement.bodyText ? (
+          <p style={{ fontSize: 14, color: "#374151", lineHeight: 1.75 }}>{announcement.bodyText}</p>
+        ) : (
+          <p style={{ fontSize: 13, color: "#9ca3af", fontStyle: "italic" }}>No content.</p>
+        )}
+
+        {/* Attachments */}
+        {announcement.attachments && announcement.attachments.length > 0 && (
+          <div style={{ marginTop: 20, paddingTop: 16, borderTop: "1px solid #f3f4f6" }}>
+            <div style={{
+              fontSize: 10, fontWeight: 700, color: "#9ca3af",
+              textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8,
+            }}>
+              Attachments
             </div>
-          )}
-        </div>
-
-        
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {announcement.attachments.map((f) => (
+                <a
+                  key={f.id}
+                  href={f.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: "flex", alignItems: "center", gap: 8,
+                    padding: "10px 12px",
+                    border: "1px solid #e5e7eb", borderRadius: 10,
+                    background: "#f9fafb", textDecoration: "none",
+                    color: MAROON,
+                  }}
+                >
+                  <span style={{ fontSize: 18 }}>
+                    {f.type.startsWith("image/") ? "🖼️" : f.type === "application/pdf" ? "📄" : f.type.includes("word") ? "📝" : f.type.includes("sheet") ? "📊" : "📎"}
+                  </span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: MAROON, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {f.name}
+                    </div>
+                    <div style={{ fontSize: 10, color: "#9ca3af" }}>
+                      {f.size < 1048576 ? `${(f.size / 1024).toFixed(1)} KB` : `${(f.size / 1048576).toFixed(1)} MB`}
+                    </div>
+                  </div>
+                  <svg width="14" height="14" fill="none" stroke={MAROON} strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
 // ─── AnnouncementsListView ────────────────────────────────────────────────────
-function AnnouncementsListView({ filter, setFilter, search, setSearch, onAdd, onMarkAllRead, announcements, onRemove, onToggleLock, onView, selectedIds, setSelectedIds }: {
+function AnnouncementsListView({
+  filter, setFilter, search, setSearch,
+  onAdd, onMarkAllRead,
+  announcements, onRemove, onToggleRead, onView,
+  selectedIds, setSelectedIds,
+}: {
   filter: FilterType; setFilter: (v: FilterType) => void;
   search: string; setSearch: (v: string) => void;
   onAdd: () => void; onMarkAllRead: () => void;
   announcements: Announcement[];
   onRemove: (id: string | number) => void;
-  onToggleLock: (id: string | number) => void;
+  onToggleRead: (id: string | number) => void;
   onView: (id: string | number) => void;
   selectedIds: Set<string | number>;
   setSelectedIds: React.Dispatch<React.SetStateAction<Set<string | number>>>;
 }) {
   const [confirmDelete, setConfirmDelete] = useState<"single" | "bulk" | null>(null);
-  const [confirmLock, setConfirmLock] = useState<"bulk" | null>(null);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | number | null>(null);
+  const [searchFocused, setSearchFocused] = useState(false);
 
   const hasSelection = selectedIds.size > 0;
   const allChecked = announcements.length > 0 && announcements.every((a) => selectedIds.has(a.id));
-  const toggleAll = () => { if (allChecked) setSelectedIds(new Set()); else setSelectedIds(new Set(announcements.map((a) => a.id))); };
-  const toggleOne = (id: string | number) => setSelectedIds((prev) => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; });
+  const unreadCount = announcements.filter(a => !a.read).length;
+
+  const toggleAll = () => {
+    if (allChecked) setSelectedIds(new Set());
+    else setSelectedIds(new Set(announcements.map((a) => a.id)));
+  };
+  const toggleOne = (id: string | number) => setSelectedIds((prev) => {
+    const next = new Set(prev);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    return next;
+  });
   const handleBulkDelete = () => { selectedIds.forEach((id) => onRemove(id)); setSelectedIds(new Set()); setConfirmDelete(null); };
   const handleSingleDelete = (id: string | number) => { onRemove(id); setPendingDeleteId(null); setConfirmDelete(null); };
-  const handleBulkLock = () => { selectedIds.forEach((id) => onToggleLock(id)); setSelectedIds(new Set()); setConfirmLock(null); };
-  const formatAudience = (assignTo?: string[]) => !assignTo || assignTo.length === 0 ? "Everyone" : assignTo.join(", ");
+
+  const grouped = useMemo(() => groupAnnouncementsByDate(announcements), [announcements]);
+
+  const FILTER_PILLS: { label: string; value: FilterType; count?: number }[] = [
+    { label: "All", value: "All" },
+    { label: "Unread", value: "Unread", count: unreadCount },
+    { label: "Recent", value: "Recent Activity" },
+  ];
 
   return (
-    <div className="px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
-      {confirmDelete === "bulk" && <ConfirmModal title="Delete Announcements" message={`Delete ${selectedIds.size} announcement${selectedIds.size !== 1 ? "s" : ""}? This cannot be undone.`} confirmLabel="Delete" danger onConfirm={handleBulkDelete} onCancel={() => setConfirmDelete(null)} />}
-      {confirmDelete === "single" && pendingDeleteId !== null && <ConfirmModal title="Delete Announcement" message="Delete this announcement? This cannot be undone." confirmLabel="Delete" danger onConfirm={() => handleSingleDelete(pendingDeleteId)} onCancel={() => { setConfirmDelete(null); setPendingDeleteId(null); }} />}
-      {confirmLock === "bulk" && <ConfirmModal title="Toggle Lock" message={`Toggle lock for ${selectedIds.size} announcement${selectedIds.size !== 1 ? "s" : ""}?`} confirmLabel="Confirm" onConfirm={handleBulkLock} onCancel={() => setConfirmLock(null)} />}
-
-      {/* Toolbar row */}
-      <div className="flex flex-wrap items-center gap-2 mb-4">
-        {/* Filter dropdown */}
-        <div className="relative">
-          <select value={filter} onChange={(e) => setFilter(e.target.value as FilterType)}
-            className="border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none appearance-none pr-8 h-9">
-            {["All", "Unread", "Recent Activity"].map((f) => <option key={f} value={f}>{f}</option>)}
-          </select>
-          <svg className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
-        </div>
-
-        {/* Search */}
-        <div className="relative flex-1 min-w-[120px]">
-          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" strokeLinecap="round" /></svg>
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search…" className="w-full pl-9 pr-3 h-9 border border-gray-300 rounded text-sm focus:outline-none focus:border-[#7b1113]" />
-        </div>
-
-        {/* Add button */}
-        <button type="button" onClick={onAdd} style={{ background: MAROON }} className="inline-flex items-center gap-1.5 px-3 h-9 rounded text-white text-sm font-medium hover:opacity-90 whitespace-nowrap">
-          <span className="text-lg leading-none">＋</span>
-          <span className="hidden sm:inline">Add Announcement</span>
-          <span className="sm:hidden">Add</span>
-        </button>
-
-        {/* Mark all read */}
-        <button type="button" onClick={onMarkAllRead} className="inline-flex items-center gap-1.5 text-sm border border-gray-300 px-3 h-9 rounded hover:bg-gray-50 text-gray-700 whitespace-nowrap">
-          <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
-          <span className="hidden sm:inline">Mark All Read</span>
-        </button>
-
-        {/* Bulk actions */}
-        <div className="flex items-center gap-1.5">
-          <button type="button" disabled={!hasSelection} onClick={() => hasSelection && setConfirmDelete("bulk")}
-            title="Delete selected"
-            className="inline-flex items-center justify-center w-9 h-9 border rounded transition-colors"
-            style={{ borderColor: hasSelection ? "#ef4444" : "#d1d5db", color: hasSelection ? "#ef4444" : "#d1d5db", background: "white", cursor: hasSelection ? "pointer" : "not-allowed", opacity: hasSelection ? 1 : 0.45 }}>
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6M14 11v6" /><path d="M9 6V4h6v2" /></svg>
-          </button>
-        
-        </div>
-      </div>
-
-      {hasSelection && (
-        <div className="mb-2 text-xs text-gray-500 flex items-center gap-2">
-          <span className="font-medium" style={{ color: MAROON }}>{selectedIds.size}</span> selected
-          <button type="button" onClick={() => setSelectedIds(new Set())} className="underline hover:no-underline text-gray-400">Clear</button>
-        </div>
+    <div style={{ fontFamily: FONT, display: "flex", flexDirection: "column", minHeight: "100%" }}>
+      {confirmDelete === "bulk" && (
+        <ConfirmModal title="Delete announcements" message={`Delete ${selectedIds.size} announcement${selectedIds.size !== 1 ? "s" : ""}? This cannot be undone.`} confirmLabel="Delete" danger onConfirm={handleBulkDelete} onCancel={() => setConfirmDelete(null)} />
+      )}
+      {confirmDelete === "single" && pendingDeleteId !== null && (
+        <ConfirmModal title="Delete announcement" message="Delete this announcement? This cannot be undone." confirmLabel="Delete" danger onConfirm={() => handleSingleDelete(pendingDeleteId)} onCancel={() => { setConfirmDelete(null); setPendingDeleteId(null); }} />
       )}
 
-      {announcements.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 sm:py-24 text-center">
-          <div className="text-4xl mb-3">📢</div>
-          <div className="text-lg font-semibold text-gray-700">No Announcements</div>
-          <div className="text-sm text-gray-500 mt-1">Create an announcement above</div>
+      {/* ── Sticky header ── */}
+      <div style={{
+        position: "sticky", top: 0, zIndex: 10,
+        background: "#fff", borderBottom: "1px solid #f0e4e4",
+      }}>
+        {/* Filter chips row */}
+        <div style={{
+          display: "flex", alignItems: "center", gap: 6,
+          padding: "8px 14px 0",
+          overflowX: "auto", scrollbarWidth: "none",
+        }}>
+          {FILTER_PILLS.map(pill => (
+            <button
+              key={pill.value}
+              type="button"
+              onClick={() => setFilter(pill.value)}
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 5,
+                padding: "5px 12px", borderRadius: 20, flexShrink: 0,
+                border: filter === pill.value ? `1.5px solid ${MAROON}` : "1.5px solid #e5e7eb",
+                background: filter === pill.value ? "#fef2f2" : "#fff",
+                color: filter === pill.value ? MAROON : "#6b7280",
+                fontSize: 12, fontWeight: filter === pill.value ? 700 : 500,
+                cursor: "pointer", fontFamily: FONT,
+                transition: "all 0.15s",
+              }}
+            >
+              {pill.label}
+              {pill.count !== undefined && pill.count > 0 && (
+                <span style={{
+                  background: filter === pill.value ? MAROON : "#e5e7eb",
+                  color: filter === pill.value ? "#fff" : "#374151",
+                  fontSize: 10, fontWeight: 700,
+                  padding: "0 5px", borderRadius: 10, minWidth: 16,
+                  textAlign: "center",
+                }}>
+                  {pill.count}
+                </span>
+              )}
+            </button>
+          ))}
+          <div style={{ marginLeft: "auto", flexShrink: 0 }}>
+            <button
+              type="button"
+              onClick={onMarkAllRead}
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 5,
+                padding: "5px 10px", borderRadius: 20,
+                border: "1.5px solid #e5e7eb", background: "#fff",
+                color: "#6b7280", fontSize: 11, fontWeight: 500,
+                cursor: "pointer", fontFamily: FONT, whiteSpace: "nowrap",
+              }}
+            >
+              <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+              Mark all read
+            </button>
+          </div>
         </div>
-      ) : (
-        <div className="divide-y divide-gray-200 border-t border-gray-200">
-          {/* Select all row */}
-          <div className="flex items-center gap-3 py-2 px-1">
-            <input type="checkbox" checked={allChecked} onChange={toggleAll} className="h-4 w-4 rounded border-gray-300" style={{ accentColor: MAROON }} />
-            <span className="text-xs text-gray-400">Select all</span>
+
+        {/* Search + actions row */}
+        <div style={{
+          display: "flex", alignItems: "center", gap: 8,
+          padding: "8px 14px 10px",
+        }}>
+          {/* Search */}
+          <div style={{
+            flex: 1, position: "relative",
+            display: "flex", alignItems: "center",
+          }}>
+            <svg style={{ position: "absolute", left: 10, color: "#9ca3af", flexShrink: 0 }}
+              width="14" height="14" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" strokeLinecap="round" />
+            </svg>
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onFocus={() => setSearchFocused(true)}
+              onBlur={() => setSearchFocused(false)}
+              placeholder="Search announcements…"
+              style={{
+                width: "100%", height: 36, paddingLeft: 32, paddingRight: 10,
+                border: `1.5px solid ${searchFocused ? MAROON : "#e5e7eb"}`,
+                borderRadius: 20, fontSize: 13, outline: "none",
+                background: "#f9fafb", color: "#111827",
+                fontFamily: FONT, transition: "border-color 0.15s",
+              }}
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch("")}
+                style={{
+                  position: "absolute", right: 10, background: "none",
+                  border: "none", cursor: "pointer", color: "#9ca3af",
+                  fontSize: 14, lineHeight: 1, padding: 0,
+                }}
+              >
+                ×
+              </button>
+            )}
           </div>
 
-          {announcements.map((a) => (
-            <div key={a.id}
-              className="flex items-start gap-2 sm:gap-3 py-4 px-1 hover:bg-gray-50 transition-colors"
-              style={{ background: selectedIds.has(a.id) ? "#fef9f9" : undefined }}
+          {/* Add button */}
+          <button
+            type="button"
+            onClick={onAdd}
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 5,
+              height: 36, padding: "0 14px", borderRadius: 20,
+              background: MAROON, color: "#fff",
+              border: "none", cursor: "pointer",
+              fontSize: 13, fontWeight: 700, fontFamily: FONT,
+              flexShrink: 0, whiteSpace: "nowrap",
+            }}
+          >
+            <span style={{ fontSize: 16, lineHeight: 1 }}>＋</span>
+            <span>New</span>
+          </button>
+
+          {/* Bulk delete — only when selected */}
+          {hasSelection && (
+            <button
+              type="button"
+              onClick={() => setConfirmDelete("bulk")}
+              style={{
+                display: "inline-flex", alignItems: "center", justifyContent: "center",
+                width: 36, height: 36, borderRadius: "50%",
+                background: "#fef2f2", border: "1px solid #fecaca",
+                cursor: "pointer", color: "#dc2626", flexShrink: 0,
+              }}
+              title={`Delete ${selectedIds.size} selected`}
             >
-              {/* Checkbox */}
-              <input type="checkbox" checked={selectedIds.has(a.id)} onChange={() => toggleOne(a.id)}
-                className="mt-1 h-4 w-4 rounded border-gray-300 shrink-0" style={{ accentColor: MAROON }} />
+              <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6M14 11v6" /><path d="M9 6V4h6v2" />
+              </svg>
+            </button>
+          )}
+        </div>
 
-              {/* Avatar — hide on very small screens */}
-              <div className="hidden xs:block">
-                <AuthorAvatar name={a.author} size={32} />
+        {/* Selection bar */}
+        {hasSelection && (
+          <div style={{
+            display: "flex", alignItems: "center", gap: 8,
+            padding: "6px 14px 8px",
+            background: "#fef9f9", borderTop: "1px solid #fde8e8",
+          }}>
+            <input
+              type="checkbox"
+              checked={allChecked}
+              onChange={toggleAll}
+              style={{ width: 15, height: 15, accentColor: MAROON }}
+            />
+            <span style={{ fontSize: 12, color: MAROON, fontWeight: 600 }}>
+              {selectedIds.size} selected
+            </span>
+            <button
+              type="button"
+              onClick={() => setSelectedIds(new Set())}
+              style={{
+                background: "none", border: "none", cursor: "pointer",
+                fontSize: 11, color: "#9ca3af", fontFamily: FONT,
+                textDecoration: "underline",
+              }}
+            >
+              Clear
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* ── List body ── */}
+      {announcements.length === 0 ? (
+        <div style={{
+          display: "flex", flexDirection: "column", alignItems: "center",
+          justifyContent: "center", padding: "60px 20px", textAlign: "center",
+          color: "#9ca3af", flex: 1,
+        }}>
+          <div style={{ fontSize: 44, marginBottom: 12 }}>📢</div>
+          <div style={{ fontSize: 15, fontWeight: 700, color: "#374151", marginBottom: 4 }}>
+            No announcements
+          </div>
+          <div style={{ fontSize: 13, color: "#9ca3af", marginBottom: 16 }}>
+            {search ? `No results for "${search}"` : filter !== "All" ? `No ${filter.toLowerCase()} announcements` : "Create the first announcement"}
+          </div>
+          {!search && filter === "All" && (
+            <button
+              type="button"
+              onClick={onAdd}
+              style={{
+                padding: "9px 20px", borderRadius: 20,
+                background: MAROON, color: "#fff",
+                border: "none", cursor: "pointer",
+                fontSize: 13, fontWeight: 700, fontFamily: FONT,
+              }}
+            >
+              ＋ New Announcement
+            </button>
+          )}
+        </div>
+      ) : (
+        <div>
+          {/* Select all row */}
+          <div style={{
+            display: "flex", alignItems: "center", gap: 8,
+            padding: "8px 14px", borderBottom: "1px solid #f3f4f6",
+            background: "#f9fafb",
+          }}>
+            <input
+              type="checkbox"
+              checked={allChecked}
+              onChange={toggleAll}
+              style={{ width: 15, height: 15, accentColor: MAROON }}
+            />
+            <span style={{ fontSize: 11, color: "#9ca3af" }}>Select all</span>
+          </div>
+
+          {grouped.map(({ label, items }) => (
+            <div key={label}>
+              {/* Date group label */}
+              <div style={{
+                padding: "8px 14px 4px",
+                fontSize: 10, fontWeight: 700, color: "#9ca3af",
+                textTransform: "uppercase", letterSpacing: "0.07em",
+                background: "#f9fafb", borderBottom: "1px solid #f3f4f6",
+              }}>
+                {label}
               </div>
 
-              {/* Content */}
-              <div className="flex-1 min-w-0 cursor-pointer" onClick={() => onView(a.id)}>
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  {!a.read && <span className="w-2 h-2 rounded-full shrink-0" style={{ background: MAROON }} />}
-                  <h3 className="text-sm font-semibold hover:underline break-words" style={{ color: MAROON }}>{a.title}</h3>
-                  {a.locked && (
-                    <span className="inline-flex items-center gap-1 text-xs text-gray-500 shrink-0">
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
-                      <span className="hidden sm:inline">Locked</span>
-                    </span>
-                  )}
-                  {a.allowComments === false && <span className="text-xs text-gray-400 hidden md:inline">Comments off</span>}
-                </div>
-                <div className="text-xs text-gray-700 mt-0.5 font-semibold">{a.author}</div>
-                <div className="text-xs text-gray-400">To: {formatAudience(a.assignTo)}</div>
-                {a.bodyText && <p className="text-sm text-gray-600 mt-1 line-clamp-2">{a.bodyText}</p>}
-                {a.attachments && a.attachments.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-2" onClick={(e) => e.stopPropagation()}>
-                    {a.attachments.map((f) => (
-                      <a key={f.id} href={f.url} target="_blank" rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-xs px-2 py-0.5 border border-gray-200 rounded bg-gray-50 hover:bg-gray-100" style={{ color: MAROON }}>
-                        📎 {f.name}
-                      </a>
-                    ))}
-                  </div>
-                )}
-                
-              </div>
-
-              {/* Right side: menu + date */}
-              <div className="shrink-0 flex flex-col items-end gap-1">
-                <ThreeDotMenu
-  onDelete={() => { setPendingDeleteId(a.id); setConfirmDelete("single"); }}
-/>
-                <div className="text-right text-xs text-gray-400 leading-snug hidden sm:block">
-                  <div>{a.createdAtLabel}</div>
-                </div>
-              </div>
+              {items.map((a) => (
+                <AnnouncementCard
+                  key={a.id}
+                  a={a}
+                  selected={selectedIds.has(a.id)}
+                  onToggleSelect={() => toggleOne(a.id)}
+                  onView={() => onView(a.id)}
+                  onDelete={() => { setPendingDeleteId(a.id); setConfirmDelete("single"); }}
+                  onToggleRead={() => onToggleRead(a.id)}
+                />
+              ))}
             </div>
           ))}
         </div>
       )}
+
+      <style>{`.hide-scrollbar::-webkit-scrollbar{display:none}`}</style>
     </div>
   );
 }
@@ -1085,89 +1604,148 @@ export function AnnouncementCreateView(props: {
   } = props;
 
   return (
-    // FIXED: added pb-safe for mobile nav bar clearance; max-w constrains width
-    <div className="px-3 sm:px-6 lg:px-8 py-4 sm:py-6 pb-6">
-      <div className="flex items-center gap-6 border-b border-gray-200 mb-6">
-        <div className="text-sm font-medium py-3 border-b-2 -mb-px" style={{ borderColor: MAROON, color: "#374151" }}>Details</div>
-      </div>
-
-      {!isCoursePublished && (
-        <div className="mb-4 flex items-start gap-3 border border-orange-300 bg-orange-50 text-orange-900 rounded px-4 py-3">
-          <div className="mt-0.5 w-6 h-6 rounded-full bg-orange-500 text-white flex items-center justify-center font-bold text-sm shrink-0">!</div>
-          <p className="text-sm leading-relaxed">Notifications will not be sent retroactively for announcements created before publishing your course or before the course start date.</p>
-        </div>
-      )}
-
-      {/* Title */}
-      <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-800 mb-2">Topic Title *</label>
-        <input value={topicTitle} onChange={(e) => setTopicTitle(e.target.value)} placeholder="Topic Title"
-          className="w-full h-10 border rounded-sm px-3 text-sm outline-none focus:ring-1 transition-all"
-          style={{ borderColor: MAROON }} />
-      </div>
-
-      {/* Content */}
-      <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-800 mb-2">Topic Content</label>
-        <RichTextEditor valueHtml={bodyHtml} onChangeHtml={setBodyHtml} onChangeText={setBodyText} />
-      </div>
-
-      {/* Attachments */}
-      <div className="mb-6">
-        <AttachButton attachments={attachments} onAdd={onAddAttachments} onRemove={onRemoveAttachment} />
-      </div>
-
-      {/* Assign To */}
-      <div className="mb-6">
-        <label className="block text-sm font-medium text-gray-800 mb-2">Assign To</label>
-        <AssignToSelector selected={assignTo} setSelected={setAssignTo} staff={staff} />
-      </div>
-
-    
-
-      {/* Scheduling — FIXED: stacked on mobile, no overflow */}
-      <div className="mb-8 border border-gray-200 rounded-lg p-4 bg-gray-50">
-        <div className="text-sm font-medium text-gray-800 mb-4">Scheduling</div>
-        {/* Always stack on mobile; side-by-side only on sm+ */}
-        <div className="flex flex-col gap-5 sm:grid sm:grid-cols-2 sm:gap-6">
-          <div className="w-full min-w-0">
-            <div className="text-sm font-medium text-gray-800 mb-2">Available From</div>
-            <DateTimeRow
-              label="Date & Time"
-              date={availableFromDate}
-              time={availableFromTime}
-              onDateChange={setAvailableFromDate}
-              onTimeChange={setAvailableFromTime}
-              onClear={() => { setAvailableFromDate(""); setAvailableFromTime(""); }}
-            />
-          </div>
-          <div className="w-full min-w-0">
-            <div className="text-sm font-medium text-gray-800 mb-2">Until</div>
-            <DateTimeRow
-              label="Date & Time"
-              date={untilDate}
-              time={untilTime}
-              onDateChange={setUntilDate}
-              onTimeChange={setUntilTime}
-              onClear={onResetUntil}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Actions */}
-      <div className="flex flex-col-reverse sm:flex-row justify-end gap-3">
-        <button onClick={onCancel} disabled={isPublishing} type="button"
-          className="text-sm border border-gray-300 rounded px-4 py-2.5 hover:bg-gray-50 disabled:opacity-60">
+    <div style={{ fontFamily: FONT }}>
+      {/* Sticky top bar */}
+      <div style={{
+        position: "sticky", top: 0, zIndex: 10,
+        background: "#fff", borderBottom: "1px solid #f0e4e4",
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        padding: "0 14px", height: 46,
+      }}>
+        <button
+          type="button"
+          onClick={onCancel}
+          disabled={isPublishing}
+          style={{
+            display: "flex", alignItems: "center", gap: 4,
+            background: "none", border: "none", cursor: "pointer",
+            color: MAROON, fontSize: 13, fontWeight: 600, fontFamily: FONT,
+          }}
+        >
+          <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
           Cancel
         </button>
-        <button onClick={onPublish} disabled={isPublishing || !topicTitle.trim()} type="button"
-          style={{ background: MAROON }}
-          className="text-sm text-white rounded px-5 py-2.5 hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2">
-          {isPublishing
-            ? (<><svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" /></svg>Publishing…</>)
-            : "Publish"}
+
+        <span style={{ fontSize: 14, fontWeight: 700, color: "#111827" }}>New Announcement</span>
+
+        <button
+          type="button"
+          onClick={onPublish}
+          disabled={isPublishing || !topicTitle.trim()}
+          style={{
+            display: "inline-flex", alignItems: "center", gap: 5,
+            padding: "6px 16px", borderRadius: 20,
+            background: isPublishing || !topicTitle.trim() ? "#d1d5db" : MAROON,
+            color: "#fff", border: "none",
+            cursor: isPublishing || !topicTitle.trim() ? "not-allowed" : "pointer",
+            fontSize: 12, fontWeight: 700, fontFamily: FONT,
+          }}
+        >
+          {isPublishing ? (
+            <>
+              <svg className="animate-spin w-3 h-3" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+              </svg>
+              Publishing…
+            </>
+          ) : "Publish"}
         </button>
+      </div>
+
+      <div style={{ padding: "16px 14px 40px" }}>
+        {!isCoursePublished && (
+          <div style={{
+            display: "flex", alignItems: "flex-start", gap: 10,
+            border: "1px solid #fed7aa", background: "#fff7ed",
+            borderRadius: 10, padding: "10px 12px", marginBottom: 16,
+          }}>
+            <div style={{
+              width: 22, height: 22, borderRadius: "50%",
+              background: "#f97316", color: "#fff",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 12, fontWeight: 700, flexShrink: 0,
+            }}>!</div>
+            <p style={{ fontSize: 12, color: "#9a3412", lineHeight: 1.5, margin: 0 }}>
+              Notifications won&apos;t be sent for announcements created before the course is published.
+            </p>
+          </div>
+        )}
+
+        {/* Title */}
+        <div style={{ marginBottom: 16 }}>
+          <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#374151", marginBottom: 6 }}>
+            Title <span style={{ color: MAROON }}>*</span>
+          </label>
+          <input
+            value={topicTitle}
+            onChange={(e) => setTopicTitle(e.target.value)}
+            placeholder="Announcement title"
+            style={{
+              width: "100%", height: 42, padding: "0 12px",
+              border: `1.5px solid ${topicTitle ? MAROON : "#e5e7eb"}`,
+              borderRadius: 10, fontSize: 14, outline: "none",
+              background: "#fff", color: "#111827",
+              fontFamily: FONT, boxSizing: "border-box",
+              transition: "border-color 0.15s",
+            }}
+            onFocus={e => e.currentTarget.style.borderColor = MAROON}
+            onBlur={e => e.currentTarget.style.borderColor = topicTitle ? MAROON : "#e5e7eb"}
+          />
+        </div>
+
+        {/* Content */}
+        <div style={{ marginBottom: 16 }}>
+          <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#374151", marginBottom: 6 }}>
+            Content
+          </label>
+          <RichTextEditor valueHtml={bodyHtml} onChangeHtml={setBodyHtml} onChangeText={setBodyText} />
+        </div>
+
+        {/* Attachments */}
+        <div style={{ marginBottom: 16 }}>
+          <AttachButton attachments={attachments} onAdd={onAddAttachments} onRemove={onRemoveAttachment} />
+        </div>
+
+        {/* Assign To */}
+        <div style={{ marginBottom: 16 }}>
+          <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#374151", marginBottom: 6 }}>
+            Assign To
+          </label>
+          <AssignToSelector selected={assignTo} setSelected={setAssignTo} staff={staff} />
+        </div>
+
+        {/* Scheduling */}
+        <div style={{
+          border: "1px solid #e5e7eb", borderRadius: 12,
+          padding: 14, background: "#f9fafb", marginBottom: 8,
+        }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "#374151", marginBottom: 12 }}>
+            Scheduling
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 600, color: "#374151", marginBottom: 6 }}>Available From</div>
+              <DateTimeRow
+                label="Date & Time"
+                date={availableFromDate} time={availableFromTime}
+                onDateChange={setAvailableFromDate} onTimeChange={setAvailableFromTime}
+                onClear={() => { setAvailableFromDate(""); setAvailableFromTime(""); }}
+              />
+            </div>
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 600, color: "#374151", marginBottom: 6 }}>Until</div>
+              <DateTimeRow
+                label="Date & Time"
+                date={untilDate} time={untilTime}
+                onDateChange={setUntilDate} onTimeChange={setUntilTime}
+                onClear={onResetUntil}
+              />
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -1189,14 +1767,6 @@ export default function CourseAnnouncementsPage({
   const [search, setSearch] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<string | number>>(new Set());
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
-  const [readIds, setReadIds] = useState<Set<string | number>>(new Set());
-
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem(`read-announcements-${courseId}`);
-      if (saved) setReadIds(new Set(JSON.parse(saved)));
-    } catch {}
-  }, [courseId]);
 
   // Form state
   const [topicTitle, setTopicTitle] = useState("");
@@ -1232,7 +1802,6 @@ export default function CourseAnnouncementsPage({
         setAnnouncements((d.announcements ?? []).map((a: {
           id: string; title: string; bodyText: string; bodyHtml: string; author: string;
           createdAt: string; assignTo: string[];
-          read?: boolean;
           attachments: { id: string; name: string; size: number; mimeType: string; url: string }[];
           locked?: boolean; allowComments?: boolean;
           availableFrom?: string | null; availableUntil?: string | null;
@@ -1255,25 +1824,32 @@ export default function CourseAnnouncementsPage({
       .then(r => r.json())
       .then(d => {
         const people: { id?: string; userId?: string; name?: string; courseRole?: string }[] = d.people ?? d.enrollments ?? [];
-        const staffList = people
-          .filter(p => p.courseRole && p.courseRole.toLowerCase() === "staff")
-          .map(p => ({ id: p.userId ?? p.id ?? "", name: p.name ?? "" }))
-          .filter(p => p.id && p.name);
-        setStaff(staffList);
+        setStaff(
+          people
+            .filter(p => p.courseRole && p.courseRole.toLowerCase() === "staff")
+            .map(p => ({ id: p.userId ?? p.id ?? "", name: p.name ?? "" }))
+            .filter(p => p.id && p.name)
+        );
       })
       .catch(() => setStaff([]));
   }, [courseId]);
 
   const onMarkAllRead = () => {
     const allIds = announcements.map(a => a.id);
-    setReadIds(prev => {
-      const next = new Set([...prev, ...allIds]);
-      try {
-        localStorage.setItem(`read-announcements-${courseId}`, JSON.stringify([...next]));
-      } catch {}
-      return next;
-    });
+    const next = new Set([...allIds]);
+    try { localStorage.setItem(`read-announcements-${courseId}`, JSON.stringify([...next])); } catch {}
     setAnnouncements(prev => prev.map(a => ({ ...a, read: true })));
+  };
+
+  const onToggleRead = (id: string | number) => {
+    setAnnouncements(prev => {
+      const updated = prev.map(a => a.id === id ? { ...a, read: !a.read } : a);
+      try {
+        const readIds = updated.filter(a => a.read).map(a => a.id);
+        localStorage.setItem(`read-announcements-${courseId}`, JSON.stringify(readIds));
+      } catch {}
+      return updated;
+    });
   };
 
   const onRemove = async (id: string | number) => {
@@ -1281,8 +1857,7 @@ export default function CourseAnnouncementsPage({
     setSelectedIds(prev => { const next = new Set(prev); next.delete(id); return next; });
     if (!courseId) return;
     try {
-      const res = await fetch(`/api/admin/courses/${courseId}/announcements/${id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Failed to delete");
+      await fetch(`/api/admin/courses/${courseId}/announcements/${id}`, { method: "DELETE" });
     } catch (err) { console.error(err); }
   };
 
@@ -1293,15 +1868,14 @@ export default function CourseAnnouncementsPage({
     if (!courseId) return;
     try {
       const res = await fetch(`/api/admin/courses/${courseId}/announcements/${id}`, {
-        method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ locked: newValue }),
+        method: "PATCH", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ locked: newValue }),
       });
       if (!res.ok) throw new Error("Failed");
     } catch {
       setAnnouncements(prev => prev.map(a => a.id === id ? { ...a, locked: !newValue } : a));
     }
   };
-
-  
 
   const onAddAttachments = (files: AttachedFile[]) => setAttachments(prev => [...prev, ...files]);
   const onRemoveAttachment = (id: string) => setAttachments(prev => prev.filter(f => f.id !== id));
@@ -1313,14 +1887,17 @@ export default function CourseAnnouncementsPage({
       const t = Date.parse(a.createdAtIso);
       return isNaN(t) ? acc : acc === null ? t : Math.max(acc, t);
     }, null);
-    return announcements.filter(a => {
-      const matchSearch = !q || a.title.toLowerCase().includes(q) || (a.bodyText ?? "").toLowerCase().includes(q);
-      const matchFilter =
-        filter === "All" ||
-        (filter === "Unread" && !a.read) ||
-        (filter === "Recent Activity" && latest !== null && latest - Date.parse(a.createdAtIso) <= sevenDaysMs);
-      return matchFilter && matchSearch;
-    });
+    const now = new Date();
+return announcements.filter(a => {
+  const matchSearch = !q || a.title.toLowerCase().includes(q) || (a.bodyText ?? "").toLowerCase().includes(q);
+  const matchFilter =
+    filter === "All" ||
+    (filter === "Unread" && !a.read) ||
+    (filter === "Recent Activity" && latest !== null && latest - Date.parse(a.createdAtIso) <= sevenDaysMs);
+  const matchAvailableFrom = !a.availableFrom || new Date(a.availableFrom) <= now;
+  const matchUntil = !a.availableUntil || new Date(a.availableUntil) >= now;
+  return matchFilter && matchSearch && matchAvailableFrom && matchUntil;
+});
   }, [announcements, filter, search]);
 
   const resetCreateForm = () => {
@@ -1334,10 +1911,7 @@ export default function CourseAnnouncementsPage({
     if (availableFromDate && untilDate) {
       const from = new Date(`${availableFromDate}T${availableFromTime || "00:00"}`);
       const until = new Date(`${untilDate}T${untilTime || "00:00"}`);
-      if (until <= from) {
-        alert("Ang 'Until' date ay dapat mas bago kaysa 'Available From'.");
-        return;
-      }
+      if (until <= from) { alert("Ang 'Until' date ay dapat mas bago kaysa 'Available From'."); return; }
     }
     const authorName = currentUser?.name ?? "Admin";
     const availableFromIso = availableFromDate ? `${availableFromDate}T${availableFromTime || "00:00"}` : null;
@@ -1351,8 +1925,7 @@ export default function CourseAnnouncementsPage({
         createdAtLabel: now.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit", hour12: true }),
         read: false, attachments: [...attachments],
         assignTo: assignTo.length ? assignTo : ["Everyone"],
-        locked: false,
-        availableFrom: availableFromIso, availableUntil: availableUntilIso,
+        locked: false, availableFrom: availableFromIso, availableUntil: availableUntilIso,
       }, ...prev]);
       resetCreateForm(); setMode("list"); return;
     }
@@ -1365,21 +1938,20 @@ export default function CourseAnnouncementsPage({
         body: JSON.stringify({
           title: topicTitle.trim(), bodyText: bodyText.trim(), bodyHtml, author: authorName,
           assignTo: assignTo.length ? assignTo : ["Everyone"],
-          availableFrom: availableFromIso,
-          availableUntil: availableUntilIso,
+          availableFrom: availableFromIso, availableUntil: availableUntilIso,
           attachments: attachments.map(f => ({ name: f.name, url: f.url, size: f.size, mimeType: f.type })),
         }),
       });
       if (!res.ok) throw new Error("Failed to publish");
       const { announcement } = await res.json();
       setAnnouncements(prev => [{
-        id: announcement.id, title: announcement.title, bodyText: announcement.bodyText, bodyHtml: announcement.bodyHtml,
+        id: announcement.id, title: announcement.title,
+        bodyText: announcement.bodyText, bodyHtml: announcement.bodyHtml,
         author: announcement.author, createdAtIso: announcement.createdAt,
         createdAtLabel: new Date(announcement.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit", hour12: true }),
         read: false,
         attachments: (announcement.attachments ?? []).map((a: { id: string; name: string; size: number; mimeType: string; url: string }) => ({ id: a.id, name: a.name, size: a.size, type: a.mimeType, url: a.url })),
-        assignTo: announcement.assignTo,
-        locked: false,
+        assignTo: announcement.assignTo, locked: false,
         availableFrom: announcement.availableFrom ?? null,
         availableUntil: announcement.availableUntil ?? null,
       }, ...prev]);
@@ -1394,17 +1966,14 @@ export default function CourseAnnouncementsPage({
 
   const onCancel = () => { resetCreateForm(); setMode("list"); };
   const onResetUntil = () => { setUntilDate(""); setUntilTime(""); };
+
   const onView = (id: string | number) => {
     setViewingId(id); setMode("detail");
-    setReadIds(prev => {
-      const next = new Set(prev);
-      next.add(id);
-      try {
-        localStorage.setItem(`read-announcements-${courseId}`, JSON.stringify([...next]));
-      } catch {}
-      return next;
-    });
     setAnnouncements(prev => prev.map(a => a.id === id ? { ...a, read: true } : a));
+    try {
+      const allIds = announcements.filter(a => a.read || a.id === id).map(a => a.id);
+      localStorage.setItem(`read-announcements-${courseId}`, JSON.stringify(allIds));
+    } catch {}
   };
 
   const viewingAnnouncement = announcements.find(a => a.id === viewingId) ?? null;
@@ -1416,7 +1985,6 @@ export default function CourseAnnouncementsPage({
         courseId={courseId}
         onBack={() => { setMode("list"); setViewingId(null); }}
         onDelete={onRemove}
-        onToggleLock={onToggleLock}
       />
     );
   }
@@ -1439,10 +2007,11 @@ export default function CourseAnnouncementsPage({
 
   return (
     <AnnouncementsListView
-      filter={filter} setFilter={setFilter} search={search} setSearch={setSearch}
+      filter={filter} setFilter={setFilter}
+      search={search} setSearch={setSearch}
       onAdd={() => setMode("create")} onMarkAllRead={onMarkAllRead}
       announcements={filteredAnnouncements}
-      onRemove={onRemove} onToggleLock={onToggleLock}
+      onRemove={onRemove} onToggleRead={onToggleRead}
       onView={onView} selectedIds={selectedIds} setSelectedIds={setSelectedIds}
     />
   );

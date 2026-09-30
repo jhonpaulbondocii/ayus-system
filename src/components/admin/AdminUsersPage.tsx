@@ -309,9 +309,9 @@ const CreateUserModal = React.memo(function CreateUserModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/30"
-      style={{ backdropFilter: "blur(4px)", fontFamily: FONT }}>
+      style={{ backdropFilter: "blur(4px)", fontFamily: FONT, paddingBottom: "96px" }}>
       {/* wider: sm:max-w-xl */}
-      <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-xl overflow-hidden max-h-[95vh] flex flex-col">
+      <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-xl overflow-hidden flex flex-col" style={{ height: "calc(100% - 96px)", maxHeight: "calc(100% - 96px)" }}>
         <div className="sm:hidden flex justify-center pt-3 pb-1 shrink-0">
           <div className="w-10 h-1 bg-gray-200 rounded-full"/>
         </div>
@@ -332,7 +332,7 @@ const CreateUserModal = React.memo(function CreateUserModal({
           </button>
         </div>
 
-        <div className="px-6 py-6 space-y-4 overflow-y-auto flex-1">
+        <div className="px-6 py-6 space-y-4 overflow-y-auto" style={{ flex: "1 1 0", minHeight: 0, overscrollBehavior: "contain" }}>
           {error && (
             <div className="text-xs font-semibold text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{error}</div>
           )}
@@ -468,9 +468,10 @@ function BulkEnrollModal({ userIds, userCount, onClose, onDone }: {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/30"
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/30"
       style={{ backdropFilter: "blur(4px)", fontFamily: FONT }}>
-      <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-sm overflow-hidden">
+      <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-xl overflow-hidden flex flex-col"
+        style={{ height: "92dvh", maxHeight: "92dvh" }}>
         <div className="sm:hidden flex justify-center pt-3 pb-1"><div className="w-10 h-1 bg-gray-200 rounded-full"/></div>
         <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-gray-100" style={{ background: MAROON }}>
           <div className="flex items-center gap-2.5">
@@ -549,7 +550,7 @@ function BulkDeleteModal({ userIds, userCount, onClose, onDeleted }: {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/30"
+       <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/30"
       style={{ backdropFilter: "blur(4px)", fontFamily: FONT }}>
       <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:w-80 p-6">
         <div className="sm:hidden flex justify-center mb-4"><div className="w-10 h-1 bg-gray-200 rounded-full"/></div>

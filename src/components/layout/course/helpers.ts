@@ -178,6 +178,8 @@ export function normalizeAnnouncement(a: RawAnnouncement, index: number): Announ
     locked: Boolean(a.locked),
     allowComments: a.allowComments !== false,
     allowLiking: Boolean(a.allowLiking),
+    availableFrom: a.availableFrom ?? null,
+    availableUntil: a.availableUntil ?? null,
     attachments: (a.attachments ?? []).map((f) => ({
       id: f.id,
       name: f.name,

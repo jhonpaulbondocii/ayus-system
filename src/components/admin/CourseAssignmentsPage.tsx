@@ -77,20 +77,28 @@ const GLOBAL_CSS = `
       grid-template-columns: 1fr !important;
     }
 
-    /* Toolbar: search takes full width, actions wrap below */
+    /* Toolbar: search takes full width, actions in a compact equal row below */
     .asgn-toolbar {
       flex-direction: column !important;
       align-items: stretch !important;
-      gap: 8px !important;
-      padding: 10px 12px !important;
+      gap: 6px !important;
+      padding: 8px 10px !important;
     }
     .asgn-toolbar-search {
       max-width: 100% !important;
       width: 100% !important;
     }
+    .asgn-toolbar-search input { height: 36px !important; }
     .asgn-toolbar-right {
       width: 100%;
-      justify-content: flex-end;
+      justify-content: stretch;
+    }
+    .asgn-toolbar-right > div { width: 100% !important; }
+    .asgn-toolbar-right button {
+      flex: 1;
+      justify-content: center;
+      height: 34px !important;
+      border-radius: 9px !important;
     }
 
     /* Section label font */
@@ -100,7 +108,22 @@ const GLOBAL_CSS = `
     .asgn-group-title { max-width: calc(100vw - 120px) !important; }
 
     /* Assignment row: tighter padding on mobile */
-    .asgn-row { padding: 11px 10px 11px 14px !important; }
+    .asgn-row { padding: 9px 8px 9px 12px !important; }
+
+    /* Section label: tighter, less shouty */
+    .asgn-section-header { padding: 6px 12px !important; }
+
+    /* Group / author headers: tighter + rounder */
+    .asgn-group-header,
+    .asgn-others-header {
+      padding: 8px 10px !important;
+      border-radius: 10px !important;
+    }
+    .asgn-group-body { border-radius: 0 0 10px 10px !important; }
+
+    /* Groups container: tighter side padding, tighter gap between groups */
+    .asgn-groups-wrap { padding: 8px 8px 4px !important; }
+    .asgn-others-wrap { padding: 8px 8px 16px !important; }
 
     /* Assignment title: allow wrap instead of truncate on tiny screens */
     .asgn-row-title {
@@ -321,14 +344,14 @@ function PublishToggle({ published, onToggle }: { published: boolean; onToggle: 
   return (
     <button type="button" onClick={onToggle}
       title={published ? "Published — click to unpublish" : "Unpublished — click to publish"}
-      style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", padding: 4, touchAction: "manipulation", minWidth: 30, minHeight: 30 }}>
+      style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", padding: 2, touchAction: "manipulation", minWidth: 26, minHeight: 26 }}>
       {published ? (
-        <svg width="22" height="22" viewBox="0 0 20 20" fill="none">
+        <svg width="19" height="19" viewBox="0 0 20 20" fill="none">
           <circle cx="10" cy="10" r="9" fill="#16a34a" />
           <path d="M5.5 10.5l3 3 6-6" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       ) : (
-        <svg width="22" height="22" viewBox="0 0 20 20" fill="none">
+        <svg width="19" height="19" viewBox="0 0 20 20" fill="none">
           <circle cx="10" cy="10" r="9" stroke="#9ca3af" strokeWidth="1.5" fill="none" />
           <line x1="6" y1="14" x2="14" y2="6" stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round" />
         </svg>
@@ -339,7 +362,7 @@ function PublishToggle({ published, onToggle }: { published: boolean; onToggle: 
 
 function AssignmentIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.5" style={{ flexShrink: 0 }}>
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.5" style={{ flexShrink: 0 }}>
       <rect x="4" y="3" width="14" height="18" rx="2" />
       <path d="M8 8h8M8 12h8M8 16h5" strokeLinecap="round" />
     </svg>
@@ -1012,8 +1035,8 @@ function AssignmentRow({
       onClick={handleClick}
       className="asgn-row"
       style={{
-        display: "flex", alignItems: "flex-start", gap: 8,
-        padding: "14px 12px 14px 16px",
+        display: "flex", alignItems: "flex-start", gap: 6,
+        padding: "8px 8px 8px 12px",
         background: variant === "mine" ? "#fff" : "#fafcff",
         borderBottom: "1px solid #f3f4f6",
         cursor: "pointer", position: "relative",
@@ -1030,24 +1053,25 @@ function AssignmentRow({
         <PublishToggle published={a.status === "PUBLISHED"} onToggle={() => onTogglePublish(a)} />
       </div>
 
-      <div style={{ flexShrink: 0, marginTop: 5 }}>
+      <div style={{ flexShrink: 0, marginTop: 2 }}>
         <AssignmentIcon />
       </div>
 
       {/* Content */}
       <div style={{ flex: 1, minWidth: 0 }}>
         {/* Title row */}
-        <div style={{ display: "flex", alignItems: "flex-start", gap: 6, flexWrap: "wrap", marginBottom: 5 }}>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 5, flexWrap: "wrap", marginBottom: 2 }}>
           <span
             className="asgn-row-title"
             style={{
-              fontSize: 13, fontWeight: 700, color: MAROON,
+              fontSize: 12.5, fontWeight: 700, color: MAROON,
               overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
               maxWidth: "100%",
             }}
           >
             {a.title}
           </span>
+          <span style={{ fontSize: 11, color: "#9ca3af", fontWeight: 600, flexShrink: 0 }}>· {a.points} pts</span>
           {isNew && <NewBadge />}
           {a.status === "UNPUBLISHED" && (
             <span style={{ fontSize: 10, color: "#d97706", fontWeight: 600, flexShrink: 0 }}>Not Published</span>
@@ -1067,12 +1091,8 @@ function AssignmentRow({
           {variant === "others" && (
             <PublisherChip name={authorDisplayName} image={a.publisherImage} role={authorRole} />
           )}
-          <span style={{ fontSize: 12, color: "#6b7280", flexShrink: 0 }}>{a.points} pts</span>
           {due && (
-            <>
-              <span className="asgn-meta-dot" style={{ color: "#d1d5db", flexShrink: 0 }}>·</span>
-              <span className="asgn-meta-due" style={{ fontSize: 12, color: "#6b7280" }}>Due: {due}</span>
-            </>
+            <span className="asgn-meta-due" style={{ fontSize: 11, color: "#6b7280" }}>Due: {due}</span>
           )}
         </div>
       </div>
@@ -1105,13 +1125,13 @@ function AssignmentGroupSection({
   const [collapsed, setCollapsed] = useState(false);
   const newCount = items.filter(a => !seenIds.has(String(a.id))).length;
 
-  return (
-    <div style={{ marginBottom: 12 }}>
+    return (
+    <div style={{ marginBottom: 10, borderRadius: 12, overflow: "hidden", border: "1px solid #ececec", boxShadow: "0 1px 2px rgba(0,0,0,0.03)" }}>
       {/* Group header */}
-      <div style={{
+      <div className="asgn-group-header" style={{
         display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "10px 12px", background: "#f9fafb",
-        border: "1px solid #e5e7eb", borderRadius: collapsed ? 8 : "8px 8px 0 0",
+        padding: "9px 10px", background: "#f9fafb",
+        borderBottom: collapsed ? "none" : "1px solid #e5e7eb",
       }}>
         <div
           style={{ display: "flex", alignItems: "center", gap: 7, cursor: "pointer", flex: 1, minWidth: 0 }}
@@ -1147,10 +1167,10 @@ function AssignmentGroupSection({
         </div>
       </div>
 
-      {!collapsed && (
-        <div style={{ border: "1px solid #e5e7eb", borderTop: "none", borderRadius: "0 0 8px 8px", overflow: "hidden" }}>
+            {!collapsed && (
+        <div>
           {items.length === 0 ? (
-            <div style={{ padding: "20px 16px", fontSize: 13, color: "#9ca3af", textAlign: "center" }}>
+            <div style={{ padding: "16px", fontSize: 12, color: "#9ca3af", textAlign: "center" }}>
               No assignments in this group.
             </div>
           ) : (
@@ -1183,15 +1203,15 @@ function OthersAuthorSection({
   const [collapsed, setCollapsed] = useState(false);
   const newCount = items.filter(a => !seenIds.has(String(a.id))).length;
 
-  return (
-    <div style={{ marginBottom: 12 }}>
+    return (
+    <div style={{ marginBottom: 10, borderRadius: 12, overflow: "hidden", border: "1px solid #bfdbfe", boxShadow: "0 1px 2px rgba(0,0,0,0.03)" }}>
       <div onClick={() => setCollapsed(c => !c)}
-        style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 12px", background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: collapsed ? 8 : "8px 8px 0 0", cursor: "pointer" }}>
+        style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 10px", background: "#eff6ff", borderBottom: collapsed ? "none" : "1px solid #bfdbfe", cursor: "pointer" }}>
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1d6fa4" strokeWidth="2.5"
           style={{ flexShrink: 0, transform: collapsed ? "rotate(-90deg)" : "none", transition: "transform 0.15s" }}>
           <path d="M6 9l6 6 6-6" />
         </svg>
-        <PublisherAvatar name={authorName} image={authorImage} size={22} />
+        <PublisherAvatar name={authorName} image={authorImage} size={20} />
         <span style={{ fontSize: 13, fontWeight: 700, color: "#1d4ed8", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0, flex: 1 }}>{authorName}</span>
         {authorRole && (
           <span style={{ padding: "1px 6px", borderRadius: 4, fontSize: 9, fontWeight: 700, textTransform: "uppercase", background: "#eff6ff", color: "#1d6fa4", border: "1px solid #bfdbfe", flexShrink: 0 }}>
@@ -1206,7 +1226,7 @@ function OthersAuthorSection({
         )}
       </div>
       {!collapsed && (
-        <div style={{ border: "1px solid #bfdbfe", borderTop: "none", borderRadius: "0 0 8px 8px", overflow: "hidden" }}>
+        <div>
           {items.map(a => (
             <AssignmentRow key={a.id} a={a} courseId={courseId} router={router} variant="others"
               seenIds={seenIds} onView={onView}
@@ -1233,10 +1253,10 @@ function OthersGroupSection({
   const [collapsed, setCollapsed] = useState(false);
   const newCount = items.filter(a => !seenIds.has(String(a.id))).length;
 
-  return (
-    <div style={{ marginBottom: 12 }}>
+    return (
+    <div style={{ marginBottom: 10, borderRadius: 12, overflow: "hidden", border: "1px solid #bae6fd", boxShadow: "0 1px 2px rgba(0,0,0,0.03)" }}>
       <div onClick={() => setCollapsed(c => !c)}
-        style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 12px", background: "#f0f9ff", border: "1px solid #bae6fd", borderRadius: collapsed ? 8 : "8px 8px 0 0", cursor: "pointer" }}>
+        style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 10px", background: "#f0f9ff", borderBottom: collapsed ? "none" : "1px solid #bae6fd", cursor: "pointer" }}>
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#0369a1" strokeWidth="2.5"
           style={{ flexShrink: 0, transform: collapsed ? "rotate(-90deg)" : "none", transition: "transform 0.15s" }}>
           <path d="M6 9l6 6 6-6" />
@@ -1250,7 +1270,7 @@ function OthersGroupSection({
         )}
       </div>
       {!collapsed && (
-        <div style={{ border: "1px solid #bae6fd", borderTop: "none", borderRadius: "0 0 8px 8px", overflow: "hidden" }}>
+        <div>
           {items.map(a => (
             <AssignmentRow key={a.id} a={a} courseId={courseId} router={router} variant="others"
               seenIds={seenIds} onView={onView}
@@ -1272,17 +1292,17 @@ function Toolbar({ search, onSearch, right }: {
       className="asgn-toolbar"
       style={{
         display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "10px 12px", borderBottom: "1px solid #f3f4f6", gap: 8,
+        padding: "8px 10px", borderBottom: "1px solid #f3f4f6", gap: 8,
       }}
     >
       {/* Search */}
       <div className="asgn-toolbar-search" style={{ position: "relative", flex: 1, maxWidth: 280 }}>
-        <Search size={14} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "#9ca3af", pointerEvents: "none" }} />
+        <Search size={13} style={{ position: "absolute", left: 9, top: "50%", transform: "translateY(-50%)", color: "#9ca3af", pointerEvents: "none" }} />
         <input
           value={search} onChange={e => onSearch(e.target.value)} placeholder="Search assignments…"
           style={{
-            width: "100%", height: 38, border: "1px solid #e5e7eb", borderRadius: 8,
-            paddingLeft: 32, paddingRight: 10, fontFamily: FONT, fontSize: 13,
+            width: "100%", height: 34, border: "1px solid #e5e7eb", borderRadius: 8,
+            paddingLeft: 30, paddingRight: 10, fontFamily: FONT, fontSize: 12.5,
             color: "#374151", background: "#fafafa", outline: "none",
           }}
         />
@@ -1297,9 +1317,9 @@ function Toolbar({ search, onSearch, right }: {
 
 function SectionLabel({ children, color, bg, border }: { children: React.ReactNode; color: string; bg: string; border: string }) {
   return (
-    <div style={{
+        <div style={{
       display: "flex", alignItems: "center",
-      padding: "8px 14px",
+      padding: "7px 12px",
       background: bg, borderBottom: `1px solid ${border}`, borderTop: `1px solid ${border}`,
     }}>
       <span
@@ -1538,30 +1558,30 @@ export default function CourseAssignmentsPage({
         right={<>
           <button onClick={() => setShowGroupModal(true)}
             style={{
-              display: "flex", alignItems: "center", gap: 5,
-              height: 38, padding: "0 12px", fontFamily: FONT,
-              fontSize: 13, fontWeight: 600,
+              display: "flex", alignItems: "center", gap: 4,
+              height: 34, padding: "0 10px", fontFamily: FONT,
+              fontSize: 12.5, fontWeight: 600,
               border: "1px solid #e5e7eb", borderRadius: 8,
               background: "#fff", color: "#374151", cursor: "pointer", touchAction: "manipulation",
             }}>
-            <Plus size={14} />
+            <Plus size={13} />
             <span>Group</span>
           </button>
           <button onClick={() => router.push(`/admin/courses/${courseId}/assignments/new`)}
             style={{
-              display: "flex", alignItems: "center", gap: 5,
-              height: 38, padding: "0 14px", fontFamily: FONT,
-              fontSize: 13, fontWeight: 700,
+              display: "flex", alignItems: "center", gap: 4,
+              height: 34, padding: "0 12px", fontFamily: FONT,
+              fontSize: 12.5, fontWeight: 700,
               border: "none", borderRadius: 8,
               background: MAROON, color: "#fff", cursor: "pointer", touchAction: "manipulation",
             }}>
-            <Plus size={14} />
+            <Plus size={13} />
             <span>New</span>
           </button>
         </>}
       />
 
-      <div style={{ padding: "12px 12px 4px" }}>
+      <div className="asgn-groups-wrap" style={{ padding: "10px 10px 4px" }}>
         {myFiltered.length === 0 && mySearch ? (
           <div style={{ padding: "32px 16px", textAlign: "center", fontSize: 13, color: "#9ca3af" }}>
             No results for &ldquo;{mySearch}&rdquo;
@@ -1605,7 +1625,7 @@ export default function CourseAssignmentsPage({
             {(["author", "group"] as const).map(mode => (
               <button key={mode} onClick={() => setOthersViewMode(mode)}
                 style={{
-                  padding: "0 12px", height: 38, fontFamily: FONT,
+                  padding: "0 12px", height: 34, fontFamily: FONT,
                   fontSize: 12, fontWeight: 700, border: "none", cursor: "pointer",
                   whiteSpace: "nowrap",
                   background: othersViewMode === mode ? MAROON : "transparent",
@@ -1619,7 +1639,7 @@ export default function CourseAssignmentsPage({
         }
       />
 
-      <div style={{ padding: "12px 12px 24px" }}>
+      <div className="asgn-others-wrap" style={{ padding: "10px 10px 20px" }}>
         {otherAssignments.length === 0 ? (
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 20px", gap: 10 }}>
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" strokeWidth="1.5">

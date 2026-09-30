@@ -2,12 +2,10 @@
 
 import CourseFormAnswer from "@/components/layout/CourseFormAnswer";
 import HeadFormDetail from "@/components/layout/course/HeadFormDetail";
-import HeadFormResponses from "@/components/layout/course/HeadFormResponses";  // ← new import
+import HeadFormResponses from "@/components/layout/course/HeadFormResponses";
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import Image from "next/image";
-import {
-  Plus, FileText,
-} from "lucide-react";
+import { Plus, FileText } from "lucide-react";
 
 const MAROON = "#7b1113";
 const FONT = "'Plus Jakarta Sans', 'Helvetica Neue', Arial, sans-serif";
@@ -207,30 +205,23 @@ const RESPONSIVE_CSS = `
   .cft-tab-btn.active { background:#fff; border-color:#e2e8f0; color:#111827; font-weight:600; }
   .cft-tab-btn:not(.active) { color:#6b7280; }
   .cft-tab-btn:not(.active):hover { color:#374151; }
-  .cft-floating-add {
-    position: fixed;
-    right: 16px;
-    bottom: 72px;
-    z-index: 40;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 8px;
-  }
-  .cft-add-btn {
-    display:flex; align-items:center; gap:8px;
-    padding:0 18px; height:46px; border-radius:99px;
-    color:#fff; font-size:13px; font-weight:700;
-    border:none; cursor:pointer;
-    box-shadow:0 4px 16px rgba(123,17,19,.3);
-    transition:opacity .15s;
-    -webkit-tap-highlight-color:transparent;
-    touch-action: manipulation;
-  }
+
+  /* ── Inline add-question bar (replaces fixed floating button) ── */
+  .cft-inline-add { position:relative; }
   .cft-add-menu {
     background:#fff; border:1px solid #e5e7eb;
     border-radius:12px; box-shadow:0 8px 32px rgba(0,0,0,.15);
-    width:210px; overflow:hidden; max-height:65vh; overflow-y:auto;
+    width:210px; overflow:hidden; max-height:55vh; overflow-y:auto;
+    position:absolute; bottom:calc(100% + 8px); left:0; z-index:50;
+  }
+  .cft-add-btn {
+    display:flex; align-items:center; gap:8px;
+    padding:0 18px; height:40px; border-radius:8px;
+    color:#fff; font-size:13px; font-weight:700;
+    border:none; cursor:pointer;
+    transition:opacity .15s;
+    -webkit-tap-highlight-color:transparent;
+    touch-action: manipulation;
   }
   @media (max-width: 640px) {
     .cft-toolbar { padding:10px 12px; }
@@ -243,7 +234,6 @@ const RESPONSIVE_CSS = `
     .cft-form-label { text-align:left; padding-top:0; font-weight:600; }
     .cft-tab-bar { padding:0 10px; }
     .cft-tab-btn { padding:10px 10px; font-size:11px; }
-    .cft-floating-add { right:12px; bottom:16px; }
   }
   @media (max-width: 400px) {
     .cft-detail-actions { gap:4px; }
@@ -277,7 +267,6 @@ function AuthorBadge({ name, role }: { name: string; role: string }) {
     </span>
   );
 }
-
 
 // ── Publisher Chip ─────────────────────────────────────────────────────────────
 function PublisherChip({ name, image }: { name?: string | null; image?: string | null }) {
@@ -750,11 +739,12 @@ function QuestionCard({ question, isActive, isGraded, onActivate, onChange, onDu
   );
 }
 
-// ── Floating Toolbar ───────────────────────────────────────────────────────────
-function FloatingToolbar({ onAdd }: { onAdd: (type: QuestionType | "section") => void }) {
+// ── Inline Add Question Bar (no fixed positioning) ─────────────────────────────
+function InlineAddQuestionBar({ onAdd }: { onAdd: (type: QuestionType | "section") => void }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   useOnClickOutside(ref, () => setOpen(false));
+
   const items = [
     { group: "Choice", options: [
       { label: "Multiple Choice", action: () => onAdd("multiple_choice") },
@@ -779,11 +769,12 @@ function FloatingToolbar({ onAdd }: { onAdd: (type: QuestionType | "section") =>
       { label: "Section Divider", action: () => onAdd("section") },
     ]},
   ];
+
   return (
-    <div ref={ref} className="cft-floating-add">
+    <div ref={ref} className="cft-inline-add">
       {open && (
         <div className="cft-add-menu">
-          <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+          <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white">
             <span className="text-xs font-semibold text-gray-700">Add Question</span>
             <button type="button" onClick={() => setOpen(false)} className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 text-sm">×</button>
           </div>
@@ -801,8 +792,16 @@ function FloatingToolbar({ onAdd }: { onAdd: (type: QuestionType | "section") =>
           <div className="h-2" />
         </div>
       )}
-      <button type="button" onClick={() => setOpen(v => !v)} className="cft-add-btn" style={{ background: MAROON }}>
-        {open ? "Close" : "+ Add Question"}
+      <button
+        type="button"
+        onClick={() => setOpen(v => !v)}
+        className="cft-add-btn"
+        style={{ background: open ? "#5a0d0f" : MAROON }}
+      >
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+          <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+        {open ? "Close" : "Add Question"}
       </button>
     </div>
   );
@@ -827,32 +826,39 @@ function QuestionsTab({ questions, isGraded, onChange }: { questions: FormQuesti
   const upd = (idx: number, q: FormQuestion) => { const u = [...questions]; u[idx] = q; onChange(u); };
   const up = (idx: number) => { if (idx === 0) return; const u = [...questions]; [u[idx - 1], u[idx]] = [u[idx], u[idx - 1]]; onChange(u); };
   const dn = (idx: number) => { if (idx === questions.length - 1) return; const u = [...questions]; [u[idx], u[idx + 1]] = [u[idx + 1], u[idx]]; onChange(u); };
+
   return (
-    <div className="relative">
-      {questions.length > 0 && (
-        <div className="flex items-center justify-between mb-3 text-xs text-gray-500">
-          <span>{questions.filter(q => q.type !== "section").length} question(s)</span>
-        </div>
-      )}
-      <div className="space-y-3 pb-24">
-        {questions.length === 0 && (
-          <div className="text-center py-12 bg-white rounded-lg border border-dashed border-gray-300">
-            <div className="text-3xl mb-3">📋</div>
-            <p className="text-sm text-gray-400 mb-1">No questions yet</p>
-            <p className="text-xs text-gray-300">Tap the + button to add questions</p>
+    <div className="flex flex-col flex-1 min-h-0">
+      {/* Question list — scrollable */}
+      <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4">
+        {questions.length > 0 && (
+          <div className="flex items-center justify-between mb-3 text-xs text-gray-500">
+            <span>{questions.filter(q => q.type !== "section").length} question(s)</span>
           </div>
         )}
-        {questions.map((q, idx) => (
-          <QuestionCard
-            key={q.id} question={q} isActive={activeId === q.id} isGraded={isGraded}
-            onActivate={() => setActiveId(q.id)}
-            onChange={updated => upd(idx, updated)}
-            onDuplicate={() => dup(idx)} onDelete={() => delQ(idx)}
-            onMoveUp={() => up(idx)} onMoveDown={() => dn(idx)}
-          />
-        ))}
+        <div className="space-y-3 pb-2">
+          {questions.length === 0 && (
+            <div className="text-center py-12 bg-white rounded-lg border border-dashed border-gray-300">
+              <div className="text-3xl mb-3">📋</div>
+              <p className="text-sm text-gray-400 mb-1">No questions yet</p>
+              <p className="text-xs text-gray-300">Use the button below to add questions</p>
+            </div>
+          )}
+          {questions.map((q, idx) => (
+            <QuestionCard
+              key={q.id} question={q} isActive={activeId === q.id} isGraded={isGraded}
+              onActivate={() => setActiveId(q.id)}
+              onChange={updated => upd(idx, updated)}
+              onDuplicate={() => dup(idx)} onDelete={() => delQ(idx)}
+              onMoveUp={() => up(idx)} onMoveDown={() => dn(idx)}
+            />
+          ))}
+        </div>
       </div>
-      <FloatingToolbar onAdd={addQ} />
+      {/* Add button bar — always visible at bottom of questions tab */}
+      <div className="shrink-0 border-t border-gray-100 px-4 sm:px-6 py-3 bg-gray-50 flex items-center">
+        <InlineAddQuestionBar onAdd={addQ} />
+      </div>
     </div>
   );
 }
@@ -961,6 +967,8 @@ function SubmitConfirmationPreview({ message, allowMultiple }: { message: string
 }
 
 // ── Form Create/Edit View ──────────────────────────────────────────────────────
+// NOTE: Assignment Group is removed for regular users — it's only used internally
+// by admins/heads when routing through the admin panel.
 function FormCreateEditView({ form, courseId, sections, staff, onCancel, onSave }: {
   form?: Form; courseId: string; sections: Section[]; staff: Staff[];
   onCancel: () => void;
@@ -973,8 +981,6 @@ function FormCreateEditView({ form, courseId, sections, staff, onCancel, onSave 
   const [title, setTitle] = useState(form?.title ?? "");
   const [description, setDescription] = useState(form?.description ?? "");
   const [formType, setFormType] = useState<Form["formType"]>(form?.formType ?? "Survey / Feedback");
-  const [assignmentGroup, setAssignmentGroup] = useState(form?.assignmentGroup ?? "Assignments");
-  const [groups, setGroups] = useState<AssignmentGroup[]>([{ id: 1, name: "Assignments" }]);
   const [allowMultipleResponses, setAllowMultipleResponses] = useState(form?.allowMultipleResponses ?? false);
   const [confirmationMessage, setConfirmationMessage] = useState(form?.confirmationMessage ?? "");
   const [assignTo, setAssignTo] = useState<string[]>(form?.assignTo ?? ["Everyone"]);
@@ -984,20 +990,9 @@ function FormCreateEditView({ form, courseId, sections, staff, onCancel, onSave 
   const [availableFromTime, setAvailableFromTime] = useState(form?.availableFromTime ?? "");
   const [availableUntil, setAvailableUntil] = useState(form?.availableUntil ?? "");
   const [availableUntilTime, setAvailableUntilTime] = useState(form?.availableUntilTime ?? "");
-  const [groupModalOpen, setGroupModalOpen] = useState(false);
-  const [newGroupName, setNewGroupName] = useState("");
   const [questions, setQuestions] = useState<FormQuestion[]>(form?.questions ?? []);
 
   const isGraded = formType === "Graded Assessment";
-
-  useEffect(() => {
-    fetch(`/api/courses/${courseId}/assignments`).then(r => r.json()).then(d => {
-      const list = d.assignments ?? [];
-      const names: string[] = [...new Set<string>(list.map((a: { assignmentGroup: string }) => a.assignmentGroup || "Assignments"))];
-      if (!names.includes("Assignments")) names.unshift("Assignments");
-      setGroups(names.map((n, i) => ({ id: i + 1, name: n })));
-    }).catch(() => {});
-  }, [courseId]);
 
   const handleSave = async (publish: boolean) => {
     setSaveError(null);
@@ -1005,7 +1000,8 @@ function FormCreateEditView({ form, courseId, sections, staff, onCancel, onSave 
     setSaving(true);
     try {
       await onSave({
-        title: title.trim(), description, formType, assignmentGroup,
+        title: title.trim(), description, formType,
+        assignmentGroup: form?.assignmentGroup ?? "Assignments",
         shuffleAnswers: false, allowMultipleResponses, responseLimit: null,
         anonymousResponses: false, showResultsToRespondents: false,
         showOneAtATime: false, lockQuestionsAfterAnswering: false,
@@ -1018,16 +1014,11 @@ function FormCreateEditView({ form, courseId, sections, staff, onCancel, onSave 
     finally { setSaving(false); }
   };
 
-  const saveGroup = () => {
-    const n = newGroupName.trim(); if (!n) return;
-    if (!groups.find(g => g.name === n)) setGroups(p => [...p, { id: Date.now(), name: n }]);
-    setAssignmentGroup(n); setGroupModalOpen(false); setNewGroupName("");
-  };
-
   const sel = "h-9 border border-gray-300 rounded-sm px-3 text-xs w-full bg-white outline-none focus:border-[#7b1113]";
 
   return (
-    <div className="w-full h-full bg-white flex flex-col" style={{ fontFamily: FONT }}>
+    // KEY FIX: use flex flex-col with explicit height so footer is always visible
+    <div style={{ fontFamily: FONT, display: "flex", flexDirection: "column", width: "100%", height: "100%", minHeight: 0, background: "#fff" }}>
       {/* Header */}
       <div className="flex items-center justify-between px-4 sm:px-6 py-2.5 border-b border-gray-200 bg-white shrink-0 flex-wrap gap-2">
         <span className="text-sm font-bold text-gray-700">{form ? "Edit Form" : "New Form"}</span>
@@ -1039,6 +1030,7 @@ function FormCreateEditView({ form, courseId, sections, staff, onCancel, onSave 
           </div>
         </div>
       </div>
+
       {/* Tab bar */}
       <div className="cft-tab-bar">
         {(["details","questions","responses"] as const).map(key => (
@@ -1056,120 +1048,114 @@ function FormCreateEditView({ form, courseId, sections, staff, onCancel, onSave 
           </button>
         ))}
       </div>
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4">
+
+      {/* Content — flex-1 so it fills remaining space, tabs handle own scroll */}
+      <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", overflow: "hidden" }}>
         {activeTab === "details" && (
-          <div className="max-w-2xl space-y-4">
-            <div>
-              <label className="text-xs text-gray-500 block mb-1">Form Title <span className="text-red-500">*</span></label>
-              <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Untitled Form"
-                className="w-full h-9 border rounded-sm px-3 text-sm outline-none" style={{ borderColor: MAROON }}/>
-            </div>
-            <div>
-              <label className="text-xs text-gray-500 block mb-1">Description / Instructions</label>
-              <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Form description..." rows={4}
-                className="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:border-[#7b1113] resize-none"/>
-            </div>
-            <div className="cft-form-grid">
-              <label className="cft-form-label">Form Type</label>
-              <select value={formType} onChange={e => setFormType(e.target.value as Form["formType"])} className={sel}>
-                <option>Survey / Feedback</option>
-                <option>Evaluation</option>
-                <option>Registration Form</option>
-                <option>Graded Assessment</option>
-              </select>
-              <label className="cft-form-label">Assignment Group</label>
-              <div className="flex items-center gap-2">
-                <select value={assignmentGroup} onChange={e => setAssignmentGroup(e.target.value)} className={sel} style={{ maxWidth: 280 }}>
-                  {groups.map(g => <option key={g.id} value={g.name}>{g.name}</option>)}
-                </select>
-                <button type="button" onClick={() => setGroupModalOpen(true)}
-                  className="h-9 px-2 text-xs border border-gray-300 rounded-sm hover:bg-gray-50 shrink-0" style={{ color: MAROON }}>+ New</button>
+          <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4">
+            <div className="max-w-2xl space-y-4">
+              <div>
+                <label className="text-xs text-gray-500 block mb-1">Form Title <span className="text-red-500">*</span></label>
+                <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Untitled Form"
+                  className="w-full h-9 border rounded-sm px-3 text-sm outline-none" style={{ borderColor: MAROON }}/>
               </div>
-              <label className="cft-form-label">Assign</label>
-              <div className="border border-gray-200 rounded-sm p-3 space-y-3">
-                <div>
-                  <p className="text-xs font-medium text-gray-700 mb-1">Assign To</p>
-                  <AssignToDropdown selected={assignTo} setSelected={setAssignTo} sections={sections} staff={staff}/>
-                </div>
-                {[
-                  { label: "Due Date",       date: dueDate,        setDate: setDueDate,        time: dueTime,            setTime: setDueTime },
-                  { label: "Available from", date: availableFrom,  setDate: setAvailableFrom,  time: availableFromTime,  setTime: setAvailableFromTime },
-                  { label: "Until",          date: availableUntil, setDate: setAvailableUntil, time: availableUntilTime, setTime: setAvailableUntilTime },
-                ].map(({ label, date, setDate, time, setTime }) => (
-                  <div key={label}>
-                    <p className="text-xs font-medium text-gray-700 mb-1">{label}</p>
-                    <div className="flex border border-gray-300 rounded-sm overflow-hidden">
-                      <input type="date" value={date} onChange={e => setDate(e.target.value)}
-                        className="flex-1 h-8 border-0 px-2 text-xs outline-none bg-white min-w-0" style={{ fontSize: "13px" }}/>
-                      <div className="w-px bg-gray-200 self-stretch"/>
-                      <select value={time} onChange={e => setTime(e.target.value)}
-                        className="h-8 border-0 px-2 text-xs bg-white outline-none w-28 shrink-0">
-                        <option value="">Time</option>
-                        {TIME_OPTIONS.map(t => <option key={t}>{t}</option>)}
-                      </select>
-                    </div>
-                    <button type="button" onClick={() => { setDate(""); setTime(""); }}
-                      className="text-xs hover:underline mt-0.5" style={{ color: MAROON }}>Clear</button>
+              <div>
+                <label className="text-xs text-gray-500 block mb-1">Description / Instructions</label>
+                <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Form description..." rows={4}
+                  className="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:border-[#7b1113] resize-none"/>
+              </div>
+              <div className="cft-form-grid">
+                <label className="cft-form-label">Form Type</label>
+                <select value={formType} onChange={e => setFormType(e.target.value as Form["formType"])} className={sel}>
+                  <option>Survey / Feedback</option>
+                  <option>Evaluation</option>
+                  <option>Registration Form</option>
+                  <option>Graded Assessment</option>
+                </select>
+                <label className="cft-form-label">Assign</label>
+                <div className="border border-gray-200 rounded-sm p-3 space-y-3">
+                  <div>
+                    <p className="text-xs font-medium text-gray-700 mb-1">Assign To</p>
+                    <AssignToDropdown selected={assignTo} setSelected={setAssignTo} sections={sections} staff={staff}/>
                   </div>
-                ))}
+                  {[
+                    { label: "Due Date",       date: dueDate,        setDate: setDueDate,        time: dueTime,            setTime: setDueTime },
+                    { label: "Available from", date: availableFrom,  setDate: setAvailableFrom,  time: availableFromTime,  setTime: setAvailableFromTime },
+                    { label: "Until",          date: availableUntil, setDate: setAvailableUntil, time: availableUntilTime, setTime: setAvailableUntilTime },
+                  ].map(({ label, date, setDate, time, setTime }) => (
+                    <div key={label}>
+                      <p className="text-xs font-medium text-gray-700 mb-1">{label}</p>
+                      <div className="flex border border-gray-300 rounded-sm overflow-hidden">
+                        <input type="date" value={date} onChange={e => setDate(e.target.value)}
+                          className="flex-1 h-8 border-0 px-2 text-xs outline-none bg-white min-w-0" style={{ fontSize: "13px" }}/>
+                        <div className="w-px bg-gray-200 self-stretch"/>
+                        <select value={time} onChange={e => setTime(e.target.value)}
+                          className="h-8 border-0 px-2 text-xs bg-white outline-none w-28 shrink-0">
+                          <option value="">Time</option>
+                          {TIME_OPTIONS.map(t => <option key={t}>{t}</option>)}
+                        </select>
+                      </div>
+                      <button type="button" onClick={() => { setDate(""); setTime(""); }}
+                        className="text-xs hover:underline mt-0.5" style={{ color: MAROON }}>Clear</button>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
         )}
+
+        {/* Questions tab: QuestionsTab handles its own scroll + add button bar */}
         {activeTab === "questions" && (
           <QuestionsTab questions={questions} isGraded={isGraded} onChange={setQuestions}/>
         )}
+
         {activeTab === "responses" && (
-          <div className="max-w-lg space-y-4">
-            <div>
-              <label className="text-xs font-medium text-gray-700 block mb-1">Confirmation Message</label>
-              <textarea value={confirmationMessage} onChange={e => setConfirmationMessage(e.target.value)}
-                placeholder="Thank you for completing this form." rows={3}
-                className="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:border-[#7b1113] resize-none"/>
-            </div>
-            <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
-              <input type="checkbox" checked={allowMultipleResponses} onChange={e => setAllowMultipleResponses(e.target.checked)} style={{ accentColor: MAROON }}/>
-              Show &quot;Submit another response&quot; button
-            </label>
-            <div className="border-t border-gray-100 pt-4">
-              <p className="text-xs font-medium text-gray-700 mb-3">Preview</p>
-              <SubmitConfirmationPreview message={confirmationMessage} allowMultiple={allowMultipleResponses}/>
+          <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4">
+            <div className="max-w-lg space-y-4">
+              <div>
+                <label className="text-xs font-medium text-gray-700 block mb-1">Confirmation Message</label>
+                <textarea value={confirmationMessage} onChange={e => setConfirmationMessage(e.target.value)}
+                  placeholder="Thank you for completing this form." rows={3}
+                  className="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:border-[#7b1113] resize-none"/>
+              </div>
+              <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
+                <input type="checkbox" checked={allowMultipleResponses} onChange={e => setAllowMultipleResponses(e.target.checked)} style={{ accentColor: MAROON }}/>
+                Show &quot;Submit another response&quot; button
+              </label>
+              <div className="border-t border-gray-100 pt-4">
+                <p className="text-xs font-medium text-gray-700 mb-3">Preview</p>
+                <SubmitConfirmationPreview message={confirmationMessage} allowMultiple={allowMultipleResponses}/>
+              </div>
             </div>
           </div>
         )}
       </div>
-      {/* Group create modal */}
-      {groupModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/20 px-4 pb-4 sm:pb-0">
-          <div className="w-full max-w-sm bg-white shadow-xl border border-gray-200 rounded-xl">
-            <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
-              <span className="text-sm font-semibold text-gray-800">Add Assignment Group</span>
-              <button onClick={() => setGroupModalOpen(false)} className="w-7 h-7 flex items-center justify-center border rounded text-sm" style={{ borderColor: MAROON, color: MAROON }}>×</button>
-            </div>
-            <div className="px-5 py-5">
-              <div className="flex flex-col gap-2">
-                <label className="text-xs font-medium text-gray-700">Group Name</label>
-                <input value={newGroupName} onChange={e => setNewGroupName(e.target.value)} onKeyDown={e => e.key === "Enter" && saveGroup()}
-                  placeholder="e.g., Evaluation Group 1" className="h-9 border border-gray-300 px-2 text-xs outline-none focus:border-[#7b1113] rounded-sm w-full"/>
-              </div>
-            </div>
-            <div className="bg-gray-50 border-t border-gray-200 px-4 py-3 flex flex-col-reverse sm:flex-row justify-end gap-2">
-              <button onClick={() => setGroupModalOpen(false)} className="h-10 px-4 border border-gray-300 bg-white text-xs text-gray-700 hover:bg-gray-50 rounded touch-manipulation">Cancel</button>
-              <button onClick={saveGroup} style={{ background: MAROON }} className="h-10 px-4 text-white text-xs rounded hover:opacity-90 touch-manipulation">Add Group</button>
-            </div>
-          </div>
-        </div>
-      )}
-      {/* Footer */}
+
+      {/* Footer — always at the bottom, never hidden */}
       <div className="shrink-0 border-t border-gray-200 bg-white px-4 sm:px-6 py-3 flex items-center justify-between flex-wrap gap-2">
         <div>{saveError && <span className="text-xs text-red-600 font-medium">⚠ {saveError}</span>}</div>
         <div className="flex items-center gap-2 flex-wrap justify-end w-full sm:w-auto">
-          <button onClick={onCancel} disabled={saving} className="h-9 px-4 border border-gray-300 bg-white text-xs text-gray-700 rounded hover:bg-gray-50 disabled:opacity-50 touch-manipulation">Cancel</button>
-          <button onClick={() => handleSave(true)} disabled={saving} className="h-9 px-4 border border-gray-300 bg-gray-50 text-xs text-gray-700 rounded hover:bg-gray-100 disabled:opacity-50 touch-manipulation">
+          <button
+            onClick={onCancel}
+            disabled={saving}
+            className="h-9 px-4 border border-gray-300 bg-white text-xs text-gray-700 rounded hover:bg-gray-50 disabled:opacity-50 touch-manipulation"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => handleSave(true)}
+            disabled={saving}
+            className="h-9 px-4 border border-gray-300 bg-gray-50 text-xs text-gray-700 rounded hover:bg-gray-100 disabled:opacity-50 touch-manipulation"
+          >
             {saving ? "Saving..." : "Save & Publish"}
           </button>
-          <button onClick={() => handleSave(false)} disabled={saving} style={{ background: MAROON }} className="h-9 px-4 text-white text-xs rounded hover:opacity-90 disabled:opacity-50 touch-manipulation">
+          <button
+            onClick={() => handleSave(false)}
+            disabled={saving}
+            style={{ background: MAROON }}
+            className="h-9 px-4 text-white text-xs rounded hover:opacity-90 disabled:opacity-50 touch-manipulation"
+          >
             {saving ? "Saving..." : "Save"}
           </button>
         </div>
@@ -1423,7 +1409,10 @@ interface CourseFormsPageProps {
   currentUserId?: string | null;
 }
 
-export default function CourseFormsPage({ courseId, isHead, isStaff, isFaculty: _isFaculty, canDelete: _canDelete, canManageForms, currentUserId }: CourseFormsPageProps) {
+export default function CourseFormsPage({
+  courseId, isHead, isStaff, isFaculty: _isFaculty,
+  canDelete: _canDelete, canManageForms, currentUserId,
+}: CourseFormsPageProps) {
   const [mode, setMode] = useState<"list" | "create" | "edit" | "detail" | "answer" | "responses">("list");
   const [forms, setForms] = useState<Form[]>([]);
   const [editingForm, setEditingForm] = useState<Form | undefined>(undefined);
@@ -1444,12 +1433,12 @@ export default function CourseFormsPage({ courseId, isHead, isStaff, isFaculty: 
 
   const canManage = canManageForms ?? viewer?.canManageForms ?? false;
   const headMode = isHead || isStaff || (
-  viewer?.courseRole === "Head" ||
-  viewer?.courseRole === "Staff" ||
-  viewer?.courseRole?.includes("Head") ||
-  viewer?.courseRole?.includes("Staff") ||
-  viewer?.canManageForms === true
-);
+    viewer?.courseRole === "Head" ||
+    viewer?.courseRole === "Staff" ||
+    viewer?.courseRole?.includes("Head") ||
+    viewer?.courseRole?.includes("Staff") ||
+    viewer?.canManageForms === true
+  );
 
   const loadForms = useCallback(() => {
     setLoading(true);
@@ -1464,7 +1453,7 @@ export default function CourseFormsPage({ courseId, isHead, isStaff, isFaculty: 
       .catch(() => {});
   }, [courseId]);
 
- const loadSubmissions = useCallback(async (formId: string | number) => {
+  const loadSubmissions = useCallback(async (formId: string | number) => {
     setSubmissionsLoading(true);
     try {
       const res = await fetch(`/api/courses/${courseId}/forms/${formId}/submissions`);
@@ -1554,7 +1543,7 @@ export default function CourseFormsPage({ courseId, isHead, isStaff, isFaculty: 
     );
   }
 
-  /* ── detail mode — uses HeadFormDetail ── */
+  /* ── detail mode ── */
   if (mode === "detail" && viewingForm) {
     return (
       <>
@@ -1593,11 +1582,14 @@ export default function CourseFormsPage({ courseId, isHead, isStaff, isFaculty: 
     return (
       <>
         <style>{RESPONSIVE_CSS}</style>
-        <FormCreateEditView
-          form={editingForm} courseId={courseId} sections={sections} staff={staff}
-          onCancel={() => { setMode("list"); setEditingForm(undefined); }}
-          onSave={onSave}
-        />
+        {/* KEY FIX: h-full so FormCreateEditView can use flex-col height properly */}
+        <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
+          <FormCreateEditView
+            form={editingForm} courseId={courseId} sections={sections} staff={staff}
+            onCancel={() => { setMode("list"); setEditingForm(undefined); }}
+            onSave={onSave}
+          />
+        </div>
       </>
     );
   }

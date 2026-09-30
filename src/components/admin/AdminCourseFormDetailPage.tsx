@@ -68,6 +68,56 @@ const typeColors: Record<string, string> = {
   "Graded Assessment": MAROON,
 };
 
+const FORMDETAIL_CSS = `
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .fd-desc { font-size: 13px; color: #374151; line-height: 1.75; }
+  .fd-desc p { margin: 0 0 8px; }
+  .fd-desc strong, .fd-desc b { font-weight: 700; color: #111827; }
+  .fd-desc ul, .fd-desc ol { padding-left: 20px; margin: 0 0 6px; }
+  .fd-desc li { margin-bottom: 3px; }
+  .fd-desc a { color: #7b1113; text-decoration: underline; }
+
+  .fd-sidebar { display: flex !important; }
+
+  .fd-overview-layout { display: flex; flex: 1; overflow: hidden; }
+  .fd-overview-main { flex: 1; overflow-y: auto; padding: 20px 24px; min-width: 0; }
+  .fd-overview-sidebar { width: 220px; flex-shrink: 0; border-left: 1px solid #e5e7eb; background: #fff; overflow-y: auto; display: flex; flex-direction: column; }
+
+  .fd-details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .fd-stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .fd-action-label { display: inline !important; }
+
+  @media (max-width: 1023px) {
+    .fd-overview-sidebar { display: none !important; }
+    .fd-overview-main { padding: 16px; }
+  }
+
+  @media (max-width: 767px) {
+    .fd-overview-main { padding: 10px 8px; }
+    .fd-detail-card-body { grid-template-columns: 1fr !important; gap: 8px !important; }
+    .fd-stats-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 6px; }
+
+    .fd-top-bar-wrap { flex-direction: column !important; align-items: stretch !important; padding: 0 8px !important; min-height: auto !important; }
+    .fd-tabs-row { width: 100%; }
+    .fd-tabs-row button { flex: 1; justify-content: center; padding: 8px 6px !important; font-size: 12px !important; }
+
+    .fd-tab-actions-wrap {
+      width: 100%; padding: 8px 0 10px !important; gap: 0 !important;
+      border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden; background: #fff;
+    }
+    .fd-tab-actions-wrap > button, .fd-tab-actions-wrap > div {
+      flex: 1; margin: 0 !important; border-radius: 0 !important; border: none !important;
+      border-right: 1px solid #e5e7eb !important; justify-content: center !important; height: 38px !important;
+    }
+    .fd-tab-actions-wrap > button:last-child, .fd-tab-actions-wrap > div:last-child { border-right: none !important; }
+    .fd-tab-actions-wrap > div > button { width: 100% !important; height: 100% !important; border-radius: 0 !important; }
+
+    .fd-hero { padding: 12px 14px !important; border-radius: 12px !important; }
+    .fd-action-label { display: none !important; }
+  }
+`;
+
 // ── Time options ──────────────────────────────────────────────────────────────
 function buildTimes() {
   const list: string[] = [];
@@ -140,22 +190,20 @@ function DeleteFormModal({ title, onConfirm, onCancel, deleting }: {
   title: string; onConfirm: () => void; onCancel: () => void; deleting: boolean;
 }) {
   return (
-    <div className="fixed inset-0 z-200 flex items-center justify-center bg-black/40 px-4" onClick={onCancel}>
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-95 border border-gray-200 overflow-hidden" onClick={e => e.stopPropagation()}>
-        <div className="px-5 py-4 border-b border-gray-100" style={{ background: "#fef2f2" }}>
-          <div className="flex items-center gap-2">
-            <Trash2 size={15} style={{ color: MAROON }} />
-            <span className="text-sm font-black" style={{ color: MAROON }}>Delete Form</span>
-          </div>
+    <div style={{ position: "fixed", inset: 0, zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,.4)", padding: "0 16px" }} onClick={onCancel}>
+      <div style={{ background: "#fff", borderRadius: 16, boxShadow: "0 20px 40px rgba(0,0,0,.2)", width: "100%", maxWidth: 400, overflow: "hidden", fontFamily: FONT }} onClick={e => e.stopPropagation()}>
+        <div style={{ padding: "16px 20px", borderBottom: "1px solid #fce8e8", background: "#fef2f2", display: "flex", alignItems: "center", gap: 8 }}>
+          <Trash2 size={15} style={{ color: MAROON }} />
+          <span style={{ fontSize: 14, fontWeight: 900, color: MAROON }}>Delete Form</span>
         </div>
-        <div className="px-5 py-5">
-          <p className="text-sm text-gray-700 leading-relaxed">
-            Are you sure you want to delete <span className="font-bold">&ldquo;{title}&rdquo;</span>? This action cannot be undone.
+        <div style={{ padding: 20 }}>
+          <p style={{ fontSize: 13, color: "#374151", lineHeight: 1.6, margin: 0 }}>
+            Are you sure you want to delete <strong>&ldquo;{title}&rdquo;</strong>? This cannot be undone.
           </p>
         </div>
-        <div className="px-5 py-4 border-t border-gray-100 bg-gray-50 flex justify-end gap-2">
-          <button onClick={onCancel} disabled={deleting} className="h-9 px-4 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-100 transition-all disabled:opacity-50">Cancel</button>
-          <button onClick={onConfirm} disabled={deleting} className="h-9 px-4 rounded-xl text-sm font-black text-white transition-all disabled:opacity-60" style={{ background: MAROON }}>
+        <div style={{ padding: "12px 20px", borderTop: "1px solid #f3f4f6", background: "#f9fafb", display: "flex", justifyContent: "flex-end", gap: 8 }}>
+          <button onClick={onCancel} disabled={deleting} style={{ height: 36, padding: "0 16px", border: "1px solid #e5e7eb", borderRadius: 10, fontSize: 13, fontWeight: 600, color: "#374151", cursor: "pointer", background: "#fff" }}>Cancel</button>
+          <button onClick={onConfirm} disabled={deleting} style={{ height: 36, padding: "0 16px", borderRadius: 10, fontSize: 13, fontWeight: 900, color: "#fff", cursor: "pointer", background: MAROON, border: "none", opacity: deleting ? 0.6 : 1 }}>
             {deleting ? "Deleting..." : "Delete"}
           </button>
         </div>
@@ -233,6 +281,13 @@ export default function AdminCourseFormDetailPage({
 
   // Active tab in detail
   const [activeTab, setActiveTab] = useState<"overview" | "questions" | "responses">("overview");
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 1024);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   useEffect(() => {
     if (!showDotMenu) return;
@@ -392,183 +447,201 @@ export default function AdminCourseFormDetailPage({
   const qCount = form.questions?.filter(q => q.type !== "section").length ?? 0;
 
   return (
-    <div className="flex flex-col h-full bg-white" style={{ fontFamily: FONT }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "#fff", fontFamily: FONT }}>
+      <style>{FORMDETAIL_CSS}</style>
 
       {/* Delete modal */}
       {showDeleteModal && (
         <DeleteFormModal title={form.title} onConfirm={handleDelete} onCancel={() => { setShowDeleteModal(false); setShowDotMenu(false); }} deleting={deleting} />
       )}
 
-      {/* ── Top action bar ── */}
-      <div className="bg-white border-b border-gray-200 px-3 sm:px-6 py-3 flex items-center justify-between shrink-0 gap-2">
-        <div className="flex items-center gap-1.5">
-          <span
-            className="hidden sm:inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full"
-            style={{ background: `${availability.statusColor}18`, color: availability.statusColor, border: `1px solid ${availability.statusColor}40` }}
-          >
-            <span className="w-1.5 h-1.5 rounded-full" style={{ background: availability.statusColor }} />
-            {availability.statusLabel}
-          </span>
+      {/* ── Unpublished banner ── */}
+      {!isPublished && (
+        <div style={{ background: "#fffbeb", borderBottom: "1px solid #fde68a", padding: "8px 16px", display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="#f59e0b" style={{ flexShrink: 0 }}><path d="M12 2L1 21h22L12 2zm0 3.5L20.5 19h-17L12 5.5zM11 10v4h2v-4h-2zm0 6v2h2v-2h-2z" /></svg>
+          <p style={{ fontSize: 12, color: "#92400e", fontWeight: 500, margin: 0 }}>This form is <strong>unpublished</strong>. Respondents cannot see it until published.</p>
         </div>
-        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap justify-end">
+      )}
+      {isPublished && form.availableFrom && new Date() < new Date(form.availableFrom) && (
+        <div style={{ background: "#eff6ff", borderBottom: "1px solid #bfdbfe", padding: "8px 16px", display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="#3b82f6" style={{ flexShrink: 0 }}><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" /></svg>
+          <p style={{ fontSize: 12, color: "#1e40af", fontWeight: 500, margin: 0 }}>Published but responses open {fmtDate(form.availableFrom)}.</p>
+        </div>
+      )}
+
+      {/* ── Top action bar ── */}
+      <div className="fd-top-bar-wrap" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid #e5e7eb", padding: "0 8px 0 12px", background: "#fff", flexShrink: 0, flexWrap: "wrap", gap: 0, minHeight: 48 }}>
+        {/* Tabs */}
+        <div className="fd-tabs-row" style={{ display: "flex", alignItems: "flex-end" }}>
+          {(["overview", "questions", "responses"] as const).map(key => (
+            <button key={key} onClick={() => setActiveTab(key)}
+              style={{ padding: "10px 12px", fontSize: 13, marginBottom: -1, marginRight: 2, borderRadius: "6px 6px 0 0", cursor: "pointer", display: "flex", alignItems: "center", gap: 5, whiteSpace: "nowrap", textTransform: "capitalize", transition: "all 0.15s",
+                border: activeTab === key ? "1px solid #e5e7eb" : "1px solid transparent",
+                borderBottom: activeTab === key ? "1px solid #fff" : "1px solid transparent",
+                background: activeTab === key ? "#fff" : "transparent",
+                color: activeTab === key ? "#111827" : "#6b7280",
+                fontWeight: activeTab === key ? 600 : 400 }}>
+              {key === "questions" ? (
+                <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                  Questions
+                  {qCount > 0 && <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 16, height: 16, borderRadius: "50%", fontSize: 10, color: "#fff", background: MAROON }}>{qCount}</span>}
+                </span>
+              ) : key === "responses" ? "After Submission" : "Overview"}
+            </button>
+          ))}
+        </div>
+
+        {/* Actions */}
+        <div className="fd-tab-actions-wrap" style={{ display: "flex", alignItems: "center", gap: 5, flexWrap: "wrap", padding: "6px 0" }}>
           <button onClick={togglePublish} disabled={publishing}
-            className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 text-xs font-bold rounded-lg transition-all disabled:opacity-60"
-            style={isPublished
-              ? { background: "#f0fdf4", color: "#15803d", border: "1px solid #bbf7d0" }
-              : { background: "#f9fafb", color: "#6b7280", border: "1px solid #e5e7eb" }}>
+            style={{ display: "flex", alignItems: "center", gap: 4, padding: "6px 10px", fontSize: 12, fontWeight: 700, borderRadius: 8, cursor: "pointer", opacity: publishing ? 0.6 : 1, border: "1px solid",
+              background: isPublished ? "#f0fdf4" : "#f9fafb",
+              color: isPublished ? "#15803d" : "#6b7280",
+              borderColor: isPublished ? "#bbf7d0" : "#e5e7eb" }}>
             {isPublished ? <CheckCircle size={13} style={{ color: "#15803d" }} /> : <Circle size={13} />}
-            <span className="hidden sm:inline">{isPublished ? "Published" : "Unpublished"}</span>
+            <span className="fd-action-label">{isPublished ? "Published" : "Unpublished"}</span>
           </button>
-          <button onClick={openAssignPanel} className="flex items-center gap-1 sm:gap-1.5 text-xs font-bold px-2 sm:px-3 py-1.5 border border-gray-200 rounded-lg hover:border-gray-400 text-gray-600 hover:text-gray-800 transition-all">
-            <Users size={12} /><span className="hidden sm:inline">Assign To</span>
+          <button onClick={openAssignPanel}
+            style={{ display: "flex", alignItems: "center", gap: 4, padding: "6px 10px", fontSize: 12, fontWeight: 700, borderRadius: 8, cursor: "pointer", border: "1px solid #e5e7eb", background: "#fff", color: "#374151" }}>
+            <Users size={13} /><span className="fd-action-label">Assign</span>
           </button>
           <button onClick={() => router.push(`/admin/courses/${courseId}/forms/${formId}/edit`)}
-            className="flex items-center gap-1 sm:gap-1.5 text-xs font-bold px-2 sm:px-3 py-1.5 border border-gray-200 rounded-lg hover:border-gray-400 text-gray-600 hover:text-gray-800 transition-all">
-            <Pencil size={12} /><span className="hidden sm:inline">Edit</span>
+            style={{ display: "flex", alignItems: "center", gap: 4, padding: "6px 10px", fontSize: 12, fontWeight: 700, borderRadius: 8, cursor: "pointer", border: "1px solid #e5e7eb", background: "#fff", color: "#374151" }}>
+            <Pencil size={13} /><span className="fd-action-label">Edit</span>
           </button>
-          <div className="relative" ref={dotMenuRef}>
-            <button onClick={() => setShowDotMenu(p => !p)} className="w-8 h-8 flex items-center justify-center border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-500 transition-all">
+          <div style={{ position: "relative" }} ref={dotMenuRef}>
+            <button onClick={() => setShowDotMenu(p => !p)}
+              style={{ width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid #e5e7eb", borderRadius: 8, cursor: "pointer", background: "#fff", color: "#6b7280" }}>
               <MoreVertical size={15} />
             </button>
-            {showDotMenu && (
-              <div className="absolute right-0 top-full mt-1 w-44 bg-white border border-gray-200 shadow-xl rounded-xl z-100 overflow-hidden py-1">
-                <button onClick={() => { setShowDotMenu(false); setShowDeleteModal(true); }}
-                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-red-600 hover:bg-red-50 transition-colors text-left">
-                  <Trash2 size={13} /> Delete Form
-                </button>
-              </div>
-            )}
+            {showDotMenu && (() => {
+  const rect = dotMenuRef.current?.querySelector("button")?.getBoundingClientRect();
+  const top = rect ? Math.min(rect.bottom + 4, window.innerHeight - 80) : 100;
+  const right = rect ? window.innerWidth - rect.right : 8;
+  return (
+    <div style={{ position: "fixed", right, top, width: 180, background: "#fff", border: "1px solid #e5e7eb", borderRadius: 12, boxShadow: "0 8px 24px rgba(0,0,0,.12)", zIndex: 9999, overflow: "hidden", padding: "4px 0" }}>
+      <button onClick={() => { setShowDotMenu(false); setShowDeleteModal(true); }}
+        style={{ width: "100%", display: "flex", alignItems: "center", gap: 8, padding: "10px 16px", fontSize: 12, fontWeight: 600, color: "#ef4444", cursor: "pointer", background: "none", border: "none", textAlign: "left" }}>
+        <Trash2 size={13} /> Delete Form
+      </button>
+    </div>
+  );
+})()}
           </div>
         </div>
       </div>
 
-      {/* Status banners */}
-      {!isPublished && (
-        <div className="bg-amber-50 border-b border-amber-200 px-4 py-2 flex items-center gap-2">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="#f59e0b"><path d="M12 2L1 21h22L12 2zm0 3.5L20.5 19h-17L12 5.5zM11 10v4h2v-4h-2zm0 6v2h2v-2h-2z" /></svg>
-          <p className="text-xs text-amber-800 font-medium">This form is <strong>unpublished</strong>. Respondents cannot see it until you publish it.</p>
-        </div>
-      )}
-      {isPublished && form.availableFrom && new Date() < new Date(form.availableFrom) && (
-        <div className="bg-blue-50 border-b border-blue-200 px-4 py-2 flex items-center gap-2">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="#3b82f6"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" /></svg>
-          <p className="text-xs text-blue-800 font-medium">Published but responses open {fmtDate(form.availableFrom)}.</p>
-        </div>
-      )}
-
-      {/* Inner tab bar */}
-      <div className="flex items-end border-b border-gray-200 px-3 sm:px-6 bg-white shrink-0 overflow-x-auto">
-        {(["overview", "questions", "responses"] as const).map(key => (
-          <button key={key} onClick={() => setActiveTab(key)}
-            className={`px-3 sm:px-4 py-2 text-xs border border-b-0 -mb-px mr-0.5 transition-colors rounded-t capitalize whitespace-nowrap ${activeTab === key ? "bg-white border-gray-200 text-gray-900 font-medium" : "border-transparent text-gray-500 hover:text-gray-700"}`}>
-            {key === "questions" ? (
-              <span className="flex items-center gap-1">
-                Questions
-                {qCount > 0 && <span className="inline-flex items-center justify-center w-4 h-4 rounded-full text-[10px] text-white" style={{ background: MAROON }}>{qCount}</span>}
-              </span>
-            ) : key === "responses" ? "After Submission" : "Overview"}
-          </button>
-        ))}
-      </div>
-
-      <div className="flex flex-1 overflow-hidden">
+       <div className="fd-overview-layout" style={activeTab !== "overview" ? { display: "flex", flex: 1, overflow: "hidden" } : undefined}>
 
         {/* ── Main content ── */}
-        <div className="flex-1 overflow-y-auto px-4 sm:px-8 py-6">
+        <div className={activeTab === "overview" ? "fd-overview-main" : "flex-1 overflow-y-auto px-4 sm:px-8 py-6"}>
 
           {/* ── OVERVIEW TAB ── */}
           {activeTab === "overview" && (
-            <>
-              {/* Title */}
-              <div className="flex items-start gap-3 mb-4">
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${typeColors[form.formType] ?? MAROON}18` }}>
-                  <FileText size={18} style={{ color: typeColors[form.formType] ?? MAROON }} />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2 flex-wrap mb-1">
-                    <h1 className="text-xl sm:text-2xl font-black text-gray-900">{form.title}</h1>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full text-white font-medium" style={{ background: typeColors[form.formType] ?? MAROON }}>
-                      {form.formType}
-                    </span>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, width: "100%" }}>
+
+              {/* Hero */}
+              <div className="fd-hero" style={{ background: `linear-gradient(135deg, ${typeColors[form.formType] ?? MAROON} 0%, ${MAROON} 100%)`, borderRadius: 12, padding: "12px 14px", position: "relative", overflow: "hidden" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, position: "relative", flexWrap: "wrap" }}>
+                  <div style={{ width: 34, height: 34, borderRadius: 9, background: "rgba(255,255,255,.15)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <FileText size={16} color="#fff" />
                   </div>
-                  {creator && (
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-black shrink-0" style={{ background: MAROON }}>
-                        {creator.name.charAt(0).toUpperCase()}
-                      </div>
-                      <span className="text-sm font-bold text-gray-800">{creator.name}</span>
-                      {creator.courseRole && <RoleBadge role={creator.courseRole} />}
-                      <span className="text-xs text-gray-400">· Posted {fmtDateTime(creator.createdAt)}</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <h1 style={{ fontSize: 15, fontWeight: 900, color: "#fff", margin: 0, letterSpacing: "-0.01em", lineHeight: 1.25, wordBreak: "break-word" }}>{form.title}</h1>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginTop: 3 }}>
+                      <span style={{ fontSize: 9, fontWeight: 800, padding: "2px 7px", borderRadius: 20, background: "rgba(255,255,255,.15)", color: "rgba(255,255,255,.85)", letterSpacing: "0.04em", textTransform: "uppercase", whiteSpace: "nowrap" }}>
+                        {form.formType}
+                      </span>
+                      {creator && (
+                        <span style={{ fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,.75)" }}>{creator.name}{creator.courseRole ? ` · ${creator.courseRole}` : ""}</span>
+                      )}
                     </div>
-                  )}
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 4, background: "rgba(255,255,255,.12)", borderRadius: 20, padding: "4px 9px", flexShrink: 0 }}>
+                    <div style={{ width: 6, height: 6, borderRadius: "50%", background: availability.statusColor }} />
+                    <span style={{ fontSize: 10, fontWeight: 800, color: "#fff", whiteSpace: "nowrap" }}>{availability.statusLabel}</span>
+                  </div>
                 </div>
               </div>
 
               {/* Description */}
               {form.description && (
-                <div className="mb-6 text-sm text-gray-700 leading-relaxed border-l-4 pl-4" style={{ borderColor: typeColors[form.formType] ?? MAROON }}>
-                  <div dangerouslySetInnerHTML={{ __html: form.description }} />
+                <div style={{ background: "#fff", border: "1px solid #f0e4e4", borderLeft: `3px solid ${typeColors[form.formType] ?? MAROON}`, borderRadius: "0 10px 10px 0", padding: "10px 12px" }}>
+                  <p style={{ fontSize: 9, fontWeight: 800, color: MAROON, textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 5px" }}>Description</p>
+                  <div className="fd-desc" dangerouslySetInnerHTML={{ __html: form.description }} />
                 </div>
               )}
 
-              {/* Details grid */}
-              {/* Details grid */}
-              <div className="bg-white border border-gray-100 rounded-xl mb-5 overflow-hidden shadow-sm">
-                <div className="px-4 py-2.5 border-b border-gray-100 flex items-center gap-2" style={{ background: "#fdf2f2" }}>
-                  <svg width="13" height="13" fill="none" stroke={MAROON} strokeWidth={2} viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                  <p className="text-[10px] font-black uppercase tracking-widest" style={{ color: MAROON }}>Details</p>
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-y divide-gray-100">
-                  <div className="px-4 py-4 flex flex-col gap-1">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Type</p>
-                    <span className="text-[11px] px-2 py-0.5 rounded-full text-white font-bold w-fit" style={{ background: typeColors[form.formType] ?? MAROON }}>{form.formType}</span>
+              {/* Stats */}
+              <div className="fd-stats-grid">
+                {[
+                  { label: "Questions", value: qCount, color: "#1d4ed8", bg: "#eff6ff", border: "#bfdbfe" },
+                  { label: "Status", value: isPublished ? "Published" : "Draft", color: isPublished ? "#15803d" : "#9ca3af", bg: isPublished ? "#f0fdf4" : "#f9fafb", border: isPublished ? "#bbf7d0" : "#e5e7eb" },
+                  { label: "Can Respond", value: availability.canRespond ? "Yes" : "No", color: availability.canRespond ? "#15803d" : MAROON, bg: availability.canRespond ? "#f0fdf4" : "#fef2f2", border: availability.canRespond ? "#bbf7d0" : "#f0c0c0" },
+                  { label: "For", value: forLabel, color: "#374151", bg: "#f9fafb", border: "#e5e7eb" },
+                ].map(stat => (
+                  <div key={stat.label} style={{ background: stat.bg, border: `1px solid ${stat.border}`, borderRadius: 9, padding: "8px 4px", textAlign: "center", overflow: "hidden" }}>
+                    <p style={{ fontSize: "clamp(11px, 2.5vw, 15px)", fontWeight: 900, color: stat.color, margin: 0, lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{stat.value}</p>
+                    <p style={{ fontSize: "clamp(7.5px, 1.2vw, 10px)", fontWeight: 800, color: stat.color, textTransform: "uppercase", letterSpacing: "0.05em", margin: "3px 0 0" }}>{stat.label}</p>
                   </div>
-                  <div className="px-4 py-4 flex flex-col gap-1">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Questions</p>
-                    <p className="text-2xl font-black" style={{ color: MAROON }}>{qCount}</p>
-                  </div>
-                  <div className="px-4 py-4 flex flex-col gap-1">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Status</p>
-                    <span className="flex items-center gap-1.5 text-sm font-bold" style={{ color: isPublished ? "#15803d" : "#9ca3af" }}>
-                      <span className="w-2 h-2 rounded-full shrink-0" style={{ background: isPublished ? "#22c55e" : "#9ca3af" }}/>
-                      {isPublished ? "Published" : "Unpublished"}
-                    </span>
-                  </div>
-                  <div className="px-4 py-4 flex flex-col gap-1">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Can Respond</p>
-                    <span className="flex items-center gap-1.5 text-sm font-bold" style={{ color: availability.canRespond ? "#15803d" : "#ef4444" }}>
-                      <span className="w-2 h-2 rounded-full shrink-0" style={{ background: availability.canRespond ? "#22c55e" : "#ef4444" }}/>
-                      {availability.canRespond ? "Yes" : "No"}
-                    </span>
-                  </div>
-                </div>
+                ))}
               </div>
 
-              {/* Schedule */}
-              <div className="bg-white border border-gray-100 rounded-xl mb-5 overflow-hidden shadow-sm">
-                <div className="px-4 py-2.5 border-b border-gray-100 flex items-center gap-2" style={{ background: "#fdf2f2" }}>
-                  <svg width="13" height="13" fill="none" stroke={MAROON} strokeWidth={2} viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                  <p className="text-[10px] font-black uppercase tracking-widest" style={{ color: MAROON }}>Schedule</p>
+              {/* Details + Schedule — merged card */}
+              <div style={{ background: "#fff", border: "1px solid #f0e4e4", borderRadius: 12, overflow: "hidden" }}>
+                <div style={{ padding: "8px 12px", background: "linear-gradient(90deg,#fef2f2,#fff)", borderBottom: "1px solid #fce8e8" }}>
+                  <p style={{ fontSize: 9, fontWeight: 800, color: MAROON, textTransform: "uppercase", letterSpacing: "0.08em", margin: 0 }}>Details &amp; Schedule</p>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-y divide-gray-100">
-                  {[
-                    { label: "Due", value: fmtDate(form.dueDate), icon: "⏰", accent: true },
-                    { label: "For", value: forLabel, icon: "👥", accent: false },
-                    { label: "Available From", value: fmtDate(form.availableFrom), icon: "🟢", accent: false },
-                    { label: "Until", value: fmtDate(form.availableUntil), icon: "🔴", accent: false },
-                  ].map(({ label, value, icon, accent }) => (
-                    <div key={label} className="px-4 py-4 flex flex-col gap-1.5">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 flex items-center gap-1">
-                        <span>{icon}</span>{label}
-                      </p>
-                      <p className="text-sm font-semibold" style={{ color: accent ? MAROON : "#374151" }}>
-                        {value}
-                      </p>
+                <div className="fd-detail-card-body" style={{ padding: "10px 12px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px 14px" }}>
+                  {([
+                    ["Type", form.formType],
+                    ["Due", fmtDate(form.dueDate)],
+                    ["Assigned To", forLabel],
+                    ["Available From", fmtDate(form.availableFrom)],
+                    ["Status", isPublished ? "Published" : "Unpublished"],
+                    ["Until", fmtDate(form.availableUntil)],
+                  ] as [string, string][]).map(([k, v]) => (
+                    <div key={k}>
+                      <p style={{ fontSize: 8.5, fontWeight: 800, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 2px" }}>{k}</p>
+                      <p style={{ fontSize: 12, fontWeight: 700, color: "#111827", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{v}</p>
                     </div>
                   ))}
                 </div>
               </div>
-            </>
+
+              {/* ── Mobile Quick Links ── */}
+              {isMobile && (
+                <div style={{ background: "#fff", border: "1px solid #f0e4e4", borderRadius: 12, overflow: "hidden" }}>
+                  <div style={{ padding: "8px 12px", background: "linear-gradient(90deg,#fef2f2,#fff)", borderBottom: "1px solid #fce8e8" }}>
+                    <p style={{ fontSize: 9, fontWeight: 800, color: MAROON, textTransform: "uppercase", letterSpacing: "0.08em", margin: 0 }}>Quick Links</p>
+                  </div>
+                  <div style={{ padding: "12px 14px", display: "flex", flexDirection: "column", gap: 14 }}>
+                    <button
+                      onClick={() => setActiveTab("questions")}
+                      style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 700, color: MAROON, background: "none", border: "none", cursor: "pointer", textAlign: "left", padding: 0 }}
+                    >
+                      <FileText size={14} />
+                      View Questions
+                      {qCount > 0 && <span style={{ fontSize: 11, color: "#9ca3af", fontWeight: 400 }}>({qCount})</span>}
+                    </button>
+                    <button
+                      onClick={() => router.push(`/admin/courses/${courseId}/forms/${formId}/responses`)}
+                      style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 700, color: MAROON, background: "none", border: "none", cursor: "pointer", textAlign: "left", padding: 0 }}
+                    >
+                      <FileText size={14} />
+                      View Responses
+                    </button>
+                    <button
+                      onClick={() => router.push(`/admin/courses/${courseId}/forms/${formId}/edit`)}
+                      style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 700, color: MAROON, background: "none", border: "none", cursor: "pointer", textAlign: "left", padding: 0 }}
+                    >
+                      <Pencil size={14} />
+                      Edit Form
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           )}
 
           {/* ── QUESTIONS TAB ── */}
@@ -625,28 +698,25 @@ export default function AdminCourseFormDetailPage({
         </div>
 
         {/* ── Right Sidebar ── */}
-        <div className="hidden sm:flex w-52 border-l border-gray-200 bg-white shrink-0 flex-col overflow-y-auto">
-          <div className="px-4 py-4 border-b border-gray-100" style={{ background: "#fdf2f2" }}>
-            <p className="text-[10px] font-black uppercase tracking-widest" style={{ color: MAROON }}>Related</p>
+        {activeTab === "overview" && (
+          <div className="fd-overview-sidebar fd-sidebar">
+            <div style={{ padding: "12px 16px", borderBottom: "1px solid #f3f4f6", background: "#fdf2f2" }}>
+              <p style={{ fontSize: 10, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.1em", color: MAROON, margin: 0 }}>Related Items</p>
+            </div>
+            <div style={{ padding: "14px 16px", display: "flex", flexDirection: "column", gap: 12 }}>
+              <button onClick={() => setActiveTab("questions")} style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 12, fontWeight: 700, color: MAROON, background: "none", border: "none", cursor: "pointer", textAlign: "left", padding: 0 }}><FileText size={13} /> View Questions</button>
+              <button onClick={() => router.push(`/admin/courses/${courseId}/forms/${formId}/responses`)} style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 12, fontWeight: 700, color: MAROON, background: "none", border: "none", cursor: "pointer", textAlign: "left", padding: 0 }}><FileText size={13} /> View Responses</button>
+              <button onClick={() => router.push(`/admin/courses/${courseId}/forms/${formId}/edit`)} style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 12, fontWeight: 700, color: MAROON, background: "none", border: "none", cursor: "pointer", textAlign: "left", padding: 0 }}><Pencil size={13} /> Edit Form</button>
+            </div>
+            <div style={{ padding: "14px 16px", borderTop: "1px solid #f3f4f6" }}>
+              <p style={{ fontSize: 10, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.1em", color: "#9ca3af", margin: "0 0 8px" }}>Summary</p>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <span style={{ fontSize: 12, color: "#6b7280" }}>Questions</span>
+                <span style={{ fontSize: 13, fontWeight: 900, color: MAROON }}>{qCount}</span>
+              </div>
+            </div>
           </div>
-          <div className="px-4 py-4 space-y-3">
-            <button
-              onClick={() => router.push(`/admin/courses/${courseId}/forms/${formId}/edit`)}
-              className="w-full flex items-center gap-2 text-xs font-bold hover:underline text-left" style={{ color: MAROON }}>
-              <Pencil size={13} /> Edit Form
-            </button>
-            <button
-              onClick={() => router.push(`/admin/courses/${courseId}/forms/${formId}/responses`)}
-              className="w-full flex items-center gap-2 text-xs font-bold hover:underline text-left" style={{ color: MAROON }}>
-              <FileText size={13} /> View Responses
-            </button>
-          </div>
-          <div className="px-4 py-2 border-t border-gray-100">
-            <p className="text-[10px] text-gray-400 leading-relaxed">
-              {qCount} question{qCount !== 1 ? "s" : ""}
-            </p>
-          </div>
-        </div>
+        )}
       </div>
 
       {/* ── Assign To Side Panel ── */}

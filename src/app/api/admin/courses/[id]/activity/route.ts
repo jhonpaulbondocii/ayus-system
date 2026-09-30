@@ -58,7 +58,7 @@ export async function GET(
     prisma.form.count({ where: { courseId } }),
   ]);
 
-  const [recentSubmissions, recentAnnouncements, recentEnrollments] =
+  const [recentSubmissions, recentAnnouncements, recentEnrollments, recentFormSubmissions] =
     await Promise.all([
       prisma.submission.findMany({
         where: { assignment: { courseId }, submittedAt: { not: null } },
@@ -90,9 +90,30 @@ export async function GET(
         orderBy: { createdAt: "desc" },
         take: 5,
       }),
+
+      prisma.formSubmission.findMany({
+        where: { form: { courseId } },
+        select: {
+          id: true,
+          createdAt: true,
+          user: { select: { name: true } },
+          form: { select: { title: true } },
+        },
+        orderBy: { createdAt: "desc" },
+        take: 5,
+      }),
     ]);
 
-  const withTs: ActivityItemWithTs[] = [
+    const withTs: ActivityItemWithTs[] = [
+    ...recentFormSubmissions.map((fs) => ({
+      id: `fsub-${fs.id}`,
+      type: "general" as const,
+      text: `submitted form: "${fs.form.title}"`,
+      user: fs.user.name ?? undefined,
+      time: formatTime(fs.createdAt),
+      _ts: fs.createdAt,
+    })),
+
     ...recentSubmissions.map((s) => ({
       id: `sub-${s.id}`,
       type: "submission" as const,
@@ -124,7 +145,7 @@ export async function GET(
   const activity: ActivityItem[] = withTs
     .sort((a, b) => b._ts.getTime() - a._ts.getTime())
     .slice(0, 10)
-    .map(({ _ts: _ignored, ...rest }) => rest);
+    .map(({ _ts: _ts, ...rest }) => { void _ts; return rest; });
 
   return NextResponse.json({
     stats: {

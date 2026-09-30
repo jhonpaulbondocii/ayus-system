@@ -162,8 +162,9 @@ function GradeModal({
     ? Math.round((parseFloat(points) / assignment.points) * 100) : null;
 
   return (
-    <div className="fixed inset-0 z-200 flex items-center justify-center bg-black/50 px-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-105 overflow-hidden border border-gray-100"
+    <div className="fixed inset-0 flex items-center justify-center bg-black/50 px-4" style={{ zIndex: 9999 }} onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-105 border border-gray-100 flex flex-col"
+        style={{ maxHeight: "calc(100dvh - 120px)", overflow: "hidden" }}
         onClick={e => e.stopPropagation()}>
 
         {/* Header */}
@@ -178,7 +179,7 @@ function GradeModal({
           <button onClick={onClose} className="text-white/50 hover:text-white transition-colors"><X size={16} /></button>
         </div>
 
-        <div className="px-5 py-5 space-y-4">
+        <div className="px-5 py-5 space-y-4 overflow-y-auto" style={{ maxHeight: "60vh" }}>
           {/* Assignment info */}
           <div className="flex items-center justify-between text-xs text-gray-500">
             <span className="font-semibold truncate">{assignment.title}</span>
@@ -515,7 +516,7 @@ function StatsBar({ submissions, assignment }: { submissions: Submission[]; assi
   })();
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
+    <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-3 mb-4 sm:mb-6">
       {[
         { label: "Submitted", value: submitted, color: "#1d4ed8", bg: "#eff6ff", border: "#bfdbfe" },
         { label: "Graded", value: graded, color: "#15803d", bg: "#f0fdf4", border: "#bbf7d0" },
@@ -527,10 +528,10 @@ function StatsBar({ submissions, assignment }: { submissions: Submission[]; assi
           color: "#6b7280", bg: "#f9fafb", border: "#e5e7eb",
         },
       ].map(stat => (
-        <div key={stat.label} className="rounded-xl border px-4 py-3 text-center"
+        <div key={stat.label} className="rounded-xl border px-2 sm:px-4 py-2 sm:py-3 text-center"
           style={{ background: stat.bg, borderColor: stat.border }}>
-          <p className="text-xl font-black" style={{ color: stat.color }}>{stat.value}</p>
-          <p className="text-[10px] font-bold uppercase tracking-widest mt-0.5" style={{ color: stat.color }}>{stat.label}</p>
+          <p className="text-base sm:text-xl font-black" style={{ color: stat.color }}>{stat.value}</p>
+          <p className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mt-0.5" style={{ color: stat.color }}>{stat.label}</p>
         </div>
       ))}
     </div>
@@ -789,8 +790,8 @@ export default function AdminCourseAssignmentSubmissionsPage({
       )}
 
       {/* ── Header ── */}
-      <div className="bg-white border-b border-gray-200 px-4 sm:px-6 py-4 shrink-0">
-        <div className="flex items-start gap-3">
+      <div className="bg-white border-b border-gray-200 px-3 sm:px-6 py-3 sm:py-4 shrink-0">
+        <div className="flex items-start gap-2 sm:gap-3">
           {/* Back button */}
           <button
             onClick={() => router.push(`/admin/courses/${courseId}/assignments/${assignmentId}`)}
@@ -800,8 +801,8 @@ export default function AdminCourseAssignmentSubmissionsPage({
           </button>
 
           <div className="flex-1 min-w-0">
-            {/* Breadcrumb */}
-            <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1 flex-wrap">
+            {/* Breadcrumb — hidden on mobile, too much clutter */}
+            <div className="hidden sm:flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1 flex-wrap">
               <span
                 className="hover:underline cursor-pointer transition-colors"
                 style={{ color: MAROON }}
@@ -821,35 +822,36 @@ export default function AdminCourseAssignmentSubmissionsPage({
               <span className="text-gray-500">Submissions</span>
             </div>
 
-            <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-lg sm:text-xl font-black text-gray-900">Submissions</h1>
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+              <h1 className="text-base sm:text-xl font-black text-gray-900">Submissions</h1>
               <span className="text-[10px] px-2 py-0.5 rounded-full text-white font-bold" style={{ background: MAROON }}>
                 {submitted.length}
               </span>
+            </div>
+            <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+              <span className="text-xs sm:text-sm font-semibold text-gray-600 truncate max-w-[55vw] sm:max-w-none">{assignment.title}</span>
               <span className="text-xs text-gray-400">·</span>
-              <span className="text-sm font-semibold text-gray-600 truncate">{assignment.title}</span>
-              <span className="text-xs text-gray-400">·</span>
-              <span className="text-sm font-bold" style={{ color: MAROON }}>{assignment.points} pts</span>
+              <span className="text-xs sm:text-sm font-bold" style={{ color: MAROON }}>{assignment.points} pts</span>
             </div>
           </div>
 
-          {/* Actions */}
-          <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
+          {/* Actions — full width row on mobile */}
+          <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end w-full sm:w-auto mt-2 sm:mt-0">
             <button
               onClick={handleRefresh}
               disabled={refreshing}
-              className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 border border-gray-200 rounded-lg hover:border-gray-400 text-gray-600 hover:text-gray-800 transition-all disabled:opacity-50"
+              className="flex items-center justify-center gap-1.5 text-xs font-bold px-3 py-2 sm:py-1.5 border border-gray-200 rounded-lg hover:border-gray-400 text-gray-600 hover:text-gray-800 transition-all disabled:opacity-50 flex-1 sm:flex-none"
             >
               <RefreshCw size={12} className={refreshing ? "animate-spin" : ""} />
-              <span className="hidden sm:inline">Refresh</span>
+              <span>Refresh</span>
             </button>
             <button
               onClick={() => window.open(`/admin/courses/${courseId}/assignments/${assignmentId}/speedgrader`, "_blank")}
-              className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg transition-all text-white"
+              className="flex items-center justify-center gap-1.5 text-xs font-bold px-3 py-2 sm:py-1.5 rounded-lg transition-all text-white flex-1 sm:flex-none"
               style={{ background: MAROON }}
             >
               <Zap size={12} />
-              <span className="hidden sm:inline">SpeedGrader™</span>
+              <span>SpeedGrader™</span>
             </button>
           </div>
         </div>
@@ -862,10 +864,10 @@ export default function AdminCourseAssignmentSubmissionsPage({
         <StatsBar submissions={submissions} assignment={assignment} />
 
         {/* Toolbar */}
-        <div className="bg-white rounded-xl border border-gray-200 px-4 py-3 mb-4 flex items-center gap-3 flex-wrap shadow-sm">
+        <div className="bg-white rounded-xl border border-gray-200 px-3 sm:px-4 py-3 mb-4 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 sm:flex-wrap shadow-sm">
 
           {/* Search */}
-          <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-3 py-1.5 flex-1 min-w-45 max-w-xs focus-within:border-gray-400 transition-colors">
+          <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-3 py-1.5 w-full sm:flex-1 sm:min-w-45 sm:max-w-xs focus-within:border-gray-400 transition-colors">
             <Search size={12} className="text-gray-400 shrink-0" />
             <input
               value={search}
@@ -877,7 +879,7 @@ export default function AdminCourseAssignmentSubmissionsPage({
           </div>
 
           {/* Filter status */}
-          <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1 flex-wrap">
+          <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1 overflow-x-auto sm:flex-wrap" style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "none" }}>
             {(["all", "submitted", "graded", "missing", "late"] as FilterStatus[]).map(f => (
               <button key={f}
                 onClick={() => setFilterStatus(f)}
@@ -893,27 +895,28 @@ export default function AdminCourseAssignmentSubmissionsPage({
             ))}
           </div>
 
-          {/* Sort */}
-          <div className="flex items-center gap-2 ml-auto">
-            <Filter size={11} className="text-gray-400" />
-            <select
-              value={sort}
-              onChange={e => setSort(e.target.value as SortType)}
-              className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white outline-none cursor-pointer text-gray-600"
-            >
-              <option value="newest">Newest first</option>
-              <option value="oldest">Oldest first</option>
-              <option value="name">Name A–Z</option>
-              <option value="grade">Grade (high)</option>
-            </select>
+          {/* Sort + count */}
+          <div className="flex items-center gap-2 justify-between sm:ml-auto w-full sm:w-auto">
+            <div className="flex items-center gap-2">
+              <Filter size={11} className="text-gray-400" />
+              <select
+                value={sort}
+                onChange={e => setSort(e.target.value as SortType)}
+                className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white outline-none cursor-pointer text-gray-600"
+              >
+                <option value="newest">Newest first</option>
+                <option value="oldest">Oldest first</option>
+                <option value="name">Name A–Z</option>
+                <option value="grade">Grade (high)</option>
+              </select>
+            </div>
+            <span className="text-xs text-gray-400 whitespace-nowrap">{filtered.length} shown</span>
           </div>
-
-          <span className="text-xs text-gray-400 whitespace-nowrap">{filtered.length} shown</span>
         </div>
 
         {/* Download bar */}
         {submitted.length > 0 && (
-          <div className="bg-white border border-gray-200 rounded-xl px-4 py-3 mb-5 flex items-center justify-between gap-3 shadow-sm flex-wrap">
+          <div className="bg-white border border-gray-200 rounded-xl px-3 sm:px-4 py-3 mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 shadow-sm">
             <div className="flex items-center gap-2">
               <PackageOpen size={14} style={{ color: MAROON }} />
               <div>
@@ -954,7 +957,7 @@ export default function AdminCourseAssignmentSubmissionsPage({
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
             {filtered.map((sub, i) => (
               <SubmissionCard
                 key={sub.id ?? `${sub.userId}-${i}`}
