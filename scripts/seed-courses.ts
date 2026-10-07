@@ -1,7 +1,7 @@
 // scripts/seed-courses.ts
 // Run: npx tsx scripts/seed-courses.ts
 
-import { PrismaClient } from "../src/generated/prisma";
+import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 

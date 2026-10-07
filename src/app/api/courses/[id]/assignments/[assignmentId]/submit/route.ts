@@ -5,7 +5,7 @@ import { randomUUID } from "crypto";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { AssignmentStatus } from "@/generated/prisma";
+import { AssignmentStatus } from "@prisma/client";
 
 type SubmissionEntryRule = {
   id: string | number;

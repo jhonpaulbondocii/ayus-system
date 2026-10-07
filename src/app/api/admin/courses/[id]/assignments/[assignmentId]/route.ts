@@ -1,7 +1,7 @@
 // src/app/api/admin/courses/[id]/assignments/[assignmentId]/route.ts
 
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@/generated/prisma";
+import { PrismaClient } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 

@@ -3,7 +3,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireCoursePermission } from "@/lib/course-access";
-import { PatientAction } from "@/generated/prisma";
+import { PatientAction } from "@prisma/client";
 import { generateSignToken, signTokenExpiry } from "@/lib/sign-token";
 import { sendSignatureRequestEmail } from "@/lib/email";
 

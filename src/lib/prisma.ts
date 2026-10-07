@@ -1,7 +1,6 @@
 // src/lib/prisma.ts
-// Prisma v7 generates client to src/generated/prisma by default
 
-import { PrismaClient } from "@/generated/prisma";
+import { PrismaClient } from "@prisma/client";
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;

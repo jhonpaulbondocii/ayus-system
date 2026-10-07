@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireCoursePermission } from "@/lib/course-access";
-import { FormType, FormQuestionType } from "@/generated/prisma";
+import { FormType, FormQuestionType } from "@prisma/client";
 
 function toFormType(value: string): FormType {
   const map: Record<string, FormType> = {

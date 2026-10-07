@@ -3,7 +3,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireCoursePermission } from "@/lib/course-access";
-import { AssignmentStatus } from "@/generated/prisma";
+import { AssignmentStatus } from "@prisma/client";
 
 export async function PATCH(
   req: NextRequest,

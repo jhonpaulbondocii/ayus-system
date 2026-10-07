@@ -1,7 +1,7 @@
 // scripts/create-admin.ts
 // Run: npx ts-node scripts/create-admin.ts
 
-import { PrismaClient } from "../src/generated/prisma";
+import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();

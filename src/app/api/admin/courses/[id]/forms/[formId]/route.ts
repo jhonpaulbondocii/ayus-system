@@ -2,7 +2,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { FormQuestionType, FormType } from "@/generated/prisma";
+import { FormQuestionType, FormType } from "@prisma/client";
 
 type UpdateFormQuestionInput = {
   question?: string;

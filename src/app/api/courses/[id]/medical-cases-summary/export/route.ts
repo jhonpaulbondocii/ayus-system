@@ -16,7 +16,6 @@ import { computeMedicalCasesSummary } from "@/lib/medical-cases-aggregate";
 import {
   FIXED_BODY_SYSTEMS,
   COLLEGE_CODES,
-  MEDICAL_CASES_TEMPLATE_PATH,
   MONTH_SHEET_NAMES,
   CONSOLIDATED_SHEET_NAME,
   TEMPLATE_COLS,
@@ -66,7 +65,7 @@ export async function GET(
     const summary = await computeMedicalCasesSummary({ courseId, dateFrom, dateTo });
 
     // ── Load template workbook ──
-    const templatePath = path.join(process.cwd(), MEDICAL_CASES_TEMPLATE_PATH);
+    const templatePath = path.join(process.cwd(), "public", "template", "PMC-Medical-Cases.xlsx");
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.readFile(templatePath);
 

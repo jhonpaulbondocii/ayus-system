@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { requireCoursePermission } from "@/lib/course-access";
-import { QuizQuestionType } from "@/generated/prisma";
+import { QuizQuestionType } from "@prisma/client";
 
 type Props = {
   params: Promise<{ id: string; quizId: string }>;
