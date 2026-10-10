@@ -230,6 +230,7 @@ export type Tab =
   | "Student Directory"
   | "Disciplinary Log"
   | "Violation Types"
+  | "Lost & Found"    // ← idagdag ito
   | "Library Cards"
   | "Library Log"
   | "Book Catalog"
