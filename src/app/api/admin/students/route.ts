@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { resolveStudentAge } from "@/lib/age";
+import { departmentOfCourse } from "@/lib/academic-programs";
 
 export async function GET(_req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -13,14 +14,41 @@ export async function GET(_req: NextRequest) {
     orderBy: { createdAt: "desc" },
   });
 
-  // Resolve display age: computed from birthDate if present, falling back
-  // to the manually-entered `age` for legacy/CSV-imported records.
-  const withComputedAge = students.map((s) => ({
-    ...s,
-    age: resolveStudentAge(s),
-  }));
+  // Kunin ang guidance sheets na tugma sa student numbers (pinakabago muna)
+  const sheets = await prisma.guidanceInfoSheet.findMany({
+    where: { studentNo: { in: students.map((s) => s.studentNumber) } },
+    orderBy: { submittedAt: "desc" },
+  });
+  const sheetByNo = new Map<string, (typeof sheets)[number]>();
+  for (const sh of sheets) {
+    if (!sheetByNo.has(sh.studentNo)) sheetByNo.set(sh.studentNo, sh);
+  }
 
-  return NextResponse.json({ students: withComputedAge });
+  const merged = students.map((s) => {
+    // Resolve display age: computed from birthDate if present, falling back
+    // to the manually-entered `age` for legacy/CSV-imported records.
+    const base = { ...s, age: resolveStudentAge(s) };
+    const sh = sheetByNo.get(s.studentNumber);
+    if (!sh) return base;
+
+    /* eslint-disable @typescript-eslint/no-unused-vars */
+    const {
+      id, courseId, studentNo, name, age, email,
+      status, allowResubmit, submittedAt, updatedAt,
+      ...sheetFields
+    } = sh;
+    /* eslint-enable @typescript-eslint/no-unused-vars */
+
+    return {
+      ...base,
+      ...sheetFields,
+      course:     base.course     ?? sh.courseProgram,
+      department: base.department ?? departmentOfCourse(sh.courseProgram),
+      guidanceSheetId: id,
+    };
+  });
+
+  return NextResponse.json({ students: merged });
 }
 
 export async function POST(req: NextRequest) {

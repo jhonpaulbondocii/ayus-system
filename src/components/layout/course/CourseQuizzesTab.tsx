@@ -25,7 +25,7 @@ export default function CourseQuizzesTab({
   return (
     <CourseFormsPage
       courseId={courseId}
-      isHead={isHead}
+      isHead={isHead || isStaff}
       isStaff={isStaff}
       isFaculty={isFaculty}
       canDelete={canDelete}

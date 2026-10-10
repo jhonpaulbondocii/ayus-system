@@ -1,22 +1,12 @@
 // src/app/api/admin/courses/[id]/activity/route.ts
 
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-
-type SessionUser = { role?: string };
-
-async function requireAdmin() {
-  const session = await getServerSession(authOptions);
-  if (!session) return null;
-  if ((session.user as SessionUser)?.role !== "ADMIN") return null;
-  return session;
-}
+import { requireHeadOrAdmin } from "@/lib/require-head-or-admin";
 
 type ActivityItem = {
   id: string;
-  type: "submission" | "announcement" | "enrollment" | "grade" | "general";
+  type: "submission" | "announcement" | "enrollment" | "grade" | "general" | "form";
   text: string;
   user?: string;
   time: string;
@@ -39,10 +29,11 @@ export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  if (!(await requireAdmin()))
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
   const { id: courseId } = await params;
+
+  const auth = await requireHeadOrAdmin(courseId);
+  if (!auth.ok)
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
 
   const [
     peopleCount,
@@ -58,7 +49,14 @@ export async function GET(
     prisma.form.count({ where: { courseId } }),
   ]);
 
-  const [recentSubmissions, recentAnnouncements, recentEnrollments, recentFormSubmissions] =
+  const [
+    recentSubmissions,
+    recentAnnouncements,
+    recentEnrollments,
+    recentFormSubmissions,
+    recentAssignments,
+    recentForms,
+  ] =
     await Promise.all([
       prisma.submission.findMany({
         where: { assignment: { courseId }, submittedAt: { not: null } },
@@ -102,9 +100,62 @@ export async function GET(
         orderBy: { createdAt: "desc" },
         take: 5,
       }),
+
+      prisma.assignment.findMany({
+        where: { courseId },
+        select: { id: true, title: true, createdAt: true, createdById: true },
+        orderBy: { createdAt: "desc" },
+        take: 5,
+      }),
+
+      prisma.form.findMany({
+        where: { courseId },
+        select: {
+          id: true,
+          title: true,
+          createdAt: true,
+          author: { select: { name: true } },
+        },
+        orderBy: { createdAt: "desc" },
+        take: 5,
+      }),
     ]);
 
+    // Assignment has no author relation, so look up creator names
+    const creatorIds = Array.from(
+      new Set(
+        recentAssignments
+          .map((a) => a.createdById)
+          .filter((id): id is string => !!id)
+      )
+    );
+    const creators = creatorIds.length
+      ? await prisma.user.findMany({
+          where: { id: { in: creatorIds } },
+          select: { id: true, name: true },
+        })
+      : [];
+    const creatorNameMap = new Map(creators.map((c) => [c.id, c.name]));
+
     const withTs: ActivityItemWithTs[] = [
+    ...recentAssignments.map((a) => ({
+      id: `asgn-${a.id}`,
+      type: "submission" as const,
+      text: `created assignment: "${a.title}"`,
+      user: (a.createdById ? creatorNameMap.get(a.createdById) : undefined) ?? undefined,
+      time: formatTime(a.createdAt),
+      _ts: a.createdAt,
+    })),
+
+    ...recentForms.map((f) => ({
+      id: `form-${f.id}`,
+      type: "form" as const,
+      text: `created form: "${f.title}"`,
+      user: f.author?.name ?? undefined,
+      time: formatTime(f.createdAt),
+      _ts: f.createdAt,
+    })),
+
     ...recentFormSubmissions.map((fs) => ({
       id: `fsub-${fs.id}`,
       type: "general" as const,
@@ -144,7 +195,7 @@ export async function GET(
 
   const activity: ActivityItem[] = withTs
     .sort((a, b) => b._ts.getTime() - a._ts.getTime())
-    .slice(0, 10)
+    .slice(0, 30)
     .map(({ _ts: _ts, ...rest }) => { void _ts; return rest; });
 
   return NextResponse.json({

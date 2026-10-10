@@ -916,19 +916,26 @@ export default function CourseHomeTab({
 
   useEffect(() => {
     if (!isHead) return;
+
     fetch(`/api/admin/courses/${courseId}/activity`)
-      .then(r => r.json())
+      .then(async r => {
+        if (!r.ok) throw new Error(`activity ${r.status}`);
+        return r.json();
+      })
       .then(d => {
         setHeadActivity(d.activity ?? []);
         setStats(d.stats ?? { people: 0, announcements: 0, assignments: 0, forms: 0 });
       })
-      .catch(() => {})
+      .catch(console.error)
       .finally(() => setLoadingActivity(false));
 
     fetch(`/api/admin/courses/${courseId}/enrollments/recent`)
-      .then(r => r.json())
-      .then(d => setEnrollments(d.enrollments ?? []))
-      .catch(() => {});
+  .then(async r => {
+    if (!r.ok) return { enrollments: [] };
+    return r.json();
+  })
+  .then(d => setEnrollments(d.enrollments ?? []))
+  .catch(() => setEnrollments([]));
   }, [courseId, isHead]);
 
   const handleClearHeadItems = useCallback((ids: string[]) => {

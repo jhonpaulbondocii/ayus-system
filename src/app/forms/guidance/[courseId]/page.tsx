@@ -9,6 +9,9 @@ import {
   ChevronRight, ChevronLeft, Check, AlertCircle,
   RefreshCw, GraduationCap, Plus, Trash2, Upload, X,
 } from "lucide-react";
+import ReactCrop, { centerCrop, makeAspectCrop, type Crop } from "react-image-crop";
+import "react-image-crop/dist/ReactCrop.css";
+import { COURSES_BY_DEPARTMENT } from "@/lib/academic-programs";
 
 const MAROON = "#7b1113";
 const FONT   = "'Inter', system-ui, sans-serif";
@@ -46,6 +49,17 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
     </div>
   );
 }
+
+const CIVIL_STATUSES = ["Single", "Married", "Widowed", "Separated", "Annulled", "Live-in"];
+
+const SPECIAL_CATEGORIES = [
+  { key: "isPwd",        label: "Person with Disability (PWD)" },
+  { key: "isIndigenous", label: "Indigenous People" },
+  { key: "isSoloParent", label: "Solo Parent" },
+  { key: "isFirstGen",   label: "First Generation College Student" },
+] as const;
+
+const toBool = (v: string): boolean | null => (v === "Yes" ? true : v === "No" ? false : null);
 
 const MARITAL_OPTIONS = [
   "Living together but not married","Permanently separated",
@@ -134,6 +148,133 @@ function SignaturePad({ onSave }: { onSave: (dataUrl: string) => void }) {
   );
 }
 
+/* ── Auto age from birthdate ── */
+function computeAge(dob: string): number | null {
+  if (!dob) return null;
+  const b = new Date(dob);
+  if (isNaN(b.getTime())) return null;
+  const t = new Date();
+  let a = t.getFullYear() - b.getFullYear();
+  const m = t.getMonth() - b.getMonth();
+  if (m < 0 || (m === 0 && t.getDate() < b.getDate())) a--;
+  return a >= 0 ? a : null;
+}
+
+/* ── Photo Crop Upload (passport 2x3) ── */
+function PhotoCropUpload({
+  url, onUploaded, onRemove, courseId,
+}: {
+  url: string;
+  onUploaded: (u: string) => void;
+  onRemove: () => void;
+  courseId: string;
+}) {
+  const [srcImg, setSrcImg] = useState<string | null>(null);
+  const [crop,   setCrop]   = useState<Crop>();
+  const [status, setStatus] = useState("");
+  const imgRef       = useRef<HTMLImageElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const closeCrop = () => {
+    setSrcImg(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => setSrcImg(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const onImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    const { naturalWidth: width, naturalHeight: height } = e.currentTarget;
+    setCrop(centerCrop(makeAspectCrop({ unit: "%", width: 80 }, 2 / 3, width, height), width, height));
+  };
+
+  const handleCropSave = async () => {
+    const img = imgRef.current;
+    if (!img || !crop) return;
+    setStatus("Processing...");
+    const px = {
+      x:      crop.unit === "%" ? (crop.x      / 100) * img.naturalWidth  : crop.x,
+      y:      crop.unit === "%" ? (crop.y      / 100) * img.naturalHeight : crop.y,
+      width:  crop.unit === "%" ? (crop.width  / 100) * img.naturalWidth  : crop.width,
+      height: crop.unit === "%" ? (crop.height / 100) * img.naturalHeight : crop.height,
+    };
+    const canvas = document.createElement("canvas");
+    canvas.width = 600; canvas.height = 900;
+    canvas.getContext("2d")!.drawImage(img, px.x, px.y, px.width, px.height, 0, 0, 600, 900);
+    canvas.toBlob(async (blob) => {
+      if (!blob) { setStatus("Failed. Try again."); return; }
+      const fd = new FormData();
+      fd.append("file", blob, "passport-photo.jpg");
+      try {
+        setStatus("Uploading...");
+        const res  = await fetch(`/api/guidance/${courseId}/upload`, { method: "POST", body: fd });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        onUploaded(data.fileUrl);
+        closeCrop();
+        setStatus("");
+      } catch { setStatus("Upload failed. Try again."); }
+    }, "image/jpeg", 0.92);
+  };
+
+  return (
+    <div>
+      {srcImg && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4" style={{ fontFamily: FONT }}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b" style={{ background: MAROON }}>
+              <p className="text-sm font-black text-white">Crop Photo</p>
+              <button onClick={closeCrop} className="w-7 h-7 flex items-center justify-center rounded-lg text-white/60 hover:text-white hover:bg-white/10">
+                <X size={15} />
+              </button>
+            </div>
+            <div className="px-4 py-3 bg-gray-50 text-center">
+              <p className="text-[11px] text-gray-500">Drag to adjust. The box is locked to <strong>passport size (2×3) ratio</strong>.</p>
+            </div>
+            <div className="flex items-center justify-center bg-gray-900 max-h-[55vh] overflow-auto p-3">
+              <ReactCrop crop={crop} onChange={(_, pct) => setCrop(pct)} aspect={2 / 3} minWidth={30} keepSelection>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img ref={imgRef} src={srcImg} alt="Crop preview" onLoad={onImageLoad} style={{ maxHeight: "50vh", maxWidth: "100%" }} />
+              </ReactCrop>
+            </div>
+            <div className="px-5 py-4 border-t flex gap-2">
+              <button onClick={closeCrop} className="flex-1 py-2 rounded-xl border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50">Cancel</button>
+              <button onClick={handleCropSave} className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-bold text-white" style={{ background: MAROON }}>
+                <Check size={12} /> Use this photo
+              </button>
+            </div>
+            {status && <p className="text-center text-xs text-gray-500 pb-3">{status}</p>}
+          </div>
+        </div>
+      )}
+
+      {url ? (
+        <div className="flex items-center gap-3">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={url} alt="Passport photo" className="w-16 h-24 object-cover rounded-lg border border-gray-200" />
+          <div className="space-y-1">
+            <p className="text-[11px] font-semibold text-green-600 flex items-center gap-1"><Check size={11} /> Photo cropped & uploaded</p>
+            <button onClick={onRemove} className="text-xs text-red-500 hover:text-red-700 flex items-center gap-1"><X size={11} /> Remove</button>
+          </div>
+        </div>
+      ) : (
+        <div>
+          <input ref={fileInputRef} type="file" accept="image/*" onChange={onFileChange} className="hidden" />
+          <button type="button" onClick={() => fileInputRef.current?.click()}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 border-dashed border-gray-300 text-sm font-semibold text-gray-500 hover:border-gray-400 hover:text-gray-700 transition-all w-full justify-center">
+            <Upload size={15} /> Upload Photo
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function GuidanceFormPage() {
   const params   = useParams();
   const courseId = params.courseId as string;
@@ -154,9 +295,10 @@ export default function GuidanceFormPage() {
   const [studentNo,      setStudentNo]      = useState("");
   const [courseProgram,  setCourseProgram]  = useState("");
   const [yearSection,    setYearSection]    = useState("");
-  const [name,           setName]           = useState("");
+  const [lastName,       setLastName]       = useState("");
+  const [firstName,      setFirstName]      = useState("");
+  const [middleName,     setMiddleName]     = useState("");
   const [nickname,       setNickname]       = useState("");
-  const [age,            setAge]            = useState("");
   const [dateOfBirth,    setDateOfBirth]    = useState("");
   const [placeOfBirth,   setPlaceOfBirth]   = useState("");
   const [birthOrder,     setBirthOrder]     = useState("");
@@ -165,6 +307,17 @@ export default function GuidanceFormPage() {
   const [sex,            setSex]            = useState("");
   const [religion,       setReligion]       = useState("");
   const [completeAddress,setCompleteAddress]= useState("");
+  const [civilStatus,    setCivilStatus]    = useState("");
+  const [special, setSpecial] = useState<Record<string, string>>({
+    isPwd: "", isIndigenous: "", isSoloParent: "", isFirstGen: "",
+  });
+
+  // Auto-computed: "Last Name, First Name Middle Name" (ito ang mapupunta sa PDF)
+  const name = lastName.trim() && firstName.trim()
+    ? `${lastName.trim()}, ${firstName.trim()}${middleName.trim() ? " " + middleName.trim() : ""}`
+    : "";
+  // Auto-computed from birthdate
+  const age = computeAge(dateOfBirth);
 
   // ── Step 1: Parents ──
   const [fatherName,        setFatherName]        = useState("");
@@ -233,9 +386,7 @@ export default function GuidanceFormPage() {
   const [signatureUrl,          setSignatureUrl]          = useState("");
   const [signatureSaved,        setSignatureSaved]        = useState(false);
   const [photoUrl,              setPhotoUrl]              = useState("");
-  const [photoUploading,        setPhotoUploading]        = useState("");
   const [sigUploading,          setSigUploading]          = useState("");
-  const photoInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetch(`/api/guidance/${courseId}/info`)
@@ -278,17 +429,6 @@ export default function GuidanceFormPage() {
     return data.fileUrl;
   }, [courseId]);
 
-  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]; if (!file) return;
-    setPhotoUploading("Uploading...");
-    try {
-      const url = await uploadToCloudinary(file);
-      setPhotoUrl(url);
-      setPhotoUploading("");
-    } catch {
-      setPhotoUploading("Upload failed. Try again.");
-    }
-  };
 
   const handleSignatureSave = async (dataUrl: string) => {
     setSigUploading("Uploading signature...");
@@ -305,7 +445,9 @@ export default function GuidanceFormPage() {
   const validateStep = () => {
     if (step === 0) {
       if (!studentNo.trim()) return "Student number is required.";
-      if (!name.trim())      return "Full name is required.";
+      if (!courseProgram)    return "Course / Program is required.";
+      if (!lastName.trim())  return "Last name is required.";
+      if (!firstName.trim()) return "First name is required.";
       if (!sex.trim())       return "Sex is required.";
       if (dupWarning)        return "Please resolve the duplicate submission issue before continuing.";
     }
@@ -340,9 +482,14 @@ export default function GuidanceFormPage() {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           studentNo, courseProgram, yearSection,
-          name, nickname, age: age ? parseInt(age) : null,
+          name, nickname, age,
           dateOfBirth, placeOfBirth, birthOrder,
           mobileNo, email, sex, religion, completeAddress,
+          civilStatus: civilStatus || null,
+          isPwd:        toBool(special.isPwd),
+          isIndigenous: toBool(special.isIndigenous),
+          isSoloParent: toBool(special.isSoloParent),
+          isFirstGen:   toBool(special.isFirstGen),
           fatherName, fatherDOB, fatherAddress, fatherContact,
           fatherEduc, fatherOccupation, fatherIncome,
           fatherLanguage, fatherReligion, fatherOFW, fatherYearsAbroad,
@@ -455,14 +602,21 @@ export default function GuidanceFormPage() {
               <SectionTitle>Student Header</SectionTitle>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <Field label="Course / Program" required>
-                  <input value={courseProgram} onChange={e => setCourseProgram(e.target.value)} placeholder="e.g. BSIT" className={inputCls} />
+                  <select value={courseProgram} onChange={e => setCourseProgram(e.target.value)} className={inputCls}>
+                    <option value="">— Select —</option>
+                    {Object.entries(COURSES_BY_DEPARTMENT).map(([dept, list]) => (
+                      <optgroup key={dept} label={dept}>
+                        {list.map(c => <option key={c} value={c}>{c}</option>)}
+                      </optgroup>
+                    ))}
+                  </select>
                 </Field>
                 <Field label="Year & Section">
                   <input value={yearSection} onChange={e => setYearSection(e.target.value)} placeholder="e.g. 1-A" className={inputCls} />
                 </Field>
                 <Field label="Student No." required>
                   <div className="relative">
-                    <input value={studentNo} onChange={e => handleStudentNoChange(e.target.value)} placeholder="e.g. 2024-0001" className={inputCls} />
+                    <input value={studentNo} onChange={e => handleStudentNoChange(e.target.value)} placeholder="e.g. 2023312239" className={inputCls} />
                     {checkingDup && <RefreshCw size={12} className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-gray-400" />}
                   </div>
                   {dupWarning && <p className="text-[11px] text-amber-600 mt-1 leading-snug">{dupWarning}</p>}
@@ -472,9 +626,10 @@ export default function GuidanceFormPage() {
             <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-4">
               <SectionTitle>Personal Information</SectionTitle>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="sm:col-span-2"><Field label="Full Name" required><input value={name} onChange={e => setName(e.target.value)} placeholder="Last, First Middle" className={inputCls} /></Field></div>
+                <Field label="Last Name" required><input value={lastName} onChange={e => setLastName(e.target.value)} placeholder="Last Name" className={inputCls} /></Field>
+                <Field label="First Name" required><input value={firstName} onChange={e => setFirstName(e.target.value)} placeholder="First Name" className={inputCls} /></Field>
+                <Field label="Middle Name"><input value={middleName} onChange={e => setMiddleName(e.target.value)} placeholder="Middle Name (leave blank if none)" className={inputCls} /></Field>
                 <Field label="Nickname"><input value={nickname} onChange={e => setNickname(e.target.value)} placeholder="Nickname" className={inputCls} /></Field>
-                <Field label="Age"><input type="number" min="1" max="100" value={age} onChange={e => setAge(e.target.value)} placeholder="Age" className={inputCls} /></Field>
                 <Field label="Date of Birth"><input type="date" value={dateOfBirth} onChange={e => setDateOfBirth(e.target.value)} className={inputCls} /></Field>
                 <Field label="Place of Birth"><input value={placeOfBirth} onChange={e => setPlaceOfBirth(e.target.value)} placeholder="City / Municipality" className={inputCls} /></Field>
                 <Field label="Sex" required>
@@ -486,9 +641,34 @@ export default function GuidanceFormPage() {
                 </Field>
                 <Field label="Birth Order Among Siblings"><input value={birthOrder} onChange={e => setBirthOrder(e.target.value)} placeholder="e.g. 2nd of 4" className={inputCls} /></Field>
                 <Field label="Religion"><input value={religion} onChange={e => setReligion(e.target.value)} placeholder="Religion" className={inputCls} /></Field>
+                <Field label="Civil Status">
+                  <select value={civilStatus} onChange={e => setCivilStatus(e.target.value)} className={inputCls}>
+                    <option value="">— Select —</option>
+                    {CIVIL_STATUSES.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </Field>
                 <Field label="Mobile No."><input value={mobileNo} onChange={e => setMobileNo(e.target.value)} placeholder="09XXXXXXXXX" className={inputCls} /></Field>
                 <Field label="E-mail"><input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="email@example.com" className={inputCls} /></Field>
                 <div className="sm:col-span-2"><Field label="Complete Address"><input value={completeAddress} onChange={e => setCompleteAddress(e.target.value)} placeholder="Street, Barangay, City, Province" className={inputCls} /></Field></div>
+              </div>
+            </div>
+            <div className="bg-white rounded-xl border border-gray-200 p-5">
+              <SectionTitle>Special Categories</SectionTitle>
+              <div className="divide-y divide-gray-100">
+                {SPECIAL_CATEGORIES.map(({ key, label }) => (
+                  <div key={key} className="flex items-center justify-between gap-3 py-2.5">
+                    <span className="text-xs font-semibold text-gray-700 flex-1">{label}</span>
+                    <div className="flex gap-4 shrink-0">
+                      {["Yes", "No"].map(opt => (
+                        <label key={opt} className="flex items-center gap-1.5 cursor-pointer">
+                          <input type="radio" name={key} value={opt} checked={special[key] === opt}
+                            onChange={() => setSpecial(p => ({ ...p, [key]: opt }))} style={{ accentColor: MAROON }} />
+                          <span className="text-sm font-medium text-gray-700">{opt}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
@@ -770,25 +950,13 @@ export default function GuidanceFormPage() {
             {/* Passport Photo */}
             <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-3">
               <SectionTitle>Passport Size Photo</SectionTitle>
-              <p className="text-xs text-gray-500">Upload a recent passport size photo (white background preferred).</p>
-              {photoUrl ? (
-                <div className="flex items-center gap-3">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={photoUrl} alt="Passport photo" className="w-20 h-24 object-cover rounded-lg border border-gray-200" />
-                  <button onClick={() => { setPhotoUrl(""); if (photoInputRef.current) photoInputRef.current.value = ""; }}
-                    className="text-xs font-semibold text-red-500 hover:text-red-700 flex items-center gap-1">
-                    <X size={12} /> Remove
-                  </button>
-                </div>
-              ) : (
-                <div>
-                  <input ref={photoInputRef} type="file" accept="image/*" onChange={handlePhotoChange} className="hidden" />
-                  <button onClick={() => photoInputRef.current?.click()}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 border-dashed border-gray-300 text-sm font-semibold text-gray-500 hover:border-gray-400 hover:text-gray-700 transition-all w-full justify-center">
-                    <Upload size={15} /> {photoUploading || "Upload Photo"}
-                  </button>
-                </div>
-              )}
+              <p className="text-xs text-gray-500">Upload your photo. You&apos;ll crop it to passport size (2×3) before it&apos;s saved.</p>
+              <PhotoCropUpload
+                url={photoUrl}
+                onUploaded={setPhotoUrl}
+                onRemove={() => setPhotoUrl("")}
+                courseId={courseId}
+              />
             </div>
 
             {/* Signature */}
@@ -825,7 +993,7 @@ export default function GuidanceFormPage() {
                   ["Name",           name],
                   ["Course",         courseProgram],
                   ["Year & Section", yearSection],
-                  ["Age",            age],
+                  ["Age",            age !== null ? String(age) : ""],
                   ["Sex",            sex],
                   ["Date of Birth",  dateOfBirth],
                   ["Mobile No.",     mobileNo],

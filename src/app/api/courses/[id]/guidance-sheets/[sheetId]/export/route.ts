@@ -8,6 +8,7 @@ import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import sharp from "sharp";
 import fs from "fs";
 import path from "path";
+import { abbreviateCourse } from "@/lib/academic-programs";
 
 // ─── Page dimensions (portrait, 612 x 936 pts) ───────────────────────────────
 // pdfplumber uses top-left origin; pdf-lib uses bottom-left origin.
@@ -69,8 +70,10 @@ export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string; sheetId: string }> }
 ) {
+  console.log("EXPORT GET CALLED");
   try {
     const { id: courseId, sheetId } = await params;
+    console.log("EXPORT params:", { courseId, sheetId });
 
     const access = await requireCoursePermission(courseId, "view_course");
     if (!access.ok) return NextResponse.json({ error: access.error }, { status: access.status });
@@ -103,7 +106,7 @@ export async function GET(
     // ═════════════════════════════════════════════════════════════════════════
 
     // ── Header ────────────────────────────────────────────────────────────────
-    drawField(page1, font, sheet.courseProgram, 92, 141, 83);
+    drawField(page1, font, abbreviateCourse(sheet.courseProgram), 92, 141, 83);
     drawField(page1, font, sheet.yearSection,   92, 154, 83);
     drawField(page1, font, sheet.studentNo,     92, 167, 83);
 

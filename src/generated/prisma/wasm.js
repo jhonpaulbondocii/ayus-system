@@ -549,7 +549,14 @@ exports.Prisma.StudentScalarFieldEnum = {
   updatedAt: 'updatedAt',
   email: 'email',
   address: 'address',
-  birthDate: 'birthDate'
+  birthDate: 'birthDate',
+  yearSection: 'yearSection',
+  mobileNo: 'mobileNo',
+  guardianName: 'guardianName',
+  guardianContact: 'guardianContact',
+  standing: 'standing',
+  clearanceHold: 'clearanceHold',
+  deletedAt: 'deletedAt'
 };
 
 exports.Prisma.PatientRecordScalarFieldEnum = {
@@ -704,6 +711,11 @@ exports.Prisma.GuidanceInfoSheetScalarFieldEnum = {
   sex: 'sex',
   religion: 'religion',
   completeAddress: 'completeAddress',
+  civilStatus: 'civilStatus',
+  isPwd: 'isPwd',
+  isIndigenous: 'isIndigenous',
+  isSoloParent: 'isSoloParent',
+  isFirstGen: 'isFirstGen',
   fatherName: 'fatherName',
   fatherDOB: 'fatherDOB',
   fatherAddress: 'fatherAddress',
@@ -923,6 +935,109 @@ exports.Prisma.LibraryBorrowRecordScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.ViolationTypeScalarFieldEnum = {
+  id: 'id',
+  courseId: 'courseId',
+  code: 'code',
+  name: 'name',
+  description: 'description',
+  severity: 'severity',
+  category: 'category',
+  dismissalOnFirst: 'dismissalOnFirst',
+  defaultSanction: 'defaultSanction',
+  sanctionMinDays: 'sanctionMinDays',
+  sanctionMaxDays: 'sanctionMaxDays',
+  maxSanction: 'maxSanction',
+  escalationCount: 'escalationCount',
+  escalatesTo: 'escalatesTo',
+  manualRef: 'manualRef',
+  isActive: 'isActive',
+  order: 'order',
+  deletedAt: 'deletedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.ViolationScalarFieldEnum = {
+  id: 'id',
+  courseId: 'courseId',
+  caseNo: 'caseNo',
+  studentId: 'studentId',
+  violationTypeId: 'violationTypeId',
+  severity: 'severity',
+  incidentDate: 'incidentDate',
+  location: 'location',
+  description: 'description',
+  reportedBy: 'reportedBy',
+  reportedByRole: 'reportedByRole',
+  status: 'status',
+  noticeToExplainAt: 'noticeToExplainAt',
+  explanationReceivedAt: 'explanationReceivedAt',
+  hearingDate: 'hearingDate',
+  hearingResult: 'hearingResult',
+  sanction: 'sanction',
+  sanctionDays: 'sanctionDays',
+  sanctionStart: 'sanctionStart',
+  sanctionEnd: 'sanctionEnd',
+  sanctionCompleted: 'sanctionCompleted',
+  decidedBy: 'decidedBy',
+  decidedAt: 'decidedAt',
+  appealed: 'appealed',
+  appealResult: 'appealResult',
+  resolvedAt: 'resolvedAt',
+  recordedBy: 'recordedBy',
+  deletedAt: 'deletedAt',
+  deletedBy: 'deletedBy',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.ParentContactScalarFieldEnum = {
+  id: 'id',
+  violationId: 'violationId',
+  contactedAt: 'contactedAt',
+  method: 'method',
+  contactedBy: 'contactedBy',
+  contactPerson: 'contactPerson',
+  relationship: 'relationship',
+  attendance: 'attendance',
+  attemptNo: 'attemptNo',
+  signatureUrl: 'signatureUrl',
+  recordedBy: 'recordedBy',
+  deletedAt: 'deletedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.ViolationNoteScalarFieldEnum = {
+  id: 'id',
+  violationId: 'violationId',
+  body: 'body',
+  confidential: 'confidential',
+  authorId: 'authorId',
+  deletedAt: 'deletedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.LostFoundItemScalarFieldEnum = {
+  id: 'id',
+  courseId: 'courseId',
+  itemName: 'itemName',
+  description: 'description',
+  category: 'category',
+  dateFound: 'dateFound',
+  locationFound: 'locationFound',
+  foundBy: 'foundBy',
+  status: 'status',
+  claimerName: 'claimerName',
+  claimedAt: 'claimedAt',
+  photoUrl: 'photoUrl',
+  recordedBy: 'recordedBy',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -1077,7 +1192,12 @@ exports.Prisma.ModelName = {
   LibraryCardRequest: 'LibraryCardRequest',
   LibraryReceivingLog: 'LibraryReceivingLog',
   LibraryBook: 'LibraryBook',
-  LibraryBorrowRecord: 'LibraryBorrowRecord'
+  LibraryBorrowRecord: 'LibraryBorrowRecord',
+  ViolationType: 'ViolationType',
+  Violation: 'Violation',
+  ParentContact: 'ParentContact',
+  ViolationNote: 'ViolationNote',
+  LostFoundItem: 'LostFoundItem'
 };
 
 /**

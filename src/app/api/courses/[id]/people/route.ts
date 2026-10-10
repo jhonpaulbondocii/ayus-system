@@ -53,23 +53,26 @@ export async function GET(
           position: true,
           accountType: true,
           status: true,
+          role: true,
         },
       },
     },
     orderBy: { user: { name: "asc" } },
   });
 
-  const people = enrollments.map((e) => ({
-    id: e.user.id,
-    name: e.user.name,
-    email: e.user.email,
-    image: e.user.image,
-    pronouns: e.user.pronouns,
-    position: e.user.position,
-    accountType: e.user.accountType,
-    role: e.courseRole,
-    status: e.user.status,
-  }));
+  const people = enrollments
+    .filter((e) => e.user.role !== "ADMIN")
+    .map((e) => ({
+      id: e.user.id,
+      name: e.user.name,
+      email: e.user.email,
+      image: e.user.image,
+      pronouns: e.user.pronouns,
+      position: e.user.position,
+      accountType: e.user.accountType,
+      role: e.courseRole,
+      status: e.user.status,
+    }));
 
   return NextResponse.json({ people });
 }

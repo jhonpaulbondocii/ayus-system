@@ -2,11 +2,11 @@
 
 // src/components/layout/course/CourseGuidanceTab.tsx
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   Search, RefreshCw, ChevronDown, ChevronLeft, ChevronRight,
   Trash2, Check, ArrowLeft, Filter, X, Plus,
-  GraduationCap, Download, AlertTriangle, Users,
+  GraduationCap, Download, AlertTriangle, Users, Eye, ExternalLink,
 } from "lucide-react";
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -108,6 +108,49 @@ function fmtDate(d: string | null | undefined) {
   return new Date(d).toLocaleDateString("en-US", {
     month: "short", day: "numeric", year: "numeric",
   });
+}
+
+const SLATE = "#0f172a";
+const MUTED = "#64748b";
+const RULE  = "#e2e8f0";
+
+function Field({ label, value }: { label: string; value?: string | number | null }) {
+  if (!value && value !== 0) return null;
+  return (
+    <div className="py-2.5" style={{ borderBottom: `1px solid ${RULE}` }}>
+      <p style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: MUTED, marginBottom: 2 }}>{label}</p>
+      <p style={{ fontSize: 13, fontWeight: 500, color: SLATE, lineHeight: 1.5 }}>{String(value)}</p>
+    </div>
+  );
+}
+
+function SectionHeader({ title }: { title: string }) {
+  return (
+    <div className="px-4 sm:px-5 py-3 border-b border-gray-100" style={{ background: "#fafafa" }}>
+      <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.14em", textTransform: "uppercase", color: MAROON }}>{title}</p>
+    </div>
+  );
+}
+
+function RightSection({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div style={{ background: "#fff", border: `1px solid ${RULE}`, borderRadius: 10, overflow: "hidden", marginBottom: 12 }}>
+      <div className="px-4 py-2.5" style={{ background: "#fafafa", borderBottom: `1px solid ${RULE}` }}>
+        <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.14em", textTransform: "uppercase", color: MAROON }}>{title}</p>
+      </div>
+      <div className="px-4 py-3">{children}</div>
+    </div>
+  );
+}
+
+function InfoRow({ label, value }: { label: string; value?: string | number | null }) {
+  if (!value && value !== 0) return null;
+  return (
+    <div className="py-2.5" style={{ borderBottom: `1px solid ${RULE}` }}>
+      <p style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: MUTED, marginBottom: 2 }}>{label}</p>
+      <p style={{ fontSize: 13, fontWeight: 500, color: SLATE, lineHeight: 1.5 }}>{String(value)}</p>
+    </div>
+  );
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -277,10 +320,10 @@ function SheetDetailView({
   const [dlFilename,   setDlFilename]   = useState("");
   const [patching,     setPatching]     = useState(false);
   const [local,        setLocal]        = useState(sheet);
-
-  const SLATE = "#0f172a";
-  const MUTED = "#64748b";
-  const RULE  = "#e2e8f0";
+  const [showPreview,    setShowPreview]    = useState(false);
+  const [previewBlobUrl, setPreviewBlobUrl] = useState<string | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewError,   setPreviewError]   = useState("");
 
   const patch = async (data: { allowResubmit?: boolean; status?: string }) => {
     setPatching(true);
@@ -295,54 +338,62 @@ function SheetDetailView({
     } finally { setPatching(false); }
   };
 
+  const defaultName = `IIS_${local.name.replace(/\s+/g, "_")}_${local.studentNo}`;
+
+  const openPreview = async () => {
+    setShowPreview(true);
+    setPreviewLoading(true);
+    setPreviewError("");
+    setPreviewBlobUrl(null);
+    try {
+      const url = `/api/courses/${courseId}/guidance-sheets/${local.id}/export?filename=${encodeURIComponent(defaultName)}`;
+      console.log("EXPORT URL:", url);
+      const res = await fetch(url);
+      if (!res.ok) {
+        const text = await res.text();
+        console.error("EXPORT FAILED", res.status, text.slice(0, 500));
+        let msg = `Failed (${res.status})`;
+        try { msg = JSON.parse(text).error ?? msg; } catch {}
+        throw new Error(msg);
+      }
+      const blob = await res.blob();
+      const pdf  = new Blob([blob], { type: "application/pdf" });
+      setPreviewBlobUrl(URL.createObjectURL(pdf));
+    } catch (e) {
+      setPreviewError(e instanceof Error ? e.message : "Failed to load the PDF preview. Please try again.");
+    } finally {
+      setPreviewLoading(false);
+    }
+  };
+
+  const closePreview = () => {
+    setShowDownload(false);
+    setShowPreview(false);
+    if (previewBlobUrl) URL.revokeObjectURL(previewBlobUrl);
+    setPreviewBlobUrl(null);
+  };
+
+  const confirmDownload = () => {
+    if (!previewBlobUrl) return;
+    const name = (dlFilename.trim() || defaultName).replace(/\.pdf$/i, "");
+    const a = document.createElement("a");
+    a.href = previewBlobUrl;
+    a.download = `${name}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setShowDownload(false);
+  };
+
   const educ = (local.educBackground ?? {}) as EducBackground;
   const siblings: Sibling[] = Array.isArray(local.siblings) ? local.siblings : [];
-
-  function Field({ label, value }: { label: string; value?: string | number | null }) {
-    if (!value && value !== 0) return null;
-    return (
-      <div className="py-2.5" style={{ borderBottom: `1px solid ${RULE}` }}>
-        <p style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: MUTED, marginBottom: 2 }}>{label}</p>
-        <p style={{ fontSize: 13, fontWeight: 500, color: SLATE, lineHeight: 1.5 }}>{String(value)}</p>
-      </div>
-    );
-  }
-
-  function SectionHeader({ title }: { title: string }) {
-    return (
-      <div className="px-4 sm:px-5 py-3 border-b border-gray-100" style={{ background: "#fafafa" }}>
-        <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.14em", textTransform: "uppercase", color: MAROON }}>{title}</p>
-      </div>
-    );
-  }
-
-  function RightSection({ title, children }: { title: string; children: React.ReactNode }) {
-    return (
-      <div style={{ background: "#fff", border: `1px solid ${RULE}`, borderRadius: 10, overflow: "hidden", marginBottom: 12 }}>
-        <div className="px-4 py-2.5" style={{ background: "#fafafa", borderBottom: `1px solid ${RULE}` }}>
-          <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.14em", textTransform: "uppercase", color: MAROON }}>{title}</p>
-        </div>
-        <div className="px-4 py-3">{children}</div>
-      </div>
-    );
-  }
-
-  function InfoRow({ label, value }: { label: string; value?: string | number | null }) {
-    if (!value && value !== 0) return null;
-    return (
-      <div className="flex flex-col sm:flex-row sm:gap-3 py-1.5" style={{ borderBottom: `1px solid #f8fafc` }}>
-        <span style={{ fontSize: 11, color: MUTED, fontWeight: 500, width: "auto", flexShrink: 0 }} className="sm:w-40">{label}</span>
-        <span style={{ fontSize: 12, color: SLATE, fontWeight: 600 }}>{String(value)}</span>
-      </div>
-    );
-  }
 
   return (
     <div className="flex flex-col h-full" style={{ fontFamily: FONT, background: "#f8fafc" }}>
 
       {/* ── Top bar ── */}
       <div style={{ background: "#fff", borderBottom: `1px solid ${RULE}` }}
-        className="px-3 sm:px-6 py-3 shrink-0">
+        className="relative px-3 sm:px-6 py-3 shrink-0">
         {/* Row 1: back + name */}
         <div className="flex items-center gap-2 mb-2 sm:mb-0">
           <button onClick={onBack}
@@ -357,13 +408,10 @@ function SheetDetailView({
         {/* Row 2: action buttons (only head) */}
         {isHead && (
           <div className="flex items-center gap-1.5 flex-wrap mt-2 sm:mt-0 sm:hidden">
-            <button onClick={() => {
-                setDlFilename(`IIS_${local.name.replace(/\s+/g, "_")}_${local.studentNo}`);
-                setShowDownload(true);
-              }}
+            <button onClick={openPreview}
               className="flex items-center gap-1 text-xs font-bold px-2.5 py-1.5 rounded-lg border transition-all min-h-8"
               style={{ borderColor: RULE, color: SLATE }}>
-              <Download size={11} /> PDF
+              <Eye size={11} /> Preview
             </button>
             {local.status !== "REVIEWED" && (
               <button onClick={() => patch({ status: "REVIEWED" })} disabled={patching}
@@ -391,17 +439,13 @@ function SheetDetailView({
         )}
 
         {/* Desktop action buttons */}
-        {isHead && (
-          <div className="hidden sm:flex items-center gap-2 flex-wrap absolute top-3 right-6">
-            <button onClick={() => {
-                setDlFilename(`IIS_${local.name.replace(/\s+/g, "_")}_${local.studentNo}`);
-                setShowDownload(true);
-              }}
-              className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg border transition-all"
-              style={{ borderColor: RULE, color: SLATE }}>
-              <Download size={12} /> Download PDF
-            </button>
-            {local.status !== "REVIEWED" && (
+        <div className="hidden sm:flex items-center gap-2 flex-wrap absolute top-3 right-6">
+                      <button onClick={openPreview}
+            className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg border transition-all"
+            style={{ borderColor: RULE, color: SLATE }}>
+            <Eye size={12} /> Preview PDF
+          </button>
+            {isHead && local.status !== "REVIEWED" && (
               <button onClick={() => patch({ status: "REVIEWED" })} disabled={patching}
                 className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg border transition-all disabled:opacity-50"
                 style={{ borderColor: MAROON, color: MAROON }}>
@@ -419,12 +463,13 @@ function SheetDetailView({
                 <AlertTriangle size={11} /> Resubmission allowed
               </span>
             )}
-            <button onClick={() => setShowDelete(true)}
-              className="flex items-center gap-1 text-xs font-semibold transition-colors text-red-400 hover:text-red-600">
-              <Trash2 size={13} />
-            </button>
+            {isHead && (
+              <button onClick={() => setShowDelete(true)}
+                className="flex items-center gap-1 text-xs font-semibold transition-colors text-red-400 hover:text-red-600">
+                <Trash2 size={13} />
+              </button>
+            )}
           </div>
-        )}
       </div>
 
       {/* ── Body ── */}
@@ -464,7 +509,7 @@ function SheetDetailView({
               <Field label="Year & Section"         value={local.yearSection} />
               <Field label="Nickname"               value={local.nickname} />
               <Field label="Age"                    value={local.age} />
-              <Field label="Date of Birth"          value={local.dateOfBirth} />
+              <Field label="Date of Birth"          value={local.dateOfBirth ? fmtDate(local.dateOfBirth) : null} />
               <Field label="Place of Birth"         value={local.placeOfBirth} />
               <Field label="Sex"                    value={local.sex} />
               <Field label="Religion"               value={local.religion} />
@@ -487,7 +532,7 @@ function SheetDetailView({
 
               <RightSection title="Father's Information">
                 <InfoRow label="Name"                   value={local.fatherName} />
-                <InfoRow label="Date of Birth"          value={local.fatherDOB} />
+                <InfoRow label="Date of Birth"          value={local.fatherDOB ? fmtDate(local.fatherDOB) : null} />
                 <InfoRow label="Address"                value={local.fatherAddress} />
                 <InfoRow label="Contact No."            value={local.fatherContact} />
                 <InfoRow label="Educational Attainment" value={local.fatherEduc} />
@@ -501,7 +546,7 @@ function SheetDetailView({
 
               <RightSection title="Mother's Information">
                 <InfoRow label="Name"                   value={local.motherName} />
-                <InfoRow label="Date of Birth"          value={local.motherDOB} />
+                <InfoRow label="Date of Birth"          value={local.motherDOB ? fmtDate(local.motherDOB) : null} />
                 <InfoRow label="Address"                value={local.motherAddress} />
                 <InfoRow label="Contact No."            value={local.motherContact} />
                 <InfoRow label="Educational Attainment" value={local.motherEduc} />
@@ -515,7 +560,7 @@ function SheetDetailView({
 
               {local.maritalStatus && (
                 <RightSection title="Parents' Marital Status">
-                  <p style={{ fontSize: 13, color: SLATE, fontWeight: 600 }}>{local.maritalStatus}</p>
+                  <p style={{ fontSize: 13, color: SLATE, fontWeight: 500, lineHeight: 1.5 }}>{local.maritalStatus}</p>
                 </RightSection>
               )}
 
@@ -538,7 +583,7 @@ function SheetDetailView({
                       ))}
                     </div>
                     {siblings.filter(s => s.name).map((s, i) => (
-                      <div key={i} className="grid grid-cols-3 gap-3 py-1.5" style={{ borderTop: `1px solid ${RULE}`, fontSize: 12, color: SLATE }}>
+                      <div key={i} className="grid grid-cols-3 gap-3 py-2.5" style={{ borderTop: `1px solid ${RULE}`, fontSize: 13, fontWeight: 500, color: SLATE }}>
                         <span>{s.name}</span>
                         <span>{s.schoolWork || "—"}</span>
                         <span>{s.age || "—"}</span>
@@ -604,7 +649,7 @@ function SheetDetailView({
                         <div key={s.title} className="mb-3">
                           <p style={{ fontSize: 9, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", color: MAROON, marginBottom: 4 }}>{s.title}</p>
                           {s.rows!.filter(r => r.school || r.level).map((r, i) => (
-                            <div key={i} className="grid grid-cols-3 gap-3 py-1" style={{ fontSize: 12, color: SLATE, borderTop: `1px solid ${RULE}` }}>
+                            <div key={i} className="grid grid-cols-3 gap-3 py-2" style={{ fontSize: 13, fontWeight: 500, color: SLATE, borderTop: `1px solid ${RULE}` }}>
                               <span>{r.level || "—"}</span>
                               <span>{r.school || "—"}</span>
                               <span style={{ color: MUTED }}>{r.years || "—"}</span>
@@ -631,63 +676,111 @@ function SheetDetailView({
         />
       )}
 
-      {showDownload && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/30"
-          style={{ backdropFilter: "blur(4px)", fontFamily: FONT }}
-          onClick={() => setShowDownload(false)}>
-          <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:w-96 p-5 sm:p-6"
-            style={{ border: `1px solid ${RULE}` }}
-            onClick={e => e.stopPropagation()}>
-            <div className="sm:hidden flex justify-center mb-3">
-              <div className="w-10 h-1 rounded-full bg-gray-200" />
-            </div>
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4"
-              style={{ background: "#fef2f2" }}>
-              <Download className="w-5 h-5" style={{ color: MAROON }} />
-            </div>
-            <p className="text-sm font-bold mb-1" style={{ color: SLATE }}>Download PDF</p>
-            <p className="text-xs mb-4" style={{ color: "#64748b" }}>
-              You can rename the file before downloading.
-            </p>
-            <div className="mb-5">
-              <label className="block mb-1.5" style={{ fontSize: 11, fontWeight: 600, color: "#64748b" }}>
-                File name
-              </label>
-              <div className="flex items-center border rounded-lg overflow-hidden"
-                style={{ borderColor: RULE }}>
-                <input
-                  value={dlFilename}
-                  onChange={e => setDlFilename(e.target.value)}
-                  onKeyDown={e => {
-                    if (e.key === "Enter") {
-                      const name = (dlFilename.trim() || `IIS_${local.name}`).replace(/\.pdf$/i, "");
-                      window.open(`/api/courses/${courseId}/guidance-sheets/${local.id}/export?filename=${encodeURIComponent(name)}`, "_blank", "noreferrer");
-                      setShowDownload(false);
-                    }
-                  }}
-                  className="flex-1 px-3 py-2 text-sm outline-none bg-white"
-                  style={{ color: SLATE }}
-                  autoFocus
-                />
-                <span className="px-3 py-2 text-xs font-semibold border-l"
-                  style={{ borderColor: RULE, color: "#94a3b8", background: "#f8fafc" }}>
-                  .pdf
+            {/* ── PDF Preview Modal ── */}
+      {showPreview && (
+        <div
+          style={{ position: "fixed", inset: 0, zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,.6)", padding: 16, fontFamily: FONT }}
+          onClick={closePreview}
+        >
+          <div
+            style={{ background: "#fff", borderRadius: 16, width: "100%", maxWidth: 900, height: "90dvh", display: "flex", flexDirection: "column", overflow: "hidden" }}
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", background: MAROON, flexShrink: 0 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+                <GraduationCap size={14} style={{ color: "rgba(255,255,255,.7)", flexShrink: 0 }} />
+                <span style={{ fontSize: 13, fontWeight: 700, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  Individual Information Sheet — {local.name}
                 </span>
               </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
+                <button
+                  type="button"
+                  disabled={!previewBlobUrl}
+                  onClick={() => previewBlobUrl && window.open(previewBlobUrl, "_blank", "noopener,noreferrer")}
+                  style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,.7)", display: "flex", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer", opacity: previewBlobUrl ? 1 : 0.4 }}
+                >
+                  <ExternalLink size={11} /> Open
+                </button>
+                <button
+                  type="button"
+                  disabled={!previewBlobUrl}
+                  onClick={() => { setDlFilename(defaultName); setShowDownload(true); }}
+                  style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,.7)", display: "flex", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer", opacity: previewBlobUrl ? 1 : 0.4 }}
+                >
+                  <Download size={11} /> Download
+                </button>
+                <button onClick={closePreview} style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,.6)" }}>
+                  <X size={15} />
+                </button>
+              </div>
             </div>
-            <div className="flex gap-2">
-              <button onClick={() => setShowDownload(false)}
-                className="flex-1 py-2.5 rounded-xl text-xs font-semibold min-h-11 sm:min-h-0"
-                style={{ border: `1px solid ${RULE}`, color: "#64748b" }}>
+
+            {/* Body */}
+            <div style={{ flex: 1, overflow: "hidden", background: "#f3f4f6", minHeight: 0 }}>
+              {previewLoading ? (
+                <div style={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12, color: "#9ca3af" }}>
+                  <RefreshCw size={22} className="animate-spin" />
+                  <p style={{ fontSize: 13 }}>Generating PDF…</p>
+                </div>
+              ) : previewError ? (
+                <div style={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12, color: "#ef4444", padding: 24, textAlign: "center" }}>
+                  <AlertTriangle size={28} />
+                  <p style={{ fontSize: 13 }}>{previewError}</p>
+                  <button onClick={openPreview}
+                    style={{ fontSize: 12, fontWeight: 700, padding: "8px 16px", borderRadius: 10, color: "#fff", background: MAROON, border: "none", cursor: "pointer" }}>
+                    Try again
+                  </button>
+                </div>
+              ) : previewBlobUrl ? (
+                <iframe src={previewBlobUrl} title="PDF Preview" style={{ width: "100%", height: "100%", border: "none" }} />
+              ) : null}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Download Name Panel (lalabas lang kapag pinindot ang Download sa preview) ── */}
+      {showDownload && (
+        <div
+          style={{ position: "fixed", inset: 0, zIndex: 400, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,.5)", padding: 16, fontFamily: FONT }}
+          onClick={() => setShowDownload(false)}
+        >
+          <div
+            style={{ background: "#fff", borderRadius: 16, width: "100%", maxWidth: 420, padding: 20, boxShadow: "0 20px 50px rgba(0,0,0,.3)" }}
+            onClick={e => e.stopPropagation()}
+          >
+            <p style={{ fontSize: 14, fontWeight: 800, color: "#111827", marginBottom: 4 }}>Download file</p>
+            <p style={{ fontSize: 11, color: "#6b7280", marginBottom: 12 }}>
+              Pwede mong palitan ang pangalan ng file bago i-download.
+            </p>
+            <div style={{ display: "flex", alignItems: "center", border: "1px solid #d1d5db", borderRadius: 10, overflow: "hidden" }}>
+              <input
+                type="text"
+                value={dlFilename}
+                onChange={e => setDlFilename(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter") confirmDownload(); }}
+                autoFocus
+                style={{ flex: 1, fontSize: 13, padding: "10px 12px", border: "none", outline: "none" }}
+              />
+              <span style={{ padding: "10px 12px", fontSize: 12, fontWeight: 600, color: "#94a3b8", background: "#f8fafc", borderLeft: "1px solid #d1d5db" }}>
+                .pdf
+              </span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16 }}>
+              <button
+                type="button"
+                onClick={() => setShowDownload(false)}
+                style={{ fontSize: 12, fontWeight: 600, padding: "8px 16px", borderRadius: 10, border: "1px solid #d1d5db", background: "#fff", color: "#4b5563", cursor: "pointer" }}
+              >
                 Cancel
               </button>
-              <button onClick={() => {
-                  const name = (dlFilename.trim() || `IIS_${local.name}`).replace(/\.pdf$/i, "");
-                  window.open(`/api/courses/${courseId}/guidance-sheets/${local.id}/export?filename=${encodeURIComponent(name)}`, "_blank", "noreferrer");
-                  setShowDownload(false);
-                }}
-                className="flex-1 py-2.5 rounded-xl text-xs font-bold text-white min-h-11 sm:min-h-0"
-                style={{ background: MAROON }}>
+              <button
+                type="button"
+                onClick={confirmDownload}
+                style={{ fontSize: 12, fontWeight: 700, padding: "8px 16px", borderRadius: 10, border: "none", background: MAROON, color: "#fff", cursor: "pointer" }}
+              >
                 Download
               </button>
             </div>

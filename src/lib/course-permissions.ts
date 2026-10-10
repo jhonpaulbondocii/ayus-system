@@ -15,10 +15,12 @@ export type CoursePermission =
 
 const COURSE_ROLE_PERMISSIONS: Record<CourseRole, CoursePermission[]> = {
   Staff: [
-    "view_course",
-    "view_announcements",
-    "submit_assignments",
-  ],
+  "view_course",
+  "view_announcements",
+  "submit_assignments",
+  "manage_announcements",
+  "manage_assignments",
+],
   Head: [
     "view_course",
     "view_announcements",

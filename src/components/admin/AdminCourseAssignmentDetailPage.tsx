@@ -180,6 +180,15 @@ function computeStats(submissions: Submission[], dueDate: string | null) {
   return { submitted, missing, graded, late, avgScore };
 }
 
+// ── Build proper download filename ─────────────────────────────────────────────
+function buildDownloadName(fileName: string, submitterName?: string | null): string {
+  const dot = fileName.lastIndexOf(".");
+  const base = dot > 0 ? fileName.slice(0, dot) : fileName;
+  const ext  = dot > 0 ? fileName.slice(dot) : "";
+  const safe = (submitterName ?? "").trim().replace(/[\\/:*?"<>|]+/g, "");
+  return safe ? `${base} - ${safe}${ext}` : `${base}${ext}`;
+}
+
 // ── Role Badge ─────────────────────────────────────────────────────────────────
 function RoleBadge({ role }: { role: string | null | undefined }) {
   if (!role) return null;
@@ -353,6 +362,12 @@ function FilePreviewModal({ sub, onClose }: { sub: Submission; onClose: () => vo
   }, [sub.allFileUrls, sub.fileUrl, sub.fileName]);
 
   const [selectedUrl, setSelectedUrl] = useState<string | null>(null);
+  const [downloadTarget, setDownloadTarget] = useState<{ url: string; name: string } | null>(null);
+  const [downloadName, setDownloadName] = useState("");
+  const [downloading, setDownloading] = useState(false);
+
+  const submitterName = sub.userName ?? sub.userEmail ?? "";
+
   const resolvedSelectedUrl = selectedUrl && files.some(file => file.url === selectedUrl)
     ? selectedUrl
     : sub.fileUrl ?? files[0]?.url ?? null;
@@ -360,76 +375,184 @@ function FilePreviewModal({ sub, onClose }: { sub: Submission; onClose: () => vo
   const url = selectedFile?.url ?? sub.onlineUrl ?? null;
 
   if ((!url && !sub.textEntry) || files.length === 0) return null;
+
   const fileName = selectedFile?.label ?? sub.fileName ?? "File";
   const isImg = url ? isImage(url) : false;
 
+  // Route file through proxy so browser tab shows a proper filename
+  const proxyUrl = (rawUrl: string, name: string) =>
+    `/api/proxy-file?url=${encodeURIComponent(rawUrl)}&name=${encodeURIComponent(buildDownloadName(name, submitterName))}`;
+
+  const openDownloadPanel = (rawUrl: string, name: string) => {
+    setDownloadTarget({ url: rawUrl, name });
+    setDownloadName(buildDownloadName(name, submitterName));
+  };
+
+  const handleConfirmDownload = async () => {
+    if (!downloadTarget) return;
+    const origDot = downloadTarget.name.lastIndexOf(".");
+    const origExt = origDot > 0 ? downloadTarget.name.slice(origDot) : "";
+    let finalName = downloadName.trim() || downloadTarget.name;
+    if (origExt && !finalName.toLowerCase().endsWith(origExt.toLowerCase())) {
+      finalName += origExt;
+    }
+    setDownloading(true);
+    try {
+      const pUrl = `/api/proxy-file?url=${encodeURIComponent(downloadTarget.url)}&name=${encodeURIComponent(finalName)}`;
+      const res = await fetch(pUrl);
+      if (!res.ok) throw new Error("Download failed");
+      const blob = await res.blob();
+      const objUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = objUrl;
+      a.download = finalName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(objUrl);
+    } catch {
+      window.open(downloadTarget.url, "_blank", "noopener,noreferrer");
+    } finally {
+      setDownloading(false);
+      setDownloadTarget(null);
+    }
+  };
+
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,.6)", padding: "16px" }} onClick={onClose}>
-      <div style={{ background: "#fff", borderRadius: 16, width: "100%", maxWidth: "95vw", height: "90dvh", display: "flex", flexDirection: "column", overflow: "hidden" }} onClick={e => e.stopPropagation()}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", background: MAROON, flexShrink: 0 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
-            <FileText size={13} style={{ color: "rgba(255,255,255,.7)", flexShrink: 0 }} />
-            <span style={{ fontSize: 13, fontWeight: 700, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{fileName}</span>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
-            {url && (
-              <>
-                <a href={url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,.7)", display: "flex", alignItems: "center", gap: 4 }}><ExternalLink size={11} /> Open</a>
-                <a href={url} download={fileName} style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,.7)", display: "flex", alignItems: "center", gap: 4 }}><Download size={11} /> Download</a>
-              </>
-            )}
-            <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,.6)" }}><X size={15} /></button>
-          </div>
-        </div>
-        {files.length > 1 && (
-          <div style={{ display: "flex", gap: 8, padding: "10px 16px 0", overflowX: "auto", background: "#fff", borderBottom: "1px solid #f3f4f6" }}>
-            {files.map((file, idx) => (
-              <button
-                key={`${file.url}-${idx}`}
-                onClick={() => setSelectedUrl(file.url)}
-                style={{
-                  padding: "6px 10px",
-                  borderRadius: 8,
-                  border: resolvedSelectedUrl === file.url ? `1px solid ${MAROON}` : "1px solid #e5e7eb",
-                  background: resolvedSelectedUrl === file.url ? "#fef2f2" : "#fff",
-                  color: resolvedSelectedUrl === file.url ? MAROON : "#374151",
-                  fontSize: 11,
-                  fontWeight: 700,
-                  whiteSpace: "nowrap",
-                  cursor: "pointer",
-                }}
-              >
-                {file.label}
-              </button>
-            ))}
-          </div>
-        )}
-        <div style={{ flex: 1, overflow: "hidden", background: "#f3f4f6", minHeight: 300 }}>
-          {!url ? (
-            <div style={{ height: "100%", overflowY: "auto", padding: "24px 32px" }}>
-              {sub.textEntry
-                ? <div style={{ fontSize: 13, color: "#374151", lineHeight: 1.75 }} dangerouslySetInnerHTML={{ __html: sub.textEntry }} />
-                : <p style={{ fontSize: 13, color: "#9ca3af", fontStyle: "italic" }}>No content to preview.</p>}
+    <>
+      <div style={{ position: "fixed", inset: 0, zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,.6)", padding: "16px" }} onClick={onClose}>
+        <div style={{ background: "#fff", borderRadius: 16, width: "100%", maxWidth: 900, height: "90dvh", display: "flex", flexDirection: "column", overflow: "hidden" }} onClick={e => e.stopPropagation()}>
+          {/* Header */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", background: MAROON, flexShrink: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+              <FileText size={13} style={{ color: "rgba(255,255,255,.7)", flexShrink: 0 }} />
+              <span style={{ fontSize: 13, fontWeight: 700, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{fileName}</span>
             </div>
-          ) : isImg ? (
-            <div style={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={url} alt={fileName} style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain", borderRadius: 8 }} />
+            <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
+              {url && (
+                <>
+                  <a
+                    href={proxyUrl(url, fileName)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,.7)", display: "flex", alignItems: "center", gap: 4 }}
+                  >
+                    <ExternalLink size={11} /> Open
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => openDownloadPanel(url, fileName)}
+                    style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,.7)", display: "flex", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}
+                  >
+                    <Download size={11} /> Download
+                  </button>
+                </>
+              )}
+              <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,.6)" }}><X size={15} /></button>
             </div>
-          ) : isPdf(url) ? (
-            <iframe src={url} title={fileName} style={{ width: "100%", height: "100%", border: "none", display: "block" }} />
-          ) : (
-            <div style={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16, color: "#9ca3af" }}>
-              <FileText size={48} />
-              <p style={{ fontSize: 13 }}>Preview not available.</p>
-              <a href={url} download={fileName} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 700, padding: "8px 16px", borderRadius: 10, color: "#fff", background: MAROON, textDecoration: "none" }}>
-                <Download size={13} /> Download to view
-              </a>
+          </div>
+
+          {/* File tabs */}
+          {files.length > 1 && (
+            <div style={{ display: "flex", gap: 8, padding: "10px 16px 0", overflowX: "auto", background: "#fff", borderBottom: "1px solid #f3f4f6" }}>
+              {files.map((file, idx) => (
+                <button
+                  key={`${file.url}-${idx}`}
+                  onClick={() => setSelectedUrl(file.url)}
+                  style={{
+                    padding: "6px 10px", borderRadius: 8,
+                    border: resolvedSelectedUrl === file.url ? `1px solid ${MAROON}` : "1px solid #e5e7eb",
+                    background: resolvedSelectedUrl === file.url ? "#fef2f2" : "#fff",
+                    color: resolvedSelectedUrl === file.url ? MAROON : "#374151",
+                    fontSize: 11, fontWeight: 700, whiteSpace: "nowrap", cursor: "pointer",
+                  }}
+                >
+                  {file.label}
+                </button>
+              ))}
             </div>
           )}
+
+          {/* Content */}
+          <div style={{ flex: 1, overflow: "hidden", background: "#f3f4f6", minHeight: 300 }}>
+            {!url ? (
+              <div style={{ height: "100%", overflowY: "auto", padding: "24px 32px" }}>
+                {sub.textEntry
+                  ? <div style={{ fontSize: 13, color: "#374151", lineHeight: 1.75 }} dangerouslySetInnerHTML={{ __html: sub.textEntry }} />
+                  : <p style={{ fontSize: 13, color: "#9ca3af", fontStyle: "italic" }}>No content to preview.</p>}
+              </div>
+            ) : isImg ? (
+              <div style={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={url} alt={fileName} style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain", borderRadius: 8 }} />
+              </div>
+            ) : isPdf(url) ? (
+              <iframe
+                src={proxyUrl(url, fileName)}
+                title={buildDownloadName(fileName, submitterName)}
+                style={{ width: "100%", height: "100%", border: "none", display: "block" }}
+              />
+            ) : (
+              <div style={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16, color: "#9ca3af" }}>
+                <FileText size={48} />
+                <p style={{ fontSize: 13 }}>Preview not available.</p>
+                <button
+                  type="button"
+                  onClick={() => openDownloadPanel(url, fileName)}
+                  style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 700, padding: "8px 16px", borderRadius: 10, color: "#fff", background: MAROON, border: "none", cursor: "pointer" }}
+                >
+                  <Download size={13} /> Download to view
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* ── Download Name Panel ── */}
+      {downloadTarget && (
+        <div
+          style={{ position: "fixed", inset: 0, zIndex: 400, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,.5)", padding: 16 }}
+          onClick={() => !downloading && setDownloadTarget(null)}
+        >
+          <div
+            style={{ background: "#fff", borderRadius: 16, width: "100%", maxWidth: 420, padding: 20, boxShadow: "0 20px 50px rgba(0,0,0,.3)", fontFamily: FONT }}
+            onClick={e => e.stopPropagation()}
+          >
+            <p style={{ fontSize: 14, fontWeight: 800, color: "#111827", marginBottom: 4 }}>Download file</p>
+            <p style={{ fontSize: 11, color: "#6b7280", marginBottom: 12 }}>
+              Pwede mong palitan ang pangalan ng file bago i-download.
+            </p>
+            <input
+              type="text"
+              value={downloadName}
+              onChange={e => setDownloadName(e.target.value)}
+              onKeyDown={e => { if (e.key === "Enter" && !downloading) handleConfirmDownload(); }}
+              autoFocus
+              style={{ width: "100%", fontSize: 13, padding: "10px 12px", border: "1px solid #d1d5db", borderRadius: 10, outline: "none", boxSizing: "border-box" as const, fontFamily: FONT }}
+            />
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16 }}>
+              <button
+                type="button"
+                disabled={downloading}
+                onClick={() => setDownloadTarget(null)}
+                style={{ fontSize: 12, fontWeight: 600, padding: "8px 16px", borderRadius: 10, border: "1px solid #d1d5db", background: "#fff", color: "#4b5563", cursor: "pointer" }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={downloading}
+                onClick={handleConfirmDownload}
+                style={{ fontSize: 12, fontWeight: 700, padding: "8px 16px", borderRadius: 10, border: "none", background: MAROON, color: "#fff", cursor: "pointer", opacity: downloading ? 0.6 : 1 }}
+              >
+                {downloading ? "Downloading…" : "Download"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -1005,10 +1128,8 @@ export default function AdminCourseAssignmentDetailPage({
         .assign-desc li { margin-bottom: 3px; }
         .assign-desc a { color: #7b1113; text-decoration: underline; }
 
-        /* ── Desktop sidebar always visible ── */
         .detail-sidebar { display: flex !important; }
 
-        /* ── Overview: side-by-side on desktop ── */
         .overview-layout {
           display: flex;
           flex: 1;
@@ -1030,38 +1151,32 @@ export default function AdminCourseAssignmentDetailPage({
           flex-direction: column;
         }
 
-        /* Details+Schedule: 2-col grid on desktop */
         .details-grid {
           display: grid;
           grid-template-columns: 1fr 1fr;
           gap: 12px;
         }
 
-        /* Stats: 5-col on desktop */
         .stats-grid {
           display: grid;
           grid-template-columns: repeat(5, 1fr);
           gap: 8px;
         }
 
-        /* Tab action labels always visible on desktop */
         .action-label { display: inline !important; }
 
-        /* Submissions: 2-col card grid on larger screens */
         .submissions-grid {
           display: grid;
           grid-template-columns: repeat(2, 1fr);
           gap: 12px;
         }
 
-        /* ── Tablet (768–1023px) ── */
         @media (max-width: 1023px) {
           .overview-sidebar { display: none !important; }
           .overview-main { padding: 16px; }
           .submissions-grid { grid-template-columns: 1fr; }
         }
 
-        /* ── Mobile (≤767px) ── */
         @media (max-width: 767px) {
           .overview-main { padding: 10px 8px; }
           .details-grid { grid-template-columns: 1fr !important; gap: 8px; }
@@ -1070,7 +1185,6 @@ export default function AdminCourseAssignmentDetailPage({
           .action-label { display: none !important; }
           .submissions-grid { grid-template-columns: 1fr; gap: 8px; }
 
-          /* Top bar: tabs full row, actions own row below as one connected toolbar */
           .top-bar-wrap { flex-direction: column !important; align-items: stretch !important; padding: 0 8px !important; min-height: auto !important; }
           .tabs-row { width: 100%; }
           .tabs-row button { flex: 1; justify-content: center; padding: 8px 6px !important; font-size: 12px !important; }
@@ -1101,22 +1215,17 @@ export default function AdminCourseAssignmentDetailPage({
             height: 100% !important;
             border-radius: 0 !important;
           }
-          /* SpeedGrader keeps maroon fill, spans remaining space, no border-right needed since it's last visually */
-          .tab-actions-wrap > button[data-speedgrader] {
-            flex: 1.4;
-          }
+          .tab-actions-wrap > button[data-speedgrader] { flex: 1.4; }
 
           .assign-hero { padding: 14px !important; border-radius: 12px !important; }
           .detail-card-body { gap: 10px 12px !important; }
 
-          /* Submissions tab: horizontal-scroll filter pills, stacked download bar */
           .filter-pills-row { overflow-x: auto !important; flex-wrap: nowrap !important; -webkit-overflow-scrolling: touch; }
           .filter-pills-row::-webkit-scrollbar { display: none; }
           .dl-bar { flex-direction: column !important; align-items: stretch !important; }
           .dl-bar button { width: 100%; justify-content: center; }
         }
 
-        /* ── Small mobile (≤480px) ── */
         @media (max-width: 480px) {
           .tab-actions-wrap { padding: 4px 0 !important; }
           .assign-hero { padding: 14px !important; }
@@ -1138,7 +1247,6 @@ export default function AdminCourseAssignmentDetailPage({
 
       {/* ── Top action bar ── */}
       <div className="top-bar-wrap" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid #e5e7eb", padding: "0 8px 0 12px", background: "#fff", flexShrink: 0, flexWrap: "wrap", gap: 0, minHeight: 48 }}>
-        {/* Tabs */}
         <div className="tabs-row" style={{ display: "flex", alignItems: "flex-end" }}>
           {(["overview", "submissions"] as ActiveTab[]).map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab)}
@@ -1156,7 +1264,6 @@ export default function AdminCourseAssignmentDetailPage({
           ))}
         </div>
 
-        {/* Actions */}
         <div className="tab-actions-wrap" style={{ display: "flex", alignItems: "center", gap: 5, flexWrap: "wrap", padding: "6px 0" }}>
           <button onClick={togglePublish} disabled={publishing}
             style={{ display: "flex", alignItems: "center", gap: 4, padding: "6px 10px", fontSize: 12, fontWeight: 700, borderRadius: 8, cursor: "pointer", opacity: publishing ? 0.6 : 1, border: "1px solid",
@@ -1198,11 +1305,10 @@ export default function AdminCourseAssignmentDetailPage({
       {/* ══ OVERVIEW TAB ══ */}
       {activeTab === "overview" && (
         <div className="overview-layout">
-          {/* Main content — fills all available space */}
           <div className="overview-main">
             <div style={{ display: "flex", flexDirection: "column", gap: 10, width: "100%" }}>
 
-              {/* Hero — compact single row */}
+              {/* Hero */}
               <div className="assign-hero" style={{ background: `linear-gradient(135deg, ${MAROON} 0%, #5a0d0f 100%)`, borderRadius: 12, padding: "12px 14px", position: "relative", overflow: "hidden" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, position: "relative", flexWrap: "wrap" }}>
                   <div style={{ width: 34, height: 34, borderRadius: 9, background: "rgba(255,255,255,.15)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
@@ -1236,7 +1342,7 @@ export default function AdminCourseAssignmentDetailPage({
 
               {/* Stats */}
               {submissions.length > 0 && (() => {
-                const { submitted: s, graded: g, missing: m, late: l, avgScore: a } = computeStats(submissions, assignment.dueDate);
+                const { submitted: s, graded: g, missing: m, late: l } = computeStats(submissions, assignment.dueDate);
                 return (
                   <div className="stats-grid">
                     {[
@@ -1244,7 +1350,7 @@ export default function AdminCourseAssignmentDetailPage({
                       { label: "Graded",    value: g.length, color: "#15803d", bg: "#f0fdf4", border: "#bbf7d0", cls: "" },
                       { label: "Missing",   value: m.length, color: MAROON,   bg: "#fef2f2", border: "#f0c0c0", cls: "" },
                       { label: "Late",      value: l.length, color: "#dc2626", bg: "#fef2f2", border: "#fecaca", cls: "stat-hide-mobile" },
-                      ].map(stat => (
+                    ].map(stat => (
                       <div key={stat.label} className={stat.cls} style={{ background: stat.bg, border: `1px solid ${stat.border}`, borderRadius: 9, padding: "8px 4px", textAlign: "center" }}>
                         <p style={{ fontSize: "clamp(13px, 2.5vw, 18px)", fontWeight: 900, color: stat.color, margin: 0, lineHeight: 1 }}>{stat.value}</p>
                         <p style={{ fontSize: "clamp(7.5px, 1.2vw, 10px)", fontWeight: 800, color: stat.color, textTransform: "uppercase", letterSpacing: "0.05em", margin: "3px 0 0" }}>{stat.label}</p>
@@ -1254,7 +1360,7 @@ export default function AdminCourseAssignmentDetailPage({
                 );
               })()}
 
-              {/* Details + Schedule — merged into one compact card */}
+              {/* Details + Schedule */}
               <div style={{ background: "#fff", border: "1px solid #f0e4e4", borderRadius: 12, overflow: "hidden" }}>
                 <div style={{ padding: "8px 12px", background: "linear-gradient(90deg,#fef2f2,#fff)", borderBottom: "1px solid #fce8e8" }}>
                   <p style={{ fontSize: 9, fontWeight: 800, color: MAROON, textTransform: "uppercase", letterSpacing: "0.08em", margin: 0 }}>Details &amp; Schedule</p>
@@ -1278,7 +1384,7 @@ export default function AdminCourseAssignmentDetailPage({
                 </div>
               </div>
 
-              {/* Rubric Section */}
+              {/* Rubric */}
               <div style={{ background: "#fff", border: "1px solid #f0e4e4", borderRadius: 12, overflow: "hidden" }}>
                 <div style={{ padding: "8px 12px", background: "linear-gradient(90deg,#fef2f2,#fff)", borderBottom: "1px solid #fce8e8" }}>
                   <p style={{ fontSize: 9, fontWeight: 800, color: MAROON, textTransform: "uppercase", letterSpacing: "0.08em", margin: 0 }}>Rubric</p>
@@ -1307,7 +1413,7 @@ export default function AdminCourseAssignmentDetailPage({
             </div>
           </div>
 
-          {/* Right Sidebar — always visible on desktop */}
+          {/* Right Sidebar */}
           <div className="overview-sidebar detail-sidebar">
             <div style={{ padding: "12px 16px", borderBottom: "1px solid #f3f4f6", background: "#fdf2f2" }}>
               <p style={{ fontSize: 10, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.1em", color: MAROON, margin: 0 }}>Related Items</p>
@@ -1317,7 +1423,6 @@ export default function AdminCourseAssignmentDetailPage({
               <button onClick={() => setActiveTab("submissions")} style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 12, fontWeight: 700, color: MAROON, background: "none", border: "none", cursor: "pointer", textAlign: "left", padding: 0 }}><FileText size={13} /> View Submissions</button>
               <button onClick={() => router.push(`/admin/courses/${courseId}/assignments/${assignmentId}/edit`)} style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 12, fontWeight: 700, color: MAROON, background: "none", border: "none", cursor: "pointer", textAlign: "left", padding: 0 }}><Pencil size={13} /> Edit Assignment</button>
             </div>
-            {/* Quick stats in sidebar */}
             {submissions.length > 0 && (() => {
               const { submitted: s, graded: g, missing: m } = computeStats(submissions, assignment.dueDate);
               return (
@@ -1355,11 +1460,11 @@ export default function AdminCourseAssignmentDetailPage({
               style={{ display: "flex", alignItems: "center", gap: 5, padding: "6px 12px", fontSize: 12, fontWeight: 600, border: "1px solid #e5e7eb", borderRadius: 8, cursor: "pointer", color: "#374151", background: "#fff", opacity: refreshing ? 0.6 : 1 }}>
               <RefreshCw size={12} style={{ animation: refreshing ? "spin 1s linear infinite" : "none" }} /> Refresh
             </button>
-            </div>
+          </div>
 
           {/* Stats bar */}
           {(() => {
-            const { submitted: s, graded: g, missing: m, late: l, avgScore: a } = computeStats(submissions, assignment.dueDate);
+            const { submitted: s, graded: g, missing: m, late: l } = computeStats(submissions, assignment.dueDate);
             return (
               <div className="stats-grid" style={{ marginBottom: 14 }}>
                 {[
@@ -1425,7 +1530,7 @@ export default function AdminCourseAssignmentDetailPage({
             </div>
           )}
 
-          {/* Submissions list — 2-col on desktop */}
+          {/* Submissions list */}
           {filteredSubmissions.length === 0 ? (
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "48px 20px", gap: 12 }}>
               <div style={{ width: 56, height: 56, borderRadius: "50%", background: "#fef2f2", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -1474,47 +1579,47 @@ export default function AdminCourseAssignmentDetailPage({
                             {late && <span style={{ fontSize: 11, fontWeight: 700, color: "#dc2626" }}>· Late</span>}
                           </div>
                           {sub.allFileUrls && sub.allFileUrls.length > 0
-  ? sub.allFileUrls.map((f, fi) => (
-      <div key={fi} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-        <FileText size={11} style={{ color: MAROON, flexShrink: 0 }} />
-        <button
-          onClick={() => {
-            if (!f.url) return;
-            setPreviewTarget({
-              ...sub,
-              fileUrl: f.url,
-              fileName: f.label || sub.fileName || "File",
-              onlineUrl: null,
-              textEntry: null,
-              allFileUrls: sub.allFileUrls ?? [{ label: f.label || sub.fileName || "File", url: f.url }],
-            });
-          }}
-          style={{ fontSize: 11, fontWeight: 600, color: MAROON, background: "none", border: "none", cursor: "pointer", textDecoration: "underline", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textAlign: "left", maxWidth: "calc(100% - 40px)" }}>
-          {f.label}
-        </button>
-        <a href={f.url} download={f.label} target="_blank" rel="noopener noreferrer" style={{ marginLeft: "auto", flexShrink: 0, color: "#9ca3af" }}><Download size={11} /></a>
-      </div>
-    ))
-  : (sub.fileUrl && sub.fileName)
-    ? (
-        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <FileText size={11} style={{ color: MAROON, flexShrink: 0 }} />
-          <button onClick={() => {
-            if (!sub.fileUrl) return;
-            setPreviewTarget({
-              ...sub,
-              fileUrl: sub.fileUrl,
-              fileName: sub.fileName ?? "File",
-              onlineUrl: null,
-              textEntry: null,
-              allFileUrls: [{ label: sub.fileName ?? "File", url: sub.fileUrl }],
-            });
-          }} style={{ fontSize: 11, fontWeight: 600, color: MAROON, background: "none", border: "none", cursor: "pointer", textDecoration: "underline", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textAlign: "left", maxWidth: "calc(100% - 40px)" }}>{sub.fileName}</button>
-          <a href={sub.fileUrl} download={sub.fileName} target="_blank" rel="noopener noreferrer" style={{ marginLeft: "auto", flexShrink: 0, color: "#9ca3af" }}><Download size={11} /></a>
-        </div>
-      )
-    : null
-}
+                            ? sub.allFileUrls.map((f, fi) => (
+                                <div key={fi} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                                  <FileText size={11} style={{ color: MAROON, flexShrink: 0 }} />
+                                  <button
+                                    onClick={() => {
+                                      if (!f.url) return;
+                                      setPreviewTarget({
+                                        ...sub,
+                                        fileUrl: f.url,
+                                        fileName: f.label || sub.fileName || "File",
+                                        onlineUrl: null,
+                                        textEntry: null,
+                                        allFileUrls: sub.allFileUrls ?? [{ label: f.label || sub.fileName || "File", url: f.url }],
+                                      });
+                                    }}
+                                    style={{ fontSize: 11, fontWeight: 600, color: MAROON, background: "none", border: "none", cursor: "pointer", textDecoration: "underline", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textAlign: "left", maxWidth: "calc(100% - 40px)" }}>
+                                    {f.label}
+                                  </button>
+                                  <a href={f.url} download={f.label} target="_blank" rel="noopener noreferrer" style={{ marginLeft: "auto", flexShrink: 0, color: "#9ca3af" }}><Download size={11} /></a>
+                                </div>
+                              ))
+                            : (sub.fileUrl && sub.fileName)
+                              ? (
+                                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                                    <FileText size={11} style={{ color: MAROON, flexShrink: 0 }} />
+                                    <button onClick={() => {
+                                      if (!sub.fileUrl) return;
+                                      setPreviewTarget({
+                                        ...sub,
+                                        fileUrl: sub.fileUrl,
+                                        fileName: sub.fileName ?? "File",
+                                        onlineUrl: null,
+                                        textEntry: null,
+                                        allFileUrls: [{ label: sub.fileName ?? "File", url: sub.fileUrl }],
+                                      });
+                                    }} style={{ fontSize: 11, fontWeight: 600, color: MAROON, background: "none", border: "none", cursor: "pointer", textDecoration: "underline", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textAlign: "left", maxWidth: "calc(100% - 40px)" }}>{sub.fileName}</button>
+                                    <a href={sub.fileUrl} download={sub.fileName} target="_blank" rel="noopener noreferrer" style={{ marginLeft: "auto", flexShrink: 0, color: "#9ca3af" }}><Download size={11} /></a>
+                                  </div>
+                                )
+                              : null
+                          }
                           {sub.onlineUrl && (
                             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                               <ExternalLink size={11} style={{ flexShrink: 0, color: "#9ca3af" }} />

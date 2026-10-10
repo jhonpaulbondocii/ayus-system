@@ -1,18 +1,8 @@
 // src/app/api/admin/courses/[id]/enrollments/recent/route.ts
 
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-
-type SessionUser = { role?: string };
-
-async function requireAdmin() {
-  const session = await getServerSession(authOptions);
-  if (!session) return null;
-  if ((session.user as SessionUser)?.role !== "ADMIN") return null;
-  return session;
-}
+import { requireHeadOrAdmin } from "@/lib/require-head-or-admin";
 
 const formatTime = (date: Date): string => {
   const diff = Date.now() - date.getTime();
@@ -29,10 +19,11 @@ export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  if (!(await requireAdmin()))
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
   const { id: courseId } = await params;
+
+  const auth = await requireHeadOrAdmin(courseId);
+  if (!auth.ok)
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
 
   try {
     const recent = await prisma.courseEnrollment.findMany({

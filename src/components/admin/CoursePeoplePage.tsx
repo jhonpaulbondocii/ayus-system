@@ -714,11 +714,9 @@ export default function CoursePeoplePage() {
                             {p.pronouns&&<span style={{fontSize:12,color:"#9ca3af",marginLeft:4}}>({p.pronouns})</span>}
                           </td>
                           <td>{p.email}</td>
-                          <td>
-                            {p.accountType?<span className="cpp-badge" style={{background:p.accountType==="Teaching"?"#eff6ff":"#f5f3ff",color:p.accountType==="Teaching"?"#1d4ed8":"#7c3aed",borderColor:p.accountType==="Teaching"?"#bfdbfe":"#ddd6fe"}}>{p.accountType}</span>:<span style={{color:"#d1d5db"}}>—</span>}
-                          </td>
+                          <td>{p.accountType??<span style={{color:"#d1d5db"}}>—</span>}</td>
                           <td>{p.position??<span style={{color:"#d1d5db"}}>—</span>}</td>
-                          <td><RolePills raw={p.role}/></td>
+                          <td style={{fontSize:13,color:"#6b7280"}}>{parseRoles(p.role)[0]??<span style={{color:"#d1d5db"}}>—</span>}</td>
                           <td style={{overflow:"visible", width:32}}>
   <div style={{position:"relative",display:"inline-block", zIndex: menuOpenId === p.id ? 10001 : 1}}>
     <button
@@ -757,12 +755,8 @@ export default function CoursePeoplePage() {
                         </p>
                         <p className="cpp-person-card-email">{p.email}</p>
                         <div className="cpp-person-card-meta">
-                          <RolePills raw={p.role}/>
-                          {p.accountType&&(
-                            <span className="cpp-badge" style={{background:p.accountType==="Teaching"?"#eff6ff":"#f5f3ff",color:p.accountType==="Teaching"?"#1d4ed8":"#7c3aed",borderColor:p.accountType==="Teaching"?"#bfdbfe":"#ddd6fe"}}>
-                              {p.accountType}
-                            </span>
-                          )}
+                          <span style={{fontSize:11,color:"#9ca3af"}}>{parseRoles(p.role)[0]}</span>
+                          {p.accountType&&<span style={{fontSize:11,color:"#9ca3af"}}>{p.accountType}</span>}
                           {p.position&&<span style={{fontSize:11,color:"#9ca3af"}}>{p.position}</span>}
                         </div>
                       </div>

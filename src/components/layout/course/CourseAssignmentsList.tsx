@@ -1020,10 +1020,10 @@ function OthersGroupSection({ title, items, courseId, seenIds, onView }: {
 /* ─────────────────────────────────────────────────────────────────────────────
    SECTION LABEL
 ───────────────────────────────────────────────────────────────────────────── */
-function SectionLabel({ children, color, bg, border }: { children: React.ReactNode; color: string; bg: string; border: string }) {
+function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", padding: "7px 12px", background: bg, borderBottom: `1px solid ${border}`, borderTop: `1px solid ${border}` }}>
-      <span style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", color }}>{children}</span>
+    <div style={{ display: "flex", alignItems: "center", padding: "7px 12px" }}>
+      <span style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", color: "#9ca3af" }}>{children}</span>
     </div>
   );
 }
@@ -1208,7 +1208,7 @@ export default function CourseAssignmentsList({
       <style>{GLOBAL_CSS}</style>
 
       {/* ── SECTION 1: Published by You ── */}
-      <SectionLabel color={MAROON} bg="#fef2f2" border="#f0c0c0">Published by You</SectionLabel>
+      <SectionLabel>Published by You</SectionLabel>
 
       {/* Section 1 toolbar */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 10px", borderBottom: "1px solid #f3f4f6", gap: 8 }}>
@@ -1260,10 +1260,10 @@ export default function CourseAssignmentsList({
       </div>
 
       {/* ── SECTION 2: Published by Others ── */}
-      <SectionLabel color="#1d6fa4" bg="#eff6ff" border="#bfdbfe">
-        Published by Others
-        {otherAssignments.length > 0 && <span style={{ marginLeft: 6, fontWeight: 500, color: "#93c5fd", fontSize: 11 }}>({otherAssignments.length})</span>}
-      </SectionLabel>
+      <SectionLabel>
+  Published by Others
+  {otherAssignments.length > 0 && <span style={{ marginLeft: 6, fontWeight: 500, color: "#9ca3af", fontSize: 11 }}>({otherAssignments.length})</span>}
+</SectionLabel>
 
       {/* Section 2 toolbar */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 10px", borderBottom: "1px solid #f3f4f6", gap: 8 }}>

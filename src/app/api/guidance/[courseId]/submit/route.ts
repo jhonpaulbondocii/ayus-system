@@ -3,6 +3,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { departmentOfCourse } from "@/lib/academic-programs";
 
 export async function POST(
   req: NextRequest,
@@ -68,6 +69,11 @@ export async function POST(
       sex:              body.sex?.trim()              || null,
       religion:         body.religion?.trim()         || null,
       completeAddress:  body.completeAddress?.trim()  || null,
+      civilStatus:      body.civilStatus?.trim()      || null,
+      isPwd:            typeof body.isPwd        === "boolean" ? body.isPwd        : null,
+      isIndigenous:     typeof body.isIndigenous === "boolean" ? body.isIndigenous : null,
+      isSoloParent:     typeof body.isSoloParent === "boolean" ? body.isSoloParent : null,
+      isFirstGen:       typeof body.isFirstGen   === "boolean" ? body.isFirstGen   : null,
       fatherName:       body.fatherName?.trim()       || null,
       fatherDOB:        body.fatherDOB?.trim()        || null,
       fatherAddress:    body.fatherAddress?.trim()    || null,
@@ -139,10 +145,11 @@ export async function POST(
           name:          data.name,
           email:         data.email          ?? null,
           address:       data.completeAddress ?? null,
-          birthDate:     data.dateOfBirth
+          birthDate:     data.dateOfBirth && !isNaN(new Date(data.dateOfBirth).getTime())
                            ? new Date(data.dateOfBirth) : null,
           gender:        data.sex            ?? null,
           course:        data.courseProgram  ?? null,
+          department:    departmentOfCourse(data.courseProgram),
           age:           data.age            ?? null,
         },
       });

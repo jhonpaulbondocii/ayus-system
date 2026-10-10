@@ -35,6 +35,10 @@ import CourseLibraryTab from "./course/CourseLibraryTab";
 import CourseLibraryLogTab from "./course/CourseLibraryLogTab";
 import CourseBookCatalogTab from "./course/CourseBookCatalogTab";
 import CourseBorrowingTab from "./course/CourseBorrowingTab";
+import CourseStudentDirectoryTab from "./course/CourseStudentDirectoryTab";
+import CourseDisciplinaryLogTab from "./course/CourseDisciplinaryLogTab";
+import CourseViolationTypesTab from "./course/CourseViolationTypesTab";
+import CourseLostFoundTab from "./course/CourseLostFoundTab";
 
 import {
   FONT,
@@ -400,10 +404,15 @@ function CourseViewInner({ courseId }: { courseId: string }) {
         )
       );
       setPeople(
-        (peopleData.people ?? []).map((p: Person) => ({
-          ...p,
-          role: normalizeCourseRole(p.role),
-        }))
+        (peopleData.people ?? [])
+          .filter((p: Person) => {
+            const r = (p.role ?? "").toUpperCase();
+            return r !== "ADMIN";
+          })
+          .map((p: Person) => ({
+            ...p,
+            role: normalizeCourseRole(p.role),
+          }))
       );
       setGroups(groupData.groups ?? []);
       setSections(sectionData.sections ?? []);
@@ -432,6 +441,7 @@ function CourseViewInner({ courseId }: { courseId: string }) {
   const isFaculty = roleFlags.isFaculty;
   const canDelete = roleFlags.canDelete;
   const canManage = roleFlags.canManage; // Head or Staff
+  const canDeleteOwn = dataLoaded && isStaff && !isHead; // Staff: delete own only
 
   const canManageAssignments  = dataLoaded && canManage;
   const canManageAnnouncements = dataLoaded && canManage;
@@ -441,6 +451,7 @@ function CourseViewInner({ courseId }: { courseId: string }) {
   const isClinic   = course?.officeType === "CLINIC";
   const isGuidance = course?.officeType === "GUIDANCE";
   const isLibrary  = course?.officeType === "LIBRARY" || course?.officeType === "Library";
+  const isOSA      = course?.officeType === "OSA";
 
   // ── Tab list per role ─────────────────────────────────────────────────────
   const TABS: Tab[] = (
@@ -449,11 +460,13 @@ function CourseViewInner({ courseId }: { courseId: string }) {
           ...(isClinic   ? ["Patient Records", "Medical Exam Record", "Medicine Inventory", "Medical Cases Summary"] : []),
           ...(isGuidance ? ["Information Sheets", "Log Sheet", "Exit Interviews"] : []),
           ...(isLibrary  ? ["Library Cards", "Library Log", "Book Catalog", "Borrowing"] : []),
+          ...(isOSA      ? ["Student Directory", "Disciplinary Log", "Violation Types"] : []),
         ]
       : ["Home", "Announcements", "Assignments", "Grades", "Users", "Form",
           ...(isClinic   ? ["Patient Records", "Medical Exam Record", "Medicine Inventory", "Medical Cases Summary"] : []),
           ...(isGuidance ? ["Information Sheets", "Log Sheet", "Exit Interviews"] : []),
           ...(isLibrary  ? ["Library Cards", "Library Log", "Book Catalog", "Borrowing"] : []),
+          ...(isOSA ? ["Student Directory", "Disciplinary Log", "Violation Types", "Lost & Found"] : []),
         ]
   ) as Tab[];
 
@@ -575,10 +588,10 @@ function CourseViewInner({ courseId }: { courseId: string }) {
             setAnnouncements={setAnnouncements}
             people={people}
             canManageAnnouncements={canManageAnnouncements}
-            canDelete={canDelete}
-            isHead={isHead}
-            isStaff={isStaff}
-            currentUserId={currentUserId ?? ""}
+canDelete={canDelete || canDeleteOwn}
+isHead={isHead}
+isStaff={isStaff}
+currentUserId={currentUserId ?? ""}
           />
         </div>
       )}
@@ -595,8 +608,9 @@ function CourseViewInner({ courseId }: { courseId: string }) {
             isStaff={isStaff}
             isFaculty={isFaculty}
             canManageAssignments={canManageAssignments}
-            canDelete={canDelete}
-            currentUserId={currentUserId}
+canDelete={canDelete || canDeleteOwn}
+currentUserId={currentUserId}
+currentUserName={(session?.user as { name?: string })?.name ?? null}
             onNavDrillIn={(label: string, backFn: () => void) => {
               setDrillLabel(label);
               setDrillBack(() => backFn);
@@ -654,9 +668,9 @@ function CourseViewInner({ courseId }: { courseId: string }) {
             isHead={isHead}
             isStaff={isStaff}
             isFaculty={isFaculty}
-            canManageForms={canManageAssignments}
-            canDelete={canDelete}
-            currentUserId={currentUserId}
+           canManageForms={canManageAssignments}
+canDelete={canDelete || canDeleteOwn}
+currentUserId={currentUserId}
           />
         </div>
       )}
@@ -680,80 +694,100 @@ function CourseViewInner({ courseId }: { courseId: string }) {
 
       {activeTab === "Patient Records" && isClinic && dataLoaded && (
         <div className="flex-1 overflow-hidden flex flex-col">
-          <CoursePatientRecordsTab
+                    <CoursePatientRecordsTab
             courseId={courseId}
             isAdmin={isAdmin}
-            isHead={isHead}
+            isHead={isHead || isStaff}
             currentUserId={currentUserId}
           />
         </div>
       )}
       {activeTab === "Medical Exam Record" && isClinic && dataLoaded && (
         <div className="flex-1 overflow-hidden flex flex-col">
-          <CourseMedicalExamRecordTab
+                    <CourseMedicalExamRecordTab
             courseId={courseId}
             isAdmin={isAdmin}
-            isHead={isHead}
+            isHead={isHead || isStaff}
             currentUserId={currentUserId}
           />
         </div>
       )}
       {activeTab === "Medicine Inventory" && isClinic && dataLoaded && (
         <div className="flex-1 overflow-hidden flex flex-col">
-          <CourseMedicineInventoryTab
+                    <CourseMedicineInventoryTab
             courseId={courseId}
             isAdmin={isAdmin}
-            isHead={isHead}
+            isHead={isHead || isStaff}
           />
         </div>
       )}
       {activeTab === "Medical Cases Summary" && isClinic && dataLoaded && (
         <div className="flex-1 overflow-hidden flex flex-col">
-          <CourseMedicalCasesSummaryTab
+                    <CourseMedicalCasesSummaryTab
             courseId={courseId}
             isAdmin={isAdmin}
-            isHead={isHead}
+            isHead={isHead || isStaff}
           />
         </div>
       )}
       {activeTab === "Information Sheets" && isGuidance && dataLoaded && (
         <div className="flex-1 overflow-hidden flex flex-col">
-          <CourseGuidanceTab
+                    <CourseGuidanceTab
             courseId={courseId}
             isAdmin={isAdmin}
-            isHead={isHead}
+            isHead={isHead || isStaff}
             currentUserId={currentUserId}
           />
         </div>
       )}
       {activeTab === "Log Sheet" && isGuidance && dataLoaded && (
         <div className="flex-1 overflow-hidden flex flex-col">
-          <CourseGuidanceLogSheetTab courseId={courseId} isHead={isHead} />
+          <CourseGuidanceLogSheetTab courseId={courseId} isHead={isHead || isStaff} />
         </div>
       )}
       {activeTab === "Exit Interviews" && isGuidance && dataLoaded && (
         <div className="flex-1 overflow-hidden flex flex-col">
-          <CourseExitInterviewTab courseId={courseId} isHead={isHead} />
+          <CourseExitInterviewTab courseId={courseId} isHead={isHead || isStaff} />
         </div>
       )}
       {activeTab === "Library Cards" && isLibrary && dataLoaded && (
         <div className="flex-1 overflow-hidden flex flex-col">
-          <CourseLibraryTab courseId={courseId} isHead={isHead} />
+          <CourseLibraryTab courseId={courseId} isHead={isHead || isStaff} />
         </div>
       )}
       {activeTab === "Library Log" && isLibrary && dataLoaded && (
         <div className="flex-1 overflow-hidden flex flex-col">
-          <CourseLibraryLogTab courseId={courseId} isHead={isHead} />
+          <CourseLibraryLogTab courseId={courseId} isHead={isHead || isStaff} />
         </div>
       )}
       {activeTab === "Book Catalog" && isLibrary && dataLoaded && (
         <div className="flex-1 overflow-hidden flex flex-col">
-          <CourseBookCatalogTab courseId={courseId} isHead={isHead} />
+          <CourseBookCatalogTab courseId={courseId} isHead={isHead || isStaff} />
         </div>
       )}
       {activeTab === "Borrowing" && isLibrary && dataLoaded && (
         <div className="flex-1 overflow-hidden flex flex-col">
-          <CourseBorrowingTab courseId={courseId} isHead={isHead} />
+          <CourseBorrowingTab courseId={courseId} isHead={isHead || isStaff} />
+        </div>
+      )}
+            {activeTab === "Student Directory" && isOSA && dataLoaded && (
+        <div className="flex-1 overflow-hidden flex flex-col">
+          <CourseStudentDirectoryTab courseId={courseId} isHead={isHead || isStaff} />
+        </div>
+      )}
+      {activeTab === "Disciplinary Log" && isOSA && dataLoaded && (
+        <div className="flex-1 overflow-hidden flex flex-col">
+          <CourseDisciplinaryLogTab courseId={courseId} isHead={isHead || isStaff} />
+        </div>
+      )}
+      {activeTab === "Violation Types" && isOSA && (isHead || isStaff) && dataLoaded && (
+        <div className="flex-1 overflow-hidden flex flex-col">
+          <CourseViolationTypesTab courseId={courseId} isHead={isHead || isStaff} />
+        </div>
+      )}
+      {activeTab === "Lost & Found" && isOSA && dataLoaded && (
+        <div className="flex-1 overflow-hidden flex flex-col">
+          <CourseLostFoundTab courseId={courseId} isHead={isHead || isStaff} />
         </div>
       )}
       {activeTab === "Settings" && course && (

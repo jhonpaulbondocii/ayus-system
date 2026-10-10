@@ -1486,14 +1486,16 @@ export default function CourseAssignmentsPage({
   const handleSpeedGrader = (a: Assignment) => window.open(`/admin/courses/${courseId}/assignments/${a.id}/speedgrader`, "_blank");
 
   const handleDeleteAssignment = async () => {
-    if (!deleteAssignmentTarget) return;
-    setDeletingAssignment(true);
-    try {
-      await fetch(`/api/admin/courses/${courseId}/assignments/${deleteAssignmentTarget.id}`, { method: "DELETE" });
+  if (!deleteAssignmentTarget) return;
+  setDeletingAssignment(true);
+  try {
+    const res = await fetch(`/api/admin/courses/${courseId}/assignments/${deleteAssignmentTarget.id}`, { method: "DELETE" });
+    if (res.ok) {
       setAssignments(prev => prev.filter(a => a.id !== deleteAssignmentTarget.id));
       setDeleteAssignmentTarget(null);
-    } finally { setDeletingAssignment(false); }
-  };
+    }
+  } finally { setDeletingAssignment(false); }
+};
 
   // Derived
   const myAssignments = assignments.filter(a => isMyAssignment(a, resolvedUserId, resolvedUserName));

@@ -395,6 +395,7 @@ export default function AdminCoursesPage() {
                   <option value="FACULTY">Faculty</option>
                   <option value="GUIDANCE">Guidance</option>
                   <option value="LIBRARY">Library</option>
+                  <option value="OSA">OSA (Office of Student Affairs)</option>
                 </select>
               </div>
 

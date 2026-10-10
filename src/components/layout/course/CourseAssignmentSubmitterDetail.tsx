@@ -65,6 +65,7 @@ interface CourseAssignmentSubmitterDetailProps {
   assignment: AssignmentWithRole;
   courseId: string;
   currentUserId?: string | null;
+  currentUserName?: string | null;
   onBack: () => void;
 }
 
@@ -200,6 +201,20 @@ function resolveFileUrl(url: string): string {
   return `/uploads/submissions/${url}`;
 }
 
+// Default download name: <original file name>_<submitter name>.<ext>
+function buildDownloadName(
+  fileName: string,
+  submitterName?: string | null
+): string {
+  const dot = fileName.lastIndexOf(".");
+  const base = dot > 0 ? fileName.slice(0, dot) : fileName;
+  const ext = dot > 0 ? fileName.slice(dot) : "";
+  const safe = (submitterName ?? "")
+    .trim()
+    .replace(/[\\/:*?"<>|]+/g, "");
+  return safe ? `${base} - ${safe}${ext}` : `${base}${ext}`;
+}
+
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function PublisherBar({
@@ -283,12 +298,12 @@ function DetailsSidebar({
       {items.map(([label, value]) => (
         <div
           key={label}
-          className="flex items-center justify-between px-3 py-2.5 gap-2"
+          className="flex items-start justify-between px-3 py-2.5 gap-3"
         >
-          <span className="text-[11px] font-bold uppercase tracking-wide text-gray-400 shrink-0">
+          <span className="text-[11px] font-bold uppercase tracking-wide text-gray-400 shrink-0 pt-0.5">
             {label}
           </span>
-          <span className="text-xs font-semibold text-gray-800 text-right truncate max-w-[55%]">
+          <span className="text-xs font-semibold text-gray-800 text-right break-words min-w-0">
             {value}
           </span>
         </div>
@@ -402,7 +417,7 @@ function SubmittedView({
                 {entry.fileUrl && (
                   <button
                     type="button"
-                    onClick={() => onPreview(resolveFileUrl(entry.fileUrl ?? ""), entry.fileName || entry.fileUrl?.split("/").pop() || "File")}
+                    onClick={() => onPreview(resolveFileUrl(entry.fileUrl ?? ""), entry.fileName || "File")}
                     className="flex items-center gap-1 h-8 px-3 text-[11px] font-bold border rounded-lg hover:bg-gray-50 shrink-0 touch-manipulation"
                     style={{ color: MAROON, borderColor: "#f0c0c0", background: "white", cursor: "pointer" }}
                   >
@@ -423,7 +438,7 @@ function SubmittedView({
             </span>
             <button
               type="button"
-              onClick={() => onPreview(resolveFileUrl(sub.fileUrl!), sub.fileUrl!.split("/").pop() || "File")}
+              onClick={() => onPreview(resolveFileUrl(sub.fileUrl!), "File")}
               className="flex items-center gap-1 h-8 px-3 text-[11px] font-bold border rounded-lg hover:bg-gray-50 shrink-0 touch-manipulation"
               style={{ color: MAROON, borderColor: "#f0c0c0", background: "white", cursor: "pointer" }}
             >
@@ -486,9 +501,6 @@ function FileEntryUpload({
   const maxFiles = entry.maxFiles ?? 1;
   const maxSizeValue = entry.maxFileSizeValue ?? 1;
   const maxSizeUnit = entry.maxFileSizeUnit ?? "MB";
-  const maxSizeBytes = maxSizeUnit === "KB"
-    ? maxSizeValue * 1024
-    : maxSizeValue * 1024 * 1024;
   const entryLabel = entry.label?.trim() ||
   (hasRestrictions
     ? `${formatAllowedFileTypes(types)} File Upload`
@@ -630,7 +642,6 @@ function FileEntryUpload({
             <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
               Selected Files ({selectedFiles.length})
             </p>
-            {/* FIX: max-h + overflow-y-auto so list scrolls instead of pushing buttons off screen */}
             <div className="space-y-1.5 max-h-40 overflow-y-auto overscroll-contain pr-0.5">
               {selectedFiles.map((f, i) => (
                 <div
@@ -837,7 +848,6 @@ function SubmitterFileUploadSection({
   };
 
   return (
-    // FIX: flex column layout so action buttons are always visible at the bottom
     <div className="flex flex-col gap-3">
       {/* Scrollable file entries area */}
       <div className="space-y-3">
@@ -871,11 +881,7 @@ function SubmitterFileUploadSection({
         </div>
       )}
 
-      {/*
-        FIX: Action buttons — sticky on mobile so they're always visible above
-        the bottom nav bar. Uses safe-area-inset for notch/home indicator support.
-        On sm+ screens: normal inline row layout.
-      */}
+      {/* Action buttons — sticky on mobile, inline row on sm+ */}
       <div
         className="
           sticky bottom-0 left-0 right-0
@@ -1018,6 +1024,7 @@ export default function CourseAssignmentSubmitterDetail({
   assignment,
   courseId,
   currentUserId,
+  currentUserName,
   onBack,
 }: CourseAssignmentSubmitterDetailProps) {
   const now = new Date();
@@ -1046,18 +1053,51 @@ export default function CourseAssignmentSubmitterDetail({
   const [mode, setMode] = useState<"view" | "submit">("view");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewName, setPreviewName] = useState<string>("");
+  const [downloadTarget, setDownloadTarget] = useState<{ url: string; name: string } | null>(null);
+  const [downloadName, setDownloadName] = useState("");
+  const [downloading, setDownloading] = useState(false);
+
+  const openDownloadPanel = (url: string, name: string) => {
+    setDownloadTarget({ url, name });
+    setDownloadName(buildDownloadName(name, currentUserName));
+  };
+
+  const handleConfirmDownload = async () => {
+    if (!downloadTarget) return;
+    const origDot = downloadTarget.name.lastIndexOf(".");
+    const origExt = origDot > 0 ? downloadTarget.name.slice(origDot) : "";
+    let finalName = downloadName.trim() || downloadTarget.name;
+    if (origExt && !finalName.toLowerCase().endsWith(origExt.toLowerCase())) {
+      finalName += origExt;
+    }
+    setDownloading(true);
+    try {
+      const proxyUrl = `/api/proxy-file?url=${encodeURIComponent(downloadTarget.url)}&name=${encodeURIComponent(finalName)}`;
+      const res = await fetch(proxyUrl);
+      if (!res.ok) throw new Error("Download failed");
+      const blob = await res.blob();
+      const objUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = objUrl;
+      a.download = finalName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(objUrl);
+    } catch {
+      window.open(downloadTarget.url, "_blank", "noopener,noreferrer");
+    } finally {
+      setDownloading(false);
+      setDownloadTarget(null);
+    }
+  };
+
   const handleSubmitted = () => {
     setMode("view");
     onBack();
   };
 
   return (
-    /*
-      FIX: The root container uses `min-h-0` and `overflow-y-auto` so the entire
-      page is scrollable. On mobile, `pb-safe` (via inline style) adds space at
-      the bottom for the device's home indicator / navigation bar.
-      The sticky action bar inside SubmitterFileUploadSection handles the rest.
-    */
     <div
       className="flex flex-col bg-white overflow-y-auto"
       style={{
@@ -1282,7 +1322,7 @@ export default function CourseAssignmentSubmitterDetail({
           </div>
 
           {/* ── Desktop sidebar ── */}
-          <div className="hidden lg:block w-52 shrink-0">
+          <div className="hidden lg:block w-64 shrink-0">
             <DetailsSidebar assignment={assignment} />
           </div>
         </div>
@@ -1304,34 +1344,97 @@ export default function CourseAssignmentSubmitterDetail({
                 <span style={{ fontSize: 13, fontWeight: 700, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{previewName}</span>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
-                <a href={previewUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,.7)", display: "flex", alignItems: "center", gap: 4 }}>
-                  <ExternalLink size={11} /> Open
-                </a>
-                <a href={previewUrl} download={previewName} style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,.7)", display: "flex", alignItems: "center", gap: 4 }}>
+                <a
+  href={`/api/proxy-file?url=${encodeURIComponent(previewUrl)}&name=${encodeURIComponent(previewName)}&submitter=${encodeURIComponent(currentUserName ?? "")}`}
+  target="_blank"
+  rel="noopener noreferrer"
+  style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,.7)", display: "flex", alignItems: "center", gap: 4 }}
+>
+  <ExternalLink size={11} /> Open
+</a>
+                <button
+                  type="button"
+                  onClick={() => openDownloadPanel(previewUrl, previewName)}
+                  style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,.7)", display: "flex", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}
+                >
                   <Download size={11} /> Download
-                </a>
+                </button>
                 <button onClick={() => setPreviewUrl(null)} style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,.6)" }}>
                   <X size={15} />
                 </button>
               </div>
             </div>
             <div style={{ flex: 1, overflow: "hidden", background: "#f3f4f6", minHeight: 0 }}>
-              {/\.(jpg|jpeg|png|gif|webp|svg)$/i.test(previewUrl.split("?")[0]) ? (
+              {/\.(jpg|jpeg|png|gif|webp|svg)$/i.test(previewName.split("?")[0]) || /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(previewUrl.split("?")[0]) ? (
                 <div style={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={previewUrl} alt={previewName} style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain", borderRadius: 8 }} />
                 </div>
-              ) : /\.pdf$/i.test(previewUrl.split("?")[0]) ? (
-                <iframe src={previewUrl} title={previewName} style={{ width: "100%", height: "100%", border: "none" }} />
+              ) : /\.pdf$/i.test(previewName.split("?")[0]) || /\.pdf$/i.test(previewUrl.split("?")[0]) ? (
+  <iframe
+    src={`/api/proxy-file?url=${encodeURIComponent(previewUrl)}&name=${encodeURIComponent(previewName)}&submitter=${encodeURIComponent(currentUserName ?? "")}`}
+    title={previewName}
+    style={{ width: "100%", height: "100%", border: "none" }}
+  />
               ) : (
                 <div style={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16, color: "#9ca3af" }}>
                   <FileText size={48} />
                   <p style={{ fontSize: 13 }}>Preview not available.</p>
-                  <a href={previewUrl} download={previewName} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 700, padding: "8px 16px", borderRadius: 10, color: "#fff", background: MAROON, textDecoration: "none" }}>
+                  <button
+                    type="button"
+                    onClick={() => openDownloadPanel(previewUrl, previewName)}
+                    style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 700, padding: "8px 16px", borderRadius: 10, color: "#fff", background: MAROON, border: "none", cursor: "pointer" }}
+                  >
                     <Download size={13} /> Download to view
-                  </a>
+                  </button>
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Download Name Panel ── */}
+      {downloadTarget && (
+        <div
+          style={{ position: "fixed", inset: 0, zIndex: 400, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,.5)", padding: 16 }}
+          onClick={() => !downloading && setDownloadTarget(null)}
+        >
+          <div
+            style={{ background: "#fff", borderRadius: 16, width: "100%", maxWidth: 420, padding: 20, boxShadow: "0 20px 50px rgba(0,0,0,.3)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p style={{ fontSize: 14, fontWeight: 800, color: "#111827", marginBottom: 4 }}>
+              Download file
+            </p>
+            <p style={{ fontSize: 11, color: "#6b7280", marginBottom: 12 }}>
+              Pwede mong palitan ang pangalan ng file bago i-download.
+            </p>
+            <input
+              type="text"
+              value={downloadName}
+              onChange={(e) => setDownloadName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter" && !downloading) handleConfirmDownload(); }}
+              autoFocus
+              style={{ width: "100%", fontSize: 13, padding: "10px 12px", border: "1px solid #d1d5db", borderRadius: 10, outline: "none" }}
+            />
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16 }}>
+              <button
+                type="button"
+                disabled={downloading}
+                onClick={() => setDownloadTarget(null)}
+                style={{ fontSize: 12, fontWeight: 600, padding: "8px 16px", borderRadius: 10, border: "1px solid #d1d5db", background: "#fff", color: "#4b5563", cursor: "pointer" }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={downloading}
+                onClick={handleConfirmDownload}
+                style={{ fontSize: 12, fontWeight: 700, padding: "8px 16px", borderRadius: 10, border: "none", background: MAROON, color: "#fff", cursor: "pointer", opacity: downloading ? 0.6 : 1 }}
+              >
+                {downloading ? "Downloading…" : "Download"}
+              </button>
             </div>
           </div>
         </div>

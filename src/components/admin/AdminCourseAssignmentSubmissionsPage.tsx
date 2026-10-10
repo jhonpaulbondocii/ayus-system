@@ -294,68 +294,180 @@ function FilePreviewModal({ sub, onClose }: { sub: Submission; onClose: () => vo
     ? [{ label: sub.fileName ?? "File", url: sub.fileUrl }]
     : [];
   const [activeIdx, setActiveIdx] = useState(0);
+  const [downloadTarget, setDownloadTarget] = useState<{ url: string; name: string } | null>(null);
+  const [downloadName, setDownloadName] = useState("");
+  const [downloading, setDownloading] = useState(false);
+
   const active = files[activeIdx];
   if (!files.length) return null;
+
+  const submitterName = sub.userName ?? sub.userEmail ?? "";
+
+  const buildDownloadName = (fileName: string, submitter: string) => {
+    const dot = fileName.lastIndexOf(".");
+    const base = dot > 0 ? fileName.slice(0, dot) : fileName;
+    const ext = dot > 0 ? fileName.slice(dot) : "";
+    const safe = submitter.trim().replace(/[\\/:*?"<>|]+/g, "");
+    return safe ? `${base} - ${safe}${ext}` : `${base}${ext}`;
+  };
+
+  const openDownloadPanel = (url: string, name: string) => {
+    setDownloadTarget({ url, name });
+    setDownloadName(buildDownloadName(name, submitterName));
+  };
+
+  const handleConfirmDownload = async () => {
+    if (!downloadTarget) return;
+    const origDot = downloadTarget.name.lastIndexOf(".");
+    const origExt = origDot > 0 ? downloadTarget.name.slice(origDot) : "";
+    let finalName = downloadName.trim() || downloadTarget.name;
+    if (origExt && !finalName.toLowerCase().endsWith(origExt.toLowerCase())) {
+      finalName += origExt;
+    }
+    setDownloading(true);
+    try {
+      const proxyUrl = `/api/proxy-file?url=${encodeURIComponent(downloadTarget.url)}&name=${encodeURIComponent(finalName)}`;
+      const res = await fetch(proxyUrl);
+      if (!res.ok) throw new Error("Download failed");
+      const blob = await res.blob();
+      const objUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = objUrl;
+      a.download = finalName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(objUrl);
+    } catch {
+      window.open(downloadTarget.url, "_blank", "noopener,noreferrer");
+    } finally {
+      setDownloading(false);
+      setDownloadTarget(null);
+    }
+  };
+
   return (
-    <div className="fixed inset-0 z-300 flex items-center justify-center bg-black/80 p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl overflow-hidden w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl"
-        onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-4 py-3 shrink-0" style={{ background: MAROON }}>
-          <div className="flex items-center gap-2 min-w-0">
-            <FileText size={13} className="text-white/70 shrink-0" />
-            <span className="text-sm font-bold text-white truncate">{active?.label ?? "File"}</span>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <a href={active?.url} target="_blank" rel="noopener noreferrer"
-              className="flex items-center gap-1 text-[10px] font-bold text-white/70 hover:text-white transition-colors">
-              <ExternalLink size={11} /> Open
-            </a>
-            <a href={active?.url} download
-              className="flex items-center gap-1 text-[10px] font-bold text-white/70 hover:text-white transition-colors">
-              <Download size={11} /> Download
-            </a>
-            <button onClick={onClose} className="text-white/60 hover:text-white ml-1"><X size={15} /></button>
-          </div>
-        </div>
-        {files.length > 1 && (
-          <div className="flex gap-1 px-3 py-2 border-b border-gray-200 bg-gray-50 overflow-x-auto">
-            {files.map((f, i) => {
-              const name = f.url.split("/").pop()?.split("?")[0] ?? f.label;
-              return (
-                <button key={i} onClick={() => setActiveIdx(i)}
-                  className="flex items-center gap-1.5 text-[10px] font-bold px-3 py-1.5 rounded-lg border whitespace-nowrap transition-all shrink-0"
-                  style={{
-                    background: activeIdx === i ? MAROON : "#fff",
-                    color: activeIdx === i ? "#fff" : "#6b7280",
-                    borderColor: activeIdx === i ? MAROON : "#e5e7eb",
-                  }}>
-                  <FileText size={10} />
-                  {name.length > 30 ? name.slice(0, 27) + "..." : name}
-                </button>
-              );
-            })}
-          </div>
-        )}
-        <div className="flex-1 overflow-auto bg-gray-900 flex items-center justify-center p-4" style={{ minHeight: 300 }}>
-          {active && (isImage(active.url) ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={active.url} alt={active.label} className="max-w-full max-h-[70vh] object-contain rounded-lg" />
-          ) : isPdf(active.url) ? (
-            <iframe src={active.url} title={active.label} className="w-full rounded-lg border-0" style={{ height: "70vh" }} />
-          ) : (
-            <div className="flex flex-col items-center gap-4 text-gray-400">
-              <FileText size={48} />
-              <p className="text-sm">Preview not available for this file type.</p>
-              <a href={active.url} download
-                className="flex items-center gap-2 text-sm font-bold px-4 py-2 rounded-lg text-white"
-                style={{ background: MAROON }}>
-                <Download size={13} /> Download to view
-              </a>
+    <>
+      <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/80 p-4" onClick={onClose}>
+        <div className="bg-white rounded-2xl overflow-hidden flex flex-col shadow-2xl"
+          style={{ width: "100%", maxWidth: 900, height: "90dvh" }}
+          onClick={e => e.stopPropagation()}>
+          <div className="flex items-center justify-between px-4 py-3 shrink-0" style={{ background: MAROON }}>
+            <div className="flex items-center gap-2 min-w-0">
+              <FileText size={13} className="text-white/70 shrink-0" />
+              <span className="text-sm font-bold text-white truncate">{active?.label ?? "File"}</span>
             </div>
-          ))}
+            <div className="flex items-center gap-2 shrink-0">
+              <a
+                href={active ? `/api/proxy-file?url=${encodeURIComponent(active.url)}&name=${encodeURIComponent(buildDownloadName(active.label, submitterName))}` : "#"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 text-[10px] font-bold text-white/70 hover:text-white transition-colors"
+              >
+                <ExternalLink size={11} /> Open
+              </a>
+              <button
+                onClick={() => active && openDownloadPanel(active.url, active.label)}
+                className="flex items-center gap-1 text-[10px] font-bold text-white/70 hover:text-white transition-colors bg-transparent border-none cursor-pointer"
+              >
+                <Download size={11} /> Download
+              </button>
+              <button onClick={onClose} className="text-white/60 hover:text-white ml-1"><X size={15} /></button>
+            </div>
+          </div>
+
+          {files.length > 1 && (
+            <div className="flex gap-1 px-3 py-2 border-b border-gray-200 bg-gray-50 overflow-x-auto">
+              {files.map((f, i) => {
+                const name = f.url.split("/").pop()?.split("?")[0] ?? f.label;
+                return (
+                  <button key={i} onClick={() => setActiveIdx(i)}
+                    className="flex items-center gap-1.5 text-[10px] font-bold px-3 py-1.5 rounded-lg border whitespace-nowrap transition-all shrink-0"
+                    style={{
+                      background: activeIdx === i ? MAROON : "#fff",
+                      color: activeIdx === i ? "#fff" : "#6b7280",
+                      borderColor: activeIdx === i ? MAROON : "#e5e7eb",
+                    }}>
+                    <FileText size={10} />
+                    {name.length > 30 ? name.slice(0, 27) + "..." : name}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          <div className="flex-1 overflow-auto bg-gray-900 flex items-center justify-center p-4" style={{ minHeight: 300 }}>
+            {active && (isImage(active.url) ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={active.url} alt={active.label} className="max-w-full max-h-[70vh] object-contain rounded-lg" />
+            ) : isPdf(active.url) ? (
+              <iframe
+                src={`/api/proxy-file?url=${encodeURIComponent(active.url)}&name=${encodeURIComponent(buildDownloadName(active.label, submitterName))}`}
+                title={active.label}
+                className="w-full rounded-lg border-0"
+                style={{ height: "70vh" }}
+              />
+            ) : (
+              <div className="flex flex-col items-center gap-4 text-gray-400">
+                <FileText size={48} />
+                <p className="text-sm">Preview not available for this file type.</p>
+                <button
+                  onClick={() => active && openDownloadPanel(active.url, active.label)}
+                  className="flex items-center gap-2 text-sm font-bold px-4 py-2 rounded-lg text-white border-none cursor-pointer"
+                  style={{ background: MAROON }}
+                >
+                  <Download size={13} /> Download to view
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* ── Download Name Panel ── */}
+      {downloadTarget && (
+        <div
+          style={{ position: "fixed", inset: 0, zIndex: 400, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,.5)", padding: 16 }}
+          onClick={() => !downloading && setDownloadTarget(null)}
+        >
+          <div
+            style={{ background: "#fff", borderRadius: 16, width: "100%", maxWidth: 420, padding: 20, boxShadow: "0 20px 50px rgba(0,0,0,.3)" }}
+            onClick={e => e.stopPropagation()}
+          >
+            <p style={{ fontSize: 14, fontWeight: 800, color: "#111827", marginBottom: 4 }}>Download file</p>
+            <p style={{ fontSize: 11, color: "#6b7280", marginBottom: 12 }}>
+              I-edit ang pangalan ng file bago i-download.
+            </p>
+            <input
+              type="text"
+              value={downloadName}
+              onChange={e => setDownloadName(e.target.value)}
+              onKeyDown={e => { if (e.key === "Enter" && !downloading) handleConfirmDownload(); }}
+              autoFocus
+              style={{ width: "100%", fontSize: 13, padding: "10px 12px", border: "1px solid #d1d5db", borderRadius: 10, outline: "none", boxSizing: "border-box" }}
+            />
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16 }}>
+              <button
+                type="button"
+                disabled={downloading}
+                onClick={() => setDownloadTarget(null)}
+                style={{ fontSize: 12, fontWeight: 600, padding: "8px 16px", borderRadius: 10, border: "1px solid #d1d5db", background: "#fff", color: "#4b5563", cursor: "pointer" }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={downloading}
+                onClick={handleConfirmDownload}
+                style={{ fontSize: 12, fontWeight: 700, padding: "8px 16px", borderRadius: 10, border: "none", background: MAROON, color: "#fff", cursor: "pointer", opacity: downloading ? 0.6 : 1 }}
+              >
+                {downloading ? "Downloading…" : "Download"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 

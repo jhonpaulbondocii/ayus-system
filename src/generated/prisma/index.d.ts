@@ -248,6 +248,31 @@ export type LibraryBook = $Result.DefaultSelection<Prisma.$LibraryBookPayload>
  * 
  */
 export type LibraryBorrowRecord = $Result.DefaultSelection<Prisma.$LibraryBorrowRecordPayload>
+/**
+ * Model ViolationType
+ * 
+ */
+export type ViolationType = $Result.DefaultSelection<Prisma.$ViolationTypePayload>
+/**
+ * Model Violation
+ * 
+ */
+export type Violation = $Result.DefaultSelection<Prisma.$ViolationPayload>
+/**
+ * Model ParentContact
+ * 
+ */
+export type ParentContact = $Result.DefaultSelection<Prisma.$ParentContactPayload>
+/**
+ * Model ViolationNote
+ * 
+ */
+export type ViolationNote = $Result.DefaultSelection<Prisma.$ViolationNotePayload>
+/**
+ * Model LostFoundItem
+ * 
+ */
+export type LostFoundItem = $Result.DefaultSelection<Prisma.$LostFoundItemPayload>
 
 /**
  * Enums
@@ -994,6 +1019,56 @@ export class PrismaClient<
     * ```
     */
   get libraryBorrowRecord(): Prisma.LibraryBorrowRecordDelegate<ExtArgs>;
+
+  /**
+   * `prisma.violationType`: Exposes CRUD operations for the **ViolationType** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more ViolationTypes
+    * const violationTypes = await prisma.violationType.findMany()
+    * ```
+    */
+  get violationType(): Prisma.ViolationTypeDelegate<ExtArgs>;
+
+  /**
+   * `prisma.violation`: Exposes CRUD operations for the **Violation** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Violations
+    * const violations = await prisma.violation.findMany()
+    * ```
+    */
+  get violation(): Prisma.ViolationDelegate<ExtArgs>;
+
+  /**
+   * `prisma.parentContact`: Exposes CRUD operations for the **ParentContact** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more ParentContacts
+    * const parentContacts = await prisma.parentContact.findMany()
+    * ```
+    */
+  get parentContact(): Prisma.ParentContactDelegate<ExtArgs>;
+
+  /**
+   * `prisma.violationNote`: Exposes CRUD operations for the **ViolationNote** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more ViolationNotes
+    * const violationNotes = await prisma.violationNote.findMany()
+    * ```
+    */
+  get violationNote(): Prisma.ViolationNoteDelegate<ExtArgs>;
+
+  /**
+   * `prisma.lostFoundItem`: Exposes CRUD operations for the **LostFoundItem** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more LostFoundItems
+    * const lostFoundItems = await prisma.lostFoundItem.findMany()
+    * ```
+    */
+  get lostFoundItem(): Prisma.LostFoundItemDelegate<ExtArgs>;
 }
 
 export namespace Prisma {
@@ -1481,7 +1556,12 @@ export namespace Prisma {
     LibraryCardRequest: 'LibraryCardRequest',
     LibraryReceivingLog: 'LibraryReceivingLog',
     LibraryBook: 'LibraryBook',
-    LibraryBorrowRecord: 'LibraryBorrowRecord'
+    LibraryBorrowRecord: 'LibraryBorrowRecord',
+    ViolationType: 'ViolationType',
+    Violation: 'Violation',
+    ParentContact: 'ParentContact',
+    ViolationNote: 'ViolationNote',
+    LostFoundItem: 'LostFoundItem'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -1497,7 +1577,7 @@ export namespace Prisma {
 
   export type TypeMap<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, ClientOptions = {}> = {
     meta: {
-      modelProps: "conversation" | "conversationParticipant" | "message" | "messageAttachment" | "user" | "passwordResetToken" | "course" | "courseEnrollment" | "groupSet" | "group" | "groupMember" | "announcement" | "announcementAttachment" | "announcementRead" | "assignment" | "submission" | "repositoryFile" | "activityLog" | "account" | "session" | "quiz" | "quizQuestion" | "quizAttempt" | "form" | "formQuestion" | "formSubmission" | "rubric" | "rubricCriterion" | "rubricRating" | "student" | "patientRecord" | "bodySystem" | "medicalCondition" | "medicalExamRecord" | "medicineInventory" | "medicineUsage" | "quiz_answers" | "quiz_match_pairs" | "repositories" | "verification_tokens" | "guidanceInfoSheet" | "guidanceLogEntry" | "exitInterview" | "libraryCardRequest" | "libraryReceivingLog" | "libraryBook" | "libraryBorrowRecord"
+      modelProps: "conversation" | "conversationParticipant" | "message" | "messageAttachment" | "user" | "passwordResetToken" | "course" | "courseEnrollment" | "groupSet" | "group" | "groupMember" | "announcement" | "announcementAttachment" | "announcementRead" | "assignment" | "submission" | "repositoryFile" | "activityLog" | "account" | "session" | "quiz" | "quizQuestion" | "quizAttempt" | "form" | "formQuestion" | "formSubmission" | "rubric" | "rubricCriterion" | "rubricRating" | "student" | "patientRecord" | "bodySystem" | "medicalCondition" | "medicalExamRecord" | "medicineInventory" | "medicineUsage" | "quiz_answers" | "quiz_match_pairs" | "repositories" | "verification_tokens" | "guidanceInfoSheet" | "guidanceLogEntry" | "exitInterview" | "libraryCardRequest" | "libraryReceivingLog" | "libraryBook" | "libraryBorrowRecord" | "violationType" | "violation" | "parentContact" | "violationNote" | "lostFoundItem"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -4791,6 +4871,356 @@ export namespace Prisma {
           }
         }
       }
+      ViolationType: {
+        payload: Prisma.$ViolationTypePayload<ExtArgs>
+        fields: Prisma.ViolationTypeFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.ViolationTypeFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ViolationTypePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.ViolationTypeFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ViolationTypePayload>
+          }
+          findFirst: {
+            args: Prisma.ViolationTypeFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ViolationTypePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.ViolationTypeFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ViolationTypePayload>
+          }
+          findMany: {
+            args: Prisma.ViolationTypeFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ViolationTypePayload>[]
+          }
+          create: {
+            args: Prisma.ViolationTypeCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ViolationTypePayload>
+          }
+          createMany: {
+            args: Prisma.ViolationTypeCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.ViolationTypeCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ViolationTypePayload>[]
+          }
+          delete: {
+            args: Prisma.ViolationTypeDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ViolationTypePayload>
+          }
+          update: {
+            args: Prisma.ViolationTypeUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ViolationTypePayload>
+          }
+          deleteMany: {
+            args: Prisma.ViolationTypeDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.ViolationTypeUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.ViolationTypeUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ViolationTypePayload>
+          }
+          aggregate: {
+            args: Prisma.ViolationTypeAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateViolationType>
+          }
+          groupBy: {
+            args: Prisma.ViolationTypeGroupByArgs<ExtArgs>
+            result: $Utils.Optional<ViolationTypeGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.ViolationTypeCountArgs<ExtArgs>
+            result: $Utils.Optional<ViolationTypeCountAggregateOutputType> | number
+          }
+        }
+      }
+      Violation: {
+        payload: Prisma.$ViolationPayload<ExtArgs>
+        fields: Prisma.ViolationFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.ViolationFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ViolationPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.ViolationFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ViolationPayload>
+          }
+          findFirst: {
+            args: Prisma.ViolationFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ViolationPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.ViolationFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ViolationPayload>
+          }
+          findMany: {
+            args: Prisma.ViolationFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ViolationPayload>[]
+          }
+          create: {
+            args: Prisma.ViolationCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ViolationPayload>
+          }
+          createMany: {
+            args: Prisma.ViolationCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.ViolationCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ViolationPayload>[]
+          }
+          delete: {
+            args: Prisma.ViolationDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ViolationPayload>
+          }
+          update: {
+            args: Prisma.ViolationUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ViolationPayload>
+          }
+          deleteMany: {
+            args: Prisma.ViolationDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.ViolationUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.ViolationUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ViolationPayload>
+          }
+          aggregate: {
+            args: Prisma.ViolationAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateViolation>
+          }
+          groupBy: {
+            args: Prisma.ViolationGroupByArgs<ExtArgs>
+            result: $Utils.Optional<ViolationGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.ViolationCountArgs<ExtArgs>
+            result: $Utils.Optional<ViolationCountAggregateOutputType> | number
+          }
+        }
+      }
+      ParentContact: {
+        payload: Prisma.$ParentContactPayload<ExtArgs>
+        fields: Prisma.ParentContactFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.ParentContactFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ParentContactPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.ParentContactFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ParentContactPayload>
+          }
+          findFirst: {
+            args: Prisma.ParentContactFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ParentContactPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.ParentContactFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ParentContactPayload>
+          }
+          findMany: {
+            args: Prisma.ParentContactFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ParentContactPayload>[]
+          }
+          create: {
+            args: Prisma.ParentContactCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ParentContactPayload>
+          }
+          createMany: {
+            args: Prisma.ParentContactCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.ParentContactCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ParentContactPayload>[]
+          }
+          delete: {
+            args: Prisma.ParentContactDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ParentContactPayload>
+          }
+          update: {
+            args: Prisma.ParentContactUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ParentContactPayload>
+          }
+          deleteMany: {
+            args: Prisma.ParentContactDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.ParentContactUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.ParentContactUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ParentContactPayload>
+          }
+          aggregate: {
+            args: Prisma.ParentContactAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateParentContact>
+          }
+          groupBy: {
+            args: Prisma.ParentContactGroupByArgs<ExtArgs>
+            result: $Utils.Optional<ParentContactGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.ParentContactCountArgs<ExtArgs>
+            result: $Utils.Optional<ParentContactCountAggregateOutputType> | number
+          }
+        }
+      }
+      ViolationNote: {
+        payload: Prisma.$ViolationNotePayload<ExtArgs>
+        fields: Prisma.ViolationNoteFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.ViolationNoteFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ViolationNotePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.ViolationNoteFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ViolationNotePayload>
+          }
+          findFirst: {
+            args: Prisma.ViolationNoteFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ViolationNotePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.ViolationNoteFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ViolationNotePayload>
+          }
+          findMany: {
+            args: Prisma.ViolationNoteFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ViolationNotePayload>[]
+          }
+          create: {
+            args: Prisma.ViolationNoteCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ViolationNotePayload>
+          }
+          createMany: {
+            args: Prisma.ViolationNoteCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.ViolationNoteCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ViolationNotePayload>[]
+          }
+          delete: {
+            args: Prisma.ViolationNoteDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ViolationNotePayload>
+          }
+          update: {
+            args: Prisma.ViolationNoteUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ViolationNotePayload>
+          }
+          deleteMany: {
+            args: Prisma.ViolationNoteDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.ViolationNoteUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.ViolationNoteUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ViolationNotePayload>
+          }
+          aggregate: {
+            args: Prisma.ViolationNoteAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateViolationNote>
+          }
+          groupBy: {
+            args: Prisma.ViolationNoteGroupByArgs<ExtArgs>
+            result: $Utils.Optional<ViolationNoteGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.ViolationNoteCountArgs<ExtArgs>
+            result: $Utils.Optional<ViolationNoteCountAggregateOutputType> | number
+          }
+        }
+      }
+      LostFoundItem: {
+        payload: Prisma.$LostFoundItemPayload<ExtArgs>
+        fields: Prisma.LostFoundItemFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.LostFoundItemFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LostFoundItemPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.LostFoundItemFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LostFoundItemPayload>
+          }
+          findFirst: {
+            args: Prisma.LostFoundItemFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LostFoundItemPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.LostFoundItemFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LostFoundItemPayload>
+          }
+          findMany: {
+            args: Prisma.LostFoundItemFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LostFoundItemPayload>[]
+          }
+          create: {
+            args: Prisma.LostFoundItemCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LostFoundItemPayload>
+          }
+          createMany: {
+            args: Prisma.LostFoundItemCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.LostFoundItemCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LostFoundItemPayload>[]
+          }
+          delete: {
+            args: Prisma.LostFoundItemDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LostFoundItemPayload>
+          }
+          update: {
+            args: Prisma.LostFoundItemUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LostFoundItemPayload>
+          }
+          deleteMany: {
+            args: Prisma.LostFoundItemDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.LostFoundItemUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.LostFoundItemUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LostFoundItemPayload>
+          }
+          aggregate: {
+            args: Prisma.LostFoundItemAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateLostFoundItem>
+          }
+          groupBy: {
+            args: Prisma.LostFoundItemGroupByArgs<ExtArgs>
+            result: $Utils.Optional<LostFoundItemGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.LostFoundItemCountArgs<ExtArgs>
+            result: $Utils.Optional<LostFoundItemCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -5043,6 +5473,10 @@ export namespace Prisma {
     exitInterviewsCounseled: number
     submissions_submissions_gradedByIdTousers: number
     submissions: number
+    violationsRecorded: number
+    violationNotes: number
+    parentContactsRecorded: number
+    lostFoundRecorded: number
   }
 
   export type UserCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -5066,6 +5500,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: boolean | UserCountOutputTypeCountExitInterviewsCounseledArgs
     submissions_submissions_gradedByIdTousers?: boolean | UserCountOutputTypeCountSubmissions_submissions_gradedByIdTousersArgs
     submissions?: boolean | UserCountOutputTypeCountSubmissionsArgs
+    violationsRecorded?: boolean | UserCountOutputTypeCountViolationsRecordedArgs
+    violationNotes?: boolean | UserCountOutputTypeCountViolationNotesArgs
+    parentContactsRecorded?: boolean | UserCountOutputTypeCountParentContactsRecordedArgs
+    lostFoundRecorded?: boolean | UserCountOutputTypeCountLostFoundRecordedArgs
   }
 
   // Custom InputTypes
@@ -5219,6 +5657,34 @@ export namespace Prisma {
     where?: SubmissionWhereInput
   }
 
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountViolationsRecordedArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ViolationWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountViolationNotesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ViolationNoteWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountParentContactsRecordedArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ParentContactWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountLostFoundRecordedArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: LostFoundItemWhereInput
+  }
+
 
   /**
    * Count Type CourseCountOutputType
@@ -5245,6 +5711,9 @@ export namespace Prisma {
     libraryReceivingLogs: number
     LibraryBook: number
     LibraryBorrowRecord: number
+    violationTypes: number
+    violations: number
+    lostFoundItems: number
   }
 
   export type CourseCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -5268,6 +5737,9 @@ export namespace Prisma {
     libraryReceivingLogs?: boolean | CourseCountOutputTypeCountLibraryReceivingLogsArgs
     LibraryBook?: boolean | CourseCountOutputTypeCountLibraryBookArgs
     LibraryBorrowRecord?: boolean | CourseCountOutputTypeCountLibraryBorrowRecordArgs
+    violationTypes?: boolean | CourseCountOutputTypeCountViolationTypesArgs
+    violations?: boolean | CourseCountOutputTypeCountViolationsArgs
+    lostFoundItems?: boolean | CourseCountOutputTypeCountLostFoundItemsArgs
   }
 
   // Custom InputTypes
@@ -5419,6 +5891,27 @@ export namespace Prisma {
    */
   export type CourseCountOutputTypeCountLibraryBorrowRecordArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: LibraryBorrowRecordWhereInput
+  }
+
+  /**
+   * CourseCountOutputType without action
+   */
+  export type CourseCountOutputTypeCountViolationTypesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ViolationTypeWhereInput
+  }
+
+  /**
+   * CourseCountOutputType without action
+   */
+  export type CourseCountOutputTypeCountViolationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ViolationWhereInput
+  }
+
+  /**
+   * CourseCountOutputType without action
+   */
+  export type CourseCountOutputTypeCountLostFoundItemsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: LostFoundItemWhereInput
   }
 
 
@@ -5753,11 +6246,13 @@ export namespace Prisma {
   export type StudentCountOutputType = {
     medicalExamRecords: number
     patientRecords: number
+    violations: number
   }
 
   export type StudentCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     medicalExamRecords?: boolean | StudentCountOutputTypeCountMedicalExamRecordsArgs
     patientRecords?: boolean | StudentCountOutputTypeCountPatientRecordsArgs
+    violations?: boolean | StudentCountOutputTypeCountViolationsArgs
   }
 
   // Custom InputTypes
@@ -5783,6 +6278,13 @@ export namespace Prisma {
    */
   export type StudentCountOutputTypeCountPatientRecordsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: PatientRecordWhereInput
+  }
+
+  /**
+   * StudentCountOutputType without action
+   */
+  export type StudentCountOutputTypeCountViolationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ViolationWhereInput
   }
 
 
@@ -5978,6 +6480,77 @@ export namespace Prisma {
    */
   export type LibraryBookCountOutputTypeCountBorrowRecordsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: LibraryBorrowRecordWhereInput
+  }
+
+
+  /**
+   * Count Type ViolationTypeCountOutputType
+   */
+
+  export type ViolationTypeCountOutputType = {
+    violations: number
+  }
+
+  export type ViolationTypeCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    violations?: boolean | ViolationTypeCountOutputTypeCountViolationsArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * ViolationTypeCountOutputType without action
+   */
+  export type ViolationTypeCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ViolationTypeCountOutputType
+     */
+    select?: ViolationTypeCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * ViolationTypeCountOutputType without action
+   */
+  export type ViolationTypeCountOutputTypeCountViolationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ViolationWhereInput
+  }
+
+
+  /**
+   * Count Type ViolationCountOutputType
+   */
+
+  export type ViolationCountOutputType = {
+    parentContacts: number
+    notes: number
+  }
+
+  export type ViolationCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    parentContacts?: boolean | ViolationCountOutputTypeCountParentContactsArgs
+    notes?: boolean | ViolationCountOutputTypeCountNotesArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * ViolationCountOutputType without action
+   */
+  export type ViolationCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ViolationCountOutputType
+     */
+    select?: ViolationCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * ViolationCountOutputType without action
+   */
+  export type ViolationCountOutputTypeCountParentContactsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ParentContactWhereInput
+  }
+
+  /**
+   * ViolationCountOutputType without action
+   */
+  export type ViolationCountOutputTypeCountNotesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ViolationNoteWhereInput
   }
 
 
@@ -10214,6 +10787,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: boolean | User$exitInterviewsCounseledArgs<ExtArgs>
     submissions_submissions_gradedByIdTousers?: boolean | User$submissions_submissions_gradedByIdTousersArgs<ExtArgs>
     submissions?: boolean | User$submissionsArgs<ExtArgs>
+    violationsRecorded?: boolean | User$violationsRecordedArgs<ExtArgs>
+    violationNotes?: boolean | User$violationNotesArgs<ExtArgs>
+    parentContactsRecorded?: boolean | User$parentContactsRecordedArgs<ExtArgs>
+    lostFoundRecorded?: boolean | User$lostFoundRecordedArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["user"]>
 
@@ -10280,6 +10857,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: boolean | User$exitInterviewsCounseledArgs<ExtArgs>
     submissions_submissions_gradedByIdTousers?: boolean | User$submissions_submissions_gradedByIdTousersArgs<ExtArgs>
     submissions?: boolean | User$submissionsArgs<ExtArgs>
+    violationsRecorded?: boolean | User$violationsRecordedArgs<ExtArgs>
+    violationNotes?: boolean | User$violationNotesArgs<ExtArgs>
+    parentContactsRecorded?: boolean | User$parentContactsRecordedArgs<ExtArgs>
+    lostFoundRecorded?: boolean | User$lostFoundRecordedArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type UserIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -10307,6 +10888,10 @@ export namespace Prisma {
       exitInterviewsCounseled: Prisma.$ExitInterviewPayload<ExtArgs>[]
       submissions_submissions_gradedByIdTousers: Prisma.$SubmissionPayload<ExtArgs>[]
       submissions: Prisma.$SubmissionPayload<ExtArgs>[]
+      violationsRecorded: Prisma.$ViolationPayload<ExtArgs>[]
+      violationNotes: Prisma.$ViolationNotePayload<ExtArgs>[]
+      parentContactsRecorded: Prisma.$ParentContactPayload<ExtArgs>[]
+      lostFoundRecorded: Prisma.$LostFoundItemPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -10711,6 +11296,10 @@ export namespace Prisma {
     exitInterviewsCounseled<T extends User$exitInterviewsCounseledArgs<ExtArgs> = {}>(args?: Subset<T, User$exitInterviewsCounseledArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ExitInterviewPayload<ExtArgs>, T, "findMany"> | Null>
     submissions_submissions_gradedByIdTousers<T extends User$submissions_submissions_gradedByIdTousersArgs<ExtArgs> = {}>(args?: Subset<T, User$submissions_submissions_gradedByIdTousersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SubmissionPayload<ExtArgs>, T, "findMany"> | Null>
     submissions<T extends User$submissionsArgs<ExtArgs> = {}>(args?: Subset<T, User$submissionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SubmissionPayload<ExtArgs>, T, "findMany"> | Null>
+    violationsRecorded<T extends User$violationsRecordedArgs<ExtArgs> = {}>(args?: Subset<T, User$violationsRecordedArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ViolationPayload<ExtArgs>, T, "findMany"> | Null>
+    violationNotes<T extends User$violationNotesArgs<ExtArgs> = {}>(args?: Subset<T, User$violationNotesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ViolationNotePayload<ExtArgs>, T, "findMany"> | Null>
+    parentContactsRecorded<T extends User$parentContactsRecordedArgs<ExtArgs> = {}>(args?: Subset<T, User$parentContactsRecordedArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ParentContactPayload<ExtArgs>, T, "findMany"> | Null>
+    lostFoundRecorded<T extends User$lostFoundRecordedArgs<ExtArgs> = {}>(args?: Subset<T, User$lostFoundRecordedArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$LostFoundItemPayload<ExtArgs>, T, "findMany"> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -11469,6 +12058,86 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: SubmissionScalarFieldEnum | SubmissionScalarFieldEnum[]
+  }
+
+  /**
+   * User.violationsRecorded
+   */
+  export type User$violationsRecordedArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Violation
+     */
+    select?: ViolationSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ViolationInclude<ExtArgs> | null
+    where?: ViolationWhereInput
+    orderBy?: ViolationOrderByWithRelationInput | ViolationOrderByWithRelationInput[]
+    cursor?: ViolationWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: ViolationScalarFieldEnum | ViolationScalarFieldEnum[]
+  }
+
+  /**
+   * User.violationNotes
+   */
+  export type User$violationNotesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ViolationNote
+     */
+    select?: ViolationNoteSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ViolationNoteInclude<ExtArgs> | null
+    where?: ViolationNoteWhereInput
+    orderBy?: ViolationNoteOrderByWithRelationInput | ViolationNoteOrderByWithRelationInput[]
+    cursor?: ViolationNoteWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: ViolationNoteScalarFieldEnum | ViolationNoteScalarFieldEnum[]
+  }
+
+  /**
+   * User.parentContactsRecorded
+   */
+  export type User$parentContactsRecordedArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ParentContact
+     */
+    select?: ParentContactSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ParentContactInclude<ExtArgs> | null
+    where?: ParentContactWhereInput
+    orderBy?: ParentContactOrderByWithRelationInput | ParentContactOrderByWithRelationInput[]
+    cursor?: ParentContactWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: ParentContactScalarFieldEnum | ParentContactScalarFieldEnum[]
+  }
+
+  /**
+   * User.lostFoundRecorded
+   */
+  export type User$lostFoundRecordedArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LostFoundItem
+     */
+    select?: LostFoundItemSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LostFoundItemInclude<ExtArgs> | null
+    where?: LostFoundItemWhereInput
+    orderBy?: LostFoundItemOrderByWithRelationInput | LostFoundItemOrderByWithRelationInput[]
+    cursor?: LostFoundItemWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: LostFoundItemScalarFieldEnum | LostFoundItemScalarFieldEnum[]
   }
 
   /**
@@ -12691,6 +13360,9 @@ export namespace Prisma {
     libraryReceivingLogs?: boolean | Course$libraryReceivingLogsArgs<ExtArgs>
     LibraryBook?: boolean | Course$LibraryBookArgs<ExtArgs>
     LibraryBorrowRecord?: boolean | Course$LibraryBorrowRecordArgs<ExtArgs>
+    violationTypes?: boolean | Course$violationTypesArgs<ExtArgs>
+    violations?: boolean | Course$violationsArgs<ExtArgs>
+    lostFoundItems?: boolean | Course$lostFoundItemsArgs<ExtArgs>
     _count?: boolean | CourseCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["course"]>
 
@@ -12747,6 +13419,9 @@ export namespace Prisma {
     libraryReceivingLogs?: boolean | Course$libraryReceivingLogsArgs<ExtArgs>
     LibraryBook?: boolean | Course$LibraryBookArgs<ExtArgs>
     LibraryBorrowRecord?: boolean | Course$LibraryBorrowRecordArgs<ExtArgs>
+    violationTypes?: boolean | Course$violationTypesArgs<ExtArgs>
+    violations?: boolean | Course$violationsArgs<ExtArgs>
+    lostFoundItems?: boolean | Course$lostFoundItemsArgs<ExtArgs>
     _count?: boolean | CourseCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type CourseIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -12774,6 +13449,9 @@ export namespace Prisma {
       libraryReceivingLogs: Prisma.$LibraryReceivingLogPayload<ExtArgs>[]
       LibraryBook: Prisma.$LibraryBookPayload<ExtArgs>[]
       LibraryBorrowRecord: Prisma.$LibraryBorrowRecordPayload<ExtArgs>[]
+      violationTypes: Prisma.$ViolationTypePayload<ExtArgs>[]
+      violations: Prisma.$ViolationPayload<ExtArgs>[]
+      lostFoundItems: Prisma.$LostFoundItemPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -13173,6 +13851,9 @@ export namespace Prisma {
     libraryReceivingLogs<T extends Course$libraryReceivingLogsArgs<ExtArgs> = {}>(args?: Subset<T, Course$libraryReceivingLogsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$LibraryReceivingLogPayload<ExtArgs>, T, "findMany"> | Null>
     LibraryBook<T extends Course$LibraryBookArgs<ExtArgs> = {}>(args?: Subset<T, Course$LibraryBookArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$LibraryBookPayload<ExtArgs>, T, "findMany"> | Null>
     LibraryBorrowRecord<T extends Course$LibraryBorrowRecordArgs<ExtArgs> = {}>(args?: Subset<T, Course$LibraryBorrowRecordArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$LibraryBorrowRecordPayload<ExtArgs>, T, "findMany"> | Null>
+    violationTypes<T extends Course$violationTypesArgs<ExtArgs> = {}>(args?: Subset<T, Course$violationTypesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ViolationTypePayload<ExtArgs>, T, "findMany"> | Null>
+    violations<T extends Course$violationsArgs<ExtArgs> = {}>(args?: Subset<T, Course$violationsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ViolationPayload<ExtArgs>, T, "findMany"> | Null>
+    lostFoundItems<T extends Course$lostFoundItemsArgs<ExtArgs> = {}>(args?: Subset<T, Course$lostFoundItemsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$LostFoundItemPayload<ExtArgs>, T, "findMany"> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -13926,6 +14607,66 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: LibraryBorrowRecordScalarFieldEnum | LibraryBorrowRecordScalarFieldEnum[]
+  }
+
+  /**
+   * Course.violationTypes
+   */
+  export type Course$violationTypesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ViolationType
+     */
+    select?: ViolationTypeSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ViolationTypeInclude<ExtArgs> | null
+    where?: ViolationTypeWhereInput
+    orderBy?: ViolationTypeOrderByWithRelationInput | ViolationTypeOrderByWithRelationInput[]
+    cursor?: ViolationTypeWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: ViolationTypeScalarFieldEnum | ViolationTypeScalarFieldEnum[]
+  }
+
+  /**
+   * Course.violations
+   */
+  export type Course$violationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Violation
+     */
+    select?: ViolationSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ViolationInclude<ExtArgs> | null
+    where?: ViolationWhereInput
+    orderBy?: ViolationOrderByWithRelationInput | ViolationOrderByWithRelationInput[]
+    cursor?: ViolationWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: ViolationScalarFieldEnum | ViolationScalarFieldEnum[]
+  }
+
+  /**
+   * Course.lostFoundItems
+   */
+  export type Course$lostFoundItemsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LostFoundItem
+     */
+    select?: LostFoundItemSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LostFoundItemInclude<ExtArgs> | null
+    where?: LostFoundItemWhereInput
+    orderBy?: LostFoundItemOrderByWithRelationInput | LostFoundItemOrderByWithRelationInput[]
+    cursor?: LostFoundItemWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: LostFoundItemScalarFieldEnum | LostFoundItemScalarFieldEnum[]
   }
 
   /**
@@ -37513,6 +38254,13 @@ export namespace Prisma {
     email: string | null
     address: string | null
     birthDate: Date | null
+    yearSection: string | null
+    mobileNo: string | null
+    guardianName: string | null
+    guardianContact: string | null
+    standing: string | null
+    clearanceHold: boolean | null
+    deletedAt: Date | null
   }
 
   export type StudentMaxAggregateOutputType = {
@@ -37528,6 +38276,13 @@ export namespace Prisma {
     email: string | null
     address: string | null
     birthDate: Date | null
+    yearSection: string | null
+    mobileNo: string | null
+    guardianName: string | null
+    guardianContact: string | null
+    standing: string | null
+    clearanceHold: boolean | null
+    deletedAt: Date | null
   }
 
   export type StudentCountAggregateOutputType = {
@@ -37543,6 +38298,13 @@ export namespace Prisma {
     email: number
     address: number
     birthDate: number
+    yearSection: number
+    mobileNo: number
+    guardianName: number
+    guardianContact: number
+    standing: number
+    clearanceHold: number
+    deletedAt: number
     _all: number
   }
 
@@ -37568,6 +38330,13 @@ export namespace Prisma {
     email?: true
     address?: true
     birthDate?: true
+    yearSection?: true
+    mobileNo?: true
+    guardianName?: true
+    guardianContact?: true
+    standing?: true
+    clearanceHold?: true
+    deletedAt?: true
   }
 
   export type StudentMaxAggregateInputType = {
@@ -37583,6 +38352,13 @@ export namespace Prisma {
     email?: true
     address?: true
     birthDate?: true
+    yearSection?: true
+    mobileNo?: true
+    guardianName?: true
+    guardianContact?: true
+    standing?: true
+    clearanceHold?: true
+    deletedAt?: true
   }
 
   export type StudentCountAggregateInputType = {
@@ -37598,6 +38374,13 @@ export namespace Prisma {
     email?: true
     address?: true
     birthDate?: true
+    yearSection?: true
+    mobileNo?: true
+    guardianName?: true
+    guardianContact?: true
+    standing?: true
+    clearanceHold?: true
+    deletedAt?: true
     _all?: true
   }
 
@@ -37700,6 +38483,13 @@ export namespace Prisma {
     email: string | null
     address: string | null
     birthDate: Date | null
+    yearSection: string | null
+    mobileNo: string | null
+    guardianName: string | null
+    guardianContact: string | null
+    standing: string
+    clearanceHold: boolean
+    deletedAt: Date | null
     _count: StudentCountAggregateOutputType | null
     _avg: StudentAvgAggregateOutputType | null
     _sum: StudentSumAggregateOutputType | null
@@ -37734,8 +38524,16 @@ export namespace Prisma {
     email?: boolean
     address?: boolean
     birthDate?: boolean
+    yearSection?: boolean
+    mobileNo?: boolean
+    guardianName?: boolean
+    guardianContact?: boolean
+    standing?: boolean
+    clearanceHold?: boolean
+    deletedAt?: boolean
     medicalExamRecords?: boolean | Student$medicalExamRecordsArgs<ExtArgs>
     patientRecords?: boolean | Student$patientRecordsArgs<ExtArgs>
+    violations?: boolean | Student$violationsArgs<ExtArgs>
     _count?: boolean | StudentCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["student"]>
 
@@ -37752,6 +38550,13 @@ export namespace Prisma {
     email?: boolean
     address?: boolean
     birthDate?: boolean
+    yearSection?: boolean
+    mobileNo?: boolean
+    guardianName?: boolean
+    guardianContact?: boolean
+    standing?: boolean
+    clearanceHold?: boolean
+    deletedAt?: boolean
   }, ExtArgs["result"]["student"]>
 
   export type StudentSelectScalar = {
@@ -37767,11 +38572,19 @@ export namespace Prisma {
     email?: boolean
     address?: boolean
     birthDate?: boolean
+    yearSection?: boolean
+    mobileNo?: boolean
+    guardianName?: boolean
+    guardianContact?: boolean
+    standing?: boolean
+    clearanceHold?: boolean
+    deletedAt?: boolean
   }
 
   export type StudentInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     medicalExamRecords?: boolean | Student$medicalExamRecordsArgs<ExtArgs>
     patientRecords?: boolean | Student$patientRecordsArgs<ExtArgs>
+    violations?: boolean | Student$violationsArgs<ExtArgs>
     _count?: boolean | StudentCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type StudentIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -37781,6 +38594,7 @@ export namespace Prisma {
     objects: {
       medicalExamRecords: Prisma.$MedicalExamRecordPayload<ExtArgs>[]
       patientRecords: Prisma.$PatientRecordPayload<ExtArgs>[]
+      violations: Prisma.$ViolationPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -37795,6 +38609,13 @@ export namespace Prisma {
       email: string | null
       address: string | null
       birthDate: Date | null
+      yearSection: string | null
+      mobileNo: string | null
+      guardianName: string | null
+      guardianContact: string | null
+      standing: string
+      clearanceHold: boolean
+      deletedAt: Date | null
     }, ExtArgs["result"]["student"]>
     composites: {}
   }
@@ -38161,6 +38982,7 @@ export namespace Prisma {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     medicalExamRecords<T extends Student$medicalExamRecordsArgs<ExtArgs> = {}>(args?: Subset<T, Student$medicalExamRecordsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$MedicalExamRecordPayload<ExtArgs>, T, "findMany"> | Null>
     patientRecords<T extends Student$patientRecordsArgs<ExtArgs> = {}>(args?: Subset<T, Student$patientRecordsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PatientRecordPayload<ExtArgs>, T, "findMany"> | Null>
+    violations<T extends Student$violationsArgs<ExtArgs> = {}>(args?: Subset<T, Student$violationsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ViolationPayload<ExtArgs>, T, "findMany"> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -38202,6 +39024,13 @@ export namespace Prisma {
     readonly email: FieldRef<"Student", 'String'>
     readonly address: FieldRef<"Student", 'String'>
     readonly birthDate: FieldRef<"Student", 'DateTime'>
+    readonly yearSection: FieldRef<"Student", 'String'>
+    readonly mobileNo: FieldRef<"Student", 'String'>
+    readonly guardianName: FieldRef<"Student", 'String'>
+    readonly guardianContact: FieldRef<"Student", 'String'>
+    readonly standing: FieldRef<"Student", 'String'>
+    readonly clearanceHold: FieldRef<"Student", 'Boolean'>
+    readonly deletedAt: FieldRef<"Student", 'DateTime'>
   }
     
 
@@ -38556,6 +39385,26 @@ export namespace Prisma {
   }
 
   /**
+   * Student.violations
+   */
+  export type Student$violationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Violation
+     */
+    select?: ViolationSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ViolationInclude<ExtArgs> | null
+    where?: ViolationWhereInput
+    orderBy?: ViolationOrderByWithRelationInput | ViolationOrderByWithRelationInput[]
+    cursor?: ViolationWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: ViolationScalarFieldEnum | ViolationScalarFieldEnum[]
+  }
+
+  /**
    * Student without action
    */
   export type StudentDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -38871,7 +39720,7 @@ export namespace Prisma {
     action: $Enums.PatientAction
     notes: string | null
     visitDate: Date
-    recordedBy: string
+    recordedBy: string | null
     createdAt: Date
     updatedAt: Date
     signEmailSentAt: Date | null
@@ -38930,7 +39779,7 @@ export namespace Prisma {
     medicalConditionId?: boolean
     medicineUsages?: boolean | PatientRecord$medicineUsagesArgs<ExtArgs>
     course?: boolean | CourseDefaultArgs<ExtArgs>
-    recordedByUser?: boolean | UserDefaultArgs<ExtArgs>
+    recordedByUser?: boolean | PatientRecord$recordedByUserArgs<ExtArgs>
     student?: boolean | StudentDefaultArgs<ExtArgs>
     medicalCondition?: boolean | PatientRecord$medicalConditionArgs<ExtArgs>
     _count?: boolean | PatientRecordCountOutputTypeDefaultArgs<ExtArgs>
@@ -38962,7 +39811,7 @@ export namespace Prisma {
     bodySystemId?: boolean
     medicalConditionId?: boolean
     course?: boolean | CourseDefaultArgs<ExtArgs>
-    recordedByUser?: boolean | UserDefaultArgs<ExtArgs>
+    recordedByUser?: boolean | PatientRecord$recordedByUserArgs<ExtArgs>
     student?: boolean | StudentDefaultArgs<ExtArgs>
     medicalCondition?: boolean | PatientRecord$medicalConditionArgs<ExtArgs>
   }, ExtArgs["result"]["patientRecord"]>
@@ -38997,14 +39846,14 @@ export namespace Prisma {
   export type PatientRecordInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     medicineUsages?: boolean | PatientRecord$medicineUsagesArgs<ExtArgs>
     course?: boolean | CourseDefaultArgs<ExtArgs>
-    recordedByUser?: boolean | UserDefaultArgs<ExtArgs>
+    recordedByUser?: boolean | PatientRecord$recordedByUserArgs<ExtArgs>
     student?: boolean | StudentDefaultArgs<ExtArgs>
     medicalCondition?: boolean | PatientRecord$medicalConditionArgs<ExtArgs>
     _count?: boolean | PatientRecordCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type PatientRecordIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     course?: boolean | CourseDefaultArgs<ExtArgs>
-    recordedByUser?: boolean | UserDefaultArgs<ExtArgs>
+    recordedByUser?: boolean | PatientRecord$recordedByUserArgs<ExtArgs>
     student?: boolean | StudentDefaultArgs<ExtArgs>
     medicalCondition?: boolean | PatientRecord$medicalConditionArgs<ExtArgs>
   }
@@ -39014,7 +39863,7 @@ export namespace Prisma {
     objects: {
       medicineUsages: Prisma.$MedicineUsagePayload<ExtArgs>[]
       course: Prisma.$CoursePayload<ExtArgs>
-      recordedByUser: Prisma.$UserPayload<ExtArgs>
+      recordedByUser: Prisma.$UserPayload<ExtArgs> | null
       student: Prisma.$StudentPayload<ExtArgs>
       medicalCondition: Prisma.$MedicalConditionPayload<ExtArgs> | null
     }
@@ -39032,7 +39881,7 @@ export namespace Prisma {
       action: $Enums.PatientAction
       notes: string | null
       visitDate: Date
-      recordedBy: string
+      recordedBy: string | null
       createdAt: Date
       updatedAt: Date
       signEmailSentAt: Date | null
@@ -39409,7 +40258,7 @@ export namespace Prisma {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     medicineUsages<T extends PatientRecord$medicineUsagesArgs<ExtArgs> = {}>(args?: Subset<T, PatientRecord$medicineUsagesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$MedicineUsagePayload<ExtArgs>, T, "findMany"> | Null>
     course<T extends CourseDefaultArgs<ExtArgs> = {}>(args?: Subset<T, CourseDefaultArgs<ExtArgs>>): Prisma__CourseClient<$Result.GetResult<Prisma.$CoursePayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
-    recordedByUser<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    recordedByUser<T extends PatientRecord$recordedByUserArgs<ExtArgs> = {}>(args?: Subset<T, PatientRecord$recordedByUserArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
     student<T extends StudentDefaultArgs<ExtArgs> = {}>(args?: Subset<T, StudentDefaultArgs<ExtArgs>>): Prisma__StudentClient<$Result.GetResult<Prisma.$StudentPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
     medicalCondition<T extends PatientRecord$medicalConditionArgs<ExtArgs> = {}>(args?: Subset<T, PatientRecord$medicalConditionArgs<ExtArgs>>): Prisma__MedicalConditionClient<$Result.GetResult<Prisma.$MedicalConditionPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
     /**
@@ -39800,6 +40649,21 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: MedicineUsageScalarFieldEnum | MedicineUsageScalarFieldEnum[]
+  }
+
+  /**
+   * PatientRecord.recordedByUser
+   */
+  export type PatientRecord$recordedByUserArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    where?: UserWhereInput
   }
 
   /**
@@ -42188,7 +43052,7 @@ export namespace Prisma {
     purpose: string
     remarks: string | null
     visitDate: Date
-    recordedBy: string
+    recordedBy: string | null
     createdAt: Date
     updatedAt: Date
     signatureUrl: string | null
@@ -42267,7 +43131,7 @@ export namespace Prisma {
     clearanceRemarks?: boolean
     clearanceIssuedAt?: boolean
     course?: boolean | CourseDefaultArgs<ExtArgs>
-    recordedByUser?: boolean | UserDefaultArgs<ExtArgs>
+    recordedByUser?: boolean | MedicalExamRecord$recordedByUserArgs<ExtArgs>
     student?: boolean | StudentDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["medicalExamRecord"]>
 
@@ -42304,7 +43168,7 @@ export namespace Prisma {
     clearanceRemarks?: boolean
     clearanceIssuedAt?: boolean
     course?: boolean | CourseDefaultArgs<ExtArgs>
-    recordedByUser?: boolean | UserDefaultArgs<ExtArgs>
+    recordedByUser?: boolean | MedicalExamRecord$recordedByUserArgs<ExtArgs>
     student?: boolean | StudentDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["medicalExamRecord"]>
 
@@ -42344,12 +43208,12 @@ export namespace Prisma {
 
   export type MedicalExamRecordInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     course?: boolean | CourseDefaultArgs<ExtArgs>
-    recordedByUser?: boolean | UserDefaultArgs<ExtArgs>
+    recordedByUser?: boolean | MedicalExamRecord$recordedByUserArgs<ExtArgs>
     student?: boolean | StudentDefaultArgs<ExtArgs>
   }
   export type MedicalExamRecordIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     course?: boolean | CourseDefaultArgs<ExtArgs>
-    recordedByUser?: boolean | UserDefaultArgs<ExtArgs>
+    recordedByUser?: boolean | MedicalExamRecord$recordedByUserArgs<ExtArgs>
     student?: boolean | StudentDefaultArgs<ExtArgs>
   }
 
@@ -42357,7 +43221,7 @@ export namespace Prisma {
     name: "MedicalExamRecord"
     objects: {
       course: Prisma.$CoursePayload<ExtArgs>
-      recordedByUser: Prisma.$UserPayload<ExtArgs>
+      recordedByUser: Prisma.$UserPayload<ExtArgs> | null
       student: Prisma.$StudentPayload<ExtArgs>
     }
     scalars: $Extensions.GetPayloadResult<{
@@ -42367,7 +43231,7 @@ export namespace Prisma {
       purpose: string
       remarks: string | null
       visitDate: Date
-      recordedBy: string
+      recordedBy: string | null
       createdAt: Date
       updatedAt: Date
       signatureUrl: string | null
@@ -42757,7 +43621,7 @@ export namespace Prisma {
   export interface Prisma__MedicalExamRecordClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     course<T extends CourseDefaultArgs<ExtArgs> = {}>(args?: Subset<T, CourseDefaultArgs<ExtArgs>>): Prisma__CourseClient<$Result.GetResult<Prisma.$CoursePayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
-    recordedByUser<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    recordedByUser<T extends MedicalExamRecord$recordedByUserArgs<ExtArgs> = {}>(args?: Subset<T, MedicalExamRecord$recordedByUserArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
     student<T extends StudentDefaultArgs<ExtArgs> = {}>(args?: Subset<T, StudentDefaultArgs<ExtArgs>>): Prisma__StudentClient<$Result.GetResult<Prisma.$StudentPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -43134,6 +43998,21 @@ export namespace Prisma {
      * Filter which MedicalExamRecords to delete
      */
     where?: MedicalExamRecordWhereInput
+  }
+
+  /**
+   * MedicalExamRecord.recordedByUser
+   */
+  export type MedicalExamRecord$recordedByUserArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    where?: UserWhereInput
   }
 
   /**
@@ -49037,6 +49916,11 @@ export namespace Prisma {
     sex: string | null
     religion: string | null
     completeAddress: string | null
+    civilStatus: string | null
+    isPwd: boolean | null
+    isIndigenous: boolean | null
+    isSoloParent: boolean | null
+    isFirstGen: boolean | null
     fatherName: string | null
     fatherDOB: string | null
     fatherAddress: string | null
@@ -49103,6 +49987,11 @@ export namespace Prisma {
     sex: string | null
     religion: string | null
     completeAddress: string | null
+    civilStatus: string | null
+    isPwd: boolean | null
+    isIndigenous: boolean | null
+    isSoloParent: boolean | null
+    isFirstGen: boolean | null
     fatherName: string | null
     fatherDOB: string | null
     fatherAddress: string | null
@@ -49169,6 +50058,11 @@ export namespace Prisma {
     sex: number
     religion: number
     completeAddress: number
+    civilStatus: number
+    isPwd: number
+    isIndigenous: number
+    isSoloParent: number
+    isFirstGen: number
     fatherName: number
     fatherDOB: number
     fatherAddress: number
@@ -49248,6 +50142,11 @@ export namespace Prisma {
     sex?: true
     religion?: true
     completeAddress?: true
+    civilStatus?: true
+    isPwd?: true
+    isIndigenous?: true
+    isSoloParent?: true
+    isFirstGen?: true
     fatherName?: true
     fatherDOB?: true
     fatherAddress?: true
@@ -49314,6 +50213,11 @@ export namespace Prisma {
     sex?: true
     religion?: true
     completeAddress?: true
+    civilStatus?: true
+    isPwd?: true
+    isIndigenous?: true
+    isSoloParent?: true
+    isFirstGen?: true
     fatherName?: true
     fatherDOB?: true
     fatherAddress?: true
@@ -49380,6 +50284,11 @@ export namespace Prisma {
     sex?: true
     religion?: true
     completeAddress?: true
+    civilStatus?: true
+    isPwd?: true
+    isIndigenous?: true
+    isSoloParent?: true
+    isFirstGen?: true
     fatherName?: true
     fatherDOB?: true
     fatherAddress?: true
@@ -49536,6 +50445,11 @@ export namespace Prisma {
     sex: string | null
     religion: string | null
     completeAddress: string | null
+    civilStatus: string | null
+    isPwd: boolean | null
+    isIndigenous: boolean | null
+    isSoloParent: boolean | null
+    isFirstGen: boolean | null
     fatherName: string | null
     fatherDOB: string | null
     fatherAddress: string | null
@@ -49624,6 +50538,11 @@ export namespace Prisma {
     sex?: boolean
     religion?: boolean
     completeAddress?: boolean
+    civilStatus?: boolean
+    isPwd?: boolean
+    isIndigenous?: boolean
+    isSoloParent?: boolean
+    isFirstGen?: boolean
     fatherName?: boolean
     fatherDOB?: boolean
     fatherAddress?: boolean
@@ -49694,6 +50613,11 @@ export namespace Prisma {
     sex?: boolean
     religion?: boolean
     completeAddress?: boolean
+    civilStatus?: boolean
+    isPwd?: boolean
+    isIndigenous?: boolean
+    isSoloParent?: boolean
+    isFirstGen?: boolean
     fatherName?: boolean
     fatherDOB?: boolean
     fatherAddress?: boolean
@@ -49764,6 +50688,11 @@ export namespace Prisma {
     sex?: boolean
     religion?: boolean
     completeAddress?: boolean
+    civilStatus?: boolean
+    isPwd?: boolean
+    isIndigenous?: boolean
+    isSoloParent?: boolean
+    isFirstGen?: boolean
     fatherName?: boolean
     fatherDOB?: boolean
     fatherAddress?: boolean
@@ -49845,6 +50774,11 @@ export namespace Prisma {
       sex: string | null
       religion: string | null
       completeAddress: string | null
+      civilStatus: string | null
+      isPwd: boolean | null
+      isIndigenous: boolean | null
+      isSoloParent: boolean | null
+      isFirstGen: boolean | null
       fatherName: string | null
       fatherDOB: string | null
       fatherAddress: string | null
@@ -50305,6 +51239,11 @@ export namespace Prisma {
     readonly sex: FieldRef<"GuidanceInfoSheet", 'String'>
     readonly religion: FieldRef<"GuidanceInfoSheet", 'String'>
     readonly completeAddress: FieldRef<"GuidanceInfoSheet", 'String'>
+    readonly civilStatus: FieldRef<"GuidanceInfoSheet", 'String'>
+    readonly isPwd: FieldRef<"GuidanceInfoSheet", 'Boolean'>
+    readonly isIndigenous: FieldRef<"GuidanceInfoSheet", 'Boolean'>
+    readonly isSoloParent: FieldRef<"GuidanceInfoSheet", 'Boolean'>
+    readonly isFirstGen: FieldRef<"GuidanceInfoSheet", 'Boolean'>
     readonly fatherName: FieldRef<"GuidanceInfoSheet", 'String'>
     readonly fatherDOB: FieldRef<"GuidanceInfoSheet", 'String'>
     readonly fatherAddress: FieldRef<"GuidanceInfoSheet", 'String'>
@@ -50907,7 +51846,7 @@ export namespace Prisma {
     signTokenExpiresAt: Date | null
     signEmailSentAt: Date | null
     visitDate: Date
-    recordedBy: string
+    recordedBy: string | null
     createdAt: Date
     updatedAt: Date
     _count: GuidanceLogEntryCountAggregateOutputType | null
@@ -50948,7 +51887,7 @@ export namespace Prisma {
     createdAt?: boolean
     updatedAt?: boolean
     course?: boolean | CourseDefaultArgs<ExtArgs>
-    recordedByUser?: boolean | UserDefaultArgs<ExtArgs>
+    recordedByUser?: boolean | GuidanceLogEntry$recordedByUserArgs<ExtArgs>
   }, ExtArgs["result"]["guidanceLogEntry"]>
 
   export type GuidanceLogEntrySelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -50970,7 +51909,7 @@ export namespace Prisma {
     createdAt?: boolean
     updatedAt?: boolean
     course?: boolean | CourseDefaultArgs<ExtArgs>
-    recordedByUser?: boolean | UserDefaultArgs<ExtArgs>
+    recordedByUser?: boolean | GuidanceLogEntry$recordedByUserArgs<ExtArgs>
   }, ExtArgs["result"]["guidanceLogEntry"]>
 
   export type GuidanceLogEntrySelectScalar = {
@@ -50995,18 +51934,18 @@ export namespace Prisma {
 
   export type GuidanceLogEntryInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     course?: boolean | CourseDefaultArgs<ExtArgs>
-    recordedByUser?: boolean | UserDefaultArgs<ExtArgs>
+    recordedByUser?: boolean | GuidanceLogEntry$recordedByUserArgs<ExtArgs>
   }
   export type GuidanceLogEntryIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     course?: boolean | CourseDefaultArgs<ExtArgs>
-    recordedByUser?: boolean | UserDefaultArgs<ExtArgs>
+    recordedByUser?: boolean | GuidanceLogEntry$recordedByUserArgs<ExtArgs>
   }
 
   export type $GuidanceLogEntryPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "GuidanceLogEntry"
     objects: {
       course: Prisma.$CoursePayload<ExtArgs>
-      recordedByUser: Prisma.$UserPayload<ExtArgs>
+      recordedByUser: Prisma.$UserPayload<ExtArgs> | null
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -51023,7 +51962,7 @@ export namespace Prisma {
       signTokenExpiresAt: Date | null
       signEmailSentAt: Date | null
       visitDate: Date
-      recordedBy: string
+      recordedBy: string | null
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["guidanceLogEntry"]>
@@ -51391,7 +52330,7 @@ export namespace Prisma {
   export interface Prisma__GuidanceLogEntryClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     course<T extends CourseDefaultArgs<ExtArgs> = {}>(args?: Subset<T, CourseDefaultArgs<ExtArgs>>): Prisma__CourseClient<$Result.GetResult<Prisma.$CoursePayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
-    recordedByUser<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    recordedByUser<T extends GuidanceLogEntry$recordedByUserArgs<ExtArgs> = {}>(args?: Subset<T, GuidanceLogEntry$recordedByUserArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -51753,6 +52692,21 @@ export namespace Prisma {
      * Filter which GuidanceLogEntries to delete
      */
     where?: GuidanceLogEntryWhereInput
+  }
+
+  /**
+   * GuidanceLogEntry.recordedByUser
+   */
+  export type GuidanceLogEntry$recordedByUserArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    where?: UserWhereInput
   }
 
   /**
@@ -57885,6 +58839,5713 @@ export namespace Prisma {
 
 
   /**
+   * Model ViolationType
+   */
+
+  export type AggregateViolationType = {
+    _count: ViolationTypeCountAggregateOutputType | null
+    _avg: ViolationTypeAvgAggregateOutputType | null
+    _sum: ViolationTypeSumAggregateOutputType | null
+    _min: ViolationTypeMinAggregateOutputType | null
+    _max: ViolationTypeMaxAggregateOutputType | null
+  }
+
+  export type ViolationTypeAvgAggregateOutputType = {
+    sanctionMinDays: number | null
+    sanctionMaxDays: number | null
+    escalationCount: number | null
+    order: number | null
+  }
+
+  export type ViolationTypeSumAggregateOutputType = {
+    sanctionMinDays: number | null
+    sanctionMaxDays: number | null
+    escalationCount: number | null
+    order: number | null
+  }
+
+  export type ViolationTypeMinAggregateOutputType = {
+    id: string | null
+    courseId: string | null
+    code: string | null
+    name: string | null
+    description: string | null
+    severity: string | null
+    category: string | null
+    dismissalOnFirst: boolean | null
+    defaultSanction: string | null
+    sanctionMinDays: number | null
+    sanctionMaxDays: number | null
+    maxSanction: string | null
+    escalationCount: number | null
+    escalatesTo: string | null
+    manualRef: string | null
+    isActive: boolean | null
+    order: number | null
+    deletedAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type ViolationTypeMaxAggregateOutputType = {
+    id: string | null
+    courseId: string | null
+    code: string | null
+    name: string | null
+    description: string | null
+    severity: string | null
+    category: string | null
+    dismissalOnFirst: boolean | null
+    defaultSanction: string | null
+    sanctionMinDays: number | null
+    sanctionMaxDays: number | null
+    maxSanction: string | null
+    escalationCount: number | null
+    escalatesTo: string | null
+    manualRef: string | null
+    isActive: boolean | null
+    order: number | null
+    deletedAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type ViolationTypeCountAggregateOutputType = {
+    id: number
+    courseId: number
+    code: number
+    name: number
+    description: number
+    severity: number
+    category: number
+    dismissalOnFirst: number
+    defaultSanction: number
+    sanctionMinDays: number
+    sanctionMaxDays: number
+    maxSanction: number
+    escalationCount: number
+    escalatesTo: number
+    manualRef: number
+    isActive: number
+    order: number
+    deletedAt: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type ViolationTypeAvgAggregateInputType = {
+    sanctionMinDays?: true
+    sanctionMaxDays?: true
+    escalationCount?: true
+    order?: true
+  }
+
+  export type ViolationTypeSumAggregateInputType = {
+    sanctionMinDays?: true
+    sanctionMaxDays?: true
+    escalationCount?: true
+    order?: true
+  }
+
+  export type ViolationTypeMinAggregateInputType = {
+    id?: true
+    courseId?: true
+    code?: true
+    name?: true
+    description?: true
+    severity?: true
+    category?: true
+    dismissalOnFirst?: true
+    defaultSanction?: true
+    sanctionMinDays?: true
+    sanctionMaxDays?: true
+    maxSanction?: true
+    escalationCount?: true
+    escalatesTo?: true
+    manualRef?: true
+    isActive?: true
+    order?: true
+    deletedAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type ViolationTypeMaxAggregateInputType = {
+    id?: true
+    courseId?: true
+    code?: true
+    name?: true
+    description?: true
+    severity?: true
+    category?: true
+    dismissalOnFirst?: true
+    defaultSanction?: true
+    sanctionMinDays?: true
+    sanctionMaxDays?: true
+    maxSanction?: true
+    escalationCount?: true
+    escalatesTo?: true
+    manualRef?: true
+    isActive?: true
+    order?: true
+    deletedAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type ViolationTypeCountAggregateInputType = {
+    id?: true
+    courseId?: true
+    code?: true
+    name?: true
+    description?: true
+    severity?: true
+    category?: true
+    dismissalOnFirst?: true
+    defaultSanction?: true
+    sanctionMinDays?: true
+    sanctionMaxDays?: true
+    maxSanction?: true
+    escalationCount?: true
+    escalatesTo?: true
+    manualRef?: true
+    isActive?: true
+    order?: true
+    deletedAt?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type ViolationTypeAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ViolationType to aggregate.
+     */
+    where?: ViolationTypeWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ViolationTypes to fetch.
+     */
+    orderBy?: ViolationTypeOrderByWithRelationInput | ViolationTypeOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: ViolationTypeWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ViolationTypes from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ViolationTypes.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned ViolationTypes
+    **/
+    _count?: true | ViolationTypeCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: ViolationTypeAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: ViolationTypeSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: ViolationTypeMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: ViolationTypeMaxAggregateInputType
+  }
+
+  export type GetViolationTypeAggregateType<T extends ViolationTypeAggregateArgs> = {
+        [P in keyof T & keyof AggregateViolationType]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateViolationType[P]>
+      : GetScalarType<T[P], AggregateViolationType[P]>
+  }
+
+
+
+
+  export type ViolationTypeGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ViolationTypeWhereInput
+    orderBy?: ViolationTypeOrderByWithAggregationInput | ViolationTypeOrderByWithAggregationInput[]
+    by: ViolationTypeScalarFieldEnum[] | ViolationTypeScalarFieldEnum
+    having?: ViolationTypeScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: ViolationTypeCountAggregateInputType | true
+    _avg?: ViolationTypeAvgAggregateInputType
+    _sum?: ViolationTypeSumAggregateInputType
+    _min?: ViolationTypeMinAggregateInputType
+    _max?: ViolationTypeMaxAggregateInputType
+  }
+
+  export type ViolationTypeGroupByOutputType = {
+    id: string
+    courseId: string
+    code: string
+    name: string
+    description: string | null
+    severity: string
+    category: string | null
+    dismissalOnFirst: boolean
+    defaultSanction: string | null
+    sanctionMinDays: number | null
+    sanctionMaxDays: number | null
+    maxSanction: string | null
+    escalationCount: number
+    escalatesTo: string | null
+    manualRef: string | null
+    isActive: boolean
+    order: number
+    deletedAt: Date | null
+    createdAt: Date
+    updatedAt: Date
+    _count: ViolationTypeCountAggregateOutputType | null
+    _avg: ViolationTypeAvgAggregateOutputType | null
+    _sum: ViolationTypeSumAggregateOutputType | null
+    _min: ViolationTypeMinAggregateOutputType | null
+    _max: ViolationTypeMaxAggregateOutputType | null
+  }
+
+  type GetViolationTypeGroupByPayload<T extends ViolationTypeGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<ViolationTypeGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof ViolationTypeGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], ViolationTypeGroupByOutputType[P]>
+            : GetScalarType<T[P], ViolationTypeGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type ViolationTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    courseId?: boolean
+    code?: boolean
+    name?: boolean
+    description?: boolean
+    severity?: boolean
+    category?: boolean
+    dismissalOnFirst?: boolean
+    defaultSanction?: boolean
+    sanctionMinDays?: boolean
+    sanctionMaxDays?: boolean
+    maxSanction?: boolean
+    escalationCount?: boolean
+    escalatesTo?: boolean
+    manualRef?: boolean
+    isActive?: boolean
+    order?: boolean
+    deletedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    course?: boolean | CourseDefaultArgs<ExtArgs>
+    violations?: boolean | ViolationType$violationsArgs<ExtArgs>
+    _count?: boolean | ViolationTypeCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["violationType"]>
+
+  export type ViolationTypeSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    courseId?: boolean
+    code?: boolean
+    name?: boolean
+    description?: boolean
+    severity?: boolean
+    category?: boolean
+    dismissalOnFirst?: boolean
+    defaultSanction?: boolean
+    sanctionMinDays?: boolean
+    sanctionMaxDays?: boolean
+    maxSanction?: boolean
+    escalationCount?: boolean
+    escalatesTo?: boolean
+    manualRef?: boolean
+    isActive?: boolean
+    order?: boolean
+    deletedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    course?: boolean | CourseDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["violationType"]>
+
+  export type ViolationTypeSelectScalar = {
+    id?: boolean
+    courseId?: boolean
+    code?: boolean
+    name?: boolean
+    description?: boolean
+    severity?: boolean
+    category?: boolean
+    dismissalOnFirst?: boolean
+    defaultSanction?: boolean
+    sanctionMinDays?: boolean
+    sanctionMaxDays?: boolean
+    maxSanction?: boolean
+    escalationCount?: boolean
+    escalatesTo?: boolean
+    manualRef?: boolean
+    isActive?: boolean
+    order?: boolean
+    deletedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type ViolationTypeInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    course?: boolean | CourseDefaultArgs<ExtArgs>
+    violations?: boolean | ViolationType$violationsArgs<ExtArgs>
+    _count?: boolean | ViolationTypeCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type ViolationTypeIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    course?: boolean | CourseDefaultArgs<ExtArgs>
+  }
+
+  export type $ViolationTypePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "ViolationType"
+    objects: {
+      course: Prisma.$CoursePayload<ExtArgs>
+      violations: Prisma.$ViolationPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      courseId: string
+      code: string
+      name: string
+      description: string | null
+      severity: string
+      category: string | null
+      dismissalOnFirst: boolean
+      defaultSanction: string | null
+      sanctionMinDays: number | null
+      sanctionMaxDays: number | null
+      maxSanction: string | null
+      escalationCount: number
+      escalatesTo: string | null
+      manualRef: string | null
+      isActive: boolean
+      order: number
+      deletedAt: Date | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["violationType"]>
+    composites: {}
+  }
+
+  type ViolationTypeGetPayload<S extends boolean | null | undefined | ViolationTypeDefaultArgs> = $Result.GetResult<Prisma.$ViolationTypePayload, S>
+
+  type ViolationTypeCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<ViolationTypeFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: ViolationTypeCountAggregateInputType | true
+    }
+
+  export interface ViolationTypeDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['ViolationType'], meta: { name: 'ViolationType' } }
+    /**
+     * Find zero or one ViolationType that matches the filter.
+     * @param {ViolationTypeFindUniqueArgs} args - Arguments to find a ViolationType
+     * @example
+     * // Get one ViolationType
+     * const violationType = await prisma.violationType.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends ViolationTypeFindUniqueArgs>(args: SelectSubset<T, ViolationTypeFindUniqueArgs<ExtArgs>>): Prisma__ViolationTypeClient<$Result.GetResult<Prisma.$ViolationTypePayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one ViolationType that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {ViolationTypeFindUniqueOrThrowArgs} args - Arguments to find a ViolationType
+     * @example
+     * // Get one ViolationType
+     * const violationType = await prisma.violationType.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends ViolationTypeFindUniqueOrThrowArgs>(args: SelectSubset<T, ViolationTypeFindUniqueOrThrowArgs<ExtArgs>>): Prisma__ViolationTypeClient<$Result.GetResult<Prisma.$ViolationTypePayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first ViolationType that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ViolationTypeFindFirstArgs} args - Arguments to find a ViolationType
+     * @example
+     * // Get one ViolationType
+     * const violationType = await prisma.violationType.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends ViolationTypeFindFirstArgs>(args?: SelectSubset<T, ViolationTypeFindFirstArgs<ExtArgs>>): Prisma__ViolationTypeClient<$Result.GetResult<Prisma.$ViolationTypePayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first ViolationType that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ViolationTypeFindFirstOrThrowArgs} args - Arguments to find a ViolationType
+     * @example
+     * // Get one ViolationType
+     * const violationType = await prisma.violationType.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends ViolationTypeFindFirstOrThrowArgs>(args?: SelectSubset<T, ViolationTypeFindFirstOrThrowArgs<ExtArgs>>): Prisma__ViolationTypeClient<$Result.GetResult<Prisma.$ViolationTypePayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more ViolationTypes that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ViolationTypeFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all ViolationTypes
+     * const violationTypes = await prisma.violationType.findMany()
+     * 
+     * // Get first 10 ViolationTypes
+     * const violationTypes = await prisma.violationType.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const violationTypeWithIdOnly = await prisma.violationType.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends ViolationTypeFindManyArgs>(args?: SelectSubset<T, ViolationTypeFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ViolationTypePayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a ViolationType.
+     * @param {ViolationTypeCreateArgs} args - Arguments to create a ViolationType.
+     * @example
+     * // Create one ViolationType
+     * const ViolationType = await prisma.violationType.create({
+     *   data: {
+     *     // ... data to create a ViolationType
+     *   }
+     * })
+     * 
+     */
+    create<T extends ViolationTypeCreateArgs>(args: SelectSubset<T, ViolationTypeCreateArgs<ExtArgs>>): Prisma__ViolationTypeClient<$Result.GetResult<Prisma.$ViolationTypePayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many ViolationTypes.
+     * @param {ViolationTypeCreateManyArgs} args - Arguments to create many ViolationTypes.
+     * @example
+     * // Create many ViolationTypes
+     * const violationType = await prisma.violationType.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends ViolationTypeCreateManyArgs>(args?: SelectSubset<T, ViolationTypeCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many ViolationTypes and returns the data saved in the database.
+     * @param {ViolationTypeCreateManyAndReturnArgs} args - Arguments to create many ViolationTypes.
+     * @example
+     * // Create many ViolationTypes
+     * const violationType = await prisma.violationType.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many ViolationTypes and only return the `id`
+     * const violationTypeWithIdOnly = await prisma.violationType.createManyAndReturn({ 
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends ViolationTypeCreateManyAndReturnArgs>(args?: SelectSubset<T, ViolationTypeCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ViolationTypePayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a ViolationType.
+     * @param {ViolationTypeDeleteArgs} args - Arguments to delete one ViolationType.
+     * @example
+     * // Delete one ViolationType
+     * const ViolationType = await prisma.violationType.delete({
+     *   where: {
+     *     // ... filter to delete one ViolationType
+     *   }
+     * })
+     * 
+     */
+    delete<T extends ViolationTypeDeleteArgs>(args: SelectSubset<T, ViolationTypeDeleteArgs<ExtArgs>>): Prisma__ViolationTypeClient<$Result.GetResult<Prisma.$ViolationTypePayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one ViolationType.
+     * @param {ViolationTypeUpdateArgs} args - Arguments to update one ViolationType.
+     * @example
+     * // Update one ViolationType
+     * const violationType = await prisma.violationType.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends ViolationTypeUpdateArgs>(args: SelectSubset<T, ViolationTypeUpdateArgs<ExtArgs>>): Prisma__ViolationTypeClient<$Result.GetResult<Prisma.$ViolationTypePayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more ViolationTypes.
+     * @param {ViolationTypeDeleteManyArgs} args - Arguments to filter ViolationTypes to delete.
+     * @example
+     * // Delete a few ViolationTypes
+     * const { count } = await prisma.violationType.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends ViolationTypeDeleteManyArgs>(args?: SelectSubset<T, ViolationTypeDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ViolationTypes.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ViolationTypeUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many ViolationTypes
+     * const violationType = await prisma.violationType.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends ViolationTypeUpdateManyArgs>(args: SelectSubset<T, ViolationTypeUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one ViolationType.
+     * @param {ViolationTypeUpsertArgs} args - Arguments to update or create a ViolationType.
+     * @example
+     * // Update or create a ViolationType
+     * const violationType = await prisma.violationType.upsert({
+     *   create: {
+     *     // ... data to create a ViolationType
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the ViolationType we want to update
+     *   }
+     * })
+     */
+    upsert<T extends ViolationTypeUpsertArgs>(args: SelectSubset<T, ViolationTypeUpsertArgs<ExtArgs>>): Prisma__ViolationTypeClient<$Result.GetResult<Prisma.$ViolationTypePayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of ViolationTypes.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ViolationTypeCountArgs} args - Arguments to filter ViolationTypes to count.
+     * @example
+     * // Count the number of ViolationTypes
+     * const count = await prisma.violationType.count({
+     *   where: {
+     *     // ... the filter for the ViolationTypes we want to count
+     *   }
+     * })
+    **/
+    count<T extends ViolationTypeCountArgs>(
+      args?: Subset<T, ViolationTypeCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], ViolationTypeCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a ViolationType.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ViolationTypeAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends ViolationTypeAggregateArgs>(args: Subset<T, ViolationTypeAggregateArgs>): Prisma.PrismaPromise<GetViolationTypeAggregateType<T>>
+
+    /**
+     * Group by ViolationType.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ViolationTypeGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends ViolationTypeGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: ViolationTypeGroupByArgs['orderBy'] }
+        : { orderBy?: ViolationTypeGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, ViolationTypeGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetViolationTypeGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the ViolationType model
+   */
+  readonly fields: ViolationTypeFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for ViolationType.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__ViolationTypeClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    course<T extends CourseDefaultArgs<ExtArgs> = {}>(args?: Subset<T, CourseDefaultArgs<ExtArgs>>): Prisma__CourseClient<$Result.GetResult<Prisma.$CoursePayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    violations<T extends ViolationType$violationsArgs<ExtArgs> = {}>(args?: Subset<T, ViolationType$violationsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ViolationPayload<ExtArgs>, T, "findMany"> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the ViolationType model
+   */ 
+  interface ViolationTypeFieldRefs {
+    readonly id: FieldRef<"ViolationType", 'String'>
+    readonly courseId: FieldRef<"ViolationType", 'String'>
+    readonly code: FieldRef<"ViolationType", 'String'>
+    readonly name: FieldRef<"ViolationType", 'String'>
+    readonly description: FieldRef<"ViolationType", 'String'>
+    readonly severity: FieldRef<"ViolationType", 'String'>
+    readonly category: FieldRef<"ViolationType", 'String'>
+    readonly dismissalOnFirst: FieldRef<"ViolationType", 'Boolean'>
+    readonly defaultSanction: FieldRef<"ViolationType", 'String'>
+    readonly sanctionMinDays: FieldRef<"ViolationType", 'Int'>
+    readonly sanctionMaxDays: FieldRef<"ViolationType", 'Int'>
+    readonly maxSanction: FieldRef<"ViolationType", 'String'>
+    readonly escalationCount: FieldRef<"ViolationType", 'Int'>
+    readonly escalatesTo: FieldRef<"ViolationType", 'String'>
+    readonly manualRef: FieldRef<"ViolationType", 'String'>
+    readonly isActive: FieldRef<"ViolationType", 'Boolean'>
+    readonly order: FieldRef<"ViolationType", 'Int'>
+    readonly deletedAt: FieldRef<"ViolationType", 'DateTime'>
+    readonly createdAt: FieldRef<"ViolationType", 'DateTime'>
+    readonly updatedAt: FieldRef<"ViolationType", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * ViolationType findUnique
+   */
+  export type ViolationTypeFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ViolationType
+     */
+    select?: ViolationTypeSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ViolationTypeInclude<ExtArgs> | null
+    /**
+     * Filter, which ViolationType to fetch.
+     */
+    where: ViolationTypeWhereUniqueInput
+  }
+
+  /**
+   * ViolationType findUniqueOrThrow
+   */
+  export type ViolationTypeFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ViolationType
+     */
+    select?: ViolationTypeSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ViolationTypeInclude<ExtArgs> | null
+    /**
+     * Filter, which ViolationType to fetch.
+     */
+    where: ViolationTypeWhereUniqueInput
+  }
+
+  /**
+   * ViolationType findFirst
+   */
+  export type ViolationTypeFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ViolationType
+     */
+    select?: ViolationTypeSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ViolationTypeInclude<ExtArgs> | null
+    /**
+     * Filter, which ViolationType to fetch.
+     */
+    where?: ViolationTypeWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ViolationTypes to fetch.
+     */
+    orderBy?: ViolationTypeOrderByWithRelationInput | ViolationTypeOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ViolationTypes.
+     */
+    cursor?: ViolationTypeWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ViolationTypes from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ViolationTypes.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ViolationTypes.
+     */
+    distinct?: ViolationTypeScalarFieldEnum | ViolationTypeScalarFieldEnum[]
+  }
+
+  /**
+   * ViolationType findFirstOrThrow
+   */
+  export type ViolationTypeFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ViolationType
+     */
+    select?: ViolationTypeSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ViolationTypeInclude<ExtArgs> | null
+    /**
+     * Filter, which ViolationType to fetch.
+     */
+    where?: ViolationTypeWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ViolationTypes to fetch.
+     */
+    orderBy?: ViolationTypeOrderByWithRelationInput | ViolationTypeOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ViolationTypes.
+     */
+    cursor?: ViolationTypeWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ViolationTypes from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ViolationTypes.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ViolationTypes.
+     */
+    distinct?: ViolationTypeScalarFieldEnum | ViolationTypeScalarFieldEnum[]
+  }
+
+  /**
+   * ViolationType findMany
+   */
+  export type ViolationTypeFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ViolationType
+     */
+    select?: ViolationTypeSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ViolationTypeInclude<ExtArgs> | null
+    /**
+     * Filter, which ViolationTypes to fetch.
+     */
+    where?: ViolationTypeWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ViolationTypes to fetch.
+     */
+    orderBy?: ViolationTypeOrderByWithRelationInput | ViolationTypeOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing ViolationTypes.
+     */
+    cursor?: ViolationTypeWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ViolationTypes from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ViolationTypes.
+     */
+    skip?: number
+    distinct?: ViolationTypeScalarFieldEnum | ViolationTypeScalarFieldEnum[]
+  }
+
+  /**
+   * ViolationType create
+   */
+  export type ViolationTypeCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ViolationType
+     */
+    select?: ViolationTypeSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ViolationTypeInclude<ExtArgs> | null
+    /**
+     * The data needed to create a ViolationType.
+     */
+    data: XOR<ViolationTypeCreateInput, ViolationTypeUncheckedCreateInput>
+  }
+
+  /**
+   * ViolationType createMany
+   */
+  export type ViolationTypeCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many ViolationTypes.
+     */
+    data: ViolationTypeCreateManyInput | ViolationTypeCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * ViolationType createManyAndReturn
+   */
+  export type ViolationTypeCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ViolationType
+     */
+    select?: ViolationTypeSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many ViolationTypes.
+     */
+    data: ViolationTypeCreateManyInput | ViolationTypeCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ViolationTypeIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * ViolationType update
+   */
+  export type ViolationTypeUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ViolationType
+     */
+    select?: ViolationTypeSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ViolationTypeInclude<ExtArgs> | null
+    /**
+     * The data needed to update a ViolationType.
+     */
+    data: XOR<ViolationTypeUpdateInput, ViolationTypeUncheckedUpdateInput>
+    /**
+     * Choose, which ViolationType to update.
+     */
+    where: ViolationTypeWhereUniqueInput
+  }
+
+  /**
+   * ViolationType updateMany
+   */
+  export type ViolationTypeUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update ViolationTypes.
+     */
+    data: XOR<ViolationTypeUpdateManyMutationInput, ViolationTypeUncheckedUpdateManyInput>
+    /**
+     * Filter which ViolationTypes to update
+     */
+    where?: ViolationTypeWhereInput
+  }
+
+  /**
+   * ViolationType upsert
+   */
+  export type ViolationTypeUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ViolationType
+     */
+    select?: ViolationTypeSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ViolationTypeInclude<ExtArgs> | null
+    /**
+     * The filter to search for the ViolationType to update in case it exists.
+     */
+    where: ViolationTypeWhereUniqueInput
+    /**
+     * In case the ViolationType found by the `where` argument doesn't exist, create a new ViolationType with this data.
+     */
+    create: XOR<ViolationTypeCreateInput, ViolationTypeUncheckedCreateInput>
+    /**
+     * In case the ViolationType was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<ViolationTypeUpdateInput, ViolationTypeUncheckedUpdateInput>
+  }
+
+  /**
+   * ViolationType delete
+   */
+  export type ViolationTypeDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ViolationType
+     */
+    select?: ViolationTypeSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ViolationTypeInclude<ExtArgs> | null
+    /**
+     * Filter which ViolationType to delete.
+     */
+    where: ViolationTypeWhereUniqueInput
+  }
+
+  /**
+   * ViolationType deleteMany
+   */
+  export type ViolationTypeDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ViolationTypes to delete
+     */
+    where?: ViolationTypeWhereInput
+  }
+
+  /**
+   * ViolationType.violations
+   */
+  export type ViolationType$violationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Violation
+     */
+    select?: ViolationSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ViolationInclude<ExtArgs> | null
+    where?: ViolationWhereInput
+    orderBy?: ViolationOrderByWithRelationInput | ViolationOrderByWithRelationInput[]
+    cursor?: ViolationWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: ViolationScalarFieldEnum | ViolationScalarFieldEnum[]
+  }
+
+  /**
+   * ViolationType without action
+   */
+  export type ViolationTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ViolationType
+     */
+    select?: ViolationTypeSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ViolationTypeInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model Violation
+   */
+
+  export type AggregateViolation = {
+    _count: ViolationCountAggregateOutputType | null
+    _avg: ViolationAvgAggregateOutputType | null
+    _sum: ViolationSumAggregateOutputType | null
+    _min: ViolationMinAggregateOutputType | null
+    _max: ViolationMaxAggregateOutputType | null
+  }
+
+  export type ViolationAvgAggregateOutputType = {
+    sanctionDays: number | null
+  }
+
+  export type ViolationSumAggregateOutputType = {
+    sanctionDays: number | null
+  }
+
+  export type ViolationMinAggregateOutputType = {
+    id: string | null
+    courseId: string | null
+    caseNo: string | null
+    studentId: string | null
+    violationTypeId: string | null
+    severity: string | null
+    incidentDate: Date | null
+    location: string | null
+    description: string | null
+    reportedBy: string | null
+    reportedByRole: string | null
+    status: string | null
+    noticeToExplainAt: Date | null
+    explanationReceivedAt: Date | null
+    hearingDate: Date | null
+    hearingResult: string | null
+    sanction: string | null
+    sanctionDays: number | null
+    sanctionStart: Date | null
+    sanctionEnd: Date | null
+    sanctionCompleted: boolean | null
+    decidedBy: string | null
+    decidedAt: Date | null
+    appealed: boolean | null
+    appealResult: string | null
+    resolvedAt: Date | null
+    recordedBy: string | null
+    deletedAt: Date | null
+    deletedBy: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type ViolationMaxAggregateOutputType = {
+    id: string | null
+    courseId: string | null
+    caseNo: string | null
+    studentId: string | null
+    violationTypeId: string | null
+    severity: string | null
+    incidentDate: Date | null
+    location: string | null
+    description: string | null
+    reportedBy: string | null
+    reportedByRole: string | null
+    status: string | null
+    noticeToExplainAt: Date | null
+    explanationReceivedAt: Date | null
+    hearingDate: Date | null
+    hearingResult: string | null
+    sanction: string | null
+    sanctionDays: number | null
+    sanctionStart: Date | null
+    sanctionEnd: Date | null
+    sanctionCompleted: boolean | null
+    decidedBy: string | null
+    decidedAt: Date | null
+    appealed: boolean | null
+    appealResult: string | null
+    resolvedAt: Date | null
+    recordedBy: string | null
+    deletedAt: Date | null
+    deletedBy: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type ViolationCountAggregateOutputType = {
+    id: number
+    courseId: number
+    caseNo: number
+    studentId: number
+    violationTypeId: number
+    severity: number
+    incidentDate: number
+    location: number
+    description: number
+    reportedBy: number
+    reportedByRole: number
+    status: number
+    noticeToExplainAt: number
+    explanationReceivedAt: number
+    hearingDate: number
+    hearingResult: number
+    sanction: number
+    sanctionDays: number
+    sanctionStart: number
+    sanctionEnd: number
+    sanctionCompleted: number
+    decidedBy: number
+    decidedAt: number
+    appealed: number
+    appealResult: number
+    resolvedAt: number
+    recordedBy: number
+    deletedAt: number
+    deletedBy: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type ViolationAvgAggregateInputType = {
+    sanctionDays?: true
+  }
+
+  export type ViolationSumAggregateInputType = {
+    sanctionDays?: true
+  }
+
+  export type ViolationMinAggregateInputType = {
+    id?: true
+    courseId?: true
+    caseNo?: true
+    studentId?: true
+    violationTypeId?: true
+    severity?: true
+    incidentDate?: true
+    location?: true
+    description?: true
+    reportedBy?: true
+    reportedByRole?: true
+    status?: true
+    noticeToExplainAt?: true
+    explanationReceivedAt?: true
+    hearingDate?: true
+    hearingResult?: true
+    sanction?: true
+    sanctionDays?: true
+    sanctionStart?: true
+    sanctionEnd?: true
+    sanctionCompleted?: true
+    decidedBy?: true
+    decidedAt?: true
+    appealed?: true
+    appealResult?: true
+    resolvedAt?: true
+    recordedBy?: true
+    deletedAt?: true
+    deletedBy?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type ViolationMaxAggregateInputType = {
+    id?: true
+    courseId?: true
+    caseNo?: true
+    studentId?: true
+    violationTypeId?: true
+    severity?: true
+    incidentDate?: true
+    location?: true
+    description?: true
+    reportedBy?: true
+    reportedByRole?: true
+    status?: true
+    noticeToExplainAt?: true
+    explanationReceivedAt?: true
+    hearingDate?: true
+    hearingResult?: true
+    sanction?: true
+    sanctionDays?: true
+    sanctionStart?: true
+    sanctionEnd?: true
+    sanctionCompleted?: true
+    decidedBy?: true
+    decidedAt?: true
+    appealed?: true
+    appealResult?: true
+    resolvedAt?: true
+    recordedBy?: true
+    deletedAt?: true
+    deletedBy?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type ViolationCountAggregateInputType = {
+    id?: true
+    courseId?: true
+    caseNo?: true
+    studentId?: true
+    violationTypeId?: true
+    severity?: true
+    incidentDate?: true
+    location?: true
+    description?: true
+    reportedBy?: true
+    reportedByRole?: true
+    status?: true
+    noticeToExplainAt?: true
+    explanationReceivedAt?: true
+    hearingDate?: true
+    hearingResult?: true
+    sanction?: true
+    sanctionDays?: true
+    sanctionStart?: true
+    sanctionEnd?: true
+    sanctionCompleted?: true
+    decidedBy?: true
+    decidedAt?: true
+    appealed?: true
+    appealResult?: true
+    resolvedAt?: true
+    recordedBy?: true
+    deletedAt?: true
+    deletedBy?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type ViolationAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Violation to aggregate.
+     */
+    where?: ViolationWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Violations to fetch.
+     */
+    orderBy?: ViolationOrderByWithRelationInput | ViolationOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: ViolationWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Violations from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Violations.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned Violations
+    **/
+    _count?: true | ViolationCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: ViolationAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: ViolationSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: ViolationMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: ViolationMaxAggregateInputType
+  }
+
+  export type GetViolationAggregateType<T extends ViolationAggregateArgs> = {
+        [P in keyof T & keyof AggregateViolation]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateViolation[P]>
+      : GetScalarType<T[P], AggregateViolation[P]>
+  }
+
+
+
+
+  export type ViolationGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ViolationWhereInput
+    orderBy?: ViolationOrderByWithAggregationInput | ViolationOrderByWithAggregationInput[]
+    by: ViolationScalarFieldEnum[] | ViolationScalarFieldEnum
+    having?: ViolationScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: ViolationCountAggregateInputType | true
+    _avg?: ViolationAvgAggregateInputType
+    _sum?: ViolationSumAggregateInputType
+    _min?: ViolationMinAggregateInputType
+    _max?: ViolationMaxAggregateInputType
+  }
+
+  export type ViolationGroupByOutputType = {
+    id: string
+    courseId: string
+    caseNo: string
+    studentId: string
+    violationTypeId: string
+    severity: string
+    incidentDate: Date
+    location: string | null
+    description: string | null
+    reportedBy: string | null
+    reportedByRole: string | null
+    status: string
+    noticeToExplainAt: Date | null
+    explanationReceivedAt: Date | null
+    hearingDate: Date | null
+    hearingResult: string | null
+    sanction: string | null
+    sanctionDays: number | null
+    sanctionStart: Date | null
+    sanctionEnd: Date | null
+    sanctionCompleted: boolean
+    decidedBy: string | null
+    decidedAt: Date | null
+    appealed: boolean
+    appealResult: string | null
+    resolvedAt: Date | null
+    recordedBy: string | null
+    deletedAt: Date | null
+    deletedBy: string | null
+    createdAt: Date
+    updatedAt: Date
+    _count: ViolationCountAggregateOutputType | null
+    _avg: ViolationAvgAggregateOutputType | null
+    _sum: ViolationSumAggregateOutputType | null
+    _min: ViolationMinAggregateOutputType | null
+    _max: ViolationMaxAggregateOutputType | null
+  }
+
+  type GetViolationGroupByPayload<T extends ViolationGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<ViolationGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof ViolationGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], ViolationGroupByOutputType[P]>
+            : GetScalarType<T[P], ViolationGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type ViolationSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    courseId?: boolean
+    caseNo?: boolean
+    studentId?: boolean
+    violationTypeId?: boolean
+    severity?: boolean
+    incidentDate?: boolean
+    location?: boolean
+    description?: boolean
+    reportedBy?: boolean
+    reportedByRole?: boolean
+    status?: boolean
+    noticeToExplainAt?: boolean
+    explanationReceivedAt?: boolean
+    hearingDate?: boolean
+    hearingResult?: boolean
+    sanction?: boolean
+    sanctionDays?: boolean
+    sanctionStart?: boolean
+    sanctionEnd?: boolean
+    sanctionCompleted?: boolean
+    decidedBy?: boolean
+    decidedAt?: boolean
+    appealed?: boolean
+    appealResult?: boolean
+    resolvedAt?: boolean
+    recordedBy?: boolean
+    deletedAt?: boolean
+    deletedBy?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    course?: boolean | CourseDefaultArgs<ExtArgs>
+    student?: boolean | StudentDefaultArgs<ExtArgs>
+    violationType?: boolean | ViolationTypeDefaultArgs<ExtArgs>
+    recordedByUser?: boolean | Violation$recordedByUserArgs<ExtArgs>
+    parentContacts?: boolean | Violation$parentContactsArgs<ExtArgs>
+    notes?: boolean | Violation$notesArgs<ExtArgs>
+    _count?: boolean | ViolationCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["violation"]>
+
+  export type ViolationSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    courseId?: boolean
+    caseNo?: boolean
+    studentId?: boolean
+    violationTypeId?: boolean
+    severity?: boolean
+    incidentDate?: boolean
+    location?: boolean
+    description?: boolean
+    reportedBy?: boolean
+    reportedByRole?: boolean
+    status?: boolean
+    noticeToExplainAt?: boolean
+    explanationReceivedAt?: boolean
+    hearingDate?: boolean
+    hearingResult?: boolean
+    sanction?: boolean
+    sanctionDays?: boolean
+    sanctionStart?: boolean
+    sanctionEnd?: boolean
+    sanctionCompleted?: boolean
+    decidedBy?: boolean
+    decidedAt?: boolean
+    appealed?: boolean
+    appealResult?: boolean
+    resolvedAt?: boolean
+    recordedBy?: boolean
+    deletedAt?: boolean
+    deletedBy?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    course?: boolean | CourseDefaultArgs<ExtArgs>
+    student?: boolean | StudentDefaultArgs<ExtArgs>
+    violationType?: boolean | ViolationTypeDefaultArgs<ExtArgs>
+    recordedByUser?: boolean | Violation$recordedByUserArgs<ExtArgs>
+  }, ExtArgs["result"]["violation"]>
+
+  export type ViolationSelectScalar = {
+    id?: boolean
+    courseId?: boolean
+    caseNo?: boolean
+    studentId?: boolean
+    violationTypeId?: boolean
+    severity?: boolean
+    incidentDate?: boolean
+    location?: boolean
+    description?: boolean
+    reportedBy?: boolean
+    reportedByRole?: boolean
+    status?: boolean
+    noticeToExplainAt?: boolean
+    explanationReceivedAt?: boolean
+    hearingDate?: boolean
+    hearingResult?: boolean
+    sanction?: boolean
+    sanctionDays?: boolean
+    sanctionStart?: boolean
+    sanctionEnd?: boolean
+    sanctionCompleted?: boolean
+    decidedBy?: boolean
+    decidedAt?: boolean
+    appealed?: boolean
+    appealResult?: boolean
+    resolvedAt?: boolean
+    recordedBy?: boolean
+    deletedAt?: boolean
+    deletedBy?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type ViolationInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    course?: boolean | CourseDefaultArgs<ExtArgs>
+    student?: boolean | StudentDefaultArgs<ExtArgs>
+    violationType?: boolean | ViolationTypeDefaultArgs<ExtArgs>
+    recordedByUser?: boolean | Violation$recordedByUserArgs<ExtArgs>
+    parentContacts?: boolean | Violation$parentContactsArgs<ExtArgs>
+    notes?: boolean | Violation$notesArgs<ExtArgs>
+    _count?: boolean | ViolationCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type ViolationIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    course?: boolean | CourseDefaultArgs<ExtArgs>
+    student?: boolean | StudentDefaultArgs<ExtArgs>
+    violationType?: boolean | ViolationTypeDefaultArgs<ExtArgs>
+    recordedByUser?: boolean | Violation$recordedByUserArgs<ExtArgs>
+  }
+
+  export type $ViolationPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "Violation"
+    objects: {
+      course: Prisma.$CoursePayload<ExtArgs>
+      student: Prisma.$StudentPayload<ExtArgs>
+      violationType: Prisma.$ViolationTypePayload<ExtArgs>
+      recordedByUser: Prisma.$UserPayload<ExtArgs> | null
+      parentContacts: Prisma.$ParentContactPayload<ExtArgs>[]
+      notes: Prisma.$ViolationNotePayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      courseId: string
+      caseNo: string
+      studentId: string
+      violationTypeId: string
+      severity: string
+      incidentDate: Date
+      location: string | null
+      description: string | null
+      reportedBy: string | null
+      reportedByRole: string | null
+      status: string
+      noticeToExplainAt: Date | null
+      explanationReceivedAt: Date | null
+      hearingDate: Date | null
+      hearingResult: string | null
+      sanction: string | null
+      sanctionDays: number | null
+      sanctionStart: Date | null
+      sanctionEnd: Date | null
+      sanctionCompleted: boolean
+      decidedBy: string | null
+      decidedAt: Date | null
+      appealed: boolean
+      appealResult: string | null
+      resolvedAt: Date | null
+      recordedBy: string | null
+      deletedAt: Date | null
+      deletedBy: string | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["violation"]>
+    composites: {}
+  }
+
+  type ViolationGetPayload<S extends boolean | null | undefined | ViolationDefaultArgs> = $Result.GetResult<Prisma.$ViolationPayload, S>
+
+  type ViolationCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<ViolationFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: ViolationCountAggregateInputType | true
+    }
+
+  export interface ViolationDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['Violation'], meta: { name: 'Violation' } }
+    /**
+     * Find zero or one Violation that matches the filter.
+     * @param {ViolationFindUniqueArgs} args - Arguments to find a Violation
+     * @example
+     * // Get one Violation
+     * const violation = await prisma.violation.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends ViolationFindUniqueArgs>(args: SelectSubset<T, ViolationFindUniqueArgs<ExtArgs>>): Prisma__ViolationClient<$Result.GetResult<Prisma.$ViolationPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one Violation that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {ViolationFindUniqueOrThrowArgs} args - Arguments to find a Violation
+     * @example
+     * // Get one Violation
+     * const violation = await prisma.violation.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends ViolationFindUniqueOrThrowArgs>(args: SelectSubset<T, ViolationFindUniqueOrThrowArgs<ExtArgs>>): Prisma__ViolationClient<$Result.GetResult<Prisma.$ViolationPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first Violation that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ViolationFindFirstArgs} args - Arguments to find a Violation
+     * @example
+     * // Get one Violation
+     * const violation = await prisma.violation.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends ViolationFindFirstArgs>(args?: SelectSubset<T, ViolationFindFirstArgs<ExtArgs>>): Prisma__ViolationClient<$Result.GetResult<Prisma.$ViolationPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first Violation that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ViolationFindFirstOrThrowArgs} args - Arguments to find a Violation
+     * @example
+     * // Get one Violation
+     * const violation = await prisma.violation.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends ViolationFindFirstOrThrowArgs>(args?: SelectSubset<T, ViolationFindFirstOrThrowArgs<ExtArgs>>): Prisma__ViolationClient<$Result.GetResult<Prisma.$ViolationPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more Violations that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ViolationFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all Violations
+     * const violations = await prisma.violation.findMany()
+     * 
+     * // Get first 10 Violations
+     * const violations = await prisma.violation.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const violationWithIdOnly = await prisma.violation.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends ViolationFindManyArgs>(args?: SelectSubset<T, ViolationFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ViolationPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a Violation.
+     * @param {ViolationCreateArgs} args - Arguments to create a Violation.
+     * @example
+     * // Create one Violation
+     * const Violation = await prisma.violation.create({
+     *   data: {
+     *     // ... data to create a Violation
+     *   }
+     * })
+     * 
+     */
+    create<T extends ViolationCreateArgs>(args: SelectSubset<T, ViolationCreateArgs<ExtArgs>>): Prisma__ViolationClient<$Result.GetResult<Prisma.$ViolationPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many Violations.
+     * @param {ViolationCreateManyArgs} args - Arguments to create many Violations.
+     * @example
+     * // Create many Violations
+     * const violation = await prisma.violation.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends ViolationCreateManyArgs>(args?: SelectSubset<T, ViolationCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many Violations and returns the data saved in the database.
+     * @param {ViolationCreateManyAndReturnArgs} args - Arguments to create many Violations.
+     * @example
+     * // Create many Violations
+     * const violation = await prisma.violation.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many Violations and only return the `id`
+     * const violationWithIdOnly = await prisma.violation.createManyAndReturn({ 
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends ViolationCreateManyAndReturnArgs>(args?: SelectSubset<T, ViolationCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ViolationPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a Violation.
+     * @param {ViolationDeleteArgs} args - Arguments to delete one Violation.
+     * @example
+     * // Delete one Violation
+     * const Violation = await prisma.violation.delete({
+     *   where: {
+     *     // ... filter to delete one Violation
+     *   }
+     * })
+     * 
+     */
+    delete<T extends ViolationDeleteArgs>(args: SelectSubset<T, ViolationDeleteArgs<ExtArgs>>): Prisma__ViolationClient<$Result.GetResult<Prisma.$ViolationPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one Violation.
+     * @param {ViolationUpdateArgs} args - Arguments to update one Violation.
+     * @example
+     * // Update one Violation
+     * const violation = await prisma.violation.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends ViolationUpdateArgs>(args: SelectSubset<T, ViolationUpdateArgs<ExtArgs>>): Prisma__ViolationClient<$Result.GetResult<Prisma.$ViolationPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more Violations.
+     * @param {ViolationDeleteManyArgs} args - Arguments to filter Violations to delete.
+     * @example
+     * // Delete a few Violations
+     * const { count } = await prisma.violation.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends ViolationDeleteManyArgs>(args?: SelectSubset<T, ViolationDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Violations.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ViolationUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many Violations
+     * const violation = await prisma.violation.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends ViolationUpdateManyArgs>(args: SelectSubset<T, ViolationUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one Violation.
+     * @param {ViolationUpsertArgs} args - Arguments to update or create a Violation.
+     * @example
+     * // Update or create a Violation
+     * const violation = await prisma.violation.upsert({
+     *   create: {
+     *     // ... data to create a Violation
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the Violation we want to update
+     *   }
+     * })
+     */
+    upsert<T extends ViolationUpsertArgs>(args: SelectSubset<T, ViolationUpsertArgs<ExtArgs>>): Prisma__ViolationClient<$Result.GetResult<Prisma.$ViolationPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of Violations.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ViolationCountArgs} args - Arguments to filter Violations to count.
+     * @example
+     * // Count the number of Violations
+     * const count = await prisma.violation.count({
+     *   where: {
+     *     // ... the filter for the Violations we want to count
+     *   }
+     * })
+    **/
+    count<T extends ViolationCountArgs>(
+      args?: Subset<T, ViolationCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], ViolationCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a Violation.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ViolationAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends ViolationAggregateArgs>(args: Subset<T, ViolationAggregateArgs>): Prisma.PrismaPromise<GetViolationAggregateType<T>>
+
+    /**
+     * Group by Violation.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ViolationGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends ViolationGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: ViolationGroupByArgs['orderBy'] }
+        : { orderBy?: ViolationGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, ViolationGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetViolationGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the Violation model
+   */
+  readonly fields: ViolationFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for Violation.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__ViolationClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    course<T extends CourseDefaultArgs<ExtArgs> = {}>(args?: Subset<T, CourseDefaultArgs<ExtArgs>>): Prisma__CourseClient<$Result.GetResult<Prisma.$CoursePayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    student<T extends StudentDefaultArgs<ExtArgs> = {}>(args?: Subset<T, StudentDefaultArgs<ExtArgs>>): Prisma__StudentClient<$Result.GetResult<Prisma.$StudentPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    violationType<T extends ViolationTypeDefaultArgs<ExtArgs> = {}>(args?: Subset<T, ViolationTypeDefaultArgs<ExtArgs>>): Prisma__ViolationTypeClient<$Result.GetResult<Prisma.$ViolationTypePayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    recordedByUser<T extends Violation$recordedByUserArgs<ExtArgs> = {}>(args?: Subset<T, Violation$recordedByUserArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
+    parentContacts<T extends Violation$parentContactsArgs<ExtArgs> = {}>(args?: Subset<T, Violation$parentContactsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ParentContactPayload<ExtArgs>, T, "findMany"> | Null>
+    notes<T extends Violation$notesArgs<ExtArgs> = {}>(args?: Subset<T, Violation$notesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ViolationNotePayload<ExtArgs>, T, "findMany"> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the Violation model
+   */ 
+  interface ViolationFieldRefs {
+    readonly id: FieldRef<"Violation", 'String'>
+    readonly courseId: FieldRef<"Violation", 'String'>
+    readonly caseNo: FieldRef<"Violation", 'String'>
+    readonly studentId: FieldRef<"Violation", 'String'>
+    readonly violationTypeId: FieldRef<"Violation", 'String'>
+    readonly severity: FieldRef<"Violation", 'String'>
+    readonly incidentDate: FieldRef<"Violation", 'DateTime'>
+    readonly location: FieldRef<"Violation", 'String'>
+    readonly description: FieldRef<"Violation", 'String'>
+    readonly reportedBy: FieldRef<"Violation", 'String'>
+    readonly reportedByRole: FieldRef<"Violation", 'String'>
+    readonly status: FieldRef<"Violation", 'String'>
+    readonly noticeToExplainAt: FieldRef<"Violation", 'DateTime'>
+    readonly explanationReceivedAt: FieldRef<"Violation", 'DateTime'>
+    readonly hearingDate: FieldRef<"Violation", 'DateTime'>
+    readonly hearingResult: FieldRef<"Violation", 'String'>
+    readonly sanction: FieldRef<"Violation", 'String'>
+    readonly sanctionDays: FieldRef<"Violation", 'Int'>
+    readonly sanctionStart: FieldRef<"Violation", 'DateTime'>
+    readonly sanctionEnd: FieldRef<"Violation", 'DateTime'>
+    readonly sanctionCompleted: FieldRef<"Violation", 'Boolean'>
+    readonly decidedBy: FieldRef<"Violation", 'String'>
+    readonly decidedAt: FieldRef<"Violation", 'DateTime'>
+    readonly appealed: FieldRef<"Violation", 'Boolean'>
+    readonly appealResult: FieldRef<"Violation", 'String'>
+    readonly resolvedAt: FieldRef<"Violation", 'DateTime'>
+    readonly recordedBy: FieldRef<"Violation", 'String'>
+    readonly deletedAt: FieldRef<"Violation", 'DateTime'>
+    readonly deletedBy: FieldRef<"Violation", 'String'>
+    readonly createdAt: FieldRef<"Violation", 'DateTime'>
+    readonly updatedAt: FieldRef<"Violation", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * Violation findUnique
+   */
+  export type ViolationFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Violation
+     */
+    select?: ViolationSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ViolationInclude<ExtArgs> | null
+    /**
+     * Filter, which Violation to fetch.
+     */
+    where: ViolationWhereUniqueInput
+  }
+
+  /**
+   * Violation findUniqueOrThrow
+   */
+  export type ViolationFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Violation
+     */
+    select?: ViolationSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ViolationInclude<ExtArgs> | null
+    /**
+     * Filter, which Violation to fetch.
+     */
+    where: ViolationWhereUniqueInput
+  }
+
+  /**
+   * Violation findFirst
+   */
+  export type ViolationFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Violation
+     */
+    select?: ViolationSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ViolationInclude<ExtArgs> | null
+    /**
+     * Filter, which Violation to fetch.
+     */
+    where?: ViolationWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Violations to fetch.
+     */
+    orderBy?: ViolationOrderByWithRelationInput | ViolationOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Violations.
+     */
+    cursor?: ViolationWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Violations from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Violations.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Violations.
+     */
+    distinct?: ViolationScalarFieldEnum | ViolationScalarFieldEnum[]
+  }
+
+  /**
+   * Violation findFirstOrThrow
+   */
+  export type ViolationFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Violation
+     */
+    select?: ViolationSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ViolationInclude<ExtArgs> | null
+    /**
+     * Filter, which Violation to fetch.
+     */
+    where?: ViolationWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Violations to fetch.
+     */
+    orderBy?: ViolationOrderByWithRelationInput | ViolationOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Violations.
+     */
+    cursor?: ViolationWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Violations from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Violations.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Violations.
+     */
+    distinct?: ViolationScalarFieldEnum | ViolationScalarFieldEnum[]
+  }
+
+  /**
+   * Violation findMany
+   */
+  export type ViolationFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Violation
+     */
+    select?: ViolationSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ViolationInclude<ExtArgs> | null
+    /**
+     * Filter, which Violations to fetch.
+     */
+    where?: ViolationWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Violations to fetch.
+     */
+    orderBy?: ViolationOrderByWithRelationInput | ViolationOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing Violations.
+     */
+    cursor?: ViolationWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Violations from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Violations.
+     */
+    skip?: number
+    distinct?: ViolationScalarFieldEnum | ViolationScalarFieldEnum[]
+  }
+
+  /**
+   * Violation create
+   */
+  export type ViolationCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Violation
+     */
+    select?: ViolationSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ViolationInclude<ExtArgs> | null
+    /**
+     * The data needed to create a Violation.
+     */
+    data: XOR<ViolationCreateInput, ViolationUncheckedCreateInput>
+  }
+
+  /**
+   * Violation createMany
+   */
+  export type ViolationCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many Violations.
+     */
+    data: ViolationCreateManyInput | ViolationCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Violation createManyAndReturn
+   */
+  export type ViolationCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Violation
+     */
+    select?: ViolationSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many Violations.
+     */
+    data: ViolationCreateManyInput | ViolationCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ViolationIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * Violation update
+   */
+  export type ViolationUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Violation
+     */
+    select?: ViolationSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ViolationInclude<ExtArgs> | null
+    /**
+     * The data needed to update a Violation.
+     */
+    data: XOR<ViolationUpdateInput, ViolationUncheckedUpdateInput>
+    /**
+     * Choose, which Violation to update.
+     */
+    where: ViolationWhereUniqueInput
+  }
+
+  /**
+   * Violation updateMany
+   */
+  export type ViolationUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update Violations.
+     */
+    data: XOR<ViolationUpdateManyMutationInput, ViolationUncheckedUpdateManyInput>
+    /**
+     * Filter which Violations to update
+     */
+    where?: ViolationWhereInput
+  }
+
+  /**
+   * Violation upsert
+   */
+  export type ViolationUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Violation
+     */
+    select?: ViolationSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ViolationInclude<ExtArgs> | null
+    /**
+     * The filter to search for the Violation to update in case it exists.
+     */
+    where: ViolationWhereUniqueInput
+    /**
+     * In case the Violation found by the `where` argument doesn't exist, create a new Violation with this data.
+     */
+    create: XOR<ViolationCreateInput, ViolationUncheckedCreateInput>
+    /**
+     * In case the Violation was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<ViolationUpdateInput, ViolationUncheckedUpdateInput>
+  }
+
+  /**
+   * Violation delete
+   */
+  export type ViolationDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Violation
+     */
+    select?: ViolationSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ViolationInclude<ExtArgs> | null
+    /**
+     * Filter which Violation to delete.
+     */
+    where: ViolationWhereUniqueInput
+  }
+
+  /**
+   * Violation deleteMany
+   */
+  export type ViolationDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Violations to delete
+     */
+    where?: ViolationWhereInput
+  }
+
+  /**
+   * Violation.recordedByUser
+   */
+  export type Violation$recordedByUserArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    where?: UserWhereInput
+  }
+
+  /**
+   * Violation.parentContacts
+   */
+  export type Violation$parentContactsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ParentContact
+     */
+    select?: ParentContactSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ParentContactInclude<ExtArgs> | null
+    where?: ParentContactWhereInput
+    orderBy?: ParentContactOrderByWithRelationInput | ParentContactOrderByWithRelationInput[]
+    cursor?: ParentContactWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: ParentContactScalarFieldEnum | ParentContactScalarFieldEnum[]
+  }
+
+  /**
+   * Violation.notes
+   */
+  export type Violation$notesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ViolationNote
+     */
+    select?: ViolationNoteSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ViolationNoteInclude<ExtArgs> | null
+    where?: ViolationNoteWhereInput
+    orderBy?: ViolationNoteOrderByWithRelationInput | ViolationNoteOrderByWithRelationInput[]
+    cursor?: ViolationNoteWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: ViolationNoteScalarFieldEnum | ViolationNoteScalarFieldEnum[]
+  }
+
+  /**
+   * Violation without action
+   */
+  export type ViolationDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Violation
+     */
+    select?: ViolationSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ViolationInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model ParentContact
+   */
+
+  export type AggregateParentContact = {
+    _count: ParentContactCountAggregateOutputType | null
+    _avg: ParentContactAvgAggregateOutputType | null
+    _sum: ParentContactSumAggregateOutputType | null
+    _min: ParentContactMinAggregateOutputType | null
+    _max: ParentContactMaxAggregateOutputType | null
+  }
+
+  export type ParentContactAvgAggregateOutputType = {
+    attemptNo: number | null
+  }
+
+  export type ParentContactSumAggregateOutputType = {
+    attemptNo: number | null
+  }
+
+  export type ParentContactMinAggregateOutputType = {
+    id: string | null
+    violationId: string | null
+    contactedAt: Date | null
+    method: string | null
+    contactedBy: string | null
+    contactPerson: string | null
+    relationship: string | null
+    attendance: string | null
+    attemptNo: number | null
+    signatureUrl: string | null
+    recordedBy: string | null
+    deletedAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type ParentContactMaxAggregateOutputType = {
+    id: string | null
+    violationId: string | null
+    contactedAt: Date | null
+    method: string | null
+    contactedBy: string | null
+    contactPerson: string | null
+    relationship: string | null
+    attendance: string | null
+    attemptNo: number | null
+    signatureUrl: string | null
+    recordedBy: string | null
+    deletedAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type ParentContactCountAggregateOutputType = {
+    id: number
+    violationId: number
+    contactedAt: number
+    method: number
+    contactedBy: number
+    contactPerson: number
+    relationship: number
+    attendance: number
+    attemptNo: number
+    signatureUrl: number
+    recordedBy: number
+    deletedAt: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type ParentContactAvgAggregateInputType = {
+    attemptNo?: true
+  }
+
+  export type ParentContactSumAggregateInputType = {
+    attemptNo?: true
+  }
+
+  export type ParentContactMinAggregateInputType = {
+    id?: true
+    violationId?: true
+    contactedAt?: true
+    method?: true
+    contactedBy?: true
+    contactPerson?: true
+    relationship?: true
+    attendance?: true
+    attemptNo?: true
+    signatureUrl?: true
+    recordedBy?: true
+    deletedAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type ParentContactMaxAggregateInputType = {
+    id?: true
+    violationId?: true
+    contactedAt?: true
+    method?: true
+    contactedBy?: true
+    contactPerson?: true
+    relationship?: true
+    attendance?: true
+    attemptNo?: true
+    signatureUrl?: true
+    recordedBy?: true
+    deletedAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type ParentContactCountAggregateInputType = {
+    id?: true
+    violationId?: true
+    contactedAt?: true
+    method?: true
+    contactedBy?: true
+    contactPerson?: true
+    relationship?: true
+    attendance?: true
+    attemptNo?: true
+    signatureUrl?: true
+    recordedBy?: true
+    deletedAt?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type ParentContactAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ParentContact to aggregate.
+     */
+    where?: ParentContactWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ParentContacts to fetch.
+     */
+    orderBy?: ParentContactOrderByWithRelationInput | ParentContactOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: ParentContactWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ParentContacts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ParentContacts.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned ParentContacts
+    **/
+    _count?: true | ParentContactCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: ParentContactAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: ParentContactSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: ParentContactMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: ParentContactMaxAggregateInputType
+  }
+
+  export type GetParentContactAggregateType<T extends ParentContactAggregateArgs> = {
+        [P in keyof T & keyof AggregateParentContact]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateParentContact[P]>
+      : GetScalarType<T[P], AggregateParentContact[P]>
+  }
+
+
+
+
+  export type ParentContactGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ParentContactWhereInput
+    orderBy?: ParentContactOrderByWithAggregationInput | ParentContactOrderByWithAggregationInput[]
+    by: ParentContactScalarFieldEnum[] | ParentContactScalarFieldEnum
+    having?: ParentContactScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: ParentContactCountAggregateInputType | true
+    _avg?: ParentContactAvgAggregateInputType
+    _sum?: ParentContactSumAggregateInputType
+    _min?: ParentContactMinAggregateInputType
+    _max?: ParentContactMaxAggregateInputType
+  }
+
+  export type ParentContactGroupByOutputType = {
+    id: string
+    violationId: string
+    contactedAt: Date
+    method: string
+    contactedBy: string | null
+    contactPerson: string | null
+    relationship: string | null
+    attendance: string
+    attemptNo: number
+    signatureUrl: string | null
+    recordedBy: string | null
+    deletedAt: Date | null
+    createdAt: Date
+    updatedAt: Date
+    _count: ParentContactCountAggregateOutputType | null
+    _avg: ParentContactAvgAggregateOutputType | null
+    _sum: ParentContactSumAggregateOutputType | null
+    _min: ParentContactMinAggregateOutputType | null
+    _max: ParentContactMaxAggregateOutputType | null
+  }
+
+  type GetParentContactGroupByPayload<T extends ParentContactGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<ParentContactGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof ParentContactGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], ParentContactGroupByOutputType[P]>
+            : GetScalarType<T[P], ParentContactGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type ParentContactSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    violationId?: boolean
+    contactedAt?: boolean
+    method?: boolean
+    contactedBy?: boolean
+    contactPerson?: boolean
+    relationship?: boolean
+    attendance?: boolean
+    attemptNo?: boolean
+    signatureUrl?: boolean
+    recordedBy?: boolean
+    deletedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    violation?: boolean | ViolationDefaultArgs<ExtArgs>
+    recordedByUser?: boolean | ParentContact$recordedByUserArgs<ExtArgs>
+  }, ExtArgs["result"]["parentContact"]>
+
+  export type ParentContactSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    violationId?: boolean
+    contactedAt?: boolean
+    method?: boolean
+    contactedBy?: boolean
+    contactPerson?: boolean
+    relationship?: boolean
+    attendance?: boolean
+    attemptNo?: boolean
+    signatureUrl?: boolean
+    recordedBy?: boolean
+    deletedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    violation?: boolean | ViolationDefaultArgs<ExtArgs>
+    recordedByUser?: boolean | ParentContact$recordedByUserArgs<ExtArgs>
+  }, ExtArgs["result"]["parentContact"]>
+
+  export type ParentContactSelectScalar = {
+    id?: boolean
+    violationId?: boolean
+    contactedAt?: boolean
+    method?: boolean
+    contactedBy?: boolean
+    contactPerson?: boolean
+    relationship?: boolean
+    attendance?: boolean
+    attemptNo?: boolean
+    signatureUrl?: boolean
+    recordedBy?: boolean
+    deletedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type ParentContactInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    violation?: boolean | ViolationDefaultArgs<ExtArgs>
+    recordedByUser?: boolean | ParentContact$recordedByUserArgs<ExtArgs>
+  }
+  export type ParentContactIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    violation?: boolean | ViolationDefaultArgs<ExtArgs>
+    recordedByUser?: boolean | ParentContact$recordedByUserArgs<ExtArgs>
+  }
+
+  export type $ParentContactPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "ParentContact"
+    objects: {
+      violation: Prisma.$ViolationPayload<ExtArgs>
+      recordedByUser: Prisma.$UserPayload<ExtArgs> | null
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      violationId: string
+      contactedAt: Date
+      method: string
+      contactedBy: string | null
+      contactPerson: string | null
+      relationship: string | null
+      attendance: string
+      attemptNo: number
+      signatureUrl: string | null
+      recordedBy: string | null
+      deletedAt: Date | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["parentContact"]>
+    composites: {}
+  }
+
+  type ParentContactGetPayload<S extends boolean | null | undefined | ParentContactDefaultArgs> = $Result.GetResult<Prisma.$ParentContactPayload, S>
+
+  type ParentContactCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<ParentContactFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: ParentContactCountAggregateInputType | true
+    }
+
+  export interface ParentContactDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['ParentContact'], meta: { name: 'ParentContact' } }
+    /**
+     * Find zero or one ParentContact that matches the filter.
+     * @param {ParentContactFindUniqueArgs} args - Arguments to find a ParentContact
+     * @example
+     * // Get one ParentContact
+     * const parentContact = await prisma.parentContact.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends ParentContactFindUniqueArgs>(args: SelectSubset<T, ParentContactFindUniqueArgs<ExtArgs>>): Prisma__ParentContactClient<$Result.GetResult<Prisma.$ParentContactPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one ParentContact that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {ParentContactFindUniqueOrThrowArgs} args - Arguments to find a ParentContact
+     * @example
+     * // Get one ParentContact
+     * const parentContact = await prisma.parentContact.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends ParentContactFindUniqueOrThrowArgs>(args: SelectSubset<T, ParentContactFindUniqueOrThrowArgs<ExtArgs>>): Prisma__ParentContactClient<$Result.GetResult<Prisma.$ParentContactPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first ParentContact that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ParentContactFindFirstArgs} args - Arguments to find a ParentContact
+     * @example
+     * // Get one ParentContact
+     * const parentContact = await prisma.parentContact.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends ParentContactFindFirstArgs>(args?: SelectSubset<T, ParentContactFindFirstArgs<ExtArgs>>): Prisma__ParentContactClient<$Result.GetResult<Prisma.$ParentContactPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first ParentContact that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ParentContactFindFirstOrThrowArgs} args - Arguments to find a ParentContact
+     * @example
+     * // Get one ParentContact
+     * const parentContact = await prisma.parentContact.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends ParentContactFindFirstOrThrowArgs>(args?: SelectSubset<T, ParentContactFindFirstOrThrowArgs<ExtArgs>>): Prisma__ParentContactClient<$Result.GetResult<Prisma.$ParentContactPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more ParentContacts that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ParentContactFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all ParentContacts
+     * const parentContacts = await prisma.parentContact.findMany()
+     * 
+     * // Get first 10 ParentContacts
+     * const parentContacts = await prisma.parentContact.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const parentContactWithIdOnly = await prisma.parentContact.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends ParentContactFindManyArgs>(args?: SelectSubset<T, ParentContactFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ParentContactPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a ParentContact.
+     * @param {ParentContactCreateArgs} args - Arguments to create a ParentContact.
+     * @example
+     * // Create one ParentContact
+     * const ParentContact = await prisma.parentContact.create({
+     *   data: {
+     *     // ... data to create a ParentContact
+     *   }
+     * })
+     * 
+     */
+    create<T extends ParentContactCreateArgs>(args: SelectSubset<T, ParentContactCreateArgs<ExtArgs>>): Prisma__ParentContactClient<$Result.GetResult<Prisma.$ParentContactPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many ParentContacts.
+     * @param {ParentContactCreateManyArgs} args - Arguments to create many ParentContacts.
+     * @example
+     * // Create many ParentContacts
+     * const parentContact = await prisma.parentContact.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends ParentContactCreateManyArgs>(args?: SelectSubset<T, ParentContactCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many ParentContacts and returns the data saved in the database.
+     * @param {ParentContactCreateManyAndReturnArgs} args - Arguments to create many ParentContacts.
+     * @example
+     * // Create many ParentContacts
+     * const parentContact = await prisma.parentContact.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many ParentContacts and only return the `id`
+     * const parentContactWithIdOnly = await prisma.parentContact.createManyAndReturn({ 
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends ParentContactCreateManyAndReturnArgs>(args?: SelectSubset<T, ParentContactCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ParentContactPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a ParentContact.
+     * @param {ParentContactDeleteArgs} args - Arguments to delete one ParentContact.
+     * @example
+     * // Delete one ParentContact
+     * const ParentContact = await prisma.parentContact.delete({
+     *   where: {
+     *     // ... filter to delete one ParentContact
+     *   }
+     * })
+     * 
+     */
+    delete<T extends ParentContactDeleteArgs>(args: SelectSubset<T, ParentContactDeleteArgs<ExtArgs>>): Prisma__ParentContactClient<$Result.GetResult<Prisma.$ParentContactPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one ParentContact.
+     * @param {ParentContactUpdateArgs} args - Arguments to update one ParentContact.
+     * @example
+     * // Update one ParentContact
+     * const parentContact = await prisma.parentContact.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends ParentContactUpdateArgs>(args: SelectSubset<T, ParentContactUpdateArgs<ExtArgs>>): Prisma__ParentContactClient<$Result.GetResult<Prisma.$ParentContactPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more ParentContacts.
+     * @param {ParentContactDeleteManyArgs} args - Arguments to filter ParentContacts to delete.
+     * @example
+     * // Delete a few ParentContacts
+     * const { count } = await prisma.parentContact.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends ParentContactDeleteManyArgs>(args?: SelectSubset<T, ParentContactDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ParentContacts.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ParentContactUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many ParentContacts
+     * const parentContact = await prisma.parentContact.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends ParentContactUpdateManyArgs>(args: SelectSubset<T, ParentContactUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one ParentContact.
+     * @param {ParentContactUpsertArgs} args - Arguments to update or create a ParentContact.
+     * @example
+     * // Update or create a ParentContact
+     * const parentContact = await prisma.parentContact.upsert({
+     *   create: {
+     *     // ... data to create a ParentContact
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the ParentContact we want to update
+     *   }
+     * })
+     */
+    upsert<T extends ParentContactUpsertArgs>(args: SelectSubset<T, ParentContactUpsertArgs<ExtArgs>>): Prisma__ParentContactClient<$Result.GetResult<Prisma.$ParentContactPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of ParentContacts.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ParentContactCountArgs} args - Arguments to filter ParentContacts to count.
+     * @example
+     * // Count the number of ParentContacts
+     * const count = await prisma.parentContact.count({
+     *   where: {
+     *     // ... the filter for the ParentContacts we want to count
+     *   }
+     * })
+    **/
+    count<T extends ParentContactCountArgs>(
+      args?: Subset<T, ParentContactCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], ParentContactCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a ParentContact.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ParentContactAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends ParentContactAggregateArgs>(args: Subset<T, ParentContactAggregateArgs>): Prisma.PrismaPromise<GetParentContactAggregateType<T>>
+
+    /**
+     * Group by ParentContact.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ParentContactGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends ParentContactGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: ParentContactGroupByArgs['orderBy'] }
+        : { orderBy?: ParentContactGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, ParentContactGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetParentContactGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the ParentContact model
+   */
+  readonly fields: ParentContactFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for ParentContact.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__ParentContactClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    violation<T extends ViolationDefaultArgs<ExtArgs> = {}>(args?: Subset<T, ViolationDefaultArgs<ExtArgs>>): Prisma__ViolationClient<$Result.GetResult<Prisma.$ViolationPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    recordedByUser<T extends ParentContact$recordedByUserArgs<ExtArgs> = {}>(args?: Subset<T, ParentContact$recordedByUserArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the ParentContact model
+   */ 
+  interface ParentContactFieldRefs {
+    readonly id: FieldRef<"ParentContact", 'String'>
+    readonly violationId: FieldRef<"ParentContact", 'String'>
+    readonly contactedAt: FieldRef<"ParentContact", 'DateTime'>
+    readonly method: FieldRef<"ParentContact", 'String'>
+    readonly contactedBy: FieldRef<"ParentContact", 'String'>
+    readonly contactPerson: FieldRef<"ParentContact", 'String'>
+    readonly relationship: FieldRef<"ParentContact", 'String'>
+    readonly attendance: FieldRef<"ParentContact", 'String'>
+    readonly attemptNo: FieldRef<"ParentContact", 'Int'>
+    readonly signatureUrl: FieldRef<"ParentContact", 'String'>
+    readonly recordedBy: FieldRef<"ParentContact", 'String'>
+    readonly deletedAt: FieldRef<"ParentContact", 'DateTime'>
+    readonly createdAt: FieldRef<"ParentContact", 'DateTime'>
+    readonly updatedAt: FieldRef<"ParentContact", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * ParentContact findUnique
+   */
+  export type ParentContactFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ParentContact
+     */
+    select?: ParentContactSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ParentContactInclude<ExtArgs> | null
+    /**
+     * Filter, which ParentContact to fetch.
+     */
+    where: ParentContactWhereUniqueInput
+  }
+
+  /**
+   * ParentContact findUniqueOrThrow
+   */
+  export type ParentContactFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ParentContact
+     */
+    select?: ParentContactSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ParentContactInclude<ExtArgs> | null
+    /**
+     * Filter, which ParentContact to fetch.
+     */
+    where: ParentContactWhereUniqueInput
+  }
+
+  /**
+   * ParentContact findFirst
+   */
+  export type ParentContactFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ParentContact
+     */
+    select?: ParentContactSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ParentContactInclude<ExtArgs> | null
+    /**
+     * Filter, which ParentContact to fetch.
+     */
+    where?: ParentContactWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ParentContacts to fetch.
+     */
+    orderBy?: ParentContactOrderByWithRelationInput | ParentContactOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ParentContacts.
+     */
+    cursor?: ParentContactWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ParentContacts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ParentContacts.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ParentContacts.
+     */
+    distinct?: ParentContactScalarFieldEnum | ParentContactScalarFieldEnum[]
+  }
+
+  /**
+   * ParentContact findFirstOrThrow
+   */
+  export type ParentContactFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ParentContact
+     */
+    select?: ParentContactSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ParentContactInclude<ExtArgs> | null
+    /**
+     * Filter, which ParentContact to fetch.
+     */
+    where?: ParentContactWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ParentContacts to fetch.
+     */
+    orderBy?: ParentContactOrderByWithRelationInput | ParentContactOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ParentContacts.
+     */
+    cursor?: ParentContactWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ParentContacts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ParentContacts.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ParentContacts.
+     */
+    distinct?: ParentContactScalarFieldEnum | ParentContactScalarFieldEnum[]
+  }
+
+  /**
+   * ParentContact findMany
+   */
+  export type ParentContactFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ParentContact
+     */
+    select?: ParentContactSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ParentContactInclude<ExtArgs> | null
+    /**
+     * Filter, which ParentContacts to fetch.
+     */
+    where?: ParentContactWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ParentContacts to fetch.
+     */
+    orderBy?: ParentContactOrderByWithRelationInput | ParentContactOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing ParentContacts.
+     */
+    cursor?: ParentContactWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ParentContacts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ParentContacts.
+     */
+    skip?: number
+    distinct?: ParentContactScalarFieldEnum | ParentContactScalarFieldEnum[]
+  }
+
+  /**
+   * ParentContact create
+   */
+  export type ParentContactCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ParentContact
+     */
+    select?: ParentContactSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ParentContactInclude<ExtArgs> | null
+    /**
+     * The data needed to create a ParentContact.
+     */
+    data: XOR<ParentContactCreateInput, ParentContactUncheckedCreateInput>
+  }
+
+  /**
+   * ParentContact createMany
+   */
+  export type ParentContactCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many ParentContacts.
+     */
+    data: ParentContactCreateManyInput | ParentContactCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * ParentContact createManyAndReturn
+   */
+  export type ParentContactCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ParentContact
+     */
+    select?: ParentContactSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many ParentContacts.
+     */
+    data: ParentContactCreateManyInput | ParentContactCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ParentContactIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * ParentContact update
+   */
+  export type ParentContactUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ParentContact
+     */
+    select?: ParentContactSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ParentContactInclude<ExtArgs> | null
+    /**
+     * The data needed to update a ParentContact.
+     */
+    data: XOR<ParentContactUpdateInput, ParentContactUncheckedUpdateInput>
+    /**
+     * Choose, which ParentContact to update.
+     */
+    where: ParentContactWhereUniqueInput
+  }
+
+  /**
+   * ParentContact updateMany
+   */
+  export type ParentContactUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update ParentContacts.
+     */
+    data: XOR<ParentContactUpdateManyMutationInput, ParentContactUncheckedUpdateManyInput>
+    /**
+     * Filter which ParentContacts to update
+     */
+    where?: ParentContactWhereInput
+  }
+
+  /**
+   * ParentContact upsert
+   */
+  export type ParentContactUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ParentContact
+     */
+    select?: ParentContactSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ParentContactInclude<ExtArgs> | null
+    /**
+     * The filter to search for the ParentContact to update in case it exists.
+     */
+    where: ParentContactWhereUniqueInput
+    /**
+     * In case the ParentContact found by the `where` argument doesn't exist, create a new ParentContact with this data.
+     */
+    create: XOR<ParentContactCreateInput, ParentContactUncheckedCreateInput>
+    /**
+     * In case the ParentContact was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<ParentContactUpdateInput, ParentContactUncheckedUpdateInput>
+  }
+
+  /**
+   * ParentContact delete
+   */
+  export type ParentContactDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ParentContact
+     */
+    select?: ParentContactSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ParentContactInclude<ExtArgs> | null
+    /**
+     * Filter which ParentContact to delete.
+     */
+    where: ParentContactWhereUniqueInput
+  }
+
+  /**
+   * ParentContact deleteMany
+   */
+  export type ParentContactDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ParentContacts to delete
+     */
+    where?: ParentContactWhereInput
+  }
+
+  /**
+   * ParentContact.recordedByUser
+   */
+  export type ParentContact$recordedByUserArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    where?: UserWhereInput
+  }
+
+  /**
+   * ParentContact without action
+   */
+  export type ParentContactDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ParentContact
+     */
+    select?: ParentContactSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ParentContactInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model ViolationNote
+   */
+
+  export type AggregateViolationNote = {
+    _count: ViolationNoteCountAggregateOutputType | null
+    _min: ViolationNoteMinAggregateOutputType | null
+    _max: ViolationNoteMaxAggregateOutputType | null
+  }
+
+  export type ViolationNoteMinAggregateOutputType = {
+    id: string | null
+    violationId: string | null
+    body: string | null
+    confidential: boolean | null
+    authorId: string | null
+    deletedAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type ViolationNoteMaxAggregateOutputType = {
+    id: string | null
+    violationId: string | null
+    body: string | null
+    confidential: boolean | null
+    authorId: string | null
+    deletedAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type ViolationNoteCountAggregateOutputType = {
+    id: number
+    violationId: number
+    body: number
+    confidential: number
+    authorId: number
+    deletedAt: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type ViolationNoteMinAggregateInputType = {
+    id?: true
+    violationId?: true
+    body?: true
+    confidential?: true
+    authorId?: true
+    deletedAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type ViolationNoteMaxAggregateInputType = {
+    id?: true
+    violationId?: true
+    body?: true
+    confidential?: true
+    authorId?: true
+    deletedAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type ViolationNoteCountAggregateInputType = {
+    id?: true
+    violationId?: true
+    body?: true
+    confidential?: true
+    authorId?: true
+    deletedAt?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type ViolationNoteAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ViolationNote to aggregate.
+     */
+    where?: ViolationNoteWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ViolationNotes to fetch.
+     */
+    orderBy?: ViolationNoteOrderByWithRelationInput | ViolationNoteOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: ViolationNoteWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ViolationNotes from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ViolationNotes.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned ViolationNotes
+    **/
+    _count?: true | ViolationNoteCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: ViolationNoteMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: ViolationNoteMaxAggregateInputType
+  }
+
+  export type GetViolationNoteAggregateType<T extends ViolationNoteAggregateArgs> = {
+        [P in keyof T & keyof AggregateViolationNote]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateViolationNote[P]>
+      : GetScalarType<T[P], AggregateViolationNote[P]>
+  }
+
+
+
+
+  export type ViolationNoteGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ViolationNoteWhereInput
+    orderBy?: ViolationNoteOrderByWithAggregationInput | ViolationNoteOrderByWithAggregationInput[]
+    by: ViolationNoteScalarFieldEnum[] | ViolationNoteScalarFieldEnum
+    having?: ViolationNoteScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: ViolationNoteCountAggregateInputType | true
+    _min?: ViolationNoteMinAggregateInputType
+    _max?: ViolationNoteMaxAggregateInputType
+  }
+
+  export type ViolationNoteGroupByOutputType = {
+    id: string
+    violationId: string
+    body: string
+    confidential: boolean
+    authorId: string | null
+    deletedAt: Date | null
+    createdAt: Date
+    updatedAt: Date
+    _count: ViolationNoteCountAggregateOutputType | null
+    _min: ViolationNoteMinAggregateOutputType | null
+    _max: ViolationNoteMaxAggregateOutputType | null
+  }
+
+  type GetViolationNoteGroupByPayload<T extends ViolationNoteGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<ViolationNoteGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof ViolationNoteGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], ViolationNoteGroupByOutputType[P]>
+            : GetScalarType<T[P], ViolationNoteGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type ViolationNoteSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    violationId?: boolean
+    body?: boolean
+    confidential?: boolean
+    authorId?: boolean
+    deletedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    violation?: boolean | ViolationDefaultArgs<ExtArgs>
+    author?: boolean | ViolationNote$authorArgs<ExtArgs>
+  }, ExtArgs["result"]["violationNote"]>
+
+  export type ViolationNoteSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    violationId?: boolean
+    body?: boolean
+    confidential?: boolean
+    authorId?: boolean
+    deletedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    violation?: boolean | ViolationDefaultArgs<ExtArgs>
+    author?: boolean | ViolationNote$authorArgs<ExtArgs>
+  }, ExtArgs["result"]["violationNote"]>
+
+  export type ViolationNoteSelectScalar = {
+    id?: boolean
+    violationId?: boolean
+    body?: boolean
+    confidential?: boolean
+    authorId?: boolean
+    deletedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type ViolationNoteInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    violation?: boolean | ViolationDefaultArgs<ExtArgs>
+    author?: boolean | ViolationNote$authorArgs<ExtArgs>
+  }
+  export type ViolationNoteIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    violation?: boolean | ViolationDefaultArgs<ExtArgs>
+    author?: boolean | ViolationNote$authorArgs<ExtArgs>
+  }
+
+  export type $ViolationNotePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "ViolationNote"
+    objects: {
+      violation: Prisma.$ViolationPayload<ExtArgs>
+      author: Prisma.$UserPayload<ExtArgs> | null
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      violationId: string
+      body: string
+      confidential: boolean
+      authorId: string | null
+      deletedAt: Date | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["violationNote"]>
+    composites: {}
+  }
+
+  type ViolationNoteGetPayload<S extends boolean | null | undefined | ViolationNoteDefaultArgs> = $Result.GetResult<Prisma.$ViolationNotePayload, S>
+
+  type ViolationNoteCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<ViolationNoteFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: ViolationNoteCountAggregateInputType | true
+    }
+
+  export interface ViolationNoteDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['ViolationNote'], meta: { name: 'ViolationNote' } }
+    /**
+     * Find zero or one ViolationNote that matches the filter.
+     * @param {ViolationNoteFindUniqueArgs} args - Arguments to find a ViolationNote
+     * @example
+     * // Get one ViolationNote
+     * const violationNote = await prisma.violationNote.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends ViolationNoteFindUniqueArgs>(args: SelectSubset<T, ViolationNoteFindUniqueArgs<ExtArgs>>): Prisma__ViolationNoteClient<$Result.GetResult<Prisma.$ViolationNotePayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one ViolationNote that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {ViolationNoteFindUniqueOrThrowArgs} args - Arguments to find a ViolationNote
+     * @example
+     * // Get one ViolationNote
+     * const violationNote = await prisma.violationNote.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends ViolationNoteFindUniqueOrThrowArgs>(args: SelectSubset<T, ViolationNoteFindUniqueOrThrowArgs<ExtArgs>>): Prisma__ViolationNoteClient<$Result.GetResult<Prisma.$ViolationNotePayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first ViolationNote that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ViolationNoteFindFirstArgs} args - Arguments to find a ViolationNote
+     * @example
+     * // Get one ViolationNote
+     * const violationNote = await prisma.violationNote.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends ViolationNoteFindFirstArgs>(args?: SelectSubset<T, ViolationNoteFindFirstArgs<ExtArgs>>): Prisma__ViolationNoteClient<$Result.GetResult<Prisma.$ViolationNotePayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first ViolationNote that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ViolationNoteFindFirstOrThrowArgs} args - Arguments to find a ViolationNote
+     * @example
+     * // Get one ViolationNote
+     * const violationNote = await prisma.violationNote.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends ViolationNoteFindFirstOrThrowArgs>(args?: SelectSubset<T, ViolationNoteFindFirstOrThrowArgs<ExtArgs>>): Prisma__ViolationNoteClient<$Result.GetResult<Prisma.$ViolationNotePayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more ViolationNotes that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ViolationNoteFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all ViolationNotes
+     * const violationNotes = await prisma.violationNote.findMany()
+     * 
+     * // Get first 10 ViolationNotes
+     * const violationNotes = await prisma.violationNote.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const violationNoteWithIdOnly = await prisma.violationNote.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends ViolationNoteFindManyArgs>(args?: SelectSubset<T, ViolationNoteFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ViolationNotePayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a ViolationNote.
+     * @param {ViolationNoteCreateArgs} args - Arguments to create a ViolationNote.
+     * @example
+     * // Create one ViolationNote
+     * const ViolationNote = await prisma.violationNote.create({
+     *   data: {
+     *     // ... data to create a ViolationNote
+     *   }
+     * })
+     * 
+     */
+    create<T extends ViolationNoteCreateArgs>(args: SelectSubset<T, ViolationNoteCreateArgs<ExtArgs>>): Prisma__ViolationNoteClient<$Result.GetResult<Prisma.$ViolationNotePayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many ViolationNotes.
+     * @param {ViolationNoteCreateManyArgs} args - Arguments to create many ViolationNotes.
+     * @example
+     * // Create many ViolationNotes
+     * const violationNote = await prisma.violationNote.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends ViolationNoteCreateManyArgs>(args?: SelectSubset<T, ViolationNoteCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many ViolationNotes and returns the data saved in the database.
+     * @param {ViolationNoteCreateManyAndReturnArgs} args - Arguments to create many ViolationNotes.
+     * @example
+     * // Create many ViolationNotes
+     * const violationNote = await prisma.violationNote.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many ViolationNotes and only return the `id`
+     * const violationNoteWithIdOnly = await prisma.violationNote.createManyAndReturn({ 
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends ViolationNoteCreateManyAndReturnArgs>(args?: SelectSubset<T, ViolationNoteCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ViolationNotePayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a ViolationNote.
+     * @param {ViolationNoteDeleteArgs} args - Arguments to delete one ViolationNote.
+     * @example
+     * // Delete one ViolationNote
+     * const ViolationNote = await prisma.violationNote.delete({
+     *   where: {
+     *     // ... filter to delete one ViolationNote
+     *   }
+     * })
+     * 
+     */
+    delete<T extends ViolationNoteDeleteArgs>(args: SelectSubset<T, ViolationNoteDeleteArgs<ExtArgs>>): Prisma__ViolationNoteClient<$Result.GetResult<Prisma.$ViolationNotePayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one ViolationNote.
+     * @param {ViolationNoteUpdateArgs} args - Arguments to update one ViolationNote.
+     * @example
+     * // Update one ViolationNote
+     * const violationNote = await prisma.violationNote.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends ViolationNoteUpdateArgs>(args: SelectSubset<T, ViolationNoteUpdateArgs<ExtArgs>>): Prisma__ViolationNoteClient<$Result.GetResult<Prisma.$ViolationNotePayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more ViolationNotes.
+     * @param {ViolationNoteDeleteManyArgs} args - Arguments to filter ViolationNotes to delete.
+     * @example
+     * // Delete a few ViolationNotes
+     * const { count } = await prisma.violationNote.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends ViolationNoteDeleteManyArgs>(args?: SelectSubset<T, ViolationNoteDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ViolationNotes.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ViolationNoteUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many ViolationNotes
+     * const violationNote = await prisma.violationNote.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends ViolationNoteUpdateManyArgs>(args: SelectSubset<T, ViolationNoteUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one ViolationNote.
+     * @param {ViolationNoteUpsertArgs} args - Arguments to update or create a ViolationNote.
+     * @example
+     * // Update or create a ViolationNote
+     * const violationNote = await prisma.violationNote.upsert({
+     *   create: {
+     *     // ... data to create a ViolationNote
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the ViolationNote we want to update
+     *   }
+     * })
+     */
+    upsert<T extends ViolationNoteUpsertArgs>(args: SelectSubset<T, ViolationNoteUpsertArgs<ExtArgs>>): Prisma__ViolationNoteClient<$Result.GetResult<Prisma.$ViolationNotePayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of ViolationNotes.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ViolationNoteCountArgs} args - Arguments to filter ViolationNotes to count.
+     * @example
+     * // Count the number of ViolationNotes
+     * const count = await prisma.violationNote.count({
+     *   where: {
+     *     // ... the filter for the ViolationNotes we want to count
+     *   }
+     * })
+    **/
+    count<T extends ViolationNoteCountArgs>(
+      args?: Subset<T, ViolationNoteCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], ViolationNoteCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a ViolationNote.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ViolationNoteAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends ViolationNoteAggregateArgs>(args: Subset<T, ViolationNoteAggregateArgs>): Prisma.PrismaPromise<GetViolationNoteAggregateType<T>>
+
+    /**
+     * Group by ViolationNote.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ViolationNoteGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends ViolationNoteGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: ViolationNoteGroupByArgs['orderBy'] }
+        : { orderBy?: ViolationNoteGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, ViolationNoteGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetViolationNoteGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the ViolationNote model
+   */
+  readonly fields: ViolationNoteFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for ViolationNote.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__ViolationNoteClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    violation<T extends ViolationDefaultArgs<ExtArgs> = {}>(args?: Subset<T, ViolationDefaultArgs<ExtArgs>>): Prisma__ViolationClient<$Result.GetResult<Prisma.$ViolationPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    author<T extends ViolationNote$authorArgs<ExtArgs> = {}>(args?: Subset<T, ViolationNote$authorArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the ViolationNote model
+   */ 
+  interface ViolationNoteFieldRefs {
+    readonly id: FieldRef<"ViolationNote", 'String'>
+    readonly violationId: FieldRef<"ViolationNote", 'String'>
+    readonly body: FieldRef<"ViolationNote", 'String'>
+    readonly confidential: FieldRef<"ViolationNote", 'Boolean'>
+    readonly authorId: FieldRef<"ViolationNote", 'String'>
+    readonly deletedAt: FieldRef<"ViolationNote", 'DateTime'>
+    readonly createdAt: FieldRef<"ViolationNote", 'DateTime'>
+    readonly updatedAt: FieldRef<"ViolationNote", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * ViolationNote findUnique
+   */
+  export type ViolationNoteFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ViolationNote
+     */
+    select?: ViolationNoteSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ViolationNoteInclude<ExtArgs> | null
+    /**
+     * Filter, which ViolationNote to fetch.
+     */
+    where: ViolationNoteWhereUniqueInput
+  }
+
+  /**
+   * ViolationNote findUniqueOrThrow
+   */
+  export type ViolationNoteFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ViolationNote
+     */
+    select?: ViolationNoteSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ViolationNoteInclude<ExtArgs> | null
+    /**
+     * Filter, which ViolationNote to fetch.
+     */
+    where: ViolationNoteWhereUniqueInput
+  }
+
+  /**
+   * ViolationNote findFirst
+   */
+  export type ViolationNoteFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ViolationNote
+     */
+    select?: ViolationNoteSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ViolationNoteInclude<ExtArgs> | null
+    /**
+     * Filter, which ViolationNote to fetch.
+     */
+    where?: ViolationNoteWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ViolationNotes to fetch.
+     */
+    orderBy?: ViolationNoteOrderByWithRelationInput | ViolationNoteOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ViolationNotes.
+     */
+    cursor?: ViolationNoteWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ViolationNotes from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ViolationNotes.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ViolationNotes.
+     */
+    distinct?: ViolationNoteScalarFieldEnum | ViolationNoteScalarFieldEnum[]
+  }
+
+  /**
+   * ViolationNote findFirstOrThrow
+   */
+  export type ViolationNoteFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ViolationNote
+     */
+    select?: ViolationNoteSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ViolationNoteInclude<ExtArgs> | null
+    /**
+     * Filter, which ViolationNote to fetch.
+     */
+    where?: ViolationNoteWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ViolationNotes to fetch.
+     */
+    orderBy?: ViolationNoteOrderByWithRelationInput | ViolationNoteOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ViolationNotes.
+     */
+    cursor?: ViolationNoteWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ViolationNotes from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ViolationNotes.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ViolationNotes.
+     */
+    distinct?: ViolationNoteScalarFieldEnum | ViolationNoteScalarFieldEnum[]
+  }
+
+  /**
+   * ViolationNote findMany
+   */
+  export type ViolationNoteFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ViolationNote
+     */
+    select?: ViolationNoteSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ViolationNoteInclude<ExtArgs> | null
+    /**
+     * Filter, which ViolationNotes to fetch.
+     */
+    where?: ViolationNoteWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ViolationNotes to fetch.
+     */
+    orderBy?: ViolationNoteOrderByWithRelationInput | ViolationNoteOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing ViolationNotes.
+     */
+    cursor?: ViolationNoteWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ViolationNotes from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ViolationNotes.
+     */
+    skip?: number
+    distinct?: ViolationNoteScalarFieldEnum | ViolationNoteScalarFieldEnum[]
+  }
+
+  /**
+   * ViolationNote create
+   */
+  export type ViolationNoteCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ViolationNote
+     */
+    select?: ViolationNoteSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ViolationNoteInclude<ExtArgs> | null
+    /**
+     * The data needed to create a ViolationNote.
+     */
+    data: XOR<ViolationNoteCreateInput, ViolationNoteUncheckedCreateInput>
+  }
+
+  /**
+   * ViolationNote createMany
+   */
+  export type ViolationNoteCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many ViolationNotes.
+     */
+    data: ViolationNoteCreateManyInput | ViolationNoteCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * ViolationNote createManyAndReturn
+   */
+  export type ViolationNoteCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ViolationNote
+     */
+    select?: ViolationNoteSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many ViolationNotes.
+     */
+    data: ViolationNoteCreateManyInput | ViolationNoteCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ViolationNoteIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * ViolationNote update
+   */
+  export type ViolationNoteUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ViolationNote
+     */
+    select?: ViolationNoteSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ViolationNoteInclude<ExtArgs> | null
+    /**
+     * The data needed to update a ViolationNote.
+     */
+    data: XOR<ViolationNoteUpdateInput, ViolationNoteUncheckedUpdateInput>
+    /**
+     * Choose, which ViolationNote to update.
+     */
+    where: ViolationNoteWhereUniqueInput
+  }
+
+  /**
+   * ViolationNote updateMany
+   */
+  export type ViolationNoteUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update ViolationNotes.
+     */
+    data: XOR<ViolationNoteUpdateManyMutationInput, ViolationNoteUncheckedUpdateManyInput>
+    /**
+     * Filter which ViolationNotes to update
+     */
+    where?: ViolationNoteWhereInput
+  }
+
+  /**
+   * ViolationNote upsert
+   */
+  export type ViolationNoteUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ViolationNote
+     */
+    select?: ViolationNoteSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ViolationNoteInclude<ExtArgs> | null
+    /**
+     * The filter to search for the ViolationNote to update in case it exists.
+     */
+    where: ViolationNoteWhereUniqueInput
+    /**
+     * In case the ViolationNote found by the `where` argument doesn't exist, create a new ViolationNote with this data.
+     */
+    create: XOR<ViolationNoteCreateInput, ViolationNoteUncheckedCreateInput>
+    /**
+     * In case the ViolationNote was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<ViolationNoteUpdateInput, ViolationNoteUncheckedUpdateInput>
+  }
+
+  /**
+   * ViolationNote delete
+   */
+  export type ViolationNoteDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ViolationNote
+     */
+    select?: ViolationNoteSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ViolationNoteInclude<ExtArgs> | null
+    /**
+     * Filter which ViolationNote to delete.
+     */
+    where: ViolationNoteWhereUniqueInput
+  }
+
+  /**
+   * ViolationNote deleteMany
+   */
+  export type ViolationNoteDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ViolationNotes to delete
+     */
+    where?: ViolationNoteWhereInput
+  }
+
+  /**
+   * ViolationNote.author
+   */
+  export type ViolationNote$authorArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    where?: UserWhereInput
+  }
+
+  /**
+   * ViolationNote without action
+   */
+  export type ViolationNoteDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ViolationNote
+     */
+    select?: ViolationNoteSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ViolationNoteInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model LostFoundItem
+   */
+
+  export type AggregateLostFoundItem = {
+    _count: LostFoundItemCountAggregateOutputType | null
+    _min: LostFoundItemMinAggregateOutputType | null
+    _max: LostFoundItemMaxAggregateOutputType | null
+  }
+
+  export type LostFoundItemMinAggregateOutputType = {
+    id: string | null
+    courseId: string | null
+    itemName: string | null
+    description: string | null
+    category: string | null
+    dateFound: Date | null
+    locationFound: string | null
+    foundBy: string | null
+    status: string | null
+    claimerName: string | null
+    claimedAt: Date | null
+    photoUrl: string | null
+    recordedBy: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type LostFoundItemMaxAggregateOutputType = {
+    id: string | null
+    courseId: string | null
+    itemName: string | null
+    description: string | null
+    category: string | null
+    dateFound: Date | null
+    locationFound: string | null
+    foundBy: string | null
+    status: string | null
+    claimerName: string | null
+    claimedAt: Date | null
+    photoUrl: string | null
+    recordedBy: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type LostFoundItemCountAggregateOutputType = {
+    id: number
+    courseId: number
+    itemName: number
+    description: number
+    category: number
+    dateFound: number
+    locationFound: number
+    foundBy: number
+    status: number
+    claimerName: number
+    claimedAt: number
+    photoUrl: number
+    recordedBy: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type LostFoundItemMinAggregateInputType = {
+    id?: true
+    courseId?: true
+    itemName?: true
+    description?: true
+    category?: true
+    dateFound?: true
+    locationFound?: true
+    foundBy?: true
+    status?: true
+    claimerName?: true
+    claimedAt?: true
+    photoUrl?: true
+    recordedBy?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type LostFoundItemMaxAggregateInputType = {
+    id?: true
+    courseId?: true
+    itemName?: true
+    description?: true
+    category?: true
+    dateFound?: true
+    locationFound?: true
+    foundBy?: true
+    status?: true
+    claimerName?: true
+    claimedAt?: true
+    photoUrl?: true
+    recordedBy?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type LostFoundItemCountAggregateInputType = {
+    id?: true
+    courseId?: true
+    itemName?: true
+    description?: true
+    category?: true
+    dateFound?: true
+    locationFound?: true
+    foundBy?: true
+    status?: true
+    claimerName?: true
+    claimedAt?: true
+    photoUrl?: true
+    recordedBy?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type LostFoundItemAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which LostFoundItem to aggregate.
+     */
+    where?: LostFoundItemWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of LostFoundItems to fetch.
+     */
+    orderBy?: LostFoundItemOrderByWithRelationInput | LostFoundItemOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: LostFoundItemWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` LostFoundItems from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` LostFoundItems.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned LostFoundItems
+    **/
+    _count?: true | LostFoundItemCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: LostFoundItemMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: LostFoundItemMaxAggregateInputType
+  }
+
+  export type GetLostFoundItemAggregateType<T extends LostFoundItemAggregateArgs> = {
+        [P in keyof T & keyof AggregateLostFoundItem]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateLostFoundItem[P]>
+      : GetScalarType<T[P], AggregateLostFoundItem[P]>
+  }
+
+
+
+
+  export type LostFoundItemGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: LostFoundItemWhereInput
+    orderBy?: LostFoundItemOrderByWithAggregationInput | LostFoundItemOrderByWithAggregationInput[]
+    by: LostFoundItemScalarFieldEnum[] | LostFoundItemScalarFieldEnum
+    having?: LostFoundItemScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: LostFoundItemCountAggregateInputType | true
+    _min?: LostFoundItemMinAggregateInputType
+    _max?: LostFoundItemMaxAggregateInputType
+  }
+
+  export type LostFoundItemGroupByOutputType = {
+    id: string
+    courseId: string
+    itemName: string
+    description: string | null
+    category: string
+    dateFound: Date
+    locationFound: string | null
+    foundBy: string | null
+    status: string
+    claimerName: string | null
+    claimedAt: Date | null
+    photoUrl: string | null
+    recordedBy: string | null
+    createdAt: Date
+    updatedAt: Date
+    _count: LostFoundItemCountAggregateOutputType | null
+    _min: LostFoundItemMinAggregateOutputType | null
+    _max: LostFoundItemMaxAggregateOutputType | null
+  }
+
+  type GetLostFoundItemGroupByPayload<T extends LostFoundItemGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<LostFoundItemGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof LostFoundItemGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], LostFoundItemGroupByOutputType[P]>
+            : GetScalarType<T[P], LostFoundItemGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type LostFoundItemSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    courseId?: boolean
+    itemName?: boolean
+    description?: boolean
+    category?: boolean
+    dateFound?: boolean
+    locationFound?: boolean
+    foundBy?: boolean
+    status?: boolean
+    claimerName?: boolean
+    claimedAt?: boolean
+    photoUrl?: boolean
+    recordedBy?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    course?: boolean | CourseDefaultArgs<ExtArgs>
+    recordedByUser?: boolean | LostFoundItem$recordedByUserArgs<ExtArgs>
+  }, ExtArgs["result"]["lostFoundItem"]>
+
+  export type LostFoundItemSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    courseId?: boolean
+    itemName?: boolean
+    description?: boolean
+    category?: boolean
+    dateFound?: boolean
+    locationFound?: boolean
+    foundBy?: boolean
+    status?: boolean
+    claimerName?: boolean
+    claimedAt?: boolean
+    photoUrl?: boolean
+    recordedBy?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    course?: boolean | CourseDefaultArgs<ExtArgs>
+    recordedByUser?: boolean | LostFoundItem$recordedByUserArgs<ExtArgs>
+  }, ExtArgs["result"]["lostFoundItem"]>
+
+  export type LostFoundItemSelectScalar = {
+    id?: boolean
+    courseId?: boolean
+    itemName?: boolean
+    description?: boolean
+    category?: boolean
+    dateFound?: boolean
+    locationFound?: boolean
+    foundBy?: boolean
+    status?: boolean
+    claimerName?: boolean
+    claimedAt?: boolean
+    photoUrl?: boolean
+    recordedBy?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type LostFoundItemInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    course?: boolean | CourseDefaultArgs<ExtArgs>
+    recordedByUser?: boolean | LostFoundItem$recordedByUserArgs<ExtArgs>
+  }
+  export type LostFoundItemIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    course?: boolean | CourseDefaultArgs<ExtArgs>
+    recordedByUser?: boolean | LostFoundItem$recordedByUserArgs<ExtArgs>
+  }
+
+  export type $LostFoundItemPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "LostFoundItem"
+    objects: {
+      course: Prisma.$CoursePayload<ExtArgs>
+      recordedByUser: Prisma.$UserPayload<ExtArgs> | null
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      courseId: string
+      itemName: string
+      description: string | null
+      category: string
+      dateFound: Date
+      locationFound: string | null
+      foundBy: string | null
+      status: string
+      claimerName: string | null
+      claimedAt: Date | null
+      photoUrl: string | null
+      recordedBy: string | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["lostFoundItem"]>
+    composites: {}
+  }
+
+  type LostFoundItemGetPayload<S extends boolean | null | undefined | LostFoundItemDefaultArgs> = $Result.GetResult<Prisma.$LostFoundItemPayload, S>
+
+  type LostFoundItemCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<LostFoundItemFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: LostFoundItemCountAggregateInputType | true
+    }
+
+  export interface LostFoundItemDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['LostFoundItem'], meta: { name: 'LostFoundItem' } }
+    /**
+     * Find zero or one LostFoundItem that matches the filter.
+     * @param {LostFoundItemFindUniqueArgs} args - Arguments to find a LostFoundItem
+     * @example
+     * // Get one LostFoundItem
+     * const lostFoundItem = await prisma.lostFoundItem.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends LostFoundItemFindUniqueArgs>(args: SelectSubset<T, LostFoundItemFindUniqueArgs<ExtArgs>>): Prisma__LostFoundItemClient<$Result.GetResult<Prisma.$LostFoundItemPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one LostFoundItem that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {LostFoundItemFindUniqueOrThrowArgs} args - Arguments to find a LostFoundItem
+     * @example
+     * // Get one LostFoundItem
+     * const lostFoundItem = await prisma.lostFoundItem.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends LostFoundItemFindUniqueOrThrowArgs>(args: SelectSubset<T, LostFoundItemFindUniqueOrThrowArgs<ExtArgs>>): Prisma__LostFoundItemClient<$Result.GetResult<Prisma.$LostFoundItemPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first LostFoundItem that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LostFoundItemFindFirstArgs} args - Arguments to find a LostFoundItem
+     * @example
+     * // Get one LostFoundItem
+     * const lostFoundItem = await prisma.lostFoundItem.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends LostFoundItemFindFirstArgs>(args?: SelectSubset<T, LostFoundItemFindFirstArgs<ExtArgs>>): Prisma__LostFoundItemClient<$Result.GetResult<Prisma.$LostFoundItemPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first LostFoundItem that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LostFoundItemFindFirstOrThrowArgs} args - Arguments to find a LostFoundItem
+     * @example
+     * // Get one LostFoundItem
+     * const lostFoundItem = await prisma.lostFoundItem.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends LostFoundItemFindFirstOrThrowArgs>(args?: SelectSubset<T, LostFoundItemFindFirstOrThrowArgs<ExtArgs>>): Prisma__LostFoundItemClient<$Result.GetResult<Prisma.$LostFoundItemPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more LostFoundItems that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LostFoundItemFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all LostFoundItems
+     * const lostFoundItems = await prisma.lostFoundItem.findMany()
+     * 
+     * // Get first 10 LostFoundItems
+     * const lostFoundItems = await prisma.lostFoundItem.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const lostFoundItemWithIdOnly = await prisma.lostFoundItem.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends LostFoundItemFindManyArgs>(args?: SelectSubset<T, LostFoundItemFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$LostFoundItemPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a LostFoundItem.
+     * @param {LostFoundItemCreateArgs} args - Arguments to create a LostFoundItem.
+     * @example
+     * // Create one LostFoundItem
+     * const LostFoundItem = await prisma.lostFoundItem.create({
+     *   data: {
+     *     // ... data to create a LostFoundItem
+     *   }
+     * })
+     * 
+     */
+    create<T extends LostFoundItemCreateArgs>(args: SelectSubset<T, LostFoundItemCreateArgs<ExtArgs>>): Prisma__LostFoundItemClient<$Result.GetResult<Prisma.$LostFoundItemPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many LostFoundItems.
+     * @param {LostFoundItemCreateManyArgs} args - Arguments to create many LostFoundItems.
+     * @example
+     * // Create many LostFoundItems
+     * const lostFoundItem = await prisma.lostFoundItem.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends LostFoundItemCreateManyArgs>(args?: SelectSubset<T, LostFoundItemCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many LostFoundItems and returns the data saved in the database.
+     * @param {LostFoundItemCreateManyAndReturnArgs} args - Arguments to create many LostFoundItems.
+     * @example
+     * // Create many LostFoundItems
+     * const lostFoundItem = await prisma.lostFoundItem.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many LostFoundItems and only return the `id`
+     * const lostFoundItemWithIdOnly = await prisma.lostFoundItem.createManyAndReturn({ 
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends LostFoundItemCreateManyAndReturnArgs>(args?: SelectSubset<T, LostFoundItemCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$LostFoundItemPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a LostFoundItem.
+     * @param {LostFoundItemDeleteArgs} args - Arguments to delete one LostFoundItem.
+     * @example
+     * // Delete one LostFoundItem
+     * const LostFoundItem = await prisma.lostFoundItem.delete({
+     *   where: {
+     *     // ... filter to delete one LostFoundItem
+     *   }
+     * })
+     * 
+     */
+    delete<T extends LostFoundItemDeleteArgs>(args: SelectSubset<T, LostFoundItemDeleteArgs<ExtArgs>>): Prisma__LostFoundItemClient<$Result.GetResult<Prisma.$LostFoundItemPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one LostFoundItem.
+     * @param {LostFoundItemUpdateArgs} args - Arguments to update one LostFoundItem.
+     * @example
+     * // Update one LostFoundItem
+     * const lostFoundItem = await prisma.lostFoundItem.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends LostFoundItemUpdateArgs>(args: SelectSubset<T, LostFoundItemUpdateArgs<ExtArgs>>): Prisma__LostFoundItemClient<$Result.GetResult<Prisma.$LostFoundItemPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more LostFoundItems.
+     * @param {LostFoundItemDeleteManyArgs} args - Arguments to filter LostFoundItems to delete.
+     * @example
+     * // Delete a few LostFoundItems
+     * const { count } = await prisma.lostFoundItem.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends LostFoundItemDeleteManyArgs>(args?: SelectSubset<T, LostFoundItemDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more LostFoundItems.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LostFoundItemUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many LostFoundItems
+     * const lostFoundItem = await prisma.lostFoundItem.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends LostFoundItemUpdateManyArgs>(args: SelectSubset<T, LostFoundItemUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one LostFoundItem.
+     * @param {LostFoundItemUpsertArgs} args - Arguments to update or create a LostFoundItem.
+     * @example
+     * // Update or create a LostFoundItem
+     * const lostFoundItem = await prisma.lostFoundItem.upsert({
+     *   create: {
+     *     // ... data to create a LostFoundItem
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the LostFoundItem we want to update
+     *   }
+     * })
+     */
+    upsert<T extends LostFoundItemUpsertArgs>(args: SelectSubset<T, LostFoundItemUpsertArgs<ExtArgs>>): Prisma__LostFoundItemClient<$Result.GetResult<Prisma.$LostFoundItemPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of LostFoundItems.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LostFoundItemCountArgs} args - Arguments to filter LostFoundItems to count.
+     * @example
+     * // Count the number of LostFoundItems
+     * const count = await prisma.lostFoundItem.count({
+     *   where: {
+     *     // ... the filter for the LostFoundItems we want to count
+     *   }
+     * })
+    **/
+    count<T extends LostFoundItemCountArgs>(
+      args?: Subset<T, LostFoundItemCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], LostFoundItemCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a LostFoundItem.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LostFoundItemAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends LostFoundItemAggregateArgs>(args: Subset<T, LostFoundItemAggregateArgs>): Prisma.PrismaPromise<GetLostFoundItemAggregateType<T>>
+
+    /**
+     * Group by LostFoundItem.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LostFoundItemGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends LostFoundItemGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: LostFoundItemGroupByArgs['orderBy'] }
+        : { orderBy?: LostFoundItemGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, LostFoundItemGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetLostFoundItemGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the LostFoundItem model
+   */
+  readonly fields: LostFoundItemFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for LostFoundItem.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__LostFoundItemClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    course<T extends CourseDefaultArgs<ExtArgs> = {}>(args?: Subset<T, CourseDefaultArgs<ExtArgs>>): Prisma__CourseClient<$Result.GetResult<Prisma.$CoursePayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    recordedByUser<T extends LostFoundItem$recordedByUserArgs<ExtArgs> = {}>(args?: Subset<T, LostFoundItem$recordedByUserArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the LostFoundItem model
+   */ 
+  interface LostFoundItemFieldRefs {
+    readonly id: FieldRef<"LostFoundItem", 'String'>
+    readonly courseId: FieldRef<"LostFoundItem", 'String'>
+    readonly itemName: FieldRef<"LostFoundItem", 'String'>
+    readonly description: FieldRef<"LostFoundItem", 'String'>
+    readonly category: FieldRef<"LostFoundItem", 'String'>
+    readonly dateFound: FieldRef<"LostFoundItem", 'DateTime'>
+    readonly locationFound: FieldRef<"LostFoundItem", 'String'>
+    readonly foundBy: FieldRef<"LostFoundItem", 'String'>
+    readonly status: FieldRef<"LostFoundItem", 'String'>
+    readonly claimerName: FieldRef<"LostFoundItem", 'String'>
+    readonly claimedAt: FieldRef<"LostFoundItem", 'DateTime'>
+    readonly photoUrl: FieldRef<"LostFoundItem", 'String'>
+    readonly recordedBy: FieldRef<"LostFoundItem", 'String'>
+    readonly createdAt: FieldRef<"LostFoundItem", 'DateTime'>
+    readonly updatedAt: FieldRef<"LostFoundItem", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * LostFoundItem findUnique
+   */
+  export type LostFoundItemFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LostFoundItem
+     */
+    select?: LostFoundItemSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LostFoundItemInclude<ExtArgs> | null
+    /**
+     * Filter, which LostFoundItem to fetch.
+     */
+    where: LostFoundItemWhereUniqueInput
+  }
+
+  /**
+   * LostFoundItem findUniqueOrThrow
+   */
+  export type LostFoundItemFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LostFoundItem
+     */
+    select?: LostFoundItemSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LostFoundItemInclude<ExtArgs> | null
+    /**
+     * Filter, which LostFoundItem to fetch.
+     */
+    where: LostFoundItemWhereUniqueInput
+  }
+
+  /**
+   * LostFoundItem findFirst
+   */
+  export type LostFoundItemFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LostFoundItem
+     */
+    select?: LostFoundItemSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LostFoundItemInclude<ExtArgs> | null
+    /**
+     * Filter, which LostFoundItem to fetch.
+     */
+    where?: LostFoundItemWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of LostFoundItems to fetch.
+     */
+    orderBy?: LostFoundItemOrderByWithRelationInput | LostFoundItemOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for LostFoundItems.
+     */
+    cursor?: LostFoundItemWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` LostFoundItems from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` LostFoundItems.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of LostFoundItems.
+     */
+    distinct?: LostFoundItemScalarFieldEnum | LostFoundItemScalarFieldEnum[]
+  }
+
+  /**
+   * LostFoundItem findFirstOrThrow
+   */
+  export type LostFoundItemFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LostFoundItem
+     */
+    select?: LostFoundItemSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LostFoundItemInclude<ExtArgs> | null
+    /**
+     * Filter, which LostFoundItem to fetch.
+     */
+    where?: LostFoundItemWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of LostFoundItems to fetch.
+     */
+    orderBy?: LostFoundItemOrderByWithRelationInput | LostFoundItemOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for LostFoundItems.
+     */
+    cursor?: LostFoundItemWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` LostFoundItems from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` LostFoundItems.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of LostFoundItems.
+     */
+    distinct?: LostFoundItemScalarFieldEnum | LostFoundItemScalarFieldEnum[]
+  }
+
+  /**
+   * LostFoundItem findMany
+   */
+  export type LostFoundItemFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LostFoundItem
+     */
+    select?: LostFoundItemSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LostFoundItemInclude<ExtArgs> | null
+    /**
+     * Filter, which LostFoundItems to fetch.
+     */
+    where?: LostFoundItemWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of LostFoundItems to fetch.
+     */
+    orderBy?: LostFoundItemOrderByWithRelationInput | LostFoundItemOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing LostFoundItems.
+     */
+    cursor?: LostFoundItemWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` LostFoundItems from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` LostFoundItems.
+     */
+    skip?: number
+    distinct?: LostFoundItemScalarFieldEnum | LostFoundItemScalarFieldEnum[]
+  }
+
+  /**
+   * LostFoundItem create
+   */
+  export type LostFoundItemCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LostFoundItem
+     */
+    select?: LostFoundItemSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LostFoundItemInclude<ExtArgs> | null
+    /**
+     * The data needed to create a LostFoundItem.
+     */
+    data: XOR<LostFoundItemCreateInput, LostFoundItemUncheckedCreateInput>
+  }
+
+  /**
+   * LostFoundItem createMany
+   */
+  export type LostFoundItemCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many LostFoundItems.
+     */
+    data: LostFoundItemCreateManyInput | LostFoundItemCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * LostFoundItem createManyAndReturn
+   */
+  export type LostFoundItemCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LostFoundItem
+     */
+    select?: LostFoundItemSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many LostFoundItems.
+     */
+    data: LostFoundItemCreateManyInput | LostFoundItemCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LostFoundItemIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * LostFoundItem update
+   */
+  export type LostFoundItemUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LostFoundItem
+     */
+    select?: LostFoundItemSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LostFoundItemInclude<ExtArgs> | null
+    /**
+     * The data needed to update a LostFoundItem.
+     */
+    data: XOR<LostFoundItemUpdateInput, LostFoundItemUncheckedUpdateInput>
+    /**
+     * Choose, which LostFoundItem to update.
+     */
+    where: LostFoundItemWhereUniqueInput
+  }
+
+  /**
+   * LostFoundItem updateMany
+   */
+  export type LostFoundItemUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update LostFoundItems.
+     */
+    data: XOR<LostFoundItemUpdateManyMutationInput, LostFoundItemUncheckedUpdateManyInput>
+    /**
+     * Filter which LostFoundItems to update
+     */
+    where?: LostFoundItemWhereInput
+  }
+
+  /**
+   * LostFoundItem upsert
+   */
+  export type LostFoundItemUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LostFoundItem
+     */
+    select?: LostFoundItemSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LostFoundItemInclude<ExtArgs> | null
+    /**
+     * The filter to search for the LostFoundItem to update in case it exists.
+     */
+    where: LostFoundItemWhereUniqueInput
+    /**
+     * In case the LostFoundItem found by the `where` argument doesn't exist, create a new LostFoundItem with this data.
+     */
+    create: XOR<LostFoundItemCreateInput, LostFoundItemUncheckedCreateInput>
+    /**
+     * In case the LostFoundItem was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<LostFoundItemUpdateInput, LostFoundItemUncheckedUpdateInput>
+  }
+
+  /**
+   * LostFoundItem delete
+   */
+  export type LostFoundItemDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LostFoundItem
+     */
+    select?: LostFoundItemSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LostFoundItemInclude<ExtArgs> | null
+    /**
+     * Filter which LostFoundItem to delete.
+     */
+    where: LostFoundItemWhereUniqueInput
+  }
+
+  /**
+   * LostFoundItem deleteMany
+   */
+  export type LostFoundItemDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which LostFoundItems to delete
+     */
+    where?: LostFoundItemWhereInput
+  }
+
+  /**
+   * LostFoundItem.recordedByUser
+   */
+  export type LostFoundItem$recordedByUserArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    where?: UserWhereInput
+  }
+
+  /**
+   * LostFoundItem without action
+   */
+  export type LostFoundItemDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LostFoundItem
+     */
+    select?: LostFoundItemSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LostFoundItemInclude<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -58412,7 +65073,14 @@ export namespace Prisma {
     updatedAt: 'updatedAt',
     email: 'email',
     address: 'address',
-    birthDate: 'birthDate'
+    birthDate: 'birthDate',
+    yearSection: 'yearSection',
+    mobileNo: 'mobileNo',
+    guardianName: 'guardianName',
+    guardianContact: 'guardianContact',
+    standing: 'standing',
+    clearanceHold: 'clearanceHold',
+    deletedAt: 'deletedAt'
   };
 
   export type StudentScalarFieldEnum = (typeof StudentScalarFieldEnum)[keyof typeof StudentScalarFieldEnum]
@@ -58600,6 +65268,11 @@ export namespace Prisma {
     sex: 'sex',
     religion: 'religion',
     completeAddress: 'completeAddress',
+    civilStatus: 'civilStatus',
+    isPwd: 'isPwd',
+    isIndigenous: 'isIndigenous',
+    isSoloParent: 'isSoloParent',
+    isFirstGen: 'isFirstGen',
     fatherName: 'fatherName',
     fatherDOB: 'fatherDOB',
     fatherAddress: 'fatherAddress',
@@ -58838,6 +65511,124 @@ export namespace Prisma {
   };
 
   export type LibraryBorrowRecordScalarFieldEnum = (typeof LibraryBorrowRecordScalarFieldEnum)[keyof typeof LibraryBorrowRecordScalarFieldEnum]
+
+
+  export const ViolationTypeScalarFieldEnum: {
+    id: 'id',
+    courseId: 'courseId',
+    code: 'code',
+    name: 'name',
+    description: 'description',
+    severity: 'severity',
+    category: 'category',
+    dismissalOnFirst: 'dismissalOnFirst',
+    defaultSanction: 'defaultSanction',
+    sanctionMinDays: 'sanctionMinDays',
+    sanctionMaxDays: 'sanctionMaxDays',
+    maxSanction: 'maxSanction',
+    escalationCount: 'escalationCount',
+    escalatesTo: 'escalatesTo',
+    manualRef: 'manualRef',
+    isActive: 'isActive',
+    order: 'order',
+    deletedAt: 'deletedAt',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type ViolationTypeScalarFieldEnum = (typeof ViolationTypeScalarFieldEnum)[keyof typeof ViolationTypeScalarFieldEnum]
+
+
+  export const ViolationScalarFieldEnum: {
+    id: 'id',
+    courseId: 'courseId',
+    caseNo: 'caseNo',
+    studentId: 'studentId',
+    violationTypeId: 'violationTypeId',
+    severity: 'severity',
+    incidentDate: 'incidentDate',
+    location: 'location',
+    description: 'description',
+    reportedBy: 'reportedBy',
+    reportedByRole: 'reportedByRole',
+    status: 'status',
+    noticeToExplainAt: 'noticeToExplainAt',
+    explanationReceivedAt: 'explanationReceivedAt',
+    hearingDate: 'hearingDate',
+    hearingResult: 'hearingResult',
+    sanction: 'sanction',
+    sanctionDays: 'sanctionDays',
+    sanctionStart: 'sanctionStart',
+    sanctionEnd: 'sanctionEnd',
+    sanctionCompleted: 'sanctionCompleted',
+    decidedBy: 'decidedBy',
+    decidedAt: 'decidedAt',
+    appealed: 'appealed',
+    appealResult: 'appealResult',
+    resolvedAt: 'resolvedAt',
+    recordedBy: 'recordedBy',
+    deletedAt: 'deletedAt',
+    deletedBy: 'deletedBy',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type ViolationScalarFieldEnum = (typeof ViolationScalarFieldEnum)[keyof typeof ViolationScalarFieldEnum]
+
+
+  export const ParentContactScalarFieldEnum: {
+    id: 'id',
+    violationId: 'violationId',
+    contactedAt: 'contactedAt',
+    method: 'method',
+    contactedBy: 'contactedBy',
+    contactPerson: 'contactPerson',
+    relationship: 'relationship',
+    attendance: 'attendance',
+    attemptNo: 'attemptNo',
+    signatureUrl: 'signatureUrl',
+    recordedBy: 'recordedBy',
+    deletedAt: 'deletedAt',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type ParentContactScalarFieldEnum = (typeof ParentContactScalarFieldEnum)[keyof typeof ParentContactScalarFieldEnum]
+
+
+  export const ViolationNoteScalarFieldEnum: {
+    id: 'id',
+    violationId: 'violationId',
+    body: 'body',
+    confidential: 'confidential',
+    authorId: 'authorId',
+    deletedAt: 'deletedAt',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type ViolationNoteScalarFieldEnum = (typeof ViolationNoteScalarFieldEnum)[keyof typeof ViolationNoteScalarFieldEnum]
+
+
+  export const LostFoundItemScalarFieldEnum: {
+    id: 'id',
+    courseId: 'courseId',
+    itemName: 'itemName',
+    description: 'description',
+    category: 'category',
+    dateFound: 'dateFound',
+    locationFound: 'locationFound',
+    foundBy: 'foundBy',
+    status: 'status',
+    claimerName: 'claimerName',
+    claimedAt: 'claimedAt',
+    photoUrl: 'photoUrl',
+    recordedBy: 'recordedBy',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type LostFoundItemScalarFieldEnum = (typeof LostFoundItemScalarFieldEnum)[keyof typeof LostFoundItemScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -59416,6 +66207,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewListRelationFilter
     submissions_submissions_gradedByIdTousers?: SubmissionListRelationFilter
     submissions?: SubmissionListRelationFilter
+    violationsRecorded?: ViolationListRelationFilter
+    violationNotes?: ViolationNoteListRelationFilter
+    parentContactsRecorded?: ParentContactListRelationFilter
+    lostFoundRecorded?: LostFoundItemListRelationFilter
   }
 
   export type UserOrderByWithRelationInput = {
@@ -59457,6 +66252,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewOrderByRelationAggregateInput
     submissions_submissions_gradedByIdTousers?: SubmissionOrderByRelationAggregateInput
     submissions?: SubmissionOrderByRelationAggregateInput
+    violationsRecorded?: ViolationOrderByRelationAggregateInput
+    violationNotes?: ViolationNoteOrderByRelationAggregateInput
+    parentContactsRecorded?: ParentContactOrderByRelationAggregateInput
+    lostFoundRecorded?: LostFoundItemOrderByRelationAggregateInput
   }
 
   export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -59501,6 +66300,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewListRelationFilter
     submissions_submissions_gradedByIdTousers?: SubmissionListRelationFilter
     submissions?: SubmissionListRelationFilter
+    violationsRecorded?: ViolationListRelationFilter
+    violationNotes?: ViolationNoteListRelationFilter
+    parentContactsRecorded?: ParentContactListRelationFilter
+    lostFoundRecorded?: LostFoundItemListRelationFilter
   }, "id" | "email">
 
   export type UserOrderByWithAggregationInput = {
@@ -59653,6 +66456,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogListRelationFilter
     LibraryBook?: LibraryBookListRelationFilter
     LibraryBorrowRecord?: LibraryBorrowRecordListRelationFilter
+    violationTypes?: ViolationTypeListRelationFilter
+    violations?: ViolationListRelationFilter
+    lostFoundItems?: LostFoundItemListRelationFilter
   }
 
   export type CourseOrderByWithRelationInput = {
@@ -59689,6 +66495,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogOrderByRelationAggregateInput
     LibraryBook?: LibraryBookOrderByRelationAggregateInput
     LibraryBorrowRecord?: LibraryBorrowRecordOrderByRelationAggregateInput
+    violationTypes?: ViolationTypeOrderByRelationAggregateInput
+    violations?: ViolationOrderByRelationAggregateInput
+    lostFoundItems?: LostFoundItemOrderByRelationAggregateInput
   }
 
   export type CourseWhereUniqueInput = Prisma.AtLeast<{
@@ -59728,6 +66537,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogListRelationFilter
     LibraryBook?: LibraryBookListRelationFilter
     LibraryBorrowRecord?: LibraryBorrowRecordListRelationFilter
+    violationTypes?: ViolationTypeListRelationFilter
+    violations?: ViolationListRelationFilter
+    lostFoundItems?: LostFoundItemListRelationFilter
   }, "id" | "code">
 
   export type CourseOrderByWithAggregationInput = {
@@ -61895,8 +68707,16 @@ export namespace Prisma {
     email?: StringNullableFilter<"Student"> | string | null
     address?: StringNullableFilter<"Student"> | string | null
     birthDate?: DateTimeNullableFilter<"Student"> | Date | string | null
+    yearSection?: StringNullableFilter<"Student"> | string | null
+    mobileNo?: StringNullableFilter<"Student"> | string | null
+    guardianName?: StringNullableFilter<"Student"> | string | null
+    guardianContact?: StringNullableFilter<"Student"> | string | null
+    standing?: StringFilter<"Student"> | string
+    clearanceHold?: BoolFilter<"Student"> | boolean
+    deletedAt?: DateTimeNullableFilter<"Student"> | Date | string | null
     medicalExamRecords?: MedicalExamRecordListRelationFilter
     patientRecords?: PatientRecordListRelationFilter
+    violations?: ViolationListRelationFilter
   }
 
   export type StudentOrderByWithRelationInput = {
@@ -61912,8 +68732,16 @@ export namespace Prisma {
     email?: SortOrderInput | SortOrder
     address?: SortOrderInput | SortOrder
     birthDate?: SortOrderInput | SortOrder
+    yearSection?: SortOrderInput | SortOrder
+    mobileNo?: SortOrderInput | SortOrder
+    guardianName?: SortOrderInput | SortOrder
+    guardianContact?: SortOrderInput | SortOrder
+    standing?: SortOrder
+    clearanceHold?: SortOrder
+    deletedAt?: SortOrderInput | SortOrder
     medicalExamRecords?: MedicalExamRecordOrderByRelationAggregateInput
     patientRecords?: PatientRecordOrderByRelationAggregateInput
+    violations?: ViolationOrderByRelationAggregateInput
   }
 
   export type StudentWhereUniqueInput = Prisma.AtLeast<{
@@ -61932,8 +68760,16 @@ export namespace Prisma {
     email?: StringNullableFilter<"Student"> | string | null
     address?: StringNullableFilter<"Student"> | string | null
     birthDate?: DateTimeNullableFilter<"Student"> | Date | string | null
+    yearSection?: StringNullableFilter<"Student"> | string | null
+    mobileNo?: StringNullableFilter<"Student"> | string | null
+    guardianName?: StringNullableFilter<"Student"> | string | null
+    guardianContact?: StringNullableFilter<"Student"> | string | null
+    standing?: StringFilter<"Student"> | string
+    clearanceHold?: BoolFilter<"Student"> | boolean
+    deletedAt?: DateTimeNullableFilter<"Student"> | Date | string | null
     medicalExamRecords?: MedicalExamRecordListRelationFilter
     patientRecords?: PatientRecordListRelationFilter
+    violations?: ViolationListRelationFilter
   }, "id" | "studentNumber">
 
   export type StudentOrderByWithAggregationInput = {
@@ -61949,6 +68785,13 @@ export namespace Prisma {
     email?: SortOrderInput | SortOrder
     address?: SortOrderInput | SortOrder
     birthDate?: SortOrderInput | SortOrder
+    yearSection?: SortOrderInput | SortOrder
+    mobileNo?: SortOrderInput | SortOrder
+    guardianName?: SortOrderInput | SortOrder
+    guardianContact?: SortOrderInput | SortOrder
+    standing?: SortOrder
+    clearanceHold?: SortOrder
+    deletedAt?: SortOrderInput | SortOrder
     _count?: StudentCountOrderByAggregateInput
     _avg?: StudentAvgOrderByAggregateInput
     _max?: StudentMaxOrderByAggregateInput
@@ -61972,6 +68815,13 @@ export namespace Prisma {
     email?: StringNullableWithAggregatesFilter<"Student"> | string | null
     address?: StringNullableWithAggregatesFilter<"Student"> | string | null
     birthDate?: DateTimeNullableWithAggregatesFilter<"Student"> | Date | string | null
+    yearSection?: StringNullableWithAggregatesFilter<"Student"> | string | null
+    mobileNo?: StringNullableWithAggregatesFilter<"Student"> | string | null
+    guardianName?: StringNullableWithAggregatesFilter<"Student"> | string | null
+    guardianContact?: StringNullableWithAggregatesFilter<"Student"> | string | null
+    standing?: StringWithAggregatesFilter<"Student"> | string
+    clearanceHold?: BoolWithAggregatesFilter<"Student"> | boolean
+    deletedAt?: DateTimeNullableWithAggregatesFilter<"Student"> | Date | string | null
   }
 
   export type PatientRecordWhereInput = {
@@ -61991,7 +68841,7 @@ export namespace Prisma {
     action?: EnumPatientActionFilter<"PatientRecord"> | $Enums.PatientAction
     notes?: StringNullableFilter<"PatientRecord"> | string | null
     visitDate?: DateTimeFilter<"PatientRecord"> | Date | string
-    recordedBy?: StringFilter<"PatientRecord"> | string
+    recordedBy?: StringNullableFilter<"PatientRecord"> | string | null
     createdAt?: DateTimeFilter<"PatientRecord"> | Date | string
     updatedAt?: DateTimeFilter<"PatientRecord"> | Date | string
     signEmailSentAt?: DateTimeNullableFilter<"PatientRecord"> | Date | string | null
@@ -62004,7 +68854,7 @@ export namespace Prisma {
     medicalConditionId?: StringNullableFilter<"PatientRecord"> | string | null
     medicineUsages?: MedicineUsageListRelationFilter
     course?: XOR<CourseRelationFilter, CourseWhereInput>
-    recordedByUser?: XOR<UserRelationFilter, UserWhereInput>
+    recordedByUser?: XOR<UserNullableRelationFilter, UserWhereInput> | null
     student?: XOR<StudentRelationFilter, StudentWhereInput>
     medicalCondition?: XOR<MedicalConditionNullableRelationFilter, MedicalConditionWhereInput> | null
   }
@@ -62023,7 +68873,7 @@ export namespace Prisma {
     action?: SortOrder
     notes?: SortOrderInput | SortOrder
     visitDate?: SortOrder
-    recordedBy?: SortOrder
+    recordedBy?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     signEmailSentAt?: SortOrderInput | SortOrder
@@ -62059,7 +68909,7 @@ export namespace Prisma {
     action?: EnumPatientActionFilter<"PatientRecord"> | $Enums.PatientAction
     notes?: StringNullableFilter<"PatientRecord"> | string | null
     visitDate?: DateTimeFilter<"PatientRecord"> | Date | string
-    recordedBy?: StringFilter<"PatientRecord"> | string
+    recordedBy?: StringNullableFilter<"PatientRecord"> | string | null
     createdAt?: DateTimeFilter<"PatientRecord"> | Date | string
     updatedAt?: DateTimeFilter<"PatientRecord"> | Date | string
     signEmailSentAt?: DateTimeNullableFilter<"PatientRecord"> | Date | string | null
@@ -62071,7 +68921,7 @@ export namespace Prisma {
     medicalConditionId?: StringNullableFilter<"PatientRecord"> | string | null
     medicineUsages?: MedicineUsageListRelationFilter
     course?: XOR<CourseRelationFilter, CourseWhereInput>
-    recordedByUser?: XOR<UserRelationFilter, UserWhereInput>
+    recordedByUser?: XOR<UserNullableRelationFilter, UserWhereInput> | null
     student?: XOR<StudentRelationFilter, StudentWhereInput>
     medicalCondition?: XOR<MedicalConditionNullableRelationFilter, MedicalConditionWhereInput> | null
   }, "id" | "signToken">
@@ -62090,7 +68940,7 @@ export namespace Prisma {
     action?: SortOrder
     notes?: SortOrderInput | SortOrder
     visitDate?: SortOrder
-    recordedBy?: SortOrder
+    recordedBy?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     signEmailSentAt?: SortOrderInput | SortOrder
@@ -62125,7 +68975,7 @@ export namespace Prisma {
     action?: EnumPatientActionWithAggregatesFilter<"PatientRecord"> | $Enums.PatientAction
     notes?: StringNullableWithAggregatesFilter<"PatientRecord"> | string | null
     visitDate?: DateTimeWithAggregatesFilter<"PatientRecord"> | Date | string
-    recordedBy?: StringWithAggregatesFilter<"PatientRecord"> | string
+    recordedBy?: StringNullableWithAggregatesFilter<"PatientRecord"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"PatientRecord"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"PatientRecord"> | Date | string
     signEmailSentAt?: DateTimeNullableWithAggregatesFilter<"PatientRecord"> | Date | string | null
@@ -62286,7 +69136,7 @@ export namespace Prisma {
     purpose?: StringFilter<"MedicalExamRecord"> | string
     remarks?: StringNullableFilter<"MedicalExamRecord"> | string | null
     visitDate?: DateTimeFilter<"MedicalExamRecord"> | Date | string
-    recordedBy?: StringFilter<"MedicalExamRecord"> | string
+    recordedBy?: StringNullableFilter<"MedicalExamRecord"> | string | null
     createdAt?: DateTimeFilter<"MedicalExamRecord"> | Date | string
     updatedAt?: DateTimeFilter<"MedicalExamRecord"> | Date | string
     signatureUrl?: StringNullableFilter<"MedicalExamRecord"> | string | null
@@ -62312,7 +69162,7 @@ export namespace Prisma {
     clearanceRemarks?: StringNullableFilter<"MedicalExamRecord"> | string | null
     clearanceIssuedAt?: DateTimeNullableFilter<"MedicalExamRecord"> | Date | string | null
     course?: XOR<CourseRelationFilter, CourseWhereInput>
-    recordedByUser?: XOR<UserRelationFilter, UserWhereInput>
+    recordedByUser?: XOR<UserNullableRelationFilter, UserWhereInput> | null
     student?: XOR<StudentRelationFilter, StudentWhereInput>
   }
 
@@ -62323,7 +69173,7 @@ export namespace Prisma {
     purpose?: SortOrder
     remarks?: SortOrderInput | SortOrder
     visitDate?: SortOrder
-    recordedBy?: SortOrder
+    recordedBy?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     signatureUrl?: SortOrderInput | SortOrder
@@ -62364,7 +69214,7 @@ export namespace Prisma {
     purpose?: StringFilter<"MedicalExamRecord"> | string
     remarks?: StringNullableFilter<"MedicalExamRecord"> | string | null
     visitDate?: DateTimeFilter<"MedicalExamRecord"> | Date | string
-    recordedBy?: StringFilter<"MedicalExamRecord"> | string
+    recordedBy?: StringNullableFilter<"MedicalExamRecord"> | string | null
     createdAt?: DateTimeFilter<"MedicalExamRecord"> | Date | string
     updatedAt?: DateTimeFilter<"MedicalExamRecord"> | Date | string
     signatureUrl?: StringNullableFilter<"MedicalExamRecord"> | string | null
@@ -62389,7 +69239,7 @@ export namespace Prisma {
     clearanceRemarks?: StringNullableFilter<"MedicalExamRecord"> | string | null
     clearanceIssuedAt?: DateTimeNullableFilter<"MedicalExamRecord"> | Date | string | null
     course?: XOR<CourseRelationFilter, CourseWhereInput>
-    recordedByUser?: XOR<UserRelationFilter, UserWhereInput>
+    recordedByUser?: XOR<UserNullableRelationFilter, UserWhereInput> | null
     student?: XOR<StudentRelationFilter, StudentWhereInput>
   }, "id" | "signToken">
 
@@ -62400,7 +69250,7 @@ export namespace Prisma {
     purpose?: SortOrder
     remarks?: SortOrderInput | SortOrder
     visitDate?: SortOrder
-    recordedBy?: SortOrder
+    recordedBy?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     signatureUrl?: SortOrderInput | SortOrder
@@ -62442,7 +69292,7 @@ export namespace Prisma {
     purpose?: StringWithAggregatesFilter<"MedicalExamRecord"> | string
     remarks?: StringNullableWithAggregatesFilter<"MedicalExamRecord"> | string | null
     visitDate?: DateTimeWithAggregatesFilter<"MedicalExamRecord"> | Date | string
-    recordedBy?: StringWithAggregatesFilter<"MedicalExamRecord"> | string
+    recordedBy?: StringNullableWithAggregatesFilter<"MedicalExamRecord"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"MedicalExamRecord"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"MedicalExamRecord"> | Date | string
     signatureUrl?: StringNullableWithAggregatesFilter<"MedicalExamRecord"> | string | null
@@ -62872,6 +69722,11 @@ export namespace Prisma {
     sex?: StringNullableFilter<"GuidanceInfoSheet"> | string | null
     religion?: StringNullableFilter<"GuidanceInfoSheet"> | string | null
     completeAddress?: StringNullableFilter<"GuidanceInfoSheet"> | string | null
+    civilStatus?: StringNullableFilter<"GuidanceInfoSheet"> | string | null
+    isPwd?: BoolNullableFilter<"GuidanceInfoSheet"> | boolean | null
+    isIndigenous?: BoolNullableFilter<"GuidanceInfoSheet"> | boolean | null
+    isSoloParent?: BoolNullableFilter<"GuidanceInfoSheet"> | boolean | null
+    isFirstGen?: BoolNullableFilter<"GuidanceInfoSheet"> | boolean | null
     fatherName?: StringNullableFilter<"GuidanceInfoSheet"> | string | null
     fatherDOB?: StringNullableFilter<"GuidanceInfoSheet"> | string | null
     fatherAddress?: StringNullableFilter<"GuidanceInfoSheet"> | string | null
@@ -62942,6 +69797,11 @@ export namespace Prisma {
     sex?: SortOrderInput | SortOrder
     religion?: SortOrderInput | SortOrder
     completeAddress?: SortOrderInput | SortOrder
+    civilStatus?: SortOrderInput | SortOrder
+    isPwd?: SortOrderInput | SortOrder
+    isIndigenous?: SortOrderInput | SortOrder
+    isSoloParent?: SortOrderInput | SortOrder
+    isFirstGen?: SortOrderInput | SortOrder
     fatherName?: SortOrderInput | SortOrder
     fatherDOB?: SortOrderInput | SortOrder
     fatherAddress?: SortOrderInput | SortOrder
@@ -63016,6 +69876,11 @@ export namespace Prisma {
     sex?: StringNullableFilter<"GuidanceInfoSheet"> | string | null
     religion?: StringNullableFilter<"GuidanceInfoSheet"> | string | null
     completeAddress?: StringNullableFilter<"GuidanceInfoSheet"> | string | null
+    civilStatus?: StringNullableFilter<"GuidanceInfoSheet"> | string | null
+    isPwd?: BoolNullableFilter<"GuidanceInfoSheet"> | boolean | null
+    isIndigenous?: BoolNullableFilter<"GuidanceInfoSheet"> | boolean | null
+    isSoloParent?: BoolNullableFilter<"GuidanceInfoSheet"> | boolean | null
+    isFirstGen?: BoolNullableFilter<"GuidanceInfoSheet"> | boolean | null
     fatherName?: StringNullableFilter<"GuidanceInfoSheet"> | string | null
     fatherDOB?: StringNullableFilter<"GuidanceInfoSheet"> | string | null
     fatherAddress?: StringNullableFilter<"GuidanceInfoSheet"> | string | null
@@ -63086,6 +69951,11 @@ export namespace Prisma {
     sex?: SortOrderInput | SortOrder
     religion?: SortOrderInput | SortOrder
     completeAddress?: SortOrderInput | SortOrder
+    civilStatus?: SortOrderInput | SortOrder
+    isPwd?: SortOrderInput | SortOrder
+    isIndigenous?: SortOrderInput | SortOrder
+    isSoloParent?: SortOrderInput | SortOrder
+    isFirstGen?: SortOrderInput | SortOrder
     fatherName?: SortOrderInput | SortOrder
     fatherDOB?: SortOrderInput | SortOrder
     fatherAddress?: SortOrderInput | SortOrder
@@ -63163,6 +70033,11 @@ export namespace Prisma {
     sex?: StringNullableWithAggregatesFilter<"GuidanceInfoSheet"> | string | null
     religion?: StringNullableWithAggregatesFilter<"GuidanceInfoSheet"> | string | null
     completeAddress?: StringNullableWithAggregatesFilter<"GuidanceInfoSheet"> | string | null
+    civilStatus?: StringNullableWithAggregatesFilter<"GuidanceInfoSheet"> | string | null
+    isPwd?: BoolNullableWithAggregatesFilter<"GuidanceInfoSheet"> | boolean | null
+    isIndigenous?: BoolNullableWithAggregatesFilter<"GuidanceInfoSheet"> | boolean | null
+    isSoloParent?: BoolNullableWithAggregatesFilter<"GuidanceInfoSheet"> | boolean | null
+    isFirstGen?: BoolNullableWithAggregatesFilter<"GuidanceInfoSheet"> | boolean | null
     fatherName?: StringNullableWithAggregatesFilter<"GuidanceInfoSheet"> | string | null
     fatherDOB?: StringNullableWithAggregatesFilter<"GuidanceInfoSheet"> | string | null
     fatherAddress?: StringNullableWithAggregatesFilter<"GuidanceInfoSheet"> | string | null
@@ -63233,11 +70108,11 @@ export namespace Prisma {
     signTokenExpiresAt?: DateTimeNullableFilter<"GuidanceLogEntry"> | Date | string | null
     signEmailSentAt?: DateTimeNullableFilter<"GuidanceLogEntry"> | Date | string | null
     visitDate?: DateTimeFilter<"GuidanceLogEntry"> | Date | string
-    recordedBy?: StringFilter<"GuidanceLogEntry"> | string
+    recordedBy?: StringNullableFilter<"GuidanceLogEntry"> | string | null
     createdAt?: DateTimeFilter<"GuidanceLogEntry"> | Date | string
     updatedAt?: DateTimeFilter<"GuidanceLogEntry"> | Date | string
     course?: XOR<CourseRelationFilter, CourseWhereInput>
-    recordedByUser?: XOR<UserRelationFilter, UserWhereInput>
+    recordedByUser?: XOR<UserNullableRelationFilter, UserWhereInput> | null
   }
 
   export type GuidanceLogEntryOrderByWithRelationInput = {
@@ -63255,7 +70130,7 @@ export namespace Prisma {
     signTokenExpiresAt?: SortOrderInput | SortOrder
     signEmailSentAt?: SortOrderInput | SortOrder
     visitDate?: SortOrder
-    recordedBy?: SortOrder
+    recordedBy?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     course?: CourseOrderByWithRelationInput
@@ -63280,11 +70155,11 @@ export namespace Prisma {
     signTokenExpiresAt?: DateTimeNullableFilter<"GuidanceLogEntry"> | Date | string | null
     signEmailSentAt?: DateTimeNullableFilter<"GuidanceLogEntry"> | Date | string | null
     visitDate?: DateTimeFilter<"GuidanceLogEntry"> | Date | string
-    recordedBy?: StringFilter<"GuidanceLogEntry"> | string
+    recordedBy?: StringNullableFilter<"GuidanceLogEntry"> | string | null
     createdAt?: DateTimeFilter<"GuidanceLogEntry"> | Date | string
     updatedAt?: DateTimeFilter<"GuidanceLogEntry"> | Date | string
     course?: XOR<CourseRelationFilter, CourseWhereInput>
-    recordedByUser?: XOR<UserRelationFilter, UserWhereInput>
+    recordedByUser?: XOR<UserNullableRelationFilter, UserWhereInput> | null
   }, "id" | "signToken">
 
   export type GuidanceLogEntryOrderByWithAggregationInput = {
@@ -63302,7 +70177,7 @@ export namespace Prisma {
     signTokenExpiresAt?: SortOrderInput | SortOrder
     signEmailSentAt?: SortOrderInput | SortOrder
     visitDate?: SortOrder
-    recordedBy?: SortOrder
+    recordedBy?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: GuidanceLogEntryCountOrderByAggregateInput
@@ -63328,7 +70203,7 @@ export namespace Prisma {
     signTokenExpiresAt?: DateTimeNullableWithAggregatesFilter<"GuidanceLogEntry"> | Date | string | null
     signEmailSentAt?: DateTimeNullableWithAggregatesFilter<"GuidanceLogEntry"> | Date | string | null
     visitDate?: DateTimeWithAggregatesFilter<"GuidanceLogEntry"> | Date | string
-    recordedBy?: StringWithAggregatesFilter<"GuidanceLogEntry"> | string
+    recordedBy?: StringNullableWithAggregatesFilter<"GuidanceLogEntry"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"GuidanceLogEntry"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"GuidanceLogEntry"> | Date | string
   }
@@ -64163,6 +71038,631 @@ export namespace Prisma {
     updatedAt?: DateTimeWithAggregatesFilter<"LibraryBorrowRecord"> | Date | string
   }
 
+  export type ViolationTypeWhereInput = {
+    AND?: ViolationTypeWhereInput | ViolationTypeWhereInput[]
+    OR?: ViolationTypeWhereInput[]
+    NOT?: ViolationTypeWhereInput | ViolationTypeWhereInput[]
+    id?: StringFilter<"ViolationType"> | string
+    courseId?: StringFilter<"ViolationType"> | string
+    code?: StringFilter<"ViolationType"> | string
+    name?: StringFilter<"ViolationType"> | string
+    description?: StringNullableFilter<"ViolationType"> | string | null
+    severity?: StringFilter<"ViolationType"> | string
+    category?: StringNullableFilter<"ViolationType"> | string | null
+    dismissalOnFirst?: BoolFilter<"ViolationType"> | boolean
+    defaultSanction?: StringNullableFilter<"ViolationType"> | string | null
+    sanctionMinDays?: IntNullableFilter<"ViolationType"> | number | null
+    sanctionMaxDays?: IntNullableFilter<"ViolationType"> | number | null
+    maxSanction?: StringNullableFilter<"ViolationType"> | string | null
+    escalationCount?: IntFilter<"ViolationType"> | number
+    escalatesTo?: StringNullableFilter<"ViolationType"> | string | null
+    manualRef?: StringNullableFilter<"ViolationType"> | string | null
+    isActive?: BoolFilter<"ViolationType"> | boolean
+    order?: IntFilter<"ViolationType"> | number
+    deletedAt?: DateTimeNullableFilter<"ViolationType"> | Date | string | null
+    createdAt?: DateTimeFilter<"ViolationType"> | Date | string
+    updatedAt?: DateTimeFilter<"ViolationType"> | Date | string
+    course?: XOR<CourseRelationFilter, CourseWhereInput>
+    violations?: ViolationListRelationFilter
+  }
+
+  export type ViolationTypeOrderByWithRelationInput = {
+    id?: SortOrder
+    courseId?: SortOrder
+    code?: SortOrder
+    name?: SortOrder
+    description?: SortOrderInput | SortOrder
+    severity?: SortOrder
+    category?: SortOrderInput | SortOrder
+    dismissalOnFirst?: SortOrder
+    defaultSanction?: SortOrderInput | SortOrder
+    sanctionMinDays?: SortOrderInput | SortOrder
+    sanctionMaxDays?: SortOrderInput | SortOrder
+    maxSanction?: SortOrderInput | SortOrder
+    escalationCount?: SortOrder
+    escalatesTo?: SortOrderInput | SortOrder
+    manualRef?: SortOrderInput | SortOrder
+    isActive?: SortOrder
+    order?: SortOrder
+    deletedAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    course?: CourseOrderByWithRelationInput
+    violations?: ViolationOrderByRelationAggregateInput
+  }
+
+  export type ViolationTypeWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    courseId_code?: ViolationTypeCourseIdCodeCompoundUniqueInput
+    AND?: ViolationTypeWhereInput | ViolationTypeWhereInput[]
+    OR?: ViolationTypeWhereInput[]
+    NOT?: ViolationTypeWhereInput | ViolationTypeWhereInput[]
+    courseId?: StringFilter<"ViolationType"> | string
+    code?: StringFilter<"ViolationType"> | string
+    name?: StringFilter<"ViolationType"> | string
+    description?: StringNullableFilter<"ViolationType"> | string | null
+    severity?: StringFilter<"ViolationType"> | string
+    category?: StringNullableFilter<"ViolationType"> | string | null
+    dismissalOnFirst?: BoolFilter<"ViolationType"> | boolean
+    defaultSanction?: StringNullableFilter<"ViolationType"> | string | null
+    sanctionMinDays?: IntNullableFilter<"ViolationType"> | number | null
+    sanctionMaxDays?: IntNullableFilter<"ViolationType"> | number | null
+    maxSanction?: StringNullableFilter<"ViolationType"> | string | null
+    escalationCount?: IntFilter<"ViolationType"> | number
+    escalatesTo?: StringNullableFilter<"ViolationType"> | string | null
+    manualRef?: StringNullableFilter<"ViolationType"> | string | null
+    isActive?: BoolFilter<"ViolationType"> | boolean
+    order?: IntFilter<"ViolationType"> | number
+    deletedAt?: DateTimeNullableFilter<"ViolationType"> | Date | string | null
+    createdAt?: DateTimeFilter<"ViolationType"> | Date | string
+    updatedAt?: DateTimeFilter<"ViolationType"> | Date | string
+    course?: XOR<CourseRelationFilter, CourseWhereInput>
+    violations?: ViolationListRelationFilter
+  }, "id" | "courseId_code">
+
+  export type ViolationTypeOrderByWithAggregationInput = {
+    id?: SortOrder
+    courseId?: SortOrder
+    code?: SortOrder
+    name?: SortOrder
+    description?: SortOrderInput | SortOrder
+    severity?: SortOrder
+    category?: SortOrderInput | SortOrder
+    dismissalOnFirst?: SortOrder
+    defaultSanction?: SortOrderInput | SortOrder
+    sanctionMinDays?: SortOrderInput | SortOrder
+    sanctionMaxDays?: SortOrderInput | SortOrder
+    maxSanction?: SortOrderInput | SortOrder
+    escalationCount?: SortOrder
+    escalatesTo?: SortOrderInput | SortOrder
+    manualRef?: SortOrderInput | SortOrder
+    isActive?: SortOrder
+    order?: SortOrder
+    deletedAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: ViolationTypeCountOrderByAggregateInput
+    _avg?: ViolationTypeAvgOrderByAggregateInput
+    _max?: ViolationTypeMaxOrderByAggregateInput
+    _min?: ViolationTypeMinOrderByAggregateInput
+    _sum?: ViolationTypeSumOrderByAggregateInput
+  }
+
+  export type ViolationTypeScalarWhereWithAggregatesInput = {
+    AND?: ViolationTypeScalarWhereWithAggregatesInput | ViolationTypeScalarWhereWithAggregatesInput[]
+    OR?: ViolationTypeScalarWhereWithAggregatesInput[]
+    NOT?: ViolationTypeScalarWhereWithAggregatesInput | ViolationTypeScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"ViolationType"> | string
+    courseId?: StringWithAggregatesFilter<"ViolationType"> | string
+    code?: StringWithAggregatesFilter<"ViolationType"> | string
+    name?: StringWithAggregatesFilter<"ViolationType"> | string
+    description?: StringNullableWithAggregatesFilter<"ViolationType"> | string | null
+    severity?: StringWithAggregatesFilter<"ViolationType"> | string
+    category?: StringNullableWithAggregatesFilter<"ViolationType"> | string | null
+    dismissalOnFirst?: BoolWithAggregatesFilter<"ViolationType"> | boolean
+    defaultSanction?: StringNullableWithAggregatesFilter<"ViolationType"> | string | null
+    sanctionMinDays?: IntNullableWithAggregatesFilter<"ViolationType"> | number | null
+    sanctionMaxDays?: IntNullableWithAggregatesFilter<"ViolationType"> | number | null
+    maxSanction?: StringNullableWithAggregatesFilter<"ViolationType"> | string | null
+    escalationCount?: IntWithAggregatesFilter<"ViolationType"> | number
+    escalatesTo?: StringNullableWithAggregatesFilter<"ViolationType"> | string | null
+    manualRef?: StringNullableWithAggregatesFilter<"ViolationType"> | string | null
+    isActive?: BoolWithAggregatesFilter<"ViolationType"> | boolean
+    order?: IntWithAggregatesFilter<"ViolationType"> | number
+    deletedAt?: DateTimeNullableWithAggregatesFilter<"ViolationType"> | Date | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"ViolationType"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"ViolationType"> | Date | string
+  }
+
+  export type ViolationWhereInput = {
+    AND?: ViolationWhereInput | ViolationWhereInput[]
+    OR?: ViolationWhereInput[]
+    NOT?: ViolationWhereInput | ViolationWhereInput[]
+    id?: StringFilter<"Violation"> | string
+    courseId?: StringFilter<"Violation"> | string
+    caseNo?: StringFilter<"Violation"> | string
+    studentId?: StringFilter<"Violation"> | string
+    violationTypeId?: StringFilter<"Violation"> | string
+    severity?: StringFilter<"Violation"> | string
+    incidentDate?: DateTimeFilter<"Violation"> | Date | string
+    location?: StringNullableFilter<"Violation"> | string | null
+    description?: StringNullableFilter<"Violation"> | string | null
+    reportedBy?: StringNullableFilter<"Violation"> | string | null
+    reportedByRole?: StringNullableFilter<"Violation"> | string | null
+    status?: StringFilter<"Violation"> | string
+    noticeToExplainAt?: DateTimeNullableFilter<"Violation"> | Date | string | null
+    explanationReceivedAt?: DateTimeNullableFilter<"Violation"> | Date | string | null
+    hearingDate?: DateTimeNullableFilter<"Violation"> | Date | string | null
+    hearingResult?: StringNullableFilter<"Violation"> | string | null
+    sanction?: StringNullableFilter<"Violation"> | string | null
+    sanctionDays?: IntNullableFilter<"Violation"> | number | null
+    sanctionStart?: DateTimeNullableFilter<"Violation"> | Date | string | null
+    sanctionEnd?: DateTimeNullableFilter<"Violation"> | Date | string | null
+    sanctionCompleted?: BoolFilter<"Violation"> | boolean
+    decidedBy?: StringNullableFilter<"Violation"> | string | null
+    decidedAt?: DateTimeNullableFilter<"Violation"> | Date | string | null
+    appealed?: BoolFilter<"Violation"> | boolean
+    appealResult?: StringNullableFilter<"Violation"> | string | null
+    resolvedAt?: DateTimeNullableFilter<"Violation"> | Date | string | null
+    recordedBy?: StringNullableFilter<"Violation"> | string | null
+    deletedAt?: DateTimeNullableFilter<"Violation"> | Date | string | null
+    deletedBy?: StringNullableFilter<"Violation"> | string | null
+    createdAt?: DateTimeFilter<"Violation"> | Date | string
+    updatedAt?: DateTimeFilter<"Violation"> | Date | string
+    course?: XOR<CourseRelationFilter, CourseWhereInput>
+    student?: XOR<StudentRelationFilter, StudentWhereInput>
+    violationType?: XOR<ViolationTypeRelationFilter, ViolationTypeWhereInput>
+    recordedByUser?: XOR<UserNullableRelationFilter, UserWhereInput> | null
+    parentContacts?: ParentContactListRelationFilter
+    notes?: ViolationNoteListRelationFilter
+  }
+
+  export type ViolationOrderByWithRelationInput = {
+    id?: SortOrder
+    courseId?: SortOrder
+    caseNo?: SortOrder
+    studentId?: SortOrder
+    violationTypeId?: SortOrder
+    severity?: SortOrder
+    incidentDate?: SortOrder
+    location?: SortOrderInput | SortOrder
+    description?: SortOrderInput | SortOrder
+    reportedBy?: SortOrderInput | SortOrder
+    reportedByRole?: SortOrderInput | SortOrder
+    status?: SortOrder
+    noticeToExplainAt?: SortOrderInput | SortOrder
+    explanationReceivedAt?: SortOrderInput | SortOrder
+    hearingDate?: SortOrderInput | SortOrder
+    hearingResult?: SortOrderInput | SortOrder
+    sanction?: SortOrderInput | SortOrder
+    sanctionDays?: SortOrderInput | SortOrder
+    sanctionStart?: SortOrderInput | SortOrder
+    sanctionEnd?: SortOrderInput | SortOrder
+    sanctionCompleted?: SortOrder
+    decidedBy?: SortOrderInput | SortOrder
+    decidedAt?: SortOrderInput | SortOrder
+    appealed?: SortOrder
+    appealResult?: SortOrderInput | SortOrder
+    resolvedAt?: SortOrderInput | SortOrder
+    recordedBy?: SortOrderInput | SortOrder
+    deletedAt?: SortOrderInput | SortOrder
+    deletedBy?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    course?: CourseOrderByWithRelationInput
+    student?: StudentOrderByWithRelationInput
+    violationType?: ViolationTypeOrderByWithRelationInput
+    recordedByUser?: UserOrderByWithRelationInput
+    parentContacts?: ParentContactOrderByRelationAggregateInput
+    notes?: ViolationNoteOrderByRelationAggregateInput
+  }
+
+  export type ViolationWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    courseId_caseNo?: ViolationCourseIdCaseNoCompoundUniqueInput
+    AND?: ViolationWhereInput | ViolationWhereInput[]
+    OR?: ViolationWhereInput[]
+    NOT?: ViolationWhereInput | ViolationWhereInput[]
+    courseId?: StringFilter<"Violation"> | string
+    caseNo?: StringFilter<"Violation"> | string
+    studentId?: StringFilter<"Violation"> | string
+    violationTypeId?: StringFilter<"Violation"> | string
+    severity?: StringFilter<"Violation"> | string
+    incidentDate?: DateTimeFilter<"Violation"> | Date | string
+    location?: StringNullableFilter<"Violation"> | string | null
+    description?: StringNullableFilter<"Violation"> | string | null
+    reportedBy?: StringNullableFilter<"Violation"> | string | null
+    reportedByRole?: StringNullableFilter<"Violation"> | string | null
+    status?: StringFilter<"Violation"> | string
+    noticeToExplainAt?: DateTimeNullableFilter<"Violation"> | Date | string | null
+    explanationReceivedAt?: DateTimeNullableFilter<"Violation"> | Date | string | null
+    hearingDate?: DateTimeNullableFilter<"Violation"> | Date | string | null
+    hearingResult?: StringNullableFilter<"Violation"> | string | null
+    sanction?: StringNullableFilter<"Violation"> | string | null
+    sanctionDays?: IntNullableFilter<"Violation"> | number | null
+    sanctionStart?: DateTimeNullableFilter<"Violation"> | Date | string | null
+    sanctionEnd?: DateTimeNullableFilter<"Violation"> | Date | string | null
+    sanctionCompleted?: BoolFilter<"Violation"> | boolean
+    decidedBy?: StringNullableFilter<"Violation"> | string | null
+    decidedAt?: DateTimeNullableFilter<"Violation"> | Date | string | null
+    appealed?: BoolFilter<"Violation"> | boolean
+    appealResult?: StringNullableFilter<"Violation"> | string | null
+    resolvedAt?: DateTimeNullableFilter<"Violation"> | Date | string | null
+    recordedBy?: StringNullableFilter<"Violation"> | string | null
+    deletedAt?: DateTimeNullableFilter<"Violation"> | Date | string | null
+    deletedBy?: StringNullableFilter<"Violation"> | string | null
+    createdAt?: DateTimeFilter<"Violation"> | Date | string
+    updatedAt?: DateTimeFilter<"Violation"> | Date | string
+    course?: XOR<CourseRelationFilter, CourseWhereInput>
+    student?: XOR<StudentRelationFilter, StudentWhereInput>
+    violationType?: XOR<ViolationTypeRelationFilter, ViolationTypeWhereInput>
+    recordedByUser?: XOR<UserNullableRelationFilter, UserWhereInput> | null
+    parentContacts?: ParentContactListRelationFilter
+    notes?: ViolationNoteListRelationFilter
+  }, "id" | "courseId_caseNo">
+
+  export type ViolationOrderByWithAggregationInput = {
+    id?: SortOrder
+    courseId?: SortOrder
+    caseNo?: SortOrder
+    studentId?: SortOrder
+    violationTypeId?: SortOrder
+    severity?: SortOrder
+    incidentDate?: SortOrder
+    location?: SortOrderInput | SortOrder
+    description?: SortOrderInput | SortOrder
+    reportedBy?: SortOrderInput | SortOrder
+    reportedByRole?: SortOrderInput | SortOrder
+    status?: SortOrder
+    noticeToExplainAt?: SortOrderInput | SortOrder
+    explanationReceivedAt?: SortOrderInput | SortOrder
+    hearingDate?: SortOrderInput | SortOrder
+    hearingResult?: SortOrderInput | SortOrder
+    sanction?: SortOrderInput | SortOrder
+    sanctionDays?: SortOrderInput | SortOrder
+    sanctionStart?: SortOrderInput | SortOrder
+    sanctionEnd?: SortOrderInput | SortOrder
+    sanctionCompleted?: SortOrder
+    decidedBy?: SortOrderInput | SortOrder
+    decidedAt?: SortOrderInput | SortOrder
+    appealed?: SortOrder
+    appealResult?: SortOrderInput | SortOrder
+    resolvedAt?: SortOrderInput | SortOrder
+    recordedBy?: SortOrderInput | SortOrder
+    deletedAt?: SortOrderInput | SortOrder
+    deletedBy?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: ViolationCountOrderByAggregateInput
+    _avg?: ViolationAvgOrderByAggregateInput
+    _max?: ViolationMaxOrderByAggregateInput
+    _min?: ViolationMinOrderByAggregateInput
+    _sum?: ViolationSumOrderByAggregateInput
+  }
+
+  export type ViolationScalarWhereWithAggregatesInput = {
+    AND?: ViolationScalarWhereWithAggregatesInput | ViolationScalarWhereWithAggregatesInput[]
+    OR?: ViolationScalarWhereWithAggregatesInput[]
+    NOT?: ViolationScalarWhereWithAggregatesInput | ViolationScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"Violation"> | string
+    courseId?: StringWithAggregatesFilter<"Violation"> | string
+    caseNo?: StringWithAggregatesFilter<"Violation"> | string
+    studentId?: StringWithAggregatesFilter<"Violation"> | string
+    violationTypeId?: StringWithAggregatesFilter<"Violation"> | string
+    severity?: StringWithAggregatesFilter<"Violation"> | string
+    incidentDate?: DateTimeWithAggregatesFilter<"Violation"> | Date | string
+    location?: StringNullableWithAggregatesFilter<"Violation"> | string | null
+    description?: StringNullableWithAggregatesFilter<"Violation"> | string | null
+    reportedBy?: StringNullableWithAggregatesFilter<"Violation"> | string | null
+    reportedByRole?: StringNullableWithAggregatesFilter<"Violation"> | string | null
+    status?: StringWithAggregatesFilter<"Violation"> | string
+    noticeToExplainAt?: DateTimeNullableWithAggregatesFilter<"Violation"> | Date | string | null
+    explanationReceivedAt?: DateTimeNullableWithAggregatesFilter<"Violation"> | Date | string | null
+    hearingDate?: DateTimeNullableWithAggregatesFilter<"Violation"> | Date | string | null
+    hearingResult?: StringNullableWithAggregatesFilter<"Violation"> | string | null
+    sanction?: StringNullableWithAggregatesFilter<"Violation"> | string | null
+    sanctionDays?: IntNullableWithAggregatesFilter<"Violation"> | number | null
+    sanctionStart?: DateTimeNullableWithAggregatesFilter<"Violation"> | Date | string | null
+    sanctionEnd?: DateTimeNullableWithAggregatesFilter<"Violation"> | Date | string | null
+    sanctionCompleted?: BoolWithAggregatesFilter<"Violation"> | boolean
+    decidedBy?: StringNullableWithAggregatesFilter<"Violation"> | string | null
+    decidedAt?: DateTimeNullableWithAggregatesFilter<"Violation"> | Date | string | null
+    appealed?: BoolWithAggregatesFilter<"Violation"> | boolean
+    appealResult?: StringNullableWithAggregatesFilter<"Violation"> | string | null
+    resolvedAt?: DateTimeNullableWithAggregatesFilter<"Violation"> | Date | string | null
+    recordedBy?: StringNullableWithAggregatesFilter<"Violation"> | string | null
+    deletedAt?: DateTimeNullableWithAggregatesFilter<"Violation"> | Date | string | null
+    deletedBy?: StringNullableWithAggregatesFilter<"Violation"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"Violation"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"Violation"> | Date | string
+  }
+
+  export type ParentContactWhereInput = {
+    AND?: ParentContactWhereInput | ParentContactWhereInput[]
+    OR?: ParentContactWhereInput[]
+    NOT?: ParentContactWhereInput | ParentContactWhereInput[]
+    id?: StringFilter<"ParentContact"> | string
+    violationId?: StringFilter<"ParentContact"> | string
+    contactedAt?: DateTimeFilter<"ParentContact"> | Date | string
+    method?: StringFilter<"ParentContact"> | string
+    contactedBy?: StringNullableFilter<"ParentContact"> | string | null
+    contactPerson?: StringNullableFilter<"ParentContact"> | string | null
+    relationship?: StringNullableFilter<"ParentContact"> | string | null
+    attendance?: StringFilter<"ParentContact"> | string
+    attemptNo?: IntFilter<"ParentContact"> | number
+    signatureUrl?: StringNullableFilter<"ParentContact"> | string | null
+    recordedBy?: StringNullableFilter<"ParentContact"> | string | null
+    deletedAt?: DateTimeNullableFilter<"ParentContact"> | Date | string | null
+    createdAt?: DateTimeFilter<"ParentContact"> | Date | string
+    updatedAt?: DateTimeFilter<"ParentContact"> | Date | string
+    violation?: XOR<ViolationRelationFilter, ViolationWhereInput>
+    recordedByUser?: XOR<UserNullableRelationFilter, UserWhereInput> | null
+  }
+
+  export type ParentContactOrderByWithRelationInput = {
+    id?: SortOrder
+    violationId?: SortOrder
+    contactedAt?: SortOrder
+    method?: SortOrder
+    contactedBy?: SortOrderInput | SortOrder
+    contactPerson?: SortOrderInput | SortOrder
+    relationship?: SortOrderInput | SortOrder
+    attendance?: SortOrder
+    attemptNo?: SortOrder
+    signatureUrl?: SortOrderInput | SortOrder
+    recordedBy?: SortOrderInput | SortOrder
+    deletedAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    violation?: ViolationOrderByWithRelationInput
+    recordedByUser?: UserOrderByWithRelationInput
+  }
+
+  export type ParentContactWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: ParentContactWhereInput | ParentContactWhereInput[]
+    OR?: ParentContactWhereInput[]
+    NOT?: ParentContactWhereInput | ParentContactWhereInput[]
+    violationId?: StringFilter<"ParentContact"> | string
+    contactedAt?: DateTimeFilter<"ParentContact"> | Date | string
+    method?: StringFilter<"ParentContact"> | string
+    contactedBy?: StringNullableFilter<"ParentContact"> | string | null
+    contactPerson?: StringNullableFilter<"ParentContact"> | string | null
+    relationship?: StringNullableFilter<"ParentContact"> | string | null
+    attendance?: StringFilter<"ParentContact"> | string
+    attemptNo?: IntFilter<"ParentContact"> | number
+    signatureUrl?: StringNullableFilter<"ParentContact"> | string | null
+    recordedBy?: StringNullableFilter<"ParentContact"> | string | null
+    deletedAt?: DateTimeNullableFilter<"ParentContact"> | Date | string | null
+    createdAt?: DateTimeFilter<"ParentContact"> | Date | string
+    updatedAt?: DateTimeFilter<"ParentContact"> | Date | string
+    violation?: XOR<ViolationRelationFilter, ViolationWhereInput>
+    recordedByUser?: XOR<UserNullableRelationFilter, UserWhereInput> | null
+  }, "id">
+
+  export type ParentContactOrderByWithAggregationInput = {
+    id?: SortOrder
+    violationId?: SortOrder
+    contactedAt?: SortOrder
+    method?: SortOrder
+    contactedBy?: SortOrderInput | SortOrder
+    contactPerson?: SortOrderInput | SortOrder
+    relationship?: SortOrderInput | SortOrder
+    attendance?: SortOrder
+    attemptNo?: SortOrder
+    signatureUrl?: SortOrderInput | SortOrder
+    recordedBy?: SortOrderInput | SortOrder
+    deletedAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: ParentContactCountOrderByAggregateInput
+    _avg?: ParentContactAvgOrderByAggregateInput
+    _max?: ParentContactMaxOrderByAggregateInput
+    _min?: ParentContactMinOrderByAggregateInput
+    _sum?: ParentContactSumOrderByAggregateInput
+  }
+
+  export type ParentContactScalarWhereWithAggregatesInput = {
+    AND?: ParentContactScalarWhereWithAggregatesInput | ParentContactScalarWhereWithAggregatesInput[]
+    OR?: ParentContactScalarWhereWithAggregatesInput[]
+    NOT?: ParentContactScalarWhereWithAggregatesInput | ParentContactScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"ParentContact"> | string
+    violationId?: StringWithAggregatesFilter<"ParentContact"> | string
+    contactedAt?: DateTimeWithAggregatesFilter<"ParentContact"> | Date | string
+    method?: StringWithAggregatesFilter<"ParentContact"> | string
+    contactedBy?: StringNullableWithAggregatesFilter<"ParentContact"> | string | null
+    contactPerson?: StringNullableWithAggregatesFilter<"ParentContact"> | string | null
+    relationship?: StringNullableWithAggregatesFilter<"ParentContact"> | string | null
+    attendance?: StringWithAggregatesFilter<"ParentContact"> | string
+    attemptNo?: IntWithAggregatesFilter<"ParentContact"> | number
+    signatureUrl?: StringNullableWithAggregatesFilter<"ParentContact"> | string | null
+    recordedBy?: StringNullableWithAggregatesFilter<"ParentContact"> | string | null
+    deletedAt?: DateTimeNullableWithAggregatesFilter<"ParentContact"> | Date | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"ParentContact"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"ParentContact"> | Date | string
+  }
+
+  export type ViolationNoteWhereInput = {
+    AND?: ViolationNoteWhereInput | ViolationNoteWhereInput[]
+    OR?: ViolationNoteWhereInput[]
+    NOT?: ViolationNoteWhereInput | ViolationNoteWhereInput[]
+    id?: StringFilter<"ViolationNote"> | string
+    violationId?: StringFilter<"ViolationNote"> | string
+    body?: StringFilter<"ViolationNote"> | string
+    confidential?: BoolFilter<"ViolationNote"> | boolean
+    authorId?: StringNullableFilter<"ViolationNote"> | string | null
+    deletedAt?: DateTimeNullableFilter<"ViolationNote"> | Date | string | null
+    createdAt?: DateTimeFilter<"ViolationNote"> | Date | string
+    updatedAt?: DateTimeFilter<"ViolationNote"> | Date | string
+    violation?: XOR<ViolationRelationFilter, ViolationWhereInput>
+    author?: XOR<UserNullableRelationFilter, UserWhereInput> | null
+  }
+
+  export type ViolationNoteOrderByWithRelationInput = {
+    id?: SortOrder
+    violationId?: SortOrder
+    body?: SortOrder
+    confidential?: SortOrder
+    authorId?: SortOrderInput | SortOrder
+    deletedAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    violation?: ViolationOrderByWithRelationInput
+    author?: UserOrderByWithRelationInput
+  }
+
+  export type ViolationNoteWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: ViolationNoteWhereInput | ViolationNoteWhereInput[]
+    OR?: ViolationNoteWhereInput[]
+    NOT?: ViolationNoteWhereInput | ViolationNoteWhereInput[]
+    violationId?: StringFilter<"ViolationNote"> | string
+    body?: StringFilter<"ViolationNote"> | string
+    confidential?: BoolFilter<"ViolationNote"> | boolean
+    authorId?: StringNullableFilter<"ViolationNote"> | string | null
+    deletedAt?: DateTimeNullableFilter<"ViolationNote"> | Date | string | null
+    createdAt?: DateTimeFilter<"ViolationNote"> | Date | string
+    updatedAt?: DateTimeFilter<"ViolationNote"> | Date | string
+    violation?: XOR<ViolationRelationFilter, ViolationWhereInput>
+    author?: XOR<UserNullableRelationFilter, UserWhereInput> | null
+  }, "id">
+
+  export type ViolationNoteOrderByWithAggregationInput = {
+    id?: SortOrder
+    violationId?: SortOrder
+    body?: SortOrder
+    confidential?: SortOrder
+    authorId?: SortOrderInput | SortOrder
+    deletedAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: ViolationNoteCountOrderByAggregateInput
+    _max?: ViolationNoteMaxOrderByAggregateInput
+    _min?: ViolationNoteMinOrderByAggregateInput
+  }
+
+  export type ViolationNoteScalarWhereWithAggregatesInput = {
+    AND?: ViolationNoteScalarWhereWithAggregatesInput | ViolationNoteScalarWhereWithAggregatesInput[]
+    OR?: ViolationNoteScalarWhereWithAggregatesInput[]
+    NOT?: ViolationNoteScalarWhereWithAggregatesInput | ViolationNoteScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"ViolationNote"> | string
+    violationId?: StringWithAggregatesFilter<"ViolationNote"> | string
+    body?: StringWithAggregatesFilter<"ViolationNote"> | string
+    confidential?: BoolWithAggregatesFilter<"ViolationNote"> | boolean
+    authorId?: StringNullableWithAggregatesFilter<"ViolationNote"> | string | null
+    deletedAt?: DateTimeNullableWithAggregatesFilter<"ViolationNote"> | Date | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"ViolationNote"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"ViolationNote"> | Date | string
+  }
+
+  export type LostFoundItemWhereInput = {
+    AND?: LostFoundItemWhereInput | LostFoundItemWhereInput[]
+    OR?: LostFoundItemWhereInput[]
+    NOT?: LostFoundItemWhereInput | LostFoundItemWhereInput[]
+    id?: StringFilter<"LostFoundItem"> | string
+    courseId?: StringFilter<"LostFoundItem"> | string
+    itemName?: StringFilter<"LostFoundItem"> | string
+    description?: StringNullableFilter<"LostFoundItem"> | string | null
+    category?: StringFilter<"LostFoundItem"> | string
+    dateFound?: DateTimeFilter<"LostFoundItem"> | Date | string
+    locationFound?: StringNullableFilter<"LostFoundItem"> | string | null
+    foundBy?: StringNullableFilter<"LostFoundItem"> | string | null
+    status?: StringFilter<"LostFoundItem"> | string
+    claimerName?: StringNullableFilter<"LostFoundItem"> | string | null
+    claimedAt?: DateTimeNullableFilter<"LostFoundItem"> | Date | string | null
+    photoUrl?: StringNullableFilter<"LostFoundItem"> | string | null
+    recordedBy?: StringNullableFilter<"LostFoundItem"> | string | null
+    createdAt?: DateTimeFilter<"LostFoundItem"> | Date | string
+    updatedAt?: DateTimeFilter<"LostFoundItem"> | Date | string
+    course?: XOR<CourseRelationFilter, CourseWhereInput>
+    recordedByUser?: XOR<UserNullableRelationFilter, UserWhereInput> | null
+  }
+
+  export type LostFoundItemOrderByWithRelationInput = {
+    id?: SortOrder
+    courseId?: SortOrder
+    itemName?: SortOrder
+    description?: SortOrderInput | SortOrder
+    category?: SortOrder
+    dateFound?: SortOrder
+    locationFound?: SortOrderInput | SortOrder
+    foundBy?: SortOrderInput | SortOrder
+    status?: SortOrder
+    claimerName?: SortOrderInput | SortOrder
+    claimedAt?: SortOrderInput | SortOrder
+    photoUrl?: SortOrderInput | SortOrder
+    recordedBy?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    course?: CourseOrderByWithRelationInput
+    recordedByUser?: UserOrderByWithRelationInput
+  }
+
+  export type LostFoundItemWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: LostFoundItemWhereInput | LostFoundItemWhereInput[]
+    OR?: LostFoundItemWhereInput[]
+    NOT?: LostFoundItemWhereInput | LostFoundItemWhereInput[]
+    courseId?: StringFilter<"LostFoundItem"> | string
+    itemName?: StringFilter<"LostFoundItem"> | string
+    description?: StringNullableFilter<"LostFoundItem"> | string | null
+    category?: StringFilter<"LostFoundItem"> | string
+    dateFound?: DateTimeFilter<"LostFoundItem"> | Date | string
+    locationFound?: StringNullableFilter<"LostFoundItem"> | string | null
+    foundBy?: StringNullableFilter<"LostFoundItem"> | string | null
+    status?: StringFilter<"LostFoundItem"> | string
+    claimerName?: StringNullableFilter<"LostFoundItem"> | string | null
+    claimedAt?: DateTimeNullableFilter<"LostFoundItem"> | Date | string | null
+    photoUrl?: StringNullableFilter<"LostFoundItem"> | string | null
+    recordedBy?: StringNullableFilter<"LostFoundItem"> | string | null
+    createdAt?: DateTimeFilter<"LostFoundItem"> | Date | string
+    updatedAt?: DateTimeFilter<"LostFoundItem"> | Date | string
+    course?: XOR<CourseRelationFilter, CourseWhereInput>
+    recordedByUser?: XOR<UserNullableRelationFilter, UserWhereInput> | null
+  }, "id">
+
+  export type LostFoundItemOrderByWithAggregationInput = {
+    id?: SortOrder
+    courseId?: SortOrder
+    itemName?: SortOrder
+    description?: SortOrderInput | SortOrder
+    category?: SortOrder
+    dateFound?: SortOrder
+    locationFound?: SortOrderInput | SortOrder
+    foundBy?: SortOrderInput | SortOrder
+    status?: SortOrder
+    claimerName?: SortOrderInput | SortOrder
+    claimedAt?: SortOrderInput | SortOrder
+    photoUrl?: SortOrderInput | SortOrder
+    recordedBy?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: LostFoundItemCountOrderByAggregateInput
+    _max?: LostFoundItemMaxOrderByAggregateInput
+    _min?: LostFoundItemMinOrderByAggregateInput
+  }
+
+  export type LostFoundItemScalarWhereWithAggregatesInput = {
+    AND?: LostFoundItemScalarWhereWithAggregatesInput | LostFoundItemScalarWhereWithAggregatesInput[]
+    OR?: LostFoundItemScalarWhereWithAggregatesInput[]
+    NOT?: LostFoundItemScalarWhereWithAggregatesInput | LostFoundItemScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"LostFoundItem"> | string
+    courseId?: StringWithAggregatesFilter<"LostFoundItem"> | string
+    itemName?: StringWithAggregatesFilter<"LostFoundItem"> | string
+    description?: StringNullableWithAggregatesFilter<"LostFoundItem"> | string | null
+    category?: StringWithAggregatesFilter<"LostFoundItem"> | string
+    dateFound?: DateTimeWithAggregatesFilter<"LostFoundItem"> | Date | string
+    locationFound?: StringNullableWithAggregatesFilter<"LostFoundItem"> | string | null
+    foundBy?: StringNullableWithAggregatesFilter<"LostFoundItem"> | string | null
+    status?: StringWithAggregatesFilter<"LostFoundItem"> | string
+    claimerName?: StringNullableWithAggregatesFilter<"LostFoundItem"> | string | null
+    claimedAt?: DateTimeNullableWithAggregatesFilter<"LostFoundItem"> | Date | string | null
+    photoUrl?: StringNullableWithAggregatesFilter<"LostFoundItem"> | string | null
+    recordedBy?: StringNullableWithAggregatesFilter<"LostFoundItem"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"LostFoundItem"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"LostFoundItem"> | Date | string
+  }
+
   export type ConversationCreateInput = {
     id?: string
     subject: string
@@ -64474,6 +71974,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
     submissions?: SubmissionCreateNestedManyWithoutUserInput
+    violationsRecorded?: ViolationCreateNestedManyWithoutRecordedByUserInput
+    violationNotes?: ViolationNoteCreateNestedManyWithoutAuthorInput
+    parentContactsRecorded?: ParentContactCreateNestedManyWithoutRecordedByUserInput
+    lostFoundRecorded?: LostFoundItemCreateNestedManyWithoutRecordedByUserInput
   }
 
   export type UserUncheckedCreateInput = {
@@ -64515,6 +72019,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewUncheckedCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
     submissions?: SubmissionUncheckedCreateNestedManyWithoutUserInput
+    violationsRecorded?: ViolationUncheckedCreateNestedManyWithoutRecordedByUserInput
+    violationNotes?: ViolationNoteUncheckedCreateNestedManyWithoutAuthorInput
+    parentContactsRecorded?: ParentContactUncheckedCreateNestedManyWithoutRecordedByUserInput
+    lostFoundRecorded?: LostFoundItemUncheckedCreateNestedManyWithoutRecordedByUserInput
   }
 
   export type UserUpdateInput = {
@@ -64556,6 +72064,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
     submissions?: SubmissionUpdateManyWithoutUserNestedInput
+    violationsRecorded?: ViolationUpdateManyWithoutRecordedByUserNestedInput
+    violationNotes?: ViolationNoteUpdateManyWithoutAuthorNestedInput
+    parentContactsRecorded?: ParentContactUpdateManyWithoutRecordedByUserNestedInput
+    lostFoundRecorded?: LostFoundItemUpdateManyWithoutRecordedByUserNestedInput
   }
 
   export type UserUncheckedUpdateInput = {
@@ -64597,6 +72109,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewUncheckedUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
     submissions?: SubmissionUncheckedUpdateManyWithoutUserNestedInput
+    violationsRecorded?: ViolationUncheckedUpdateManyWithoutRecordedByUserNestedInput
+    violationNotes?: ViolationNoteUncheckedUpdateManyWithoutAuthorNestedInput
+    parentContactsRecorded?: ParentContactUncheckedUpdateManyWithoutRecordedByUserNestedInput
+    lostFoundRecorded?: LostFoundItemUncheckedUpdateManyWithoutRecordedByUserNestedInput
   }
 
   export type UserCreateManyInput = {
@@ -64765,6 +72281,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogCreateNestedManyWithoutCourseInput
     LibraryBook?: LibraryBookCreateNestedManyWithoutCourseInput
     LibraryBorrowRecord?: LibraryBorrowRecordCreateNestedManyWithoutCourseInput
+    violationTypes?: ViolationTypeCreateNestedManyWithoutCourseInput
+    violations?: ViolationCreateNestedManyWithoutCourseInput
+    lostFoundItems?: LostFoundItemCreateNestedManyWithoutCourseInput
   }
 
   export type CourseUncheckedCreateInput = {
@@ -64801,6 +72320,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogUncheckedCreateNestedManyWithoutCourseInput
     LibraryBook?: LibraryBookUncheckedCreateNestedManyWithoutCourseInput
     LibraryBorrowRecord?: LibraryBorrowRecordUncheckedCreateNestedManyWithoutCourseInput
+    violationTypes?: ViolationTypeUncheckedCreateNestedManyWithoutCourseInput
+    violations?: ViolationUncheckedCreateNestedManyWithoutCourseInput
+    lostFoundItems?: LostFoundItemUncheckedCreateNestedManyWithoutCourseInput
   }
 
   export type CourseUpdateInput = {
@@ -64837,6 +72359,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogUpdateManyWithoutCourseNestedInput
     LibraryBook?: LibraryBookUpdateManyWithoutCourseNestedInput
     LibraryBorrowRecord?: LibraryBorrowRecordUpdateManyWithoutCourseNestedInput
+    violationTypes?: ViolationTypeUpdateManyWithoutCourseNestedInput
+    violations?: ViolationUpdateManyWithoutCourseNestedInput
+    lostFoundItems?: LostFoundItemUpdateManyWithoutCourseNestedInput
   }
 
   export type CourseUncheckedUpdateInput = {
@@ -64873,6 +72398,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogUncheckedUpdateManyWithoutCourseNestedInput
     LibraryBook?: LibraryBookUncheckedUpdateManyWithoutCourseNestedInput
     LibraryBorrowRecord?: LibraryBorrowRecordUncheckedUpdateManyWithoutCourseNestedInput
+    violationTypes?: ViolationTypeUncheckedUpdateManyWithoutCourseNestedInput
+    violations?: ViolationUncheckedUpdateManyWithoutCourseNestedInput
+    lostFoundItems?: LostFoundItemUncheckedUpdateManyWithoutCourseNestedInput
   }
 
   export type CourseCreateManyInput = {
@@ -67278,8 +74806,16 @@ export namespace Prisma {
     email?: string | null
     address?: string | null
     birthDate?: Date | string | null
+    yearSection?: string | null
+    mobileNo?: string | null
+    guardianName?: string | null
+    guardianContact?: string | null
+    standing?: string
+    clearanceHold?: boolean
+    deletedAt?: Date | string | null
     medicalExamRecords?: MedicalExamRecordCreateNestedManyWithoutStudentInput
     patientRecords?: PatientRecordCreateNestedManyWithoutStudentInput
+    violations?: ViolationCreateNestedManyWithoutStudentInput
   }
 
   export type StudentUncheckedCreateInput = {
@@ -67295,8 +74831,16 @@ export namespace Prisma {
     email?: string | null
     address?: string | null
     birthDate?: Date | string | null
+    yearSection?: string | null
+    mobileNo?: string | null
+    guardianName?: string | null
+    guardianContact?: string | null
+    standing?: string
+    clearanceHold?: boolean
+    deletedAt?: Date | string | null
     medicalExamRecords?: MedicalExamRecordUncheckedCreateNestedManyWithoutStudentInput
     patientRecords?: PatientRecordUncheckedCreateNestedManyWithoutStudentInput
+    violations?: ViolationUncheckedCreateNestedManyWithoutStudentInput
   }
 
   export type StudentUpdateInput = {
@@ -67312,8 +74856,16 @@ export namespace Prisma {
     email?: NullableStringFieldUpdateOperationsInput | string | null
     address?: NullableStringFieldUpdateOperationsInput | string | null
     birthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    yearSection?: NullableStringFieldUpdateOperationsInput | string | null
+    mobileNo?: NullableStringFieldUpdateOperationsInput | string | null
+    guardianName?: NullableStringFieldUpdateOperationsInput | string | null
+    guardianContact?: NullableStringFieldUpdateOperationsInput | string | null
+    standing?: StringFieldUpdateOperationsInput | string
+    clearanceHold?: BoolFieldUpdateOperationsInput | boolean
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     medicalExamRecords?: MedicalExamRecordUpdateManyWithoutStudentNestedInput
     patientRecords?: PatientRecordUpdateManyWithoutStudentNestedInput
+    violations?: ViolationUpdateManyWithoutStudentNestedInput
   }
 
   export type StudentUncheckedUpdateInput = {
@@ -67329,8 +74881,16 @@ export namespace Prisma {
     email?: NullableStringFieldUpdateOperationsInput | string | null
     address?: NullableStringFieldUpdateOperationsInput | string | null
     birthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    yearSection?: NullableStringFieldUpdateOperationsInput | string | null
+    mobileNo?: NullableStringFieldUpdateOperationsInput | string | null
+    guardianName?: NullableStringFieldUpdateOperationsInput | string | null
+    guardianContact?: NullableStringFieldUpdateOperationsInput | string | null
+    standing?: StringFieldUpdateOperationsInput | string
+    clearanceHold?: BoolFieldUpdateOperationsInput | boolean
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     medicalExamRecords?: MedicalExamRecordUncheckedUpdateManyWithoutStudentNestedInput
     patientRecords?: PatientRecordUncheckedUpdateManyWithoutStudentNestedInput
+    violations?: ViolationUncheckedUpdateManyWithoutStudentNestedInput
   }
 
   export type StudentCreateManyInput = {
@@ -67346,6 +74906,13 @@ export namespace Prisma {
     email?: string | null
     address?: string | null
     birthDate?: Date | string | null
+    yearSection?: string | null
+    mobileNo?: string | null
+    guardianName?: string | null
+    guardianContact?: string | null
+    standing?: string
+    clearanceHold?: boolean
+    deletedAt?: Date | string | null
   }
 
   export type StudentUpdateManyMutationInput = {
@@ -67361,6 +74928,13 @@ export namespace Prisma {
     email?: NullableStringFieldUpdateOperationsInput | string | null
     address?: NullableStringFieldUpdateOperationsInput | string | null
     birthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    yearSection?: NullableStringFieldUpdateOperationsInput | string | null
+    mobileNo?: NullableStringFieldUpdateOperationsInput | string | null
+    guardianName?: NullableStringFieldUpdateOperationsInput | string | null
+    guardianContact?: NullableStringFieldUpdateOperationsInput | string | null
+    standing?: StringFieldUpdateOperationsInput | string
+    clearanceHold?: BoolFieldUpdateOperationsInput | boolean
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type StudentUncheckedUpdateManyInput = {
@@ -67376,6 +74950,13 @@ export namespace Prisma {
     email?: NullableStringFieldUpdateOperationsInput | string | null
     address?: NullableStringFieldUpdateOperationsInput | string | null
     birthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    yearSection?: NullableStringFieldUpdateOperationsInput | string | null
+    mobileNo?: NullableStringFieldUpdateOperationsInput | string | null
+    guardianName?: NullableStringFieldUpdateOperationsInput | string | null
+    guardianContact?: NullableStringFieldUpdateOperationsInput | string | null
+    standing?: StringFieldUpdateOperationsInput | string
+    clearanceHold?: BoolFieldUpdateOperationsInput | boolean
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type PatientRecordCreateInput = {
@@ -67401,7 +74982,7 @@ export namespace Prisma {
     bodySystemId?: string | null
     medicineUsages?: MedicineUsageCreateNestedManyWithoutPatientRecordInput
     course: CourseCreateNestedOneWithoutPatientRecordsInput
-    recordedByUser: UserCreateNestedOneWithoutPatientRecordsInput
+    recordedByUser?: UserCreateNestedOneWithoutPatientRecordsInput
     student: StudentCreateNestedOneWithoutPatientRecordsInput
     medicalCondition?: MedicalConditionCreateNestedOneWithoutPatientRecordsInput
   }
@@ -67420,7 +75001,7 @@ export namespace Prisma {
     action: $Enums.PatientAction
     notes?: string | null
     visitDate: Date | string
-    recordedBy: string
+    recordedBy?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     signEmailSentAt?: Date | string | null
@@ -67457,7 +75038,7 @@ export namespace Prisma {
     bodySystemId?: NullableStringFieldUpdateOperationsInput | string | null
     medicineUsages?: MedicineUsageUpdateManyWithoutPatientRecordNestedInput
     course?: CourseUpdateOneRequiredWithoutPatientRecordsNestedInput
-    recordedByUser?: UserUpdateOneRequiredWithoutPatientRecordsNestedInput
+    recordedByUser?: UserUpdateOneWithoutPatientRecordsNestedInput
     student?: StudentUpdateOneRequiredWithoutPatientRecordsNestedInput
     medicalCondition?: MedicalConditionUpdateOneWithoutPatientRecordsNestedInput
   }
@@ -67476,7 +75057,7 @@ export namespace Prisma {
     action?: EnumPatientActionFieldUpdateOperationsInput | $Enums.PatientAction
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     visitDate?: DateTimeFieldUpdateOperationsInput | Date | string
-    recordedBy?: StringFieldUpdateOperationsInput | string
+    recordedBy?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     signEmailSentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -67504,7 +75085,7 @@ export namespace Prisma {
     action: $Enums.PatientAction
     notes?: string | null
     visitDate: Date | string
-    recordedBy: string
+    recordedBy?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     signEmailSentAt?: Date | string | null
@@ -67554,7 +75135,7 @@ export namespace Prisma {
     action?: EnumPatientActionFieldUpdateOperationsInput | $Enums.PatientAction
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     visitDate?: DateTimeFieldUpdateOperationsInput | Date | string
-    recordedBy?: StringFieldUpdateOperationsInput | string
+    recordedBy?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     signEmailSentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -67735,7 +75316,7 @@ export namespace Prisma {
     clearanceRemarks?: string | null
     clearanceIssuedAt?: Date | string | null
     course: CourseCreateNestedOneWithoutMedicalExamRecordsInput
-    recordedByUser: UserCreateNestedOneWithoutMedicalExamRecordsInput
+    recordedByUser?: UserCreateNestedOneWithoutMedicalExamRecordsInput
     student: StudentCreateNestedOneWithoutMedicalExamRecordsInput
   }
 
@@ -67746,7 +75327,7 @@ export namespace Prisma {
     purpose: string
     remarks?: string | null
     visitDate: Date | string
-    recordedBy: string
+    recordedBy?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     signatureUrl?: string | null
@@ -67803,7 +75384,7 @@ export namespace Prisma {
     clearanceRemarks?: NullableStringFieldUpdateOperationsInput | string | null
     clearanceIssuedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     course?: CourseUpdateOneRequiredWithoutMedicalExamRecordsNestedInput
-    recordedByUser?: UserUpdateOneRequiredWithoutMedicalExamRecordsNestedInput
+    recordedByUser?: UserUpdateOneWithoutMedicalExamRecordsNestedInput
     student?: StudentUpdateOneRequiredWithoutMedicalExamRecordsNestedInput
   }
 
@@ -67814,7 +75395,7 @@ export namespace Prisma {
     purpose?: StringFieldUpdateOperationsInput | string
     remarks?: NullableStringFieldUpdateOperationsInput | string | null
     visitDate?: DateTimeFieldUpdateOperationsInput | Date | string
-    recordedBy?: StringFieldUpdateOperationsInput | string
+    recordedBy?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     signatureUrl?: NullableStringFieldUpdateOperationsInput | string | null
@@ -67848,7 +75429,7 @@ export namespace Prisma {
     purpose: string
     remarks?: string | null
     visitDate: Date | string
-    recordedBy: string
+    recordedBy?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     signatureUrl?: string | null
@@ -67913,7 +75494,7 @@ export namespace Prisma {
     purpose?: StringFieldUpdateOperationsInput | string
     remarks?: NullableStringFieldUpdateOperationsInput | string | null
     visitDate?: DateTimeFieldUpdateOperationsInput | Date | string
-    recordedBy?: StringFieldUpdateOperationsInput | string
+    recordedBy?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     signatureUrl?: NullableStringFieldUpdateOperationsInput | string | null
@@ -68347,6 +75928,11 @@ export namespace Prisma {
     sex?: string | null
     religion?: string | null
     completeAddress?: string | null
+    civilStatus?: string | null
+    isPwd?: boolean | null
+    isIndigenous?: boolean | null
+    isSoloParent?: boolean | null
+    isFirstGen?: boolean | null
     fatherName?: string | null
     fatherDOB?: string | null
     fatherAddress?: string | null
@@ -68417,6 +76003,11 @@ export namespace Prisma {
     sex?: string | null
     religion?: string | null
     completeAddress?: string | null
+    civilStatus?: string | null
+    isPwd?: boolean | null
+    isIndigenous?: boolean | null
+    isSoloParent?: boolean | null
+    isFirstGen?: boolean | null
     fatherName?: string | null
     fatherDOB?: string | null
     fatherAddress?: string | null
@@ -68485,6 +76076,11 @@ export namespace Prisma {
     sex?: NullableStringFieldUpdateOperationsInput | string | null
     religion?: NullableStringFieldUpdateOperationsInput | string | null
     completeAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    civilStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    isPwd?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    isIndigenous?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    isSoloParent?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    isFirstGen?: NullableBoolFieldUpdateOperationsInput | boolean | null
     fatherName?: NullableStringFieldUpdateOperationsInput | string | null
     fatherDOB?: NullableStringFieldUpdateOperationsInput | string | null
     fatherAddress?: NullableStringFieldUpdateOperationsInput | string | null
@@ -68555,6 +76151,11 @@ export namespace Prisma {
     sex?: NullableStringFieldUpdateOperationsInput | string | null
     religion?: NullableStringFieldUpdateOperationsInput | string | null
     completeAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    civilStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    isPwd?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    isIndigenous?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    isSoloParent?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    isFirstGen?: NullableBoolFieldUpdateOperationsInput | boolean | null
     fatherName?: NullableStringFieldUpdateOperationsInput | string | null
     fatherDOB?: NullableStringFieldUpdateOperationsInput | string | null
     fatherAddress?: NullableStringFieldUpdateOperationsInput | string | null
@@ -68624,6 +76225,11 @@ export namespace Prisma {
     sex?: string | null
     religion?: string | null
     completeAddress?: string | null
+    civilStatus?: string | null
+    isPwd?: boolean | null
+    isIndigenous?: boolean | null
+    isSoloParent?: boolean | null
+    isFirstGen?: boolean | null
     fatherName?: string | null
     fatherDOB?: string | null
     fatherAddress?: string | null
@@ -68692,6 +76298,11 @@ export namespace Prisma {
     sex?: NullableStringFieldUpdateOperationsInput | string | null
     religion?: NullableStringFieldUpdateOperationsInput | string | null
     completeAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    civilStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    isPwd?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    isIndigenous?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    isSoloParent?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    isFirstGen?: NullableBoolFieldUpdateOperationsInput | boolean | null
     fatherName?: NullableStringFieldUpdateOperationsInput | string | null
     fatherDOB?: NullableStringFieldUpdateOperationsInput | string | null
     fatherAddress?: NullableStringFieldUpdateOperationsInput | string | null
@@ -68761,6 +76372,11 @@ export namespace Prisma {
     sex?: NullableStringFieldUpdateOperationsInput | string | null
     religion?: NullableStringFieldUpdateOperationsInput | string | null
     completeAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    civilStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    isPwd?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    isIndigenous?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    isSoloParent?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    isFirstGen?: NullableBoolFieldUpdateOperationsInput | boolean | null
     fatherName?: NullableStringFieldUpdateOperationsInput | string | null
     fatherDOB?: NullableStringFieldUpdateOperationsInput | string | null
     fatherAddress?: NullableStringFieldUpdateOperationsInput | string | null
@@ -68830,7 +76446,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     course: CourseCreateNestedOneWithoutGuidanceLogEntriesInput
-    recordedByUser: UserCreateNestedOneWithoutGuidanceLogEntriesInput
+    recordedByUser?: UserCreateNestedOneWithoutGuidanceLogEntriesInput
   }
 
   export type GuidanceLogEntryUncheckedCreateInput = {
@@ -68848,7 +76464,7 @@ export namespace Prisma {
     signTokenExpiresAt?: Date | string | null
     signEmailSentAt?: Date | string | null
     visitDate?: Date | string
-    recordedBy: string
+    recordedBy?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -68870,7 +76486,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     course?: CourseUpdateOneRequiredWithoutGuidanceLogEntriesNestedInput
-    recordedByUser?: UserUpdateOneRequiredWithoutGuidanceLogEntriesNestedInput
+    recordedByUser?: UserUpdateOneWithoutGuidanceLogEntriesNestedInput
   }
 
   export type GuidanceLogEntryUncheckedUpdateInput = {
@@ -68888,7 +76504,7 @@ export namespace Prisma {
     signTokenExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     signEmailSentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     visitDate?: DateTimeFieldUpdateOperationsInput | Date | string
-    recordedBy?: StringFieldUpdateOperationsInput | string
+    recordedBy?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -68908,7 +76524,7 @@ export namespace Prisma {
     signTokenExpiresAt?: Date | string | null
     signEmailSentAt?: Date | string | null
     visitDate?: Date | string
-    recordedBy: string
+    recordedBy?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -68946,7 +76562,7 @@ export namespace Prisma {
     signTokenExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     signEmailSentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     visitDate?: DateTimeFieldUpdateOperationsInput | Date | string
-    recordedBy?: StringFieldUpdateOperationsInput | string
+    recordedBy?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -69980,6 +77596,728 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type ViolationTypeCreateInput = {
+    id?: string
+    code: string
+    name: string
+    description?: string | null
+    severity?: string
+    category?: string | null
+    dismissalOnFirst?: boolean
+    defaultSanction?: string | null
+    sanctionMinDays?: number | null
+    sanctionMaxDays?: number | null
+    maxSanction?: string | null
+    escalationCount?: number
+    escalatesTo?: string | null
+    manualRef?: string | null
+    isActive?: boolean
+    order?: number
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    course: CourseCreateNestedOneWithoutViolationTypesInput
+    violations?: ViolationCreateNestedManyWithoutViolationTypeInput
+  }
+
+  export type ViolationTypeUncheckedCreateInput = {
+    id?: string
+    courseId: string
+    code: string
+    name: string
+    description?: string | null
+    severity?: string
+    category?: string | null
+    dismissalOnFirst?: boolean
+    defaultSanction?: string | null
+    sanctionMinDays?: number | null
+    sanctionMaxDays?: number | null
+    maxSanction?: string | null
+    escalationCount?: number
+    escalatesTo?: string | null
+    manualRef?: string | null
+    isActive?: boolean
+    order?: number
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    violations?: ViolationUncheckedCreateNestedManyWithoutViolationTypeInput
+  }
+
+  export type ViolationTypeUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    code?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    severity?: StringFieldUpdateOperationsInput | string
+    category?: NullableStringFieldUpdateOperationsInput | string | null
+    dismissalOnFirst?: BoolFieldUpdateOperationsInput | boolean
+    defaultSanction?: NullableStringFieldUpdateOperationsInput | string | null
+    sanctionMinDays?: NullableIntFieldUpdateOperationsInput | number | null
+    sanctionMaxDays?: NullableIntFieldUpdateOperationsInput | number | null
+    maxSanction?: NullableStringFieldUpdateOperationsInput | string | null
+    escalationCount?: IntFieldUpdateOperationsInput | number
+    escalatesTo?: NullableStringFieldUpdateOperationsInput | string | null
+    manualRef?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    order?: IntFieldUpdateOperationsInput | number
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    course?: CourseUpdateOneRequiredWithoutViolationTypesNestedInput
+    violations?: ViolationUpdateManyWithoutViolationTypeNestedInput
+  }
+
+  export type ViolationTypeUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    courseId?: StringFieldUpdateOperationsInput | string
+    code?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    severity?: StringFieldUpdateOperationsInput | string
+    category?: NullableStringFieldUpdateOperationsInput | string | null
+    dismissalOnFirst?: BoolFieldUpdateOperationsInput | boolean
+    defaultSanction?: NullableStringFieldUpdateOperationsInput | string | null
+    sanctionMinDays?: NullableIntFieldUpdateOperationsInput | number | null
+    sanctionMaxDays?: NullableIntFieldUpdateOperationsInput | number | null
+    maxSanction?: NullableStringFieldUpdateOperationsInput | string | null
+    escalationCount?: IntFieldUpdateOperationsInput | number
+    escalatesTo?: NullableStringFieldUpdateOperationsInput | string | null
+    manualRef?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    order?: IntFieldUpdateOperationsInput | number
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    violations?: ViolationUncheckedUpdateManyWithoutViolationTypeNestedInput
+  }
+
+  export type ViolationTypeCreateManyInput = {
+    id?: string
+    courseId: string
+    code: string
+    name: string
+    description?: string | null
+    severity?: string
+    category?: string | null
+    dismissalOnFirst?: boolean
+    defaultSanction?: string | null
+    sanctionMinDays?: number | null
+    sanctionMaxDays?: number | null
+    maxSanction?: string | null
+    escalationCount?: number
+    escalatesTo?: string | null
+    manualRef?: string | null
+    isActive?: boolean
+    order?: number
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ViolationTypeUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    code?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    severity?: StringFieldUpdateOperationsInput | string
+    category?: NullableStringFieldUpdateOperationsInput | string | null
+    dismissalOnFirst?: BoolFieldUpdateOperationsInput | boolean
+    defaultSanction?: NullableStringFieldUpdateOperationsInput | string | null
+    sanctionMinDays?: NullableIntFieldUpdateOperationsInput | number | null
+    sanctionMaxDays?: NullableIntFieldUpdateOperationsInput | number | null
+    maxSanction?: NullableStringFieldUpdateOperationsInput | string | null
+    escalationCount?: IntFieldUpdateOperationsInput | number
+    escalatesTo?: NullableStringFieldUpdateOperationsInput | string | null
+    manualRef?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    order?: IntFieldUpdateOperationsInput | number
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ViolationTypeUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    courseId?: StringFieldUpdateOperationsInput | string
+    code?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    severity?: StringFieldUpdateOperationsInput | string
+    category?: NullableStringFieldUpdateOperationsInput | string | null
+    dismissalOnFirst?: BoolFieldUpdateOperationsInput | boolean
+    defaultSanction?: NullableStringFieldUpdateOperationsInput | string | null
+    sanctionMinDays?: NullableIntFieldUpdateOperationsInput | number | null
+    sanctionMaxDays?: NullableIntFieldUpdateOperationsInput | number | null
+    maxSanction?: NullableStringFieldUpdateOperationsInput | string | null
+    escalationCount?: IntFieldUpdateOperationsInput | number
+    escalatesTo?: NullableStringFieldUpdateOperationsInput | string | null
+    manualRef?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    order?: IntFieldUpdateOperationsInput | number
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ViolationCreateInput = {
+    id?: string
+    caseNo: string
+    severity: string
+    incidentDate: Date | string
+    location?: string | null
+    description?: string | null
+    reportedBy?: string | null
+    reportedByRole?: string | null
+    status?: string
+    noticeToExplainAt?: Date | string | null
+    explanationReceivedAt?: Date | string | null
+    hearingDate?: Date | string | null
+    hearingResult?: string | null
+    sanction?: string | null
+    sanctionDays?: number | null
+    sanctionStart?: Date | string | null
+    sanctionEnd?: Date | string | null
+    sanctionCompleted?: boolean
+    decidedBy?: string | null
+    decidedAt?: Date | string | null
+    appealed?: boolean
+    appealResult?: string | null
+    resolvedAt?: Date | string | null
+    deletedAt?: Date | string | null
+    deletedBy?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    course: CourseCreateNestedOneWithoutViolationsInput
+    student: StudentCreateNestedOneWithoutViolationsInput
+    violationType: ViolationTypeCreateNestedOneWithoutViolationsInput
+    recordedByUser?: UserCreateNestedOneWithoutViolationsRecordedInput
+    parentContacts?: ParentContactCreateNestedManyWithoutViolationInput
+    notes?: ViolationNoteCreateNestedManyWithoutViolationInput
+  }
+
+  export type ViolationUncheckedCreateInput = {
+    id?: string
+    courseId: string
+    caseNo: string
+    studentId: string
+    violationTypeId: string
+    severity: string
+    incidentDate: Date | string
+    location?: string | null
+    description?: string | null
+    reportedBy?: string | null
+    reportedByRole?: string | null
+    status?: string
+    noticeToExplainAt?: Date | string | null
+    explanationReceivedAt?: Date | string | null
+    hearingDate?: Date | string | null
+    hearingResult?: string | null
+    sanction?: string | null
+    sanctionDays?: number | null
+    sanctionStart?: Date | string | null
+    sanctionEnd?: Date | string | null
+    sanctionCompleted?: boolean
+    decidedBy?: string | null
+    decidedAt?: Date | string | null
+    appealed?: boolean
+    appealResult?: string | null
+    resolvedAt?: Date | string | null
+    recordedBy?: string | null
+    deletedAt?: Date | string | null
+    deletedBy?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    parentContacts?: ParentContactUncheckedCreateNestedManyWithoutViolationInput
+    notes?: ViolationNoteUncheckedCreateNestedManyWithoutViolationInput
+  }
+
+  export type ViolationUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    caseNo?: StringFieldUpdateOperationsInput | string
+    severity?: StringFieldUpdateOperationsInput | string
+    incidentDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    reportedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    reportedByRole?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    noticeToExplainAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    explanationReceivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    hearingDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    hearingResult?: NullableStringFieldUpdateOperationsInput | string | null
+    sanction?: NullableStringFieldUpdateOperationsInput | string | null
+    sanctionDays?: NullableIntFieldUpdateOperationsInput | number | null
+    sanctionStart?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sanctionEnd?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sanctionCompleted?: BoolFieldUpdateOperationsInput | boolean
+    decidedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    decidedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    appealed?: BoolFieldUpdateOperationsInput | boolean
+    appealResult?: NullableStringFieldUpdateOperationsInput | string | null
+    resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    deletedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    course?: CourseUpdateOneRequiredWithoutViolationsNestedInput
+    student?: StudentUpdateOneRequiredWithoutViolationsNestedInput
+    violationType?: ViolationTypeUpdateOneRequiredWithoutViolationsNestedInput
+    recordedByUser?: UserUpdateOneWithoutViolationsRecordedNestedInput
+    parentContacts?: ParentContactUpdateManyWithoutViolationNestedInput
+    notes?: ViolationNoteUpdateManyWithoutViolationNestedInput
+  }
+
+  export type ViolationUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    courseId?: StringFieldUpdateOperationsInput | string
+    caseNo?: StringFieldUpdateOperationsInput | string
+    studentId?: StringFieldUpdateOperationsInput | string
+    violationTypeId?: StringFieldUpdateOperationsInput | string
+    severity?: StringFieldUpdateOperationsInput | string
+    incidentDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    reportedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    reportedByRole?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    noticeToExplainAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    explanationReceivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    hearingDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    hearingResult?: NullableStringFieldUpdateOperationsInput | string | null
+    sanction?: NullableStringFieldUpdateOperationsInput | string | null
+    sanctionDays?: NullableIntFieldUpdateOperationsInput | number | null
+    sanctionStart?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sanctionEnd?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sanctionCompleted?: BoolFieldUpdateOperationsInput | boolean
+    decidedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    decidedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    appealed?: BoolFieldUpdateOperationsInput | boolean
+    appealResult?: NullableStringFieldUpdateOperationsInput | string | null
+    resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    recordedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    deletedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    parentContacts?: ParentContactUncheckedUpdateManyWithoutViolationNestedInput
+    notes?: ViolationNoteUncheckedUpdateManyWithoutViolationNestedInput
+  }
+
+  export type ViolationCreateManyInput = {
+    id?: string
+    courseId: string
+    caseNo: string
+    studentId: string
+    violationTypeId: string
+    severity: string
+    incidentDate: Date | string
+    location?: string | null
+    description?: string | null
+    reportedBy?: string | null
+    reportedByRole?: string | null
+    status?: string
+    noticeToExplainAt?: Date | string | null
+    explanationReceivedAt?: Date | string | null
+    hearingDate?: Date | string | null
+    hearingResult?: string | null
+    sanction?: string | null
+    sanctionDays?: number | null
+    sanctionStart?: Date | string | null
+    sanctionEnd?: Date | string | null
+    sanctionCompleted?: boolean
+    decidedBy?: string | null
+    decidedAt?: Date | string | null
+    appealed?: boolean
+    appealResult?: string | null
+    resolvedAt?: Date | string | null
+    recordedBy?: string | null
+    deletedAt?: Date | string | null
+    deletedBy?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ViolationUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    caseNo?: StringFieldUpdateOperationsInput | string
+    severity?: StringFieldUpdateOperationsInput | string
+    incidentDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    reportedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    reportedByRole?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    noticeToExplainAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    explanationReceivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    hearingDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    hearingResult?: NullableStringFieldUpdateOperationsInput | string | null
+    sanction?: NullableStringFieldUpdateOperationsInput | string | null
+    sanctionDays?: NullableIntFieldUpdateOperationsInput | number | null
+    sanctionStart?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sanctionEnd?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sanctionCompleted?: BoolFieldUpdateOperationsInput | boolean
+    decidedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    decidedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    appealed?: BoolFieldUpdateOperationsInput | boolean
+    appealResult?: NullableStringFieldUpdateOperationsInput | string | null
+    resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    deletedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ViolationUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    courseId?: StringFieldUpdateOperationsInput | string
+    caseNo?: StringFieldUpdateOperationsInput | string
+    studentId?: StringFieldUpdateOperationsInput | string
+    violationTypeId?: StringFieldUpdateOperationsInput | string
+    severity?: StringFieldUpdateOperationsInput | string
+    incidentDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    reportedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    reportedByRole?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    noticeToExplainAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    explanationReceivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    hearingDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    hearingResult?: NullableStringFieldUpdateOperationsInput | string | null
+    sanction?: NullableStringFieldUpdateOperationsInput | string | null
+    sanctionDays?: NullableIntFieldUpdateOperationsInput | number | null
+    sanctionStart?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sanctionEnd?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sanctionCompleted?: BoolFieldUpdateOperationsInput | boolean
+    decidedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    decidedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    appealed?: BoolFieldUpdateOperationsInput | boolean
+    appealResult?: NullableStringFieldUpdateOperationsInput | string | null
+    resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    recordedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    deletedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ParentContactCreateInput = {
+    id?: string
+    contactedAt?: Date | string
+    method?: string
+    contactedBy?: string | null
+    contactPerson?: string | null
+    relationship?: string | null
+    attendance?: string
+    attemptNo?: number
+    signatureUrl?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    violation: ViolationCreateNestedOneWithoutParentContactsInput
+    recordedByUser?: UserCreateNestedOneWithoutParentContactsRecordedInput
+  }
+
+  export type ParentContactUncheckedCreateInput = {
+    id?: string
+    violationId: string
+    contactedAt?: Date | string
+    method?: string
+    contactedBy?: string | null
+    contactPerson?: string | null
+    relationship?: string | null
+    attendance?: string
+    attemptNo?: number
+    signatureUrl?: string | null
+    recordedBy?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ParentContactUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    contactedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    method?: StringFieldUpdateOperationsInput | string
+    contactedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    contactPerson?: NullableStringFieldUpdateOperationsInput | string | null
+    relationship?: NullableStringFieldUpdateOperationsInput | string | null
+    attendance?: StringFieldUpdateOperationsInput | string
+    attemptNo?: IntFieldUpdateOperationsInput | number
+    signatureUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    violation?: ViolationUpdateOneRequiredWithoutParentContactsNestedInput
+    recordedByUser?: UserUpdateOneWithoutParentContactsRecordedNestedInput
+  }
+
+  export type ParentContactUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    violationId?: StringFieldUpdateOperationsInput | string
+    contactedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    method?: StringFieldUpdateOperationsInput | string
+    contactedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    contactPerson?: NullableStringFieldUpdateOperationsInput | string | null
+    relationship?: NullableStringFieldUpdateOperationsInput | string | null
+    attendance?: StringFieldUpdateOperationsInput | string
+    attemptNo?: IntFieldUpdateOperationsInput | number
+    signatureUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    recordedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ParentContactCreateManyInput = {
+    id?: string
+    violationId: string
+    contactedAt?: Date | string
+    method?: string
+    contactedBy?: string | null
+    contactPerson?: string | null
+    relationship?: string | null
+    attendance?: string
+    attemptNo?: number
+    signatureUrl?: string | null
+    recordedBy?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ParentContactUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    contactedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    method?: StringFieldUpdateOperationsInput | string
+    contactedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    contactPerson?: NullableStringFieldUpdateOperationsInput | string | null
+    relationship?: NullableStringFieldUpdateOperationsInput | string | null
+    attendance?: StringFieldUpdateOperationsInput | string
+    attemptNo?: IntFieldUpdateOperationsInput | number
+    signatureUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ParentContactUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    violationId?: StringFieldUpdateOperationsInput | string
+    contactedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    method?: StringFieldUpdateOperationsInput | string
+    contactedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    contactPerson?: NullableStringFieldUpdateOperationsInput | string | null
+    relationship?: NullableStringFieldUpdateOperationsInput | string | null
+    attendance?: StringFieldUpdateOperationsInput | string
+    attemptNo?: IntFieldUpdateOperationsInput | number
+    signatureUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    recordedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ViolationNoteCreateInput = {
+    id?: string
+    body: string
+    confidential?: boolean
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    violation: ViolationCreateNestedOneWithoutNotesInput
+    author?: UserCreateNestedOneWithoutViolationNotesInput
+  }
+
+  export type ViolationNoteUncheckedCreateInput = {
+    id?: string
+    violationId: string
+    body: string
+    confidential?: boolean
+    authorId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ViolationNoteUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    body?: StringFieldUpdateOperationsInput | string
+    confidential?: BoolFieldUpdateOperationsInput | boolean
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    violation?: ViolationUpdateOneRequiredWithoutNotesNestedInput
+    author?: UserUpdateOneWithoutViolationNotesNestedInput
+  }
+
+  export type ViolationNoteUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    violationId?: StringFieldUpdateOperationsInput | string
+    body?: StringFieldUpdateOperationsInput | string
+    confidential?: BoolFieldUpdateOperationsInput | boolean
+    authorId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ViolationNoteCreateManyInput = {
+    id?: string
+    violationId: string
+    body: string
+    confidential?: boolean
+    authorId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ViolationNoteUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    body?: StringFieldUpdateOperationsInput | string
+    confidential?: BoolFieldUpdateOperationsInput | boolean
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ViolationNoteUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    violationId?: StringFieldUpdateOperationsInput | string
+    body?: StringFieldUpdateOperationsInput | string
+    confidential?: BoolFieldUpdateOperationsInput | boolean
+    authorId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type LostFoundItemCreateInput = {
+    id?: string
+    itemName: string
+    description?: string | null
+    category?: string
+    dateFound: Date | string
+    locationFound?: string | null
+    foundBy?: string | null
+    status?: string
+    claimerName?: string | null
+    claimedAt?: Date | string | null
+    photoUrl?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    course: CourseCreateNestedOneWithoutLostFoundItemsInput
+    recordedByUser?: UserCreateNestedOneWithoutLostFoundRecordedInput
+  }
+
+  export type LostFoundItemUncheckedCreateInput = {
+    id?: string
+    courseId: string
+    itemName: string
+    description?: string | null
+    category?: string
+    dateFound: Date | string
+    locationFound?: string | null
+    foundBy?: string | null
+    status?: string
+    claimerName?: string | null
+    claimedAt?: Date | string | null
+    photoUrl?: string | null
+    recordedBy?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type LostFoundItemUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    itemName?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    category?: StringFieldUpdateOperationsInput | string
+    dateFound?: DateTimeFieldUpdateOperationsInput | Date | string
+    locationFound?: NullableStringFieldUpdateOperationsInput | string | null
+    foundBy?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    claimerName?: NullableStringFieldUpdateOperationsInput | string | null
+    claimedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    course?: CourseUpdateOneRequiredWithoutLostFoundItemsNestedInput
+    recordedByUser?: UserUpdateOneWithoutLostFoundRecordedNestedInput
+  }
+
+  export type LostFoundItemUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    courseId?: StringFieldUpdateOperationsInput | string
+    itemName?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    category?: StringFieldUpdateOperationsInput | string
+    dateFound?: DateTimeFieldUpdateOperationsInput | Date | string
+    locationFound?: NullableStringFieldUpdateOperationsInput | string | null
+    foundBy?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    claimerName?: NullableStringFieldUpdateOperationsInput | string | null
+    claimedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    recordedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type LostFoundItemCreateManyInput = {
+    id?: string
+    courseId: string
+    itemName: string
+    description?: string | null
+    category?: string
+    dateFound: Date | string
+    locationFound?: string | null
+    foundBy?: string | null
+    status?: string
+    claimerName?: string | null
+    claimedAt?: Date | string | null
+    photoUrl?: string | null
+    recordedBy?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type LostFoundItemUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    itemName?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    category?: StringFieldUpdateOperationsInput | string
+    dateFound?: DateTimeFieldUpdateOperationsInput | Date | string
+    locationFound?: NullableStringFieldUpdateOperationsInput | string | null
+    foundBy?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    claimerName?: NullableStringFieldUpdateOperationsInput | string | null
+    claimedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type LostFoundItemUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    courseId?: StringFieldUpdateOperationsInput | string
+    itemName?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    category?: StringFieldUpdateOperationsInput | string
+    dateFound?: DateTimeFieldUpdateOperationsInput | Date | string
+    locationFound?: NullableStringFieldUpdateOperationsInput | string | null
+    foundBy?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    claimerName?: NullableStringFieldUpdateOperationsInput | string | null
+    claimedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    recordedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type StringFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -70451,6 +78789,30 @@ export namespace Prisma {
     none?: SubmissionWhereInput
   }
 
+  export type ViolationListRelationFilter = {
+    every?: ViolationWhereInput
+    some?: ViolationWhereInput
+    none?: ViolationWhereInput
+  }
+
+  export type ViolationNoteListRelationFilter = {
+    every?: ViolationNoteWhereInput
+    some?: ViolationNoteWhereInput
+    none?: ViolationNoteWhereInput
+  }
+
+  export type ParentContactListRelationFilter = {
+    every?: ParentContactWhereInput
+    some?: ParentContactWhereInput
+    none?: ParentContactWhereInput
+  }
+
+  export type LostFoundItemListRelationFilter = {
+    every?: LostFoundItemWhereInput
+    some?: LostFoundItemWhereInput
+    none?: LostFoundItemWhereInput
+  }
+
   export type AccountOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
@@ -70516,6 +78878,22 @@ export namespace Prisma {
   }
 
   export type SubmissionOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type ViolationOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type ViolationNoteOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type ParentContactOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type LostFoundItemOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -70717,6 +79095,12 @@ export namespace Prisma {
     none?: LibraryBorrowRecordWhereInput
   }
 
+  export type ViolationTypeListRelationFilter = {
+    every?: ViolationTypeWhereInput
+    some?: ViolationTypeWhereInput
+    none?: ViolationTypeWhereInput
+  }
+
   export type AnnouncementOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
@@ -70766,6 +79150,10 @@ export namespace Prisma {
   }
 
   export type LibraryBorrowRecordOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type ViolationTypeOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -72408,6 +80796,13 @@ export namespace Prisma {
     email?: SortOrder
     address?: SortOrder
     birthDate?: SortOrder
+    yearSection?: SortOrder
+    mobileNo?: SortOrder
+    guardianName?: SortOrder
+    guardianContact?: SortOrder
+    standing?: SortOrder
+    clearanceHold?: SortOrder
+    deletedAt?: SortOrder
   }
 
   export type StudentAvgOrderByAggregateInput = {
@@ -72427,6 +80822,13 @@ export namespace Prisma {
     email?: SortOrder
     address?: SortOrder
     birthDate?: SortOrder
+    yearSection?: SortOrder
+    mobileNo?: SortOrder
+    guardianName?: SortOrder
+    guardianContact?: SortOrder
+    standing?: SortOrder
+    clearanceHold?: SortOrder
+    deletedAt?: SortOrder
   }
 
   export type StudentMinOrderByAggregateInput = {
@@ -72442,6 +80844,13 @@ export namespace Prisma {
     email?: SortOrder
     address?: SortOrder
     birthDate?: SortOrder
+    yearSection?: SortOrder
+    mobileNo?: SortOrder
+    guardianName?: SortOrder
+    guardianContact?: SortOrder
+    standing?: SortOrder
+    clearanceHold?: SortOrder
+    deletedAt?: SortOrder
   }
 
   export type StudentSumOrderByAggregateInput = {
@@ -73020,6 +81429,11 @@ export namespace Prisma {
     sex?: SortOrder
     religion?: SortOrder
     completeAddress?: SortOrder
+    civilStatus?: SortOrder
+    isPwd?: SortOrder
+    isIndigenous?: SortOrder
+    isSoloParent?: SortOrder
+    isFirstGen?: SortOrder
     fatherName?: SortOrder
     fatherDOB?: SortOrder
     fatherAddress?: SortOrder
@@ -73093,6 +81507,11 @@ export namespace Prisma {
     sex?: SortOrder
     religion?: SortOrder
     completeAddress?: SortOrder
+    civilStatus?: SortOrder
+    isPwd?: SortOrder
+    isIndigenous?: SortOrder
+    isSoloParent?: SortOrder
+    isFirstGen?: SortOrder
     fatherName?: SortOrder
     fatherDOB?: SortOrder
     fatherAddress?: SortOrder
@@ -73159,6 +81578,11 @@ export namespace Prisma {
     sex?: SortOrder
     religion?: SortOrder
     completeAddress?: SortOrder
+    civilStatus?: SortOrder
+    isPwd?: SortOrder
+    isIndigenous?: SortOrder
+    isSoloParent?: SortOrder
+    isFirstGen?: SortOrder
     fatherName?: SortOrder
     fatherDOB?: SortOrder
     fatherAddress?: SortOrder
@@ -73751,6 +82175,365 @@ export namespace Prisma {
     updatedAt?: SortOrder
   }
 
+  export type ViolationTypeCourseIdCodeCompoundUniqueInput = {
+    courseId: string
+    code: string
+  }
+
+  export type ViolationTypeCountOrderByAggregateInput = {
+    id?: SortOrder
+    courseId?: SortOrder
+    code?: SortOrder
+    name?: SortOrder
+    description?: SortOrder
+    severity?: SortOrder
+    category?: SortOrder
+    dismissalOnFirst?: SortOrder
+    defaultSanction?: SortOrder
+    sanctionMinDays?: SortOrder
+    sanctionMaxDays?: SortOrder
+    maxSanction?: SortOrder
+    escalationCount?: SortOrder
+    escalatesTo?: SortOrder
+    manualRef?: SortOrder
+    isActive?: SortOrder
+    order?: SortOrder
+    deletedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type ViolationTypeAvgOrderByAggregateInput = {
+    sanctionMinDays?: SortOrder
+    sanctionMaxDays?: SortOrder
+    escalationCount?: SortOrder
+    order?: SortOrder
+  }
+
+  export type ViolationTypeMaxOrderByAggregateInput = {
+    id?: SortOrder
+    courseId?: SortOrder
+    code?: SortOrder
+    name?: SortOrder
+    description?: SortOrder
+    severity?: SortOrder
+    category?: SortOrder
+    dismissalOnFirst?: SortOrder
+    defaultSanction?: SortOrder
+    sanctionMinDays?: SortOrder
+    sanctionMaxDays?: SortOrder
+    maxSanction?: SortOrder
+    escalationCount?: SortOrder
+    escalatesTo?: SortOrder
+    manualRef?: SortOrder
+    isActive?: SortOrder
+    order?: SortOrder
+    deletedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type ViolationTypeMinOrderByAggregateInput = {
+    id?: SortOrder
+    courseId?: SortOrder
+    code?: SortOrder
+    name?: SortOrder
+    description?: SortOrder
+    severity?: SortOrder
+    category?: SortOrder
+    dismissalOnFirst?: SortOrder
+    defaultSanction?: SortOrder
+    sanctionMinDays?: SortOrder
+    sanctionMaxDays?: SortOrder
+    maxSanction?: SortOrder
+    escalationCount?: SortOrder
+    escalatesTo?: SortOrder
+    manualRef?: SortOrder
+    isActive?: SortOrder
+    order?: SortOrder
+    deletedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type ViolationTypeSumOrderByAggregateInput = {
+    sanctionMinDays?: SortOrder
+    sanctionMaxDays?: SortOrder
+    escalationCount?: SortOrder
+    order?: SortOrder
+  }
+
+  export type ViolationTypeRelationFilter = {
+    is?: ViolationTypeWhereInput
+    isNot?: ViolationTypeWhereInput
+  }
+
+  export type ViolationCourseIdCaseNoCompoundUniqueInput = {
+    courseId: string
+    caseNo: string
+  }
+
+  export type ViolationCountOrderByAggregateInput = {
+    id?: SortOrder
+    courseId?: SortOrder
+    caseNo?: SortOrder
+    studentId?: SortOrder
+    violationTypeId?: SortOrder
+    severity?: SortOrder
+    incidentDate?: SortOrder
+    location?: SortOrder
+    description?: SortOrder
+    reportedBy?: SortOrder
+    reportedByRole?: SortOrder
+    status?: SortOrder
+    noticeToExplainAt?: SortOrder
+    explanationReceivedAt?: SortOrder
+    hearingDate?: SortOrder
+    hearingResult?: SortOrder
+    sanction?: SortOrder
+    sanctionDays?: SortOrder
+    sanctionStart?: SortOrder
+    sanctionEnd?: SortOrder
+    sanctionCompleted?: SortOrder
+    decidedBy?: SortOrder
+    decidedAt?: SortOrder
+    appealed?: SortOrder
+    appealResult?: SortOrder
+    resolvedAt?: SortOrder
+    recordedBy?: SortOrder
+    deletedAt?: SortOrder
+    deletedBy?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type ViolationAvgOrderByAggregateInput = {
+    sanctionDays?: SortOrder
+  }
+
+  export type ViolationMaxOrderByAggregateInput = {
+    id?: SortOrder
+    courseId?: SortOrder
+    caseNo?: SortOrder
+    studentId?: SortOrder
+    violationTypeId?: SortOrder
+    severity?: SortOrder
+    incidentDate?: SortOrder
+    location?: SortOrder
+    description?: SortOrder
+    reportedBy?: SortOrder
+    reportedByRole?: SortOrder
+    status?: SortOrder
+    noticeToExplainAt?: SortOrder
+    explanationReceivedAt?: SortOrder
+    hearingDate?: SortOrder
+    hearingResult?: SortOrder
+    sanction?: SortOrder
+    sanctionDays?: SortOrder
+    sanctionStart?: SortOrder
+    sanctionEnd?: SortOrder
+    sanctionCompleted?: SortOrder
+    decidedBy?: SortOrder
+    decidedAt?: SortOrder
+    appealed?: SortOrder
+    appealResult?: SortOrder
+    resolvedAt?: SortOrder
+    recordedBy?: SortOrder
+    deletedAt?: SortOrder
+    deletedBy?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type ViolationMinOrderByAggregateInput = {
+    id?: SortOrder
+    courseId?: SortOrder
+    caseNo?: SortOrder
+    studentId?: SortOrder
+    violationTypeId?: SortOrder
+    severity?: SortOrder
+    incidentDate?: SortOrder
+    location?: SortOrder
+    description?: SortOrder
+    reportedBy?: SortOrder
+    reportedByRole?: SortOrder
+    status?: SortOrder
+    noticeToExplainAt?: SortOrder
+    explanationReceivedAt?: SortOrder
+    hearingDate?: SortOrder
+    hearingResult?: SortOrder
+    sanction?: SortOrder
+    sanctionDays?: SortOrder
+    sanctionStart?: SortOrder
+    sanctionEnd?: SortOrder
+    sanctionCompleted?: SortOrder
+    decidedBy?: SortOrder
+    decidedAt?: SortOrder
+    appealed?: SortOrder
+    appealResult?: SortOrder
+    resolvedAt?: SortOrder
+    recordedBy?: SortOrder
+    deletedAt?: SortOrder
+    deletedBy?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type ViolationSumOrderByAggregateInput = {
+    sanctionDays?: SortOrder
+  }
+
+  export type ViolationRelationFilter = {
+    is?: ViolationWhereInput
+    isNot?: ViolationWhereInput
+  }
+
+  export type ParentContactCountOrderByAggregateInput = {
+    id?: SortOrder
+    violationId?: SortOrder
+    contactedAt?: SortOrder
+    method?: SortOrder
+    contactedBy?: SortOrder
+    contactPerson?: SortOrder
+    relationship?: SortOrder
+    attendance?: SortOrder
+    attemptNo?: SortOrder
+    signatureUrl?: SortOrder
+    recordedBy?: SortOrder
+    deletedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type ParentContactAvgOrderByAggregateInput = {
+    attemptNo?: SortOrder
+  }
+
+  export type ParentContactMaxOrderByAggregateInput = {
+    id?: SortOrder
+    violationId?: SortOrder
+    contactedAt?: SortOrder
+    method?: SortOrder
+    contactedBy?: SortOrder
+    contactPerson?: SortOrder
+    relationship?: SortOrder
+    attendance?: SortOrder
+    attemptNo?: SortOrder
+    signatureUrl?: SortOrder
+    recordedBy?: SortOrder
+    deletedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type ParentContactMinOrderByAggregateInput = {
+    id?: SortOrder
+    violationId?: SortOrder
+    contactedAt?: SortOrder
+    method?: SortOrder
+    contactedBy?: SortOrder
+    contactPerson?: SortOrder
+    relationship?: SortOrder
+    attendance?: SortOrder
+    attemptNo?: SortOrder
+    signatureUrl?: SortOrder
+    recordedBy?: SortOrder
+    deletedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type ParentContactSumOrderByAggregateInput = {
+    attemptNo?: SortOrder
+  }
+
+  export type ViolationNoteCountOrderByAggregateInput = {
+    id?: SortOrder
+    violationId?: SortOrder
+    body?: SortOrder
+    confidential?: SortOrder
+    authorId?: SortOrder
+    deletedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type ViolationNoteMaxOrderByAggregateInput = {
+    id?: SortOrder
+    violationId?: SortOrder
+    body?: SortOrder
+    confidential?: SortOrder
+    authorId?: SortOrder
+    deletedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type ViolationNoteMinOrderByAggregateInput = {
+    id?: SortOrder
+    violationId?: SortOrder
+    body?: SortOrder
+    confidential?: SortOrder
+    authorId?: SortOrder
+    deletedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type LostFoundItemCountOrderByAggregateInput = {
+    id?: SortOrder
+    courseId?: SortOrder
+    itemName?: SortOrder
+    description?: SortOrder
+    category?: SortOrder
+    dateFound?: SortOrder
+    locationFound?: SortOrder
+    foundBy?: SortOrder
+    status?: SortOrder
+    claimerName?: SortOrder
+    claimedAt?: SortOrder
+    photoUrl?: SortOrder
+    recordedBy?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type LostFoundItemMaxOrderByAggregateInput = {
+    id?: SortOrder
+    courseId?: SortOrder
+    itemName?: SortOrder
+    description?: SortOrder
+    category?: SortOrder
+    dateFound?: SortOrder
+    locationFound?: SortOrder
+    foundBy?: SortOrder
+    status?: SortOrder
+    claimerName?: SortOrder
+    claimedAt?: SortOrder
+    photoUrl?: SortOrder
+    recordedBy?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type LostFoundItemMinOrderByAggregateInput = {
+    id?: SortOrder
+    courseId?: SortOrder
+    itemName?: SortOrder
+    description?: SortOrder
+    category?: SortOrder
+    dateFound?: SortOrder
+    locationFound?: SortOrder
+    foundBy?: SortOrder
+    status?: SortOrder
+    claimerName?: SortOrder
+    claimedAt?: SortOrder
+    photoUrl?: SortOrder
+    recordedBy?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
   export type ConversationParticipantCreateNestedManyWithoutConversationInput = {
     create?: XOR<ConversationParticipantCreateWithoutConversationInput, ConversationParticipantUncheckedCreateWithoutConversationInput> | ConversationParticipantCreateWithoutConversationInput[] | ConversationParticipantUncheckedCreateWithoutConversationInput[]
     connectOrCreate?: ConversationParticipantCreateOrConnectWithoutConversationInput | ConversationParticipantCreateOrConnectWithoutConversationInput[]
@@ -74135,6 +82918,34 @@ export namespace Prisma {
     connect?: SubmissionWhereUniqueInput | SubmissionWhereUniqueInput[]
   }
 
+  export type ViolationCreateNestedManyWithoutRecordedByUserInput = {
+    create?: XOR<ViolationCreateWithoutRecordedByUserInput, ViolationUncheckedCreateWithoutRecordedByUserInput> | ViolationCreateWithoutRecordedByUserInput[] | ViolationUncheckedCreateWithoutRecordedByUserInput[]
+    connectOrCreate?: ViolationCreateOrConnectWithoutRecordedByUserInput | ViolationCreateOrConnectWithoutRecordedByUserInput[]
+    createMany?: ViolationCreateManyRecordedByUserInputEnvelope
+    connect?: ViolationWhereUniqueInput | ViolationWhereUniqueInput[]
+  }
+
+  export type ViolationNoteCreateNestedManyWithoutAuthorInput = {
+    create?: XOR<ViolationNoteCreateWithoutAuthorInput, ViolationNoteUncheckedCreateWithoutAuthorInput> | ViolationNoteCreateWithoutAuthorInput[] | ViolationNoteUncheckedCreateWithoutAuthorInput[]
+    connectOrCreate?: ViolationNoteCreateOrConnectWithoutAuthorInput | ViolationNoteCreateOrConnectWithoutAuthorInput[]
+    createMany?: ViolationNoteCreateManyAuthorInputEnvelope
+    connect?: ViolationNoteWhereUniqueInput | ViolationNoteWhereUniqueInput[]
+  }
+
+  export type ParentContactCreateNestedManyWithoutRecordedByUserInput = {
+    create?: XOR<ParentContactCreateWithoutRecordedByUserInput, ParentContactUncheckedCreateWithoutRecordedByUserInput> | ParentContactCreateWithoutRecordedByUserInput[] | ParentContactUncheckedCreateWithoutRecordedByUserInput[]
+    connectOrCreate?: ParentContactCreateOrConnectWithoutRecordedByUserInput | ParentContactCreateOrConnectWithoutRecordedByUserInput[]
+    createMany?: ParentContactCreateManyRecordedByUserInputEnvelope
+    connect?: ParentContactWhereUniqueInput | ParentContactWhereUniqueInput[]
+  }
+
+  export type LostFoundItemCreateNestedManyWithoutRecordedByUserInput = {
+    create?: XOR<LostFoundItemCreateWithoutRecordedByUserInput, LostFoundItemUncheckedCreateWithoutRecordedByUserInput> | LostFoundItemCreateWithoutRecordedByUserInput[] | LostFoundItemUncheckedCreateWithoutRecordedByUserInput[]
+    connectOrCreate?: LostFoundItemCreateOrConnectWithoutRecordedByUserInput | LostFoundItemCreateOrConnectWithoutRecordedByUserInput[]
+    createMany?: LostFoundItemCreateManyRecordedByUserInputEnvelope
+    connect?: LostFoundItemWhereUniqueInput | LostFoundItemWhereUniqueInput[]
+  }
+
   export type AccountUncheckedCreateNestedManyWithoutUserInput = {
     create?: XOR<AccountCreateWithoutUserInput, AccountUncheckedCreateWithoutUserInput> | AccountCreateWithoutUserInput[] | AccountUncheckedCreateWithoutUserInput[]
     connectOrCreate?: AccountCreateOrConnectWithoutUserInput | AccountCreateOrConnectWithoutUserInput[]
@@ -74273,6 +83084,34 @@ export namespace Prisma {
     connectOrCreate?: SubmissionCreateOrConnectWithoutUserInput | SubmissionCreateOrConnectWithoutUserInput[]
     createMany?: SubmissionCreateManyUserInputEnvelope
     connect?: SubmissionWhereUniqueInput | SubmissionWhereUniqueInput[]
+  }
+
+  export type ViolationUncheckedCreateNestedManyWithoutRecordedByUserInput = {
+    create?: XOR<ViolationCreateWithoutRecordedByUserInput, ViolationUncheckedCreateWithoutRecordedByUserInput> | ViolationCreateWithoutRecordedByUserInput[] | ViolationUncheckedCreateWithoutRecordedByUserInput[]
+    connectOrCreate?: ViolationCreateOrConnectWithoutRecordedByUserInput | ViolationCreateOrConnectWithoutRecordedByUserInput[]
+    createMany?: ViolationCreateManyRecordedByUserInputEnvelope
+    connect?: ViolationWhereUniqueInput | ViolationWhereUniqueInput[]
+  }
+
+  export type ViolationNoteUncheckedCreateNestedManyWithoutAuthorInput = {
+    create?: XOR<ViolationNoteCreateWithoutAuthorInput, ViolationNoteUncheckedCreateWithoutAuthorInput> | ViolationNoteCreateWithoutAuthorInput[] | ViolationNoteUncheckedCreateWithoutAuthorInput[]
+    connectOrCreate?: ViolationNoteCreateOrConnectWithoutAuthorInput | ViolationNoteCreateOrConnectWithoutAuthorInput[]
+    createMany?: ViolationNoteCreateManyAuthorInputEnvelope
+    connect?: ViolationNoteWhereUniqueInput | ViolationNoteWhereUniqueInput[]
+  }
+
+  export type ParentContactUncheckedCreateNestedManyWithoutRecordedByUserInput = {
+    create?: XOR<ParentContactCreateWithoutRecordedByUserInput, ParentContactUncheckedCreateWithoutRecordedByUserInput> | ParentContactCreateWithoutRecordedByUserInput[] | ParentContactUncheckedCreateWithoutRecordedByUserInput[]
+    connectOrCreate?: ParentContactCreateOrConnectWithoutRecordedByUserInput | ParentContactCreateOrConnectWithoutRecordedByUserInput[]
+    createMany?: ParentContactCreateManyRecordedByUserInputEnvelope
+    connect?: ParentContactWhereUniqueInput | ParentContactWhereUniqueInput[]
+  }
+
+  export type LostFoundItemUncheckedCreateNestedManyWithoutRecordedByUserInput = {
+    create?: XOR<LostFoundItemCreateWithoutRecordedByUserInput, LostFoundItemUncheckedCreateWithoutRecordedByUserInput> | LostFoundItemCreateWithoutRecordedByUserInput[] | LostFoundItemUncheckedCreateWithoutRecordedByUserInput[]
+    connectOrCreate?: LostFoundItemCreateOrConnectWithoutRecordedByUserInput | LostFoundItemCreateOrConnectWithoutRecordedByUserInput[]
+    createMany?: LostFoundItemCreateManyRecordedByUserInputEnvelope
+    connect?: LostFoundItemWhereUniqueInput | LostFoundItemWhereUniqueInput[]
   }
 
   export type EnumRoleFieldUpdateOperationsInput = {
@@ -74563,6 +83402,62 @@ export namespace Prisma {
     deleteMany?: SubmissionScalarWhereInput | SubmissionScalarWhereInput[]
   }
 
+  export type ViolationUpdateManyWithoutRecordedByUserNestedInput = {
+    create?: XOR<ViolationCreateWithoutRecordedByUserInput, ViolationUncheckedCreateWithoutRecordedByUserInput> | ViolationCreateWithoutRecordedByUserInput[] | ViolationUncheckedCreateWithoutRecordedByUserInput[]
+    connectOrCreate?: ViolationCreateOrConnectWithoutRecordedByUserInput | ViolationCreateOrConnectWithoutRecordedByUserInput[]
+    upsert?: ViolationUpsertWithWhereUniqueWithoutRecordedByUserInput | ViolationUpsertWithWhereUniqueWithoutRecordedByUserInput[]
+    createMany?: ViolationCreateManyRecordedByUserInputEnvelope
+    set?: ViolationWhereUniqueInput | ViolationWhereUniqueInput[]
+    disconnect?: ViolationWhereUniqueInput | ViolationWhereUniqueInput[]
+    delete?: ViolationWhereUniqueInput | ViolationWhereUniqueInput[]
+    connect?: ViolationWhereUniqueInput | ViolationWhereUniqueInput[]
+    update?: ViolationUpdateWithWhereUniqueWithoutRecordedByUserInput | ViolationUpdateWithWhereUniqueWithoutRecordedByUserInput[]
+    updateMany?: ViolationUpdateManyWithWhereWithoutRecordedByUserInput | ViolationUpdateManyWithWhereWithoutRecordedByUserInput[]
+    deleteMany?: ViolationScalarWhereInput | ViolationScalarWhereInput[]
+  }
+
+  export type ViolationNoteUpdateManyWithoutAuthorNestedInput = {
+    create?: XOR<ViolationNoteCreateWithoutAuthorInput, ViolationNoteUncheckedCreateWithoutAuthorInput> | ViolationNoteCreateWithoutAuthorInput[] | ViolationNoteUncheckedCreateWithoutAuthorInput[]
+    connectOrCreate?: ViolationNoteCreateOrConnectWithoutAuthorInput | ViolationNoteCreateOrConnectWithoutAuthorInput[]
+    upsert?: ViolationNoteUpsertWithWhereUniqueWithoutAuthorInput | ViolationNoteUpsertWithWhereUniqueWithoutAuthorInput[]
+    createMany?: ViolationNoteCreateManyAuthorInputEnvelope
+    set?: ViolationNoteWhereUniqueInput | ViolationNoteWhereUniqueInput[]
+    disconnect?: ViolationNoteWhereUniqueInput | ViolationNoteWhereUniqueInput[]
+    delete?: ViolationNoteWhereUniqueInput | ViolationNoteWhereUniqueInput[]
+    connect?: ViolationNoteWhereUniqueInput | ViolationNoteWhereUniqueInput[]
+    update?: ViolationNoteUpdateWithWhereUniqueWithoutAuthorInput | ViolationNoteUpdateWithWhereUniqueWithoutAuthorInput[]
+    updateMany?: ViolationNoteUpdateManyWithWhereWithoutAuthorInput | ViolationNoteUpdateManyWithWhereWithoutAuthorInput[]
+    deleteMany?: ViolationNoteScalarWhereInput | ViolationNoteScalarWhereInput[]
+  }
+
+  export type ParentContactUpdateManyWithoutRecordedByUserNestedInput = {
+    create?: XOR<ParentContactCreateWithoutRecordedByUserInput, ParentContactUncheckedCreateWithoutRecordedByUserInput> | ParentContactCreateWithoutRecordedByUserInput[] | ParentContactUncheckedCreateWithoutRecordedByUserInput[]
+    connectOrCreate?: ParentContactCreateOrConnectWithoutRecordedByUserInput | ParentContactCreateOrConnectWithoutRecordedByUserInput[]
+    upsert?: ParentContactUpsertWithWhereUniqueWithoutRecordedByUserInput | ParentContactUpsertWithWhereUniqueWithoutRecordedByUserInput[]
+    createMany?: ParentContactCreateManyRecordedByUserInputEnvelope
+    set?: ParentContactWhereUniqueInput | ParentContactWhereUniqueInput[]
+    disconnect?: ParentContactWhereUniqueInput | ParentContactWhereUniqueInput[]
+    delete?: ParentContactWhereUniqueInput | ParentContactWhereUniqueInput[]
+    connect?: ParentContactWhereUniqueInput | ParentContactWhereUniqueInput[]
+    update?: ParentContactUpdateWithWhereUniqueWithoutRecordedByUserInput | ParentContactUpdateWithWhereUniqueWithoutRecordedByUserInput[]
+    updateMany?: ParentContactUpdateManyWithWhereWithoutRecordedByUserInput | ParentContactUpdateManyWithWhereWithoutRecordedByUserInput[]
+    deleteMany?: ParentContactScalarWhereInput | ParentContactScalarWhereInput[]
+  }
+
+  export type LostFoundItemUpdateManyWithoutRecordedByUserNestedInput = {
+    create?: XOR<LostFoundItemCreateWithoutRecordedByUserInput, LostFoundItemUncheckedCreateWithoutRecordedByUserInput> | LostFoundItemCreateWithoutRecordedByUserInput[] | LostFoundItemUncheckedCreateWithoutRecordedByUserInput[]
+    connectOrCreate?: LostFoundItemCreateOrConnectWithoutRecordedByUserInput | LostFoundItemCreateOrConnectWithoutRecordedByUserInput[]
+    upsert?: LostFoundItemUpsertWithWhereUniqueWithoutRecordedByUserInput | LostFoundItemUpsertWithWhereUniqueWithoutRecordedByUserInput[]
+    createMany?: LostFoundItemCreateManyRecordedByUserInputEnvelope
+    set?: LostFoundItemWhereUniqueInput | LostFoundItemWhereUniqueInput[]
+    disconnect?: LostFoundItemWhereUniqueInput | LostFoundItemWhereUniqueInput[]
+    delete?: LostFoundItemWhereUniqueInput | LostFoundItemWhereUniqueInput[]
+    connect?: LostFoundItemWhereUniqueInput | LostFoundItemWhereUniqueInput[]
+    update?: LostFoundItemUpdateWithWhereUniqueWithoutRecordedByUserInput | LostFoundItemUpdateWithWhereUniqueWithoutRecordedByUserInput[]
+    updateMany?: LostFoundItemUpdateManyWithWhereWithoutRecordedByUserInput | LostFoundItemUpdateManyWithWhereWithoutRecordedByUserInput[]
+    deleteMany?: LostFoundItemScalarWhereInput | LostFoundItemScalarWhereInput[]
+  }
+
   export type AccountUncheckedUpdateManyWithoutUserNestedInput = {
     create?: XOR<AccountCreateWithoutUserInput, AccountUncheckedCreateWithoutUserInput> | AccountCreateWithoutUserInput[] | AccountUncheckedCreateWithoutUserInput[]
     connectOrCreate?: AccountCreateOrConnectWithoutUserInput | AccountCreateOrConnectWithoutUserInput[]
@@ -74843,6 +83738,62 @@ export namespace Prisma {
     deleteMany?: SubmissionScalarWhereInput | SubmissionScalarWhereInput[]
   }
 
+  export type ViolationUncheckedUpdateManyWithoutRecordedByUserNestedInput = {
+    create?: XOR<ViolationCreateWithoutRecordedByUserInput, ViolationUncheckedCreateWithoutRecordedByUserInput> | ViolationCreateWithoutRecordedByUserInput[] | ViolationUncheckedCreateWithoutRecordedByUserInput[]
+    connectOrCreate?: ViolationCreateOrConnectWithoutRecordedByUserInput | ViolationCreateOrConnectWithoutRecordedByUserInput[]
+    upsert?: ViolationUpsertWithWhereUniqueWithoutRecordedByUserInput | ViolationUpsertWithWhereUniqueWithoutRecordedByUserInput[]
+    createMany?: ViolationCreateManyRecordedByUserInputEnvelope
+    set?: ViolationWhereUniqueInput | ViolationWhereUniqueInput[]
+    disconnect?: ViolationWhereUniqueInput | ViolationWhereUniqueInput[]
+    delete?: ViolationWhereUniqueInput | ViolationWhereUniqueInput[]
+    connect?: ViolationWhereUniqueInput | ViolationWhereUniqueInput[]
+    update?: ViolationUpdateWithWhereUniqueWithoutRecordedByUserInput | ViolationUpdateWithWhereUniqueWithoutRecordedByUserInput[]
+    updateMany?: ViolationUpdateManyWithWhereWithoutRecordedByUserInput | ViolationUpdateManyWithWhereWithoutRecordedByUserInput[]
+    deleteMany?: ViolationScalarWhereInput | ViolationScalarWhereInput[]
+  }
+
+  export type ViolationNoteUncheckedUpdateManyWithoutAuthorNestedInput = {
+    create?: XOR<ViolationNoteCreateWithoutAuthorInput, ViolationNoteUncheckedCreateWithoutAuthorInput> | ViolationNoteCreateWithoutAuthorInput[] | ViolationNoteUncheckedCreateWithoutAuthorInput[]
+    connectOrCreate?: ViolationNoteCreateOrConnectWithoutAuthorInput | ViolationNoteCreateOrConnectWithoutAuthorInput[]
+    upsert?: ViolationNoteUpsertWithWhereUniqueWithoutAuthorInput | ViolationNoteUpsertWithWhereUniqueWithoutAuthorInput[]
+    createMany?: ViolationNoteCreateManyAuthorInputEnvelope
+    set?: ViolationNoteWhereUniqueInput | ViolationNoteWhereUniqueInput[]
+    disconnect?: ViolationNoteWhereUniqueInput | ViolationNoteWhereUniqueInput[]
+    delete?: ViolationNoteWhereUniqueInput | ViolationNoteWhereUniqueInput[]
+    connect?: ViolationNoteWhereUniqueInput | ViolationNoteWhereUniqueInput[]
+    update?: ViolationNoteUpdateWithWhereUniqueWithoutAuthorInput | ViolationNoteUpdateWithWhereUniqueWithoutAuthorInput[]
+    updateMany?: ViolationNoteUpdateManyWithWhereWithoutAuthorInput | ViolationNoteUpdateManyWithWhereWithoutAuthorInput[]
+    deleteMany?: ViolationNoteScalarWhereInput | ViolationNoteScalarWhereInput[]
+  }
+
+  export type ParentContactUncheckedUpdateManyWithoutRecordedByUserNestedInput = {
+    create?: XOR<ParentContactCreateWithoutRecordedByUserInput, ParentContactUncheckedCreateWithoutRecordedByUserInput> | ParentContactCreateWithoutRecordedByUserInput[] | ParentContactUncheckedCreateWithoutRecordedByUserInput[]
+    connectOrCreate?: ParentContactCreateOrConnectWithoutRecordedByUserInput | ParentContactCreateOrConnectWithoutRecordedByUserInput[]
+    upsert?: ParentContactUpsertWithWhereUniqueWithoutRecordedByUserInput | ParentContactUpsertWithWhereUniqueWithoutRecordedByUserInput[]
+    createMany?: ParentContactCreateManyRecordedByUserInputEnvelope
+    set?: ParentContactWhereUniqueInput | ParentContactWhereUniqueInput[]
+    disconnect?: ParentContactWhereUniqueInput | ParentContactWhereUniqueInput[]
+    delete?: ParentContactWhereUniqueInput | ParentContactWhereUniqueInput[]
+    connect?: ParentContactWhereUniqueInput | ParentContactWhereUniqueInput[]
+    update?: ParentContactUpdateWithWhereUniqueWithoutRecordedByUserInput | ParentContactUpdateWithWhereUniqueWithoutRecordedByUserInput[]
+    updateMany?: ParentContactUpdateManyWithWhereWithoutRecordedByUserInput | ParentContactUpdateManyWithWhereWithoutRecordedByUserInput[]
+    deleteMany?: ParentContactScalarWhereInput | ParentContactScalarWhereInput[]
+  }
+
+  export type LostFoundItemUncheckedUpdateManyWithoutRecordedByUserNestedInput = {
+    create?: XOR<LostFoundItemCreateWithoutRecordedByUserInput, LostFoundItemUncheckedCreateWithoutRecordedByUserInput> | LostFoundItemCreateWithoutRecordedByUserInput[] | LostFoundItemUncheckedCreateWithoutRecordedByUserInput[]
+    connectOrCreate?: LostFoundItemCreateOrConnectWithoutRecordedByUserInput | LostFoundItemCreateOrConnectWithoutRecordedByUserInput[]
+    upsert?: LostFoundItemUpsertWithWhereUniqueWithoutRecordedByUserInput | LostFoundItemUpsertWithWhereUniqueWithoutRecordedByUserInput[]
+    createMany?: LostFoundItemCreateManyRecordedByUserInputEnvelope
+    set?: LostFoundItemWhereUniqueInput | LostFoundItemWhereUniqueInput[]
+    disconnect?: LostFoundItemWhereUniqueInput | LostFoundItemWhereUniqueInput[]
+    delete?: LostFoundItemWhereUniqueInput | LostFoundItemWhereUniqueInput[]
+    connect?: LostFoundItemWhereUniqueInput | LostFoundItemWhereUniqueInput[]
+    update?: LostFoundItemUpdateWithWhereUniqueWithoutRecordedByUserInput | LostFoundItemUpdateWithWhereUniqueWithoutRecordedByUserInput[]
+    updateMany?: LostFoundItemUpdateManyWithWhereWithoutRecordedByUserInput | LostFoundItemUpdateManyWithWhereWithoutRecordedByUserInput[]
+    deleteMany?: LostFoundItemScalarWhereInput | LostFoundItemScalarWhereInput[]
+  }
+
   export type UserCreateNestedOneWithoutResetTokensInput = {
     create?: XOR<UserCreateWithoutResetTokensInput, UserUncheckedCreateWithoutResetTokensInput>
     connectOrCreate?: UserCreateOrConnectWithoutResetTokensInput
@@ -74997,6 +83948,27 @@ export namespace Prisma {
     connect?: LibraryBorrowRecordWhereUniqueInput | LibraryBorrowRecordWhereUniqueInput[]
   }
 
+  export type ViolationTypeCreateNestedManyWithoutCourseInput = {
+    create?: XOR<ViolationTypeCreateWithoutCourseInput, ViolationTypeUncheckedCreateWithoutCourseInput> | ViolationTypeCreateWithoutCourseInput[] | ViolationTypeUncheckedCreateWithoutCourseInput[]
+    connectOrCreate?: ViolationTypeCreateOrConnectWithoutCourseInput | ViolationTypeCreateOrConnectWithoutCourseInput[]
+    createMany?: ViolationTypeCreateManyCourseInputEnvelope
+    connect?: ViolationTypeWhereUniqueInput | ViolationTypeWhereUniqueInput[]
+  }
+
+  export type ViolationCreateNestedManyWithoutCourseInput = {
+    create?: XOR<ViolationCreateWithoutCourseInput, ViolationUncheckedCreateWithoutCourseInput> | ViolationCreateWithoutCourseInput[] | ViolationUncheckedCreateWithoutCourseInput[]
+    connectOrCreate?: ViolationCreateOrConnectWithoutCourseInput | ViolationCreateOrConnectWithoutCourseInput[]
+    createMany?: ViolationCreateManyCourseInputEnvelope
+    connect?: ViolationWhereUniqueInput | ViolationWhereUniqueInput[]
+  }
+
+  export type LostFoundItemCreateNestedManyWithoutCourseInput = {
+    create?: XOR<LostFoundItemCreateWithoutCourseInput, LostFoundItemUncheckedCreateWithoutCourseInput> | LostFoundItemCreateWithoutCourseInput[] | LostFoundItemUncheckedCreateWithoutCourseInput[]
+    connectOrCreate?: LostFoundItemCreateOrConnectWithoutCourseInput | LostFoundItemCreateOrConnectWithoutCourseInput[]
+    createMany?: LostFoundItemCreateManyCourseInputEnvelope
+    connect?: LostFoundItemWhereUniqueInput | LostFoundItemWhereUniqueInput[]
+  }
+
   export type AnnouncementUncheckedCreateNestedManyWithoutCourseInput = {
     create?: XOR<AnnouncementCreateWithoutCourseInput, AnnouncementUncheckedCreateWithoutCourseInput> | AnnouncementCreateWithoutCourseInput[] | AnnouncementUncheckedCreateWithoutCourseInput[]
     connectOrCreate?: AnnouncementCreateOrConnectWithoutCourseInput | AnnouncementCreateOrConnectWithoutCourseInput[]
@@ -75135,6 +84107,27 @@ export namespace Prisma {
     connectOrCreate?: LibraryBorrowRecordCreateOrConnectWithoutCourseInput | LibraryBorrowRecordCreateOrConnectWithoutCourseInput[]
     createMany?: LibraryBorrowRecordCreateManyCourseInputEnvelope
     connect?: LibraryBorrowRecordWhereUniqueInput | LibraryBorrowRecordWhereUniqueInput[]
+  }
+
+  export type ViolationTypeUncheckedCreateNestedManyWithoutCourseInput = {
+    create?: XOR<ViolationTypeCreateWithoutCourseInput, ViolationTypeUncheckedCreateWithoutCourseInput> | ViolationTypeCreateWithoutCourseInput[] | ViolationTypeUncheckedCreateWithoutCourseInput[]
+    connectOrCreate?: ViolationTypeCreateOrConnectWithoutCourseInput | ViolationTypeCreateOrConnectWithoutCourseInput[]
+    createMany?: ViolationTypeCreateManyCourseInputEnvelope
+    connect?: ViolationTypeWhereUniqueInput | ViolationTypeWhereUniqueInput[]
+  }
+
+  export type ViolationUncheckedCreateNestedManyWithoutCourseInput = {
+    create?: XOR<ViolationCreateWithoutCourseInput, ViolationUncheckedCreateWithoutCourseInput> | ViolationCreateWithoutCourseInput[] | ViolationUncheckedCreateWithoutCourseInput[]
+    connectOrCreate?: ViolationCreateOrConnectWithoutCourseInput | ViolationCreateOrConnectWithoutCourseInput[]
+    createMany?: ViolationCreateManyCourseInputEnvelope
+    connect?: ViolationWhereUniqueInput | ViolationWhereUniqueInput[]
+  }
+
+  export type LostFoundItemUncheckedCreateNestedManyWithoutCourseInput = {
+    create?: XOR<LostFoundItemCreateWithoutCourseInput, LostFoundItemUncheckedCreateWithoutCourseInput> | LostFoundItemCreateWithoutCourseInput[] | LostFoundItemUncheckedCreateWithoutCourseInput[]
+    connectOrCreate?: LostFoundItemCreateOrConnectWithoutCourseInput | LostFoundItemCreateOrConnectWithoutCourseInput[]
+    createMany?: LostFoundItemCreateManyCourseInputEnvelope
+    connect?: LostFoundItemWhereUniqueInput | LostFoundItemWhereUniqueInput[]
   }
 
   export type EnumCourseStatusFieldUpdateOperationsInput = {
@@ -75421,6 +84414,48 @@ export namespace Prisma {
     deleteMany?: LibraryBorrowRecordScalarWhereInput | LibraryBorrowRecordScalarWhereInput[]
   }
 
+  export type ViolationTypeUpdateManyWithoutCourseNestedInput = {
+    create?: XOR<ViolationTypeCreateWithoutCourseInput, ViolationTypeUncheckedCreateWithoutCourseInput> | ViolationTypeCreateWithoutCourseInput[] | ViolationTypeUncheckedCreateWithoutCourseInput[]
+    connectOrCreate?: ViolationTypeCreateOrConnectWithoutCourseInput | ViolationTypeCreateOrConnectWithoutCourseInput[]
+    upsert?: ViolationTypeUpsertWithWhereUniqueWithoutCourseInput | ViolationTypeUpsertWithWhereUniqueWithoutCourseInput[]
+    createMany?: ViolationTypeCreateManyCourseInputEnvelope
+    set?: ViolationTypeWhereUniqueInput | ViolationTypeWhereUniqueInput[]
+    disconnect?: ViolationTypeWhereUniqueInput | ViolationTypeWhereUniqueInput[]
+    delete?: ViolationTypeWhereUniqueInput | ViolationTypeWhereUniqueInput[]
+    connect?: ViolationTypeWhereUniqueInput | ViolationTypeWhereUniqueInput[]
+    update?: ViolationTypeUpdateWithWhereUniqueWithoutCourseInput | ViolationTypeUpdateWithWhereUniqueWithoutCourseInput[]
+    updateMany?: ViolationTypeUpdateManyWithWhereWithoutCourseInput | ViolationTypeUpdateManyWithWhereWithoutCourseInput[]
+    deleteMany?: ViolationTypeScalarWhereInput | ViolationTypeScalarWhereInput[]
+  }
+
+  export type ViolationUpdateManyWithoutCourseNestedInput = {
+    create?: XOR<ViolationCreateWithoutCourseInput, ViolationUncheckedCreateWithoutCourseInput> | ViolationCreateWithoutCourseInput[] | ViolationUncheckedCreateWithoutCourseInput[]
+    connectOrCreate?: ViolationCreateOrConnectWithoutCourseInput | ViolationCreateOrConnectWithoutCourseInput[]
+    upsert?: ViolationUpsertWithWhereUniqueWithoutCourseInput | ViolationUpsertWithWhereUniqueWithoutCourseInput[]
+    createMany?: ViolationCreateManyCourseInputEnvelope
+    set?: ViolationWhereUniqueInput | ViolationWhereUniqueInput[]
+    disconnect?: ViolationWhereUniqueInput | ViolationWhereUniqueInput[]
+    delete?: ViolationWhereUniqueInput | ViolationWhereUniqueInput[]
+    connect?: ViolationWhereUniqueInput | ViolationWhereUniqueInput[]
+    update?: ViolationUpdateWithWhereUniqueWithoutCourseInput | ViolationUpdateWithWhereUniqueWithoutCourseInput[]
+    updateMany?: ViolationUpdateManyWithWhereWithoutCourseInput | ViolationUpdateManyWithWhereWithoutCourseInput[]
+    deleteMany?: ViolationScalarWhereInput | ViolationScalarWhereInput[]
+  }
+
+  export type LostFoundItemUpdateManyWithoutCourseNestedInput = {
+    create?: XOR<LostFoundItemCreateWithoutCourseInput, LostFoundItemUncheckedCreateWithoutCourseInput> | LostFoundItemCreateWithoutCourseInput[] | LostFoundItemUncheckedCreateWithoutCourseInput[]
+    connectOrCreate?: LostFoundItemCreateOrConnectWithoutCourseInput | LostFoundItemCreateOrConnectWithoutCourseInput[]
+    upsert?: LostFoundItemUpsertWithWhereUniqueWithoutCourseInput | LostFoundItemUpsertWithWhereUniqueWithoutCourseInput[]
+    createMany?: LostFoundItemCreateManyCourseInputEnvelope
+    set?: LostFoundItemWhereUniqueInput | LostFoundItemWhereUniqueInput[]
+    disconnect?: LostFoundItemWhereUniqueInput | LostFoundItemWhereUniqueInput[]
+    delete?: LostFoundItemWhereUniqueInput | LostFoundItemWhereUniqueInput[]
+    connect?: LostFoundItemWhereUniqueInput | LostFoundItemWhereUniqueInput[]
+    update?: LostFoundItemUpdateWithWhereUniqueWithoutCourseInput | LostFoundItemUpdateWithWhereUniqueWithoutCourseInput[]
+    updateMany?: LostFoundItemUpdateManyWithWhereWithoutCourseInput | LostFoundItemUpdateManyWithWhereWithoutCourseInput[]
+    deleteMany?: LostFoundItemScalarWhereInput | LostFoundItemScalarWhereInput[]
+  }
+
   export type AnnouncementUncheckedUpdateManyWithoutCourseNestedInput = {
     create?: XOR<AnnouncementCreateWithoutCourseInput, AnnouncementUncheckedCreateWithoutCourseInput> | AnnouncementCreateWithoutCourseInput[] | AnnouncementUncheckedCreateWithoutCourseInput[]
     connectOrCreate?: AnnouncementCreateOrConnectWithoutCourseInput | AnnouncementCreateOrConnectWithoutCourseInput[]
@@ -75699,6 +84734,48 @@ export namespace Prisma {
     update?: LibraryBorrowRecordUpdateWithWhereUniqueWithoutCourseInput | LibraryBorrowRecordUpdateWithWhereUniqueWithoutCourseInput[]
     updateMany?: LibraryBorrowRecordUpdateManyWithWhereWithoutCourseInput | LibraryBorrowRecordUpdateManyWithWhereWithoutCourseInput[]
     deleteMany?: LibraryBorrowRecordScalarWhereInput | LibraryBorrowRecordScalarWhereInput[]
+  }
+
+  export type ViolationTypeUncheckedUpdateManyWithoutCourseNestedInput = {
+    create?: XOR<ViolationTypeCreateWithoutCourseInput, ViolationTypeUncheckedCreateWithoutCourseInput> | ViolationTypeCreateWithoutCourseInput[] | ViolationTypeUncheckedCreateWithoutCourseInput[]
+    connectOrCreate?: ViolationTypeCreateOrConnectWithoutCourseInput | ViolationTypeCreateOrConnectWithoutCourseInput[]
+    upsert?: ViolationTypeUpsertWithWhereUniqueWithoutCourseInput | ViolationTypeUpsertWithWhereUniqueWithoutCourseInput[]
+    createMany?: ViolationTypeCreateManyCourseInputEnvelope
+    set?: ViolationTypeWhereUniqueInput | ViolationTypeWhereUniqueInput[]
+    disconnect?: ViolationTypeWhereUniqueInput | ViolationTypeWhereUniqueInput[]
+    delete?: ViolationTypeWhereUniqueInput | ViolationTypeWhereUniqueInput[]
+    connect?: ViolationTypeWhereUniqueInput | ViolationTypeWhereUniqueInput[]
+    update?: ViolationTypeUpdateWithWhereUniqueWithoutCourseInput | ViolationTypeUpdateWithWhereUniqueWithoutCourseInput[]
+    updateMany?: ViolationTypeUpdateManyWithWhereWithoutCourseInput | ViolationTypeUpdateManyWithWhereWithoutCourseInput[]
+    deleteMany?: ViolationTypeScalarWhereInput | ViolationTypeScalarWhereInput[]
+  }
+
+  export type ViolationUncheckedUpdateManyWithoutCourseNestedInput = {
+    create?: XOR<ViolationCreateWithoutCourseInput, ViolationUncheckedCreateWithoutCourseInput> | ViolationCreateWithoutCourseInput[] | ViolationUncheckedCreateWithoutCourseInput[]
+    connectOrCreate?: ViolationCreateOrConnectWithoutCourseInput | ViolationCreateOrConnectWithoutCourseInput[]
+    upsert?: ViolationUpsertWithWhereUniqueWithoutCourseInput | ViolationUpsertWithWhereUniqueWithoutCourseInput[]
+    createMany?: ViolationCreateManyCourseInputEnvelope
+    set?: ViolationWhereUniqueInput | ViolationWhereUniqueInput[]
+    disconnect?: ViolationWhereUniqueInput | ViolationWhereUniqueInput[]
+    delete?: ViolationWhereUniqueInput | ViolationWhereUniqueInput[]
+    connect?: ViolationWhereUniqueInput | ViolationWhereUniqueInput[]
+    update?: ViolationUpdateWithWhereUniqueWithoutCourseInput | ViolationUpdateWithWhereUniqueWithoutCourseInput[]
+    updateMany?: ViolationUpdateManyWithWhereWithoutCourseInput | ViolationUpdateManyWithWhereWithoutCourseInput[]
+    deleteMany?: ViolationScalarWhereInput | ViolationScalarWhereInput[]
+  }
+
+  export type LostFoundItemUncheckedUpdateManyWithoutCourseNestedInput = {
+    create?: XOR<LostFoundItemCreateWithoutCourseInput, LostFoundItemUncheckedCreateWithoutCourseInput> | LostFoundItemCreateWithoutCourseInput[] | LostFoundItemUncheckedCreateWithoutCourseInput[]
+    connectOrCreate?: LostFoundItemCreateOrConnectWithoutCourseInput | LostFoundItemCreateOrConnectWithoutCourseInput[]
+    upsert?: LostFoundItemUpsertWithWhereUniqueWithoutCourseInput | LostFoundItemUpsertWithWhereUniqueWithoutCourseInput[]
+    createMany?: LostFoundItemCreateManyCourseInputEnvelope
+    set?: LostFoundItemWhereUniqueInput | LostFoundItemWhereUniqueInput[]
+    disconnect?: LostFoundItemWhereUniqueInput | LostFoundItemWhereUniqueInput[]
+    delete?: LostFoundItemWhereUniqueInput | LostFoundItemWhereUniqueInput[]
+    connect?: LostFoundItemWhereUniqueInput | LostFoundItemWhereUniqueInput[]
+    update?: LostFoundItemUpdateWithWhereUniqueWithoutCourseInput | LostFoundItemUpdateWithWhereUniqueWithoutCourseInput[]
+    updateMany?: LostFoundItemUpdateManyWithWhereWithoutCourseInput | LostFoundItemUpdateManyWithWhereWithoutCourseInput[]
+    deleteMany?: LostFoundItemScalarWhereInput | LostFoundItemScalarWhereInput[]
   }
 
   export type CourseCreateNestedOneWithoutEnrollmentsInput = {
@@ -77035,6 +86112,13 @@ export namespace Prisma {
     connect?: PatientRecordWhereUniqueInput | PatientRecordWhereUniqueInput[]
   }
 
+  export type ViolationCreateNestedManyWithoutStudentInput = {
+    create?: XOR<ViolationCreateWithoutStudentInput, ViolationUncheckedCreateWithoutStudentInput> | ViolationCreateWithoutStudentInput[] | ViolationUncheckedCreateWithoutStudentInput[]
+    connectOrCreate?: ViolationCreateOrConnectWithoutStudentInput | ViolationCreateOrConnectWithoutStudentInput[]
+    createMany?: ViolationCreateManyStudentInputEnvelope
+    connect?: ViolationWhereUniqueInput | ViolationWhereUniqueInput[]
+  }
+
   export type MedicalExamRecordUncheckedCreateNestedManyWithoutStudentInput = {
     create?: XOR<MedicalExamRecordCreateWithoutStudentInput, MedicalExamRecordUncheckedCreateWithoutStudentInput> | MedicalExamRecordCreateWithoutStudentInput[] | MedicalExamRecordUncheckedCreateWithoutStudentInput[]
     connectOrCreate?: MedicalExamRecordCreateOrConnectWithoutStudentInput | MedicalExamRecordCreateOrConnectWithoutStudentInput[]
@@ -77047,6 +86131,13 @@ export namespace Prisma {
     connectOrCreate?: PatientRecordCreateOrConnectWithoutStudentInput | PatientRecordCreateOrConnectWithoutStudentInput[]
     createMany?: PatientRecordCreateManyStudentInputEnvelope
     connect?: PatientRecordWhereUniqueInput | PatientRecordWhereUniqueInput[]
+  }
+
+  export type ViolationUncheckedCreateNestedManyWithoutStudentInput = {
+    create?: XOR<ViolationCreateWithoutStudentInput, ViolationUncheckedCreateWithoutStudentInput> | ViolationCreateWithoutStudentInput[] | ViolationUncheckedCreateWithoutStudentInput[]
+    connectOrCreate?: ViolationCreateOrConnectWithoutStudentInput | ViolationCreateOrConnectWithoutStudentInput[]
+    createMany?: ViolationCreateManyStudentInputEnvelope
+    connect?: ViolationWhereUniqueInput | ViolationWhereUniqueInput[]
   }
 
   export type MedicalExamRecordUpdateManyWithoutStudentNestedInput = {
@@ -77077,6 +86168,20 @@ export namespace Prisma {
     deleteMany?: PatientRecordScalarWhereInput | PatientRecordScalarWhereInput[]
   }
 
+  export type ViolationUpdateManyWithoutStudentNestedInput = {
+    create?: XOR<ViolationCreateWithoutStudentInput, ViolationUncheckedCreateWithoutStudentInput> | ViolationCreateWithoutStudentInput[] | ViolationUncheckedCreateWithoutStudentInput[]
+    connectOrCreate?: ViolationCreateOrConnectWithoutStudentInput | ViolationCreateOrConnectWithoutStudentInput[]
+    upsert?: ViolationUpsertWithWhereUniqueWithoutStudentInput | ViolationUpsertWithWhereUniqueWithoutStudentInput[]
+    createMany?: ViolationCreateManyStudentInputEnvelope
+    set?: ViolationWhereUniqueInput | ViolationWhereUniqueInput[]
+    disconnect?: ViolationWhereUniqueInput | ViolationWhereUniqueInput[]
+    delete?: ViolationWhereUniqueInput | ViolationWhereUniqueInput[]
+    connect?: ViolationWhereUniqueInput | ViolationWhereUniqueInput[]
+    update?: ViolationUpdateWithWhereUniqueWithoutStudentInput | ViolationUpdateWithWhereUniqueWithoutStudentInput[]
+    updateMany?: ViolationUpdateManyWithWhereWithoutStudentInput | ViolationUpdateManyWithWhereWithoutStudentInput[]
+    deleteMany?: ViolationScalarWhereInput | ViolationScalarWhereInput[]
+  }
+
   export type MedicalExamRecordUncheckedUpdateManyWithoutStudentNestedInput = {
     create?: XOR<MedicalExamRecordCreateWithoutStudentInput, MedicalExamRecordUncheckedCreateWithoutStudentInput> | MedicalExamRecordCreateWithoutStudentInput[] | MedicalExamRecordUncheckedCreateWithoutStudentInput[]
     connectOrCreate?: MedicalExamRecordCreateOrConnectWithoutStudentInput | MedicalExamRecordCreateOrConnectWithoutStudentInput[]
@@ -77103,6 +86208,20 @@ export namespace Prisma {
     update?: PatientRecordUpdateWithWhereUniqueWithoutStudentInput | PatientRecordUpdateWithWhereUniqueWithoutStudentInput[]
     updateMany?: PatientRecordUpdateManyWithWhereWithoutStudentInput | PatientRecordUpdateManyWithWhereWithoutStudentInput[]
     deleteMany?: PatientRecordScalarWhereInput | PatientRecordScalarWhereInput[]
+  }
+
+  export type ViolationUncheckedUpdateManyWithoutStudentNestedInput = {
+    create?: XOR<ViolationCreateWithoutStudentInput, ViolationUncheckedCreateWithoutStudentInput> | ViolationCreateWithoutStudentInput[] | ViolationUncheckedCreateWithoutStudentInput[]
+    connectOrCreate?: ViolationCreateOrConnectWithoutStudentInput | ViolationCreateOrConnectWithoutStudentInput[]
+    upsert?: ViolationUpsertWithWhereUniqueWithoutStudentInput | ViolationUpsertWithWhereUniqueWithoutStudentInput[]
+    createMany?: ViolationCreateManyStudentInputEnvelope
+    set?: ViolationWhereUniqueInput | ViolationWhereUniqueInput[]
+    disconnect?: ViolationWhereUniqueInput | ViolationWhereUniqueInput[]
+    delete?: ViolationWhereUniqueInput | ViolationWhereUniqueInput[]
+    connect?: ViolationWhereUniqueInput | ViolationWhereUniqueInput[]
+    update?: ViolationUpdateWithWhereUniqueWithoutStudentInput | ViolationUpdateWithWhereUniqueWithoutStudentInput[]
+    updateMany?: ViolationUpdateManyWithWhereWithoutStudentInput | ViolationUpdateManyWithWhereWithoutStudentInput[]
+    deleteMany?: ViolationScalarWhereInput | ViolationScalarWhereInput[]
   }
 
   export type MedicineUsageCreateNestedManyWithoutPatientRecordInput = {
@@ -77169,10 +86288,12 @@ export namespace Prisma {
     update?: XOR<XOR<CourseUpdateToOneWithWhereWithoutPatientRecordsInput, CourseUpdateWithoutPatientRecordsInput>, CourseUncheckedUpdateWithoutPatientRecordsInput>
   }
 
-  export type UserUpdateOneRequiredWithoutPatientRecordsNestedInput = {
+  export type UserUpdateOneWithoutPatientRecordsNestedInput = {
     create?: XOR<UserCreateWithoutPatientRecordsInput, UserUncheckedCreateWithoutPatientRecordsInput>
     connectOrCreate?: UserCreateOrConnectWithoutPatientRecordsInput
     upsert?: UserUpsertWithoutPatientRecordsInput
+    disconnect?: UserWhereInput | boolean
+    delete?: UserWhereInput | boolean
     connect?: UserWhereUniqueInput
     update?: XOR<XOR<UserUpdateToOneWithWhereWithoutPatientRecordsInput, UserUpdateWithoutPatientRecordsInput>, UserUncheckedUpdateWithoutPatientRecordsInput>
   }
@@ -77374,10 +86495,12 @@ export namespace Prisma {
     update?: XOR<XOR<CourseUpdateToOneWithWhereWithoutMedicalExamRecordsInput, CourseUpdateWithoutMedicalExamRecordsInput>, CourseUncheckedUpdateWithoutMedicalExamRecordsInput>
   }
 
-  export type UserUpdateOneRequiredWithoutMedicalExamRecordsNestedInput = {
+  export type UserUpdateOneWithoutMedicalExamRecordsNestedInput = {
     create?: XOR<UserCreateWithoutMedicalExamRecordsInput, UserUncheckedCreateWithoutMedicalExamRecordsInput>
     connectOrCreate?: UserCreateOrConnectWithoutMedicalExamRecordsInput
     upsert?: UserUpsertWithoutMedicalExamRecordsInput
+    disconnect?: UserWhereInput | boolean
+    delete?: UserWhereInput | boolean
     connect?: UserWhereUniqueInput
     update?: XOR<XOR<UserUpdateToOneWithWhereWithoutMedicalExamRecordsInput, UserUpdateWithoutMedicalExamRecordsInput>, UserUncheckedUpdateWithoutMedicalExamRecordsInput>
   }
@@ -77634,10 +86757,12 @@ export namespace Prisma {
     update?: XOR<XOR<CourseUpdateToOneWithWhereWithoutGuidanceLogEntriesInput, CourseUpdateWithoutGuidanceLogEntriesInput>, CourseUncheckedUpdateWithoutGuidanceLogEntriesInput>
   }
 
-  export type UserUpdateOneRequiredWithoutGuidanceLogEntriesNestedInput = {
+  export type UserUpdateOneWithoutGuidanceLogEntriesNestedInput = {
     create?: XOR<UserCreateWithoutGuidanceLogEntriesInput, UserUncheckedCreateWithoutGuidanceLogEntriesInput>
     connectOrCreate?: UserCreateOrConnectWithoutGuidanceLogEntriesInput
     upsert?: UserUpsertWithoutGuidanceLogEntriesInput
+    disconnect?: UserWhereInput | boolean
+    delete?: UserWhereInput | boolean
     connect?: UserWhereUniqueInput
     update?: XOR<XOR<UserUpdateToOneWithWhereWithoutGuidanceLogEntriesInput, UserUpdateWithoutGuidanceLogEntriesInput>, UserUncheckedUpdateWithoutGuidanceLogEntriesInput>
   }
@@ -77830,6 +86955,294 @@ export namespace Prisma {
     upsert?: LibraryBookUpsertWithoutBorrowRecordsInput
     connect?: LibraryBookWhereUniqueInput
     update?: XOR<XOR<LibraryBookUpdateToOneWithWhereWithoutBorrowRecordsInput, LibraryBookUpdateWithoutBorrowRecordsInput>, LibraryBookUncheckedUpdateWithoutBorrowRecordsInput>
+  }
+
+  export type CourseCreateNestedOneWithoutViolationTypesInput = {
+    create?: XOR<CourseCreateWithoutViolationTypesInput, CourseUncheckedCreateWithoutViolationTypesInput>
+    connectOrCreate?: CourseCreateOrConnectWithoutViolationTypesInput
+    connect?: CourseWhereUniqueInput
+  }
+
+  export type ViolationCreateNestedManyWithoutViolationTypeInput = {
+    create?: XOR<ViolationCreateWithoutViolationTypeInput, ViolationUncheckedCreateWithoutViolationTypeInput> | ViolationCreateWithoutViolationTypeInput[] | ViolationUncheckedCreateWithoutViolationTypeInput[]
+    connectOrCreate?: ViolationCreateOrConnectWithoutViolationTypeInput | ViolationCreateOrConnectWithoutViolationTypeInput[]
+    createMany?: ViolationCreateManyViolationTypeInputEnvelope
+    connect?: ViolationWhereUniqueInput | ViolationWhereUniqueInput[]
+  }
+
+  export type ViolationUncheckedCreateNestedManyWithoutViolationTypeInput = {
+    create?: XOR<ViolationCreateWithoutViolationTypeInput, ViolationUncheckedCreateWithoutViolationTypeInput> | ViolationCreateWithoutViolationTypeInput[] | ViolationUncheckedCreateWithoutViolationTypeInput[]
+    connectOrCreate?: ViolationCreateOrConnectWithoutViolationTypeInput | ViolationCreateOrConnectWithoutViolationTypeInput[]
+    createMany?: ViolationCreateManyViolationTypeInputEnvelope
+    connect?: ViolationWhereUniqueInput | ViolationWhereUniqueInput[]
+  }
+
+  export type CourseUpdateOneRequiredWithoutViolationTypesNestedInput = {
+    create?: XOR<CourseCreateWithoutViolationTypesInput, CourseUncheckedCreateWithoutViolationTypesInput>
+    connectOrCreate?: CourseCreateOrConnectWithoutViolationTypesInput
+    upsert?: CourseUpsertWithoutViolationTypesInput
+    connect?: CourseWhereUniqueInput
+    update?: XOR<XOR<CourseUpdateToOneWithWhereWithoutViolationTypesInput, CourseUpdateWithoutViolationTypesInput>, CourseUncheckedUpdateWithoutViolationTypesInput>
+  }
+
+  export type ViolationUpdateManyWithoutViolationTypeNestedInput = {
+    create?: XOR<ViolationCreateWithoutViolationTypeInput, ViolationUncheckedCreateWithoutViolationTypeInput> | ViolationCreateWithoutViolationTypeInput[] | ViolationUncheckedCreateWithoutViolationTypeInput[]
+    connectOrCreate?: ViolationCreateOrConnectWithoutViolationTypeInput | ViolationCreateOrConnectWithoutViolationTypeInput[]
+    upsert?: ViolationUpsertWithWhereUniqueWithoutViolationTypeInput | ViolationUpsertWithWhereUniqueWithoutViolationTypeInput[]
+    createMany?: ViolationCreateManyViolationTypeInputEnvelope
+    set?: ViolationWhereUniqueInput | ViolationWhereUniqueInput[]
+    disconnect?: ViolationWhereUniqueInput | ViolationWhereUniqueInput[]
+    delete?: ViolationWhereUniqueInput | ViolationWhereUniqueInput[]
+    connect?: ViolationWhereUniqueInput | ViolationWhereUniqueInput[]
+    update?: ViolationUpdateWithWhereUniqueWithoutViolationTypeInput | ViolationUpdateWithWhereUniqueWithoutViolationTypeInput[]
+    updateMany?: ViolationUpdateManyWithWhereWithoutViolationTypeInput | ViolationUpdateManyWithWhereWithoutViolationTypeInput[]
+    deleteMany?: ViolationScalarWhereInput | ViolationScalarWhereInput[]
+  }
+
+  export type ViolationUncheckedUpdateManyWithoutViolationTypeNestedInput = {
+    create?: XOR<ViolationCreateWithoutViolationTypeInput, ViolationUncheckedCreateWithoutViolationTypeInput> | ViolationCreateWithoutViolationTypeInput[] | ViolationUncheckedCreateWithoutViolationTypeInput[]
+    connectOrCreate?: ViolationCreateOrConnectWithoutViolationTypeInput | ViolationCreateOrConnectWithoutViolationTypeInput[]
+    upsert?: ViolationUpsertWithWhereUniqueWithoutViolationTypeInput | ViolationUpsertWithWhereUniqueWithoutViolationTypeInput[]
+    createMany?: ViolationCreateManyViolationTypeInputEnvelope
+    set?: ViolationWhereUniqueInput | ViolationWhereUniqueInput[]
+    disconnect?: ViolationWhereUniqueInput | ViolationWhereUniqueInput[]
+    delete?: ViolationWhereUniqueInput | ViolationWhereUniqueInput[]
+    connect?: ViolationWhereUniqueInput | ViolationWhereUniqueInput[]
+    update?: ViolationUpdateWithWhereUniqueWithoutViolationTypeInput | ViolationUpdateWithWhereUniqueWithoutViolationTypeInput[]
+    updateMany?: ViolationUpdateManyWithWhereWithoutViolationTypeInput | ViolationUpdateManyWithWhereWithoutViolationTypeInput[]
+    deleteMany?: ViolationScalarWhereInput | ViolationScalarWhereInput[]
+  }
+
+  export type CourseCreateNestedOneWithoutViolationsInput = {
+    create?: XOR<CourseCreateWithoutViolationsInput, CourseUncheckedCreateWithoutViolationsInput>
+    connectOrCreate?: CourseCreateOrConnectWithoutViolationsInput
+    connect?: CourseWhereUniqueInput
+  }
+
+  export type StudentCreateNestedOneWithoutViolationsInput = {
+    create?: XOR<StudentCreateWithoutViolationsInput, StudentUncheckedCreateWithoutViolationsInput>
+    connectOrCreate?: StudentCreateOrConnectWithoutViolationsInput
+    connect?: StudentWhereUniqueInput
+  }
+
+  export type ViolationTypeCreateNestedOneWithoutViolationsInput = {
+    create?: XOR<ViolationTypeCreateWithoutViolationsInput, ViolationTypeUncheckedCreateWithoutViolationsInput>
+    connectOrCreate?: ViolationTypeCreateOrConnectWithoutViolationsInput
+    connect?: ViolationTypeWhereUniqueInput
+  }
+
+  export type UserCreateNestedOneWithoutViolationsRecordedInput = {
+    create?: XOR<UserCreateWithoutViolationsRecordedInput, UserUncheckedCreateWithoutViolationsRecordedInput>
+    connectOrCreate?: UserCreateOrConnectWithoutViolationsRecordedInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type ParentContactCreateNestedManyWithoutViolationInput = {
+    create?: XOR<ParentContactCreateWithoutViolationInput, ParentContactUncheckedCreateWithoutViolationInput> | ParentContactCreateWithoutViolationInput[] | ParentContactUncheckedCreateWithoutViolationInput[]
+    connectOrCreate?: ParentContactCreateOrConnectWithoutViolationInput | ParentContactCreateOrConnectWithoutViolationInput[]
+    createMany?: ParentContactCreateManyViolationInputEnvelope
+    connect?: ParentContactWhereUniqueInput | ParentContactWhereUniqueInput[]
+  }
+
+  export type ViolationNoteCreateNestedManyWithoutViolationInput = {
+    create?: XOR<ViolationNoteCreateWithoutViolationInput, ViolationNoteUncheckedCreateWithoutViolationInput> | ViolationNoteCreateWithoutViolationInput[] | ViolationNoteUncheckedCreateWithoutViolationInput[]
+    connectOrCreate?: ViolationNoteCreateOrConnectWithoutViolationInput | ViolationNoteCreateOrConnectWithoutViolationInput[]
+    createMany?: ViolationNoteCreateManyViolationInputEnvelope
+    connect?: ViolationNoteWhereUniqueInput | ViolationNoteWhereUniqueInput[]
+  }
+
+  export type ParentContactUncheckedCreateNestedManyWithoutViolationInput = {
+    create?: XOR<ParentContactCreateWithoutViolationInput, ParentContactUncheckedCreateWithoutViolationInput> | ParentContactCreateWithoutViolationInput[] | ParentContactUncheckedCreateWithoutViolationInput[]
+    connectOrCreate?: ParentContactCreateOrConnectWithoutViolationInput | ParentContactCreateOrConnectWithoutViolationInput[]
+    createMany?: ParentContactCreateManyViolationInputEnvelope
+    connect?: ParentContactWhereUniqueInput | ParentContactWhereUniqueInput[]
+  }
+
+  export type ViolationNoteUncheckedCreateNestedManyWithoutViolationInput = {
+    create?: XOR<ViolationNoteCreateWithoutViolationInput, ViolationNoteUncheckedCreateWithoutViolationInput> | ViolationNoteCreateWithoutViolationInput[] | ViolationNoteUncheckedCreateWithoutViolationInput[]
+    connectOrCreate?: ViolationNoteCreateOrConnectWithoutViolationInput | ViolationNoteCreateOrConnectWithoutViolationInput[]
+    createMany?: ViolationNoteCreateManyViolationInputEnvelope
+    connect?: ViolationNoteWhereUniqueInput | ViolationNoteWhereUniqueInput[]
+  }
+
+  export type CourseUpdateOneRequiredWithoutViolationsNestedInput = {
+    create?: XOR<CourseCreateWithoutViolationsInput, CourseUncheckedCreateWithoutViolationsInput>
+    connectOrCreate?: CourseCreateOrConnectWithoutViolationsInput
+    upsert?: CourseUpsertWithoutViolationsInput
+    connect?: CourseWhereUniqueInput
+    update?: XOR<XOR<CourseUpdateToOneWithWhereWithoutViolationsInput, CourseUpdateWithoutViolationsInput>, CourseUncheckedUpdateWithoutViolationsInput>
+  }
+
+  export type StudentUpdateOneRequiredWithoutViolationsNestedInput = {
+    create?: XOR<StudentCreateWithoutViolationsInput, StudentUncheckedCreateWithoutViolationsInput>
+    connectOrCreate?: StudentCreateOrConnectWithoutViolationsInput
+    upsert?: StudentUpsertWithoutViolationsInput
+    connect?: StudentWhereUniqueInput
+    update?: XOR<XOR<StudentUpdateToOneWithWhereWithoutViolationsInput, StudentUpdateWithoutViolationsInput>, StudentUncheckedUpdateWithoutViolationsInput>
+  }
+
+  export type ViolationTypeUpdateOneRequiredWithoutViolationsNestedInput = {
+    create?: XOR<ViolationTypeCreateWithoutViolationsInput, ViolationTypeUncheckedCreateWithoutViolationsInput>
+    connectOrCreate?: ViolationTypeCreateOrConnectWithoutViolationsInput
+    upsert?: ViolationTypeUpsertWithoutViolationsInput
+    connect?: ViolationTypeWhereUniqueInput
+    update?: XOR<XOR<ViolationTypeUpdateToOneWithWhereWithoutViolationsInput, ViolationTypeUpdateWithoutViolationsInput>, ViolationTypeUncheckedUpdateWithoutViolationsInput>
+  }
+
+  export type UserUpdateOneWithoutViolationsRecordedNestedInput = {
+    create?: XOR<UserCreateWithoutViolationsRecordedInput, UserUncheckedCreateWithoutViolationsRecordedInput>
+    connectOrCreate?: UserCreateOrConnectWithoutViolationsRecordedInput
+    upsert?: UserUpsertWithoutViolationsRecordedInput
+    disconnect?: UserWhereInput | boolean
+    delete?: UserWhereInput | boolean
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutViolationsRecordedInput, UserUpdateWithoutViolationsRecordedInput>, UserUncheckedUpdateWithoutViolationsRecordedInput>
+  }
+
+  export type ParentContactUpdateManyWithoutViolationNestedInput = {
+    create?: XOR<ParentContactCreateWithoutViolationInput, ParentContactUncheckedCreateWithoutViolationInput> | ParentContactCreateWithoutViolationInput[] | ParentContactUncheckedCreateWithoutViolationInput[]
+    connectOrCreate?: ParentContactCreateOrConnectWithoutViolationInput | ParentContactCreateOrConnectWithoutViolationInput[]
+    upsert?: ParentContactUpsertWithWhereUniqueWithoutViolationInput | ParentContactUpsertWithWhereUniqueWithoutViolationInput[]
+    createMany?: ParentContactCreateManyViolationInputEnvelope
+    set?: ParentContactWhereUniqueInput | ParentContactWhereUniqueInput[]
+    disconnect?: ParentContactWhereUniqueInput | ParentContactWhereUniqueInput[]
+    delete?: ParentContactWhereUniqueInput | ParentContactWhereUniqueInput[]
+    connect?: ParentContactWhereUniqueInput | ParentContactWhereUniqueInput[]
+    update?: ParentContactUpdateWithWhereUniqueWithoutViolationInput | ParentContactUpdateWithWhereUniqueWithoutViolationInput[]
+    updateMany?: ParentContactUpdateManyWithWhereWithoutViolationInput | ParentContactUpdateManyWithWhereWithoutViolationInput[]
+    deleteMany?: ParentContactScalarWhereInput | ParentContactScalarWhereInput[]
+  }
+
+  export type ViolationNoteUpdateManyWithoutViolationNestedInput = {
+    create?: XOR<ViolationNoteCreateWithoutViolationInput, ViolationNoteUncheckedCreateWithoutViolationInput> | ViolationNoteCreateWithoutViolationInput[] | ViolationNoteUncheckedCreateWithoutViolationInput[]
+    connectOrCreate?: ViolationNoteCreateOrConnectWithoutViolationInput | ViolationNoteCreateOrConnectWithoutViolationInput[]
+    upsert?: ViolationNoteUpsertWithWhereUniqueWithoutViolationInput | ViolationNoteUpsertWithWhereUniqueWithoutViolationInput[]
+    createMany?: ViolationNoteCreateManyViolationInputEnvelope
+    set?: ViolationNoteWhereUniqueInput | ViolationNoteWhereUniqueInput[]
+    disconnect?: ViolationNoteWhereUniqueInput | ViolationNoteWhereUniqueInput[]
+    delete?: ViolationNoteWhereUniqueInput | ViolationNoteWhereUniqueInput[]
+    connect?: ViolationNoteWhereUniqueInput | ViolationNoteWhereUniqueInput[]
+    update?: ViolationNoteUpdateWithWhereUniqueWithoutViolationInput | ViolationNoteUpdateWithWhereUniqueWithoutViolationInput[]
+    updateMany?: ViolationNoteUpdateManyWithWhereWithoutViolationInput | ViolationNoteUpdateManyWithWhereWithoutViolationInput[]
+    deleteMany?: ViolationNoteScalarWhereInput | ViolationNoteScalarWhereInput[]
+  }
+
+  export type ParentContactUncheckedUpdateManyWithoutViolationNestedInput = {
+    create?: XOR<ParentContactCreateWithoutViolationInput, ParentContactUncheckedCreateWithoutViolationInput> | ParentContactCreateWithoutViolationInput[] | ParentContactUncheckedCreateWithoutViolationInput[]
+    connectOrCreate?: ParentContactCreateOrConnectWithoutViolationInput | ParentContactCreateOrConnectWithoutViolationInput[]
+    upsert?: ParentContactUpsertWithWhereUniqueWithoutViolationInput | ParentContactUpsertWithWhereUniqueWithoutViolationInput[]
+    createMany?: ParentContactCreateManyViolationInputEnvelope
+    set?: ParentContactWhereUniqueInput | ParentContactWhereUniqueInput[]
+    disconnect?: ParentContactWhereUniqueInput | ParentContactWhereUniqueInput[]
+    delete?: ParentContactWhereUniqueInput | ParentContactWhereUniqueInput[]
+    connect?: ParentContactWhereUniqueInput | ParentContactWhereUniqueInput[]
+    update?: ParentContactUpdateWithWhereUniqueWithoutViolationInput | ParentContactUpdateWithWhereUniqueWithoutViolationInput[]
+    updateMany?: ParentContactUpdateManyWithWhereWithoutViolationInput | ParentContactUpdateManyWithWhereWithoutViolationInput[]
+    deleteMany?: ParentContactScalarWhereInput | ParentContactScalarWhereInput[]
+  }
+
+  export type ViolationNoteUncheckedUpdateManyWithoutViolationNestedInput = {
+    create?: XOR<ViolationNoteCreateWithoutViolationInput, ViolationNoteUncheckedCreateWithoutViolationInput> | ViolationNoteCreateWithoutViolationInput[] | ViolationNoteUncheckedCreateWithoutViolationInput[]
+    connectOrCreate?: ViolationNoteCreateOrConnectWithoutViolationInput | ViolationNoteCreateOrConnectWithoutViolationInput[]
+    upsert?: ViolationNoteUpsertWithWhereUniqueWithoutViolationInput | ViolationNoteUpsertWithWhereUniqueWithoutViolationInput[]
+    createMany?: ViolationNoteCreateManyViolationInputEnvelope
+    set?: ViolationNoteWhereUniqueInput | ViolationNoteWhereUniqueInput[]
+    disconnect?: ViolationNoteWhereUniqueInput | ViolationNoteWhereUniqueInput[]
+    delete?: ViolationNoteWhereUniqueInput | ViolationNoteWhereUniqueInput[]
+    connect?: ViolationNoteWhereUniqueInput | ViolationNoteWhereUniqueInput[]
+    update?: ViolationNoteUpdateWithWhereUniqueWithoutViolationInput | ViolationNoteUpdateWithWhereUniqueWithoutViolationInput[]
+    updateMany?: ViolationNoteUpdateManyWithWhereWithoutViolationInput | ViolationNoteUpdateManyWithWhereWithoutViolationInput[]
+    deleteMany?: ViolationNoteScalarWhereInput | ViolationNoteScalarWhereInput[]
+  }
+
+  export type ViolationCreateNestedOneWithoutParentContactsInput = {
+    create?: XOR<ViolationCreateWithoutParentContactsInput, ViolationUncheckedCreateWithoutParentContactsInput>
+    connectOrCreate?: ViolationCreateOrConnectWithoutParentContactsInput
+    connect?: ViolationWhereUniqueInput
+  }
+
+  export type UserCreateNestedOneWithoutParentContactsRecordedInput = {
+    create?: XOR<UserCreateWithoutParentContactsRecordedInput, UserUncheckedCreateWithoutParentContactsRecordedInput>
+    connectOrCreate?: UserCreateOrConnectWithoutParentContactsRecordedInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type ViolationUpdateOneRequiredWithoutParentContactsNestedInput = {
+    create?: XOR<ViolationCreateWithoutParentContactsInput, ViolationUncheckedCreateWithoutParentContactsInput>
+    connectOrCreate?: ViolationCreateOrConnectWithoutParentContactsInput
+    upsert?: ViolationUpsertWithoutParentContactsInput
+    connect?: ViolationWhereUniqueInput
+    update?: XOR<XOR<ViolationUpdateToOneWithWhereWithoutParentContactsInput, ViolationUpdateWithoutParentContactsInput>, ViolationUncheckedUpdateWithoutParentContactsInput>
+  }
+
+  export type UserUpdateOneWithoutParentContactsRecordedNestedInput = {
+    create?: XOR<UserCreateWithoutParentContactsRecordedInput, UserUncheckedCreateWithoutParentContactsRecordedInput>
+    connectOrCreate?: UserCreateOrConnectWithoutParentContactsRecordedInput
+    upsert?: UserUpsertWithoutParentContactsRecordedInput
+    disconnect?: UserWhereInput | boolean
+    delete?: UserWhereInput | boolean
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutParentContactsRecordedInput, UserUpdateWithoutParentContactsRecordedInput>, UserUncheckedUpdateWithoutParentContactsRecordedInput>
+  }
+
+  export type ViolationCreateNestedOneWithoutNotesInput = {
+    create?: XOR<ViolationCreateWithoutNotesInput, ViolationUncheckedCreateWithoutNotesInput>
+    connectOrCreate?: ViolationCreateOrConnectWithoutNotesInput
+    connect?: ViolationWhereUniqueInput
+  }
+
+  export type UserCreateNestedOneWithoutViolationNotesInput = {
+    create?: XOR<UserCreateWithoutViolationNotesInput, UserUncheckedCreateWithoutViolationNotesInput>
+    connectOrCreate?: UserCreateOrConnectWithoutViolationNotesInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type ViolationUpdateOneRequiredWithoutNotesNestedInput = {
+    create?: XOR<ViolationCreateWithoutNotesInput, ViolationUncheckedCreateWithoutNotesInput>
+    connectOrCreate?: ViolationCreateOrConnectWithoutNotesInput
+    upsert?: ViolationUpsertWithoutNotesInput
+    connect?: ViolationWhereUniqueInput
+    update?: XOR<XOR<ViolationUpdateToOneWithWhereWithoutNotesInput, ViolationUpdateWithoutNotesInput>, ViolationUncheckedUpdateWithoutNotesInput>
+  }
+
+  export type UserUpdateOneWithoutViolationNotesNestedInput = {
+    create?: XOR<UserCreateWithoutViolationNotesInput, UserUncheckedCreateWithoutViolationNotesInput>
+    connectOrCreate?: UserCreateOrConnectWithoutViolationNotesInput
+    upsert?: UserUpsertWithoutViolationNotesInput
+    disconnect?: UserWhereInput | boolean
+    delete?: UserWhereInput | boolean
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutViolationNotesInput, UserUpdateWithoutViolationNotesInput>, UserUncheckedUpdateWithoutViolationNotesInput>
+  }
+
+  export type CourseCreateNestedOneWithoutLostFoundItemsInput = {
+    create?: XOR<CourseCreateWithoutLostFoundItemsInput, CourseUncheckedCreateWithoutLostFoundItemsInput>
+    connectOrCreate?: CourseCreateOrConnectWithoutLostFoundItemsInput
+    connect?: CourseWhereUniqueInput
+  }
+
+  export type UserCreateNestedOneWithoutLostFoundRecordedInput = {
+    create?: XOR<UserCreateWithoutLostFoundRecordedInput, UserUncheckedCreateWithoutLostFoundRecordedInput>
+    connectOrCreate?: UserCreateOrConnectWithoutLostFoundRecordedInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type CourseUpdateOneRequiredWithoutLostFoundItemsNestedInput = {
+    create?: XOR<CourseCreateWithoutLostFoundItemsInput, CourseUncheckedCreateWithoutLostFoundItemsInput>
+    connectOrCreate?: CourseCreateOrConnectWithoutLostFoundItemsInput
+    upsert?: CourseUpsertWithoutLostFoundItemsInput
+    connect?: CourseWhereUniqueInput
+    update?: XOR<XOR<CourseUpdateToOneWithWhereWithoutLostFoundItemsInput, CourseUpdateWithoutLostFoundItemsInput>, CourseUncheckedUpdateWithoutLostFoundItemsInput>
+  }
+
+  export type UserUpdateOneWithoutLostFoundRecordedNestedInput = {
+    create?: XOR<UserCreateWithoutLostFoundRecordedInput, UserUncheckedCreateWithoutLostFoundRecordedInput>
+    connectOrCreate?: UserCreateOrConnectWithoutLostFoundRecordedInput
+    upsert?: UserUpsertWithoutLostFoundRecordedInput
+    disconnect?: UserWhereInput | boolean
+    delete?: UserWhereInput | boolean
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutLostFoundRecordedInput, UserUpdateWithoutLostFoundRecordedInput>, UserUncheckedUpdateWithoutLostFoundRecordedInput>
   }
 
   export type NestedStringFilter<$PrismaModel = never> = {
@@ -78353,6 +87766,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogCreateNestedManyWithoutCourseInput
     LibraryBook?: LibraryBookCreateNestedManyWithoutCourseInput
     LibraryBorrowRecord?: LibraryBorrowRecordCreateNestedManyWithoutCourseInput
+    violationTypes?: ViolationTypeCreateNestedManyWithoutCourseInput
+    violations?: ViolationCreateNestedManyWithoutCourseInput
+    lostFoundItems?: LostFoundItemCreateNestedManyWithoutCourseInput
   }
 
   export type CourseUncheckedCreateWithoutConversationsInput = {
@@ -78388,6 +87804,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogUncheckedCreateNestedManyWithoutCourseInput
     LibraryBook?: LibraryBookUncheckedCreateNestedManyWithoutCourseInput
     LibraryBorrowRecord?: LibraryBorrowRecordUncheckedCreateNestedManyWithoutCourseInput
+    violationTypes?: ViolationTypeUncheckedCreateNestedManyWithoutCourseInput
+    violations?: ViolationUncheckedCreateNestedManyWithoutCourseInput
+    lostFoundItems?: LostFoundItemUncheckedCreateNestedManyWithoutCourseInput
   }
 
   export type CourseCreateOrConnectWithoutConversationsInput = {
@@ -78496,6 +87915,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogUpdateManyWithoutCourseNestedInput
     LibraryBook?: LibraryBookUpdateManyWithoutCourseNestedInput
     LibraryBorrowRecord?: LibraryBorrowRecordUpdateManyWithoutCourseNestedInput
+    violationTypes?: ViolationTypeUpdateManyWithoutCourseNestedInput
+    violations?: ViolationUpdateManyWithoutCourseNestedInput
+    lostFoundItems?: LostFoundItemUpdateManyWithoutCourseNestedInput
   }
 
   export type CourseUncheckedUpdateWithoutConversationsInput = {
@@ -78531,6 +87953,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogUncheckedUpdateManyWithoutCourseNestedInput
     LibraryBook?: LibraryBookUncheckedUpdateManyWithoutCourseNestedInput
     LibraryBorrowRecord?: LibraryBorrowRecordUncheckedUpdateManyWithoutCourseNestedInput
+    violationTypes?: ViolationTypeUncheckedUpdateManyWithoutCourseNestedInput
+    violations?: ViolationUncheckedUpdateManyWithoutCourseNestedInput
+    lostFoundItems?: LostFoundItemUncheckedUpdateManyWithoutCourseNestedInput
   }
 
   export type MessageUpsertWithWhereUniqueWithoutConversationInput = {
@@ -78624,6 +88049,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
     submissions?: SubmissionCreateNestedManyWithoutUserInput
+    violationsRecorded?: ViolationCreateNestedManyWithoutRecordedByUserInput
+    violationNotes?: ViolationNoteCreateNestedManyWithoutAuthorInput
+    parentContactsRecorded?: ParentContactCreateNestedManyWithoutRecordedByUserInput
+    lostFoundRecorded?: LostFoundItemCreateNestedManyWithoutRecordedByUserInput
   }
 
   export type UserUncheckedCreateWithoutConversationParticipantsInput = {
@@ -78664,6 +88093,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewUncheckedCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
     submissions?: SubmissionUncheckedCreateNestedManyWithoutUserInput
+    violationsRecorded?: ViolationUncheckedCreateNestedManyWithoutRecordedByUserInput
+    violationNotes?: ViolationNoteUncheckedCreateNestedManyWithoutAuthorInput
+    parentContactsRecorded?: ParentContactUncheckedCreateNestedManyWithoutRecordedByUserInput
+    lostFoundRecorded?: LostFoundItemUncheckedCreateNestedManyWithoutRecordedByUserInput
   }
 
   export type UserCreateOrConnectWithoutConversationParticipantsInput = {
@@ -78751,6 +88184,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
     submissions?: SubmissionUpdateManyWithoutUserNestedInput
+    violationsRecorded?: ViolationUpdateManyWithoutRecordedByUserNestedInput
+    violationNotes?: ViolationNoteUpdateManyWithoutAuthorNestedInput
+    parentContactsRecorded?: ParentContactUpdateManyWithoutRecordedByUserNestedInput
+    lostFoundRecorded?: LostFoundItemUpdateManyWithoutRecordedByUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutConversationParticipantsInput = {
@@ -78791,6 +88228,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewUncheckedUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
     submissions?: SubmissionUncheckedUpdateManyWithoutUserNestedInput
+    violationsRecorded?: ViolationUncheckedUpdateManyWithoutRecordedByUserNestedInput
+    violationNotes?: ViolationNoteUncheckedUpdateManyWithoutAuthorNestedInput
+    parentContactsRecorded?: ParentContactUncheckedUpdateManyWithoutRecordedByUserNestedInput
+    lostFoundRecorded?: LostFoundItemUncheckedUpdateManyWithoutRecordedByUserNestedInput
   }
 
   export type MessageAttachmentCreateWithoutMessageInput = {
@@ -78884,6 +88325,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
     submissions?: SubmissionCreateNestedManyWithoutUserInput
+    violationsRecorded?: ViolationCreateNestedManyWithoutRecordedByUserInput
+    violationNotes?: ViolationNoteCreateNestedManyWithoutAuthorInput
+    parentContactsRecorded?: ParentContactCreateNestedManyWithoutRecordedByUserInput
+    lostFoundRecorded?: LostFoundItemCreateNestedManyWithoutRecordedByUserInput
   }
 
   export type UserUncheckedCreateWithoutSentMessagesInput = {
@@ -78924,6 +88369,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewUncheckedCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
     submissions?: SubmissionUncheckedCreateNestedManyWithoutUserInput
+    violationsRecorded?: ViolationUncheckedCreateNestedManyWithoutRecordedByUserInput
+    violationNotes?: ViolationNoteUncheckedCreateNestedManyWithoutAuthorInput
+    parentContactsRecorded?: ParentContactUncheckedCreateNestedManyWithoutRecordedByUserInput
+    lostFoundRecorded?: LostFoundItemUncheckedCreateNestedManyWithoutRecordedByUserInput
   }
 
   export type UserCreateOrConnectWithoutSentMessagesInput = {
@@ -79040,6 +88489,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
     submissions?: SubmissionUpdateManyWithoutUserNestedInput
+    violationsRecorded?: ViolationUpdateManyWithoutRecordedByUserNestedInput
+    violationNotes?: ViolationNoteUpdateManyWithoutAuthorNestedInput
+    parentContactsRecorded?: ParentContactUpdateManyWithoutRecordedByUserNestedInput
+    lostFoundRecorded?: LostFoundItemUpdateManyWithoutRecordedByUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutSentMessagesInput = {
@@ -79080,6 +88533,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewUncheckedUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
     submissions?: SubmissionUncheckedUpdateManyWithoutUserNestedInput
+    violationsRecorded?: ViolationUncheckedUpdateManyWithoutRecordedByUserNestedInput
+    violationNotes?: ViolationNoteUncheckedUpdateManyWithoutAuthorNestedInput
+    parentContactsRecorded?: ParentContactUncheckedUpdateManyWithoutRecordedByUserNestedInput
+    lostFoundRecorded?: LostFoundItemUncheckedUpdateManyWithoutRecordedByUserNestedInput
   }
 
   export type MessageCreateWithoutAttachmentsInput = {
@@ -80018,6 +89475,202 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type ViolationCreateWithoutRecordedByUserInput = {
+    id?: string
+    caseNo: string
+    severity: string
+    incidentDate: Date | string
+    location?: string | null
+    description?: string | null
+    reportedBy?: string | null
+    reportedByRole?: string | null
+    status?: string
+    noticeToExplainAt?: Date | string | null
+    explanationReceivedAt?: Date | string | null
+    hearingDate?: Date | string | null
+    hearingResult?: string | null
+    sanction?: string | null
+    sanctionDays?: number | null
+    sanctionStart?: Date | string | null
+    sanctionEnd?: Date | string | null
+    sanctionCompleted?: boolean
+    decidedBy?: string | null
+    decidedAt?: Date | string | null
+    appealed?: boolean
+    appealResult?: string | null
+    resolvedAt?: Date | string | null
+    deletedAt?: Date | string | null
+    deletedBy?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    course: CourseCreateNestedOneWithoutViolationsInput
+    student: StudentCreateNestedOneWithoutViolationsInput
+    violationType: ViolationTypeCreateNestedOneWithoutViolationsInput
+    parentContacts?: ParentContactCreateNestedManyWithoutViolationInput
+    notes?: ViolationNoteCreateNestedManyWithoutViolationInput
+  }
+
+  export type ViolationUncheckedCreateWithoutRecordedByUserInput = {
+    id?: string
+    courseId: string
+    caseNo: string
+    studentId: string
+    violationTypeId: string
+    severity: string
+    incidentDate: Date | string
+    location?: string | null
+    description?: string | null
+    reportedBy?: string | null
+    reportedByRole?: string | null
+    status?: string
+    noticeToExplainAt?: Date | string | null
+    explanationReceivedAt?: Date | string | null
+    hearingDate?: Date | string | null
+    hearingResult?: string | null
+    sanction?: string | null
+    sanctionDays?: number | null
+    sanctionStart?: Date | string | null
+    sanctionEnd?: Date | string | null
+    sanctionCompleted?: boolean
+    decidedBy?: string | null
+    decidedAt?: Date | string | null
+    appealed?: boolean
+    appealResult?: string | null
+    resolvedAt?: Date | string | null
+    deletedAt?: Date | string | null
+    deletedBy?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    parentContacts?: ParentContactUncheckedCreateNestedManyWithoutViolationInput
+    notes?: ViolationNoteUncheckedCreateNestedManyWithoutViolationInput
+  }
+
+  export type ViolationCreateOrConnectWithoutRecordedByUserInput = {
+    where: ViolationWhereUniqueInput
+    create: XOR<ViolationCreateWithoutRecordedByUserInput, ViolationUncheckedCreateWithoutRecordedByUserInput>
+  }
+
+  export type ViolationCreateManyRecordedByUserInputEnvelope = {
+    data: ViolationCreateManyRecordedByUserInput | ViolationCreateManyRecordedByUserInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type ViolationNoteCreateWithoutAuthorInput = {
+    id?: string
+    body: string
+    confidential?: boolean
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    violation: ViolationCreateNestedOneWithoutNotesInput
+  }
+
+  export type ViolationNoteUncheckedCreateWithoutAuthorInput = {
+    id?: string
+    violationId: string
+    body: string
+    confidential?: boolean
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ViolationNoteCreateOrConnectWithoutAuthorInput = {
+    where: ViolationNoteWhereUniqueInput
+    create: XOR<ViolationNoteCreateWithoutAuthorInput, ViolationNoteUncheckedCreateWithoutAuthorInput>
+  }
+
+  export type ViolationNoteCreateManyAuthorInputEnvelope = {
+    data: ViolationNoteCreateManyAuthorInput | ViolationNoteCreateManyAuthorInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type ParentContactCreateWithoutRecordedByUserInput = {
+    id?: string
+    contactedAt?: Date | string
+    method?: string
+    contactedBy?: string | null
+    contactPerson?: string | null
+    relationship?: string | null
+    attendance?: string
+    attemptNo?: number
+    signatureUrl?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    violation: ViolationCreateNestedOneWithoutParentContactsInput
+  }
+
+  export type ParentContactUncheckedCreateWithoutRecordedByUserInput = {
+    id?: string
+    violationId: string
+    contactedAt?: Date | string
+    method?: string
+    contactedBy?: string | null
+    contactPerson?: string | null
+    relationship?: string | null
+    attendance?: string
+    attemptNo?: number
+    signatureUrl?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ParentContactCreateOrConnectWithoutRecordedByUserInput = {
+    where: ParentContactWhereUniqueInput
+    create: XOR<ParentContactCreateWithoutRecordedByUserInput, ParentContactUncheckedCreateWithoutRecordedByUserInput>
+  }
+
+  export type ParentContactCreateManyRecordedByUserInputEnvelope = {
+    data: ParentContactCreateManyRecordedByUserInput | ParentContactCreateManyRecordedByUserInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type LostFoundItemCreateWithoutRecordedByUserInput = {
+    id?: string
+    itemName: string
+    description?: string | null
+    category?: string
+    dateFound: Date | string
+    locationFound?: string | null
+    foundBy?: string | null
+    status?: string
+    claimerName?: string | null
+    claimedAt?: Date | string | null
+    photoUrl?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    course: CourseCreateNestedOneWithoutLostFoundItemsInput
+  }
+
+  export type LostFoundItemUncheckedCreateWithoutRecordedByUserInput = {
+    id?: string
+    courseId: string
+    itemName: string
+    description?: string | null
+    category?: string
+    dateFound: Date | string
+    locationFound?: string | null
+    foundBy?: string | null
+    status?: string
+    claimerName?: string | null
+    claimedAt?: Date | string | null
+    photoUrl?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type LostFoundItemCreateOrConnectWithoutRecordedByUserInput = {
+    where: LostFoundItemWhereUniqueInput
+    create: XOR<LostFoundItemCreateWithoutRecordedByUserInput, LostFoundItemUncheckedCreateWithoutRecordedByUserInput>
+  }
+
+  export type LostFoundItemCreateManyRecordedByUserInputEnvelope = {
+    data: LostFoundItemCreateManyRecordedByUserInput | LostFoundItemCreateManyRecordedByUserInput[]
+    skipDuplicates?: boolean
+  }
+
   export type AccountUpsertWithWhereUniqueWithoutUserInput = {
     where: AccountWhereUniqueInput
     update: XOR<AccountUpdateWithoutUserInput, AccountUncheckedUpdateWithoutUserInput>
@@ -80260,7 +89913,7 @@ export namespace Prisma {
     purpose?: StringFilter<"MedicalExamRecord"> | string
     remarks?: StringNullableFilter<"MedicalExamRecord"> | string | null
     visitDate?: DateTimeFilter<"MedicalExamRecord"> | Date | string
-    recordedBy?: StringFilter<"MedicalExamRecord"> | string
+    recordedBy?: StringNullableFilter<"MedicalExamRecord"> | string | null
     createdAt?: DateTimeFilter<"MedicalExamRecord"> | Date | string
     updatedAt?: DateTimeFilter<"MedicalExamRecord"> | Date | string
     signatureUrl?: StringNullableFilter<"MedicalExamRecord"> | string | null
@@ -80365,7 +90018,7 @@ export namespace Prisma {
     action?: EnumPatientActionFilter<"PatientRecord"> | $Enums.PatientAction
     notes?: StringNullableFilter<"PatientRecord"> | string | null
     visitDate?: DateTimeFilter<"PatientRecord"> | Date | string
-    recordedBy?: StringFilter<"PatientRecord"> | string
+    recordedBy?: StringNullableFilter<"PatientRecord"> | string | null
     createdAt?: DateTimeFilter<"PatientRecord"> | Date | string
     updatedAt?: DateTimeFilter<"PatientRecord"> | Date | string
     signEmailSentAt?: DateTimeNullableFilter<"PatientRecord"> | Date | string | null
@@ -80577,7 +90230,7 @@ export namespace Prisma {
     signTokenExpiresAt?: DateTimeNullableFilter<"GuidanceLogEntry"> | Date | string | null
     signEmailSentAt?: DateTimeNullableFilter<"GuidanceLogEntry"> | Date | string | null
     visitDate?: DateTimeFilter<"GuidanceLogEntry"> | Date | string
-    recordedBy?: StringFilter<"GuidanceLogEntry"> | string
+    recordedBy?: StringNullableFilter<"GuidanceLogEntry"> | string | null
     createdAt?: DateTimeFilter<"GuidanceLogEntry"> | Date | string
     updatedAt?: DateTimeFilter<"GuidanceLogEntry"> | Date | string
   }
@@ -80705,6 +90358,162 @@ export namespace Prisma {
     data: XOR<SubmissionUpdateManyMutationInput, SubmissionUncheckedUpdateManyWithoutUserInput>
   }
 
+  export type ViolationUpsertWithWhereUniqueWithoutRecordedByUserInput = {
+    where: ViolationWhereUniqueInput
+    update: XOR<ViolationUpdateWithoutRecordedByUserInput, ViolationUncheckedUpdateWithoutRecordedByUserInput>
+    create: XOR<ViolationCreateWithoutRecordedByUserInput, ViolationUncheckedCreateWithoutRecordedByUserInput>
+  }
+
+  export type ViolationUpdateWithWhereUniqueWithoutRecordedByUserInput = {
+    where: ViolationWhereUniqueInput
+    data: XOR<ViolationUpdateWithoutRecordedByUserInput, ViolationUncheckedUpdateWithoutRecordedByUserInput>
+  }
+
+  export type ViolationUpdateManyWithWhereWithoutRecordedByUserInput = {
+    where: ViolationScalarWhereInput
+    data: XOR<ViolationUpdateManyMutationInput, ViolationUncheckedUpdateManyWithoutRecordedByUserInput>
+  }
+
+  export type ViolationScalarWhereInput = {
+    AND?: ViolationScalarWhereInput | ViolationScalarWhereInput[]
+    OR?: ViolationScalarWhereInput[]
+    NOT?: ViolationScalarWhereInput | ViolationScalarWhereInput[]
+    id?: StringFilter<"Violation"> | string
+    courseId?: StringFilter<"Violation"> | string
+    caseNo?: StringFilter<"Violation"> | string
+    studentId?: StringFilter<"Violation"> | string
+    violationTypeId?: StringFilter<"Violation"> | string
+    severity?: StringFilter<"Violation"> | string
+    incidentDate?: DateTimeFilter<"Violation"> | Date | string
+    location?: StringNullableFilter<"Violation"> | string | null
+    description?: StringNullableFilter<"Violation"> | string | null
+    reportedBy?: StringNullableFilter<"Violation"> | string | null
+    reportedByRole?: StringNullableFilter<"Violation"> | string | null
+    status?: StringFilter<"Violation"> | string
+    noticeToExplainAt?: DateTimeNullableFilter<"Violation"> | Date | string | null
+    explanationReceivedAt?: DateTimeNullableFilter<"Violation"> | Date | string | null
+    hearingDate?: DateTimeNullableFilter<"Violation"> | Date | string | null
+    hearingResult?: StringNullableFilter<"Violation"> | string | null
+    sanction?: StringNullableFilter<"Violation"> | string | null
+    sanctionDays?: IntNullableFilter<"Violation"> | number | null
+    sanctionStart?: DateTimeNullableFilter<"Violation"> | Date | string | null
+    sanctionEnd?: DateTimeNullableFilter<"Violation"> | Date | string | null
+    sanctionCompleted?: BoolFilter<"Violation"> | boolean
+    decidedBy?: StringNullableFilter<"Violation"> | string | null
+    decidedAt?: DateTimeNullableFilter<"Violation"> | Date | string | null
+    appealed?: BoolFilter<"Violation"> | boolean
+    appealResult?: StringNullableFilter<"Violation"> | string | null
+    resolvedAt?: DateTimeNullableFilter<"Violation"> | Date | string | null
+    recordedBy?: StringNullableFilter<"Violation"> | string | null
+    deletedAt?: DateTimeNullableFilter<"Violation"> | Date | string | null
+    deletedBy?: StringNullableFilter<"Violation"> | string | null
+    createdAt?: DateTimeFilter<"Violation"> | Date | string
+    updatedAt?: DateTimeFilter<"Violation"> | Date | string
+  }
+
+  export type ViolationNoteUpsertWithWhereUniqueWithoutAuthorInput = {
+    where: ViolationNoteWhereUniqueInput
+    update: XOR<ViolationNoteUpdateWithoutAuthorInput, ViolationNoteUncheckedUpdateWithoutAuthorInput>
+    create: XOR<ViolationNoteCreateWithoutAuthorInput, ViolationNoteUncheckedCreateWithoutAuthorInput>
+  }
+
+  export type ViolationNoteUpdateWithWhereUniqueWithoutAuthorInput = {
+    where: ViolationNoteWhereUniqueInput
+    data: XOR<ViolationNoteUpdateWithoutAuthorInput, ViolationNoteUncheckedUpdateWithoutAuthorInput>
+  }
+
+  export type ViolationNoteUpdateManyWithWhereWithoutAuthorInput = {
+    where: ViolationNoteScalarWhereInput
+    data: XOR<ViolationNoteUpdateManyMutationInput, ViolationNoteUncheckedUpdateManyWithoutAuthorInput>
+  }
+
+  export type ViolationNoteScalarWhereInput = {
+    AND?: ViolationNoteScalarWhereInput | ViolationNoteScalarWhereInput[]
+    OR?: ViolationNoteScalarWhereInput[]
+    NOT?: ViolationNoteScalarWhereInput | ViolationNoteScalarWhereInput[]
+    id?: StringFilter<"ViolationNote"> | string
+    violationId?: StringFilter<"ViolationNote"> | string
+    body?: StringFilter<"ViolationNote"> | string
+    confidential?: BoolFilter<"ViolationNote"> | boolean
+    authorId?: StringNullableFilter<"ViolationNote"> | string | null
+    deletedAt?: DateTimeNullableFilter<"ViolationNote"> | Date | string | null
+    createdAt?: DateTimeFilter<"ViolationNote"> | Date | string
+    updatedAt?: DateTimeFilter<"ViolationNote"> | Date | string
+  }
+
+  export type ParentContactUpsertWithWhereUniqueWithoutRecordedByUserInput = {
+    where: ParentContactWhereUniqueInput
+    update: XOR<ParentContactUpdateWithoutRecordedByUserInput, ParentContactUncheckedUpdateWithoutRecordedByUserInput>
+    create: XOR<ParentContactCreateWithoutRecordedByUserInput, ParentContactUncheckedCreateWithoutRecordedByUserInput>
+  }
+
+  export type ParentContactUpdateWithWhereUniqueWithoutRecordedByUserInput = {
+    where: ParentContactWhereUniqueInput
+    data: XOR<ParentContactUpdateWithoutRecordedByUserInput, ParentContactUncheckedUpdateWithoutRecordedByUserInput>
+  }
+
+  export type ParentContactUpdateManyWithWhereWithoutRecordedByUserInput = {
+    where: ParentContactScalarWhereInput
+    data: XOR<ParentContactUpdateManyMutationInput, ParentContactUncheckedUpdateManyWithoutRecordedByUserInput>
+  }
+
+  export type ParentContactScalarWhereInput = {
+    AND?: ParentContactScalarWhereInput | ParentContactScalarWhereInput[]
+    OR?: ParentContactScalarWhereInput[]
+    NOT?: ParentContactScalarWhereInput | ParentContactScalarWhereInput[]
+    id?: StringFilter<"ParentContact"> | string
+    violationId?: StringFilter<"ParentContact"> | string
+    contactedAt?: DateTimeFilter<"ParentContact"> | Date | string
+    method?: StringFilter<"ParentContact"> | string
+    contactedBy?: StringNullableFilter<"ParentContact"> | string | null
+    contactPerson?: StringNullableFilter<"ParentContact"> | string | null
+    relationship?: StringNullableFilter<"ParentContact"> | string | null
+    attendance?: StringFilter<"ParentContact"> | string
+    attemptNo?: IntFilter<"ParentContact"> | number
+    signatureUrl?: StringNullableFilter<"ParentContact"> | string | null
+    recordedBy?: StringNullableFilter<"ParentContact"> | string | null
+    deletedAt?: DateTimeNullableFilter<"ParentContact"> | Date | string | null
+    createdAt?: DateTimeFilter<"ParentContact"> | Date | string
+    updatedAt?: DateTimeFilter<"ParentContact"> | Date | string
+  }
+
+  export type LostFoundItemUpsertWithWhereUniqueWithoutRecordedByUserInput = {
+    where: LostFoundItemWhereUniqueInput
+    update: XOR<LostFoundItemUpdateWithoutRecordedByUserInput, LostFoundItemUncheckedUpdateWithoutRecordedByUserInput>
+    create: XOR<LostFoundItemCreateWithoutRecordedByUserInput, LostFoundItemUncheckedCreateWithoutRecordedByUserInput>
+  }
+
+  export type LostFoundItemUpdateWithWhereUniqueWithoutRecordedByUserInput = {
+    where: LostFoundItemWhereUniqueInput
+    data: XOR<LostFoundItemUpdateWithoutRecordedByUserInput, LostFoundItemUncheckedUpdateWithoutRecordedByUserInput>
+  }
+
+  export type LostFoundItemUpdateManyWithWhereWithoutRecordedByUserInput = {
+    where: LostFoundItemScalarWhereInput
+    data: XOR<LostFoundItemUpdateManyMutationInput, LostFoundItemUncheckedUpdateManyWithoutRecordedByUserInput>
+  }
+
+  export type LostFoundItemScalarWhereInput = {
+    AND?: LostFoundItemScalarWhereInput | LostFoundItemScalarWhereInput[]
+    OR?: LostFoundItemScalarWhereInput[]
+    NOT?: LostFoundItemScalarWhereInput | LostFoundItemScalarWhereInput[]
+    id?: StringFilter<"LostFoundItem"> | string
+    courseId?: StringFilter<"LostFoundItem"> | string
+    itemName?: StringFilter<"LostFoundItem"> | string
+    description?: StringNullableFilter<"LostFoundItem"> | string | null
+    category?: StringFilter<"LostFoundItem"> | string
+    dateFound?: DateTimeFilter<"LostFoundItem"> | Date | string
+    locationFound?: StringNullableFilter<"LostFoundItem"> | string | null
+    foundBy?: StringNullableFilter<"LostFoundItem"> | string | null
+    status?: StringFilter<"LostFoundItem"> | string
+    claimerName?: StringNullableFilter<"LostFoundItem"> | string | null
+    claimedAt?: DateTimeNullableFilter<"LostFoundItem"> | Date | string | null
+    photoUrl?: StringNullableFilter<"LostFoundItem"> | string | null
+    recordedBy?: StringNullableFilter<"LostFoundItem"> | string | null
+    createdAt?: DateTimeFilter<"LostFoundItem"> | Date | string
+    updatedAt?: DateTimeFilter<"LostFoundItem"> | Date | string
+  }
+
   export type UserCreateWithoutResetTokensInput = {
     id?: string
     name: string
@@ -80743,6 +90552,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
     submissions?: SubmissionCreateNestedManyWithoutUserInput
+    violationsRecorded?: ViolationCreateNestedManyWithoutRecordedByUserInput
+    violationNotes?: ViolationNoteCreateNestedManyWithoutAuthorInput
+    parentContactsRecorded?: ParentContactCreateNestedManyWithoutRecordedByUserInput
+    lostFoundRecorded?: LostFoundItemCreateNestedManyWithoutRecordedByUserInput
   }
 
   export type UserUncheckedCreateWithoutResetTokensInput = {
@@ -80783,6 +90596,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewUncheckedCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
     submissions?: SubmissionUncheckedCreateNestedManyWithoutUserInput
+    violationsRecorded?: ViolationUncheckedCreateNestedManyWithoutRecordedByUserInput
+    violationNotes?: ViolationNoteUncheckedCreateNestedManyWithoutAuthorInput
+    parentContactsRecorded?: ParentContactUncheckedCreateNestedManyWithoutRecordedByUserInput
+    lostFoundRecorded?: LostFoundItemUncheckedCreateNestedManyWithoutRecordedByUserInput
   }
 
   export type UserCreateOrConnectWithoutResetTokensInput = {
@@ -80839,6 +90656,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
     submissions?: SubmissionUpdateManyWithoutUserNestedInput
+    violationsRecorded?: ViolationUpdateManyWithoutRecordedByUserNestedInput
+    violationNotes?: ViolationNoteUpdateManyWithoutAuthorNestedInput
+    parentContactsRecorded?: ParentContactUpdateManyWithoutRecordedByUserNestedInput
+    lostFoundRecorded?: LostFoundItemUpdateManyWithoutRecordedByUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutResetTokensInput = {
@@ -80879,6 +90700,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewUncheckedUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
     submissions?: SubmissionUncheckedUpdateManyWithoutUserNestedInput
+    violationsRecorded?: ViolationUncheckedUpdateManyWithoutRecordedByUserNestedInput
+    violationNotes?: ViolationNoteUncheckedUpdateManyWithoutAuthorNestedInput
+    parentContactsRecorded?: ParentContactUncheckedUpdateManyWithoutRecordedByUserNestedInput
+    lostFoundRecorded?: LostFoundItemUncheckedUpdateManyWithoutRecordedByUserNestedInput
   }
 
   export type AnnouncementCreateWithoutCourseInput = {
@@ -81238,7 +91063,7 @@ export namespace Prisma {
     fitnessFor?: MedicalExamRecordCreatefitnessForInput | string[]
     clearanceRemarks?: string | null
     clearanceIssuedAt?: Date | string | null
-    recordedByUser: UserCreateNestedOneWithoutMedicalExamRecordsInput
+    recordedByUser?: UserCreateNestedOneWithoutMedicalExamRecordsInput
     student: StudentCreateNestedOneWithoutMedicalExamRecordsInput
   }
 
@@ -81248,7 +91073,7 @@ export namespace Prisma {
     purpose: string
     remarks?: string | null
     visitDate: Date | string
-    recordedBy: string
+    recordedBy?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     signatureUrl?: string | null
@@ -81341,7 +91166,7 @@ export namespace Prisma {
     signedAt?: Date | string | null
     bodySystemId?: string | null
     medicineUsages?: MedicineUsageCreateNestedManyWithoutPatientRecordInput
-    recordedByUser: UserCreateNestedOneWithoutPatientRecordsInput
+    recordedByUser?: UserCreateNestedOneWithoutPatientRecordsInput
     student: StudentCreateNestedOneWithoutPatientRecordsInput
     medicalCondition?: MedicalConditionCreateNestedOneWithoutPatientRecordsInput
   }
@@ -81359,7 +91184,7 @@ export namespace Prisma {
     action: $Enums.PatientAction
     notes?: string | null
     visitDate: Date | string
-    recordedBy: string
+    recordedBy?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     signEmailSentAt?: Date | string | null
@@ -81537,6 +91362,11 @@ export namespace Prisma {
     sex?: string | null
     religion?: string | null
     completeAddress?: string | null
+    civilStatus?: string | null
+    isPwd?: boolean | null
+    isIndigenous?: boolean | null
+    isSoloParent?: boolean | null
+    isFirstGen?: boolean | null
     fatherName?: string | null
     fatherDOB?: string | null
     fatherAddress?: string | null
@@ -81605,6 +91435,11 @@ export namespace Prisma {
     sex?: string | null
     religion?: string | null
     completeAddress?: string | null
+    civilStatus?: string | null
+    isPwd?: boolean | null
+    isIndigenous?: boolean | null
+    isSoloParent?: boolean | null
+    isFirstGen?: boolean | null
     fatherName?: string | null
     fatherDOB?: string | null
     fatherAddress?: string | null
@@ -81683,7 +91518,7 @@ export namespace Prisma {
     visitDate?: Date | string
     createdAt?: Date | string
     updatedAt?: Date | string
-    recordedByUser: UserCreateNestedOneWithoutGuidanceLogEntriesInput
+    recordedByUser?: UserCreateNestedOneWithoutGuidanceLogEntriesInput
   }
 
   export type GuidanceLogEntryUncheckedCreateWithoutCourseInput = {
@@ -81700,7 +91535,7 @@ export namespace Prisma {
     signTokenExpiresAt?: Date | string | null
     signEmailSentAt?: Date | string | null
     visitDate?: Date | string
-    recordedBy: string
+    recordedBy?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -82050,6 +91885,186 @@ export namespace Prisma {
 
   export type LibraryBorrowRecordCreateManyCourseInputEnvelope = {
     data: LibraryBorrowRecordCreateManyCourseInput | LibraryBorrowRecordCreateManyCourseInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type ViolationTypeCreateWithoutCourseInput = {
+    id?: string
+    code: string
+    name: string
+    description?: string | null
+    severity?: string
+    category?: string | null
+    dismissalOnFirst?: boolean
+    defaultSanction?: string | null
+    sanctionMinDays?: number | null
+    sanctionMaxDays?: number | null
+    maxSanction?: string | null
+    escalationCount?: number
+    escalatesTo?: string | null
+    manualRef?: string | null
+    isActive?: boolean
+    order?: number
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    violations?: ViolationCreateNestedManyWithoutViolationTypeInput
+  }
+
+  export type ViolationTypeUncheckedCreateWithoutCourseInput = {
+    id?: string
+    code: string
+    name: string
+    description?: string | null
+    severity?: string
+    category?: string | null
+    dismissalOnFirst?: boolean
+    defaultSanction?: string | null
+    sanctionMinDays?: number | null
+    sanctionMaxDays?: number | null
+    maxSanction?: string | null
+    escalationCount?: number
+    escalatesTo?: string | null
+    manualRef?: string | null
+    isActive?: boolean
+    order?: number
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    violations?: ViolationUncheckedCreateNestedManyWithoutViolationTypeInput
+  }
+
+  export type ViolationTypeCreateOrConnectWithoutCourseInput = {
+    where: ViolationTypeWhereUniqueInput
+    create: XOR<ViolationTypeCreateWithoutCourseInput, ViolationTypeUncheckedCreateWithoutCourseInput>
+  }
+
+  export type ViolationTypeCreateManyCourseInputEnvelope = {
+    data: ViolationTypeCreateManyCourseInput | ViolationTypeCreateManyCourseInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type ViolationCreateWithoutCourseInput = {
+    id?: string
+    caseNo: string
+    severity: string
+    incidentDate: Date | string
+    location?: string | null
+    description?: string | null
+    reportedBy?: string | null
+    reportedByRole?: string | null
+    status?: string
+    noticeToExplainAt?: Date | string | null
+    explanationReceivedAt?: Date | string | null
+    hearingDate?: Date | string | null
+    hearingResult?: string | null
+    sanction?: string | null
+    sanctionDays?: number | null
+    sanctionStart?: Date | string | null
+    sanctionEnd?: Date | string | null
+    sanctionCompleted?: boolean
+    decidedBy?: string | null
+    decidedAt?: Date | string | null
+    appealed?: boolean
+    appealResult?: string | null
+    resolvedAt?: Date | string | null
+    deletedAt?: Date | string | null
+    deletedBy?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    student: StudentCreateNestedOneWithoutViolationsInput
+    violationType: ViolationTypeCreateNestedOneWithoutViolationsInput
+    recordedByUser?: UserCreateNestedOneWithoutViolationsRecordedInput
+    parentContacts?: ParentContactCreateNestedManyWithoutViolationInput
+    notes?: ViolationNoteCreateNestedManyWithoutViolationInput
+  }
+
+  export type ViolationUncheckedCreateWithoutCourseInput = {
+    id?: string
+    caseNo: string
+    studentId: string
+    violationTypeId: string
+    severity: string
+    incidentDate: Date | string
+    location?: string | null
+    description?: string | null
+    reportedBy?: string | null
+    reportedByRole?: string | null
+    status?: string
+    noticeToExplainAt?: Date | string | null
+    explanationReceivedAt?: Date | string | null
+    hearingDate?: Date | string | null
+    hearingResult?: string | null
+    sanction?: string | null
+    sanctionDays?: number | null
+    sanctionStart?: Date | string | null
+    sanctionEnd?: Date | string | null
+    sanctionCompleted?: boolean
+    decidedBy?: string | null
+    decidedAt?: Date | string | null
+    appealed?: boolean
+    appealResult?: string | null
+    resolvedAt?: Date | string | null
+    recordedBy?: string | null
+    deletedAt?: Date | string | null
+    deletedBy?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    parentContacts?: ParentContactUncheckedCreateNestedManyWithoutViolationInput
+    notes?: ViolationNoteUncheckedCreateNestedManyWithoutViolationInput
+  }
+
+  export type ViolationCreateOrConnectWithoutCourseInput = {
+    where: ViolationWhereUniqueInput
+    create: XOR<ViolationCreateWithoutCourseInput, ViolationUncheckedCreateWithoutCourseInput>
+  }
+
+  export type ViolationCreateManyCourseInputEnvelope = {
+    data: ViolationCreateManyCourseInput | ViolationCreateManyCourseInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type LostFoundItemCreateWithoutCourseInput = {
+    id?: string
+    itemName: string
+    description?: string | null
+    category?: string
+    dateFound: Date | string
+    locationFound?: string | null
+    foundBy?: string | null
+    status?: string
+    claimerName?: string | null
+    claimedAt?: Date | string | null
+    photoUrl?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    recordedByUser?: UserCreateNestedOneWithoutLostFoundRecordedInput
+  }
+
+  export type LostFoundItemUncheckedCreateWithoutCourseInput = {
+    id?: string
+    itemName: string
+    description?: string | null
+    category?: string
+    dateFound: Date | string
+    locationFound?: string | null
+    foundBy?: string | null
+    status?: string
+    claimerName?: string | null
+    claimedAt?: Date | string | null
+    photoUrl?: string | null
+    recordedBy?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type LostFoundItemCreateOrConnectWithoutCourseInput = {
+    where: LostFoundItemWhereUniqueInput
+    create: XOR<LostFoundItemCreateWithoutCourseInput, LostFoundItemUncheckedCreateWithoutCourseInput>
+  }
+
+  export type LostFoundItemCreateManyCourseInputEnvelope = {
+    data: LostFoundItemCreateManyCourseInput | LostFoundItemCreateManyCourseInput[]
     skipDuplicates?: boolean
   }
 
@@ -82435,6 +92450,11 @@ export namespace Prisma {
     sex?: StringNullableFilter<"GuidanceInfoSheet"> | string | null
     religion?: StringNullableFilter<"GuidanceInfoSheet"> | string | null
     completeAddress?: StringNullableFilter<"GuidanceInfoSheet"> | string | null
+    civilStatus?: StringNullableFilter<"GuidanceInfoSheet"> | string | null
+    isPwd?: BoolNullableFilter<"GuidanceInfoSheet"> | boolean | null
+    isIndigenous?: BoolNullableFilter<"GuidanceInfoSheet"> | boolean | null
+    isSoloParent?: BoolNullableFilter<"GuidanceInfoSheet"> | boolean | null
+    isFirstGen?: BoolNullableFilter<"GuidanceInfoSheet"> | boolean | null
     fatherName?: StringNullableFilter<"GuidanceInfoSheet"> | string | null
     fatherDOB?: StringNullableFilter<"GuidanceInfoSheet"> | string | null
     fatherAddress?: StringNullableFilter<"GuidanceInfoSheet"> | string | null
@@ -82692,6 +92712,80 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"LibraryBorrowRecord"> | Date | string
   }
 
+  export type ViolationTypeUpsertWithWhereUniqueWithoutCourseInput = {
+    where: ViolationTypeWhereUniqueInput
+    update: XOR<ViolationTypeUpdateWithoutCourseInput, ViolationTypeUncheckedUpdateWithoutCourseInput>
+    create: XOR<ViolationTypeCreateWithoutCourseInput, ViolationTypeUncheckedCreateWithoutCourseInput>
+  }
+
+  export type ViolationTypeUpdateWithWhereUniqueWithoutCourseInput = {
+    where: ViolationTypeWhereUniqueInput
+    data: XOR<ViolationTypeUpdateWithoutCourseInput, ViolationTypeUncheckedUpdateWithoutCourseInput>
+  }
+
+  export type ViolationTypeUpdateManyWithWhereWithoutCourseInput = {
+    where: ViolationTypeScalarWhereInput
+    data: XOR<ViolationTypeUpdateManyMutationInput, ViolationTypeUncheckedUpdateManyWithoutCourseInput>
+  }
+
+  export type ViolationTypeScalarWhereInput = {
+    AND?: ViolationTypeScalarWhereInput | ViolationTypeScalarWhereInput[]
+    OR?: ViolationTypeScalarWhereInput[]
+    NOT?: ViolationTypeScalarWhereInput | ViolationTypeScalarWhereInput[]
+    id?: StringFilter<"ViolationType"> | string
+    courseId?: StringFilter<"ViolationType"> | string
+    code?: StringFilter<"ViolationType"> | string
+    name?: StringFilter<"ViolationType"> | string
+    description?: StringNullableFilter<"ViolationType"> | string | null
+    severity?: StringFilter<"ViolationType"> | string
+    category?: StringNullableFilter<"ViolationType"> | string | null
+    dismissalOnFirst?: BoolFilter<"ViolationType"> | boolean
+    defaultSanction?: StringNullableFilter<"ViolationType"> | string | null
+    sanctionMinDays?: IntNullableFilter<"ViolationType"> | number | null
+    sanctionMaxDays?: IntNullableFilter<"ViolationType"> | number | null
+    maxSanction?: StringNullableFilter<"ViolationType"> | string | null
+    escalationCount?: IntFilter<"ViolationType"> | number
+    escalatesTo?: StringNullableFilter<"ViolationType"> | string | null
+    manualRef?: StringNullableFilter<"ViolationType"> | string | null
+    isActive?: BoolFilter<"ViolationType"> | boolean
+    order?: IntFilter<"ViolationType"> | number
+    deletedAt?: DateTimeNullableFilter<"ViolationType"> | Date | string | null
+    createdAt?: DateTimeFilter<"ViolationType"> | Date | string
+    updatedAt?: DateTimeFilter<"ViolationType"> | Date | string
+  }
+
+  export type ViolationUpsertWithWhereUniqueWithoutCourseInput = {
+    where: ViolationWhereUniqueInput
+    update: XOR<ViolationUpdateWithoutCourseInput, ViolationUncheckedUpdateWithoutCourseInput>
+    create: XOR<ViolationCreateWithoutCourseInput, ViolationUncheckedCreateWithoutCourseInput>
+  }
+
+  export type ViolationUpdateWithWhereUniqueWithoutCourseInput = {
+    where: ViolationWhereUniqueInput
+    data: XOR<ViolationUpdateWithoutCourseInput, ViolationUncheckedUpdateWithoutCourseInput>
+  }
+
+  export type ViolationUpdateManyWithWhereWithoutCourseInput = {
+    where: ViolationScalarWhereInput
+    data: XOR<ViolationUpdateManyMutationInput, ViolationUncheckedUpdateManyWithoutCourseInput>
+  }
+
+  export type LostFoundItemUpsertWithWhereUniqueWithoutCourseInput = {
+    where: LostFoundItemWhereUniqueInput
+    update: XOR<LostFoundItemUpdateWithoutCourseInput, LostFoundItemUncheckedUpdateWithoutCourseInput>
+    create: XOR<LostFoundItemCreateWithoutCourseInput, LostFoundItemUncheckedCreateWithoutCourseInput>
+  }
+
+  export type LostFoundItemUpdateWithWhereUniqueWithoutCourseInput = {
+    where: LostFoundItemWhereUniqueInput
+    data: XOR<LostFoundItemUpdateWithoutCourseInput, LostFoundItemUncheckedUpdateWithoutCourseInput>
+  }
+
+  export type LostFoundItemUpdateManyWithWhereWithoutCourseInput = {
+    where: LostFoundItemScalarWhereInput
+    data: XOR<LostFoundItemUpdateManyMutationInput, LostFoundItemUncheckedUpdateManyWithoutCourseInput>
+  }
+
   export type CourseCreateWithoutEnrollmentsInput = {
     id?: string
     name: string
@@ -82725,6 +92819,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogCreateNestedManyWithoutCourseInput
     LibraryBook?: LibraryBookCreateNestedManyWithoutCourseInput
     LibraryBorrowRecord?: LibraryBorrowRecordCreateNestedManyWithoutCourseInput
+    violationTypes?: ViolationTypeCreateNestedManyWithoutCourseInput
+    violations?: ViolationCreateNestedManyWithoutCourseInput
+    lostFoundItems?: LostFoundItemCreateNestedManyWithoutCourseInput
   }
 
   export type CourseUncheckedCreateWithoutEnrollmentsInput = {
@@ -82760,6 +92857,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogUncheckedCreateNestedManyWithoutCourseInput
     LibraryBook?: LibraryBookUncheckedCreateNestedManyWithoutCourseInput
     LibraryBorrowRecord?: LibraryBorrowRecordUncheckedCreateNestedManyWithoutCourseInput
+    violationTypes?: ViolationTypeUncheckedCreateNestedManyWithoutCourseInput
+    violations?: ViolationUncheckedCreateNestedManyWithoutCourseInput
+    lostFoundItems?: LostFoundItemUncheckedCreateNestedManyWithoutCourseInput
   }
 
   export type CourseCreateOrConnectWithoutEnrollmentsInput = {
@@ -82805,6 +92905,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
     submissions?: SubmissionCreateNestedManyWithoutUserInput
+    violationsRecorded?: ViolationCreateNestedManyWithoutRecordedByUserInput
+    violationNotes?: ViolationNoteCreateNestedManyWithoutAuthorInput
+    parentContactsRecorded?: ParentContactCreateNestedManyWithoutRecordedByUserInput
+    lostFoundRecorded?: LostFoundItemCreateNestedManyWithoutRecordedByUserInput
   }
 
   export type UserUncheckedCreateWithoutEnrollmentsInput = {
@@ -82845,6 +92949,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewUncheckedCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
     submissions?: SubmissionUncheckedCreateNestedManyWithoutUserInput
+    violationsRecorded?: ViolationUncheckedCreateNestedManyWithoutRecordedByUserInput
+    violationNotes?: ViolationNoteUncheckedCreateNestedManyWithoutAuthorInput
+    parentContactsRecorded?: ParentContactUncheckedCreateNestedManyWithoutRecordedByUserInput
+    lostFoundRecorded?: LostFoundItemUncheckedCreateNestedManyWithoutRecordedByUserInput
   }
 
   export type UserCreateOrConnectWithoutEnrollmentsInput = {
@@ -82896,6 +93004,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogUpdateManyWithoutCourseNestedInput
     LibraryBook?: LibraryBookUpdateManyWithoutCourseNestedInput
     LibraryBorrowRecord?: LibraryBorrowRecordUpdateManyWithoutCourseNestedInput
+    violationTypes?: ViolationTypeUpdateManyWithoutCourseNestedInput
+    violations?: ViolationUpdateManyWithoutCourseNestedInput
+    lostFoundItems?: LostFoundItemUpdateManyWithoutCourseNestedInput
   }
 
   export type CourseUncheckedUpdateWithoutEnrollmentsInput = {
@@ -82931,6 +93042,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogUncheckedUpdateManyWithoutCourseNestedInput
     LibraryBook?: LibraryBookUncheckedUpdateManyWithoutCourseNestedInput
     LibraryBorrowRecord?: LibraryBorrowRecordUncheckedUpdateManyWithoutCourseNestedInput
+    violationTypes?: ViolationTypeUncheckedUpdateManyWithoutCourseNestedInput
+    violations?: ViolationUncheckedUpdateManyWithoutCourseNestedInput
+    lostFoundItems?: LostFoundItemUncheckedUpdateManyWithoutCourseNestedInput
   }
 
   export type UserUpsertWithoutEnrollmentsInput = {
@@ -82982,6 +93096,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
     submissions?: SubmissionUpdateManyWithoutUserNestedInput
+    violationsRecorded?: ViolationUpdateManyWithoutRecordedByUserNestedInput
+    violationNotes?: ViolationNoteUpdateManyWithoutAuthorNestedInput
+    parentContactsRecorded?: ParentContactUpdateManyWithoutRecordedByUserNestedInput
+    lostFoundRecorded?: LostFoundItemUpdateManyWithoutRecordedByUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutEnrollmentsInput = {
@@ -83022,6 +93140,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewUncheckedUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
     submissions?: SubmissionUncheckedUpdateManyWithoutUserNestedInput
+    violationsRecorded?: ViolationUncheckedUpdateManyWithoutRecordedByUserNestedInput
+    violationNotes?: ViolationNoteUncheckedUpdateManyWithoutAuthorNestedInput
+    parentContactsRecorded?: ParentContactUncheckedUpdateManyWithoutRecordedByUserNestedInput
+    lostFoundRecorded?: LostFoundItemUncheckedUpdateManyWithoutRecordedByUserNestedInput
   }
 
   export type CourseCreateWithoutGroupSetsInput = {
@@ -83057,6 +93179,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogCreateNestedManyWithoutCourseInput
     LibraryBook?: LibraryBookCreateNestedManyWithoutCourseInput
     LibraryBorrowRecord?: LibraryBorrowRecordCreateNestedManyWithoutCourseInput
+    violationTypes?: ViolationTypeCreateNestedManyWithoutCourseInput
+    violations?: ViolationCreateNestedManyWithoutCourseInput
+    lostFoundItems?: LostFoundItemCreateNestedManyWithoutCourseInput
   }
 
   export type CourseUncheckedCreateWithoutGroupSetsInput = {
@@ -83092,6 +93217,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogUncheckedCreateNestedManyWithoutCourseInput
     LibraryBook?: LibraryBookUncheckedCreateNestedManyWithoutCourseInput
     LibraryBorrowRecord?: LibraryBorrowRecordUncheckedCreateNestedManyWithoutCourseInput
+    violationTypes?: ViolationTypeUncheckedCreateNestedManyWithoutCourseInput
+    violations?: ViolationUncheckedCreateNestedManyWithoutCourseInput
+    lostFoundItems?: LostFoundItemUncheckedCreateNestedManyWithoutCourseInput
   }
 
   export type CourseCreateOrConnectWithoutGroupSetsInput = {
@@ -83173,6 +93301,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogUpdateManyWithoutCourseNestedInput
     LibraryBook?: LibraryBookUpdateManyWithoutCourseNestedInput
     LibraryBorrowRecord?: LibraryBorrowRecordUpdateManyWithoutCourseNestedInput
+    violationTypes?: ViolationTypeUpdateManyWithoutCourseNestedInput
+    violations?: ViolationUpdateManyWithoutCourseNestedInput
+    lostFoundItems?: LostFoundItemUpdateManyWithoutCourseNestedInput
   }
 
   export type CourseUncheckedUpdateWithoutGroupSetsInput = {
@@ -83208,6 +93339,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogUncheckedUpdateManyWithoutCourseNestedInput
     LibraryBook?: LibraryBookUncheckedUpdateManyWithoutCourseNestedInput
     LibraryBorrowRecord?: LibraryBorrowRecordUncheckedUpdateManyWithoutCourseNestedInput
+    violationTypes?: ViolationTypeUncheckedUpdateManyWithoutCourseNestedInput
+    violations?: ViolationUncheckedUpdateManyWithoutCourseNestedInput
+    lostFoundItems?: LostFoundItemUncheckedUpdateManyWithoutCourseNestedInput
   }
 
   export type GroupUpsertWithWhereUniqueWithoutGroupSetInput = {
@@ -83363,6 +93497,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogCreateNestedManyWithoutCourseInput
     LibraryBook?: LibraryBookCreateNestedManyWithoutCourseInput
     LibraryBorrowRecord?: LibraryBorrowRecordCreateNestedManyWithoutCourseInput
+    violationTypes?: ViolationTypeCreateNestedManyWithoutCourseInput
+    violations?: ViolationCreateNestedManyWithoutCourseInput
+    lostFoundItems?: LostFoundItemCreateNestedManyWithoutCourseInput
   }
 
   export type CourseUncheckedCreateWithoutGroupsInput = {
@@ -83398,6 +93535,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogUncheckedCreateNestedManyWithoutCourseInput
     LibraryBook?: LibraryBookUncheckedCreateNestedManyWithoutCourseInput
     LibraryBorrowRecord?: LibraryBorrowRecordUncheckedCreateNestedManyWithoutCourseInput
+    violationTypes?: ViolationTypeUncheckedCreateNestedManyWithoutCourseInput
+    violations?: ViolationUncheckedCreateNestedManyWithoutCourseInput
+    lostFoundItems?: LostFoundItemUncheckedCreateNestedManyWithoutCourseInput
   }
 
   export type CourseCreateOrConnectWithoutGroupsInput = {
@@ -83516,6 +93656,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogUpdateManyWithoutCourseNestedInput
     LibraryBook?: LibraryBookUpdateManyWithoutCourseNestedInput
     LibraryBorrowRecord?: LibraryBorrowRecordUpdateManyWithoutCourseNestedInput
+    violationTypes?: ViolationTypeUpdateManyWithoutCourseNestedInput
+    violations?: ViolationUpdateManyWithoutCourseNestedInput
+    lostFoundItems?: LostFoundItemUpdateManyWithoutCourseNestedInput
   }
 
   export type CourseUncheckedUpdateWithoutGroupsInput = {
@@ -83551,6 +93694,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogUncheckedUpdateManyWithoutCourseNestedInput
     LibraryBook?: LibraryBookUncheckedUpdateManyWithoutCourseNestedInput
     LibraryBorrowRecord?: LibraryBorrowRecordUncheckedUpdateManyWithoutCourseNestedInput
+    violationTypes?: ViolationTypeUncheckedUpdateManyWithoutCourseNestedInput
+    violations?: ViolationUncheckedUpdateManyWithoutCourseNestedInput
+    lostFoundItems?: LostFoundItemUncheckedUpdateManyWithoutCourseNestedInput
   }
 
   export type GroupSetUpsertWithoutGroupsInput = {
@@ -83657,6 +93803,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
     submissions?: SubmissionCreateNestedManyWithoutUserInput
+    violationsRecorded?: ViolationCreateNestedManyWithoutRecordedByUserInput
+    violationNotes?: ViolationNoteCreateNestedManyWithoutAuthorInput
+    parentContactsRecorded?: ParentContactCreateNestedManyWithoutRecordedByUserInput
+    lostFoundRecorded?: LostFoundItemCreateNestedManyWithoutRecordedByUserInput
   }
 
   export type UserUncheckedCreateWithoutGroupMembersInput = {
@@ -83697,6 +93847,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewUncheckedCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
     submissions?: SubmissionUncheckedCreateNestedManyWithoutUserInput
+    violationsRecorded?: ViolationUncheckedCreateNestedManyWithoutRecordedByUserInput
+    violationNotes?: ViolationNoteUncheckedCreateNestedManyWithoutAuthorInput
+    parentContactsRecorded?: ParentContactUncheckedCreateNestedManyWithoutRecordedByUserInput
+    lostFoundRecorded?: LostFoundItemUncheckedCreateNestedManyWithoutRecordedByUserInput
   }
 
   export type UserCreateOrConnectWithoutGroupMembersInput = {
@@ -83784,6 +93938,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
     submissions?: SubmissionUpdateManyWithoutUserNestedInput
+    violationsRecorded?: ViolationUpdateManyWithoutRecordedByUserNestedInput
+    violationNotes?: ViolationNoteUpdateManyWithoutAuthorNestedInput
+    parentContactsRecorded?: ParentContactUpdateManyWithoutRecordedByUserNestedInput
+    lostFoundRecorded?: LostFoundItemUpdateManyWithoutRecordedByUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutGroupMembersInput = {
@@ -83824,6 +93982,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewUncheckedUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
     submissions?: SubmissionUncheckedUpdateManyWithoutUserNestedInput
+    violationsRecorded?: ViolationUncheckedUpdateManyWithoutRecordedByUserNestedInput
+    violationNotes?: ViolationNoteUncheckedUpdateManyWithoutAuthorNestedInput
+    parentContactsRecorded?: ParentContactUncheckedUpdateManyWithoutRecordedByUserNestedInput
+    lostFoundRecorded?: LostFoundItemUncheckedUpdateManyWithoutRecordedByUserNestedInput
   }
 
   export type AnnouncementAttachmentCreateWithoutAnnouncementInput = {
@@ -83909,6 +94071,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogCreateNestedManyWithoutCourseInput
     LibraryBook?: LibraryBookCreateNestedManyWithoutCourseInput
     LibraryBorrowRecord?: LibraryBorrowRecordCreateNestedManyWithoutCourseInput
+    violationTypes?: ViolationTypeCreateNestedManyWithoutCourseInput
+    violations?: ViolationCreateNestedManyWithoutCourseInput
+    lostFoundItems?: LostFoundItemCreateNestedManyWithoutCourseInput
   }
 
   export type CourseUncheckedCreateWithoutAnnouncementsInput = {
@@ -83944,6 +94109,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogUncheckedCreateNestedManyWithoutCourseInput
     LibraryBook?: LibraryBookUncheckedCreateNestedManyWithoutCourseInput
     LibraryBorrowRecord?: LibraryBorrowRecordUncheckedCreateNestedManyWithoutCourseInput
+    violationTypes?: ViolationTypeUncheckedCreateNestedManyWithoutCourseInput
+    violations?: ViolationUncheckedCreateNestedManyWithoutCourseInput
+    lostFoundItems?: LostFoundItemUncheckedCreateNestedManyWithoutCourseInput
   }
 
   export type CourseCreateOrConnectWithoutAnnouncementsInput = {
@@ -84040,6 +94208,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogUpdateManyWithoutCourseNestedInput
     LibraryBook?: LibraryBookUpdateManyWithoutCourseNestedInput
     LibraryBorrowRecord?: LibraryBorrowRecordUpdateManyWithoutCourseNestedInput
+    violationTypes?: ViolationTypeUpdateManyWithoutCourseNestedInput
+    violations?: ViolationUpdateManyWithoutCourseNestedInput
+    lostFoundItems?: LostFoundItemUpdateManyWithoutCourseNestedInput
   }
 
   export type CourseUncheckedUpdateWithoutAnnouncementsInput = {
@@ -84075,6 +94246,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogUncheckedUpdateManyWithoutCourseNestedInput
     LibraryBook?: LibraryBookUncheckedUpdateManyWithoutCourseNestedInput
     LibraryBorrowRecord?: LibraryBorrowRecordUncheckedUpdateManyWithoutCourseNestedInput
+    violationTypes?: ViolationTypeUncheckedUpdateManyWithoutCourseNestedInput
+    violations?: ViolationUncheckedUpdateManyWithoutCourseNestedInput
+    lostFoundItems?: LostFoundItemUncheckedUpdateManyWithoutCourseNestedInput
   }
 
   export type AnnouncementCreateWithoutAttachmentsInput = {
@@ -84250,6 +94424,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
     submissions?: SubmissionCreateNestedManyWithoutUserInput
+    violationsRecorded?: ViolationCreateNestedManyWithoutRecordedByUserInput
+    violationNotes?: ViolationNoteCreateNestedManyWithoutAuthorInput
+    parentContactsRecorded?: ParentContactCreateNestedManyWithoutRecordedByUserInput
+    lostFoundRecorded?: LostFoundItemCreateNestedManyWithoutRecordedByUserInput
   }
 
   export type UserUncheckedCreateWithoutAnnouncementReadsInput = {
@@ -84290,6 +94468,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewUncheckedCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
     submissions?: SubmissionUncheckedCreateNestedManyWithoutUserInput
+    violationsRecorded?: ViolationUncheckedCreateNestedManyWithoutRecordedByUserInput
+    violationNotes?: ViolationNoteUncheckedCreateNestedManyWithoutAuthorInput
+    parentContactsRecorded?: ParentContactUncheckedCreateNestedManyWithoutRecordedByUserInput
+    lostFoundRecorded?: LostFoundItemUncheckedCreateNestedManyWithoutRecordedByUserInput
   }
 
   export type UserCreateOrConnectWithoutAnnouncementReadsInput = {
@@ -84395,6 +94577,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
     submissions?: SubmissionUpdateManyWithoutUserNestedInput
+    violationsRecorded?: ViolationUpdateManyWithoutRecordedByUserNestedInput
+    violationNotes?: ViolationNoteUpdateManyWithoutAuthorNestedInput
+    parentContactsRecorded?: ParentContactUpdateManyWithoutRecordedByUserNestedInput
+    lostFoundRecorded?: LostFoundItemUpdateManyWithoutRecordedByUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutAnnouncementReadsInput = {
@@ -84435,6 +94621,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewUncheckedUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
     submissions?: SubmissionUncheckedUpdateManyWithoutUserNestedInput
+    violationsRecorded?: ViolationUncheckedUpdateManyWithoutRecordedByUserNestedInput
+    violationNotes?: ViolationNoteUncheckedUpdateManyWithoutAuthorNestedInput
+    parentContactsRecorded?: ParentContactUncheckedUpdateManyWithoutRecordedByUserNestedInput
+    lostFoundRecorded?: LostFoundItemUncheckedUpdateManyWithoutRecordedByUserNestedInput
   }
 
   export type CourseCreateWithoutAssignmentsInput = {
@@ -84470,6 +94660,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogCreateNestedManyWithoutCourseInput
     LibraryBook?: LibraryBookCreateNestedManyWithoutCourseInput
     LibraryBorrowRecord?: LibraryBorrowRecordCreateNestedManyWithoutCourseInput
+    violationTypes?: ViolationTypeCreateNestedManyWithoutCourseInput
+    violations?: ViolationCreateNestedManyWithoutCourseInput
+    lostFoundItems?: LostFoundItemCreateNestedManyWithoutCourseInput
   }
 
   export type CourseUncheckedCreateWithoutAssignmentsInput = {
@@ -84505,6 +94698,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogUncheckedCreateNestedManyWithoutCourseInput
     LibraryBook?: LibraryBookUncheckedCreateNestedManyWithoutCourseInput
     LibraryBorrowRecord?: LibraryBorrowRecordUncheckedCreateNestedManyWithoutCourseInput
+    violationTypes?: ViolationTypeUncheckedCreateNestedManyWithoutCourseInput
+    violations?: ViolationUncheckedCreateNestedManyWithoutCourseInput
+    lostFoundItems?: LostFoundItemUncheckedCreateNestedManyWithoutCourseInput
   }
 
   export type CourseCreateOrConnectWithoutAssignmentsInput = {
@@ -84693,6 +94889,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogUpdateManyWithoutCourseNestedInput
     LibraryBook?: LibraryBookUpdateManyWithoutCourseNestedInput
     LibraryBorrowRecord?: LibraryBorrowRecordUpdateManyWithoutCourseNestedInput
+    violationTypes?: ViolationTypeUpdateManyWithoutCourseNestedInput
+    violations?: ViolationUpdateManyWithoutCourseNestedInput
+    lostFoundItems?: LostFoundItemUpdateManyWithoutCourseNestedInput
   }
 
   export type CourseUncheckedUpdateWithoutAssignmentsInput = {
@@ -84728,6 +94927,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogUncheckedUpdateManyWithoutCourseNestedInput
     LibraryBook?: LibraryBookUncheckedUpdateManyWithoutCourseNestedInput
     LibraryBorrowRecord?: LibraryBorrowRecordUncheckedUpdateManyWithoutCourseNestedInput
+    violationTypes?: ViolationTypeUncheckedUpdateManyWithoutCourseNestedInput
+    violations?: ViolationUncheckedUpdateManyWithoutCourseNestedInput
+    lostFoundItems?: LostFoundItemUncheckedUpdateManyWithoutCourseNestedInput
   }
 
   export type GroupUpsertWithoutAssignmentsInput = {
@@ -84991,6 +95193,10 @@ export namespace Prisma {
     guidanceLogEntries?: GuidanceLogEntryCreateNestedManyWithoutRecordedByUserInput
     exitInterviewsCounseled?: ExitInterviewCreateNestedManyWithoutCounselorInput
     submissions?: SubmissionCreateNestedManyWithoutUserInput
+    violationsRecorded?: ViolationCreateNestedManyWithoutRecordedByUserInput
+    violationNotes?: ViolationNoteCreateNestedManyWithoutAuthorInput
+    parentContactsRecorded?: ParentContactCreateNestedManyWithoutRecordedByUserInput
+    lostFoundRecorded?: LostFoundItemCreateNestedManyWithoutRecordedByUserInput
   }
 
   export type UserUncheckedCreateWithoutSubmissions_submissions_gradedByIdTousersInput = {
@@ -85031,6 +95237,10 @@ export namespace Prisma {
     guidanceLogEntries?: GuidanceLogEntryUncheckedCreateNestedManyWithoutRecordedByUserInput
     exitInterviewsCounseled?: ExitInterviewUncheckedCreateNestedManyWithoutCounselorInput
     submissions?: SubmissionUncheckedCreateNestedManyWithoutUserInput
+    violationsRecorded?: ViolationUncheckedCreateNestedManyWithoutRecordedByUserInput
+    violationNotes?: ViolationNoteUncheckedCreateNestedManyWithoutAuthorInput
+    parentContactsRecorded?: ParentContactUncheckedCreateNestedManyWithoutRecordedByUserInput
+    lostFoundRecorded?: LostFoundItemUncheckedCreateNestedManyWithoutRecordedByUserInput
   }
 
   export type UserCreateOrConnectWithoutSubmissions_submissions_gradedByIdTousersInput = {
@@ -85076,6 +95286,10 @@ export namespace Prisma {
     guidanceLogEntries?: GuidanceLogEntryCreateNestedManyWithoutRecordedByUserInput
     exitInterviewsCounseled?: ExitInterviewCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
+    violationsRecorded?: ViolationCreateNestedManyWithoutRecordedByUserInput
+    violationNotes?: ViolationNoteCreateNestedManyWithoutAuthorInput
+    parentContactsRecorded?: ParentContactCreateNestedManyWithoutRecordedByUserInput
+    lostFoundRecorded?: LostFoundItemCreateNestedManyWithoutRecordedByUserInput
   }
 
   export type UserUncheckedCreateWithoutSubmissionsInput = {
@@ -85116,6 +95330,10 @@ export namespace Prisma {
     guidanceLogEntries?: GuidanceLogEntryUncheckedCreateNestedManyWithoutRecordedByUserInput
     exitInterviewsCounseled?: ExitInterviewUncheckedCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
+    violationsRecorded?: ViolationUncheckedCreateNestedManyWithoutRecordedByUserInput
+    violationNotes?: ViolationNoteUncheckedCreateNestedManyWithoutAuthorInput
+    parentContactsRecorded?: ParentContactUncheckedCreateNestedManyWithoutRecordedByUserInput
+    lostFoundRecorded?: LostFoundItemUncheckedCreateNestedManyWithoutRecordedByUserInput
   }
 
   export type UserCreateOrConnectWithoutSubmissionsInput = {
@@ -85284,6 +95502,10 @@ export namespace Prisma {
     guidanceLogEntries?: GuidanceLogEntryUpdateManyWithoutRecordedByUserNestedInput
     exitInterviewsCounseled?: ExitInterviewUpdateManyWithoutCounselorNestedInput
     submissions?: SubmissionUpdateManyWithoutUserNestedInput
+    violationsRecorded?: ViolationUpdateManyWithoutRecordedByUserNestedInput
+    violationNotes?: ViolationNoteUpdateManyWithoutAuthorNestedInput
+    parentContactsRecorded?: ParentContactUpdateManyWithoutRecordedByUserNestedInput
+    lostFoundRecorded?: LostFoundItemUpdateManyWithoutRecordedByUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutSubmissions_submissions_gradedByIdTousersInput = {
@@ -85324,6 +95546,10 @@ export namespace Prisma {
     guidanceLogEntries?: GuidanceLogEntryUncheckedUpdateManyWithoutRecordedByUserNestedInput
     exitInterviewsCounseled?: ExitInterviewUncheckedUpdateManyWithoutCounselorNestedInput
     submissions?: SubmissionUncheckedUpdateManyWithoutUserNestedInput
+    violationsRecorded?: ViolationUncheckedUpdateManyWithoutRecordedByUserNestedInput
+    violationNotes?: ViolationNoteUncheckedUpdateManyWithoutAuthorNestedInput
+    parentContactsRecorded?: ParentContactUncheckedUpdateManyWithoutRecordedByUserNestedInput
+    lostFoundRecorded?: LostFoundItemUncheckedUpdateManyWithoutRecordedByUserNestedInput
   }
 
   export type UserUpsertWithoutSubmissionsInput = {
@@ -85375,6 +95601,10 @@ export namespace Prisma {
     guidanceLogEntries?: GuidanceLogEntryUpdateManyWithoutRecordedByUserNestedInput
     exitInterviewsCounseled?: ExitInterviewUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
+    violationsRecorded?: ViolationUpdateManyWithoutRecordedByUserNestedInput
+    violationNotes?: ViolationNoteUpdateManyWithoutAuthorNestedInput
+    parentContactsRecorded?: ParentContactUpdateManyWithoutRecordedByUserNestedInput
+    lostFoundRecorded?: LostFoundItemUpdateManyWithoutRecordedByUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutSubmissionsInput = {
@@ -85415,6 +95645,10 @@ export namespace Prisma {
     guidanceLogEntries?: GuidanceLogEntryUncheckedUpdateManyWithoutRecordedByUserNestedInput
     exitInterviewsCounseled?: ExitInterviewUncheckedUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
+    violationsRecorded?: ViolationUncheckedUpdateManyWithoutRecordedByUserNestedInput
+    violationNotes?: ViolationNoteUncheckedUpdateManyWithoutAuthorNestedInput
+    parentContactsRecorded?: ParentContactUncheckedUpdateManyWithoutRecordedByUserNestedInput
+    lostFoundRecorded?: LostFoundItemUncheckedUpdateManyWithoutRecordedByUserNestedInput
   }
 
   export type repositoriesCreateWithoutRepository_filesInput = {
@@ -85523,6 +95757,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
     submissions?: SubmissionCreateNestedManyWithoutUserInput
+    violationsRecorded?: ViolationCreateNestedManyWithoutRecordedByUserInput
+    violationNotes?: ViolationNoteCreateNestedManyWithoutAuthorInput
+    parentContactsRecorded?: ParentContactCreateNestedManyWithoutRecordedByUserInput
+    lostFoundRecorded?: LostFoundItemCreateNestedManyWithoutRecordedByUserInput
   }
 
   export type UserUncheckedCreateWithoutRepositoryFilesInput = {
@@ -85563,6 +95801,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewUncheckedCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
     submissions?: SubmissionUncheckedCreateNestedManyWithoutUserInput
+    violationsRecorded?: ViolationUncheckedCreateNestedManyWithoutRecordedByUserInput
+    violationNotes?: ViolationNoteUncheckedCreateNestedManyWithoutAuthorInput
+    parentContactsRecorded?: ParentContactUncheckedCreateNestedManyWithoutRecordedByUserInput
+    lostFoundRecorded?: LostFoundItemUncheckedCreateNestedManyWithoutRecordedByUserInput
   }
 
   export type UserCreateOrConnectWithoutRepositoryFilesInput = {
@@ -85699,6 +95941,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
     submissions?: SubmissionUpdateManyWithoutUserNestedInput
+    violationsRecorded?: ViolationUpdateManyWithoutRecordedByUserNestedInput
+    violationNotes?: ViolationNoteUpdateManyWithoutAuthorNestedInput
+    parentContactsRecorded?: ParentContactUpdateManyWithoutRecordedByUserNestedInput
+    lostFoundRecorded?: LostFoundItemUpdateManyWithoutRecordedByUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutRepositoryFilesInput = {
@@ -85739,6 +95985,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewUncheckedUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
     submissions?: SubmissionUncheckedUpdateManyWithoutUserNestedInput
+    violationsRecorded?: ViolationUncheckedUpdateManyWithoutRecordedByUserNestedInput
+    violationNotes?: ViolationNoteUncheckedUpdateManyWithoutAuthorNestedInput
+    parentContactsRecorded?: ParentContactUncheckedUpdateManyWithoutRecordedByUserNestedInput
+    lostFoundRecorded?: LostFoundItemUncheckedUpdateManyWithoutRecordedByUserNestedInput
   }
 
   export type repositoriesCreateWithoutActivity_logsInput = {
@@ -85804,6 +96054,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
     submissions?: SubmissionCreateNestedManyWithoutUserInput
+    violationsRecorded?: ViolationCreateNestedManyWithoutRecordedByUserInput
+    violationNotes?: ViolationNoteCreateNestedManyWithoutAuthorInput
+    parentContactsRecorded?: ParentContactCreateNestedManyWithoutRecordedByUserInput
+    lostFoundRecorded?: LostFoundItemCreateNestedManyWithoutRecordedByUserInput
   }
 
   export type UserUncheckedCreateWithoutActivityLogsInput = {
@@ -85844,6 +96098,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewUncheckedCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
     submissions?: SubmissionUncheckedCreateNestedManyWithoutUserInput
+    violationsRecorded?: ViolationUncheckedCreateNestedManyWithoutRecordedByUserInput
+    violationNotes?: ViolationNoteUncheckedCreateNestedManyWithoutAuthorInput
+    parentContactsRecorded?: ParentContactUncheckedCreateNestedManyWithoutRecordedByUserInput
+    lostFoundRecorded?: LostFoundItemUncheckedCreateNestedManyWithoutRecordedByUserInput
   }
 
   export type UserCreateOrConnectWithoutActivityLogsInput = {
@@ -85931,6 +96189,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
     submissions?: SubmissionUpdateManyWithoutUserNestedInput
+    violationsRecorded?: ViolationUpdateManyWithoutRecordedByUserNestedInput
+    violationNotes?: ViolationNoteUpdateManyWithoutAuthorNestedInput
+    parentContactsRecorded?: ParentContactUpdateManyWithoutRecordedByUserNestedInput
+    lostFoundRecorded?: LostFoundItemUpdateManyWithoutRecordedByUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutActivityLogsInput = {
@@ -85971,6 +96233,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewUncheckedUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
     submissions?: SubmissionUncheckedUpdateManyWithoutUserNestedInput
+    violationsRecorded?: ViolationUncheckedUpdateManyWithoutRecordedByUserNestedInput
+    violationNotes?: ViolationNoteUncheckedUpdateManyWithoutAuthorNestedInput
+    parentContactsRecorded?: ParentContactUncheckedUpdateManyWithoutRecordedByUserNestedInput
+    lostFoundRecorded?: LostFoundItemUncheckedUpdateManyWithoutRecordedByUserNestedInput
   }
 
   export type UserCreateWithoutAccountsInput = {
@@ -86011,6 +96277,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
     submissions?: SubmissionCreateNestedManyWithoutUserInput
+    violationsRecorded?: ViolationCreateNestedManyWithoutRecordedByUserInput
+    violationNotes?: ViolationNoteCreateNestedManyWithoutAuthorInput
+    parentContactsRecorded?: ParentContactCreateNestedManyWithoutRecordedByUserInput
+    lostFoundRecorded?: LostFoundItemCreateNestedManyWithoutRecordedByUserInput
   }
 
   export type UserUncheckedCreateWithoutAccountsInput = {
@@ -86051,6 +96321,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewUncheckedCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
     submissions?: SubmissionUncheckedCreateNestedManyWithoutUserInput
+    violationsRecorded?: ViolationUncheckedCreateNestedManyWithoutRecordedByUserInput
+    violationNotes?: ViolationNoteUncheckedCreateNestedManyWithoutAuthorInput
+    parentContactsRecorded?: ParentContactUncheckedCreateNestedManyWithoutRecordedByUserInput
+    lostFoundRecorded?: LostFoundItemUncheckedCreateNestedManyWithoutRecordedByUserInput
   }
 
   export type UserCreateOrConnectWithoutAccountsInput = {
@@ -86107,6 +96381,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
     submissions?: SubmissionUpdateManyWithoutUserNestedInput
+    violationsRecorded?: ViolationUpdateManyWithoutRecordedByUserNestedInput
+    violationNotes?: ViolationNoteUpdateManyWithoutAuthorNestedInput
+    parentContactsRecorded?: ParentContactUpdateManyWithoutRecordedByUserNestedInput
+    lostFoundRecorded?: LostFoundItemUpdateManyWithoutRecordedByUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutAccountsInput = {
@@ -86147,6 +96425,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewUncheckedUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
     submissions?: SubmissionUncheckedUpdateManyWithoutUserNestedInput
+    violationsRecorded?: ViolationUncheckedUpdateManyWithoutRecordedByUserNestedInput
+    violationNotes?: ViolationNoteUncheckedUpdateManyWithoutAuthorNestedInput
+    parentContactsRecorded?: ParentContactUncheckedUpdateManyWithoutRecordedByUserNestedInput
+    lostFoundRecorded?: LostFoundItemUncheckedUpdateManyWithoutRecordedByUserNestedInput
   }
 
   export type UserCreateWithoutSessionsInput = {
@@ -86187,6 +96469,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
     submissions?: SubmissionCreateNestedManyWithoutUserInput
+    violationsRecorded?: ViolationCreateNestedManyWithoutRecordedByUserInput
+    violationNotes?: ViolationNoteCreateNestedManyWithoutAuthorInput
+    parentContactsRecorded?: ParentContactCreateNestedManyWithoutRecordedByUserInput
+    lostFoundRecorded?: LostFoundItemCreateNestedManyWithoutRecordedByUserInput
   }
 
   export type UserUncheckedCreateWithoutSessionsInput = {
@@ -86227,6 +96513,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewUncheckedCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
     submissions?: SubmissionUncheckedCreateNestedManyWithoutUserInput
+    violationsRecorded?: ViolationUncheckedCreateNestedManyWithoutRecordedByUserInput
+    violationNotes?: ViolationNoteUncheckedCreateNestedManyWithoutAuthorInput
+    parentContactsRecorded?: ParentContactUncheckedCreateNestedManyWithoutRecordedByUserInput
+    lostFoundRecorded?: LostFoundItemUncheckedCreateNestedManyWithoutRecordedByUserInput
   }
 
   export type UserCreateOrConnectWithoutSessionsInput = {
@@ -86283,6 +96573,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
     submissions?: SubmissionUpdateManyWithoutUserNestedInput
+    violationsRecorded?: ViolationUpdateManyWithoutRecordedByUserNestedInput
+    violationNotes?: ViolationNoteUpdateManyWithoutAuthorNestedInput
+    parentContactsRecorded?: ParentContactUpdateManyWithoutRecordedByUserNestedInput
+    lostFoundRecorded?: LostFoundItemUpdateManyWithoutRecordedByUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutSessionsInput = {
@@ -86323,6 +96617,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewUncheckedUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
     submissions?: SubmissionUncheckedUpdateManyWithoutUserNestedInput
+    violationsRecorded?: ViolationUncheckedUpdateManyWithoutRecordedByUserNestedInput
+    violationNotes?: ViolationNoteUncheckedUpdateManyWithoutAuthorNestedInput
+    parentContactsRecorded?: ParentContactUncheckedUpdateManyWithoutRecordedByUserNestedInput
+    lostFoundRecorded?: LostFoundItemUncheckedUpdateManyWithoutRecordedByUserNestedInput
   }
 
   export type QuizAttemptCreateWithoutQuizInput = {
@@ -86427,6 +96725,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
     submissions?: SubmissionCreateNestedManyWithoutUserInput
+    violationsRecorded?: ViolationCreateNestedManyWithoutRecordedByUserInput
+    violationNotes?: ViolationNoteCreateNestedManyWithoutAuthorInput
+    parentContactsRecorded?: ParentContactCreateNestedManyWithoutRecordedByUserInput
+    lostFoundRecorded?: LostFoundItemCreateNestedManyWithoutRecordedByUserInput
   }
 
   export type UserUncheckedCreateWithoutQuizzesCreatedInput = {
@@ -86467,6 +96769,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewUncheckedCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
     submissions?: SubmissionUncheckedCreateNestedManyWithoutUserInput
+    violationsRecorded?: ViolationUncheckedCreateNestedManyWithoutRecordedByUserInput
+    violationNotes?: ViolationNoteUncheckedCreateNestedManyWithoutAuthorInput
+    parentContactsRecorded?: ParentContactUncheckedCreateNestedManyWithoutRecordedByUserInput
+    lostFoundRecorded?: LostFoundItemUncheckedCreateNestedManyWithoutRecordedByUserInput
   }
 
   export type UserCreateOrConnectWithoutQuizzesCreatedInput = {
@@ -86507,6 +96813,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogCreateNestedManyWithoutCourseInput
     LibraryBook?: LibraryBookCreateNestedManyWithoutCourseInput
     LibraryBorrowRecord?: LibraryBorrowRecordCreateNestedManyWithoutCourseInput
+    violationTypes?: ViolationTypeCreateNestedManyWithoutCourseInput
+    violations?: ViolationCreateNestedManyWithoutCourseInput
+    lostFoundItems?: LostFoundItemCreateNestedManyWithoutCourseInput
   }
 
   export type CourseUncheckedCreateWithoutQuizzesInput = {
@@ -86542,6 +96851,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogUncheckedCreateNestedManyWithoutCourseInput
     LibraryBook?: LibraryBookUncheckedCreateNestedManyWithoutCourseInput
     LibraryBorrowRecord?: LibraryBorrowRecordUncheckedCreateNestedManyWithoutCourseInput
+    violationTypes?: ViolationTypeUncheckedCreateNestedManyWithoutCourseInput
+    violations?: ViolationUncheckedCreateNestedManyWithoutCourseInput
+    lostFoundItems?: LostFoundItemUncheckedCreateNestedManyWithoutCourseInput
   }
 
   export type CourseCreateOrConnectWithoutQuizzesInput = {
@@ -86645,6 +96957,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
     submissions?: SubmissionUpdateManyWithoutUserNestedInput
+    violationsRecorded?: ViolationUpdateManyWithoutRecordedByUserNestedInput
+    violationNotes?: ViolationNoteUpdateManyWithoutAuthorNestedInput
+    parentContactsRecorded?: ParentContactUpdateManyWithoutRecordedByUserNestedInput
+    lostFoundRecorded?: LostFoundItemUpdateManyWithoutRecordedByUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutQuizzesCreatedInput = {
@@ -86685,6 +97001,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewUncheckedUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
     submissions?: SubmissionUncheckedUpdateManyWithoutUserNestedInput
+    violationsRecorded?: ViolationUncheckedUpdateManyWithoutRecordedByUserNestedInput
+    violationNotes?: ViolationNoteUncheckedUpdateManyWithoutAuthorNestedInput
+    parentContactsRecorded?: ParentContactUncheckedUpdateManyWithoutRecordedByUserNestedInput
+    lostFoundRecorded?: LostFoundItemUncheckedUpdateManyWithoutRecordedByUserNestedInput
   }
 
   export type CourseUpsertWithoutQuizzesInput = {
@@ -86731,6 +97051,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogUpdateManyWithoutCourseNestedInput
     LibraryBook?: LibraryBookUpdateManyWithoutCourseNestedInput
     LibraryBorrowRecord?: LibraryBorrowRecordUpdateManyWithoutCourseNestedInput
+    violationTypes?: ViolationTypeUpdateManyWithoutCourseNestedInput
+    violations?: ViolationUpdateManyWithoutCourseNestedInput
+    lostFoundItems?: LostFoundItemUpdateManyWithoutCourseNestedInput
   }
 
   export type CourseUncheckedUpdateWithoutQuizzesInput = {
@@ -86766,6 +97089,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogUncheckedUpdateManyWithoutCourseNestedInput
     LibraryBook?: LibraryBookUncheckedUpdateManyWithoutCourseNestedInput
     LibraryBorrowRecord?: LibraryBorrowRecordUncheckedUpdateManyWithoutCourseNestedInput
+    violationTypes?: ViolationTypeUncheckedUpdateManyWithoutCourseNestedInput
+    violations?: ViolationUncheckedUpdateManyWithoutCourseNestedInput
+    lostFoundItems?: LostFoundItemUncheckedUpdateManyWithoutCourseNestedInput
   }
 
   export type quiz_answersCreateWithoutQuiz_questionsInput = {
@@ -87145,6 +97471,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
     submissions?: SubmissionCreateNestedManyWithoutUserInput
+    violationsRecorded?: ViolationCreateNestedManyWithoutRecordedByUserInput
+    violationNotes?: ViolationNoteCreateNestedManyWithoutAuthorInput
+    parentContactsRecorded?: ParentContactCreateNestedManyWithoutRecordedByUserInput
+    lostFoundRecorded?: LostFoundItemCreateNestedManyWithoutRecordedByUserInput
   }
 
   export type UserUncheckedCreateWithoutQuizAttemptsInput = {
@@ -87185,6 +97515,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewUncheckedCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
     submissions?: SubmissionUncheckedCreateNestedManyWithoutUserInput
+    violationsRecorded?: ViolationUncheckedCreateNestedManyWithoutRecordedByUserInput
+    violationNotes?: ViolationNoteUncheckedCreateNestedManyWithoutAuthorInput
+    parentContactsRecorded?: ParentContactUncheckedCreateNestedManyWithoutRecordedByUserInput
+    lostFoundRecorded?: LostFoundItemUncheckedCreateNestedManyWithoutRecordedByUserInput
   }
 
   export type UserCreateOrConnectWithoutQuizAttemptsInput = {
@@ -87322,6 +97656,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
     submissions?: SubmissionUpdateManyWithoutUserNestedInput
+    violationsRecorded?: ViolationUpdateManyWithoutRecordedByUserNestedInput
+    violationNotes?: ViolationNoteUpdateManyWithoutAuthorNestedInput
+    parentContactsRecorded?: ParentContactUpdateManyWithoutRecordedByUserNestedInput
+    lostFoundRecorded?: LostFoundItemUpdateManyWithoutRecordedByUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutQuizAttemptsInput = {
@@ -87362,6 +97700,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewUncheckedUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
     submissions?: SubmissionUncheckedUpdateManyWithoutUserNestedInput
+    violationsRecorded?: ViolationUncheckedUpdateManyWithoutRecordedByUserNestedInput
+    violationNotes?: ViolationNoteUncheckedUpdateManyWithoutAuthorNestedInput
+    parentContactsRecorded?: ParentContactUncheckedUpdateManyWithoutRecordedByUserNestedInput
+    lostFoundRecorded?: LostFoundItemUncheckedUpdateManyWithoutRecordedByUserNestedInput
   }
 
   export type FormQuestionCreateWithoutFormInput = {
@@ -87480,6 +97822,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
     submissions?: SubmissionCreateNestedManyWithoutUserInput
+    violationsRecorded?: ViolationCreateNestedManyWithoutRecordedByUserInput
+    violationNotes?: ViolationNoteCreateNestedManyWithoutAuthorInput
+    parentContactsRecorded?: ParentContactCreateNestedManyWithoutRecordedByUserInput
+    lostFoundRecorded?: LostFoundItemCreateNestedManyWithoutRecordedByUserInput
   }
 
   export type UserUncheckedCreateWithoutFormsCreatedInput = {
@@ -87520,6 +97866,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewUncheckedCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
     submissions?: SubmissionUncheckedCreateNestedManyWithoutUserInput
+    violationsRecorded?: ViolationUncheckedCreateNestedManyWithoutRecordedByUserInput
+    violationNotes?: ViolationNoteUncheckedCreateNestedManyWithoutAuthorInput
+    parentContactsRecorded?: ParentContactUncheckedCreateNestedManyWithoutRecordedByUserInput
+    lostFoundRecorded?: LostFoundItemUncheckedCreateNestedManyWithoutRecordedByUserInput
   }
 
   export type UserCreateOrConnectWithoutFormsCreatedInput = {
@@ -87560,6 +97910,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogCreateNestedManyWithoutCourseInput
     LibraryBook?: LibraryBookCreateNestedManyWithoutCourseInput
     LibraryBorrowRecord?: LibraryBorrowRecordCreateNestedManyWithoutCourseInput
+    violationTypes?: ViolationTypeCreateNestedManyWithoutCourseInput
+    violations?: ViolationCreateNestedManyWithoutCourseInput
+    lostFoundItems?: LostFoundItemCreateNestedManyWithoutCourseInput
   }
 
   export type CourseUncheckedCreateWithoutFormsInput = {
@@ -87595,6 +97948,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogUncheckedCreateNestedManyWithoutCourseInput
     LibraryBook?: LibraryBookUncheckedCreateNestedManyWithoutCourseInput
     LibraryBorrowRecord?: LibraryBorrowRecordUncheckedCreateNestedManyWithoutCourseInput
+    violationTypes?: ViolationTypeUncheckedCreateNestedManyWithoutCourseInput
+    violations?: ViolationUncheckedCreateNestedManyWithoutCourseInput
+    lostFoundItems?: LostFoundItemUncheckedCreateNestedManyWithoutCourseInput
   }
 
   export type CourseCreateOrConnectWithoutFormsInput = {
@@ -87708,6 +98064,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
     submissions?: SubmissionUpdateManyWithoutUserNestedInput
+    violationsRecorded?: ViolationUpdateManyWithoutRecordedByUserNestedInput
+    violationNotes?: ViolationNoteUpdateManyWithoutAuthorNestedInput
+    parentContactsRecorded?: ParentContactUpdateManyWithoutRecordedByUserNestedInput
+    lostFoundRecorded?: LostFoundItemUpdateManyWithoutRecordedByUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutFormsCreatedInput = {
@@ -87748,6 +98108,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewUncheckedUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
     submissions?: SubmissionUncheckedUpdateManyWithoutUserNestedInput
+    violationsRecorded?: ViolationUncheckedUpdateManyWithoutRecordedByUserNestedInput
+    violationNotes?: ViolationNoteUncheckedUpdateManyWithoutAuthorNestedInput
+    parentContactsRecorded?: ParentContactUncheckedUpdateManyWithoutRecordedByUserNestedInput
+    lostFoundRecorded?: LostFoundItemUncheckedUpdateManyWithoutRecordedByUserNestedInput
   }
 
   export type CourseUpsertWithoutFormsInput = {
@@ -87794,6 +98158,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogUpdateManyWithoutCourseNestedInput
     LibraryBook?: LibraryBookUpdateManyWithoutCourseNestedInput
     LibraryBorrowRecord?: LibraryBorrowRecordUpdateManyWithoutCourseNestedInput
+    violationTypes?: ViolationTypeUpdateManyWithoutCourseNestedInput
+    violations?: ViolationUpdateManyWithoutCourseNestedInput
+    lostFoundItems?: LostFoundItemUpdateManyWithoutCourseNestedInput
   }
 
   export type CourseUncheckedUpdateWithoutFormsInput = {
@@ -87829,6 +98196,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogUncheckedUpdateManyWithoutCourseNestedInput
     LibraryBook?: LibraryBookUncheckedUpdateManyWithoutCourseNestedInput
     LibraryBorrowRecord?: LibraryBorrowRecordUncheckedUpdateManyWithoutCourseNestedInput
+    violationTypes?: ViolationTypeUncheckedUpdateManyWithoutCourseNestedInput
+    violations?: ViolationUncheckedUpdateManyWithoutCourseNestedInput
+    lostFoundItems?: LostFoundItemUncheckedUpdateManyWithoutCourseNestedInput
   }
 
   export type FormCreateWithoutQuestionsInput = {
@@ -88088,6 +98458,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
     submissions?: SubmissionCreateNestedManyWithoutUserInput
+    violationsRecorded?: ViolationCreateNestedManyWithoutRecordedByUserInput
+    violationNotes?: ViolationNoteCreateNestedManyWithoutAuthorInput
+    parentContactsRecorded?: ParentContactCreateNestedManyWithoutRecordedByUserInput
+    lostFoundRecorded?: LostFoundItemCreateNestedManyWithoutRecordedByUserInput
   }
 
   export type UserUncheckedCreateWithoutFormSubmissionsInput = {
@@ -88128,6 +98502,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewUncheckedCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
     submissions?: SubmissionUncheckedCreateNestedManyWithoutUserInput
+    violationsRecorded?: ViolationUncheckedCreateNestedManyWithoutRecordedByUserInput
+    violationNotes?: ViolationNoteUncheckedCreateNestedManyWithoutAuthorInput
+    parentContactsRecorded?: ParentContactUncheckedCreateNestedManyWithoutRecordedByUserInput
+    lostFoundRecorded?: LostFoundItemUncheckedCreateNestedManyWithoutRecordedByUserInput
   }
 
   export type UserCreateOrConnectWithoutFormSubmissionsInput = {
@@ -88261,6 +98639,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
     submissions?: SubmissionUpdateManyWithoutUserNestedInput
+    violationsRecorded?: ViolationUpdateManyWithoutRecordedByUserNestedInput
+    violationNotes?: ViolationNoteUpdateManyWithoutAuthorNestedInput
+    parentContactsRecorded?: ParentContactUpdateManyWithoutRecordedByUserNestedInput
+    lostFoundRecorded?: LostFoundItemUpdateManyWithoutRecordedByUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutFormSubmissionsInput = {
@@ -88301,6 +98683,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewUncheckedUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
     submissions?: SubmissionUncheckedUpdateManyWithoutUserNestedInput
+    violationsRecorded?: ViolationUncheckedUpdateManyWithoutRecordedByUserNestedInput
+    violationNotes?: ViolationNoteUncheckedUpdateManyWithoutAuthorNestedInput
+    parentContactsRecorded?: ParentContactUncheckedUpdateManyWithoutRecordedByUserNestedInput
+    lostFoundRecorded?: LostFoundItemUncheckedUpdateManyWithoutRecordedByUserNestedInput
   }
 
   export type RubricCriterionCreateWithoutRubricInput = {
@@ -88745,7 +99131,7 @@ export namespace Prisma {
     clearanceRemarks?: string | null
     clearanceIssuedAt?: Date | string | null
     course: CourseCreateNestedOneWithoutMedicalExamRecordsInput
-    recordedByUser: UserCreateNestedOneWithoutMedicalExamRecordsInput
+    recordedByUser?: UserCreateNestedOneWithoutMedicalExamRecordsInput
   }
 
   export type MedicalExamRecordUncheckedCreateWithoutStudentInput = {
@@ -88754,7 +99140,7 @@ export namespace Prisma {
     purpose: string
     remarks?: string | null
     visitDate: Date | string
-    recordedBy: string
+    recordedBy?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     signatureUrl?: string | null
@@ -88814,7 +99200,7 @@ export namespace Prisma {
     bodySystemId?: string | null
     medicineUsages?: MedicineUsageCreateNestedManyWithoutPatientRecordInput
     course: CourseCreateNestedOneWithoutPatientRecordsInput
-    recordedByUser: UserCreateNestedOneWithoutPatientRecordsInput
+    recordedByUser?: UserCreateNestedOneWithoutPatientRecordsInput
     medicalCondition?: MedicalConditionCreateNestedOneWithoutPatientRecordsInput
   }
 
@@ -88831,7 +99217,7 @@ export namespace Prisma {
     action: $Enums.PatientAction
     notes?: string | null
     visitDate: Date | string
-    recordedBy: string
+    recordedBy?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     signEmailSentAt?: Date | string | null
@@ -88852,6 +99238,86 @@ export namespace Prisma {
 
   export type PatientRecordCreateManyStudentInputEnvelope = {
     data: PatientRecordCreateManyStudentInput | PatientRecordCreateManyStudentInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type ViolationCreateWithoutStudentInput = {
+    id?: string
+    caseNo: string
+    severity: string
+    incidentDate: Date | string
+    location?: string | null
+    description?: string | null
+    reportedBy?: string | null
+    reportedByRole?: string | null
+    status?: string
+    noticeToExplainAt?: Date | string | null
+    explanationReceivedAt?: Date | string | null
+    hearingDate?: Date | string | null
+    hearingResult?: string | null
+    sanction?: string | null
+    sanctionDays?: number | null
+    sanctionStart?: Date | string | null
+    sanctionEnd?: Date | string | null
+    sanctionCompleted?: boolean
+    decidedBy?: string | null
+    decidedAt?: Date | string | null
+    appealed?: boolean
+    appealResult?: string | null
+    resolvedAt?: Date | string | null
+    deletedAt?: Date | string | null
+    deletedBy?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    course: CourseCreateNestedOneWithoutViolationsInput
+    violationType: ViolationTypeCreateNestedOneWithoutViolationsInput
+    recordedByUser?: UserCreateNestedOneWithoutViolationsRecordedInput
+    parentContacts?: ParentContactCreateNestedManyWithoutViolationInput
+    notes?: ViolationNoteCreateNestedManyWithoutViolationInput
+  }
+
+  export type ViolationUncheckedCreateWithoutStudentInput = {
+    id?: string
+    courseId: string
+    caseNo: string
+    violationTypeId: string
+    severity: string
+    incidentDate: Date | string
+    location?: string | null
+    description?: string | null
+    reportedBy?: string | null
+    reportedByRole?: string | null
+    status?: string
+    noticeToExplainAt?: Date | string | null
+    explanationReceivedAt?: Date | string | null
+    hearingDate?: Date | string | null
+    hearingResult?: string | null
+    sanction?: string | null
+    sanctionDays?: number | null
+    sanctionStart?: Date | string | null
+    sanctionEnd?: Date | string | null
+    sanctionCompleted?: boolean
+    decidedBy?: string | null
+    decidedAt?: Date | string | null
+    appealed?: boolean
+    appealResult?: string | null
+    resolvedAt?: Date | string | null
+    recordedBy?: string | null
+    deletedAt?: Date | string | null
+    deletedBy?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    parentContacts?: ParentContactUncheckedCreateNestedManyWithoutViolationInput
+    notes?: ViolationNoteUncheckedCreateNestedManyWithoutViolationInput
+  }
+
+  export type ViolationCreateOrConnectWithoutStudentInput = {
+    where: ViolationWhereUniqueInput
+    create: XOR<ViolationCreateWithoutStudentInput, ViolationUncheckedCreateWithoutStudentInput>
+  }
+
+  export type ViolationCreateManyStudentInputEnvelope = {
+    data: ViolationCreateManyStudentInput | ViolationCreateManyStudentInput[]
     skipDuplicates?: boolean
   }
 
@@ -88885,6 +99351,22 @@ export namespace Prisma {
   export type PatientRecordUpdateManyWithWhereWithoutStudentInput = {
     where: PatientRecordScalarWhereInput
     data: XOR<PatientRecordUpdateManyMutationInput, PatientRecordUncheckedUpdateManyWithoutStudentInput>
+  }
+
+  export type ViolationUpsertWithWhereUniqueWithoutStudentInput = {
+    where: ViolationWhereUniqueInput
+    update: XOR<ViolationUpdateWithoutStudentInput, ViolationUncheckedUpdateWithoutStudentInput>
+    create: XOR<ViolationCreateWithoutStudentInput, ViolationUncheckedCreateWithoutStudentInput>
+  }
+
+  export type ViolationUpdateWithWhereUniqueWithoutStudentInput = {
+    where: ViolationWhereUniqueInput
+    data: XOR<ViolationUpdateWithoutStudentInput, ViolationUncheckedUpdateWithoutStudentInput>
+  }
+
+  export type ViolationUpdateManyWithWhereWithoutStudentInput = {
+    where: ViolationScalarWhereInput
+    data: XOR<ViolationUpdateManyMutationInput, ViolationUncheckedUpdateManyWithoutStudentInput>
   }
 
   export type MedicineUsageCreateWithoutPatientRecordInput = {
@@ -88948,6 +99430,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogCreateNestedManyWithoutCourseInput
     LibraryBook?: LibraryBookCreateNestedManyWithoutCourseInput
     LibraryBorrowRecord?: LibraryBorrowRecordCreateNestedManyWithoutCourseInput
+    violationTypes?: ViolationTypeCreateNestedManyWithoutCourseInput
+    violations?: ViolationCreateNestedManyWithoutCourseInput
+    lostFoundItems?: LostFoundItemCreateNestedManyWithoutCourseInput
   }
 
   export type CourseUncheckedCreateWithoutPatientRecordsInput = {
@@ -88983,6 +99468,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogUncheckedCreateNestedManyWithoutCourseInput
     LibraryBook?: LibraryBookUncheckedCreateNestedManyWithoutCourseInput
     LibraryBorrowRecord?: LibraryBorrowRecordUncheckedCreateNestedManyWithoutCourseInput
+    violationTypes?: ViolationTypeUncheckedCreateNestedManyWithoutCourseInput
+    violations?: ViolationUncheckedCreateNestedManyWithoutCourseInput
+    lostFoundItems?: LostFoundItemUncheckedCreateNestedManyWithoutCourseInput
   }
 
   export type CourseCreateOrConnectWithoutPatientRecordsInput = {
@@ -89028,6 +99516,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
     submissions?: SubmissionCreateNestedManyWithoutUserInput
+    violationsRecorded?: ViolationCreateNestedManyWithoutRecordedByUserInput
+    violationNotes?: ViolationNoteCreateNestedManyWithoutAuthorInput
+    parentContactsRecorded?: ParentContactCreateNestedManyWithoutRecordedByUserInput
+    lostFoundRecorded?: LostFoundItemCreateNestedManyWithoutRecordedByUserInput
   }
 
   export type UserUncheckedCreateWithoutPatientRecordsInput = {
@@ -89068,6 +99560,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewUncheckedCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
     submissions?: SubmissionUncheckedCreateNestedManyWithoutUserInput
+    violationsRecorded?: ViolationUncheckedCreateNestedManyWithoutRecordedByUserInput
+    violationNotes?: ViolationNoteUncheckedCreateNestedManyWithoutAuthorInput
+    parentContactsRecorded?: ParentContactUncheckedCreateNestedManyWithoutRecordedByUserInput
+    lostFoundRecorded?: LostFoundItemUncheckedCreateNestedManyWithoutRecordedByUserInput
   }
 
   export type UserCreateOrConnectWithoutPatientRecordsInput = {
@@ -89088,7 +99584,15 @@ export namespace Prisma {
     email?: string | null
     address?: string | null
     birthDate?: Date | string | null
+    yearSection?: string | null
+    mobileNo?: string | null
+    guardianName?: string | null
+    guardianContact?: string | null
+    standing?: string
+    clearanceHold?: boolean
+    deletedAt?: Date | string | null
     medicalExamRecords?: MedicalExamRecordCreateNestedManyWithoutStudentInput
+    violations?: ViolationCreateNestedManyWithoutStudentInput
   }
 
   export type StudentUncheckedCreateWithoutPatientRecordsInput = {
@@ -89104,7 +99608,15 @@ export namespace Prisma {
     email?: string | null
     address?: string | null
     birthDate?: Date | string | null
+    yearSection?: string | null
+    mobileNo?: string | null
+    guardianName?: string | null
+    guardianContact?: string | null
+    standing?: string
+    clearanceHold?: boolean
+    deletedAt?: Date | string | null
     medicalExamRecords?: MedicalExamRecordUncheckedCreateNestedManyWithoutStudentInput
+    violations?: ViolationUncheckedCreateNestedManyWithoutStudentInput
   }
 
   export type StudentCreateOrConnectWithoutPatientRecordsInput = {
@@ -89210,6 +99722,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogUpdateManyWithoutCourseNestedInput
     LibraryBook?: LibraryBookUpdateManyWithoutCourseNestedInput
     LibraryBorrowRecord?: LibraryBorrowRecordUpdateManyWithoutCourseNestedInput
+    violationTypes?: ViolationTypeUpdateManyWithoutCourseNestedInput
+    violations?: ViolationUpdateManyWithoutCourseNestedInput
+    lostFoundItems?: LostFoundItemUpdateManyWithoutCourseNestedInput
   }
 
   export type CourseUncheckedUpdateWithoutPatientRecordsInput = {
@@ -89245,6 +99760,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogUncheckedUpdateManyWithoutCourseNestedInput
     LibraryBook?: LibraryBookUncheckedUpdateManyWithoutCourseNestedInput
     LibraryBorrowRecord?: LibraryBorrowRecordUncheckedUpdateManyWithoutCourseNestedInput
+    violationTypes?: ViolationTypeUncheckedUpdateManyWithoutCourseNestedInput
+    violations?: ViolationUncheckedUpdateManyWithoutCourseNestedInput
+    lostFoundItems?: LostFoundItemUncheckedUpdateManyWithoutCourseNestedInput
   }
 
   export type UserUpsertWithoutPatientRecordsInput = {
@@ -89296,6 +99814,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
     submissions?: SubmissionUpdateManyWithoutUserNestedInput
+    violationsRecorded?: ViolationUpdateManyWithoutRecordedByUserNestedInput
+    violationNotes?: ViolationNoteUpdateManyWithoutAuthorNestedInput
+    parentContactsRecorded?: ParentContactUpdateManyWithoutRecordedByUserNestedInput
+    lostFoundRecorded?: LostFoundItemUpdateManyWithoutRecordedByUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutPatientRecordsInput = {
@@ -89336,6 +99858,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewUncheckedUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
     submissions?: SubmissionUncheckedUpdateManyWithoutUserNestedInput
+    violationsRecorded?: ViolationUncheckedUpdateManyWithoutRecordedByUserNestedInput
+    violationNotes?: ViolationNoteUncheckedUpdateManyWithoutAuthorNestedInput
+    parentContactsRecorded?: ParentContactUncheckedUpdateManyWithoutRecordedByUserNestedInput
+    lostFoundRecorded?: LostFoundItemUncheckedUpdateManyWithoutRecordedByUserNestedInput
   }
 
   export type StudentUpsertWithoutPatientRecordsInput = {
@@ -89362,7 +99888,15 @@ export namespace Prisma {
     email?: NullableStringFieldUpdateOperationsInput | string | null
     address?: NullableStringFieldUpdateOperationsInput | string | null
     birthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    yearSection?: NullableStringFieldUpdateOperationsInput | string | null
+    mobileNo?: NullableStringFieldUpdateOperationsInput | string | null
+    guardianName?: NullableStringFieldUpdateOperationsInput | string | null
+    guardianContact?: NullableStringFieldUpdateOperationsInput | string | null
+    standing?: StringFieldUpdateOperationsInput | string
+    clearanceHold?: BoolFieldUpdateOperationsInput | boolean
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     medicalExamRecords?: MedicalExamRecordUpdateManyWithoutStudentNestedInput
+    violations?: ViolationUpdateManyWithoutStudentNestedInput
   }
 
   export type StudentUncheckedUpdateWithoutPatientRecordsInput = {
@@ -89378,7 +99912,15 @@ export namespace Prisma {
     email?: NullableStringFieldUpdateOperationsInput | string | null
     address?: NullableStringFieldUpdateOperationsInput | string | null
     birthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    yearSection?: NullableStringFieldUpdateOperationsInput | string | null
+    mobileNo?: NullableStringFieldUpdateOperationsInput | string | null
+    guardianName?: NullableStringFieldUpdateOperationsInput | string | null
+    guardianContact?: NullableStringFieldUpdateOperationsInput | string | null
+    standing?: StringFieldUpdateOperationsInput | string
+    clearanceHold?: BoolFieldUpdateOperationsInput | boolean
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     medicalExamRecords?: MedicalExamRecordUncheckedUpdateManyWithoutStudentNestedInput
+    violations?: ViolationUncheckedUpdateManyWithoutStudentNestedInput
   }
 
   export type MedicalConditionUpsertWithoutPatientRecordsInput = {
@@ -89445,6 +99987,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogCreateNestedManyWithoutCourseInput
     LibraryBook?: LibraryBookCreateNestedManyWithoutCourseInput
     LibraryBorrowRecord?: LibraryBorrowRecordCreateNestedManyWithoutCourseInput
+    violationTypes?: ViolationTypeCreateNestedManyWithoutCourseInput
+    violations?: ViolationCreateNestedManyWithoutCourseInput
+    lostFoundItems?: LostFoundItemCreateNestedManyWithoutCourseInput
   }
 
   export type CourseUncheckedCreateWithoutBodySystemsInput = {
@@ -89480,6 +100025,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogUncheckedCreateNestedManyWithoutCourseInput
     LibraryBook?: LibraryBookUncheckedCreateNestedManyWithoutCourseInput
     LibraryBorrowRecord?: LibraryBorrowRecordUncheckedCreateNestedManyWithoutCourseInput
+    violationTypes?: ViolationTypeUncheckedCreateNestedManyWithoutCourseInput
+    violations?: ViolationUncheckedCreateNestedManyWithoutCourseInput
+    lostFoundItems?: LostFoundItemUncheckedCreateNestedManyWithoutCourseInput
   }
 
   export type CourseCreateOrConnectWithoutBodySystemsInput = {
@@ -89561,6 +100109,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogUpdateManyWithoutCourseNestedInput
     LibraryBook?: LibraryBookUpdateManyWithoutCourseNestedInput
     LibraryBorrowRecord?: LibraryBorrowRecordUpdateManyWithoutCourseNestedInput
+    violationTypes?: ViolationTypeUpdateManyWithoutCourseNestedInput
+    violations?: ViolationUpdateManyWithoutCourseNestedInput
+    lostFoundItems?: LostFoundItemUpdateManyWithoutCourseNestedInput
   }
 
   export type CourseUncheckedUpdateWithoutBodySystemsInput = {
@@ -89596,6 +100147,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogUncheckedUpdateManyWithoutCourseNestedInput
     LibraryBook?: LibraryBookUncheckedUpdateManyWithoutCourseNestedInput
     LibraryBorrowRecord?: LibraryBorrowRecordUncheckedUpdateManyWithoutCourseNestedInput
+    violationTypes?: ViolationTypeUncheckedUpdateManyWithoutCourseNestedInput
+    violations?: ViolationUncheckedUpdateManyWithoutCourseNestedInput
+    lostFoundItems?: LostFoundItemUncheckedUpdateManyWithoutCourseNestedInput
   }
 
   export type MedicalConditionUpsertWithWhereUniqueWithoutBodySystemInput = {
@@ -89670,6 +100224,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogCreateNestedManyWithoutCourseInput
     LibraryBook?: LibraryBookCreateNestedManyWithoutCourseInput
     LibraryBorrowRecord?: LibraryBorrowRecordCreateNestedManyWithoutCourseInput
+    violationTypes?: ViolationTypeCreateNestedManyWithoutCourseInput
+    violations?: ViolationCreateNestedManyWithoutCourseInput
+    lostFoundItems?: LostFoundItemCreateNestedManyWithoutCourseInput
   }
 
   export type CourseUncheckedCreateWithoutMedicalConditionsInput = {
@@ -89705,6 +100262,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogUncheckedCreateNestedManyWithoutCourseInput
     LibraryBook?: LibraryBookUncheckedCreateNestedManyWithoutCourseInput
     LibraryBorrowRecord?: LibraryBorrowRecordUncheckedCreateNestedManyWithoutCourseInput
+    violationTypes?: ViolationTypeUncheckedCreateNestedManyWithoutCourseInput
+    violations?: ViolationUncheckedCreateNestedManyWithoutCourseInput
+    lostFoundItems?: LostFoundItemUncheckedCreateNestedManyWithoutCourseInput
   }
 
   export type CourseCreateOrConnectWithoutMedicalConditionsInput = {
@@ -89735,7 +100295,7 @@ export namespace Prisma {
     bodySystemId?: string | null
     medicineUsages?: MedicineUsageCreateNestedManyWithoutPatientRecordInput
     course: CourseCreateNestedOneWithoutPatientRecordsInput
-    recordedByUser: UserCreateNestedOneWithoutPatientRecordsInput
+    recordedByUser?: UserCreateNestedOneWithoutPatientRecordsInput
     student: StudentCreateNestedOneWithoutPatientRecordsInput
   }
 
@@ -89753,7 +100313,7 @@ export namespace Prisma {
     action: $Enums.PatientAction
     notes?: string | null
     visitDate: Date | string
-    recordedBy: string
+    recordedBy?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     signEmailSentAt?: Date | string | null
@@ -89849,6 +100409,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogUpdateManyWithoutCourseNestedInput
     LibraryBook?: LibraryBookUpdateManyWithoutCourseNestedInput
     LibraryBorrowRecord?: LibraryBorrowRecordUpdateManyWithoutCourseNestedInput
+    violationTypes?: ViolationTypeUpdateManyWithoutCourseNestedInput
+    violations?: ViolationUpdateManyWithoutCourseNestedInput
+    lostFoundItems?: LostFoundItemUpdateManyWithoutCourseNestedInput
   }
 
   export type CourseUncheckedUpdateWithoutMedicalConditionsInput = {
@@ -89884,6 +100447,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogUncheckedUpdateManyWithoutCourseNestedInput
     LibraryBook?: LibraryBookUncheckedUpdateManyWithoutCourseNestedInput
     LibraryBorrowRecord?: LibraryBorrowRecordUncheckedUpdateManyWithoutCourseNestedInput
+    violationTypes?: ViolationTypeUncheckedUpdateManyWithoutCourseNestedInput
+    violations?: ViolationUncheckedUpdateManyWithoutCourseNestedInput
+    lostFoundItems?: LostFoundItemUncheckedUpdateManyWithoutCourseNestedInput
   }
 
   export type PatientRecordUpsertWithWhereUniqueWithoutMedicalConditionInput = {
@@ -89935,6 +100501,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogCreateNestedManyWithoutCourseInput
     LibraryBook?: LibraryBookCreateNestedManyWithoutCourseInput
     LibraryBorrowRecord?: LibraryBorrowRecordCreateNestedManyWithoutCourseInput
+    violationTypes?: ViolationTypeCreateNestedManyWithoutCourseInput
+    violations?: ViolationCreateNestedManyWithoutCourseInput
+    lostFoundItems?: LostFoundItemCreateNestedManyWithoutCourseInput
   }
 
   export type CourseUncheckedCreateWithoutMedicalExamRecordsInput = {
@@ -89970,6 +100539,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogUncheckedCreateNestedManyWithoutCourseInput
     LibraryBook?: LibraryBookUncheckedCreateNestedManyWithoutCourseInput
     LibraryBorrowRecord?: LibraryBorrowRecordUncheckedCreateNestedManyWithoutCourseInput
+    violationTypes?: ViolationTypeUncheckedCreateNestedManyWithoutCourseInput
+    violations?: ViolationUncheckedCreateNestedManyWithoutCourseInput
+    lostFoundItems?: LostFoundItemUncheckedCreateNestedManyWithoutCourseInput
   }
 
   export type CourseCreateOrConnectWithoutMedicalExamRecordsInput = {
@@ -90015,6 +100587,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
     submissions?: SubmissionCreateNestedManyWithoutUserInput
+    violationsRecorded?: ViolationCreateNestedManyWithoutRecordedByUserInput
+    violationNotes?: ViolationNoteCreateNestedManyWithoutAuthorInput
+    parentContactsRecorded?: ParentContactCreateNestedManyWithoutRecordedByUserInput
+    lostFoundRecorded?: LostFoundItemCreateNestedManyWithoutRecordedByUserInput
   }
 
   export type UserUncheckedCreateWithoutMedicalExamRecordsInput = {
@@ -90055,6 +100631,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewUncheckedCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
     submissions?: SubmissionUncheckedCreateNestedManyWithoutUserInput
+    violationsRecorded?: ViolationUncheckedCreateNestedManyWithoutRecordedByUserInput
+    violationNotes?: ViolationNoteUncheckedCreateNestedManyWithoutAuthorInput
+    parentContactsRecorded?: ParentContactUncheckedCreateNestedManyWithoutRecordedByUserInput
+    lostFoundRecorded?: LostFoundItemUncheckedCreateNestedManyWithoutRecordedByUserInput
   }
 
   export type UserCreateOrConnectWithoutMedicalExamRecordsInput = {
@@ -90075,7 +100655,15 @@ export namespace Prisma {
     email?: string | null
     address?: string | null
     birthDate?: Date | string | null
+    yearSection?: string | null
+    mobileNo?: string | null
+    guardianName?: string | null
+    guardianContact?: string | null
+    standing?: string
+    clearanceHold?: boolean
+    deletedAt?: Date | string | null
     patientRecords?: PatientRecordCreateNestedManyWithoutStudentInput
+    violations?: ViolationCreateNestedManyWithoutStudentInput
   }
 
   export type StudentUncheckedCreateWithoutMedicalExamRecordsInput = {
@@ -90091,7 +100679,15 @@ export namespace Prisma {
     email?: string | null
     address?: string | null
     birthDate?: Date | string | null
+    yearSection?: string | null
+    mobileNo?: string | null
+    guardianName?: string | null
+    guardianContact?: string | null
+    standing?: string
+    clearanceHold?: boolean
+    deletedAt?: Date | string | null
     patientRecords?: PatientRecordUncheckedCreateNestedManyWithoutStudentInput
+    violations?: ViolationUncheckedCreateNestedManyWithoutStudentInput
   }
 
   export type StudentCreateOrConnectWithoutMedicalExamRecordsInput = {
@@ -90143,6 +100739,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogUpdateManyWithoutCourseNestedInput
     LibraryBook?: LibraryBookUpdateManyWithoutCourseNestedInput
     LibraryBorrowRecord?: LibraryBorrowRecordUpdateManyWithoutCourseNestedInput
+    violationTypes?: ViolationTypeUpdateManyWithoutCourseNestedInput
+    violations?: ViolationUpdateManyWithoutCourseNestedInput
+    lostFoundItems?: LostFoundItemUpdateManyWithoutCourseNestedInput
   }
 
   export type CourseUncheckedUpdateWithoutMedicalExamRecordsInput = {
@@ -90178,6 +100777,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogUncheckedUpdateManyWithoutCourseNestedInput
     LibraryBook?: LibraryBookUncheckedUpdateManyWithoutCourseNestedInput
     LibraryBorrowRecord?: LibraryBorrowRecordUncheckedUpdateManyWithoutCourseNestedInput
+    violationTypes?: ViolationTypeUncheckedUpdateManyWithoutCourseNestedInput
+    violations?: ViolationUncheckedUpdateManyWithoutCourseNestedInput
+    lostFoundItems?: LostFoundItemUncheckedUpdateManyWithoutCourseNestedInput
   }
 
   export type UserUpsertWithoutMedicalExamRecordsInput = {
@@ -90229,6 +100831,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
     submissions?: SubmissionUpdateManyWithoutUserNestedInput
+    violationsRecorded?: ViolationUpdateManyWithoutRecordedByUserNestedInput
+    violationNotes?: ViolationNoteUpdateManyWithoutAuthorNestedInput
+    parentContactsRecorded?: ParentContactUpdateManyWithoutRecordedByUserNestedInput
+    lostFoundRecorded?: LostFoundItemUpdateManyWithoutRecordedByUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutMedicalExamRecordsInput = {
@@ -90269,6 +100875,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewUncheckedUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
     submissions?: SubmissionUncheckedUpdateManyWithoutUserNestedInput
+    violationsRecorded?: ViolationUncheckedUpdateManyWithoutRecordedByUserNestedInput
+    violationNotes?: ViolationNoteUncheckedUpdateManyWithoutAuthorNestedInput
+    parentContactsRecorded?: ParentContactUncheckedUpdateManyWithoutRecordedByUserNestedInput
+    lostFoundRecorded?: LostFoundItemUncheckedUpdateManyWithoutRecordedByUserNestedInput
   }
 
   export type StudentUpsertWithoutMedicalExamRecordsInput = {
@@ -90295,7 +100905,15 @@ export namespace Prisma {
     email?: NullableStringFieldUpdateOperationsInput | string | null
     address?: NullableStringFieldUpdateOperationsInput | string | null
     birthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    yearSection?: NullableStringFieldUpdateOperationsInput | string | null
+    mobileNo?: NullableStringFieldUpdateOperationsInput | string | null
+    guardianName?: NullableStringFieldUpdateOperationsInput | string | null
+    guardianContact?: NullableStringFieldUpdateOperationsInput | string | null
+    standing?: StringFieldUpdateOperationsInput | string
+    clearanceHold?: BoolFieldUpdateOperationsInput | boolean
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     patientRecords?: PatientRecordUpdateManyWithoutStudentNestedInput
+    violations?: ViolationUpdateManyWithoutStudentNestedInput
   }
 
   export type StudentUncheckedUpdateWithoutMedicalExamRecordsInput = {
@@ -90311,7 +100929,15 @@ export namespace Prisma {
     email?: NullableStringFieldUpdateOperationsInput | string | null
     address?: NullableStringFieldUpdateOperationsInput | string | null
     birthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    yearSection?: NullableStringFieldUpdateOperationsInput | string | null
+    mobileNo?: NullableStringFieldUpdateOperationsInput | string | null
+    guardianName?: NullableStringFieldUpdateOperationsInput | string | null
+    guardianContact?: NullableStringFieldUpdateOperationsInput | string | null
+    standing?: StringFieldUpdateOperationsInput | string
+    clearanceHold?: BoolFieldUpdateOperationsInput | boolean
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     patientRecords?: PatientRecordUncheckedUpdateManyWithoutStudentNestedInput
+    violations?: ViolationUncheckedUpdateManyWithoutStudentNestedInput
   }
 
   export type CourseCreateWithoutMedicineInventoryInput = {
@@ -90347,6 +100973,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogCreateNestedManyWithoutCourseInput
     LibraryBook?: LibraryBookCreateNestedManyWithoutCourseInput
     LibraryBorrowRecord?: LibraryBorrowRecordCreateNestedManyWithoutCourseInput
+    violationTypes?: ViolationTypeCreateNestedManyWithoutCourseInput
+    violations?: ViolationCreateNestedManyWithoutCourseInput
+    lostFoundItems?: LostFoundItemCreateNestedManyWithoutCourseInput
   }
 
   export type CourseUncheckedCreateWithoutMedicineInventoryInput = {
@@ -90382,6 +101011,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogUncheckedCreateNestedManyWithoutCourseInput
     LibraryBook?: LibraryBookUncheckedCreateNestedManyWithoutCourseInput
     LibraryBorrowRecord?: LibraryBorrowRecordUncheckedCreateNestedManyWithoutCourseInput
+    violationTypes?: ViolationTypeUncheckedCreateNestedManyWithoutCourseInput
+    violations?: ViolationUncheckedCreateNestedManyWithoutCourseInput
+    lostFoundItems?: LostFoundItemUncheckedCreateNestedManyWithoutCourseInput
   }
 
   export type CourseCreateOrConnectWithoutMedicineInventoryInput = {
@@ -90461,6 +101093,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogUpdateManyWithoutCourseNestedInput
     LibraryBook?: LibraryBookUpdateManyWithoutCourseNestedInput
     LibraryBorrowRecord?: LibraryBorrowRecordUpdateManyWithoutCourseNestedInput
+    violationTypes?: ViolationTypeUpdateManyWithoutCourseNestedInput
+    violations?: ViolationUpdateManyWithoutCourseNestedInput
+    lostFoundItems?: LostFoundItemUpdateManyWithoutCourseNestedInput
   }
 
   export type CourseUncheckedUpdateWithoutMedicineInventoryInput = {
@@ -90496,6 +101131,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogUncheckedUpdateManyWithoutCourseNestedInput
     LibraryBook?: LibraryBookUncheckedUpdateManyWithoutCourseNestedInput
     LibraryBorrowRecord?: LibraryBorrowRecordUncheckedUpdateManyWithoutCourseNestedInput
+    violationTypes?: ViolationTypeUncheckedUpdateManyWithoutCourseNestedInput
+    violations?: ViolationUncheckedUpdateManyWithoutCourseNestedInput
+    lostFoundItems?: LostFoundItemUncheckedUpdateManyWithoutCourseNestedInput
   }
 
   export type MedicineUsageUpsertWithWhereUniqueWithoutMedicineInput = {
@@ -90565,7 +101203,7 @@ export namespace Prisma {
     signedAt?: Date | string | null
     bodySystemId?: string | null
     course: CourseCreateNestedOneWithoutPatientRecordsInput
-    recordedByUser: UserCreateNestedOneWithoutPatientRecordsInput
+    recordedByUser?: UserCreateNestedOneWithoutPatientRecordsInput
     student: StudentCreateNestedOneWithoutPatientRecordsInput
     medicalCondition?: MedicalConditionCreateNestedOneWithoutPatientRecordsInput
   }
@@ -90584,7 +101222,7 @@ export namespace Prisma {
     action: $Enums.PatientAction
     notes?: string | null
     visitDate: Date | string
-    recordedBy: string
+    recordedBy?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     signEmailSentAt?: Date | string | null
@@ -90670,7 +101308,7 @@ export namespace Prisma {
     signedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     bodySystemId?: NullableStringFieldUpdateOperationsInput | string | null
     course?: CourseUpdateOneRequiredWithoutPatientRecordsNestedInput
-    recordedByUser?: UserUpdateOneRequiredWithoutPatientRecordsNestedInput
+    recordedByUser?: UserUpdateOneWithoutPatientRecordsNestedInput
     student?: StudentUpdateOneRequiredWithoutPatientRecordsNestedInput
     medicalCondition?: MedicalConditionUpdateOneWithoutPatientRecordsNestedInput
   }
@@ -90689,7 +101327,7 @@ export namespace Prisma {
     action?: EnumPatientActionFieldUpdateOperationsInput | $Enums.PatientAction
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     visitDate?: DateTimeFieldUpdateOperationsInput | Date | string
-    recordedBy?: StringFieldUpdateOperationsInput | string
+    recordedBy?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     signEmailSentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -91119,6 +101757,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogCreateNestedManyWithoutCourseInput
     LibraryBook?: LibraryBookCreateNestedManyWithoutCourseInput
     LibraryBorrowRecord?: LibraryBorrowRecordCreateNestedManyWithoutCourseInput
+    violationTypes?: ViolationTypeCreateNestedManyWithoutCourseInput
+    violations?: ViolationCreateNestedManyWithoutCourseInput
+    lostFoundItems?: LostFoundItemCreateNestedManyWithoutCourseInput
   }
 
   export type CourseUncheckedCreateWithoutGuidanceInfoSheetsInput = {
@@ -91154,6 +101795,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogUncheckedCreateNestedManyWithoutCourseInput
     LibraryBook?: LibraryBookUncheckedCreateNestedManyWithoutCourseInput
     LibraryBorrowRecord?: LibraryBorrowRecordUncheckedCreateNestedManyWithoutCourseInput
+    violationTypes?: ViolationTypeUncheckedCreateNestedManyWithoutCourseInput
+    violations?: ViolationUncheckedCreateNestedManyWithoutCourseInput
+    lostFoundItems?: LostFoundItemUncheckedCreateNestedManyWithoutCourseInput
   }
 
   export type CourseCreateOrConnectWithoutGuidanceInfoSheetsInput = {
@@ -91205,6 +101849,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogUpdateManyWithoutCourseNestedInput
     LibraryBook?: LibraryBookUpdateManyWithoutCourseNestedInput
     LibraryBorrowRecord?: LibraryBorrowRecordUpdateManyWithoutCourseNestedInput
+    violationTypes?: ViolationTypeUpdateManyWithoutCourseNestedInput
+    violations?: ViolationUpdateManyWithoutCourseNestedInput
+    lostFoundItems?: LostFoundItemUpdateManyWithoutCourseNestedInput
   }
 
   export type CourseUncheckedUpdateWithoutGuidanceInfoSheetsInput = {
@@ -91240,6 +101887,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogUncheckedUpdateManyWithoutCourseNestedInput
     LibraryBook?: LibraryBookUncheckedUpdateManyWithoutCourseNestedInput
     LibraryBorrowRecord?: LibraryBorrowRecordUncheckedUpdateManyWithoutCourseNestedInput
+    violationTypes?: ViolationTypeUncheckedUpdateManyWithoutCourseNestedInput
+    violations?: ViolationUncheckedUpdateManyWithoutCourseNestedInput
+    lostFoundItems?: LostFoundItemUncheckedUpdateManyWithoutCourseNestedInput
   }
 
   export type CourseCreateWithoutGuidanceLogEntriesInput = {
@@ -91275,6 +101925,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogCreateNestedManyWithoutCourseInput
     LibraryBook?: LibraryBookCreateNestedManyWithoutCourseInput
     LibraryBorrowRecord?: LibraryBorrowRecordCreateNestedManyWithoutCourseInput
+    violationTypes?: ViolationTypeCreateNestedManyWithoutCourseInput
+    violations?: ViolationCreateNestedManyWithoutCourseInput
+    lostFoundItems?: LostFoundItemCreateNestedManyWithoutCourseInput
   }
 
   export type CourseUncheckedCreateWithoutGuidanceLogEntriesInput = {
@@ -91310,6 +101963,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogUncheckedCreateNestedManyWithoutCourseInput
     LibraryBook?: LibraryBookUncheckedCreateNestedManyWithoutCourseInput
     LibraryBorrowRecord?: LibraryBorrowRecordUncheckedCreateNestedManyWithoutCourseInput
+    violationTypes?: ViolationTypeUncheckedCreateNestedManyWithoutCourseInput
+    violations?: ViolationUncheckedCreateNestedManyWithoutCourseInput
+    lostFoundItems?: LostFoundItemUncheckedCreateNestedManyWithoutCourseInput
   }
 
   export type CourseCreateOrConnectWithoutGuidanceLogEntriesInput = {
@@ -91355,6 +102011,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
     submissions?: SubmissionCreateNestedManyWithoutUserInput
+    violationsRecorded?: ViolationCreateNestedManyWithoutRecordedByUserInput
+    violationNotes?: ViolationNoteCreateNestedManyWithoutAuthorInput
+    parentContactsRecorded?: ParentContactCreateNestedManyWithoutRecordedByUserInput
+    lostFoundRecorded?: LostFoundItemCreateNestedManyWithoutRecordedByUserInput
   }
 
   export type UserUncheckedCreateWithoutGuidanceLogEntriesInput = {
@@ -91395,6 +102055,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewUncheckedCreateNestedManyWithoutCounselorInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
     submissions?: SubmissionUncheckedCreateNestedManyWithoutUserInput
+    violationsRecorded?: ViolationUncheckedCreateNestedManyWithoutRecordedByUserInput
+    violationNotes?: ViolationNoteUncheckedCreateNestedManyWithoutAuthorInput
+    parentContactsRecorded?: ParentContactUncheckedCreateNestedManyWithoutRecordedByUserInput
+    lostFoundRecorded?: LostFoundItemUncheckedCreateNestedManyWithoutRecordedByUserInput
   }
 
   export type UserCreateOrConnectWithoutGuidanceLogEntriesInput = {
@@ -91446,6 +102110,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogUpdateManyWithoutCourseNestedInput
     LibraryBook?: LibraryBookUpdateManyWithoutCourseNestedInput
     LibraryBorrowRecord?: LibraryBorrowRecordUpdateManyWithoutCourseNestedInput
+    violationTypes?: ViolationTypeUpdateManyWithoutCourseNestedInput
+    violations?: ViolationUpdateManyWithoutCourseNestedInput
+    lostFoundItems?: LostFoundItemUpdateManyWithoutCourseNestedInput
   }
 
   export type CourseUncheckedUpdateWithoutGuidanceLogEntriesInput = {
@@ -91481,6 +102148,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogUncheckedUpdateManyWithoutCourseNestedInput
     LibraryBook?: LibraryBookUncheckedUpdateManyWithoutCourseNestedInput
     LibraryBorrowRecord?: LibraryBorrowRecordUncheckedUpdateManyWithoutCourseNestedInput
+    violationTypes?: ViolationTypeUncheckedUpdateManyWithoutCourseNestedInput
+    violations?: ViolationUncheckedUpdateManyWithoutCourseNestedInput
+    lostFoundItems?: LostFoundItemUncheckedUpdateManyWithoutCourseNestedInput
   }
 
   export type UserUpsertWithoutGuidanceLogEntriesInput = {
@@ -91532,6 +102202,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
     submissions?: SubmissionUpdateManyWithoutUserNestedInput
+    violationsRecorded?: ViolationUpdateManyWithoutRecordedByUserNestedInput
+    violationNotes?: ViolationNoteUpdateManyWithoutAuthorNestedInput
+    parentContactsRecorded?: ParentContactUpdateManyWithoutRecordedByUserNestedInput
+    lostFoundRecorded?: LostFoundItemUpdateManyWithoutRecordedByUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutGuidanceLogEntriesInput = {
@@ -91572,6 +102246,10 @@ export namespace Prisma {
     exitInterviewsCounseled?: ExitInterviewUncheckedUpdateManyWithoutCounselorNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
     submissions?: SubmissionUncheckedUpdateManyWithoutUserNestedInput
+    violationsRecorded?: ViolationUncheckedUpdateManyWithoutRecordedByUserNestedInput
+    violationNotes?: ViolationNoteUncheckedUpdateManyWithoutAuthorNestedInput
+    parentContactsRecorded?: ParentContactUncheckedUpdateManyWithoutRecordedByUserNestedInput
+    lostFoundRecorded?: LostFoundItemUncheckedUpdateManyWithoutRecordedByUserNestedInput
   }
 
   export type CourseCreateWithoutExitInterviewsInput = {
@@ -91607,6 +102285,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogCreateNestedManyWithoutCourseInput
     LibraryBook?: LibraryBookCreateNestedManyWithoutCourseInput
     LibraryBorrowRecord?: LibraryBorrowRecordCreateNestedManyWithoutCourseInput
+    violationTypes?: ViolationTypeCreateNestedManyWithoutCourseInput
+    violations?: ViolationCreateNestedManyWithoutCourseInput
+    lostFoundItems?: LostFoundItemCreateNestedManyWithoutCourseInput
   }
 
   export type CourseUncheckedCreateWithoutExitInterviewsInput = {
@@ -91642,6 +102323,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogUncheckedCreateNestedManyWithoutCourseInput
     LibraryBook?: LibraryBookUncheckedCreateNestedManyWithoutCourseInput
     LibraryBorrowRecord?: LibraryBorrowRecordUncheckedCreateNestedManyWithoutCourseInput
+    violationTypes?: ViolationTypeUncheckedCreateNestedManyWithoutCourseInput
+    violations?: ViolationUncheckedCreateNestedManyWithoutCourseInput
+    lostFoundItems?: LostFoundItemUncheckedCreateNestedManyWithoutCourseInput
   }
 
   export type CourseCreateOrConnectWithoutExitInterviewsInput = {
@@ -91687,6 +102371,10 @@ export namespace Prisma {
     guidanceLogEntries?: GuidanceLogEntryCreateNestedManyWithoutRecordedByUserInput
     submissions_submissions_gradedByIdTousers?: SubmissionCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
     submissions?: SubmissionCreateNestedManyWithoutUserInput
+    violationsRecorded?: ViolationCreateNestedManyWithoutRecordedByUserInput
+    violationNotes?: ViolationNoteCreateNestedManyWithoutAuthorInput
+    parentContactsRecorded?: ParentContactCreateNestedManyWithoutRecordedByUserInput
+    lostFoundRecorded?: LostFoundItemCreateNestedManyWithoutRecordedByUserInput
   }
 
   export type UserUncheckedCreateWithoutExitInterviewsCounseledInput = {
@@ -91727,6 +102415,10 @@ export namespace Prisma {
     guidanceLogEntries?: GuidanceLogEntryUncheckedCreateNestedManyWithoutRecordedByUserInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
     submissions?: SubmissionUncheckedCreateNestedManyWithoutUserInput
+    violationsRecorded?: ViolationUncheckedCreateNestedManyWithoutRecordedByUserInput
+    violationNotes?: ViolationNoteUncheckedCreateNestedManyWithoutAuthorInput
+    parentContactsRecorded?: ParentContactUncheckedCreateNestedManyWithoutRecordedByUserInput
+    lostFoundRecorded?: LostFoundItemUncheckedCreateNestedManyWithoutRecordedByUserInput
   }
 
   export type UserCreateOrConnectWithoutExitInterviewsCounseledInput = {
@@ -91778,6 +102470,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogUpdateManyWithoutCourseNestedInput
     LibraryBook?: LibraryBookUpdateManyWithoutCourseNestedInput
     LibraryBorrowRecord?: LibraryBorrowRecordUpdateManyWithoutCourseNestedInput
+    violationTypes?: ViolationTypeUpdateManyWithoutCourseNestedInput
+    violations?: ViolationUpdateManyWithoutCourseNestedInput
+    lostFoundItems?: LostFoundItemUpdateManyWithoutCourseNestedInput
   }
 
   export type CourseUncheckedUpdateWithoutExitInterviewsInput = {
@@ -91813,6 +102508,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogUncheckedUpdateManyWithoutCourseNestedInput
     LibraryBook?: LibraryBookUncheckedUpdateManyWithoutCourseNestedInput
     LibraryBorrowRecord?: LibraryBorrowRecordUncheckedUpdateManyWithoutCourseNestedInput
+    violationTypes?: ViolationTypeUncheckedUpdateManyWithoutCourseNestedInput
+    violations?: ViolationUncheckedUpdateManyWithoutCourseNestedInput
+    lostFoundItems?: LostFoundItemUncheckedUpdateManyWithoutCourseNestedInput
   }
 
   export type UserUpsertWithoutExitInterviewsCounseledInput = {
@@ -91864,6 +102562,10 @@ export namespace Prisma {
     guidanceLogEntries?: GuidanceLogEntryUpdateManyWithoutRecordedByUserNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
     submissions?: SubmissionUpdateManyWithoutUserNestedInput
+    violationsRecorded?: ViolationUpdateManyWithoutRecordedByUserNestedInput
+    violationNotes?: ViolationNoteUpdateManyWithoutAuthorNestedInput
+    parentContactsRecorded?: ParentContactUpdateManyWithoutRecordedByUserNestedInput
+    lostFoundRecorded?: LostFoundItemUpdateManyWithoutRecordedByUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutExitInterviewsCounseledInput = {
@@ -91904,6 +102606,10 @@ export namespace Prisma {
     guidanceLogEntries?: GuidanceLogEntryUncheckedUpdateManyWithoutRecordedByUserNestedInput
     submissions_submissions_gradedByIdTousers?: SubmissionUncheckedUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
     submissions?: SubmissionUncheckedUpdateManyWithoutUserNestedInput
+    violationsRecorded?: ViolationUncheckedUpdateManyWithoutRecordedByUserNestedInput
+    violationNotes?: ViolationNoteUncheckedUpdateManyWithoutAuthorNestedInput
+    parentContactsRecorded?: ParentContactUncheckedUpdateManyWithoutRecordedByUserNestedInput
+    lostFoundRecorded?: LostFoundItemUncheckedUpdateManyWithoutRecordedByUserNestedInput
   }
 
   export type CourseCreateWithoutLibraryCardRequestsInput = {
@@ -91939,6 +102645,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogCreateNestedManyWithoutCourseInput
     LibraryBook?: LibraryBookCreateNestedManyWithoutCourseInput
     LibraryBorrowRecord?: LibraryBorrowRecordCreateNestedManyWithoutCourseInput
+    violationTypes?: ViolationTypeCreateNestedManyWithoutCourseInput
+    violations?: ViolationCreateNestedManyWithoutCourseInput
+    lostFoundItems?: LostFoundItemCreateNestedManyWithoutCourseInput
   }
 
   export type CourseUncheckedCreateWithoutLibraryCardRequestsInput = {
@@ -91974,6 +102683,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogUncheckedCreateNestedManyWithoutCourseInput
     LibraryBook?: LibraryBookUncheckedCreateNestedManyWithoutCourseInput
     LibraryBorrowRecord?: LibraryBorrowRecordUncheckedCreateNestedManyWithoutCourseInput
+    violationTypes?: ViolationTypeUncheckedCreateNestedManyWithoutCourseInput
+    violations?: ViolationUncheckedCreateNestedManyWithoutCourseInput
+    lostFoundItems?: LostFoundItemUncheckedCreateNestedManyWithoutCourseInput
   }
 
   export type CourseCreateOrConnectWithoutLibraryCardRequestsInput = {
@@ -92072,6 +102784,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogUpdateManyWithoutCourseNestedInput
     LibraryBook?: LibraryBookUpdateManyWithoutCourseNestedInput
     LibraryBorrowRecord?: LibraryBorrowRecordUpdateManyWithoutCourseNestedInput
+    violationTypes?: ViolationTypeUpdateManyWithoutCourseNestedInput
+    violations?: ViolationUpdateManyWithoutCourseNestedInput
+    lostFoundItems?: LostFoundItemUpdateManyWithoutCourseNestedInput
   }
 
   export type CourseUncheckedUpdateWithoutLibraryCardRequestsInput = {
@@ -92107,6 +102822,9 @@ export namespace Prisma {
     libraryReceivingLogs?: LibraryReceivingLogUncheckedUpdateManyWithoutCourseNestedInput
     LibraryBook?: LibraryBookUncheckedUpdateManyWithoutCourseNestedInput
     LibraryBorrowRecord?: LibraryBorrowRecordUncheckedUpdateManyWithoutCourseNestedInput
+    violationTypes?: ViolationTypeUncheckedUpdateManyWithoutCourseNestedInput
+    violations?: ViolationUncheckedUpdateManyWithoutCourseNestedInput
+    lostFoundItems?: LostFoundItemUncheckedUpdateManyWithoutCourseNestedInput
   }
 
   export type LibraryReceivingLogUpsertWithoutRequestInput = {
@@ -92195,6 +102913,9 @@ export namespace Prisma {
     libraryCardRequests?: LibraryCardRequestCreateNestedManyWithoutCourseInput
     LibraryBook?: LibraryBookCreateNestedManyWithoutCourseInput
     LibraryBorrowRecord?: LibraryBorrowRecordCreateNestedManyWithoutCourseInput
+    violationTypes?: ViolationTypeCreateNestedManyWithoutCourseInput
+    violations?: ViolationCreateNestedManyWithoutCourseInput
+    lostFoundItems?: LostFoundItemCreateNestedManyWithoutCourseInput
   }
 
   export type CourseUncheckedCreateWithoutLibraryReceivingLogsInput = {
@@ -92230,6 +102951,9 @@ export namespace Prisma {
     libraryCardRequests?: LibraryCardRequestUncheckedCreateNestedManyWithoutCourseInput
     LibraryBook?: LibraryBookUncheckedCreateNestedManyWithoutCourseInput
     LibraryBorrowRecord?: LibraryBorrowRecordUncheckedCreateNestedManyWithoutCourseInput
+    violationTypes?: ViolationTypeUncheckedCreateNestedManyWithoutCourseInput
+    violations?: ViolationUncheckedCreateNestedManyWithoutCourseInput
+    lostFoundItems?: LostFoundItemUncheckedCreateNestedManyWithoutCourseInput
   }
 
   export type CourseCreateOrConnectWithoutLibraryReceivingLogsInput = {
@@ -92354,6 +103078,9 @@ export namespace Prisma {
     libraryCardRequests?: LibraryCardRequestUpdateManyWithoutCourseNestedInput
     LibraryBook?: LibraryBookUpdateManyWithoutCourseNestedInput
     LibraryBorrowRecord?: LibraryBorrowRecordUpdateManyWithoutCourseNestedInput
+    violationTypes?: ViolationTypeUpdateManyWithoutCourseNestedInput
+    violations?: ViolationUpdateManyWithoutCourseNestedInput
+    lostFoundItems?: LostFoundItemUpdateManyWithoutCourseNestedInput
   }
 
   export type CourseUncheckedUpdateWithoutLibraryReceivingLogsInput = {
@@ -92389,6 +103116,9 @@ export namespace Prisma {
     libraryCardRequests?: LibraryCardRequestUncheckedUpdateManyWithoutCourseNestedInput
     LibraryBook?: LibraryBookUncheckedUpdateManyWithoutCourseNestedInput
     LibraryBorrowRecord?: LibraryBorrowRecordUncheckedUpdateManyWithoutCourseNestedInput
+    violationTypes?: ViolationTypeUncheckedUpdateManyWithoutCourseNestedInput
+    violations?: ViolationUncheckedUpdateManyWithoutCourseNestedInput
+    lostFoundItems?: LostFoundItemUncheckedUpdateManyWithoutCourseNestedInput
   }
 
   export type LibraryCardRequestUpsertWithoutReceivingLogInput = {
@@ -92503,6 +103233,9 @@ export namespace Prisma {
     libraryCardRequests?: LibraryCardRequestCreateNestedManyWithoutCourseInput
     libraryReceivingLogs?: LibraryReceivingLogCreateNestedManyWithoutCourseInput
     LibraryBorrowRecord?: LibraryBorrowRecordCreateNestedManyWithoutCourseInput
+    violationTypes?: ViolationTypeCreateNestedManyWithoutCourseInput
+    violations?: ViolationCreateNestedManyWithoutCourseInput
+    lostFoundItems?: LostFoundItemCreateNestedManyWithoutCourseInput
   }
 
   export type CourseUncheckedCreateWithoutLibraryBookInput = {
@@ -92538,6 +103271,9 @@ export namespace Prisma {
     libraryCardRequests?: LibraryCardRequestUncheckedCreateNestedManyWithoutCourseInput
     libraryReceivingLogs?: LibraryReceivingLogUncheckedCreateNestedManyWithoutCourseInput
     LibraryBorrowRecord?: LibraryBorrowRecordUncheckedCreateNestedManyWithoutCourseInput
+    violationTypes?: ViolationTypeUncheckedCreateNestedManyWithoutCourseInput
+    violations?: ViolationUncheckedCreateNestedManyWithoutCourseInput
+    lostFoundItems?: LostFoundItemUncheckedCreateNestedManyWithoutCourseInput
   }
 
   export type CourseCreateOrConnectWithoutLibraryBookInput = {
@@ -92635,6 +103371,9 @@ export namespace Prisma {
     libraryCardRequests?: LibraryCardRequestUpdateManyWithoutCourseNestedInput
     libraryReceivingLogs?: LibraryReceivingLogUpdateManyWithoutCourseNestedInput
     LibraryBorrowRecord?: LibraryBorrowRecordUpdateManyWithoutCourseNestedInput
+    violationTypes?: ViolationTypeUpdateManyWithoutCourseNestedInput
+    violations?: ViolationUpdateManyWithoutCourseNestedInput
+    lostFoundItems?: LostFoundItemUpdateManyWithoutCourseNestedInput
   }
 
   export type CourseUncheckedUpdateWithoutLibraryBookInput = {
@@ -92670,6 +103409,9 @@ export namespace Prisma {
     libraryCardRequests?: LibraryCardRequestUncheckedUpdateManyWithoutCourseNestedInput
     libraryReceivingLogs?: LibraryReceivingLogUncheckedUpdateManyWithoutCourseNestedInput
     LibraryBorrowRecord?: LibraryBorrowRecordUncheckedUpdateManyWithoutCourseNestedInput
+    violationTypes?: ViolationTypeUncheckedUpdateManyWithoutCourseNestedInput
+    violations?: ViolationUncheckedUpdateManyWithoutCourseNestedInput
+    lostFoundItems?: LostFoundItemUncheckedUpdateManyWithoutCourseNestedInput
   }
 
   export type LibraryBorrowRecordUpsertWithWhereUniqueWithoutBookInput = {
@@ -92721,6 +103463,9 @@ export namespace Prisma {
     libraryCardRequests?: LibraryCardRequestCreateNestedManyWithoutCourseInput
     libraryReceivingLogs?: LibraryReceivingLogCreateNestedManyWithoutCourseInput
     LibraryBook?: LibraryBookCreateNestedManyWithoutCourseInput
+    violationTypes?: ViolationTypeCreateNestedManyWithoutCourseInput
+    violations?: ViolationCreateNestedManyWithoutCourseInput
+    lostFoundItems?: LostFoundItemCreateNestedManyWithoutCourseInput
   }
 
   export type CourseUncheckedCreateWithoutLibraryBorrowRecordInput = {
@@ -92756,6 +103501,9 @@ export namespace Prisma {
     libraryCardRequests?: LibraryCardRequestUncheckedCreateNestedManyWithoutCourseInput
     libraryReceivingLogs?: LibraryReceivingLogUncheckedCreateNestedManyWithoutCourseInput
     LibraryBook?: LibraryBookUncheckedCreateNestedManyWithoutCourseInput
+    violationTypes?: ViolationTypeUncheckedCreateNestedManyWithoutCourseInput
+    violations?: ViolationUncheckedCreateNestedManyWithoutCourseInput
+    lostFoundItems?: LostFoundItemUncheckedCreateNestedManyWithoutCourseInput
   }
 
   export type CourseCreateOrConnectWithoutLibraryBorrowRecordInput = {
@@ -92856,6 +103604,9 @@ export namespace Prisma {
     libraryCardRequests?: LibraryCardRequestUpdateManyWithoutCourseNestedInput
     libraryReceivingLogs?: LibraryReceivingLogUpdateManyWithoutCourseNestedInput
     LibraryBook?: LibraryBookUpdateManyWithoutCourseNestedInput
+    violationTypes?: ViolationTypeUpdateManyWithoutCourseNestedInput
+    violations?: ViolationUpdateManyWithoutCourseNestedInput
+    lostFoundItems?: LostFoundItemUpdateManyWithoutCourseNestedInput
   }
 
   export type CourseUncheckedUpdateWithoutLibraryBorrowRecordInput = {
@@ -92891,6 +103642,9 @@ export namespace Prisma {
     libraryCardRequests?: LibraryCardRequestUncheckedUpdateManyWithoutCourseNestedInput
     libraryReceivingLogs?: LibraryReceivingLogUncheckedUpdateManyWithoutCourseNestedInput
     LibraryBook?: LibraryBookUncheckedUpdateManyWithoutCourseNestedInput
+    violationTypes?: ViolationTypeUncheckedUpdateManyWithoutCourseNestedInput
+    violations?: ViolationUncheckedUpdateManyWithoutCourseNestedInput
+    lostFoundItems?: LostFoundItemUncheckedUpdateManyWithoutCourseNestedInput
   }
 
   export type LibraryBookUpsertWithoutBorrowRecordsInput = {
@@ -92946,6 +103700,2010 @@ export namespace Prisma {
     coverUrl?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CourseCreateWithoutViolationTypesInput = {
+    id?: string
+    name: string
+    code: string
+    color?: string
+    status?: $Enums.CourseStatus
+    description?: string | null
+    term?: string | null
+    startDate?: Date | string | null
+    endDate?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    image?: string | null
+    officeType?: string | null
+    announcements?: AnnouncementCreateNestedManyWithoutCourseInput
+    assignments?: AssignmentCreateNestedManyWithoutCourseInput
+    conversations?: ConversationCreateNestedManyWithoutCourseInput
+    enrollments?: CourseEnrollmentCreateNestedManyWithoutCourseInput
+    forms?: FormCreateNestedManyWithoutCourseInput
+    groupSets?: GroupSetCreateNestedManyWithoutCourseInput
+    groups?: GroupCreateNestedManyWithoutCourseInput
+    medicalExamRecords?: MedicalExamRecordCreateNestedManyWithoutCourseInput
+    medicineInventory?: MedicineInventoryCreateNestedManyWithoutCourseInput
+    patientRecords?: PatientRecordCreateNestedManyWithoutCourseInput
+    quizzes?: QuizCreateNestedManyWithoutCourseInput
+    bodySystems?: BodySystemCreateNestedManyWithoutCourseInput
+    medicalConditions?: MedicalConditionCreateNestedManyWithoutCourseInput
+    guidanceInfoSheets?: GuidanceInfoSheetCreateNestedManyWithoutCourseInput
+    guidanceLogEntries?: GuidanceLogEntryCreateNestedManyWithoutCourseInput
+    exitInterviews?: ExitInterviewCreateNestedManyWithoutCourseInput
+    libraryCardRequests?: LibraryCardRequestCreateNestedManyWithoutCourseInput
+    libraryReceivingLogs?: LibraryReceivingLogCreateNestedManyWithoutCourseInput
+    LibraryBook?: LibraryBookCreateNestedManyWithoutCourseInput
+    LibraryBorrowRecord?: LibraryBorrowRecordCreateNestedManyWithoutCourseInput
+    violations?: ViolationCreateNestedManyWithoutCourseInput
+    lostFoundItems?: LostFoundItemCreateNestedManyWithoutCourseInput
+  }
+
+  export type CourseUncheckedCreateWithoutViolationTypesInput = {
+    id?: string
+    name: string
+    code: string
+    color?: string
+    status?: $Enums.CourseStatus
+    description?: string | null
+    term?: string | null
+    startDate?: Date | string | null
+    endDate?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    image?: string | null
+    officeType?: string | null
+    announcements?: AnnouncementUncheckedCreateNestedManyWithoutCourseInput
+    assignments?: AssignmentUncheckedCreateNestedManyWithoutCourseInput
+    conversations?: ConversationUncheckedCreateNestedManyWithoutCourseInput
+    enrollments?: CourseEnrollmentUncheckedCreateNestedManyWithoutCourseInput
+    forms?: FormUncheckedCreateNestedManyWithoutCourseInput
+    groupSets?: GroupSetUncheckedCreateNestedManyWithoutCourseInput
+    groups?: GroupUncheckedCreateNestedManyWithoutCourseInput
+    medicalExamRecords?: MedicalExamRecordUncheckedCreateNestedManyWithoutCourseInput
+    medicineInventory?: MedicineInventoryUncheckedCreateNestedManyWithoutCourseInput
+    patientRecords?: PatientRecordUncheckedCreateNestedManyWithoutCourseInput
+    quizzes?: QuizUncheckedCreateNestedManyWithoutCourseInput
+    bodySystems?: BodySystemUncheckedCreateNestedManyWithoutCourseInput
+    medicalConditions?: MedicalConditionUncheckedCreateNestedManyWithoutCourseInput
+    guidanceInfoSheets?: GuidanceInfoSheetUncheckedCreateNestedManyWithoutCourseInput
+    guidanceLogEntries?: GuidanceLogEntryUncheckedCreateNestedManyWithoutCourseInput
+    exitInterviews?: ExitInterviewUncheckedCreateNestedManyWithoutCourseInput
+    libraryCardRequests?: LibraryCardRequestUncheckedCreateNestedManyWithoutCourseInput
+    libraryReceivingLogs?: LibraryReceivingLogUncheckedCreateNestedManyWithoutCourseInput
+    LibraryBook?: LibraryBookUncheckedCreateNestedManyWithoutCourseInput
+    LibraryBorrowRecord?: LibraryBorrowRecordUncheckedCreateNestedManyWithoutCourseInput
+    violations?: ViolationUncheckedCreateNestedManyWithoutCourseInput
+    lostFoundItems?: LostFoundItemUncheckedCreateNestedManyWithoutCourseInput
+  }
+
+  export type CourseCreateOrConnectWithoutViolationTypesInput = {
+    where: CourseWhereUniqueInput
+    create: XOR<CourseCreateWithoutViolationTypesInput, CourseUncheckedCreateWithoutViolationTypesInput>
+  }
+
+  export type ViolationCreateWithoutViolationTypeInput = {
+    id?: string
+    caseNo: string
+    severity: string
+    incidentDate: Date | string
+    location?: string | null
+    description?: string | null
+    reportedBy?: string | null
+    reportedByRole?: string | null
+    status?: string
+    noticeToExplainAt?: Date | string | null
+    explanationReceivedAt?: Date | string | null
+    hearingDate?: Date | string | null
+    hearingResult?: string | null
+    sanction?: string | null
+    sanctionDays?: number | null
+    sanctionStart?: Date | string | null
+    sanctionEnd?: Date | string | null
+    sanctionCompleted?: boolean
+    decidedBy?: string | null
+    decidedAt?: Date | string | null
+    appealed?: boolean
+    appealResult?: string | null
+    resolvedAt?: Date | string | null
+    deletedAt?: Date | string | null
+    deletedBy?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    course: CourseCreateNestedOneWithoutViolationsInput
+    student: StudentCreateNestedOneWithoutViolationsInput
+    recordedByUser?: UserCreateNestedOneWithoutViolationsRecordedInput
+    parentContacts?: ParentContactCreateNestedManyWithoutViolationInput
+    notes?: ViolationNoteCreateNestedManyWithoutViolationInput
+  }
+
+  export type ViolationUncheckedCreateWithoutViolationTypeInput = {
+    id?: string
+    courseId: string
+    caseNo: string
+    studentId: string
+    severity: string
+    incidentDate: Date | string
+    location?: string | null
+    description?: string | null
+    reportedBy?: string | null
+    reportedByRole?: string | null
+    status?: string
+    noticeToExplainAt?: Date | string | null
+    explanationReceivedAt?: Date | string | null
+    hearingDate?: Date | string | null
+    hearingResult?: string | null
+    sanction?: string | null
+    sanctionDays?: number | null
+    sanctionStart?: Date | string | null
+    sanctionEnd?: Date | string | null
+    sanctionCompleted?: boolean
+    decidedBy?: string | null
+    decidedAt?: Date | string | null
+    appealed?: boolean
+    appealResult?: string | null
+    resolvedAt?: Date | string | null
+    recordedBy?: string | null
+    deletedAt?: Date | string | null
+    deletedBy?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    parentContacts?: ParentContactUncheckedCreateNestedManyWithoutViolationInput
+    notes?: ViolationNoteUncheckedCreateNestedManyWithoutViolationInput
+  }
+
+  export type ViolationCreateOrConnectWithoutViolationTypeInput = {
+    where: ViolationWhereUniqueInput
+    create: XOR<ViolationCreateWithoutViolationTypeInput, ViolationUncheckedCreateWithoutViolationTypeInput>
+  }
+
+  export type ViolationCreateManyViolationTypeInputEnvelope = {
+    data: ViolationCreateManyViolationTypeInput | ViolationCreateManyViolationTypeInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type CourseUpsertWithoutViolationTypesInput = {
+    update: XOR<CourseUpdateWithoutViolationTypesInput, CourseUncheckedUpdateWithoutViolationTypesInput>
+    create: XOR<CourseCreateWithoutViolationTypesInput, CourseUncheckedCreateWithoutViolationTypesInput>
+    where?: CourseWhereInput
+  }
+
+  export type CourseUpdateToOneWithWhereWithoutViolationTypesInput = {
+    where?: CourseWhereInput
+    data: XOR<CourseUpdateWithoutViolationTypesInput, CourseUncheckedUpdateWithoutViolationTypesInput>
+  }
+
+  export type CourseUpdateWithoutViolationTypesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    code?: StringFieldUpdateOperationsInput | string
+    color?: StringFieldUpdateOperationsInput | string
+    status?: EnumCourseStatusFieldUpdateOperationsInput | $Enums.CourseStatus
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    term?: NullableStringFieldUpdateOperationsInput | string | null
+    startDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    image?: NullableStringFieldUpdateOperationsInput | string | null
+    officeType?: NullableStringFieldUpdateOperationsInput | string | null
+    announcements?: AnnouncementUpdateManyWithoutCourseNestedInput
+    assignments?: AssignmentUpdateManyWithoutCourseNestedInput
+    conversations?: ConversationUpdateManyWithoutCourseNestedInput
+    enrollments?: CourseEnrollmentUpdateManyWithoutCourseNestedInput
+    forms?: FormUpdateManyWithoutCourseNestedInput
+    groupSets?: GroupSetUpdateManyWithoutCourseNestedInput
+    groups?: GroupUpdateManyWithoutCourseNestedInput
+    medicalExamRecords?: MedicalExamRecordUpdateManyWithoutCourseNestedInput
+    medicineInventory?: MedicineInventoryUpdateManyWithoutCourseNestedInput
+    patientRecords?: PatientRecordUpdateManyWithoutCourseNestedInput
+    quizzes?: QuizUpdateManyWithoutCourseNestedInput
+    bodySystems?: BodySystemUpdateManyWithoutCourseNestedInput
+    medicalConditions?: MedicalConditionUpdateManyWithoutCourseNestedInput
+    guidanceInfoSheets?: GuidanceInfoSheetUpdateManyWithoutCourseNestedInput
+    guidanceLogEntries?: GuidanceLogEntryUpdateManyWithoutCourseNestedInput
+    exitInterviews?: ExitInterviewUpdateManyWithoutCourseNestedInput
+    libraryCardRequests?: LibraryCardRequestUpdateManyWithoutCourseNestedInput
+    libraryReceivingLogs?: LibraryReceivingLogUpdateManyWithoutCourseNestedInput
+    LibraryBook?: LibraryBookUpdateManyWithoutCourseNestedInput
+    LibraryBorrowRecord?: LibraryBorrowRecordUpdateManyWithoutCourseNestedInput
+    violations?: ViolationUpdateManyWithoutCourseNestedInput
+    lostFoundItems?: LostFoundItemUpdateManyWithoutCourseNestedInput
+  }
+
+  export type CourseUncheckedUpdateWithoutViolationTypesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    code?: StringFieldUpdateOperationsInput | string
+    color?: StringFieldUpdateOperationsInput | string
+    status?: EnumCourseStatusFieldUpdateOperationsInput | $Enums.CourseStatus
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    term?: NullableStringFieldUpdateOperationsInput | string | null
+    startDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    image?: NullableStringFieldUpdateOperationsInput | string | null
+    officeType?: NullableStringFieldUpdateOperationsInput | string | null
+    announcements?: AnnouncementUncheckedUpdateManyWithoutCourseNestedInput
+    assignments?: AssignmentUncheckedUpdateManyWithoutCourseNestedInput
+    conversations?: ConversationUncheckedUpdateManyWithoutCourseNestedInput
+    enrollments?: CourseEnrollmentUncheckedUpdateManyWithoutCourseNestedInput
+    forms?: FormUncheckedUpdateManyWithoutCourseNestedInput
+    groupSets?: GroupSetUncheckedUpdateManyWithoutCourseNestedInput
+    groups?: GroupUncheckedUpdateManyWithoutCourseNestedInput
+    medicalExamRecords?: MedicalExamRecordUncheckedUpdateManyWithoutCourseNestedInput
+    medicineInventory?: MedicineInventoryUncheckedUpdateManyWithoutCourseNestedInput
+    patientRecords?: PatientRecordUncheckedUpdateManyWithoutCourseNestedInput
+    quizzes?: QuizUncheckedUpdateManyWithoutCourseNestedInput
+    bodySystems?: BodySystemUncheckedUpdateManyWithoutCourseNestedInput
+    medicalConditions?: MedicalConditionUncheckedUpdateManyWithoutCourseNestedInput
+    guidanceInfoSheets?: GuidanceInfoSheetUncheckedUpdateManyWithoutCourseNestedInput
+    guidanceLogEntries?: GuidanceLogEntryUncheckedUpdateManyWithoutCourseNestedInput
+    exitInterviews?: ExitInterviewUncheckedUpdateManyWithoutCourseNestedInput
+    libraryCardRequests?: LibraryCardRequestUncheckedUpdateManyWithoutCourseNestedInput
+    libraryReceivingLogs?: LibraryReceivingLogUncheckedUpdateManyWithoutCourseNestedInput
+    LibraryBook?: LibraryBookUncheckedUpdateManyWithoutCourseNestedInput
+    LibraryBorrowRecord?: LibraryBorrowRecordUncheckedUpdateManyWithoutCourseNestedInput
+    violations?: ViolationUncheckedUpdateManyWithoutCourseNestedInput
+    lostFoundItems?: LostFoundItemUncheckedUpdateManyWithoutCourseNestedInput
+  }
+
+  export type ViolationUpsertWithWhereUniqueWithoutViolationTypeInput = {
+    where: ViolationWhereUniqueInput
+    update: XOR<ViolationUpdateWithoutViolationTypeInput, ViolationUncheckedUpdateWithoutViolationTypeInput>
+    create: XOR<ViolationCreateWithoutViolationTypeInput, ViolationUncheckedCreateWithoutViolationTypeInput>
+  }
+
+  export type ViolationUpdateWithWhereUniqueWithoutViolationTypeInput = {
+    where: ViolationWhereUniqueInput
+    data: XOR<ViolationUpdateWithoutViolationTypeInput, ViolationUncheckedUpdateWithoutViolationTypeInput>
+  }
+
+  export type ViolationUpdateManyWithWhereWithoutViolationTypeInput = {
+    where: ViolationScalarWhereInput
+    data: XOR<ViolationUpdateManyMutationInput, ViolationUncheckedUpdateManyWithoutViolationTypeInput>
+  }
+
+  export type CourseCreateWithoutViolationsInput = {
+    id?: string
+    name: string
+    code: string
+    color?: string
+    status?: $Enums.CourseStatus
+    description?: string | null
+    term?: string | null
+    startDate?: Date | string | null
+    endDate?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    image?: string | null
+    officeType?: string | null
+    announcements?: AnnouncementCreateNestedManyWithoutCourseInput
+    assignments?: AssignmentCreateNestedManyWithoutCourseInput
+    conversations?: ConversationCreateNestedManyWithoutCourseInput
+    enrollments?: CourseEnrollmentCreateNestedManyWithoutCourseInput
+    forms?: FormCreateNestedManyWithoutCourseInput
+    groupSets?: GroupSetCreateNestedManyWithoutCourseInput
+    groups?: GroupCreateNestedManyWithoutCourseInput
+    medicalExamRecords?: MedicalExamRecordCreateNestedManyWithoutCourseInput
+    medicineInventory?: MedicineInventoryCreateNestedManyWithoutCourseInput
+    patientRecords?: PatientRecordCreateNestedManyWithoutCourseInput
+    quizzes?: QuizCreateNestedManyWithoutCourseInput
+    bodySystems?: BodySystemCreateNestedManyWithoutCourseInput
+    medicalConditions?: MedicalConditionCreateNestedManyWithoutCourseInput
+    guidanceInfoSheets?: GuidanceInfoSheetCreateNestedManyWithoutCourseInput
+    guidanceLogEntries?: GuidanceLogEntryCreateNestedManyWithoutCourseInput
+    exitInterviews?: ExitInterviewCreateNestedManyWithoutCourseInput
+    libraryCardRequests?: LibraryCardRequestCreateNestedManyWithoutCourseInput
+    libraryReceivingLogs?: LibraryReceivingLogCreateNestedManyWithoutCourseInput
+    LibraryBook?: LibraryBookCreateNestedManyWithoutCourseInput
+    LibraryBorrowRecord?: LibraryBorrowRecordCreateNestedManyWithoutCourseInput
+    violationTypes?: ViolationTypeCreateNestedManyWithoutCourseInput
+    lostFoundItems?: LostFoundItemCreateNestedManyWithoutCourseInput
+  }
+
+  export type CourseUncheckedCreateWithoutViolationsInput = {
+    id?: string
+    name: string
+    code: string
+    color?: string
+    status?: $Enums.CourseStatus
+    description?: string | null
+    term?: string | null
+    startDate?: Date | string | null
+    endDate?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    image?: string | null
+    officeType?: string | null
+    announcements?: AnnouncementUncheckedCreateNestedManyWithoutCourseInput
+    assignments?: AssignmentUncheckedCreateNestedManyWithoutCourseInput
+    conversations?: ConversationUncheckedCreateNestedManyWithoutCourseInput
+    enrollments?: CourseEnrollmentUncheckedCreateNestedManyWithoutCourseInput
+    forms?: FormUncheckedCreateNestedManyWithoutCourseInput
+    groupSets?: GroupSetUncheckedCreateNestedManyWithoutCourseInput
+    groups?: GroupUncheckedCreateNestedManyWithoutCourseInput
+    medicalExamRecords?: MedicalExamRecordUncheckedCreateNestedManyWithoutCourseInput
+    medicineInventory?: MedicineInventoryUncheckedCreateNestedManyWithoutCourseInput
+    patientRecords?: PatientRecordUncheckedCreateNestedManyWithoutCourseInput
+    quizzes?: QuizUncheckedCreateNestedManyWithoutCourseInput
+    bodySystems?: BodySystemUncheckedCreateNestedManyWithoutCourseInput
+    medicalConditions?: MedicalConditionUncheckedCreateNestedManyWithoutCourseInput
+    guidanceInfoSheets?: GuidanceInfoSheetUncheckedCreateNestedManyWithoutCourseInput
+    guidanceLogEntries?: GuidanceLogEntryUncheckedCreateNestedManyWithoutCourseInput
+    exitInterviews?: ExitInterviewUncheckedCreateNestedManyWithoutCourseInput
+    libraryCardRequests?: LibraryCardRequestUncheckedCreateNestedManyWithoutCourseInput
+    libraryReceivingLogs?: LibraryReceivingLogUncheckedCreateNestedManyWithoutCourseInput
+    LibraryBook?: LibraryBookUncheckedCreateNestedManyWithoutCourseInput
+    LibraryBorrowRecord?: LibraryBorrowRecordUncheckedCreateNestedManyWithoutCourseInput
+    violationTypes?: ViolationTypeUncheckedCreateNestedManyWithoutCourseInput
+    lostFoundItems?: LostFoundItemUncheckedCreateNestedManyWithoutCourseInput
+  }
+
+  export type CourseCreateOrConnectWithoutViolationsInput = {
+    where: CourseWhereUniqueInput
+    create: XOR<CourseCreateWithoutViolationsInput, CourseUncheckedCreateWithoutViolationsInput>
+  }
+
+  export type StudentCreateWithoutViolationsInput = {
+    id?: string
+    studentNumber: string
+    name: string
+    age?: number | null
+    gender?: string | null
+    department?: string | null
+    course?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    email?: string | null
+    address?: string | null
+    birthDate?: Date | string | null
+    yearSection?: string | null
+    mobileNo?: string | null
+    guardianName?: string | null
+    guardianContact?: string | null
+    standing?: string
+    clearanceHold?: boolean
+    deletedAt?: Date | string | null
+    medicalExamRecords?: MedicalExamRecordCreateNestedManyWithoutStudentInput
+    patientRecords?: PatientRecordCreateNestedManyWithoutStudentInput
+  }
+
+  export type StudentUncheckedCreateWithoutViolationsInput = {
+    id?: string
+    studentNumber: string
+    name: string
+    age?: number | null
+    gender?: string | null
+    department?: string | null
+    course?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    email?: string | null
+    address?: string | null
+    birthDate?: Date | string | null
+    yearSection?: string | null
+    mobileNo?: string | null
+    guardianName?: string | null
+    guardianContact?: string | null
+    standing?: string
+    clearanceHold?: boolean
+    deletedAt?: Date | string | null
+    medicalExamRecords?: MedicalExamRecordUncheckedCreateNestedManyWithoutStudentInput
+    patientRecords?: PatientRecordUncheckedCreateNestedManyWithoutStudentInput
+  }
+
+  export type StudentCreateOrConnectWithoutViolationsInput = {
+    where: StudentWhereUniqueInput
+    create: XOR<StudentCreateWithoutViolationsInput, StudentUncheckedCreateWithoutViolationsInput>
+  }
+
+  export type ViolationTypeCreateWithoutViolationsInput = {
+    id?: string
+    code: string
+    name: string
+    description?: string | null
+    severity?: string
+    category?: string | null
+    dismissalOnFirst?: boolean
+    defaultSanction?: string | null
+    sanctionMinDays?: number | null
+    sanctionMaxDays?: number | null
+    maxSanction?: string | null
+    escalationCount?: number
+    escalatesTo?: string | null
+    manualRef?: string | null
+    isActive?: boolean
+    order?: number
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    course: CourseCreateNestedOneWithoutViolationTypesInput
+  }
+
+  export type ViolationTypeUncheckedCreateWithoutViolationsInput = {
+    id?: string
+    courseId: string
+    code: string
+    name: string
+    description?: string | null
+    severity?: string
+    category?: string | null
+    dismissalOnFirst?: boolean
+    defaultSanction?: string | null
+    sanctionMinDays?: number | null
+    sanctionMaxDays?: number | null
+    maxSanction?: string | null
+    escalationCount?: number
+    escalatesTo?: string | null
+    manualRef?: string | null
+    isActive?: boolean
+    order?: number
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ViolationTypeCreateOrConnectWithoutViolationsInput = {
+    where: ViolationTypeWhereUniqueInput
+    create: XOR<ViolationTypeCreateWithoutViolationsInput, ViolationTypeUncheckedCreateWithoutViolationsInput>
+  }
+
+  export type UserCreateWithoutViolationsRecordedInput = {
+    id?: string
+    name: string
+    email: string
+    emailVerified?: Date | string | null
+    password?: string | null
+    image?: string | null
+    role?: $Enums.Role
+    status?: $Enums.ApprovalStatus
+    department?: string | null
+    position?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    bio?: string | null
+    pronouns?: string | null
+    contactNumber?: string | null
+    employmentStatus?: string | null
+    accountType?: string | null
+    librarySignature?: string | null
+    accounts?: AccountCreateNestedManyWithoutUserInput
+    activityLogs?: ActivityLogCreateNestedManyWithoutUserInput
+    conversationParticipants?: ConversationParticipantCreateNestedManyWithoutUserInput
+    enrollments?: CourseEnrollmentCreateNestedManyWithoutUserInput
+    formSubmissions?: FormSubmissionCreateNestedManyWithoutUserInput
+    formsCreated?: FormCreateNestedManyWithoutAuthorInput
+    groupMembers?: GroupMemberCreateNestedManyWithoutUserInput
+    medicalExamRecords?: MedicalExamRecordCreateNestedManyWithoutRecordedByUserInput
+    sentMessages?: MessageCreateNestedManyWithoutSenderInput
+    resetTokens?: PasswordResetTokenCreateNestedManyWithoutUserInput
+    patientRecords?: PatientRecordCreateNestedManyWithoutRecordedByUserInput
+    quizAttempts?: QuizAttemptCreateNestedManyWithoutUserInput
+    quizzesCreated?: QuizCreateNestedManyWithoutAuthorInput
+    repositoryFiles?: RepositoryFileCreateNestedManyWithoutUserInput
+    sessions?: SessionCreateNestedManyWithoutUserInput
+    announcementReads?: AnnouncementReadCreateNestedManyWithoutUserInput
+    guidanceLogEntries?: GuidanceLogEntryCreateNestedManyWithoutRecordedByUserInput
+    exitInterviewsCounseled?: ExitInterviewCreateNestedManyWithoutCounselorInput
+    submissions_submissions_gradedByIdTousers?: SubmissionCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
+    submissions?: SubmissionCreateNestedManyWithoutUserInput
+    violationNotes?: ViolationNoteCreateNestedManyWithoutAuthorInput
+    parentContactsRecorded?: ParentContactCreateNestedManyWithoutRecordedByUserInput
+    lostFoundRecorded?: LostFoundItemCreateNestedManyWithoutRecordedByUserInput
+  }
+
+  export type UserUncheckedCreateWithoutViolationsRecordedInput = {
+    id?: string
+    name: string
+    email: string
+    emailVerified?: Date | string | null
+    password?: string | null
+    image?: string | null
+    role?: $Enums.Role
+    status?: $Enums.ApprovalStatus
+    department?: string | null
+    position?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    bio?: string | null
+    pronouns?: string | null
+    contactNumber?: string | null
+    employmentStatus?: string | null
+    accountType?: string | null
+    librarySignature?: string | null
+    accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
+    activityLogs?: ActivityLogUncheckedCreateNestedManyWithoutUserInput
+    conversationParticipants?: ConversationParticipantUncheckedCreateNestedManyWithoutUserInput
+    enrollments?: CourseEnrollmentUncheckedCreateNestedManyWithoutUserInput
+    formSubmissions?: FormSubmissionUncheckedCreateNestedManyWithoutUserInput
+    formsCreated?: FormUncheckedCreateNestedManyWithoutAuthorInput
+    groupMembers?: GroupMemberUncheckedCreateNestedManyWithoutUserInput
+    medicalExamRecords?: MedicalExamRecordUncheckedCreateNestedManyWithoutRecordedByUserInput
+    sentMessages?: MessageUncheckedCreateNestedManyWithoutSenderInput
+    resetTokens?: PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
+    patientRecords?: PatientRecordUncheckedCreateNestedManyWithoutRecordedByUserInput
+    quizAttempts?: QuizAttemptUncheckedCreateNestedManyWithoutUserInput
+    quizzesCreated?: QuizUncheckedCreateNestedManyWithoutAuthorInput
+    repositoryFiles?: RepositoryFileUncheckedCreateNestedManyWithoutUserInput
+    sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
+    announcementReads?: AnnouncementReadUncheckedCreateNestedManyWithoutUserInput
+    guidanceLogEntries?: GuidanceLogEntryUncheckedCreateNestedManyWithoutRecordedByUserInput
+    exitInterviewsCounseled?: ExitInterviewUncheckedCreateNestedManyWithoutCounselorInput
+    submissions_submissions_gradedByIdTousers?: SubmissionUncheckedCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
+    submissions?: SubmissionUncheckedCreateNestedManyWithoutUserInput
+    violationNotes?: ViolationNoteUncheckedCreateNestedManyWithoutAuthorInput
+    parentContactsRecorded?: ParentContactUncheckedCreateNestedManyWithoutRecordedByUserInput
+    lostFoundRecorded?: LostFoundItemUncheckedCreateNestedManyWithoutRecordedByUserInput
+  }
+
+  export type UserCreateOrConnectWithoutViolationsRecordedInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutViolationsRecordedInput, UserUncheckedCreateWithoutViolationsRecordedInput>
+  }
+
+  export type ParentContactCreateWithoutViolationInput = {
+    id?: string
+    contactedAt?: Date | string
+    method?: string
+    contactedBy?: string | null
+    contactPerson?: string | null
+    relationship?: string | null
+    attendance?: string
+    attemptNo?: number
+    signatureUrl?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    recordedByUser?: UserCreateNestedOneWithoutParentContactsRecordedInput
+  }
+
+  export type ParentContactUncheckedCreateWithoutViolationInput = {
+    id?: string
+    contactedAt?: Date | string
+    method?: string
+    contactedBy?: string | null
+    contactPerson?: string | null
+    relationship?: string | null
+    attendance?: string
+    attemptNo?: number
+    signatureUrl?: string | null
+    recordedBy?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ParentContactCreateOrConnectWithoutViolationInput = {
+    where: ParentContactWhereUniqueInput
+    create: XOR<ParentContactCreateWithoutViolationInput, ParentContactUncheckedCreateWithoutViolationInput>
+  }
+
+  export type ParentContactCreateManyViolationInputEnvelope = {
+    data: ParentContactCreateManyViolationInput | ParentContactCreateManyViolationInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type ViolationNoteCreateWithoutViolationInput = {
+    id?: string
+    body: string
+    confidential?: boolean
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    author?: UserCreateNestedOneWithoutViolationNotesInput
+  }
+
+  export type ViolationNoteUncheckedCreateWithoutViolationInput = {
+    id?: string
+    body: string
+    confidential?: boolean
+    authorId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ViolationNoteCreateOrConnectWithoutViolationInput = {
+    where: ViolationNoteWhereUniqueInput
+    create: XOR<ViolationNoteCreateWithoutViolationInput, ViolationNoteUncheckedCreateWithoutViolationInput>
+  }
+
+  export type ViolationNoteCreateManyViolationInputEnvelope = {
+    data: ViolationNoteCreateManyViolationInput | ViolationNoteCreateManyViolationInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type CourseUpsertWithoutViolationsInput = {
+    update: XOR<CourseUpdateWithoutViolationsInput, CourseUncheckedUpdateWithoutViolationsInput>
+    create: XOR<CourseCreateWithoutViolationsInput, CourseUncheckedCreateWithoutViolationsInput>
+    where?: CourseWhereInput
+  }
+
+  export type CourseUpdateToOneWithWhereWithoutViolationsInput = {
+    where?: CourseWhereInput
+    data: XOR<CourseUpdateWithoutViolationsInput, CourseUncheckedUpdateWithoutViolationsInput>
+  }
+
+  export type CourseUpdateWithoutViolationsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    code?: StringFieldUpdateOperationsInput | string
+    color?: StringFieldUpdateOperationsInput | string
+    status?: EnumCourseStatusFieldUpdateOperationsInput | $Enums.CourseStatus
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    term?: NullableStringFieldUpdateOperationsInput | string | null
+    startDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    image?: NullableStringFieldUpdateOperationsInput | string | null
+    officeType?: NullableStringFieldUpdateOperationsInput | string | null
+    announcements?: AnnouncementUpdateManyWithoutCourseNestedInput
+    assignments?: AssignmentUpdateManyWithoutCourseNestedInput
+    conversations?: ConversationUpdateManyWithoutCourseNestedInput
+    enrollments?: CourseEnrollmentUpdateManyWithoutCourseNestedInput
+    forms?: FormUpdateManyWithoutCourseNestedInput
+    groupSets?: GroupSetUpdateManyWithoutCourseNestedInput
+    groups?: GroupUpdateManyWithoutCourseNestedInput
+    medicalExamRecords?: MedicalExamRecordUpdateManyWithoutCourseNestedInput
+    medicineInventory?: MedicineInventoryUpdateManyWithoutCourseNestedInput
+    patientRecords?: PatientRecordUpdateManyWithoutCourseNestedInput
+    quizzes?: QuizUpdateManyWithoutCourseNestedInput
+    bodySystems?: BodySystemUpdateManyWithoutCourseNestedInput
+    medicalConditions?: MedicalConditionUpdateManyWithoutCourseNestedInput
+    guidanceInfoSheets?: GuidanceInfoSheetUpdateManyWithoutCourseNestedInput
+    guidanceLogEntries?: GuidanceLogEntryUpdateManyWithoutCourseNestedInput
+    exitInterviews?: ExitInterviewUpdateManyWithoutCourseNestedInput
+    libraryCardRequests?: LibraryCardRequestUpdateManyWithoutCourseNestedInput
+    libraryReceivingLogs?: LibraryReceivingLogUpdateManyWithoutCourseNestedInput
+    LibraryBook?: LibraryBookUpdateManyWithoutCourseNestedInput
+    LibraryBorrowRecord?: LibraryBorrowRecordUpdateManyWithoutCourseNestedInput
+    violationTypes?: ViolationTypeUpdateManyWithoutCourseNestedInput
+    lostFoundItems?: LostFoundItemUpdateManyWithoutCourseNestedInput
+  }
+
+  export type CourseUncheckedUpdateWithoutViolationsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    code?: StringFieldUpdateOperationsInput | string
+    color?: StringFieldUpdateOperationsInput | string
+    status?: EnumCourseStatusFieldUpdateOperationsInput | $Enums.CourseStatus
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    term?: NullableStringFieldUpdateOperationsInput | string | null
+    startDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    image?: NullableStringFieldUpdateOperationsInput | string | null
+    officeType?: NullableStringFieldUpdateOperationsInput | string | null
+    announcements?: AnnouncementUncheckedUpdateManyWithoutCourseNestedInput
+    assignments?: AssignmentUncheckedUpdateManyWithoutCourseNestedInput
+    conversations?: ConversationUncheckedUpdateManyWithoutCourseNestedInput
+    enrollments?: CourseEnrollmentUncheckedUpdateManyWithoutCourseNestedInput
+    forms?: FormUncheckedUpdateManyWithoutCourseNestedInput
+    groupSets?: GroupSetUncheckedUpdateManyWithoutCourseNestedInput
+    groups?: GroupUncheckedUpdateManyWithoutCourseNestedInput
+    medicalExamRecords?: MedicalExamRecordUncheckedUpdateManyWithoutCourseNestedInput
+    medicineInventory?: MedicineInventoryUncheckedUpdateManyWithoutCourseNestedInput
+    patientRecords?: PatientRecordUncheckedUpdateManyWithoutCourseNestedInput
+    quizzes?: QuizUncheckedUpdateManyWithoutCourseNestedInput
+    bodySystems?: BodySystemUncheckedUpdateManyWithoutCourseNestedInput
+    medicalConditions?: MedicalConditionUncheckedUpdateManyWithoutCourseNestedInput
+    guidanceInfoSheets?: GuidanceInfoSheetUncheckedUpdateManyWithoutCourseNestedInput
+    guidanceLogEntries?: GuidanceLogEntryUncheckedUpdateManyWithoutCourseNestedInput
+    exitInterviews?: ExitInterviewUncheckedUpdateManyWithoutCourseNestedInput
+    libraryCardRequests?: LibraryCardRequestUncheckedUpdateManyWithoutCourseNestedInput
+    libraryReceivingLogs?: LibraryReceivingLogUncheckedUpdateManyWithoutCourseNestedInput
+    LibraryBook?: LibraryBookUncheckedUpdateManyWithoutCourseNestedInput
+    LibraryBorrowRecord?: LibraryBorrowRecordUncheckedUpdateManyWithoutCourseNestedInput
+    violationTypes?: ViolationTypeUncheckedUpdateManyWithoutCourseNestedInput
+    lostFoundItems?: LostFoundItemUncheckedUpdateManyWithoutCourseNestedInput
+  }
+
+  export type StudentUpsertWithoutViolationsInput = {
+    update: XOR<StudentUpdateWithoutViolationsInput, StudentUncheckedUpdateWithoutViolationsInput>
+    create: XOR<StudentCreateWithoutViolationsInput, StudentUncheckedCreateWithoutViolationsInput>
+    where?: StudentWhereInput
+  }
+
+  export type StudentUpdateToOneWithWhereWithoutViolationsInput = {
+    where?: StudentWhereInput
+    data: XOR<StudentUpdateWithoutViolationsInput, StudentUncheckedUpdateWithoutViolationsInput>
+  }
+
+  export type StudentUpdateWithoutViolationsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    studentNumber?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    age?: NullableIntFieldUpdateOperationsInput | number | null
+    gender?: NullableStringFieldUpdateOperationsInput | string | null
+    department?: NullableStringFieldUpdateOperationsInput | string | null
+    course?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    address?: NullableStringFieldUpdateOperationsInput | string | null
+    birthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    yearSection?: NullableStringFieldUpdateOperationsInput | string | null
+    mobileNo?: NullableStringFieldUpdateOperationsInput | string | null
+    guardianName?: NullableStringFieldUpdateOperationsInput | string | null
+    guardianContact?: NullableStringFieldUpdateOperationsInput | string | null
+    standing?: StringFieldUpdateOperationsInput | string
+    clearanceHold?: BoolFieldUpdateOperationsInput | boolean
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    medicalExamRecords?: MedicalExamRecordUpdateManyWithoutStudentNestedInput
+    patientRecords?: PatientRecordUpdateManyWithoutStudentNestedInput
+  }
+
+  export type StudentUncheckedUpdateWithoutViolationsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    studentNumber?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    age?: NullableIntFieldUpdateOperationsInput | number | null
+    gender?: NullableStringFieldUpdateOperationsInput | string | null
+    department?: NullableStringFieldUpdateOperationsInput | string | null
+    course?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    address?: NullableStringFieldUpdateOperationsInput | string | null
+    birthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    yearSection?: NullableStringFieldUpdateOperationsInput | string | null
+    mobileNo?: NullableStringFieldUpdateOperationsInput | string | null
+    guardianName?: NullableStringFieldUpdateOperationsInput | string | null
+    guardianContact?: NullableStringFieldUpdateOperationsInput | string | null
+    standing?: StringFieldUpdateOperationsInput | string
+    clearanceHold?: BoolFieldUpdateOperationsInput | boolean
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    medicalExamRecords?: MedicalExamRecordUncheckedUpdateManyWithoutStudentNestedInput
+    patientRecords?: PatientRecordUncheckedUpdateManyWithoutStudentNestedInput
+  }
+
+  export type ViolationTypeUpsertWithoutViolationsInput = {
+    update: XOR<ViolationTypeUpdateWithoutViolationsInput, ViolationTypeUncheckedUpdateWithoutViolationsInput>
+    create: XOR<ViolationTypeCreateWithoutViolationsInput, ViolationTypeUncheckedCreateWithoutViolationsInput>
+    where?: ViolationTypeWhereInput
+  }
+
+  export type ViolationTypeUpdateToOneWithWhereWithoutViolationsInput = {
+    where?: ViolationTypeWhereInput
+    data: XOR<ViolationTypeUpdateWithoutViolationsInput, ViolationTypeUncheckedUpdateWithoutViolationsInput>
+  }
+
+  export type ViolationTypeUpdateWithoutViolationsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    code?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    severity?: StringFieldUpdateOperationsInput | string
+    category?: NullableStringFieldUpdateOperationsInput | string | null
+    dismissalOnFirst?: BoolFieldUpdateOperationsInput | boolean
+    defaultSanction?: NullableStringFieldUpdateOperationsInput | string | null
+    sanctionMinDays?: NullableIntFieldUpdateOperationsInput | number | null
+    sanctionMaxDays?: NullableIntFieldUpdateOperationsInput | number | null
+    maxSanction?: NullableStringFieldUpdateOperationsInput | string | null
+    escalationCount?: IntFieldUpdateOperationsInput | number
+    escalatesTo?: NullableStringFieldUpdateOperationsInput | string | null
+    manualRef?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    order?: IntFieldUpdateOperationsInput | number
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    course?: CourseUpdateOneRequiredWithoutViolationTypesNestedInput
+  }
+
+  export type ViolationTypeUncheckedUpdateWithoutViolationsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    courseId?: StringFieldUpdateOperationsInput | string
+    code?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    severity?: StringFieldUpdateOperationsInput | string
+    category?: NullableStringFieldUpdateOperationsInput | string | null
+    dismissalOnFirst?: BoolFieldUpdateOperationsInput | boolean
+    defaultSanction?: NullableStringFieldUpdateOperationsInput | string | null
+    sanctionMinDays?: NullableIntFieldUpdateOperationsInput | number | null
+    sanctionMaxDays?: NullableIntFieldUpdateOperationsInput | number | null
+    maxSanction?: NullableStringFieldUpdateOperationsInput | string | null
+    escalationCount?: IntFieldUpdateOperationsInput | number
+    escalatesTo?: NullableStringFieldUpdateOperationsInput | string | null
+    manualRef?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    order?: IntFieldUpdateOperationsInput | number
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type UserUpsertWithoutViolationsRecordedInput = {
+    update: XOR<UserUpdateWithoutViolationsRecordedInput, UserUncheckedUpdateWithoutViolationsRecordedInput>
+    create: XOR<UserCreateWithoutViolationsRecordedInput, UserUncheckedCreateWithoutViolationsRecordedInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutViolationsRecordedInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutViolationsRecordedInput, UserUncheckedUpdateWithoutViolationsRecordedInput>
+  }
+
+  export type UserUpdateWithoutViolationsRecordedInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    password?: NullableStringFieldUpdateOperationsInput | string | null
+    image?: NullableStringFieldUpdateOperationsInput | string | null
+    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    status?: EnumApprovalStatusFieldUpdateOperationsInput | $Enums.ApprovalStatus
+    department?: NullableStringFieldUpdateOperationsInput | string | null
+    position?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    bio?: NullableStringFieldUpdateOperationsInput | string | null
+    pronouns?: NullableStringFieldUpdateOperationsInput | string | null
+    contactNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    employmentStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    accountType?: NullableStringFieldUpdateOperationsInput | string | null
+    librarySignature?: NullableStringFieldUpdateOperationsInput | string | null
+    accounts?: AccountUpdateManyWithoutUserNestedInput
+    activityLogs?: ActivityLogUpdateManyWithoutUserNestedInput
+    conversationParticipants?: ConversationParticipantUpdateManyWithoutUserNestedInput
+    enrollments?: CourseEnrollmentUpdateManyWithoutUserNestedInput
+    formSubmissions?: FormSubmissionUpdateManyWithoutUserNestedInput
+    formsCreated?: FormUpdateManyWithoutAuthorNestedInput
+    groupMembers?: GroupMemberUpdateManyWithoutUserNestedInput
+    medicalExamRecords?: MedicalExamRecordUpdateManyWithoutRecordedByUserNestedInput
+    sentMessages?: MessageUpdateManyWithoutSenderNestedInput
+    resetTokens?: PasswordResetTokenUpdateManyWithoutUserNestedInput
+    patientRecords?: PatientRecordUpdateManyWithoutRecordedByUserNestedInput
+    quizAttempts?: QuizAttemptUpdateManyWithoutUserNestedInput
+    quizzesCreated?: QuizUpdateManyWithoutAuthorNestedInput
+    repositoryFiles?: RepositoryFileUpdateManyWithoutUserNestedInput
+    sessions?: SessionUpdateManyWithoutUserNestedInput
+    announcementReads?: AnnouncementReadUpdateManyWithoutUserNestedInput
+    guidanceLogEntries?: GuidanceLogEntryUpdateManyWithoutRecordedByUserNestedInput
+    exitInterviewsCounseled?: ExitInterviewUpdateManyWithoutCounselorNestedInput
+    submissions_submissions_gradedByIdTousers?: SubmissionUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
+    submissions?: SubmissionUpdateManyWithoutUserNestedInput
+    violationNotes?: ViolationNoteUpdateManyWithoutAuthorNestedInput
+    parentContactsRecorded?: ParentContactUpdateManyWithoutRecordedByUserNestedInput
+    lostFoundRecorded?: LostFoundItemUpdateManyWithoutRecordedByUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutViolationsRecordedInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    password?: NullableStringFieldUpdateOperationsInput | string | null
+    image?: NullableStringFieldUpdateOperationsInput | string | null
+    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    status?: EnumApprovalStatusFieldUpdateOperationsInput | $Enums.ApprovalStatus
+    department?: NullableStringFieldUpdateOperationsInput | string | null
+    position?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    bio?: NullableStringFieldUpdateOperationsInput | string | null
+    pronouns?: NullableStringFieldUpdateOperationsInput | string | null
+    contactNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    employmentStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    accountType?: NullableStringFieldUpdateOperationsInput | string | null
+    librarySignature?: NullableStringFieldUpdateOperationsInput | string | null
+    accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
+    activityLogs?: ActivityLogUncheckedUpdateManyWithoutUserNestedInput
+    conversationParticipants?: ConversationParticipantUncheckedUpdateManyWithoutUserNestedInput
+    enrollments?: CourseEnrollmentUncheckedUpdateManyWithoutUserNestedInput
+    formSubmissions?: FormSubmissionUncheckedUpdateManyWithoutUserNestedInput
+    formsCreated?: FormUncheckedUpdateManyWithoutAuthorNestedInput
+    groupMembers?: GroupMemberUncheckedUpdateManyWithoutUserNestedInput
+    medicalExamRecords?: MedicalExamRecordUncheckedUpdateManyWithoutRecordedByUserNestedInput
+    sentMessages?: MessageUncheckedUpdateManyWithoutSenderNestedInput
+    resetTokens?: PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
+    patientRecords?: PatientRecordUncheckedUpdateManyWithoutRecordedByUserNestedInput
+    quizAttempts?: QuizAttemptUncheckedUpdateManyWithoutUserNestedInput
+    quizzesCreated?: QuizUncheckedUpdateManyWithoutAuthorNestedInput
+    repositoryFiles?: RepositoryFileUncheckedUpdateManyWithoutUserNestedInput
+    sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
+    announcementReads?: AnnouncementReadUncheckedUpdateManyWithoutUserNestedInput
+    guidanceLogEntries?: GuidanceLogEntryUncheckedUpdateManyWithoutRecordedByUserNestedInput
+    exitInterviewsCounseled?: ExitInterviewUncheckedUpdateManyWithoutCounselorNestedInput
+    submissions_submissions_gradedByIdTousers?: SubmissionUncheckedUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
+    submissions?: SubmissionUncheckedUpdateManyWithoutUserNestedInput
+    violationNotes?: ViolationNoteUncheckedUpdateManyWithoutAuthorNestedInput
+    parentContactsRecorded?: ParentContactUncheckedUpdateManyWithoutRecordedByUserNestedInput
+    lostFoundRecorded?: LostFoundItemUncheckedUpdateManyWithoutRecordedByUserNestedInput
+  }
+
+  export type ParentContactUpsertWithWhereUniqueWithoutViolationInput = {
+    where: ParentContactWhereUniqueInput
+    update: XOR<ParentContactUpdateWithoutViolationInput, ParentContactUncheckedUpdateWithoutViolationInput>
+    create: XOR<ParentContactCreateWithoutViolationInput, ParentContactUncheckedCreateWithoutViolationInput>
+  }
+
+  export type ParentContactUpdateWithWhereUniqueWithoutViolationInput = {
+    where: ParentContactWhereUniqueInput
+    data: XOR<ParentContactUpdateWithoutViolationInput, ParentContactUncheckedUpdateWithoutViolationInput>
+  }
+
+  export type ParentContactUpdateManyWithWhereWithoutViolationInput = {
+    where: ParentContactScalarWhereInput
+    data: XOR<ParentContactUpdateManyMutationInput, ParentContactUncheckedUpdateManyWithoutViolationInput>
+  }
+
+  export type ViolationNoteUpsertWithWhereUniqueWithoutViolationInput = {
+    where: ViolationNoteWhereUniqueInput
+    update: XOR<ViolationNoteUpdateWithoutViolationInput, ViolationNoteUncheckedUpdateWithoutViolationInput>
+    create: XOR<ViolationNoteCreateWithoutViolationInput, ViolationNoteUncheckedCreateWithoutViolationInput>
+  }
+
+  export type ViolationNoteUpdateWithWhereUniqueWithoutViolationInput = {
+    where: ViolationNoteWhereUniqueInput
+    data: XOR<ViolationNoteUpdateWithoutViolationInput, ViolationNoteUncheckedUpdateWithoutViolationInput>
+  }
+
+  export type ViolationNoteUpdateManyWithWhereWithoutViolationInput = {
+    where: ViolationNoteScalarWhereInput
+    data: XOR<ViolationNoteUpdateManyMutationInput, ViolationNoteUncheckedUpdateManyWithoutViolationInput>
+  }
+
+  export type ViolationCreateWithoutParentContactsInput = {
+    id?: string
+    caseNo: string
+    severity: string
+    incidentDate: Date | string
+    location?: string | null
+    description?: string | null
+    reportedBy?: string | null
+    reportedByRole?: string | null
+    status?: string
+    noticeToExplainAt?: Date | string | null
+    explanationReceivedAt?: Date | string | null
+    hearingDate?: Date | string | null
+    hearingResult?: string | null
+    sanction?: string | null
+    sanctionDays?: number | null
+    sanctionStart?: Date | string | null
+    sanctionEnd?: Date | string | null
+    sanctionCompleted?: boolean
+    decidedBy?: string | null
+    decidedAt?: Date | string | null
+    appealed?: boolean
+    appealResult?: string | null
+    resolvedAt?: Date | string | null
+    deletedAt?: Date | string | null
+    deletedBy?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    course: CourseCreateNestedOneWithoutViolationsInput
+    student: StudentCreateNestedOneWithoutViolationsInput
+    violationType: ViolationTypeCreateNestedOneWithoutViolationsInput
+    recordedByUser?: UserCreateNestedOneWithoutViolationsRecordedInput
+    notes?: ViolationNoteCreateNestedManyWithoutViolationInput
+  }
+
+  export type ViolationUncheckedCreateWithoutParentContactsInput = {
+    id?: string
+    courseId: string
+    caseNo: string
+    studentId: string
+    violationTypeId: string
+    severity: string
+    incidentDate: Date | string
+    location?: string | null
+    description?: string | null
+    reportedBy?: string | null
+    reportedByRole?: string | null
+    status?: string
+    noticeToExplainAt?: Date | string | null
+    explanationReceivedAt?: Date | string | null
+    hearingDate?: Date | string | null
+    hearingResult?: string | null
+    sanction?: string | null
+    sanctionDays?: number | null
+    sanctionStart?: Date | string | null
+    sanctionEnd?: Date | string | null
+    sanctionCompleted?: boolean
+    decidedBy?: string | null
+    decidedAt?: Date | string | null
+    appealed?: boolean
+    appealResult?: string | null
+    resolvedAt?: Date | string | null
+    recordedBy?: string | null
+    deletedAt?: Date | string | null
+    deletedBy?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    notes?: ViolationNoteUncheckedCreateNestedManyWithoutViolationInput
+  }
+
+  export type ViolationCreateOrConnectWithoutParentContactsInput = {
+    where: ViolationWhereUniqueInput
+    create: XOR<ViolationCreateWithoutParentContactsInput, ViolationUncheckedCreateWithoutParentContactsInput>
+  }
+
+  export type UserCreateWithoutParentContactsRecordedInput = {
+    id?: string
+    name: string
+    email: string
+    emailVerified?: Date | string | null
+    password?: string | null
+    image?: string | null
+    role?: $Enums.Role
+    status?: $Enums.ApprovalStatus
+    department?: string | null
+    position?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    bio?: string | null
+    pronouns?: string | null
+    contactNumber?: string | null
+    employmentStatus?: string | null
+    accountType?: string | null
+    librarySignature?: string | null
+    accounts?: AccountCreateNestedManyWithoutUserInput
+    activityLogs?: ActivityLogCreateNestedManyWithoutUserInput
+    conversationParticipants?: ConversationParticipantCreateNestedManyWithoutUserInput
+    enrollments?: CourseEnrollmentCreateNestedManyWithoutUserInput
+    formSubmissions?: FormSubmissionCreateNestedManyWithoutUserInput
+    formsCreated?: FormCreateNestedManyWithoutAuthorInput
+    groupMembers?: GroupMemberCreateNestedManyWithoutUserInput
+    medicalExamRecords?: MedicalExamRecordCreateNestedManyWithoutRecordedByUserInput
+    sentMessages?: MessageCreateNestedManyWithoutSenderInput
+    resetTokens?: PasswordResetTokenCreateNestedManyWithoutUserInput
+    patientRecords?: PatientRecordCreateNestedManyWithoutRecordedByUserInput
+    quizAttempts?: QuizAttemptCreateNestedManyWithoutUserInput
+    quizzesCreated?: QuizCreateNestedManyWithoutAuthorInput
+    repositoryFiles?: RepositoryFileCreateNestedManyWithoutUserInput
+    sessions?: SessionCreateNestedManyWithoutUserInput
+    announcementReads?: AnnouncementReadCreateNestedManyWithoutUserInput
+    guidanceLogEntries?: GuidanceLogEntryCreateNestedManyWithoutRecordedByUserInput
+    exitInterviewsCounseled?: ExitInterviewCreateNestedManyWithoutCounselorInput
+    submissions_submissions_gradedByIdTousers?: SubmissionCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
+    submissions?: SubmissionCreateNestedManyWithoutUserInput
+    violationsRecorded?: ViolationCreateNestedManyWithoutRecordedByUserInput
+    violationNotes?: ViolationNoteCreateNestedManyWithoutAuthorInput
+    lostFoundRecorded?: LostFoundItemCreateNestedManyWithoutRecordedByUserInput
+  }
+
+  export type UserUncheckedCreateWithoutParentContactsRecordedInput = {
+    id?: string
+    name: string
+    email: string
+    emailVerified?: Date | string | null
+    password?: string | null
+    image?: string | null
+    role?: $Enums.Role
+    status?: $Enums.ApprovalStatus
+    department?: string | null
+    position?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    bio?: string | null
+    pronouns?: string | null
+    contactNumber?: string | null
+    employmentStatus?: string | null
+    accountType?: string | null
+    librarySignature?: string | null
+    accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
+    activityLogs?: ActivityLogUncheckedCreateNestedManyWithoutUserInput
+    conversationParticipants?: ConversationParticipantUncheckedCreateNestedManyWithoutUserInput
+    enrollments?: CourseEnrollmentUncheckedCreateNestedManyWithoutUserInput
+    formSubmissions?: FormSubmissionUncheckedCreateNestedManyWithoutUserInput
+    formsCreated?: FormUncheckedCreateNestedManyWithoutAuthorInput
+    groupMembers?: GroupMemberUncheckedCreateNestedManyWithoutUserInput
+    medicalExamRecords?: MedicalExamRecordUncheckedCreateNestedManyWithoutRecordedByUserInput
+    sentMessages?: MessageUncheckedCreateNestedManyWithoutSenderInput
+    resetTokens?: PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
+    patientRecords?: PatientRecordUncheckedCreateNestedManyWithoutRecordedByUserInput
+    quizAttempts?: QuizAttemptUncheckedCreateNestedManyWithoutUserInput
+    quizzesCreated?: QuizUncheckedCreateNestedManyWithoutAuthorInput
+    repositoryFiles?: RepositoryFileUncheckedCreateNestedManyWithoutUserInput
+    sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
+    announcementReads?: AnnouncementReadUncheckedCreateNestedManyWithoutUserInput
+    guidanceLogEntries?: GuidanceLogEntryUncheckedCreateNestedManyWithoutRecordedByUserInput
+    exitInterviewsCounseled?: ExitInterviewUncheckedCreateNestedManyWithoutCounselorInput
+    submissions_submissions_gradedByIdTousers?: SubmissionUncheckedCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
+    submissions?: SubmissionUncheckedCreateNestedManyWithoutUserInput
+    violationsRecorded?: ViolationUncheckedCreateNestedManyWithoutRecordedByUserInput
+    violationNotes?: ViolationNoteUncheckedCreateNestedManyWithoutAuthorInput
+    lostFoundRecorded?: LostFoundItemUncheckedCreateNestedManyWithoutRecordedByUserInput
+  }
+
+  export type UserCreateOrConnectWithoutParentContactsRecordedInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutParentContactsRecordedInput, UserUncheckedCreateWithoutParentContactsRecordedInput>
+  }
+
+  export type ViolationUpsertWithoutParentContactsInput = {
+    update: XOR<ViolationUpdateWithoutParentContactsInput, ViolationUncheckedUpdateWithoutParentContactsInput>
+    create: XOR<ViolationCreateWithoutParentContactsInput, ViolationUncheckedCreateWithoutParentContactsInput>
+    where?: ViolationWhereInput
+  }
+
+  export type ViolationUpdateToOneWithWhereWithoutParentContactsInput = {
+    where?: ViolationWhereInput
+    data: XOR<ViolationUpdateWithoutParentContactsInput, ViolationUncheckedUpdateWithoutParentContactsInput>
+  }
+
+  export type ViolationUpdateWithoutParentContactsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    caseNo?: StringFieldUpdateOperationsInput | string
+    severity?: StringFieldUpdateOperationsInput | string
+    incidentDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    reportedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    reportedByRole?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    noticeToExplainAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    explanationReceivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    hearingDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    hearingResult?: NullableStringFieldUpdateOperationsInput | string | null
+    sanction?: NullableStringFieldUpdateOperationsInput | string | null
+    sanctionDays?: NullableIntFieldUpdateOperationsInput | number | null
+    sanctionStart?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sanctionEnd?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sanctionCompleted?: BoolFieldUpdateOperationsInput | boolean
+    decidedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    decidedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    appealed?: BoolFieldUpdateOperationsInput | boolean
+    appealResult?: NullableStringFieldUpdateOperationsInput | string | null
+    resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    deletedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    course?: CourseUpdateOneRequiredWithoutViolationsNestedInput
+    student?: StudentUpdateOneRequiredWithoutViolationsNestedInput
+    violationType?: ViolationTypeUpdateOneRequiredWithoutViolationsNestedInput
+    recordedByUser?: UserUpdateOneWithoutViolationsRecordedNestedInput
+    notes?: ViolationNoteUpdateManyWithoutViolationNestedInput
+  }
+
+  export type ViolationUncheckedUpdateWithoutParentContactsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    courseId?: StringFieldUpdateOperationsInput | string
+    caseNo?: StringFieldUpdateOperationsInput | string
+    studentId?: StringFieldUpdateOperationsInput | string
+    violationTypeId?: StringFieldUpdateOperationsInput | string
+    severity?: StringFieldUpdateOperationsInput | string
+    incidentDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    reportedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    reportedByRole?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    noticeToExplainAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    explanationReceivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    hearingDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    hearingResult?: NullableStringFieldUpdateOperationsInput | string | null
+    sanction?: NullableStringFieldUpdateOperationsInput | string | null
+    sanctionDays?: NullableIntFieldUpdateOperationsInput | number | null
+    sanctionStart?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sanctionEnd?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sanctionCompleted?: BoolFieldUpdateOperationsInput | boolean
+    decidedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    decidedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    appealed?: BoolFieldUpdateOperationsInput | boolean
+    appealResult?: NullableStringFieldUpdateOperationsInput | string | null
+    resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    recordedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    deletedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    notes?: ViolationNoteUncheckedUpdateManyWithoutViolationNestedInput
+  }
+
+  export type UserUpsertWithoutParentContactsRecordedInput = {
+    update: XOR<UserUpdateWithoutParentContactsRecordedInput, UserUncheckedUpdateWithoutParentContactsRecordedInput>
+    create: XOR<UserCreateWithoutParentContactsRecordedInput, UserUncheckedCreateWithoutParentContactsRecordedInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutParentContactsRecordedInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutParentContactsRecordedInput, UserUncheckedUpdateWithoutParentContactsRecordedInput>
+  }
+
+  export type UserUpdateWithoutParentContactsRecordedInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    password?: NullableStringFieldUpdateOperationsInput | string | null
+    image?: NullableStringFieldUpdateOperationsInput | string | null
+    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    status?: EnumApprovalStatusFieldUpdateOperationsInput | $Enums.ApprovalStatus
+    department?: NullableStringFieldUpdateOperationsInput | string | null
+    position?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    bio?: NullableStringFieldUpdateOperationsInput | string | null
+    pronouns?: NullableStringFieldUpdateOperationsInput | string | null
+    contactNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    employmentStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    accountType?: NullableStringFieldUpdateOperationsInput | string | null
+    librarySignature?: NullableStringFieldUpdateOperationsInput | string | null
+    accounts?: AccountUpdateManyWithoutUserNestedInput
+    activityLogs?: ActivityLogUpdateManyWithoutUserNestedInput
+    conversationParticipants?: ConversationParticipantUpdateManyWithoutUserNestedInput
+    enrollments?: CourseEnrollmentUpdateManyWithoutUserNestedInput
+    formSubmissions?: FormSubmissionUpdateManyWithoutUserNestedInput
+    formsCreated?: FormUpdateManyWithoutAuthorNestedInput
+    groupMembers?: GroupMemberUpdateManyWithoutUserNestedInput
+    medicalExamRecords?: MedicalExamRecordUpdateManyWithoutRecordedByUserNestedInput
+    sentMessages?: MessageUpdateManyWithoutSenderNestedInput
+    resetTokens?: PasswordResetTokenUpdateManyWithoutUserNestedInput
+    patientRecords?: PatientRecordUpdateManyWithoutRecordedByUserNestedInput
+    quizAttempts?: QuizAttemptUpdateManyWithoutUserNestedInput
+    quizzesCreated?: QuizUpdateManyWithoutAuthorNestedInput
+    repositoryFiles?: RepositoryFileUpdateManyWithoutUserNestedInput
+    sessions?: SessionUpdateManyWithoutUserNestedInput
+    announcementReads?: AnnouncementReadUpdateManyWithoutUserNestedInput
+    guidanceLogEntries?: GuidanceLogEntryUpdateManyWithoutRecordedByUserNestedInput
+    exitInterviewsCounseled?: ExitInterviewUpdateManyWithoutCounselorNestedInput
+    submissions_submissions_gradedByIdTousers?: SubmissionUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
+    submissions?: SubmissionUpdateManyWithoutUserNestedInput
+    violationsRecorded?: ViolationUpdateManyWithoutRecordedByUserNestedInput
+    violationNotes?: ViolationNoteUpdateManyWithoutAuthorNestedInput
+    lostFoundRecorded?: LostFoundItemUpdateManyWithoutRecordedByUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutParentContactsRecordedInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    password?: NullableStringFieldUpdateOperationsInput | string | null
+    image?: NullableStringFieldUpdateOperationsInput | string | null
+    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    status?: EnumApprovalStatusFieldUpdateOperationsInput | $Enums.ApprovalStatus
+    department?: NullableStringFieldUpdateOperationsInput | string | null
+    position?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    bio?: NullableStringFieldUpdateOperationsInput | string | null
+    pronouns?: NullableStringFieldUpdateOperationsInput | string | null
+    contactNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    employmentStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    accountType?: NullableStringFieldUpdateOperationsInput | string | null
+    librarySignature?: NullableStringFieldUpdateOperationsInput | string | null
+    accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
+    activityLogs?: ActivityLogUncheckedUpdateManyWithoutUserNestedInput
+    conversationParticipants?: ConversationParticipantUncheckedUpdateManyWithoutUserNestedInput
+    enrollments?: CourseEnrollmentUncheckedUpdateManyWithoutUserNestedInput
+    formSubmissions?: FormSubmissionUncheckedUpdateManyWithoutUserNestedInput
+    formsCreated?: FormUncheckedUpdateManyWithoutAuthorNestedInput
+    groupMembers?: GroupMemberUncheckedUpdateManyWithoutUserNestedInput
+    medicalExamRecords?: MedicalExamRecordUncheckedUpdateManyWithoutRecordedByUserNestedInput
+    sentMessages?: MessageUncheckedUpdateManyWithoutSenderNestedInput
+    resetTokens?: PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
+    patientRecords?: PatientRecordUncheckedUpdateManyWithoutRecordedByUserNestedInput
+    quizAttempts?: QuizAttemptUncheckedUpdateManyWithoutUserNestedInput
+    quizzesCreated?: QuizUncheckedUpdateManyWithoutAuthorNestedInput
+    repositoryFiles?: RepositoryFileUncheckedUpdateManyWithoutUserNestedInput
+    sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
+    announcementReads?: AnnouncementReadUncheckedUpdateManyWithoutUserNestedInput
+    guidanceLogEntries?: GuidanceLogEntryUncheckedUpdateManyWithoutRecordedByUserNestedInput
+    exitInterviewsCounseled?: ExitInterviewUncheckedUpdateManyWithoutCounselorNestedInput
+    submissions_submissions_gradedByIdTousers?: SubmissionUncheckedUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
+    submissions?: SubmissionUncheckedUpdateManyWithoutUserNestedInput
+    violationsRecorded?: ViolationUncheckedUpdateManyWithoutRecordedByUserNestedInput
+    violationNotes?: ViolationNoteUncheckedUpdateManyWithoutAuthorNestedInput
+    lostFoundRecorded?: LostFoundItemUncheckedUpdateManyWithoutRecordedByUserNestedInput
+  }
+
+  export type ViolationCreateWithoutNotesInput = {
+    id?: string
+    caseNo: string
+    severity: string
+    incidentDate: Date | string
+    location?: string | null
+    description?: string | null
+    reportedBy?: string | null
+    reportedByRole?: string | null
+    status?: string
+    noticeToExplainAt?: Date | string | null
+    explanationReceivedAt?: Date | string | null
+    hearingDate?: Date | string | null
+    hearingResult?: string | null
+    sanction?: string | null
+    sanctionDays?: number | null
+    sanctionStart?: Date | string | null
+    sanctionEnd?: Date | string | null
+    sanctionCompleted?: boolean
+    decidedBy?: string | null
+    decidedAt?: Date | string | null
+    appealed?: boolean
+    appealResult?: string | null
+    resolvedAt?: Date | string | null
+    deletedAt?: Date | string | null
+    deletedBy?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    course: CourseCreateNestedOneWithoutViolationsInput
+    student: StudentCreateNestedOneWithoutViolationsInput
+    violationType: ViolationTypeCreateNestedOneWithoutViolationsInput
+    recordedByUser?: UserCreateNestedOneWithoutViolationsRecordedInput
+    parentContacts?: ParentContactCreateNestedManyWithoutViolationInput
+  }
+
+  export type ViolationUncheckedCreateWithoutNotesInput = {
+    id?: string
+    courseId: string
+    caseNo: string
+    studentId: string
+    violationTypeId: string
+    severity: string
+    incidentDate: Date | string
+    location?: string | null
+    description?: string | null
+    reportedBy?: string | null
+    reportedByRole?: string | null
+    status?: string
+    noticeToExplainAt?: Date | string | null
+    explanationReceivedAt?: Date | string | null
+    hearingDate?: Date | string | null
+    hearingResult?: string | null
+    sanction?: string | null
+    sanctionDays?: number | null
+    sanctionStart?: Date | string | null
+    sanctionEnd?: Date | string | null
+    sanctionCompleted?: boolean
+    decidedBy?: string | null
+    decidedAt?: Date | string | null
+    appealed?: boolean
+    appealResult?: string | null
+    resolvedAt?: Date | string | null
+    recordedBy?: string | null
+    deletedAt?: Date | string | null
+    deletedBy?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    parentContacts?: ParentContactUncheckedCreateNestedManyWithoutViolationInput
+  }
+
+  export type ViolationCreateOrConnectWithoutNotesInput = {
+    where: ViolationWhereUniqueInput
+    create: XOR<ViolationCreateWithoutNotesInput, ViolationUncheckedCreateWithoutNotesInput>
+  }
+
+  export type UserCreateWithoutViolationNotesInput = {
+    id?: string
+    name: string
+    email: string
+    emailVerified?: Date | string | null
+    password?: string | null
+    image?: string | null
+    role?: $Enums.Role
+    status?: $Enums.ApprovalStatus
+    department?: string | null
+    position?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    bio?: string | null
+    pronouns?: string | null
+    contactNumber?: string | null
+    employmentStatus?: string | null
+    accountType?: string | null
+    librarySignature?: string | null
+    accounts?: AccountCreateNestedManyWithoutUserInput
+    activityLogs?: ActivityLogCreateNestedManyWithoutUserInput
+    conversationParticipants?: ConversationParticipantCreateNestedManyWithoutUserInput
+    enrollments?: CourseEnrollmentCreateNestedManyWithoutUserInput
+    formSubmissions?: FormSubmissionCreateNestedManyWithoutUserInput
+    formsCreated?: FormCreateNestedManyWithoutAuthorInput
+    groupMembers?: GroupMemberCreateNestedManyWithoutUserInput
+    medicalExamRecords?: MedicalExamRecordCreateNestedManyWithoutRecordedByUserInput
+    sentMessages?: MessageCreateNestedManyWithoutSenderInput
+    resetTokens?: PasswordResetTokenCreateNestedManyWithoutUserInput
+    patientRecords?: PatientRecordCreateNestedManyWithoutRecordedByUserInput
+    quizAttempts?: QuizAttemptCreateNestedManyWithoutUserInput
+    quizzesCreated?: QuizCreateNestedManyWithoutAuthorInput
+    repositoryFiles?: RepositoryFileCreateNestedManyWithoutUserInput
+    sessions?: SessionCreateNestedManyWithoutUserInput
+    announcementReads?: AnnouncementReadCreateNestedManyWithoutUserInput
+    guidanceLogEntries?: GuidanceLogEntryCreateNestedManyWithoutRecordedByUserInput
+    exitInterviewsCounseled?: ExitInterviewCreateNestedManyWithoutCounselorInput
+    submissions_submissions_gradedByIdTousers?: SubmissionCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
+    submissions?: SubmissionCreateNestedManyWithoutUserInput
+    violationsRecorded?: ViolationCreateNestedManyWithoutRecordedByUserInput
+    parentContactsRecorded?: ParentContactCreateNestedManyWithoutRecordedByUserInput
+    lostFoundRecorded?: LostFoundItemCreateNestedManyWithoutRecordedByUserInput
+  }
+
+  export type UserUncheckedCreateWithoutViolationNotesInput = {
+    id?: string
+    name: string
+    email: string
+    emailVerified?: Date | string | null
+    password?: string | null
+    image?: string | null
+    role?: $Enums.Role
+    status?: $Enums.ApprovalStatus
+    department?: string | null
+    position?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    bio?: string | null
+    pronouns?: string | null
+    contactNumber?: string | null
+    employmentStatus?: string | null
+    accountType?: string | null
+    librarySignature?: string | null
+    accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
+    activityLogs?: ActivityLogUncheckedCreateNestedManyWithoutUserInput
+    conversationParticipants?: ConversationParticipantUncheckedCreateNestedManyWithoutUserInput
+    enrollments?: CourseEnrollmentUncheckedCreateNestedManyWithoutUserInput
+    formSubmissions?: FormSubmissionUncheckedCreateNestedManyWithoutUserInput
+    formsCreated?: FormUncheckedCreateNestedManyWithoutAuthorInput
+    groupMembers?: GroupMemberUncheckedCreateNestedManyWithoutUserInput
+    medicalExamRecords?: MedicalExamRecordUncheckedCreateNestedManyWithoutRecordedByUserInput
+    sentMessages?: MessageUncheckedCreateNestedManyWithoutSenderInput
+    resetTokens?: PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
+    patientRecords?: PatientRecordUncheckedCreateNestedManyWithoutRecordedByUserInput
+    quizAttempts?: QuizAttemptUncheckedCreateNestedManyWithoutUserInput
+    quizzesCreated?: QuizUncheckedCreateNestedManyWithoutAuthorInput
+    repositoryFiles?: RepositoryFileUncheckedCreateNestedManyWithoutUserInput
+    sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
+    announcementReads?: AnnouncementReadUncheckedCreateNestedManyWithoutUserInput
+    guidanceLogEntries?: GuidanceLogEntryUncheckedCreateNestedManyWithoutRecordedByUserInput
+    exitInterviewsCounseled?: ExitInterviewUncheckedCreateNestedManyWithoutCounselorInput
+    submissions_submissions_gradedByIdTousers?: SubmissionUncheckedCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
+    submissions?: SubmissionUncheckedCreateNestedManyWithoutUserInput
+    violationsRecorded?: ViolationUncheckedCreateNestedManyWithoutRecordedByUserInput
+    parentContactsRecorded?: ParentContactUncheckedCreateNestedManyWithoutRecordedByUserInput
+    lostFoundRecorded?: LostFoundItemUncheckedCreateNestedManyWithoutRecordedByUserInput
+  }
+
+  export type UserCreateOrConnectWithoutViolationNotesInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutViolationNotesInput, UserUncheckedCreateWithoutViolationNotesInput>
+  }
+
+  export type ViolationUpsertWithoutNotesInput = {
+    update: XOR<ViolationUpdateWithoutNotesInput, ViolationUncheckedUpdateWithoutNotesInput>
+    create: XOR<ViolationCreateWithoutNotesInput, ViolationUncheckedCreateWithoutNotesInput>
+    where?: ViolationWhereInput
+  }
+
+  export type ViolationUpdateToOneWithWhereWithoutNotesInput = {
+    where?: ViolationWhereInput
+    data: XOR<ViolationUpdateWithoutNotesInput, ViolationUncheckedUpdateWithoutNotesInput>
+  }
+
+  export type ViolationUpdateWithoutNotesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    caseNo?: StringFieldUpdateOperationsInput | string
+    severity?: StringFieldUpdateOperationsInput | string
+    incidentDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    reportedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    reportedByRole?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    noticeToExplainAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    explanationReceivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    hearingDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    hearingResult?: NullableStringFieldUpdateOperationsInput | string | null
+    sanction?: NullableStringFieldUpdateOperationsInput | string | null
+    sanctionDays?: NullableIntFieldUpdateOperationsInput | number | null
+    sanctionStart?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sanctionEnd?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sanctionCompleted?: BoolFieldUpdateOperationsInput | boolean
+    decidedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    decidedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    appealed?: BoolFieldUpdateOperationsInput | boolean
+    appealResult?: NullableStringFieldUpdateOperationsInput | string | null
+    resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    deletedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    course?: CourseUpdateOneRequiredWithoutViolationsNestedInput
+    student?: StudentUpdateOneRequiredWithoutViolationsNestedInput
+    violationType?: ViolationTypeUpdateOneRequiredWithoutViolationsNestedInput
+    recordedByUser?: UserUpdateOneWithoutViolationsRecordedNestedInput
+    parentContacts?: ParentContactUpdateManyWithoutViolationNestedInput
+  }
+
+  export type ViolationUncheckedUpdateWithoutNotesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    courseId?: StringFieldUpdateOperationsInput | string
+    caseNo?: StringFieldUpdateOperationsInput | string
+    studentId?: StringFieldUpdateOperationsInput | string
+    violationTypeId?: StringFieldUpdateOperationsInput | string
+    severity?: StringFieldUpdateOperationsInput | string
+    incidentDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    reportedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    reportedByRole?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    noticeToExplainAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    explanationReceivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    hearingDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    hearingResult?: NullableStringFieldUpdateOperationsInput | string | null
+    sanction?: NullableStringFieldUpdateOperationsInput | string | null
+    sanctionDays?: NullableIntFieldUpdateOperationsInput | number | null
+    sanctionStart?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sanctionEnd?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sanctionCompleted?: BoolFieldUpdateOperationsInput | boolean
+    decidedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    decidedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    appealed?: BoolFieldUpdateOperationsInput | boolean
+    appealResult?: NullableStringFieldUpdateOperationsInput | string | null
+    resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    recordedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    deletedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    parentContacts?: ParentContactUncheckedUpdateManyWithoutViolationNestedInput
+  }
+
+  export type UserUpsertWithoutViolationNotesInput = {
+    update: XOR<UserUpdateWithoutViolationNotesInput, UserUncheckedUpdateWithoutViolationNotesInput>
+    create: XOR<UserCreateWithoutViolationNotesInput, UserUncheckedCreateWithoutViolationNotesInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutViolationNotesInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutViolationNotesInput, UserUncheckedUpdateWithoutViolationNotesInput>
+  }
+
+  export type UserUpdateWithoutViolationNotesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    password?: NullableStringFieldUpdateOperationsInput | string | null
+    image?: NullableStringFieldUpdateOperationsInput | string | null
+    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    status?: EnumApprovalStatusFieldUpdateOperationsInput | $Enums.ApprovalStatus
+    department?: NullableStringFieldUpdateOperationsInput | string | null
+    position?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    bio?: NullableStringFieldUpdateOperationsInput | string | null
+    pronouns?: NullableStringFieldUpdateOperationsInput | string | null
+    contactNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    employmentStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    accountType?: NullableStringFieldUpdateOperationsInput | string | null
+    librarySignature?: NullableStringFieldUpdateOperationsInput | string | null
+    accounts?: AccountUpdateManyWithoutUserNestedInput
+    activityLogs?: ActivityLogUpdateManyWithoutUserNestedInput
+    conversationParticipants?: ConversationParticipantUpdateManyWithoutUserNestedInput
+    enrollments?: CourseEnrollmentUpdateManyWithoutUserNestedInput
+    formSubmissions?: FormSubmissionUpdateManyWithoutUserNestedInput
+    formsCreated?: FormUpdateManyWithoutAuthorNestedInput
+    groupMembers?: GroupMemberUpdateManyWithoutUserNestedInput
+    medicalExamRecords?: MedicalExamRecordUpdateManyWithoutRecordedByUserNestedInput
+    sentMessages?: MessageUpdateManyWithoutSenderNestedInput
+    resetTokens?: PasswordResetTokenUpdateManyWithoutUserNestedInput
+    patientRecords?: PatientRecordUpdateManyWithoutRecordedByUserNestedInput
+    quizAttempts?: QuizAttemptUpdateManyWithoutUserNestedInput
+    quizzesCreated?: QuizUpdateManyWithoutAuthorNestedInput
+    repositoryFiles?: RepositoryFileUpdateManyWithoutUserNestedInput
+    sessions?: SessionUpdateManyWithoutUserNestedInput
+    announcementReads?: AnnouncementReadUpdateManyWithoutUserNestedInput
+    guidanceLogEntries?: GuidanceLogEntryUpdateManyWithoutRecordedByUserNestedInput
+    exitInterviewsCounseled?: ExitInterviewUpdateManyWithoutCounselorNestedInput
+    submissions_submissions_gradedByIdTousers?: SubmissionUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
+    submissions?: SubmissionUpdateManyWithoutUserNestedInput
+    violationsRecorded?: ViolationUpdateManyWithoutRecordedByUserNestedInput
+    parentContactsRecorded?: ParentContactUpdateManyWithoutRecordedByUserNestedInput
+    lostFoundRecorded?: LostFoundItemUpdateManyWithoutRecordedByUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutViolationNotesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    password?: NullableStringFieldUpdateOperationsInput | string | null
+    image?: NullableStringFieldUpdateOperationsInput | string | null
+    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    status?: EnumApprovalStatusFieldUpdateOperationsInput | $Enums.ApprovalStatus
+    department?: NullableStringFieldUpdateOperationsInput | string | null
+    position?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    bio?: NullableStringFieldUpdateOperationsInput | string | null
+    pronouns?: NullableStringFieldUpdateOperationsInput | string | null
+    contactNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    employmentStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    accountType?: NullableStringFieldUpdateOperationsInput | string | null
+    librarySignature?: NullableStringFieldUpdateOperationsInput | string | null
+    accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
+    activityLogs?: ActivityLogUncheckedUpdateManyWithoutUserNestedInput
+    conversationParticipants?: ConversationParticipantUncheckedUpdateManyWithoutUserNestedInput
+    enrollments?: CourseEnrollmentUncheckedUpdateManyWithoutUserNestedInput
+    formSubmissions?: FormSubmissionUncheckedUpdateManyWithoutUserNestedInput
+    formsCreated?: FormUncheckedUpdateManyWithoutAuthorNestedInput
+    groupMembers?: GroupMemberUncheckedUpdateManyWithoutUserNestedInput
+    medicalExamRecords?: MedicalExamRecordUncheckedUpdateManyWithoutRecordedByUserNestedInput
+    sentMessages?: MessageUncheckedUpdateManyWithoutSenderNestedInput
+    resetTokens?: PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
+    patientRecords?: PatientRecordUncheckedUpdateManyWithoutRecordedByUserNestedInput
+    quizAttempts?: QuizAttemptUncheckedUpdateManyWithoutUserNestedInput
+    quizzesCreated?: QuizUncheckedUpdateManyWithoutAuthorNestedInput
+    repositoryFiles?: RepositoryFileUncheckedUpdateManyWithoutUserNestedInput
+    sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
+    announcementReads?: AnnouncementReadUncheckedUpdateManyWithoutUserNestedInput
+    guidanceLogEntries?: GuidanceLogEntryUncheckedUpdateManyWithoutRecordedByUserNestedInput
+    exitInterviewsCounseled?: ExitInterviewUncheckedUpdateManyWithoutCounselorNestedInput
+    submissions_submissions_gradedByIdTousers?: SubmissionUncheckedUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
+    submissions?: SubmissionUncheckedUpdateManyWithoutUserNestedInput
+    violationsRecorded?: ViolationUncheckedUpdateManyWithoutRecordedByUserNestedInput
+    parentContactsRecorded?: ParentContactUncheckedUpdateManyWithoutRecordedByUserNestedInput
+    lostFoundRecorded?: LostFoundItemUncheckedUpdateManyWithoutRecordedByUserNestedInput
+  }
+
+  export type CourseCreateWithoutLostFoundItemsInput = {
+    id?: string
+    name: string
+    code: string
+    color?: string
+    status?: $Enums.CourseStatus
+    description?: string | null
+    term?: string | null
+    startDate?: Date | string | null
+    endDate?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    image?: string | null
+    officeType?: string | null
+    announcements?: AnnouncementCreateNestedManyWithoutCourseInput
+    assignments?: AssignmentCreateNestedManyWithoutCourseInput
+    conversations?: ConversationCreateNestedManyWithoutCourseInput
+    enrollments?: CourseEnrollmentCreateNestedManyWithoutCourseInput
+    forms?: FormCreateNestedManyWithoutCourseInput
+    groupSets?: GroupSetCreateNestedManyWithoutCourseInput
+    groups?: GroupCreateNestedManyWithoutCourseInput
+    medicalExamRecords?: MedicalExamRecordCreateNestedManyWithoutCourseInput
+    medicineInventory?: MedicineInventoryCreateNestedManyWithoutCourseInput
+    patientRecords?: PatientRecordCreateNestedManyWithoutCourseInput
+    quizzes?: QuizCreateNestedManyWithoutCourseInput
+    bodySystems?: BodySystemCreateNestedManyWithoutCourseInput
+    medicalConditions?: MedicalConditionCreateNestedManyWithoutCourseInput
+    guidanceInfoSheets?: GuidanceInfoSheetCreateNestedManyWithoutCourseInput
+    guidanceLogEntries?: GuidanceLogEntryCreateNestedManyWithoutCourseInput
+    exitInterviews?: ExitInterviewCreateNestedManyWithoutCourseInput
+    libraryCardRequests?: LibraryCardRequestCreateNestedManyWithoutCourseInput
+    libraryReceivingLogs?: LibraryReceivingLogCreateNestedManyWithoutCourseInput
+    LibraryBook?: LibraryBookCreateNestedManyWithoutCourseInput
+    LibraryBorrowRecord?: LibraryBorrowRecordCreateNestedManyWithoutCourseInput
+    violationTypes?: ViolationTypeCreateNestedManyWithoutCourseInput
+    violations?: ViolationCreateNestedManyWithoutCourseInput
+  }
+
+  export type CourseUncheckedCreateWithoutLostFoundItemsInput = {
+    id?: string
+    name: string
+    code: string
+    color?: string
+    status?: $Enums.CourseStatus
+    description?: string | null
+    term?: string | null
+    startDate?: Date | string | null
+    endDate?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    image?: string | null
+    officeType?: string | null
+    announcements?: AnnouncementUncheckedCreateNestedManyWithoutCourseInput
+    assignments?: AssignmentUncheckedCreateNestedManyWithoutCourseInput
+    conversations?: ConversationUncheckedCreateNestedManyWithoutCourseInput
+    enrollments?: CourseEnrollmentUncheckedCreateNestedManyWithoutCourseInput
+    forms?: FormUncheckedCreateNestedManyWithoutCourseInput
+    groupSets?: GroupSetUncheckedCreateNestedManyWithoutCourseInput
+    groups?: GroupUncheckedCreateNestedManyWithoutCourseInput
+    medicalExamRecords?: MedicalExamRecordUncheckedCreateNestedManyWithoutCourseInput
+    medicineInventory?: MedicineInventoryUncheckedCreateNestedManyWithoutCourseInput
+    patientRecords?: PatientRecordUncheckedCreateNestedManyWithoutCourseInput
+    quizzes?: QuizUncheckedCreateNestedManyWithoutCourseInput
+    bodySystems?: BodySystemUncheckedCreateNestedManyWithoutCourseInput
+    medicalConditions?: MedicalConditionUncheckedCreateNestedManyWithoutCourseInput
+    guidanceInfoSheets?: GuidanceInfoSheetUncheckedCreateNestedManyWithoutCourseInput
+    guidanceLogEntries?: GuidanceLogEntryUncheckedCreateNestedManyWithoutCourseInput
+    exitInterviews?: ExitInterviewUncheckedCreateNestedManyWithoutCourseInput
+    libraryCardRequests?: LibraryCardRequestUncheckedCreateNestedManyWithoutCourseInput
+    libraryReceivingLogs?: LibraryReceivingLogUncheckedCreateNestedManyWithoutCourseInput
+    LibraryBook?: LibraryBookUncheckedCreateNestedManyWithoutCourseInput
+    LibraryBorrowRecord?: LibraryBorrowRecordUncheckedCreateNestedManyWithoutCourseInput
+    violationTypes?: ViolationTypeUncheckedCreateNestedManyWithoutCourseInput
+    violations?: ViolationUncheckedCreateNestedManyWithoutCourseInput
+  }
+
+  export type CourseCreateOrConnectWithoutLostFoundItemsInput = {
+    where: CourseWhereUniqueInput
+    create: XOR<CourseCreateWithoutLostFoundItemsInput, CourseUncheckedCreateWithoutLostFoundItemsInput>
+  }
+
+  export type UserCreateWithoutLostFoundRecordedInput = {
+    id?: string
+    name: string
+    email: string
+    emailVerified?: Date | string | null
+    password?: string | null
+    image?: string | null
+    role?: $Enums.Role
+    status?: $Enums.ApprovalStatus
+    department?: string | null
+    position?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    bio?: string | null
+    pronouns?: string | null
+    contactNumber?: string | null
+    employmentStatus?: string | null
+    accountType?: string | null
+    librarySignature?: string | null
+    accounts?: AccountCreateNestedManyWithoutUserInput
+    activityLogs?: ActivityLogCreateNestedManyWithoutUserInput
+    conversationParticipants?: ConversationParticipantCreateNestedManyWithoutUserInput
+    enrollments?: CourseEnrollmentCreateNestedManyWithoutUserInput
+    formSubmissions?: FormSubmissionCreateNestedManyWithoutUserInput
+    formsCreated?: FormCreateNestedManyWithoutAuthorInput
+    groupMembers?: GroupMemberCreateNestedManyWithoutUserInput
+    medicalExamRecords?: MedicalExamRecordCreateNestedManyWithoutRecordedByUserInput
+    sentMessages?: MessageCreateNestedManyWithoutSenderInput
+    resetTokens?: PasswordResetTokenCreateNestedManyWithoutUserInput
+    patientRecords?: PatientRecordCreateNestedManyWithoutRecordedByUserInput
+    quizAttempts?: QuizAttemptCreateNestedManyWithoutUserInput
+    quizzesCreated?: QuizCreateNestedManyWithoutAuthorInput
+    repositoryFiles?: RepositoryFileCreateNestedManyWithoutUserInput
+    sessions?: SessionCreateNestedManyWithoutUserInput
+    announcementReads?: AnnouncementReadCreateNestedManyWithoutUserInput
+    guidanceLogEntries?: GuidanceLogEntryCreateNestedManyWithoutRecordedByUserInput
+    exitInterviewsCounseled?: ExitInterviewCreateNestedManyWithoutCounselorInput
+    submissions_submissions_gradedByIdTousers?: SubmissionCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
+    submissions?: SubmissionCreateNestedManyWithoutUserInput
+    violationsRecorded?: ViolationCreateNestedManyWithoutRecordedByUserInput
+    violationNotes?: ViolationNoteCreateNestedManyWithoutAuthorInput
+    parentContactsRecorded?: ParentContactCreateNestedManyWithoutRecordedByUserInput
+  }
+
+  export type UserUncheckedCreateWithoutLostFoundRecordedInput = {
+    id?: string
+    name: string
+    email: string
+    emailVerified?: Date | string | null
+    password?: string | null
+    image?: string | null
+    role?: $Enums.Role
+    status?: $Enums.ApprovalStatus
+    department?: string | null
+    position?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    bio?: string | null
+    pronouns?: string | null
+    contactNumber?: string | null
+    employmentStatus?: string | null
+    accountType?: string | null
+    librarySignature?: string | null
+    accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
+    activityLogs?: ActivityLogUncheckedCreateNestedManyWithoutUserInput
+    conversationParticipants?: ConversationParticipantUncheckedCreateNestedManyWithoutUserInput
+    enrollments?: CourseEnrollmentUncheckedCreateNestedManyWithoutUserInput
+    formSubmissions?: FormSubmissionUncheckedCreateNestedManyWithoutUserInput
+    formsCreated?: FormUncheckedCreateNestedManyWithoutAuthorInput
+    groupMembers?: GroupMemberUncheckedCreateNestedManyWithoutUserInput
+    medicalExamRecords?: MedicalExamRecordUncheckedCreateNestedManyWithoutRecordedByUserInput
+    sentMessages?: MessageUncheckedCreateNestedManyWithoutSenderInput
+    resetTokens?: PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
+    patientRecords?: PatientRecordUncheckedCreateNestedManyWithoutRecordedByUserInput
+    quizAttempts?: QuizAttemptUncheckedCreateNestedManyWithoutUserInput
+    quizzesCreated?: QuizUncheckedCreateNestedManyWithoutAuthorInput
+    repositoryFiles?: RepositoryFileUncheckedCreateNestedManyWithoutUserInput
+    sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
+    announcementReads?: AnnouncementReadUncheckedCreateNestedManyWithoutUserInput
+    guidanceLogEntries?: GuidanceLogEntryUncheckedCreateNestedManyWithoutRecordedByUserInput
+    exitInterviewsCounseled?: ExitInterviewUncheckedCreateNestedManyWithoutCounselorInput
+    submissions_submissions_gradedByIdTousers?: SubmissionUncheckedCreateNestedManyWithoutUsers_submissions_gradedByIdTousersInput
+    submissions?: SubmissionUncheckedCreateNestedManyWithoutUserInput
+    violationsRecorded?: ViolationUncheckedCreateNestedManyWithoutRecordedByUserInput
+    violationNotes?: ViolationNoteUncheckedCreateNestedManyWithoutAuthorInput
+    parentContactsRecorded?: ParentContactUncheckedCreateNestedManyWithoutRecordedByUserInput
+  }
+
+  export type UserCreateOrConnectWithoutLostFoundRecordedInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutLostFoundRecordedInput, UserUncheckedCreateWithoutLostFoundRecordedInput>
+  }
+
+  export type CourseUpsertWithoutLostFoundItemsInput = {
+    update: XOR<CourseUpdateWithoutLostFoundItemsInput, CourseUncheckedUpdateWithoutLostFoundItemsInput>
+    create: XOR<CourseCreateWithoutLostFoundItemsInput, CourseUncheckedCreateWithoutLostFoundItemsInput>
+    where?: CourseWhereInput
+  }
+
+  export type CourseUpdateToOneWithWhereWithoutLostFoundItemsInput = {
+    where?: CourseWhereInput
+    data: XOR<CourseUpdateWithoutLostFoundItemsInput, CourseUncheckedUpdateWithoutLostFoundItemsInput>
+  }
+
+  export type CourseUpdateWithoutLostFoundItemsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    code?: StringFieldUpdateOperationsInput | string
+    color?: StringFieldUpdateOperationsInput | string
+    status?: EnumCourseStatusFieldUpdateOperationsInput | $Enums.CourseStatus
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    term?: NullableStringFieldUpdateOperationsInput | string | null
+    startDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    image?: NullableStringFieldUpdateOperationsInput | string | null
+    officeType?: NullableStringFieldUpdateOperationsInput | string | null
+    announcements?: AnnouncementUpdateManyWithoutCourseNestedInput
+    assignments?: AssignmentUpdateManyWithoutCourseNestedInput
+    conversations?: ConversationUpdateManyWithoutCourseNestedInput
+    enrollments?: CourseEnrollmentUpdateManyWithoutCourseNestedInput
+    forms?: FormUpdateManyWithoutCourseNestedInput
+    groupSets?: GroupSetUpdateManyWithoutCourseNestedInput
+    groups?: GroupUpdateManyWithoutCourseNestedInput
+    medicalExamRecords?: MedicalExamRecordUpdateManyWithoutCourseNestedInput
+    medicineInventory?: MedicineInventoryUpdateManyWithoutCourseNestedInput
+    patientRecords?: PatientRecordUpdateManyWithoutCourseNestedInput
+    quizzes?: QuizUpdateManyWithoutCourseNestedInput
+    bodySystems?: BodySystemUpdateManyWithoutCourseNestedInput
+    medicalConditions?: MedicalConditionUpdateManyWithoutCourseNestedInput
+    guidanceInfoSheets?: GuidanceInfoSheetUpdateManyWithoutCourseNestedInput
+    guidanceLogEntries?: GuidanceLogEntryUpdateManyWithoutCourseNestedInput
+    exitInterviews?: ExitInterviewUpdateManyWithoutCourseNestedInput
+    libraryCardRequests?: LibraryCardRequestUpdateManyWithoutCourseNestedInput
+    libraryReceivingLogs?: LibraryReceivingLogUpdateManyWithoutCourseNestedInput
+    LibraryBook?: LibraryBookUpdateManyWithoutCourseNestedInput
+    LibraryBorrowRecord?: LibraryBorrowRecordUpdateManyWithoutCourseNestedInput
+    violationTypes?: ViolationTypeUpdateManyWithoutCourseNestedInput
+    violations?: ViolationUpdateManyWithoutCourseNestedInput
+  }
+
+  export type CourseUncheckedUpdateWithoutLostFoundItemsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    code?: StringFieldUpdateOperationsInput | string
+    color?: StringFieldUpdateOperationsInput | string
+    status?: EnumCourseStatusFieldUpdateOperationsInput | $Enums.CourseStatus
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    term?: NullableStringFieldUpdateOperationsInput | string | null
+    startDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    image?: NullableStringFieldUpdateOperationsInput | string | null
+    officeType?: NullableStringFieldUpdateOperationsInput | string | null
+    announcements?: AnnouncementUncheckedUpdateManyWithoutCourseNestedInput
+    assignments?: AssignmentUncheckedUpdateManyWithoutCourseNestedInput
+    conversations?: ConversationUncheckedUpdateManyWithoutCourseNestedInput
+    enrollments?: CourseEnrollmentUncheckedUpdateManyWithoutCourseNestedInput
+    forms?: FormUncheckedUpdateManyWithoutCourseNestedInput
+    groupSets?: GroupSetUncheckedUpdateManyWithoutCourseNestedInput
+    groups?: GroupUncheckedUpdateManyWithoutCourseNestedInput
+    medicalExamRecords?: MedicalExamRecordUncheckedUpdateManyWithoutCourseNestedInput
+    medicineInventory?: MedicineInventoryUncheckedUpdateManyWithoutCourseNestedInput
+    patientRecords?: PatientRecordUncheckedUpdateManyWithoutCourseNestedInput
+    quizzes?: QuizUncheckedUpdateManyWithoutCourseNestedInput
+    bodySystems?: BodySystemUncheckedUpdateManyWithoutCourseNestedInput
+    medicalConditions?: MedicalConditionUncheckedUpdateManyWithoutCourseNestedInput
+    guidanceInfoSheets?: GuidanceInfoSheetUncheckedUpdateManyWithoutCourseNestedInput
+    guidanceLogEntries?: GuidanceLogEntryUncheckedUpdateManyWithoutCourseNestedInput
+    exitInterviews?: ExitInterviewUncheckedUpdateManyWithoutCourseNestedInput
+    libraryCardRequests?: LibraryCardRequestUncheckedUpdateManyWithoutCourseNestedInput
+    libraryReceivingLogs?: LibraryReceivingLogUncheckedUpdateManyWithoutCourseNestedInput
+    LibraryBook?: LibraryBookUncheckedUpdateManyWithoutCourseNestedInput
+    LibraryBorrowRecord?: LibraryBorrowRecordUncheckedUpdateManyWithoutCourseNestedInput
+    violationTypes?: ViolationTypeUncheckedUpdateManyWithoutCourseNestedInput
+    violations?: ViolationUncheckedUpdateManyWithoutCourseNestedInput
+  }
+
+  export type UserUpsertWithoutLostFoundRecordedInput = {
+    update: XOR<UserUpdateWithoutLostFoundRecordedInput, UserUncheckedUpdateWithoutLostFoundRecordedInput>
+    create: XOR<UserCreateWithoutLostFoundRecordedInput, UserUncheckedCreateWithoutLostFoundRecordedInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutLostFoundRecordedInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutLostFoundRecordedInput, UserUncheckedUpdateWithoutLostFoundRecordedInput>
+  }
+
+  export type UserUpdateWithoutLostFoundRecordedInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    password?: NullableStringFieldUpdateOperationsInput | string | null
+    image?: NullableStringFieldUpdateOperationsInput | string | null
+    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    status?: EnumApprovalStatusFieldUpdateOperationsInput | $Enums.ApprovalStatus
+    department?: NullableStringFieldUpdateOperationsInput | string | null
+    position?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    bio?: NullableStringFieldUpdateOperationsInput | string | null
+    pronouns?: NullableStringFieldUpdateOperationsInput | string | null
+    contactNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    employmentStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    accountType?: NullableStringFieldUpdateOperationsInput | string | null
+    librarySignature?: NullableStringFieldUpdateOperationsInput | string | null
+    accounts?: AccountUpdateManyWithoutUserNestedInput
+    activityLogs?: ActivityLogUpdateManyWithoutUserNestedInput
+    conversationParticipants?: ConversationParticipantUpdateManyWithoutUserNestedInput
+    enrollments?: CourseEnrollmentUpdateManyWithoutUserNestedInput
+    formSubmissions?: FormSubmissionUpdateManyWithoutUserNestedInput
+    formsCreated?: FormUpdateManyWithoutAuthorNestedInput
+    groupMembers?: GroupMemberUpdateManyWithoutUserNestedInput
+    medicalExamRecords?: MedicalExamRecordUpdateManyWithoutRecordedByUserNestedInput
+    sentMessages?: MessageUpdateManyWithoutSenderNestedInput
+    resetTokens?: PasswordResetTokenUpdateManyWithoutUserNestedInput
+    patientRecords?: PatientRecordUpdateManyWithoutRecordedByUserNestedInput
+    quizAttempts?: QuizAttemptUpdateManyWithoutUserNestedInput
+    quizzesCreated?: QuizUpdateManyWithoutAuthorNestedInput
+    repositoryFiles?: RepositoryFileUpdateManyWithoutUserNestedInput
+    sessions?: SessionUpdateManyWithoutUserNestedInput
+    announcementReads?: AnnouncementReadUpdateManyWithoutUserNestedInput
+    guidanceLogEntries?: GuidanceLogEntryUpdateManyWithoutRecordedByUserNestedInput
+    exitInterviewsCounseled?: ExitInterviewUpdateManyWithoutCounselorNestedInput
+    submissions_submissions_gradedByIdTousers?: SubmissionUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
+    submissions?: SubmissionUpdateManyWithoutUserNestedInput
+    violationsRecorded?: ViolationUpdateManyWithoutRecordedByUserNestedInput
+    violationNotes?: ViolationNoteUpdateManyWithoutAuthorNestedInput
+    parentContactsRecorded?: ParentContactUpdateManyWithoutRecordedByUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutLostFoundRecordedInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    password?: NullableStringFieldUpdateOperationsInput | string | null
+    image?: NullableStringFieldUpdateOperationsInput | string | null
+    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    status?: EnumApprovalStatusFieldUpdateOperationsInput | $Enums.ApprovalStatus
+    department?: NullableStringFieldUpdateOperationsInput | string | null
+    position?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    bio?: NullableStringFieldUpdateOperationsInput | string | null
+    pronouns?: NullableStringFieldUpdateOperationsInput | string | null
+    contactNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    employmentStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    accountType?: NullableStringFieldUpdateOperationsInput | string | null
+    librarySignature?: NullableStringFieldUpdateOperationsInput | string | null
+    accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
+    activityLogs?: ActivityLogUncheckedUpdateManyWithoutUserNestedInput
+    conversationParticipants?: ConversationParticipantUncheckedUpdateManyWithoutUserNestedInput
+    enrollments?: CourseEnrollmentUncheckedUpdateManyWithoutUserNestedInput
+    formSubmissions?: FormSubmissionUncheckedUpdateManyWithoutUserNestedInput
+    formsCreated?: FormUncheckedUpdateManyWithoutAuthorNestedInput
+    groupMembers?: GroupMemberUncheckedUpdateManyWithoutUserNestedInput
+    medicalExamRecords?: MedicalExamRecordUncheckedUpdateManyWithoutRecordedByUserNestedInput
+    sentMessages?: MessageUncheckedUpdateManyWithoutSenderNestedInput
+    resetTokens?: PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
+    patientRecords?: PatientRecordUncheckedUpdateManyWithoutRecordedByUserNestedInput
+    quizAttempts?: QuizAttemptUncheckedUpdateManyWithoutUserNestedInput
+    quizzesCreated?: QuizUncheckedUpdateManyWithoutAuthorNestedInput
+    repositoryFiles?: RepositoryFileUncheckedUpdateManyWithoutUserNestedInput
+    sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
+    announcementReads?: AnnouncementReadUncheckedUpdateManyWithoutUserNestedInput
+    guidanceLogEntries?: GuidanceLogEntryUncheckedUpdateManyWithoutRecordedByUserNestedInput
+    exitInterviewsCounseled?: ExitInterviewUncheckedUpdateManyWithoutCounselorNestedInput
+    submissions_submissions_gradedByIdTousers?: SubmissionUncheckedUpdateManyWithoutUsers_submissions_gradedByIdTousersNestedInput
+    submissions?: SubmissionUncheckedUpdateManyWithoutUserNestedInput
+    violationsRecorded?: ViolationUncheckedUpdateManyWithoutRecordedByUserNestedInput
+    violationNotes?: ViolationNoteUncheckedUpdateManyWithoutAuthorNestedInput
+    parentContactsRecorded?: ParentContactUncheckedUpdateManyWithoutRecordedByUserNestedInput
   }
 
   export type ConversationParticipantCreateManyConversationInput = {
@@ -93386,6 +106144,82 @@ export namespace Prisma {
     daysLate?: number | null
     gradedAt?: Date | string | null
     gradedById?: string | null
+  }
+
+  export type ViolationCreateManyRecordedByUserInput = {
+    id?: string
+    courseId: string
+    caseNo: string
+    studentId: string
+    violationTypeId: string
+    severity: string
+    incidentDate: Date | string
+    location?: string | null
+    description?: string | null
+    reportedBy?: string | null
+    reportedByRole?: string | null
+    status?: string
+    noticeToExplainAt?: Date | string | null
+    explanationReceivedAt?: Date | string | null
+    hearingDate?: Date | string | null
+    hearingResult?: string | null
+    sanction?: string | null
+    sanctionDays?: number | null
+    sanctionStart?: Date | string | null
+    sanctionEnd?: Date | string | null
+    sanctionCompleted?: boolean
+    decidedBy?: string | null
+    decidedAt?: Date | string | null
+    appealed?: boolean
+    appealResult?: string | null
+    resolvedAt?: Date | string | null
+    deletedAt?: Date | string | null
+    deletedBy?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ViolationNoteCreateManyAuthorInput = {
+    id?: string
+    violationId: string
+    body: string
+    confidential?: boolean
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ParentContactCreateManyRecordedByUserInput = {
+    id?: string
+    violationId: string
+    contactedAt?: Date | string
+    method?: string
+    contactedBy?: string | null
+    contactPerson?: string | null
+    relationship?: string | null
+    attendance?: string
+    attemptNo?: number
+    signatureUrl?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type LostFoundItemCreateManyRecordedByUserInput = {
+    id?: string
+    courseId: string
+    itemName: string
+    description?: string | null
+    category?: string
+    dateFound: Date | string
+    locationFound?: string | null
+    foundBy?: string | null
+    status?: string
+    claimerName?: string | null
+    claimedAt?: Date | string | null
+    photoUrl?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
   }
 
   export type AccountUpdateWithoutUserInput = {
@@ -94406,6 +107240,238 @@ export namespace Prisma {
     gradedById?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
+  export type ViolationUpdateWithoutRecordedByUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    caseNo?: StringFieldUpdateOperationsInput | string
+    severity?: StringFieldUpdateOperationsInput | string
+    incidentDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    reportedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    reportedByRole?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    noticeToExplainAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    explanationReceivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    hearingDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    hearingResult?: NullableStringFieldUpdateOperationsInput | string | null
+    sanction?: NullableStringFieldUpdateOperationsInput | string | null
+    sanctionDays?: NullableIntFieldUpdateOperationsInput | number | null
+    sanctionStart?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sanctionEnd?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sanctionCompleted?: BoolFieldUpdateOperationsInput | boolean
+    decidedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    decidedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    appealed?: BoolFieldUpdateOperationsInput | boolean
+    appealResult?: NullableStringFieldUpdateOperationsInput | string | null
+    resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    deletedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    course?: CourseUpdateOneRequiredWithoutViolationsNestedInput
+    student?: StudentUpdateOneRequiredWithoutViolationsNestedInput
+    violationType?: ViolationTypeUpdateOneRequiredWithoutViolationsNestedInput
+    parentContacts?: ParentContactUpdateManyWithoutViolationNestedInput
+    notes?: ViolationNoteUpdateManyWithoutViolationNestedInput
+  }
+
+  export type ViolationUncheckedUpdateWithoutRecordedByUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    courseId?: StringFieldUpdateOperationsInput | string
+    caseNo?: StringFieldUpdateOperationsInput | string
+    studentId?: StringFieldUpdateOperationsInput | string
+    violationTypeId?: StringFieldUpdateOperationsInput | string
+    severity?: StringFieldUpdateOperationsInput | string
+    incidentDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    reportedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    reportedByRole?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    noticeToExplainAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    explanationReceivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    hearingDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    hearingResult?: NullableStringFieldUpdateOperationsInput | string | null
+    sanction?: NullableStringFieldUpdateOperationsInput | string | null
+    sanctionDays?: NullableIntFieldUpdateOperationsInput | number | null
+    sanctionStart?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sanctionEnd?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sanctionCompleted?: BoolFieldUpdateOperationsInput | boolean
+    decidedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    decidedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    appealed?: BoolFieldUpdateOperationsInput | boolean
+    appealResult?: NullableStringFieldUpdateOperationsInput | string | null
+    resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    deletedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    parentContacts?: ParentContactUncheckedUpdateManyWithoutViolationNestedInput
+    notes?: ViolationNoteUncheckedUpdateManyWithoutViolationNestedInput
+  }
+
+  export type ViolationUncheckedUpdateManyWithoutRecordedByUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    courseId?: StringFieldUpdateOperationsInput | string
+    caseNo?: StringFieldUpdateOperationsInput | string
+    studentId?: StringFieldUpdateOperationsInput | string
+    violationTypeId?: StringFieldUpdateOperationsInput | string
+    severity?: StringFieldUpdateOperationsInput | string
+    incidentDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    reportedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    reportedByRole?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    noticeToExplainAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    explanationReceivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    hearingDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    hearingResult?: NullableStringFieldUpdateOperationsInput | string | null
+    sanction?: NullableStringFieldUpdateOperationsInput | string | null
+    sanctionDays?: NullableIntFieldUpdateOperationsInput | number | null
+    sanctionStart?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sanctionEnd?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sanctionCompleted?: BoolFieldUpdateOperationsInput | boolean
+    decidedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    decidedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    appealed?: BoolFieldUpdateOperationsInput | boolean
+    appealResult?: NullableStringFieldUpdateOperationsInput | string | null
+    resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    deletedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ViolationNoteUpdateWithoutAuthorInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    body?: StringFieldUpdateOperationsInput | string
+    confidential?: BoolFieldUpdateOperationsInput | boolean
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    violation?: ViolationUpdateOneRequiredWithoutNotesNestedInput
+  }
+
+  export type ViolationNoteUncheckedUpdateWithoutAuthorInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    violationId?: StringFieldUpdateOperationsInput | string
+    body?: StringFieldUpdateOperationsInput | string
+    confidential?: BoolFieldUpdateOperationsInput | boolean
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ViolationNoteUncheckedUpdateManyWithoutAuthorInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    violationId?: StringFieldUpdateOperationsInput | string
+    body?: StringFieldUpdateOperationsInput | string
+    confidential?: BoolFieldUpdateOperationsInput | boolean
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ParentContactUpdateWithoutRecordedByUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    contactedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    method?: StringFieldUpdateOperationsInput | string
+    contactedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    contactPerson?: NullableStringFieldUpdateOperationsInput | string | null
+    relationship?: NullableStringFieldUpdateOperationsInput | string | null
+    attendance?: StringFieldUpdateOperationsInput | string
+    attemptNo?: IntFieldUpdateOperationsInput | number
+    signatureUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    violation?: ViolationUpdateOneRequiredWithoutParentContactsNestedInput
+  }
+
+  export type ParentContactUncheckedUpdateWithoutRecordedByUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    violationId?: StringFieldUpdateOperationsInput | string
+    contactedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    method?: StringFieldUpdateOperationsInput | string
+    contactedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    contactPerson?: NullableStringFieldUpdateOperationsInput | string | null
+    relationship?: NullableStringFieldUpdateOperationsInput | string | null
+    attendance?: StringFieldUpdateOperationsInput | string
+    attemptNo?: IntFieldUpdateOperationsInput | number
+    signatureUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ParentContactUncheckedUpdateManyWithoutRecordedByUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    violationId?: StringFieldUpdateOperationsInput | string
+    contactedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    method?: StringFieldUpdateOperationsInput | string
+    contactedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    contactPerson?: NullableStringFieldUpdateOperationsInput | string | null
+    relationship?: NullableStringFieldUpdateOperationsInput | string | null
+    attendance?: StringFieldUpdateOperationsInput | string
+    attemptNo?: IntFieldUpdateOperationsInput | number
+    signatureUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type LostFoundItemUpdateWithoutRecordedByUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    itemName?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    category?: StringFieldUpdateOperationsInput | string
+    dateFound?: DateTimeFieldUpdateOperationsInput | Date | string
+    locationFound?: NullableStringFieldUpdateOperationsInput | string | null
+    foundBy?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    claimerName?: NullableStringFieldUpdateOperationsInput | string | null
+    claimedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    course?: CourseUpdateOneRequiredWithoutLostFoundItemsNestedInput
+  }
+
+  export type LostFoundItemUncheckedUpdateWithoutRecordedByUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    courseId?: StringFieldUpdateOperationsInput | string
+    itemName?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    category?: StringFieldUpdateOperationsInput | string
+    dateFound?: DateTimeFieldUpdateOperationsInput | Date | string
+    locationFound?: NullableStringFieldUpdateOperationsInput | string | null
+    foundBy?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    claimerName?: NullableStringFieldUpdateOperationsInput | string | null
+    claimedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type LostFoundItemUncheckedUpdateManyWithoutRecordedByUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    courseId?: StringFieldUpdateOperationsInput | string
+    itemName?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    category?: StringFieldUpdateOperationsInput | string
+    dateFound?: DateTimeFieldUpdateOperationsInput | Date | string
+    locationFound?: NullableStringFieldUpdateOperationsInput | string | null
+    foundBy?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    claimerName?: NullableStringFieldUpdateOperationsInput | string | null
+    claimedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type AnnouncementCreateManyCourseInput = {
     id?: string
     title: string
@@ -94529,7 +107595,7 @@ export namespace Prisma {
     purpose: string
     remarks?: string | null
     visitDate: Date | string
-    recordedBy: string
+    recordedBy?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     signatureUrl?: string | null
@@ -94580,7 +107646,7 @@ export namespace Prisma {
     action: $Enums.PatientAction
     notes?: string | null
     visitDate: Date | string
-    recordedBy: string
+    recordedBy?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     signEmailSentAt?: Date | string | null
@@ -94659,6 +107725,11 @@ export namespace Prisma {
     sex?: string | null
     religion?: string | null
     completeAddress?: string | null
+    civilStatus?: string | null
+    isPwd?: boolean | null
+    isIndigenous?: boolean | null
+    isSoloParent?: boolean | null
+    isFirstGen?: boolean | null
     fatherName?: string | null
     fatherDOB?: string | null
     fatherAddress?: string | null
@@ -94725,7 +107796,7 @@ export namespace Prisma {
     signTokenExpiresAt?: Date | string | null
     signEmailSentAt?: Date | string | null
     visitDate?: Date | string
-    recordedBy: string
+    recordedBy?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -94868,6 +107939,78 @@ export namespace Prisma {
     returnedAt?: Date | string | null
     status?: string
     remarks?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ViolationTypeCreateManyCourseInput = {
+    id?: string
+    code: string
+    name: string
+    description?: string | null
+    severity?: string
+    category?: string | null
+    dismissalOnFirst?: boolean
+    defaultSanction?: string | null
+    sanctionMinDays?: number | null
+    sanctionMaxDays?: number | null
+    maxSanction?: string | null
+    escalationCount?: number
+    escalatesTo?: string | null
+    manualRef?: string | null
+    isActive?: boolean
+    order?: number
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ViolationCreateManyCourseInput = {
+    id?: string
+    caseNo: string
+    studentId: string
+    violationTypeId: string
+    severity: string
+    incidentDate: Date | string
+    location?: string | null
+    description?: string | null
+    reportedBy?: string | null
+    reportedByRole?: string | null
+    status?: string
+    noticeToExplainAt?: Date | string | null
+    explanationReceivedAt?: Date | string | null
+    hearingDate?: Date | string | null
+    hearingResult?: string | null
+    sanction?: string | null
+    sanctionDays?: number | null
+    sanctionStart?: Date | string | null
+    sanctionEnd?: Date | string | null
+    sanctionCompleted?: boolean
+    decidedBy?: string | null
+    decidedAt?: Date | string | null
+    appealed?: boolean
+    appealResult?: string | null
+    resolvedAt?: Date | string | null
+    recordedBy?: string | null
+    deletedAt?: Date | string | null
+    deletedBy?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type LostFoundItemCreateManyCourseInput = {
+    id?: string
+    itemName: string
+    description?: string | null
+    category?: string
+    dateFound: Date | string
+    locationFound?: string | null
+    foundBy?: string | null
+    status?: string
+    claimerName?: string | null
+    claimedAt?: Date | string | null
+    photoUrl?: string | null
+    recordedBy?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -95276,7 +108419,7 @@ export namespace Prisma {
     fitnessFor?: MedicalExamRecordUpdatefitnessForInput | string[]
     clearanceRemarks?: NullableStringFieldUpdateOperationsInput | string | null
     clearanceIssuedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    recordedByUser?: UserUpdateOneRequiredWithoutMedicalExamRecordsNestedInput
+    recordedByUser?: UserUpdateOneWithoutMedicalExamRecordsNestedInput
     student?: StudentUpdateOneRequiredWithoutMedicalExamRecordsNestedInput
   }
 
@@ -95286,7 +108429,7 @@ export namespace Prisma {
     purpose?: StringFieldUpdateOperationsInput | string
     remarks?: NullableStringFieldUpdateOperationsInput | string | null
     visitDate?: DateTimeFieldUpdateOperationsInput | Date | string
-    recordedBy?: StringFieldUpdateOperationsInput | string
+    recordedBy?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     signatureUrl?: NullableStringFieldUpdateOperationsInput | string | null
@@ -95319,7 +108462,7 @@ export namespace Prisma {
     purpose?: StringFieldUpdateOperationsInput | string
     remarks?: NullableStringFieldUpdateOperationsInput | string | null
     visitDate?: DateTimeFieldUpdateOperationsInput | Date | string
-    recordedBy?: StringFieldUpdateOperationsInput | string
+    recordedBy?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     signatureUrl?: NullableStringFieldUpdateOperationsInput | string | null
@@ -95403,7 +108546,7 @@ export namespace Prisma {
     signedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     bodySystemId?: NullableStringFieldUpdateOperationsInput | string | null
     medicineUsages?: MedicineUsageUpdateManyWithoutPatientRecordNestedInput
-    recordedByUser?: UserUpdateOneRequiredWithoutPatientRecordsNestedInput
+    recordedByUser?: UserUpdateOneWithoutPatientRecordsNestedInput
     student?: StudentUpdateOneRequiredWithoutPatientRecordsNestedInput
     medicalCondition?: MedicalConditionUpdateOneWithoutPatientRecordsNestedInput
   }
@@ -95421,7 +108564,7 @@ export namespace Prisma {
     action?: EnumPatientActionFieldUpdateOperationsInput | $Enums.PatientAction
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     visitDate?: DateTimeFieldUpdateOperationsInput | Date | string
-    recordedBy?: StringFieldUpdateOperationsInput | string
+    recordedBy?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     signEmailSentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -95448,7 +108591,7 @@ export namespace Prisma {
     action?: EnumPatientActionFieldUpdateOperationsInput | $Enums.PatientAction
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     visitDate?: DateTimeFieldUpdateOperationsInput | Date | string
-    recordedBy?: StringFieldUpdateOperationsInput | string
+    recordedBy?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     signEmailSentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -95635,6 +108778,11 @@ export namespace Prisma {
     sex?: NullableStringFieldUpdateOperationsInput | string | null
     religion?: NullableStringFieldUpdateOperationsInput | string | null
     completeAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    civilStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    isPwd?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    isIndigenous?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    isSoloParent?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    isFirstGen?: NullableBoolFieldUpdateOperationsInput | boolean | null
     fatherName?: NullableStringFieldUpdateOperationsInput | string | null
     fatherDOB?: NullableStringFieldUpdateOperationsInput | string | null
     fatherAddress?: NullableStringFieldUpdateOperationsInput | string | null
@@ -95703,6 +108851,11 @@ export namespace Prisma {
     sex?: NullableStringFieldUpdateOperationsInput | string | null
     religion?: NullableStringFieldUpdateOperationsInput | string | null
     completeAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    civilStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    isPwd?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    isIndigenous?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    isSoloParent?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    isFirstGen?: NullableBoolFieldUpdateOperationsInput | boolean | null
     fatherName?: NullableStringFieldUpdateOperationsInput | string | null
     fatherDOB?: NullableStringFieldUpdateOperationsInput | string | null
     fatherAddress?: NullableStringFieldUpdateOperationsInput | string | null
@@ -95771,6 +108924,11 @@ export namespace Prisma {
     sex?: NullableStringFieldUpdateOperationsInput | string | null
     religion?: NullableStringFieldUpdateOperationsInput | string | null
     completeAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    civilStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    isPwd?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    isIndigenous?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    isSoloParent?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    isFirstGen?: NullableBoolFieldUpdateOperationsInput | boolean | null
     fatherName?: NullableStringFieldUpdateOperationsInput | string | null
     fatherDOB?: NullableStringFieldUpdateOperationsInput | string | null
     fatherAddress?: NullableStringFieldUpdateOperationsInput | string | null
@@ -95839,7 +108997,7 @@ export namespace Prisma {
     visitDate?: DateTimeFieldUpdateOperationsInput | Date | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    recordedByUser?: UserUpdateOneRequiredWithoutGuidanceLogEntriesNestedInput
+    recordedByUser?: UserUpdateOneWithoutGuidanceLogEntriesNestedInput
   }
 
   export type GuidanceLogEntryUncheckedUpdateWithoutCourseInput = {
@@ -95856,7 +109014,7 @@ export namespace Prisma {
     signTokenExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     signEmailSentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     visitDate?: DateTimeFieldUpdateOperationsInput | Date | string
-    recordedBy?: StringFieldUpdateOperationsInput | string
+    recordedBy?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -95875,7 +109033,7 @@ export namespace Prisma {
     signTokenExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     signEmailSentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     visitDate?: DateTimeFieldUpdateOperationsInput | Date | string
-    recordedBy?: StringFieldUpdateOperationsInput | string
+    recordedBy?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -96306,6 +109464,228 @@ export namespace Prisma {
     returnedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     status?: StringFieldUpdateOperationsInput | string
     remarks?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ViolationTypeUpdateWithoutCourseInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    code?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    severity?: StringFieldUpdateOperationsInput | string
+    category?: NullableStringFieldUpdateOperationsInput | string | null
+    dismissalOnFirst?: BoolFieldUpdateOperationsInput | boolean
+    defaultSanction?: NullableStringFieldUpdateOperationsInput | string | null
+    sanctionMinDays?: NullableIntFieldUpdateOperationsInput | number | null
+    sanctionMaxDays?: NullableIntFieldUpdateOperationsInput | number | null
+    maxSanction?: NullableStringFieldUpdateOperationsInput | string | null
+    escalationCount?: IntFieldUpdateOperationsInput | number
+    escalatesTo?: NullableStringFieldUpdateOperationsInput | string | null
+    manualRef?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    order?: IntFieldUpdateOperationsInput | number
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    violations?: ViolationUpdateManyWithoutViolationTypeNestedInput
+  }
+
+  export type ViolationTypeUncheckedUpdateWithoutCourseInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    code?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    severity?: StringFieldUpdateOperationsInput | string
+    category?: NullableStringFieldUpdateOperationsInput | string | null
+    dismissalOnFirst?: BoolFieldUpdateOperationsInput | boolean
+    defaultSanction?: NullableStringFieldUpdateOperationsInput | string | null
+    sanctionMinDays?: NullableIntFieldUpdateOperationsInput | number | null
+    sanctionMaxDays?: NullableIntFieldUpdateOperationsInput | number | null
+    maxSanction?: NullableStringFieldUpdateOperationsInput | string | null
+    escalationCount?: IntFieldUpdateOperationsInput | number
+    escalatesTo?: NullableStringFieldUpdateOperationsInput | string | null
+    manualRef?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    order?: IntFieldUpdateOperationsInput | number
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    violations?: ViolationUncheckedUpdateManyWithoutViolationTypeNestedInput
+  }
+
+  export type ViolationTypeUncheckedUpdateManyWithoutCourseInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    code?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    severity?: StringFieldUpdateOperationsInput | string
+    category?: NullableStringFieldUpdateOperationsInput | string | null
+    dismissalOnFirst?: BoolFieldUpdateOperationsInput | boolean
+    defaultSanction?: NullableStringFieldUpdateOperationsInput | string | null
+    sanctionMinDays?: NullableIntFieldUpdateOperationsInput | number | null
+    sanctionMaxDays?: NullableIntFieldUpdateOperationsInput | number | null
+    maxSanction?: NullableStringFieldUpdateOperationsInput | string | null
+    escalationCount?: IntFieldUpdateOperationsInput | number
+    escalatesTo?: NullableStringFieldUpdateOperationsInput | string | null
+    manualRef?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    order?: IntFieldUpdateOperationsInput | number
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ViolationUpdateWithoutCourseInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    caseNo?: StringFieldUpdateOperationsInput | string
+    severity?: StringFieldUpdateOperationsInput | string
+    incidentDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    reportedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    reportedByRole?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    noticeToExplainAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    explanationReceivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    hearingDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    hearingResult?: NullableStringFieldUpdateOperationsInput | string | null
+    sanction?: NullableStringFieldUpdateOperationsInput | string | null
+    sanctionDays?: NullableIntFieldUpdateOperationsInput | number | null
+    sanctionStart?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sanctionEnd?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sanctionCompleted?: BoolFieldUpdateOperationsInput | boolean
+    decidedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    decidedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    appealed?: BoolFieldUpdateOperationsInput | boolean
+    appealResult?: NullableStringFieldUpdateOperationsInput | string | null
+    resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    deletedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    student?: StudentUpdateOneRequiredWithoutViolationsNestedInput
+    violationType?: ViolationTypeUpdateOneRequiredWithoutViolationsNestedInput
+    recordedByUser?: UserUpdateOneWithoutViolationsRecordedNestedInput
+    parentContacts?: ParentContactUpdateManyWithoutViolationNestedInput
+    notes?: ViolationNoteUpdateManyWithoutViolationNestedInput
+  }
+
+  export type ViolationUncheckedUpdateWithoutCourseInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    caseNo?: StringFieldUpdateOperationsInput | string
+    studentId?: StringFieldUpdateOperationsInput | string
+    violationTypeId?: StringFieldUpdateOperationsInput | string
+    severity?: StringFieldUpdateOperationsInput | string
+    incidentDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    reportedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    reportedByRole?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    noticeToExplainAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    explanationReceivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    hearingDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    hearingResult?: NullableStringFieldUpdateOperationsInput | string | null
+    sanction?: NullableStringFieldUpdateOperationsInput | string | null
+    sanctionDays?: NullableIntFieldUpdateOperationsInput | number | null
+    sanctionStart?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sanctionEnd?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sanctionCompleted?: BoolFieldUpdateOperationsInput | boolean
+    decidedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    decidedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    appealed?: BoolFieldUpdateOperationsInput | boolean
+    appealResult?: NullableStringFieldUpdateOperationsInput | string | null
+    resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    recordedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    deletedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    parentContacts?: ParentContactUncheckedUpdateManyWithoutViolationNestedInput
+    notes?: ViolationNoteUncheckedUpdateManyWithoutViolationNestedInput
+  }
+
+  export type ViolationUncheckedUpdateManyWithoutCourseInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    caseNo?: StringFieldUpdateOperationsInput | string
+    studentId?: StringFieldUpdateOperationsInput | string
+    violationTypeId?: StringFieldUpdateOperationsInput | string
+    severity?: StringFieldUpdateOperationsInput | string
+    incidentDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    reportedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    reportedByRole?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    noticeToExplainAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    explanationReceivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    hearingDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    hearingResult?: NullableStringFieldUpdateOperationsInput | string | null
+    sanction?: NullableStringFieldUpdateOperationsInput | string | null
+    sanctionDays?: NullableIntFieldUpdateOperationsInput | number | null
+    sanctionStart?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sanctionEnd?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sanctionCompleted?: BoolFieldUpdateOperationsInput | boolean
+    decidedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    decidedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    appealed?: BoolFieldUpdateOperationsInput | boolean
+    appealResult?: NullableStringFieldUpdateOperationsInput | string | null
+    resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    recordedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    deletedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type LostFoundItemUpdateWithoutCourseInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    itemName?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    category?: StringFieldUpdateOperationsInput | string
+    dateFound?: DateTimeFieldUpdateOperationsInput | Date | string
+    locationFound?: NullableStringFieldUpdateOperationsInput | string | null
+    foundBy?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    claimerName?: NullableStringFieldUpdateOperationsInput | string | null
+    claimedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    recordedByUser?: UserUpdateOneWithoutLostFoundRecordedNestedInput
+  }
+
+  export type LostFoundItemUncheckedUpdateWithoutCourseInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    itemName?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    category?: StringFieldUpdateOperationsInput | string
+    dateFound?: DateTimeFieldUpdateOperationsInput | Date | string
+    locationFound?: NullableStringFieldUpdateOperationsInput | string | null
+    foundBy?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    claimerName?: NullableStringFieldUpdateOperationsInput | string | null
+    claimedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    recordedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type LostFoundItemUncheckedUpdateManyWithoutCourseInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    itemName?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    category?: StringFieldUpdateOperationsInput | string
+    dateFound?: DateTimeFieldUpdateOperationsInput | Date | string
+    locationFound?: NullableStringFieldUpdateOperationsInput | string | null
+    foundBy?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    claimerName?: NullableStringFieldUpdateOperationsInput | string | null
+    claimedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    recordedBy?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -96986,7 +110366,7 @@ export namespace Prisma {
     purpose: string
     remarks?: string | null
     visitDate: Date | string
-    recordedBy: string
+    recordedBy?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     signatureUrl?: string | null
@@ -97026,7 +110406,7 @@ export namespace Prisma {
     action: $Enums.PatientAction
     notes?: string | null
     visitDate: Date | string
-    recordedBy: string
+    recordedBy?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     signEmailSentAt?: Date | string | null
@@ -97037,6 +110417,39 @@ export namespace Prisma {
     signedAt?: Date | string | null
     bodySystemId?: string | null
     medicalConditionId?: string | null
+  }
+
+  export type ViolationCreateManyStudentInput = {
+    id?: string
+    courseId: string
+    caseNo: string
+    violationTypeId: string
+    severity: string
+    incidentDate: Date | string
+    location?: string | null
+    description?: string | null
+    reportedBy?: string | null
+    reportedByRole?: string | null
+    status?: string
+    noticeToExplainAt?: Date | string | null
+    explanationReceivedAt?: Date | string | null
+    hearingDate?: Date | string | null
+    hearingResult?: string | null
+    sanction?: string | null
+    sanctionDays?: number | null
+    sanctionStart?: Date | string | null
+    sanctionEnd?: Date | string | null
+    sanctionCompleted?: boolean
+    decidedBy?: string | null
+    decidedAt?: Date | string | null
+    appealed?: boolean
+    appealResult?: string | null
+    resolvedAt?: Date | string | null
+    recordedBy?: string | null
+    deletedAt?: Date | string | null
+    deletedBy?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
   }
 
   export type MedicalExamRecordUpdateWithoutStudentInput = {
@@ -97069,7 +110482,7 @@ export namespace Prisma {
     clearanceRemarks?: NullableStringFieldUpdateOperationsInput | string | null
     clearanceIssuedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     course?: CourseUpdateOneRequiredWithoutMedicalExamRecordsNestedInput
-    recordedByUser?: UserUpdateOneRequiredWithoutMedicalExamRecordsNestedInput
+    recordedByUser?: UserUpdateOneWithoutMedicalExamRecordsNestedInput
   }
 
   export type MedicalExamRecordUncheckedUpdateWithoutStudentInput = {
@@ -97078,7 +110491,7 @@ export namespace Prisma {
     purpose?: StringFieldUpdateOperationsInput | string
     remarks?: NullableStringFieldUpdateOperationsInput | string | null
     visitDate?: DateTimeFieldUpdateOperationsInput | Date | string
-    recordedBy?: StringFieldUpdateOperationsInput | string
+    recordedBy?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     signatureUrl?: NullableStringFieldUpdateOperationsInput | string | null
@@ -97111,7 +110524,7 @@ export namespace Prisma {
     purpose?: StringFieldUpdateOperationsInput | string
     remarks?: NullableStringFieldUpdateOperationsInput | string | null
     visitDate?: DateTimeFieldUpdateOperationsInput | Date | string
-    recordedBy?: StringFieldUpdateOperationsInput | string
+    recordedBy?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     signatureUrl?: NullableStringFieldUpdateOperationsInput | string | null
@@ -97161,7 +110574,7 @@ export namespace Prisma {
     bodySystemId?: NullableStringFieldUpdateOperationsInput | string | null
     medicineUsages?: MedicineUsageUpdateManyWithoutPatientRecordNestedInput
     course?: CourseUpdateOneRequiredWithoutPatientRecordsNestedInput
-    recordedByUser?: UserUpdateOneRequiredWithoutPatientRecordsNestedInput
+    recordedByUser?: UserUpdateOneWithoutPatientRecordsNestedInput
     medicalCondition?: MedicalConditionUpdateOneWithoutPatientRecordsNestedInput
   }
 
@@ -97178,7 +110591,7 @@ export namespace Prisma {
     action?: EnumPatientActionFieldUpdateOperationsInput | $Enums.PatientAction
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     visitDate?: DateTimeFieldUpdateOperationsInput | Date | string
-    recordedBy?: StringFieldUpdateOperationsInput | string
+    recordedBy?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     signEmailSentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -97205,7 +110618,7 @@ export namespace Prisma {
     action?: EnumPatientActionFieldUpdateOperationsInput | $Enums.PatientAction
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     visitDate?: DateTimeFieldUpdateOperationsInput | Date | string
-    recordedBy?: StringFieldUpdateOperationsInput | string
+    recordedBy?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     signEmailSentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -97216,6 +110629,109 @@ export namespace Prisma {
     signedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     bodySystemId?: NullableStringFieldUpdateOperationsInput | string | null
     medicalConditionId?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type ViolationUpdateWithoutStudentInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    caseNo?: StringFieldUpdateOperationsInput | string
+    severity?: StringFieldUpdateOperationsInput | string
+    incidentDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    reportedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    reportedByRole?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    noticeToExplainAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    explanationReceivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    hearingDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    hearingResult?: NullableStringFieldUpdateOperationsInput | string | null
+    sanction?: NullableStringFieldUpdateOperationsInput | string | null
+    sanctionDays?: NullableIntFieldUpdateOperationsInput | number | null
+    sanctionStart?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sanctionEnd?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sanctionCompleted?: BoolFieldUpdateOperationsInput | boolean
+    decidedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    decidedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    appealed?: BoolFieldUpdateOperationsInput | boolean
+    appealResult?: NullableStringFieldUpdateOperationsInput | string | null
+    resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    deletedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    course?: CourseUpdateOneRequiredWithoutViolationsNestedInput
+    violationType?: ViolationTypeUpdateOneRequiredWithoutViolationsNestedInput
+    recordedByUser?: UserUpdateOneWithoutViolationsRecordedNestedInput
+    parentContacts?: ParentContactUpdateManyWithoutViolationNestedInput
+    notes?: ViolationNoteUpdateManyWithoutViolationNestedInput
+  }
+
+  export type ViolationUncheckedUpdateWithoutStudentInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    courseId?: StringFieldUpdateOperationsInput | string
+    caseNo?: StringFieldUpdateOperationsInput | string
+    violationTypeId?: StringFieldUpdateOperationsInput | string
+    severity?: StringFieldUpdateOperationsInput | string
+    incidentDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    reportedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    reportedByRole?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    noticeToExplainAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    explanationReceivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    hearingDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    hearingResult?: NullableStringFieldUpdateOperationsInput | string | null
+    sanction?: NullableStringFieldUpdateOperationsInput | string | null
+    sanctionDays?: NullableIntFieldUpdateOperationsInput | number | null
+    sanctionStart?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sanctionEnd?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sanctionCompleted?: BoolFieldUpdateOperationsInput | boolean
+    decidedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    decidedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    appealed?: BoolFieldUpdateOperationsInput | boolean
+    appealResult?: NullableStringFieldUpdateOperationsInput | string | null
+    resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    recordedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    deletedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    parentContacts?: ParentContactUncheckedUpdateManyWithoutViolationNestedInput
+    notes?: ViolationNoteUncheckedUpdateManyWithoutViolationNestedInput
+  }
+
+  export type ViolationUncheckedUpdateManyWithoutStudentInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    courseId?: StringFieldUpdateOperationsInput | string
+    caseNo?: StringFieldUpdateOperationsInput | string
+    violationTypeId?: StringFieldUpdateOperationsInput | string
+    severity?: StringFieldUpdateOperationsInput | string
+    incidentDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    reportedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    reportedByRole?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    noticeToExplainAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    explanationReceivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    hearingDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    hearingResult?: NullableStringFieldUpdateOperationsInput | string | null
+    sanction?: NullableStringFieldUpdateOperationsInput | string | null
+    sanctionDays?: NullableIntFieldUpdateOperationsInput | number | null
+    sanctionStart?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sanctionEnd?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sanctionCompleted?: BoolFieldUpdateOperationsInput | boolean
+    decidedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    decidedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    appealed?: BoolFieldUpdateOperationsInput | boolean
+    appealResult?: NullableStringFieldUpdateOperationsInput | string | null
+    resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    recordedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    deletedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type MedicineUsageCreateManyPatientRecordInput = {
@@ -97306,7 +110822,7 @@ export namespace Prisma {
     action: $Enums.PatientAction
     notes?: string | null
     visitDate: Date | string
-    recordedBy: string
+    recordedBy?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     signEmailSentAt?: Date | string | null
@@ -97341,7 +110857,7 @@ export namespace Prisma {
     bodySystemId?: NullableStringFieldUpdateOperationsInput | string | null
     medicineUsages?: MedicineUsageUpdateManyWithoutPatientRecordNestedInput
     course?: CourseUpdateOneRequiredWithoutPatientRecordsNestedInput
-    recordedByUser?: UserUpdateOneRequiredWithoutPatientRecordsNestedInput
+    recordedByUser?: UserUpdateOneWithoutPatientRecordsNestedInput
     student?: StudentUpdateOneRequiredWithoutPatientRecordsNestedInput
   }
 
@@ -97359,7 +110875,7 @@ export namespace Prisma {
     action?: EnumPatientActionFieldUpdateOperationsInput | $Enums.PatientAction
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     visitDate?: DateTimeFieldUpdateOperationsInput | Date | string
-    recordedBy?: StringFieldUpdateOperationsInput | string
+    recordedBy?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     signEmailSentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -97386,7 +110902,7 @@ export namespace Prisma {
     action?: EnumPatientActionFieldUpdateOperationsInput | $Enums.PatientAction
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     visitDate?: DateTimeFieldUpdateOperationsInput | Date | string
-    recordedBy?: StringFieldUpdateOperationsInput | string
+    recordedBy?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     signEmailSentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -97594,6 +111110,246 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type ViolationCreateManyViolationTypeInput = {
+    id?: string
+    courseId: string
+    caseNo: string
+    studentId: string
+    severity: string
+    incidentDate: Date | string
+    location?: string | null
+    description?: string | null
+    reportedBy?: string | null
+    reportedByRole?: string | null
+    status?: string
+    noticeToExplainAt?: Date | string | null
+    explanationReceivedAt?: Date | string | null
+    hearingDate?: Date | string | null
+    hearingResult?: string | null
+    sanction?: string | null
+    sanctionDays?: number | null
+    sanctionStart?: Date | string | null
+    sanctionEnd?: Date | string | null
+    sanctionCompleted?: boolean
+    decidedBy?: string | null
+    decidedAt?: Date | string | null
+    appealed?: boolean
+    appealResult?: string | null
+    resolvedAt?: Date | string | null
+    recordedBy?: string | null
+    deletedAt?: Date | string | null
+    deletedBy?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ViolationUpdateWithoutViolationTypeInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    caseNo?: StringFieldUpdateOperationsInput | string
+    severity?: StringFieldUpdateOperationsInput | string
+    incidentDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    reportedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    reportedByRole?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    noticeToExplainAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    explanationReceivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    hearingDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    hearingResult?: NullableStringFieldUpdateOperationsInput | string | null
+    sanction?: NullableStringFieldUpdateOperationsInput | string | null
+    sanctionDays?: NullableIntFieldUpdateOperationsInput | number | null
+    sanctionStart?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sanctionEnd?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sanctionCompleted?: BoolFieldUpdateOperationsInput | boolean
+    decidedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    decidedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    appealed?: BoolFieldUpdateOperationsInput | boolean
+    appealResult?: NullableStringFieldUpdateOperationsInput | string | null
+    resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    deletedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    course?: CourseUpdateOneRequiredWithoutViolationsNestedInput
+    student?: StudentUpdateOneRequiredWithoutViolationsNestedInput
+    recordedByUser?: UserUpdateOneWithoutViolationsRecordedNestedInput
+    parentContacts?: ParentContactUpdateManyWithoutViolationNestedInput
+    notes?: ViolationNoteUpdateManyWithoutViolationNestedInput
+  }
+
+  export type ViolationUncheckedUpdateWithoutViolationTypeInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    courseId?: StringFieldUpdateOperationsInput | string
+    caseNo?: StringFieldUpdateOperationsInput | string
+    studentId?: StringFieldUpdateOperationsInput | string
+    severity?: StringFieldUpdateOperationsInput | string
+    incidentDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    reportedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    reportedByRole?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    noticeToExplainAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    explanationReceivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    hearingDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    hearingResult?: NullableStringFieldUpdateOperationsInput | string | null
+    sanction?: NullableStringFieldUpdateOperationsInput | string | null
+    sanctionDays?: NullableIntFieldUpdateOperationsInput | number | null
+    sanctionStart?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sanctionEnd?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sanctionCompleted?: BoolFieldUpdateOperationsInput | boolean
+    decidedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    decidedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    appealed?: BoolFieldUpdateOperationsInput | boolean
+    appealResult?: NullableStringFieldUpdateOperationsInput | string | null
+    resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    recordedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    deletedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    parentContacts?: ParentContactUncheckedUpdateManyWithoutViolationNestedInput
+    notes?: ViolationNoteUncheckedUpdateManyWithoutViolationNestedInput
+  }
+
+  export type ViolationUncheckedUpdateManyWithoutViolationTypeInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    courseId?: StringFieldUpdateOperationsInput | string
+    caseNo?: StringFieldUpdateOperationsInput | string
+    studentId?: StringFieldUpdateOperationsInput | string
+    severity?: StringFieldUpdateOperationsInput | string
+    incidentDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    reportedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    reportedByRole?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    noticeToExplainAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    explanationReceivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    hearingDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    hearingResult?: NullableStringFieldUpdateOperationsInput | string | null
+    sanction?: NullableStringFieldUpdateOperationsInput | string | null
+    sanctionDays?: NullableIntFieldUpdateOperationsInput | number | null
+    sanctionStart?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sanctionEnd?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sanctionCompleted?: BoolFieldUpdateOperationsInput | boolean
+    decidedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    decidedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    appealed?: BoolFieldUpdateOperationsInput | boolean
+    appealResult?: NullableStringFieldUpdateOperationsInput | string | null
+    resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    recordedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    deletedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ParentContactCreateManyViolationInput = {
+    id?: string
+    contactedAt?: Date | string
+    method?: string
+    contactedBy?: string | null
+    contactPerson?: string | null
+    relationship?: string | null
+    attendance?: string
+    attemptNo?: number
+    signatureUrl?: string | null
+    recordedBy?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ViolationNoteCreateManyViolationInput = {
+    id?: string
+    body: string
+    confidential?: boolean
+    authorId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ParentContactUpdateWithoutViolationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    contactedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    method?: StringFieldUpdateOperationsInput | string
+    contactedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    contactPerson?: NullableStringFieldUpdateOperationsInput | string | null
+    relationship?: NullableStringFieldUpdateOperationsInput | string | null
+    attendance?: StringFieldUpdateOperationsInput | string
+    attemptNo?: IntFieldUpdateOperationsInput | number
+    signatureUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    recordedByUser?: UserUpdateOneWithoutParentContactsRecordedNestedInput
+  }
+
+  export type ParentContactUncheckedUpdateWithoutViolationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    contactedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    method?: StringFieldUpdateOperationsInput | string
+    contactedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    contactPerson?: NullableStringFieldUpdateOperationsInput | string | null
+    relationship?: NullableStringFieldUpdateOperationsInput | string | null
+    attendance?: StringFieldUpdateOperationsInput | string
+    attemptNo?: IntFieldUpdateOperationsInput | number
+    signatureUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    recordedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ParentContactUncheckedUpdateManyWithoutViolationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    contactedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    method?: StringFieldUpdateOperationsInput | string
+    contactedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    contactPerson?: NullableStringFieldUpdateOperationsInput | string | null
+    relationship?: NullableStringFieldUpdateOperationsInput | string | null
+    attendance?: StringFieldUpdateOperationsInput | string
+    attemptNo?: IntFieldUpdateOperationsInput | number
+    signatureUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    recordedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ViolationNoteUpdateWithoutViolationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    body?: StringFieldUpdateOperationsInput | string
+    confidential?: BoolFieldUpdateOperationsInput | boolean
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    author?: UserUpdateOneWithoutViolationNotesNestedInput
+  }
+
+  export type ViolationNoteUncheckedUpdateWithoutViolationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    body?: StringFieldUpdateOperationsInput | string
+    confidential?: BoolFieldUpdateOperationsInput | boolean
+    authorId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ViolationNoteUncheckedUpdateManyWithoutViolationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    body?: StringFieldUpdateOperationsInput | string
+    confidential?: BoolFieldUpdateOperationsInput | boolean
+    authorId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
 
 
   /**
@@ -97679,6 +111435,14 @@ export namespace Prisma {
      * @deprecated Use LibraryBookCountOutputTypeDefaultArgs instead
      */
     export type LibraryBookCountOutputTypeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = LibraryBookCountOutputTypeDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use ViolationTypeCountOutputTypeDefaultArgs instead
+     */
+    export type ViolationTypeCountOutputTypeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = ViolationTypeCountOutputTypeDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use ViolationCountOutputTypeDefaultArgs instead
+     */
+    export type ViolationCountOutputTypeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = ViolationCountOutputTypeDefaultArgs<ExtArgs>
     /**
      * @deprecated Use ConversationDefaultArgs instead
      */
@@ -97867,6 +111631,26 @@ export namespace Prisma {
      * @deprecated Use LibraryBorrowRecordDefaultArgs instead
      */
     export type LibraryBorrowRecordArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = LibraryBorrowRecordDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use ViolationTypeDefaultArgs instead
+     */
+    export type ViolationTypeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = ViolationTypeDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use ViolationDefaultArgs instead
+     */
+    export type ViolationArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = ViolationDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use ParentContactDefaultArgs instead
+     */
+    export type ParentContactArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = ParentContactDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use ViolationNoteDefaultArgs instead
+     */
+    export type ViolationNoteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = ViolationNoteDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use LostFoundItemDefaultArgs instead
+     */
+    export type LostFoundItemArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = LostFoundItemDefaultArgs<ExtArgs>
 
   /**
    * Batch Payload for updateMany & deleteMany & createMany

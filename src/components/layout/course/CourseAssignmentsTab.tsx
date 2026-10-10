@@ -124,6 +124,7 @@ export default function CourseAssignmentsTab({
           assignment={viewTarget}
           courseId={courseId}
           currentUserId={currentUserId}
+          currentUserName={currentUserName}
           onBack={() => {
             reloadAssignments();
             drillOut();
@@ -153,15 +154,16 @@ export default function CourseAssignmentsTab({
 
   if (assignView === "submitter-detail" && viewTarget) {
     return (
-      <CourseAssignmentSubmitterDetail
-        assignment={viewTarget}
-        courseId={courseId}
-        currentUserId={currentUserId}
-        onBack={() => {
-          reloadAssignments();
-          drillOut();
-        }}
-      />
+          <CourseAssignmentSubmitterDetail
+      assignment={viewTarget}
+      courseId={courseId}
+      currentUserId={currentUserId}
+      currentUserName={currentUserName}
+      onBack={() => {
+        reloadAssignments();
+        drillOut();
+      }}
+    />
     );
   }
 

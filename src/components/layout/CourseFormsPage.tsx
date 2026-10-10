@@ -47,6 +47,8 @@ interface Form {
   _publisherId?: string | null;
   isCreator?: boolean;
   _isAssignedToYou?: boolean;
+  _hasSubmitted?: boolean;
+  submissions?: { id?: string; createdAt?: string; submittedAt?: string }[];
 }
 
 type QuestionType =
@@ -166,6 +168,32 @@ function useOnClickOutside<T extends HTMLElement>(ref: React.RefObject<T | null>
     document.addEventListener("mousedown", listener);
     return () => document.removeEventListener("mousedown", listener);
   }, [ref, handler]);
+}
+
+// ── Seen / New badge + Submitted helpers ──────────────────────────────────────
+const SEEN_KEY = (courseId: string) => `seen_forms_${courseId}`;
+function getSeenIds(courseId: string): Set<string> {
+  try {
+    const raw = localStorage.getItem(SEEN_KEY(courseId));
+    return new Set(raw ? JSON.parse(raw) : []);
+  } catch { return new Set(); }
+}
+function markSeen(courseId: string, id: string | number) {
+  try {
+    const seen = getSeenIds(courseId);
+    seen.add(String(id));
+    localStorage.setItem(SEEN_KEY(courseId), JSON.stringify([...seen]));
+  } catch { /* ignore */ }
+}
+function isSubmitted(f: Form): boolean {
+  return f._hasSubmitted === true || (f.submissions?.length ?? 0) > 0;
+}
+function NewBadge() {
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", padding: "1px 6px", borderRadius: 4, fontSize: 9, fontWeight: 800, letterSpacing: "0.08em", textTransform: "uppercase", color: "#fff", background: "#dc2626", flexShrink: 0 }}>
+      NEW
+    </span>
+  );
 }
 
 // ── Responsive CSS ─────────────────────────────────────────────────────────────
@@ -1226,108 +1254,167 @@ function ManagerSection({ forms, onCreate, onEdit, onDelete, onTogglePublish, on
 }
 
 // ── Submitter Section ──────────────────────────────────────────────────────────
-function SubmitterSection({ forms, onView }: { forms: Form[]; onView: (f: Form) => void }) {
-  const [expanded, setExpanded] = useState(true);
-  const [viewMode, setViewMode] = useState<"date" | "type">("date");
-  const now = new Date();
-
-  const upcoming: Form[] = [], undated: Form[] = [], past: Form[] = [];
-  forms.forEach(f => {
-    if (!f.dueDate) { undated.push(f); }
-    else {
-      const d = buildLocalDate(f.dueDate, f.dueTime);
-      if (d && d >= now) upcoming.push(f); else past.push(f);
-    }
-  });
-
-  const typeGroups: Record<string, Form[]> = {};
-  forms.forEach(f => {
-    const g = f.assignmentGroup || "Assignments";
-    if (!typeGroups[g]) typeGroups[g] = [];
-    typeGroups[g].push(f);
-  });
-
-  const FormRow = ({ form }: { form: Form }) => {
-    const untilDate = buildLocalDate(form.availableUntil, form.availableUntilTime);
-    const isClosed = !!untilDate && now > untilDate;
+function PublisherAvatar({ name, image, size = 20 }: { name?: string | null; image?: string | null; size?: number }) {
+  const [imgError, setImgError] = useState(false);
+  const initial = name ? name.charAt(0).toUpperCase() : "?";
+  if (image && !imgError) {
     return (
-      <div className="cft-row" onClick={() => onView(form)}>
-        <div className="w-1 h-8 rounded-full shrink-0" style={{ background: "#60a5fa" }}/>
-        <FileText size={16} className="shrink-0 text-gray-400"/>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <h3 className="text-sm font-semibold hover:underline word-break" style={{ color: "#0369a1" }}>{form.title}</h3>
-            <span className="text-[10px] px-2 py-0.5 rounded-full text-white font-medium shrink-0" style={{ background: TYPE_COLORS[form.formType] ?? MAROON }}>{form.formType}</span>
-            {isClosed && <span className="text-[10px] text-gray-500 font-medium shrink-0">Closed</span>}
-          </div>
-          <div className="cft-row-meta mt-0.5 text-xs text-gray-500">
-            {form.questions?.length > 0 && <><span>•</span><span>{form.questions.filter(q => q.type !== "section").length} Q</span></>}
-            {form.dueDate && <><span>•</span><span><span className="font-medium text-gray-700">Due</span> {fmtDue(form.dueDate, form.dueTime)}</span></>}
-            {form._publisherName && <><span>•</span><PublisherChip name={form._publisherName} image={form._publisherImage}/></>}
-          </div>
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={image}
+        alt={name ?? "Publisher"}
+        width={size}
+        height={size}
+        onError={() => setImgError(true)}
+        style={{ width: size, height: size, borderRadius: "50%", objectFit: "cover", flexShrink: 0, border: "1.5px solid #bfdbfe" }}
+      />
+    );
+  }
+  return (
+    <span
+      style={{
+        width: size, height: size, borderRadius: "50%", background: "#1d6fa4", color: "#fff",
+        fontSize: size * 0.42, fontWeight: 700, display: "inline-flex",
+        alignItems: "center", justifyContent: "center", flexShrink: 0,
+      }}
+    >
+      {initial}
+    </span>
+  );
+}
+
+
+function SubmitterFormRowInner({ form, showPublisher, seenIds, onView }: {
+  form: Form; showPublisher: boolean; seenIds: Set<string>; onView?: (f: Form) => void;
+}) {
+  const now = new Date();
+  const untilDate = buildLocalDate(form.availableUntil, form.availableUntilTime);
+  const isClosed = !!untilDate && now > untilDate;
+  const submitted = isSubmitted(form);
+  const isNew = !submitted && !seenIds.has(String(form.id));
+  return (
+    <div className="cft-row" onClick={() => onView?.(form)}>
+      <div className="w-1 h-8 rounded-full shrink-0" style={{ background: submitted ? "#16a34a" : "#60a5fa" }}/>
+      <FileText size={16} className="shrink-0 text-gray-400"/>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 flex-wrap">
+          <h3 className="text-sm font-semibold hover:underline word-break" style={{ color: "#0369a1" }}>{form.title}</h3>
+          <span className="text-[10px] px-2 py-0.5 rounded-full text-white font-medium shrink-0" style={{ background: TYPE_COLORS[form.formType] ?? MAROON }}>{form.formType}</span>
+          {isNew && <NewBadge />}
+          {isClosed && <span className="text-[10px] text-gray-500 font-medium shrink-0">Closed</span>}
         </div>
+        <div className="cft-row-meta mt-0.5 text-xs text-gray-500">
+          {form.questions?.length > 0 && <><span>•</span><span>{form.questions.filter(q => q.type !== "section").length} Q</span></>}
+          {form.dueDate && <><span>•</span><span><span className="font-medium text-gray-700">Due</span> {fmtDue(form.dueDate, form.dueTime)}</span></>}
+          {showPublisher && form._publisherName && <><span>•</span><PublisherChip name={form._publisherName} image={form._publisherImage}/></>}
+        </div>
+      </div>
+      {submitted ? (
+        <span className="text-[11px] px-2 sm:px-3 py-1 rounded-full font-bold shrink-0 inline-flex items-center gap-1" style={{ background: "#f0fdf4", color: "#16a34a", border: "1px solid #bbf7d0" }}>
+          <svg width="11" height="11" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+          Submitted
+        </span>
+      ) : (
         <span className="text-[11px] px-2 sm:px-3 py-1 rounded-full font-bold shrink-0" style={{ background: "#fef2f2", color: MAROON, border: "1px solid #f0c0c0" }}>
           Fill out
         </span>
-      </div>
-    );
-  };
+      )}
+    </div>
+  );
+}
 
-  const GroupSection = ({ title, items }: { title: string; items: Form[] }) => {
-    const [col, setCol] = useState(false);
-    return (
-      <div className="mb-3">
-        <div className="flex items-center gap-2 px-4 py-2.5 border select-none cursor-pointer"
-          style={{ background: "#f0f9ff", borderColor: "#bae6fd" }} onClick={() => setCol(c => !c)}>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#0369a1" strokeWidth="2.5"
-            style={{ transform: col ? "rotate(-90deg)" : "rotate(0deg)", transition: "transform 0.15s", flexShrink: 0 }}>
-            <path d="M6 9l6 6 6-6"/>
-          </svg>
-          <span className="text-sm font-semibold" style={{ color: "#0369a1" }}>{title}</span>
-          <span className="text-xs text-blue-400 ml-1">({items.length})</span>
-        </div>
-        {!col && (
-          <div className="border border-t-0" style={{ borderColor: "#bae6fd" }}>
-            {items.map(f => <FormRow key={f.id} form={f}/>)}
-          </div>
+function SubmitterGroup({ title, count, avatarName, avatarImage, role, items, showPublisher, seenIds, onView }: {
+  title: string; count: number;
+  avatarName?: string | null; avatarImage?: string | null; role?: string | null;
+  items: Form[]; showPublisher: boolean; seenIds: Set<string>; onView: (f: Form) => void;
+}) {
+  const [collapsed, setCollapsed] = useState(false);
+  const newCount = items.filter(f => !isSubmitted(f) && !seenIds.has(String(f.id))).length;
+  return (
+    <div style={{ marginBottom: 10, borderRadius: 12, overflow: "hidden", border: "1px solid #bfdbfe", boxShadow: "0 1px 2px rgba(0,0,0,0.03)" }}>
+      <div
+        onClick={() => setCollapsed(c => !c)}
+        style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 10px", background: "#eff6ff", borderBottom: collapsed ? "none" : "1px solid #bfdbfe", cursor: "pointer" }}
+      >
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1d6fa4" strokeWidth="2.5"
+          style={{ flexShrink: 0, transform: collapsed ? "rotate(-90deg)" : "none", transition: "transform 0.15s" }}>
+          <path d="M6 9l6 6 6-6" />
+        </svg>
+        {avatarName !== undefined && <PublisherAvatar name={avatarName} image={avatarImage} size={20} />}
+        <span style={{ fontSize: 13, fontWeight: 700, color: "#1d4ed8", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0, flex: 1 }}>
+          {title}
+        </span>
+        {role && (
+          <span style={{ padding: "1px 6px", borderRadius: 4, fontSize: 9, fontWeight: 700, textTransform: "uppercase", background: "#eff6ff", color: "#1d6fa4", border: "1px solid #bfdbfe", flexShrink: 0 }}>
+            {role}
+          </span>
         )}
+        <span style={{ fontSize: 12, color: "#93c5fd", flexShrink: 0 }}>({count})</span>
+        {newCount > 0 && <span style={{ padding: "1px 6px", borderRadius: 20, fontSize: 9, fontWeight: 800, color: "#fff", background: "#dc2626", flexShrink: 0 }}>{newCount}</span>}
       </div>
-    );
-  };
+      {!collapsed && (
+        <div className="divide-y divide-gray-100">
+          {items.map(f => <SubmitterFormRowInner key={f.id} form={f} showPublisher={showPublisher} seenIds={seenIds} onView={onView} />)}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SubmitterSection({ forms, seenIds, onView }: { forms: Form[]; seenIds: Set<string>; onView: (f: Form) => void }) {
+  const [viewMode, setViewMode] = useState<"author" | "type">("author");
+
+  // Sorted by due date (no due date goes last)
+  const sorted = [...forms].sort((a, b) => {
+    const da = buildLocalDate(a.dueDate, a.dueTime);
+    const db = buildLocalDate(b.dueDate, b.dueTime);
+    if (!da && !db) return 0;
+    if (!da) return 1;
+    if (!db) return -1;
+    return da.getTime() - db.getTime();
+  });
+
+  const byAuthor: Record<string, { image?: string | null; role?: string | null; items: Form[] }> = {};
+  sorted.forEach(f => {
+    const author = f._publisherName ?? f.authorName ?? "Unknown";
+    if (!byAuthor[author]) byAuthor[author] = { image: f._publisherImage ?? f.authorImage, role: f.authorRole, items: [] };
+    byAuthor[author].items.push(f);
+  });
+
+  const byType: Record<string, Form[]> = {};
+  sorted.forEach(f => {
+    const g = f.assignmentGroup || "Assignments";
+    if (!byType[g]) byType[g] = [];
+    byType[g].push(f);
+  });
 
   return (
-    <div className="mt-4">
-      <div className="border border-gray-200 rounded">
-        <div className="flex items-center justify-between px-4 py-3 bg-blue-50 border-b border-blue-100 cursor-pointer select-none"
-          onClick={() => setExpanded(v => !v)}>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-blue-400">{expanded ? "▾" : "▸"}</span>
-            <span className="text-sm font-medium" style={{ color: "#0369a1" }}>Forms</span>
-            {forms.length > 0 && <span className="text-xs text-blue-400 ml-1">({forms.length})</span>}
-          </div>
-          {expanded && (
-            <div className="cft-view-toggle" onClick={e => e.stopPropagation()}>
-              <button className={viewMode === "date" ? "active" : ""} onClick={() => setViewMode("date")}>By Date</button>
-              <button className={viewMode === "type" ? "active" : ""} onClick={() => setViewMode("type")}>By Type</button>
-            </div>
-          )}
+    <div className="mt-2">
+      <div className="flex items-center justify-end mb-3">
+        <div className="cft-view-toggle">
+          <button className={viewMode === "author" ? "active" : ""} onClick={() => setViewMode("author")}>By Author</button>
+          <button className={viewMode === "type" ? "active" : ""} onClick={() => setViewMode("type")}>By Type</button>
         </div>
-        {expanded && (
-          <div>
-            {forms.length === 0 ? (
-              <div className="px-4 py-8 text-center"><p className="text-sm text-gray-400">No forms assigned to you.</p></div>
-            ) : viewMode === "date" ? (
-              <>
-                {upcoming.length > 0 && <GroupSection title="Upcoming" items={upcoming}/>}
-                {undated.length > 0 && <GroupSection title="Undated" items={undated}/>}
-                {past.length > 0 && <GroupSection title="Past" items={past}/>}
-              </>
-            ) : (
-              Object.entries(typeGroups).map(([grp, items]) => <GroupSection key={grp} title={grp} items={items}/>)
-            )}
-          </div>
-        )}
       </div>
+
+      {forms.length === 0 ? (
+        <div className="px-4 py-8 text-center"><p className="text-sm text-gray-400">No forms assigned to you.</p></div>
+      ) : viewMode === "author" ? (
+        Object.entries(byAuthor).map(([author, { image, role, items }]) => (
+          <SubmitterGroup
+            key={author} title={author} count={items.length}
+            avatarName={author} avatarImage={image} role={role}
+            items={items} showPublisher={false} seenIds={seenIds} onView={onView}
+          />
+        ))
+      ) : (
+        Object.entries(byType).map(([grp, items]) => (
+          <SubmitterGroup
+            key={grp} title={grp} count={items.length}
+            items={items} showPublisher={true} seenIds={seenIds} onView={onView}
+          />
+        ))
+      )}
     </div>
   );
 }
@@ -1430,6 +1517,7 @@ export default function CourseFormsPage({
     score?: number | null; totalPoints?: number | null;
   }[]>([]);
   const [submissionsLoading, setSubmissionsLoading] = useState(false);
+    const [seenIds, setSeenIds] = useState<Set<string>>(() => getSeenIds(courseId));
 
   const canManage = canManageForms ?? viewer?.canManageForms ?? false;
   const headMode = isHead || isStaff || (
@@ -1508,6 +1596,8 @@ export default function CourseFormsPage({
   };
 
   const openForm = (form: Form) => {
+    markSeen(courseId, form.id);
+    setSeenIds(getSeenIds(courseId));
     setViewingForm(form);
     const role = resolveFormRole(form, currentUserId);
     if ((headMode || canManage) && role === "manager") setMode("detail");
@@ -1521,7 +1611,7 @@ export default function CourseFormsPage({
         <style>{RESPONSIVE_CSS}</style>
         <CourseFormAnswer
           courseId={courseId} form={viewingForm} currentUserId={currentUserId}
-          onBack={() => { setMode("list"); setViewingForm(undefined); }}
+          onBack={() => { setMode("list"); setViewingForm(undefined); loadForms(); }}
         />
       </>
     );
@@ -1621,9 +1711,9 @@ export default function CourseFormsPage({
           />
         )}
         <div className="h-full overflow-y-auto pb-6" style={{ fontFamily: FONT }}>
-          <div className="cft-section-label" style={{ color: "#7b1113", background: "#fef2f2", borderBottom: "1px solid #f0c0c0" }}>
-            <span>Published by You</span>
-          </div>
+          <div className="cft-section-label" style={{ color: "#9ca3af" }}>
+  <span>Published by You</span>
+</div>
           <div className="px-3 sm:px-5 py-4" style={{ borderBottom: "2px solid #e5e7eb" }}>
             <ManagerSection
               forms={managerForms}
@@ -1634,11 +1724,11 @@ export default function CourseFormsPage({
               onView={openForm}
             />
           </div>
-          <div className="cft-section-label" style={{ color: "#1d6fa4", background: "#eff6ff", borderBottom: "1px solid #bfdbfe", borderTop: "1px solid #bfdbfe" }}>
-            <span>Assigned to You</span>
-          </div>
+          <div className="cft-section-label" style={{ color: "#9ca3af" }}>
+  <span>Assigned to You</span>
+</div>
           <div className="px-3 sm:px-5 py-4">
-            <SubmitterSection forms={submitterForms} onView={openForm}/>
+            <SubmitterSection forms={submitterForms} seenIds={seenIds} onView={openForm}/>
           </div>
         </div>
       </>

@@ -107,6 +107,7 @@ function CreateCourseModal({
             <option value="FACULTY">Faculty</option>
             <option value="GUIDANCE">Guidance</option>
             <option value="LIBRARY">Library</option>
+            <option value="OSA">OSA (Office of Student Affairs)</option>
           </select>
         </div>
         <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, padding: "12px 22px 18px", background: "#fdf8f8", borderTop: "1px solid #f0e4e4" }}>

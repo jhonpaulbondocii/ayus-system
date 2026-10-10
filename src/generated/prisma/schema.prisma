@@ -104,6 +104,10 @@ model User {
   exitInterviewsCounseled                   ExitInterview[]           @relation("ExitInterviewCounselor")
   submissions_submissions_gradedByIdTousers Submission[]              @relation("submissions_gradedByIdTousers")
   submissions                               Submission[]
+  violationsRecorded                        Violation[]               @relation("ViolationRecordedBy")
+  violationNotes                            ViolationNote[]           @relation("ViolationNoteAuthor")
+  parentContactsRecorded                    ParentContact[]           @relation("ParentContactRecordedBy")
+  lostFoundRecorded                         LostFoundItem[]           @relation("LostFoundRecordedBy")
 
   @@map("users")
 }
@@ -155,6 +159,9 @@ model Course {
   libraryReceivingLogs LibraryReceivingLog[]
   LibraryBook          LibraryBook[]
   LibraryBorrowRecord  LibraryBorrowRecord[]
+  violationTypes       ViolationType[]
+  violations           Violation[]
+  lostFoundItems       LostFoundItem[]
 
   @@map("courses")
 }
@@ -607,8 +614,16 @@ model Student {
   email              String?
   address            String?
   birthDate          DateTime?
+  yearSection        String?
+  mobileNo           String?
+  guardianName       String?
+  guardianContact    String?
+  standing           String              @default("GOOD_STANDING") // GOOD_STANDING | ON_PROBATION | SUSPENDED
+  clearanceHold      Boolean             @default(false)
+  deletedAt          DateTime?
   medicalExamRecords MedicalExamRecord[]
   patientRecords     PatientRecord[]
+  violations         Violation[]
 
   @@map("students")
 }
@@ -627,7 +642,7 @@ model PatientRecord {
   action             PatientAction
   notes              String?
   visitDate          DateTime
-  recordedBy         String
+  recordedBy         String?
   createdAt          DateTime          @default(now())
   updatedAt          DateTime          @updatedAt
   signEmailSentAt    DateTime?
@@ -640,7 +655,7 @@ model PatientRecord {
   medicalConditionId String?
   medicineUsages     MedicineUsage[]
   course             Course            @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  recordedByUser     User              @relation("RecordedBy", fields: [recordedBy], references: [id])
+  recordedByUser     User?             @relation("RecordedBy", fields: [recordedBy], references: [id], onDelete: SetNull)
   student            Student           @relation(fields: [studentId], references: [id], onDelete: Cascade)
   medicalCondition   MedicalCondition? @relation(fields: [medicalConditionId], references: [id])
 
@@ -689,7 +704,7 @@ model MedicalExamRecord {
   purpose             String
   remarks             String?
   visitDate           DateTime
-  recordedBy          String
+  recordedBy          String?
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
   signatureUrl        String?
@@ -715,7 +730,7 @@ model MedicalExamRecord {
   clearanceRemarks    String?
   clearanceIssuedAt   DateTime?
   course              Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  recordedByUser      User      @relation("MedExamRecordedBy", fields: [recordedBy], references: [id])
+  recordedByUser      User?     @relation("MedExamRecordedBy", fields: [recordedBy], references: [id], onDelete: SetNull)
   student             Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@index([courseId])
@@ -819,6 +834,13 @@ model GuidanceInfoSheet {
   sex             String?
   religion        String?
   completeAddress String?
+  civilStatus     String?
+
+  // Special categories (null = hindi sumagot)
+  isPwd        Boolean?
+  isIndigenous Boolean?
+  isSoloParent Boolean?
+  isFirstGen   Boolean?
 
   // Parents — Father
   fatherName        String?
@@ -914,12 +936,12 @@ model GuidanceLogEntry {
   signTokenExpiresAt DateTime?
   signEmailSentAt    DateTime?
   visitDate          DateTime  @default(now())
-  recordedBy         String
+  recordedBy         String?
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
 
   course         Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  recordedByUser User   @relation("GuidanceLogRecordedBy", fields: [recordedBy], references: [id])
+  recordedByUser User?  @relation("GuidanceLogRecordedBy", fields: [recordedBy], references: [id], onDelete: SetNull)
 
   @@index([courseId])
   @@index([courseId, visitDate])
@@ -1180,6 +1202,152 @@ model LibraryBorrowRecord {
   @@index([courseId, status])
   @@index([borrowerNo])
   @@map("library_borrow_records")
+}
+
+model ViolationType {
+  id               String    @id @default(cuid())
+  courseId         String
+  code             String
+  name             String
+  description      String?
+  severity         String    @default("MINOR") // MINOR | SERIOUS | VERY_SERIOUS
+  category         String? // Sec. 78.3 grouping
+  dismissalOnFirst Boolean   @default(false) // dismissal agad kahit first offense
+  defaultSanction  String?
+  sanctionMinDays  Int?
+  sanctionMaxDays  Int?
+  maxSanction      String? // hal. "DISMISSAL", "NON_READMISSION"
+  escalationCount  Int       @default(3) // 3x same offense
+  escalatesTo      String? // severity pag na-reach ang count
+  manualRef        String? // hal. "Sec. 78.1 b.6"
+  isActive         Boolean   @default(true)
+  order            Int       @default(0)
+  deletedAt        DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  course     Course      @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  violations Violation[]
+
+  @@unique([courseId, code])
+  @@index([courseId])
+  @@index([courseId, severity])
+  @@map("violation_types")
+}
+
+model Violation {
+  id                    String    @id @default(cuid())
+  courseId              String
+  caseNo                String
+  studentId             String
+  violationTypeId       String
+  severity              String // snapshot ng severity noong na-encode
+  incidentDate          DateTime
+  location              String?
+  description           String?
+  reportedBy            String?
+  reportedByRole        String? // Guard | Faculty | Student | OSA
+  status                String    @default("OPEN") // OPEN | UNDER_REVIEW | SANCTIONED | RESOLVED | DISMISSED
+  noticeToExplainAt     DateTime?
+  explanationReceivedAt DateTime?
+  hearingDate           DateTime?
+  hearingResult         String?
+  sanction              String?
+  sanctionDays          Int?
+  sanctionStart         DateTime?
+  sanctionEnd           DateTime?
+  sanctionCompleted     Boolean   @default(false)
+  decidedBy             String? // Dean | Prefect | VP-SA | President ...
+  decidedAt             DateTime?
+  appealed              Boolean   @default(false)
+  appealResult          String?
+  resolvedAt            DateTime?
+  recordedBy            String?
+  deletedAt             DateTime?
+  deletedBy             String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  course         Course          @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  student        Student         @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  violationType  ViolationType   @relation(fields: [violationTypeId], references: [id])
+  recordedByUser User?           @relation("ViolationRecordedBy", fields: [recordedBy], references: [id], onDelete: SetNull)
+  parentContacts ParentContact[]
+  notes          ViolationNote[]
+
+  @@unique([courseId, caseNo])
+  @@index([courseId])
+  @@index([studentId])
+  @@index([violationTypeId])
+  @@index([courseId, status])
+  @@index([courseId, incidentDate])
+  @@map("violations")
+}
+
+model ParentContact {
+  id            String    @id @default(cuid())
+  violationId   String
+  contactedAt   DateTime  @default(now())
+  method        String    @default("CALL") // CALL | SMS | LETTER | PERSONAL
+  contactedBy   String?
+  contactPerson String?
+  relationship  String?
+  attendance    String    @default("NO_RESPONSE") // YES | NO | NO_RESPONSE
+  attemptNo     Int       @default(1)
+  signatureUrl  String?
+  recordedBy    String?
+  deletedAt     DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  violation      Violation @relation(fields: [violationId], references: [id], onDelete: Cascade)
+  recordedByUser User?     @relation("ParentContactRecordedBy", fields: [recordedBy], references: [id], onDelete: SetNull)
+
+  @@index([violationId])
+  @@map("parent_contacts")
+}
+
+model ViolationNote {
+  id           String    @id @default(cuid())
+  violationId  String
+  body         String
+  confidential Boolean   @default(true) // Head lang ang nakakakita
+  authorId     String?
+  deletedAt    DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  violation Violation @relation(fields: [violationId], references: [id], onDelete: Cascade)
+  author    User?     @relation("ViolationNoteAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+
+  @@index([violationId])
+  @@map("violation_notes")
+}
+
+model LostFoundItem {
+  id            String    @id @default(cuid())
+  courseId      String
+  itemName      String
+  description   String?
+  category      String    @default("Others")
+  dateFound     DateTime
+  locationFound String?
+  foundBy       String?
+  status        String    @default("UNCLAIMED") // UNCLAIMED | CLAIMED | TURNED_OVER
+  claimerName   String?
+  claimedAt     DateTime?
+  photoUrl      String?
+  recordedBy    String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  course         Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  recordedByUser User?  @relation("LostFoundRecordedBy", fields: [recordedBy], references: [id], onDelete: SetNull)
+
+  @@index([courseId])
+  @@index([courseId, status])
+  @@index([courseId, dateFound])
+  @@map("lost_found_items")
 }
 
 enum Role {

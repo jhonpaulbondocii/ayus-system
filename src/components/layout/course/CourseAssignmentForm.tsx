@@ -780,31 +780,6 @@ export default function CourseAssignmentForm({
                     className="w-full h-9 border border-dashed border-gray-300 bg-gray-50 text-xs text-gray-600 rounded-md hover:bg-gray-100 hover:border-gray-400 flex items-center justify-center gap-1.5 transition-colors">
                     + Add Submission Entry
                   </button>
-                  {/* Staff View Preview */}
-                  <div className="rounded-md p-3 border text-xs" style={{ background: "#fef2f2", borderColor: "#f0c0c0" }}>
-                    <p className="font-bold mb-2" style={{ color: MAROON }}>Staff View Preview</p>
-                    <div className="space-y-2">
-                      {submissionEntries.map(entry => {
-                        const allowed = normalizeFileTypes(entry.allowedFileTypes);
-                        const showTypes = (entry.type === "File Upload" || entry.type === "Media Recording") && allowed.length > 0;
-                        return (
-                          <div key={entry.id} className="flex items-center gap-2 flex-wrap bg-white rounded border border-gray-100 px-2.5 py-2">
-                            <span className="text-xs font-semibold text-gray-700">{entry.label?.trim() || entry.type}</span>
-                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded"
-                              style={entry.required ? { background: "#fef2f2", color: MAROON, border: "1px solid #f0c0c0" } : { background: "#f3f4f6", color: "#6b7280" }}>
-                              {entry.required ? "Required" : "Optional"}
-                            </span>
-                            {showTypes && <span className="text-[10px] font-black px-1.5 py-0.5 rounded uppercase" style={{ background: MAROON, color: "#fff" }}>{formatFileTypes(allowed)}</span>}
-                            {(entry.type === "File Upload" || entry.type === "Media Recording") && (
-                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded" style={{ background: "#eff6ff", color: "#1d4ed8", border: "1px solid #bfdbfe" }}>
-                                Max {entry.maxFileSizeValue ?? 1}{entry.maxFileSizeUnit ?? "MB"}
-                              </span>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
                 </div>
               </>
             )}
