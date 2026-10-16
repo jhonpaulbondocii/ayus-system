@@ -33,24 +33,67 @@ export async function GET(
     const { searchParams } = new URL(req.url);
     const search = searchParams.get("search")?.trim() ?? "";
 
-    const medicines = await prisma.medicineInventory.findMany({
+    const includeArchived = searchParams.get("archived") === "1";
+    const soon = new Date();
+    soon.setDate(soon.getDate() + 30);
+
+    const rows = await prisma.medicineInventory.findMany({
       where: {
         courseId,
+        ...(includeArchived ? {} : { archivedAt: null }),
         ...(search
-          ? { name: { contains: search, mode: "insensitive" } }
+          ? {
+              OR: [
+                { name:        { contains: search, mode: "insensitive" } },
+                { genericName: { contains: search, mode: "insensitive" } },
+                { brandName:   { contains: search, mode: "insensitive" } },
+                { category:    { contains: search, mode: "insensitive" } },
+              ],
+            }
           : {}),
       },
       select: {
-        id:                true,
-        name:              true,
-        unit:              true,
-        stockQty:          true,
-        lowStockThreshold: true,
-        notes:             true,
-        createdAt:         true,
-        updatedAt:         true,
+        id:                 true,
+        name:               true,
+        unit:               true,
+        stockQty:           true,
+        lowStockThreshold:  true,
+        notes:              true,
+        genericName:        true,
+        brandName:          true,
+        strength:           true,
+        dosageForm:         true,
+        category:           true,
+        location:           true,
+        supplier:           true,
+        isPrescriptionOnly: true,
+        packaging:          true,
+        piecesPerPack:      true,
+        parLevel:           true,
+        packCost:           true,
+        defaultDispenseQty: true,
+        archivedAt:         true,
+        createdAt:          true,
+        updatedAt:          true,
+        batches: {
+          where:   { qtyRemaining: { gt: 0 }, expiryDate: { not: null } },
+          orderBy: { expiryDate: "asc" },
+          select:  { expiryDate: true, qtyRemaining: true },
+        },
       },
       orderBy: { name: "asc" },
+    });
+
+    const now = new Date();
+    const medicines = rows.map(({ batches, ...m }) => {
+      const expired      = batches.filter(b => b.expiryDate! <= now);
+      const expiringSoon = batches.filter(b => b.expiryDate! > now && b.expiryDate! <= soon);
+      return {
+        ...m,
+        nextExpiry:      batches.find(b => b.expiryDate! > now)?.expiryDate ?? null,
+        expiredQty:      expired.reduce((s, b) => s + b.qtyRemaining, 0),
+        expiringSoonQty: expiringSoon.reduce((s, b) => s + b.qtyRemaining, 0),
+      };
     });
 
     return NextResponse.json({ medicines });
@@ -94,12 +137,32 @@ export async function POST(
     }
 
     const body = await req.json() as {
-      name:               string;
-      unit:               string;
-      stockQty?:          number;
-      lowStockThreshold?: number;
-      notes?:             string | null;
+      name:                string;
+      unit:                string;
+      stockQty?:           number; // sa pinakamaliit na unit
+      lowStockThreshold?:  number;
+      notes?:              string | null;
+      genericName?:        string | null;
+      brandName?:          string | null;
+      strength?:           string | null;
+      dosageForm?:         string | null;
+      category?:           string | null;
+      location?:           string | null;
+      supplier?:           string | null;
+      isPrescriptionOnly?: boolean;
+      packaging?:          string;
+      piecesPerPack?:      number;
+      parLevel?:           number | null;
+      packCost?:           number | null;
+      defaultDispenseQty?: number | null;
+      expiryDate?:         string | null; // para sa opening stock
+      batchNo?:            string | null;
     };
+
+    const piecesPerPack = body.piecesPerPack ?? 1;
+    if (!Number.isInteger(piecesPerPack) || piecesPerPack < 1) {
+      return NextResponse.json({ error: "Pieces per pack must be at least 1" }, { status: 400 });
+    }
 
     if (!body.name?.trim()) {
       return NextResponse.json({ error: "Medicine name is required" }, { status: 400 });
@@ -128,26 +191,65 @@ export async function POST(
       );
     }
 
-    const medicine = await prisma.medicineInventory.create({
-      data: {
-        courseId,
-        name:              body.name.trim(),
-        unit:              body.unit.trim(),
-        stockQty:          body.stockQty          ?? 0,
-        lowStockThreshold: body.lowStockThreshold ?? 10,
-        notes:             body.notes?.trim()     ?? null,
-      },
-      select: {
-        id:                true,
-        name:              true,
-        unit:              true,
-        stockQty:          true,
-        lowStockThreshold: true,
-        notes:             true,
-        createdAt:         true,
-        updatedAt:         true,
-      },
-    });
+    const openingQty = body.stockQty ?? 0;
+    let openingExpiry: Date | null = null;
+    if (body.expiryDate) {
+      openingExpiry = new Date(body.expiryDate);
+      if (isNaN(openingExpiry.getTime())) {
+        return NextResponse.json({ error: "Invalid expiry date" }, { status: 400 });
+      }
+    }
+
+    const medicine = await prisma.$transaction(async (tx) => {
+      const created = await tx.medicineInventory.create({
+        data: {
+          courseId,
+          name:               body.name.trim(),
+          unit:               body.unit.trim(),
+          stockQty:           openingQty,
+          lowStockThreshold:  body.lowStockThreshold ?? 10,
+          notes:              body.notes?.trim() || null,
+          genericName:        body.genericName?.trim() || null,
+          brandName:          body.brandName?.trim() || null,
+          strength:           body.strength?.trim() || null,
+          dosageForm:         body.dosageForm?.trim() || null,
+          category:           body.category?.trim() || null,
+          location:           body.location?.trim() || null,
+          supplier:           body.supplier?.trim() || null,
+          isPrescriptionOnly: body.isPrescriptionOnly ?? false,
+          packaging:          body.packaging?.trim() || "piece",
+          piecesPerPack,
+          parLevel:           body.parLevel ?? null,
+          packCost:           body.packCost ?? null,
+          defaultDispenseQty: body.defaultDispenseQty ?? null,
+        },
+      });
+
+      if (openingQty > 0) {
+        const batch = await tx.medicineBatch.create({
+          data: {
+            medicineId:   created.id,
+            batchNo:      body.batchNo?.trim() || null,
+            expiryDate:   openingExpiry,
+            qtyReceived:  openingQty,
+            qtyRemaining: openingQty,
+            source:       "OPENING",
+          },
+        });
+        await tx.medicineStockMovement.create({
+          data: {
+            medicineId:   created.id,
+            batchId:      batch.id,
+            type:         "OPENING",
+            qtyChange:    openingQty,
+            balanceAfter: openingQty,
+            reason:       "Opening stock",
+            createdById:  access.userId,
+          },
+        });
+      }
+      return created;
+    }, { timeout: 15000 });
 
     return NextResponse.json({ medicine }, { status: 201 });
   } catch (err) {

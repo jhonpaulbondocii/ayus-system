@@ -14,7 +14,6 @@ const h3: React.CSSProperties = { margin: "18px 0 8px", fontSize: 12, fontWeight
 type Form = {
   hearingDate: string; hearingResult: string;
   sanction: string; sanctionDays: string; sanctionStart: string; sanctionEnd: string;
-  decidedBy: string; decidedAt: string;
   appealed: boolean; appealResult: string;
   location: string; description: string;
 };
@@ -27,8 +26,6 @@ function toForm(v: ViolationDetail): Form {
     sanctionDays: v.sanctionDays?.toString() ?? "",
     sanctionStart: dateOnly(v.sanctionStart),
     sanctionEnd: dateOnly(v.sanctionEnd),
-    decidedBy: v.decidedBy ?? "",
-    decidedAt: dateOnly(v.decidedAt),
     appealed: v.appealed,
     appealResult: v.appealResult ?? "",
     location: v.location ?? "",
@@ -158,7 +155,7 @@ export default function ViolationDetailDrawer({
                 <Field label="Hearing Result"><textarea style={textarea} value={form.hearingResult} onChange={(e) => set("hearingResult", e.target.value)} /></Field>
               </div>
 
-              <h3 style={h3}>Sanction & Decision</h3>
+              <h3 style={h3}>Sanction</h3>
               <div style={{ display: "grid", gap: 12 }}>
                 <Field label="Sanction"><input style={input} value={form.sanction} onChange={(e) => set("sanction", e.target.value)} placeholder="e.g. Suspension, Community service" /></Field>
                 <div style={two}>
@@ -166,8 +163,12 @@ export default function ViolationDetailDrawer({
                   <div />
                   <Field label="Sanction Start"><input style={input} type="date" value={form.sanctionStart} onChange={(e) => set("sanctionStart", e.target.value)} /></Field>
                   <Field label="Sanction End"><input style={input} type="date" value={form.sanctionEnd} onChange={(e) => set("sanctionEnd", e.target.value)} /></Field>
-                  <Field label="Decided By"><input style={input} value={form.decidedBy} onChange={(e) => set("decidedBy", e.target.value)} placeholder="Dean, Prefect, VP-SA…" /></Field>
-                  <Field label="Decided At"><input style={input} type="date" value={form.decidedAt} onChange={(e) => set("decidedAt", e.target.value)} /></Field>
+                <div style={two}>
+                  <Field label="Days"><input style={input} type="number" min={0} value={form.sanctionDays} onChange={(e) => set("sanctionDays", e.target.value)} /></Field>
+                  <div />
+                  <Field label="Sanction Start"><input style={input} type="date" value={form.sanctionStart} onChange={(e) => set("sanctionStart", e.target.value)} /></Field>
+                  <Field label="Sanction End"><input style={input} type="date" value={form.sanctionEnd} onChange={(e) => set("sanctionEnd", e.target.value)} /></Field>
+                </div>
                 </div>
               </div>
 

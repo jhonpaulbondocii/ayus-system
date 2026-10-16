@@ -6,6 +6,7 @@ import { requireCoursePermission } from "@/lib/course-access";
 import { PatientAction } from "@prisma/client";
 import { generateSignToken, signTokenExpiry } from "@/lib/sign-token";
 import { sendSignatureRequestEmail } from "@/lib/email";
+import { dispenseForVisit, StockError } from "@/lib/medicine-stock";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // GET /api/courses/[id]/patient-records
@@ -347,9 +348,12 @@ export async function POST(
         });
 
         for (const med of medicineSnapshots) {
-          await tx.medicineInventory.update({
-            where: { id: med.id },
-            data:  { stockQty: { decrement: med.quantityUsed } },
+          await dispenseForVisit(tx, {
+            medicineId:      med.id,
+            courseId,
+            qty:             med.quantityUsed,
+            patientRecordId: created.id,
+            userId:          access.userId,
           });
         }
       }
@@ -430,6 +434,9 @@ export async function POST(
       { status: 201 }
     );
   } catch (err) {
+    if (err instanceof StockError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
     console.error("[POST /patient-records]", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }

@@ -16,6 +16,7 @@ import { Menu, X, ChevronRight, ChevronLeft } from "lucide-react";
 import Navbar from "./NavBar";
 import type { BreadcrumbItem } from "./NavBar";
 
+import CourseMedicalCertificateTab from "./course/CourseMedicalCertificateTab";
 import CourseHomeTab from "./course/CourseHomeTab";
 import CourseAnnouncementsTab from "./course/CourseAnnouncementsTab";
 import CourseAssignmentsTab from "./course/CourseAssignmentsTab";
@@ -457,13 +458,13 @@ function CourseViewInner({ courseId }: { courseId: string }) {
   const TABS: Tab[] = (
     isHead
       ? ["Home", "Announcements", "Assignments", "Repositories", "Grades", "Users", "Form",
-          ...(isClinic   ? ["Patient Records", "Medical Exam Record", "Medicine Inventory", "Medical Cases Summary"] : []),
+          ...(isClinic ? ["Patient Records", "Medical Exam Record", "Medical Certificate", "Medicine Inventory", "Medical Cases Summary"] : []),
           ...(isGuidance ? ["Information Sheets", "Log Sheet", "Exit Interviews"] : []),
           ...(isLibrary  ? ["Library Cards", "Library Log", "Book Catalog", "Borrowing"] : []),
           ...(isOSA      ? ["Student Directory", "Disciplinary Log", "Violation Types"] : []),
         ]
       : ["Home", "Announcements", "Assignments", "Grades", "Users", "Form",
-          ...(isClinic   ? ["Patient Records", "Medical Exam Record", "Medicine Inventory", "Medical Cases Summary"] : []),
+          ...(isClinic ? ["Patient Records", "Medical Exam Record", "Medical Certificate", "Medicine Inventory", "Medical Cases Summary"] : []),
           ...(isGuidance ? ["Information Sheets", "Log Sheet", "Exit Interviews"] : []),
           ...(isLibrary  ? ["Library Cards", "Library Log", "Book Catalog", "Borrowing"] : []),
           ...(isOSA ? ["Student Directory", "Disciplinary Log", "Violation Types", "Lost & Found"] : []),
@@ -705,6 +706,16 @@ currentUserId={currentUserId}
       {activeTab === "Medical Exam Record" && isClinic && dataLoaded && (
         <div className="flex-1 overflow-hidden flex flex-col">
                     <CourseMedicalExamRecordTab
+            courseId={courseId}
+            isAdmin={isAdmin}
+            isHead={isHead || isStaff}
+            currentUserId={currentUserId}
+          />
+        </div>
+      )}
+      {activeTab === "Medical Certificate" && isClinic && dataLoaded && (
+        <div className="flex-1 overflow-hidden flex flex-col">
+          <CourseMedicalCertificateTab
             courseId={courseId}
             isAdmin={isAdmin}
             isHead={isHead || isStaff}

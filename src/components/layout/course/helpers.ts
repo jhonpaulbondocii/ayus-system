@@ -20,7 +20,7 @@ export const COLORS = {
 export const ALL_TABS = [
   "Home","Announcements","Assignments",
   "Grades","Users","Collaborations","Form","Repositories","Patient Records",
-  "Medical Exam Record","Medicine Inventory","Medical Cases Summary","Information Sheets","Log Sheet",
+  "Medical Exam Record","Medical Certificate","Medicine Inventory","Medical Cases Summary","Information Sheets","Log Sheet",
   "Exit Interviews","Student Directory","Disciplinary Log","Violation Types","Lost & Found","Library Cards","Library Log",
   "Book Catalog","Inventory","Borrowing",
 ] as const;

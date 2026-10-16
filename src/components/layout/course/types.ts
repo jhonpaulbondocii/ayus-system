@@ -222,6 +222,7 @@ export type Tab =
   | "Repositories"
   | "Patient Records"
   | "Medical Exam Record"
+  | "Medical Certificate"
   | "Medicine Inventory"
   | "Medical Cases Summary"
   | "Information Sheets"

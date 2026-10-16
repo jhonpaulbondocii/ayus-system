@@ -51,21 +51,36 @@ export async function PUT(
     }
 
     const body = await req.json() as {
-      name?:              string;
-      unit?:              string;
-      stockQty?:          number;
-      lowStockThreshold?: number;
-      notes?:             string | null;
+      name?:               string;
+      unit?:               string;
+      lowStockThreshold?:  number;
+      notes?:              string | null;
+      genericName?:        string | null;
+      brandName?:          string | null;
+      strength?:           string | null;
+      dosageForm?:         string | null;
+      category?:           string | null;
+      location?:           string | null;
+      supplier?:           string | null;
+      isPrescriptionOnly?: boolean;
+      packaging?:          string;
+      piecesPerPack?:      number;
+      parLevel?:           number | null;
+      packCost?:           number | null;
+      defaultDispenseQty?: number | null;
+      archived?:           boolean;
     };
+
+    // Ang stockQty ay hindi na direktang ine-edit dito. Gamitin ang Restock/Adjust.
+    if (body.piecesPerPack !== undefined && (!Number.isInteger(body.piecesPerPack) || body.piecesPerPack < 1)) {
+      return NextResponse.json({ error: "Pieces per pack must be at least 1" }, { status: 400 });
+    }
 
     if (body.name !== undefined && !body.name.trim()) {
       return NextResponse.json({ error: "Medicine name cannot be empty" }, { status: 400 });
     }
     if (body.unit !== undefined && !body.unit.trim()) {
       return NextResponse.json({ error: "Unit cannot be empty" }, { status: 400 });
-    }
-    if (body.stockQty !== undefined && body.stockQty < 0) {
-      return NextResponse.json({ error: "Stock quantity cannot be negative" }, { status: 400 });
     }
     if (body.lowStockThreshold !== undefined && body.lowStockThreshold < 0) {
       return NextResponse.json({ error: "Low stock threshold cannot be negative" }, { status: 400 });
@@ -88,24 +103,29 @@ export async function PUT(
       }
     }
 
+    const t = (v: string | null | undefined) => (v?.trim() ? v.trim() : null);
+
     const medicine = await prisma.medicineInventory.update({
       where: { id: medId },
       data: {
-        ...(body.name              !== undefined ? { name:              body.name.trim()              } : {}),
-        ...(body.unit              !== undefined ? { unit:              body.unit.trim()              } : {}),
-        ...(body.stockQty          !== undefined ? { stockQty:          body.stockQty                 } : {}),
-        ...(body.lowStockThreshold !== undefined ? { lowStockThreshold: body.lowStockThreshold        } : {}),
-        ...(body.notes             !== undefined ? { notes:             body.notes?.trim() ?? null    } : {}),
-      },
-      select: {
-        id:                true,
-        name:              true,
-        unit:              true,
-        stockQty:          true,
-        lowStockThreshold: true,
-        notes:             true,
-        createdAt:         true,
-        updatedAt:         true,
+        ...(body.name               !== undefined ? { name:               body.name.trim() } : {}),
+        ...(body.unit               !== undefined ? { unit:               body.unit.trim() } : {}),
+        ...(body.lowStockThreshold  !== undefined ? { lowStockThreshold:  body.lowStockThreshold } : {}),
+        ...(body.notes              !== undefined ? { notes:              t(body.notes) } : {}),
+        ...(body.genericName        !== undefined ? { genericName:        t(body.genericName) } : {}),
+        ...(body.brandName          !== undefined ? { brandName:          t(body.brandName) } : {}),
+        ...(body.strength           !== undefined ? { strength:           t(body.strength) } : {}),
+        ...(body.dosageForm         !== undefined ? { dosageForm:         t(body.dosageForm) } : {}),
+        ...(body.category           !== undefined ? { category:           t(body.category) } : {}),
+        ...(body.location           !== undefined ? { location:           t(body.location) } : {}),
+        ...(body.supplier           !== undefined ? { supplier:           t(body.supplier) } : {}),
+        ...(body.isPrescriptionOnly !== undefined ? { isPrescriptionOnly: body.isPrescriptionOnly } : {}),
+        ...(body.packaging          !== undefined ? { packaging:          t(body.packaging) ?? "piece" } : {}),
+        ...(body.piecesPerPack      !== undefined ? { piecesPerPack:      body.piecesPerPack } : {}),
+        ...(body.parLevel           !== undefined ? { parLevel:           body.parLevel } : {}),
+        ...(body.packCost           !== undefined ? { packCost:           body.packCost } : {}),
+        ...(body.defaultDispenseQty !== undefined ? { defaultDispenseQty: body.defaultDispenseQty } : {}),
+        ...(body.archived           !== undefined ? { archivedAt:         body.archived ? new Date() : null } : {}),
       },
     });
 
@@ -152,7 +172,7 @@ export async function DELETE(
     // Verify medicine belongs to this course
     const existing = await prisma.medicineInventory.findUnique({
       where: { id: medId },
-      select: { id: true, courseId: true, name: true, _count: { select: { usages: true } } },
+      select: { id: true, courseId: true, name: true, _count: { select: { usages: true, movements: true } } },
     });
 
     if (!existing) {
@@ -164,13 +184,13 @@ export async function DELETE(
 
     // Block delete if medicine has been used in any patient record
     // (onDelete: Restrict in schema also enforces this at DB level)
-    if (existing._count.usages > 0) {
-      return NextResponse.json(
-        {
-          error: `Cannot delete "${existing.name}" — it has been used in ${existing._count.usages} patient record(s). You can set stock to 0 instead.`,
-        },
-        { status: 409 }
-      );
+    if (existing._count.usages > 0 || existing._count.movements > 0) {
+      // May history: i-archive sa halip na burahin
+      await prisma.medicineInventory.update({
+        where: { id: medId },
+        data:  { archivedAt: new Date() },
+      });
+      return NextResponse.json({ success: true, archived: true });
     }
 
     await prisma.medicineInventory.delete({ where: { id: medId } });

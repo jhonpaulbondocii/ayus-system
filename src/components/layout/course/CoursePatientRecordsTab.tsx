@@ -535,20 +535,47 @@ function VisitSidebar({ isWalkIn, walkInName, student, visitDate, visitTime, com
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   ADD VISIT MODAL
-   FIX: footer buttons always visible on mobile via safe flex column layout
+   ADD VISIT MODAL  (redesigned)
+   - One scrollable form (no tabs)
+   - Live "Visit summary" panel on desktop
+   - Sticky footer that tells the user exactly what is still missing
 ───────────────────────────────────────────────────────────────────────────── */
+function FormSection({ title, hint, children }: {
+  title: string; hint?: string; children: React.ReactNode;
+}) {
+  return (
+    <section className="py-5 first:pt-0 border-b border-gray-100 last:border-b-0">
+      <div className="mb-3.5">
+        <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
+        {hint && <p className="text-xs text-gray-500 mt-0.5">{hint}</p>}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function UnitInput({ unit, ...props }: { unit: string } & React.InputHTMLAttributes<HTMLInputElement>) {
+  return (
+    <div className="relative">
+      <input {...props} className={`${inputCls} pr-12`} />
+      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 pointer-events-none">{unit}</span>
+    </div>
+  );
+}
+
+function SummaryRow({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="flex items-start justify-between gap-3 text-xs py-1">
+      <span className="text-gray-500 shrink-0">{label}</span>
+      <span className="font-medium text-gray-800 text-right break-words min-w-0">{value}</span>
+    </div>
+  );
+}
+
 function AddVisitModal({ courseId, onClose, onSaved, courseOptions }: {
   courseId: string; onClose: () => void; onSaved: (record: PatientRecord) => void; courseOptions: string[];
 }) {
-  type TabKey = "patient" | "visit" | "clinical";
-  const TABS: { key: TabKey; label: string }[] = [
-    { key: "patient",  label: "Patient" },
-    { key: "visit",    label: "Visit Info" },
-    { key: "clinical", label: "Clinical & Action" },
-  ];
-  const [activeTab,    setActiveTab]    = useState<TabKey>("patient");
-  const [showSuccess,  setShowSuccess]  = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const [isWalkIn,         setIsWalkIn]         = useState(false);
   const [walkInFirstName,  setWalkInFirstName]  = useState("");
@@ -582,12 +609,13 @@ function AddVisitModal({ courseId, onClose, onSaved, courseOptions }: {
   const [referralHPI,        setReferralHPI]        = useState("");
   const [referralReason,     setReferralReason]     = useState("");
 
-  const [saving,       setSaving]       = useState(false);
-  const [error,        setError]        = useState("");
-  const [savedRecord,  setSavedRecord]  = useState<PatientRecord | null>(null);
+  const [saving,      setSaving]      = useState(false);
+  const [error,       setError]       = useState("");
+  const [savedRecord, setSavedRecord] = useState<PatientRecord | null>(null);
   const [showMedCertFromSuccess, setShowMedCertFromSuccess] = useState(false);
 
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const scrollRef        = useRef<HTMLDivElement>(null);
 
   const lookupStudent = useCallback(async (num: string) => {
     const trimmed = num.trim();
@@ -608,16 +636,21 @@ function AddVisitModal({ courseId, onClose, onSaved, courseOptions }: {
     searchTimeoutRef.current = setTimeout(() => lookupStudent(val), 600);
   };
 
+  /* ── Validation ── */
   const BP_REGEX = /^\d{2,3}\/\d{2,3}$/;
   const bpValid  = !bloodPressure.trim() || BP_REGEX.test(bloodPressure.trim());
 
-  const patientTabOk  = isWalkIn ? (walkInFirstName.trim().length > 0 && walkInLastName.trim().length > 0) : !!student;
-  const visitTabOk    = !!medicalConditionId && !!visitDate && bpValid;
-  const referralOk    = action !== "REFERRED_HOSPITAL" || (referralTo.trim().length > 0 && referralReason.trim().length > 0);
-  const clinicalTabOk = !!action && referralOk;
-  const canSave       = patientTabOk && visitTabOk && clinicalTabOk;
+  const patientOk  = isWalkIn ? (walkInFirstName.trim().length > 0 && walkInLastName.trim().length > 0) : !!student;
+  const conditionOk = !!medicalConditionId && !!visitDate;
+  const referralOk = action !== "REFERRED_HOSPITAL" || (referralTo.trim().length > 0 && referralReason.trim().length > 0);
+  const stockOk    = !medicineUsages.some(m => m.quantityUsed > m.stockQty);
+  const canSave    = patientOk && conditionOk && bpValid && referralOk;
 
-  const tabStatus: Record<TabKey, boolean> = { patient: patientTabOk, visit: visitTabOk, clinical: clinicalTabOk };
+  const missing: string[] = [];
+  if (!patientOk)   missing.push(isWalkIn ? "patient name" : "student");
+  if (!conditionOk) missing.push("medical condition");
+  if (!bpValid)     missing.push("valid blood pressure");
+  if (!referralOk)  missing.push("referral details");
 
   const resetForm = () => {
     setIsWalkIn(false);
@@ -629,14 +662,13 @@ function AddVisitModal({ courseId, onClose, onSaved, courseOptions }: {
     setTemperature(""); setBloodPressure(""); setPulseRate(""); setWeight("");
     setDiagnosis(""); setMedicineUsages([]); setAction("GIVEN_MEDICINE");
     setReferralTo(""); setReferralHPI(""); setReferralReason("");
-    setActiveTab("patient"); setError("");
+    setError("");
+    scrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleSave = async (closeAfter: boolean) => {
     setError("");
-    if (!patientTabOk)  { setActiveTab("patient");  setError(isWalkIn ? "Please enter the patient's name." : "Please look up a valid student first."); return; }
-    if (!visitTabOk)    { setActiveTab("visit");    setError(!bpValid ? "Blood pressure format is invalid (e.g. 120/80)." : "Please select body system and medical condition."); return; }
-    if (!clinicalTabOk) { setActiveTab("clinical"); setError(!referralOk ? "Referral details required for Referred to Hospital." : "Action taken is required."); return; }
+    if (!canSave) { setError(`Please complete: ${missing.join(", ")}.`); return; }
 
     const medicineText = medicineUsages.length > 0
       ? medicineUsages.map(u => `${u.medicineName} × ${u.quantityUsed} ${u.unit}`).join(", ")
@@ -695,156 +727,128 @@ function AddVisitModal({ courseId, onClose, onSaved, courseOptions }: {
     finally { setSaving(false); }
   };
 
-  const currentIdx = TABS.findIndex(t => t.key === activeTab);
-  const prevTab    = currentIdx > 0 ? TABS[currentIdx - 1].key : null;
-  const nextTab    = currentIdx < TABS.length - 1 ? TABS[currentIdx + 1].key : null;
-  const isLastTab  = activeTab === "clinical";
+  const patientName = isWalkIn ? (walkInFullName || "—") : (student?.name ?? "—");
+  const hasVitals   = !!(temperature || bloodPressure || pulseRate || weight);
+  const badge       = ACTION_BADGE[action] ?? { dot: "#9ca3af" };
+
+  const checklist = [
+    { label: "Patient",           ok: patientOk },
+    { label: "Medical condition", ok: conditionOk },
+    { label: "Action taken",      ok: referralOk },
+  ];
 
   return (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/30"
-      style={{ backdropFilter: "blur(4px)", fontFamily: FONT, paddingBottom: "env(safe-area-inset-bottom)" }}
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40"
+      style={{ backdropFilter: "blur(4px)", fontFamily: FONT }}
       onClick={showSuccess ? undefined : onClose}>
-      {/*
-        KEY FIX: On mobile we use flex-col with explicit height.
-        The footer (action buttons) is always rendered OUTSIDE the scrollable area,
-        pinned at the bottom as a shrink-0 element so it can NEVER be pushed off-screen.
-      */}
       <div
-        className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-5xl overflow-hidden flex flex-col border border-gray-100"
-        style={{
-          height: "calc(100dvh - 0px)",
-          maxHeight: "calc(94dvh - env(safe-area-inset-bottom))",
-          marginBottom: "60px",
-        }}
+        className="bg-white rounded-t-2xl sm:rounded-xl shadow-2xl w-full sm:max-w-4xl overflow-hidden flex flex-col border border-gray-200 h-[calc(94dvh-60px)] sm:h-[min(88vh,820px)] mb-[60px] sm:mb-0"
         onClick={e => e.stopPropagation()}>
 
-        {/* Drag handle (mobile only) */}
-        <div className="sm:hidden flex justify-center pt-3 pb-1 shrink-0">
-          <div className="w-10 h-1 rounded-full bg-gray-200" />
-        </div>
-
         {/* Header */}
-        <div className="flex items-center justify-between px-4 sm:px-5 py-3.5 sm:py-4 border-b border-gray-100 shrink-0" style={{ background: MAROON }}>
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
-              <Stethoscope size={15} className="text-white" />
+        <div className="shrink-0 bg-white border-b border-gray-200" style={{ borderTop: `3px solid ${MAROON}` }}>
+          <div className="sm:hidden flex justify-center pt-2.5"><div className="w-10 h-1 rounded-full bg-gray-200" /></div>
+          <div className="flex items-center justify-between px-5 sm:px-6 py-3.5 sm:py-4">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: "#fef2f2", color: MAROON }}>
+                <Stethoscope size={17} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-base font-semibold text-gray-900 leading-tight">New patient visit</p>
+                <p className="text-xs text-gray-500 truncate">
+                  {showSuccess ? "Visit saved" : "Complete the details below, then save the record."}
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-white/60">Clinic</p>
-              <p className="text-sm font-black text-white">New Patient Visit</p>
-            </div>
+            <button onClick={onClose} aria-label="Close"
+              className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors shrink-0">
+              <X size={16} />
+            </button>
           </div>
-          <button onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-colors shrink-0">
-            <X size={15} />
-          </button>
         </div>
 
-        {/* Tab bar */}
-        {!showSuccess && (
-          <div className="flex items-center gap-0 px-3 sm:px-5 border-b border-gray-200 bg-gray-50 shrink-0 overflow-x-auto">
-            {TABS.map(t => (
-              <button key={t.key} onClick={() => setActiveTab(t.key)}
-                className="flex items-center gap-1.5 px-3 sm:px-4 py-2.5 text-xs font-bold border-b-2 transition-colors shrink-0 whitespace-nowrap"
-                style={activeTab === t.key
-                  ? { borderColor: MAROON, color: MAROON }
-                  : { borderColor: "transparent", color: "#9ca3af" }}>
-                <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: tabStatus[t.key] ? "#22c55e" : "#d1d5db" }} />
-                {t.label}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* Body: sidebar + scrollable content — flex-1 so it fills remaining space */}
-        <div className="flex-1 overflow-hidden flex min-h-0">
-          {!showSuccess && (
-            <VisitSidebar isWalkIn={isWalkIn} walkInName={walkInFullName} student={student}
-              visitDate={visitDate} visitTime={visitTime} complaint={complaint}
-              temperature={temperature} bloodPressure={bloodPressure} pulseRate={pulseRate} weight={weight}
-              action={action} medicineUsages={medicineUsages} />
-          )}
-
-          <div className="flex-1 overflow-y-auto px-4 sm:px-8 py-5 sm:py-6 space-y-5 min-w-0">
-            {error && (
-              <div className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-lg px-4 py-2.5">{error}</div>
-            )}
-
-            {/* SUCCESS */}
-            {showSuccess && savedRecord ? (
-              <section className="flex flex-col items-center text-center py-8 space-y-4">
-                <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: "#f0fdf4" }}>
-                  <Check className="w-7 h-7 text-green-500" />
+        {/* Body */}
+        <div className="flex-1 min-h-0 flex">
+          {showSuccess && savedRecord ? (
+            <div className="flex-1 overflow-y-auto flex items-center justify-center px-6 py-10">
+              <div className="flex flex-col items-center text-center space-y-5 max-w-sm w-full">
+                <div className="w-14 h-14 rounded-full flex items-center justify-center bg-green-50">
+                  <Check className="w-7 h-7 text-green-600" />
                 </div>
                 <div>
-                  <p className="text-sm font-black text-gray-900">Visit saved for {savedRecord.student.name}</p>
-                  <p className="text-xs text-gray-400 mt-1">
-                    {action === "REFERRED_HOSPITAL" ? "Referral document downloaded automatically." : "You can generate a medical certificate now if needed."}
+                  <p className="text-base font-semibold text-gray-900">Visit saved</p>
+                  <p className="text-sm text-gray-500 mt-1">{savedRecord.student.name}</p>
+                  <p className="text-xs text-gray-400 mt-2">
+                    {action === "REFERRED_HOSPITAL"
+                      ? "The referral document was downloaded automatically."
+                      : "You can generate a medical certificate if needed."}
                   </p>
                 </div>
-                <div className="flex flex-col sm:flex-row gap-2 w-full max-w-sm">
+                <div className="flex flex-col sm:flex-row gap-2 w-full">
                   <button onClick={() => setShowMedCertFromSuccess(true)}
-                    className="flex-1 h-10 rounded-xl text-xs font-bold text-white flex items-center justify-center gap-1.5"
+                    className="flex-1 h-10 rounded-lg text-sm font-semibold text-white flex items-center justify-center gap-1.5"
                     style={{ background: MAROON }}>
-                    <FileText size={13} /> Generate Med Cert
+                    <FileText size={14} /> Generate med cert
                   </button>
                   <button onClick={onClose}
-                    className="flex-1 h-10 rounded-xl text-xs font-bold border border-gray-200 text-gray-600 hover:bg-gray-50 transition-all">
+                    className="flex-1 h-10 rounded-lg text-sm font-semibold border border-gray-200 text-gray-700 hover:bg-gray-50 transition-all">
                     Done
                   </button>
                 </div>
-              </section>
-            ) : (
-              <>
-                {/* PATIENT TAB */}
-                {activeTab === "patient" && (
-                  <section className="space-y-4">
-                    <div className="grid grid-cols-2 gap-2">
-                      <button type="button" onClick={() => setIsWalkIn(false)}
-                        className="py-2.5 rounded-lg border text-xs font-bold transition-all"
-                        style={!isWalkIn ? { borderColor: MAROON, background: "#fef2f2", color: MAROON } : { borderColor: "#e5e7eb", color: "#6b7280" }}>
-                        Registered Student
-                      </button>
-                      <button type="button" onClick={() => setIsWalkIn(true)}
-                        className="py-2.5 rounded-lg border text-xs font-bold transition-all flex items-center justify-center gap-1"
-                        style={isWalkIn ? { borderColor: "#b91c1c", background: "#fef2f2", color: "#b91c1c" } : { borderColor: "#e5e7eb", color: "#6b7280" }}>
-                        <AlertTriangle size={11} /> Walk-in
-                      </button>
-                    </div>
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* ── Form column ── */}
+              <div ref={scrollRef} className="flex-1 min-w-0 overflow-y-auto px-5 sm:px-6 py-5">
 
-                    {isWalkIn ? (
-                      <div className="space-y-3">
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                          <div>
-                            <FieldLabel required>Last Name</FieldLabel>
-                            <input value={walkInLastName} onChange={e => setWalkInLastName(e.target.value)} placeholder="Last name" className={inputCls} />
-                          </div>
-                          <div>
-                            <FieldLabel required>First Name</FieldLabel>
-                            <input value={walkInFirstName} onChange={e => setWalkInFirstName(e.target.value)} placeholder="First name" className={inputCls} />
-                          </div>
-                          <div>
-                            <FieldLabel>Middle Name</FieldLabel>
-                            <input value={walkInMiddleName} onChange={e => setWalkInMiddleName(e.target.value)} placeholder="Middle name" className={inputCls} />
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-3">
-                          <div>
-                            <FieldLabel>Age</FieldLabel>
-                            <input type="number" min="1" max="120" value={walkInAge} onChange={e => setWalkInAge(e.target.value)} placeholder="21" className={inputCls} />
-                          </div>
-                          <div>
-                            <FieldLabel>Gender</FieldLabel>
-                            <SelectWrapper>
-                              <select value={walkInGender} onChange={e => setWalkInGender(e.target.value)} className={selectCls}>
-                                <option value="">Select</option>
-                                <option value="Male">Male</option>
-                                <option value="Female">Female</option>
-                              </select>
-                            </SelectWrapper>
-                          </div>
+                {/* Patient */}
+                <FormSection title="Patient" hint="Look up a registered student or log a walk-in.">
+                  <div className="grid grid-cols-2 gap-1 p-1 bg-gray-100 rounded-lg mb-4">
+                    <button type="button" onClick={() => setIsWalkIn(false)}
+                      className="h-8 rounded-md text-xs font-semibold transition-all"
+                      style={!isWalkIn ? { background: "#fff", color: MAROON, boxShadow: "0 1px 2px rgba(0,0,0,.08)" } : { color: "#6b7280" }}>
+                      Registered student
+                    </button>
+                    <button type="button" onClick={() => setIsWalkIn(true)}
+                      className="h-8 rounded-md text-xs font-semibold transition-all"
+                      style={isWalkIn ? { background: "#fff", color: MAROON, boxShadow: "0 1px 2px rgba(0,0,0,.08)" } : { color: "#6b7280" }}>
+                      Walk-in / emergency
+                    </button>
+                  </div>
+
+                  {isWalkIn ? (
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                          <FieldLabel required>Last name</FieldLabel>
+                          <input value={walkInLastName} onChange={e => setWalkInLastName(e.target.value)} placeholder="Dela Cruz" className={inputCls} />
                         </div>
                         <div>
+                          <FieldLabel required>First name</FieldLabel>
+                          <input value={walkInFirstName} onChange={e => setWalkInFirstName(e.target.value)} placeholder="Juan" className={inputCls} />
+                        </div>
+                        <div>
+                          <FieldLabel>Middle name</FieldLabel>
+                          <input value={walkInMiddleName} onChange={e => setWalkInMiddleName(e.target.value)} placeholder="Santos" className={inputCls} />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <div>
+                          <FieldLabel>Age</FieldLabel>
+                          <input type="number" min="1" max="120" value={walkInAge} onChange={e => setWalkInAge(e.target.value)} placeholder="21" className={inputCls} />
+                        </div>
+                        <div>
+                          <FieldLabel>Gender</FieldLabel>
+                          <SelectWrapper>
+                            <select value={walkInGender} onChange={e => setWalkInGender(e.target.value)} className={selectCls}>
+                              <option value="">Select</option>
+                              <option value="Male">Male</option>
+                              <option value="Female">Female</option>
+                            </select>
+                          </SelectWrapper>
+                        </div>
+                        <div className="col-span-2">
                           <FieldLabel>Course</FieldLabel>
                           <SelectWrapper>
                             <select value={walkInCourse} onChange={e => setWalkInCourse(e.target.value)} className={selectCls}>
@@ -853,248 +857,270 @@ function AddVisitModal({ courseId, onClose, onSaved, courseOptions }: {
                             </select>
                           </SelectWrapper>
                         </div>
-                        <div>
-                          <FieldLabel>Address</FieldLabel>
-                          <input value={walkInAddress} onChange={e => setWalkInAddress(e.target.value)} placeholder="Complete address" className={inputCls} />
-                        </div>
-                        <p className="text-[11px] text-gray-400 flex items-start gap-1.5">
-                          <AlertTriangle size={12} className="mt-0.5 shrink-0 text-amber-500" />
-                          A temporary record will be created. Link the official student number later.
-                        </p>
                       </div>
-                    ) : (
                       <div>
-                        <div className="relative mb-2">
-                          <input value={studentNum} onChange={e => handleStudentNumChange(e.target.value)}
-                            placeholder="Enter student number…" className={inputCls} />
-                          {lookupLoading && <RefreshCw size={13} className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-gray-400" />}
-                        </div>
-                        {lookupError && <p className="text-xs text-red-500 mt-1">{lookupError}</p>}
-                        {student && (
-                          <div className="mt-2 border border-gray-200 rounded-lg overflow-hidden">
-                            <div className="flex items-center justify-between gap-2 px-3 py-2" style={{ background: "#fef2f2" }}>
-                              <span className="flex items-center gap-2">
-                                <Check size={12} style={{ color: MAROON }} />
-                                <span className="text-xs font-semibold" style={{ color: MAROON }}>Student Found</span>
-                              </span>
-                              {!student.email && (
-                                <span className="text-[10px] font-semibold text-amber-600 flex items-center gap-1">
-                                  <AlertTriangle size={10} /> No email
-                                </span>
-                              )}
-                            </div>
-                            <div className="px-3 py-3 grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2 bg-white">
-                              {[
-                                ["Name",    student.name],
-                                ["Stud. No.", student.studentNumber],
-                                ["Course",  student.course ?? "—"],
-                                ["Age",     studentAge(student) ? `${studentAge(student)} yrs` : "—"],
-                                ["Gender",  student.gender ?? "—"],
-                                ["Address", student.address ?? "—"],
-                              ].map(([label, val]) => (
-                                <div key={label}>
-                                  <p className="text-[10px] text-gray-400 mb-0.5">{label}</p>
-                                  <p className="text-xs font-medium text-gray-800 leading-snug">{val}</p>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
+                        <FieldLabel>Address</FieldLabel>
+                        <input value={walkInAddress} onChange={e => setWalkInAddress(e.target.value)} placeholder="Complete address" className={inputCls} />
                       </div>
-                    )}
-                  </section>
-                )}
-
-                {/* VISIT TAB */}
-                {activeTab === "visit" && (
-                  <div className="space-y-5">
-                    <section>
-                      <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-3">Visit Info</p>
-                      <div className="grid grid-cols-2 gap-3 mb-3">
-                        <div>
-                          <FieldLabel required>Date</FieldLabel>
-                          <input type="date" value={visitDate} onChange={e => setVisitDate(e.target.value)} className={inputCls} />
-                        </div>
-                        <div>
-                          <FieldLabel required>Time</FieldLabel>
-                          <SelectWrapper>
-                            <select value={visitTime} onChange={e => setVisitTime(e.target.value)} className={selectCls}>
-                              {TIME_OPTIONS.map(t => <option key={t} value={t}>{t}</option>)}
-                            </select>
-                          </SelectWrapper>
-                        </div>
-                      </div>
-                      <FieldLabel required>Chief Complaint</FieldLabel>
-                      <BodySystemConditionSelect courseId={courseId} bodySystemId={bodySystemId} conditionId={medicalConditionId}
-                        onChange={(bsId, condId, condName) => { setBodySystemId(bsId); setMedicalConditionId(condId); setComplaint(condName); }} />
-                    </section>
-
-                    <section>
-                      <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-3">
-                        Vital Signs <span className="normal-case font-normal text-gray-300 ml-1">optional</span>
+                      <p className="text-xs text-gray-500 flex items-start gap-1.5 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+                        <AlertTriangle size={13} className="mt-0.5 shrink-0 text-amber-500" />
+                        A temporary record will be created. Link the official student number later.
                       </p>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <FieldLabel>Temperature (°C)</FieldLabel>
-                          <input type="number" step="0.1" min="30" max="45" value={temperature} onChange={e => setTemperature(e.target.value)} placeholder="36.8" className={inputCls} />
-                        </div>
-                        <div>
-                          <FieldLabel>Blood Pressure</FieldLabel>
-                          <input value={bloodPressure} onChange={e => setBloodPressure(e.target.value)} placeholder="120/80"
-                            className={inputCls} style={!bpValid ? { borderColor: "#ef4444" } : undefined} />
-                          {!bpValid && <p className="text-[10px] text-red-500 mt-1">Format: 120/80</p>}
-                        </div>
-                        <div>
-                          <FieldLabel>Pulse Rate (bpm)</FieldLabel>
-                          <input type="number" min="30" max="220" value={pulseRate} onChange={e => setPulseRate(e.target.value)} placeholder="78" className={inputCls} />
-                        </div>
-                        <div>
-                          <FieldLabel>Weight (kg)</FieldLabel>
-                          <input type="number" step="0.1" min="1" max="300" value={weight} onChange={e => setWeight(e.target.value)} placeholder="55" className={inputCls} />
-                        </div>
+                    </div>
+                  ) : (
+                    <div>
+                      <FieldLabel required>Student number</FieldLabel>
+                      <div className="relative">
+                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                        <input value={studentNum} onChange={e => handleStudentNumChange(e.target.value)}
+                          placeholder="Enter student number" className={`${inputCls} pl-9`} />
+                        {lookupLoading && <RefreshCw size={13} className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-gray-400" />}
                       </div>
-                    </section>
-                  </div>
-                )}
-
-                {/* CLINICAL TAB */}
-                {activeTab === "clinical" && (
-                  <div className="space-y-5">
-                    <section>
-                      <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-3">
-                        Clinical <span className="normal-case font-normal text-gray-300 ml-1">optional</span>
-                      </p>
-                      <div>
-                        <FieldLabel>Diagnosis</FieldLabel>
-                        <textarea value={diagnosis} onChange={e => setDiagnosis(e.target.value)} rows={2} placeholder="Clinical diagnosis…" className={textareaCls} />
-                      </div>
-                      <div className="mt-3">
-                        <div className="flex items-center justify-between mb-1.5">
-                          <FieldLabel>Medicines Given</FieldLabel>
-                          {medicineUsages.length > 0 && (
-                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "#fef2f2", color: MAROON }}>
-                              {medicineUsages.length} selected
+                      {lookupError && <p className="text-xs text-red-500 mt-1.5">{lookupError}</p>}
+                      {student && (
+                        <div className="mt-3 border border-green-200 rounded-lg overflow-hidden">
+                          <div className="flex items-center justify-between gap-2 px-3.5 py-2 bg-green-50 border-b border-green-100">
+                            <span className="flex items-center gap-1.5 text-xs font-semibold text-green-700">
+                              <Check size={13} /> Student found
                             </span>
-                          )}
-                        </div>
-                        <MedicinePicker courseId={courseId} entries={medicineUsages} onChange={setMedicineUsages} />
-                      </div>
-                    </section>
-
-                    <section>
-                      <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-3">Action Taken</p>
-                      <div className="space-y-1.5">
-                        {ACTION_OPTIONS.map(opt => {
-                          const isSelected = action === opt.value;
-                          return (
-                            <label key={opt.value}
-                              className="flex items-center gap-3 px-3.5 py-2.5 rounded-lg border bg-white cursor-pointer transition-all min-h-10"
-                              style={{ borderColor: isSelected ? MAROON : "#e5e7eb", borderWidth: isSelected ? "1.5px" : "1px" }}>
-                              <input type="radio" name="action" value={opt.value} checked={isSelected}
-                                onChange={() => setAction(opt.value)} style={{ accentColor: MAROON }} className="shrink-0" />
-                              <span className="text-sm font-medium" style={{ color: isSelected ? MAROON : "#374151" }}>{opt.label}</span>
-                            </label>
-                          );
-                        })}
-                      </div>
-                    </section>
-
-                    {action === "REFERRED_HOSPITAL" && (
-                      <section>
-                        <p className="text-[11px] font-bold uppercase tracking-widest text-red-400 mb-3">Referral Details</p>
-                        <div className="space-y-3 border border-red-100 rounded-lg bg-red-50/30 p-4">
-                          <div>
-                            <FieldLabel required>Refer To</FieldLabel>
-                            <input value={referralTo} onChange={e => setReferralTo(e.target.value)} placeholder="e.g. Jose B. Lingad Memorial Hospital" className={inputCls} />
+                            {!student.email && (
+                              <span className="text-[11px] font-medium text-amber-600 flex items-center gap-1">
+                                <AlertTriangle size={11} /> No email on file
+                              </span>
+                            )}
                           </div>
-                          <div>
-                            <FieldLabel>History of Present Illness</FieldLabel>
-                            <textarea value={referralHPI} onChange={e => setReferralHPI(e.target.value)} rows={3} placeholder="Detailed history…" className={textareaCls} />
-                          </div>
-                          <div>
-                            <FieldLabel required>Reason for Referral</FieldLabel>
-                            <textarea value={referralReason} onChange={e => setReferralReason(e.target.value)} rows={2} placeholder="Reason…" className={textareaCls} />
+                          <div className="px-3.5 py-3 grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2.5 bg-white">
+                            {[
+                              ["Name",        student.name],
+                              ["Student no.", student.studentNumber],
+                              ["Course",      student.course ?? "—"],
+                              ["Age",         studentAge(student) ? `${studentAge(student)} yrs` : "—"],
+                              ["Gender",      student.gender ?? "—"],
+                              ["Address",     student.address ?? "—"],
+                            ].map(([label, val]) => (
+                              <div key={label} className="min-w-0">
+                                <p className="text-[11px] text-gray-500 mb-0.5">{label}</p>
+                                <p className="text-xs font-medium text-gray-900 leading-snug break-words">{val}</p>
+                              </div>
+                            ))}
                           </div>
                         </div>
-                      </section>
+                      )}
+                    </div>
+                  )}
+                </FormSection>
+
+                {/* Visit */}
+                <FormSection title="Visit details">
+                  <div className="grid grid-cols-2 gap-3 mb-4">
+                    <div>
+                      <FieldLabel required>Date</FieldLabel>
+                      <input type="date" value={visitDate} onChange={e => setVisitDate(e.target.value)} className={inputCls} />
+                    </div>
+                    <div>
+                      <FieldLabel required>Time</FieldLabel>
+                      <SelectWrapper>
+                        <select value={visitTime} onChange={e => setVisitTime(e.target.value)} className={selectCls}>
+                          {TIME_OPTIONS.map(t => <option key={t} value={t}>{t}</option>)}
+                        </select>
+                      </SelectWrapper>
+                    </div>
+                  </div>
+                  <BodySystemConditionSelect courseId={courseId} bodySystemId={bodySystemId} conditionId={medicalConditionId}
+                    onChange={(bsId, condId, condName) => { setBodySystemId(bsId); setMedicalConditionId(condId); setComplaint(condName); }} />
+                </FormSection>
+
+                {/* Vitals */}
+                <FormSection title="Vital signs" hint="Optional">
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                    <div>
+                      <FieldLabel>Temperature</FieldLabel>
+                      <UnitInput unit="°C" type="number" step="0.1" min="30" max="45" value={temperature}
+                        onChange={e => setTemperature(e.target.value)} placeholder="36.8" />
+                    </div>
+                    <div>
+                      <FieldLabel>Blood pressure</FieldLabel>
+                      <UnitInput unit="mmHg" value={bloodPressure} onChange={e => setBloodPressure(e.target.value)}
+                        placeholder="120/80" style={!bpValid ? { borderColor: "#ef4444" } : undefined} />
+                      {!bpValid && <p className="text-[11px] text-red-500 mt-1">Use the format 120/80</p>}
+                    </div>
+                    <div>
+                      <FieldLabel>Pulse rate</FieldLabel>
+                      <UnitInput unit="bpm" type="number" min="30" max="220" value={pulseRate}
+                        onChange={e => setPulseRate(e.target.value)} placeholder="78" />
+                    </div>
+                    <div>
+                      <FieldLabel>Weight</FieldLabel>
+                      <UnitInput unit="kg" type="number" step="0.1" min="1" max="300" value={weight}
+                        onChange={e => setWeight(e.target.value)} placeholder="55" />
+                    </div>
+                  </div>
+                </FormSection>
+
+                {/* Clinical */}
+                <FormSection title="Clinical notes" hint="Optional">
+                  <div>
+                    <FieldLabel>Diagnosis</FieldLabel>
+                    <textarea value={diagnosis} onChange={e => setDiagnosis(e.target.value)} rows={2}
+                      placeholder="Clinical diagnosis" className={textareaCls} />
+                  </div>
+                  <div className="mt-4">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <FieldLabel>Medicines given</FieldLabel>
+                      {medicineUsages.length > 0 && (
+                        <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "#fef2f2", color: MAROON }}>
+                          {medicineUsages.length} selected
+                        </span>
+                      )}
+                    </div>
+                    <MedicinePicker courseId={courseId} entries={medicineUsages} onChange={setMedicineUsages} />
+                  </div>
+                </FormSection>
+
+                {/* Action */}
+                <FormSection title="Action taken" hint="Choose one.">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2" role="radiogroup" aria-label="Action taken">
+                    {ACTION_OPTIONS.map(opt => {
+                      const isSelected = action === opt.value;
+                      const b = ACTION_BADGE[opt.value];
+                      return (
+                        <button key={opt.value} type="button" role="radio" aria-checked={isSelected}
+                          onClick={() => setAction(opt.value)}
+                          className="flex items-center gap-2.5 px-3.5 h-11 rounded-lg border text-left transition-all"
+                          style={isSelected
+                            ? { borderColor: MAROON, background: "#fef2f2", boxShadow: `inset 0 0 0 1px ${MAROON}` }
+                            : { borderColor: "#e5e7eb", background: "#fff" }}>
+                          <span className="w-2 h-2 rounded-full shrink-0" style={{ background: b.dot }} />
+                          <span className="text-sm font-medium flex-1" style={{ color: isSelected ? MAROON : "#374151" }}>{opt.label}</span>
+                          {isSelected && <Check size={14} style={{ color: MAROON }} />}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Referral details (animated reveal) */}
+                  <div className="grid transition-all duration-300 ease-out"
+                    style={{ gridTemplateRows: action === "REFERRED_HOSPITAL" ? "1fr" : "0fr", opacity: action === "REFERRED_HOSPITAL" ? 1 : 0 }}>
+                    <div className="overflow-hidden">
+                      <div className="mt-4 space-y-3 border border-red-100 rounded-lg bg-red-50/40 p-4">
+                        <p className="text-xs font-semibold text-red-700">Referral details</p>
+                        <div>
+                          <FieldLabel required>Refer to</FieldLabel>
+                          <input value={referralTo} onChange={e => setReferralTo(e.target.value)}
+                            placeholder="e.g. Jose B. Lingad Memorial Hospital" className={inputCls} />
+                        </div>
+                        <div>
+                          <FieldLabel>History of present illness</FieldLabel>
+                          <textarea value={referralHPI} onChange={e => setReferralHPI(e.target.value)} rows={3}
+                            placeholder="Detailed history" className={textareaCls} />
+                        </div>
+                        <div>
+                          <FieldLabel required>Reason for referral</FieldLabel>
+                          <textarea value={referralReason} onChange={e => setReferralReason(e.target.value)} rows={2}
+                            placeholder="Reason for referral" className={textareaCls} />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </FormSection>
+              </div>
+
+              {/* ── Summary column (desktop) ── */}
+              <aside className="hidden lg:flex w-72 shrink-0 border-l border-gray-200 bg-gray-50/70 flex-col overflow-y-auto px-5 py-5 gap-5">
+                <div>
+                  <p className="text-xs font-semibold text-gray-900 mb-2">Visit summary</p>
+                  <div className="bg-white border border-gray-200 rounded-lg px-3.5 py-3">
+                    <p className="text-sm font-semibold text-gray-900 leading-snug break-words">{patientName}</p>
+                    {!isWalkIn && student && (
+                      <p className="text-xs text-gray-500 mt-0.5">{student.studentNumber} · {courseAbbrev(student.course) ?? "—"}</p>
                     )}
+                    {isWalkIn && <p className="text-xs text-amber-600 font-medium mt-0.5">Walk-in / emergency</p>}
+                    <div className="mt-2.5 pt-2.5 border-t border-gray-100">
+                      <SummaryRow label="Date" value={fmtDate(visitDate)} />
+                      <SummaryRow label="Time" value={visitTime} />
+                      <SummaryRow label="Complaint" value={complaint || "—"} />
+                    </div>
+                  </div>
+                </div>
+
+                {hasVitals && (
+                  <div>
+                    <p className="text-xs font-semibold text-gray-900 mb-2">Vitals</p>
+                    <div className="bg-white border border-gray-200 rounded-lg px-3.5 py-2.5">
+                      {temperature   && <SummaryRow label="Temperature" value={`${temperature} °C`} />}
+                      {bloodPressure && <SummaryRow label="Blood pressure" value={bloodPressure} />}
+                      {pulseRate     && <SummaryRow label="Pulse" value={`${pulseRate} bpm`} />}
+                      {weight        && <SummaryRow label="Weight" value={`${weight} kg`} />}
+                    </div>
                   </div>
                 )}
-              </>
-            )}
-          </div>
+
+                {medicineUsages.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold text-gray-900 mb-2">Medicines</p>
+                    <div className="bg-white border border-gray-200 rounded-lg px-3.5 py-2.5 space-y-1">
+                      {medicineUsages.map(m => (
+                        <p key={m.medicineId} className="text-xs text-gray-700 leading-snug">{m.medicineName} × {m.quantityUsed} {m.unit}</p>
+                      ))}
+                      {!stockOk && <p className="text-[11px] font-medium text-red-600 pt-1">Some quantities exceed stock.</p>}
+                    </div>
+                  </div>
+                )}
+
+                <div>
+                  <p className="text-xs font-semibold text-gray-900 mb-2">Action</p>
+                  <span className="text-xs font-medium px-2.5 py-1.5 rounded-full inline-flex items-center gap-1.5 border border-gray-200 bg-white text-gray-700">
+                    <span className="w-2 h-2 rounded-full shrink-0" style={{ background: badge.dot }} />
+                    {actionLabel(action)}
+                  </span>
+                </div>
+
+                <div className="mt-auto">
+                  <p className="text-xs font-semibold text-gray-900 mb-2">Required</p>
+                  <ul className="space-y-1.5">
+                    {checklist.map(c => (
+                      <li key={c.label} className="flex items-center gap-2 text-xs" style={{ color: c.ok ? "#15803d" : "#6b7280" }}>
+                        <span className="w-4 h-4 rounded-full flex items-center justify-center shrink-0"
+                          style={c.ok ? { background: "#dcfce7" } : { background: "#fff", border: "1px solid #d1d5db" }}>
+                          {c.ok && <Check size={10} />}
+                        </span>
+                        {c.label}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </aside>
+            </>
+          )}
         </div>
 
-        {/*
-          FOOTER — shrink-0 ensures it always stays visible and is NEVER
-          scrolled off-screen on mobile. Buttons are larger (h-11) on mobile
-          for better tap targets.
-        */}
+        {/* Footer (sticky, always visible) */}
         {!showSuccess && (
-          <div className="shrink-0 border-t border-gray-100 bg-gray-50 px-3 sm:px-5 py-3 sm:py-4">
-            {/* Mobile layout: two rows when on last tab */}
-            <div className="flex flex-wrap gap-2">
-              {/* Cancel always visible */}
-              <button
-                onClick={onClose}
-                disabled={saving}
-                className="h-11 sm:h-10 px-4 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-100 transition-all disabled:opacity-50 shrink-0"
-              >
+          <div className="shrink-0 border-t border-gray-200 bg-white px-4 sm:px-6 py-3">
+            {error && (
+              <div className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2 mb-2.5">{error}</div>
+            )}
+            <div className="flex items-center gap-2">
+              <p className="hidden sm:block flex-1 text-xs min-w-0 truncate" style={{ color: canSave ? "#15803d" : "#6b7280" }}>
+                {canSave ? "Ready to save." : `Still needed: ${missing.join(", ")}`}
+              </p>
+              <div className="flex-1 sm:hidden" />
+              <button onClick={onClose} disabled={saving}
+                className="h-10 px-4 border border-gray-200 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-all disabled:opacity-50 shrink-0">
                 Cancel
               </button>
-
-              {/* Back button */}
-              {prevTab && (
-                <button
-                  onClick={() => setActiveTab(prevTab)}
-                  disabled={saving}
-                  className="h-11 sm:h-10 px-4 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-100 transition-all disabled:opacity-50 shrink-0"
-                >
-                  ← Back
-                </button>
-              )}
-
-              {/* Spacer pushes next/save buttons to the right */}
-              <div className="flex-1" />
-
-              {/* Next button */}
-              {nextTab && (
-                <button
-                  onClick={() => setActiveTab(nextTab)}
-                  className="h-11 sm:h-10 px-5 rounded-xl text-sm font-black text-white transition-all shrink-0"
-                  style={{ background: MAROON }}
-                >
-                  Next →
-                </button>
-              )}
-
-              {/* Save & New + Save on last tab */}
-              {isLastTab && (
-                <>
-                  <button
-                    onClick={() => handleSave(false)}
-                    disabled={saving || !canSave}
-                    className="h-11 sm:h-10 px-3 sm:px-4 rounded-xl text-xs sm:text-sm font-bold border transition-all disabled:opacity-40 flex items-center gap-1.5 shrink-0"
-                    style={{ borderColor: MAROON, color: MAROON, background: "#fff" }}
-                  >
-                    {saving ? <RefreshCw size={13} className="animate-spin" /> : <Plus size={13} />}
-                    {/* Show full label on sm+, abbreviated on mobile */}
-                    <span className="hidden sm:inline">Save &amp; New</span>
-                    <span className="sm:hidden">+New</span>
-                  </button>
-                  <button
-                    onClick={() => handleSave(true)}
-                    disabled={saving || !canSave}
-                    className="h-11 sm:h-10 px-4 sm:px-5 rounded-xl text-sm font-black text-white transition-all disabled:opacity-40 flex items-center gap-1.5 shrink-0"
-                    style={{ background: MAROON }}
-                  >
-                    {saving
-                      ? <><RefreshCw size={13} className="animate-spin" /> Saving…</>
-                      : <><Check size={13} /> Save</>
-                    }
-                  </button>
-                </>
-              )}
+              <button onClick={() => handleSave(false)} disabled={saving || !canSave}
+                className="h-10 px-4 rounded-lg text-sm font-semibold border transition-all disabled:opacity-40 flex items-center gap-1.5 shrink-0"
+                style={{ borderColor: MAROON, color: MAROON, background: "#fff" }}>
+                <Plus size={14} />
+                <span className="hidden sm:inline">Save and add another</span>
+                <span className="sm:hidden">Add another</span>
+              </button>
+              <button onClick={() => handleSave(true)} disabled={saving || !canSave}
+                className="h-10 px-5 rounded-lg text-sm font-semibold text-white transition-all disabled:opacity-40 flex items-center gap-1.5 shrink-0"
+                style={{ background: MAROON }}>
+                {saving ? <><RefreshCw size={14} className="animate-spin" /> Saving…</> : <><Check size={14} /> Save visit</>}
+              </button>
             </div>
           </div>
         )}
@@ -1369,22 +1395,37 @@ function EditVisitModal({ courseId, record, onClose, onSaved }: {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   RECORD DETAIL VIEW
+   RECORD DETAIL VIEW  (redesigned)
 ───────────────────────────────────────────────────────────────────────────── */
+function InfoRow({ label, value }: { label: string; value: string | null | undefined }) {
+  if (!value) return null;
+  return (
+    <div className="px-5 py-3 border-b border-gray-100 last:border-b-0">
+      <p className="text-xs text-gray-500 mb-0.5">{label}</p>
+      <p className="text-sm font-medium text-gray-900 leading-snug break-words">{value}</p>
+    </div>
+  );
+}
+
+function VitalChip({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex flex-col px-3 py-1.5 rounded-lg bg-gray-50 border border-gray-100 min-w-[72px]">
+      <span className="text-[11px] text-gray-500">{label}</span>
+      <span className="text-sm font-semibold text-gray-900">{value}</span>
+    </div>
+  );
+}
+
 function RecordDetailView({ courseId, record, isAdmin, isHead, currentUserId, onBack, onDeleted }: {
   courseId: string; record: PatientRecord; isAdmin: boolean; isHead: boolean;
   currentUserId: string | null; onBack: () => void; onDeleted: (id: string) => void;
 }) {
-  const [visits,        setVisits]        = useState<PatientRecord[]>([]);
-  const [loading,       setLoading]       = useState(true);
-  const [deleteTarget,  setDeleteTarget]  = useState<PatientRecord | null>(null);
-  const [editTarget,    setEditTarget]    = useState<PatientRecord | null>(null);
-  const [medCertTarget, setMedCertTarget] = useState<PatientRecord | null>(null);
+  const [visits,          setVisits]          = useState<PatientRecord[]>([]);
+  const [loading,         setLoading]         = useState(true);
+  const [deleteTarget,    setDeleteTarget]    = useState<PatientRecord | null>(null);
+  const [editTarget,      setEditTarget]      = useState<PatientRecord | null>(null);
+  const [medCertTarget,   setMedCertTarget]   = useState<PatientRecord | null>(null);
   const [showStudentInfo, setShowStudentInfo] = useState(false);
-
-  const SLATE = "#0f172a";
-  const MUTED = "#64748b";
-  const RULE  = "#e2e8f0";
 
   useEffect(() => {
     fetch(`/api/courses/${courseId}/patient-records/${record.id}`)
@@ -1399,169 +1440,196 @@ function RecordDetailView({ courseId, record, isAdmin, isHead, currentUserId, on
     return r.recordedByUser.id === currentUserId;
   };
 
-  const studentInfoBlock = (
-    <div className="divide-y divide-gray-100">
-      <div className="px-4 sm:px-5 py-4 flex items-start gap-3" style={{ borderBottom: `1px solid ${RULE}` }}>
-        <div>
-          <p style={{ fontSize: 14, fontWeight: 700, color: SLATE, lineHeight: 1.3 }}>{record.student.name}</p>
-          <p style={{ fontSize: 11, color: MUTED, marginTop: 2 }}>{record.student.studentNumber}</p>
-          {record.student.course && <p style={{ fontSize: 11, color: MUTED, marginTop: 2 }}>{record.student.course}</p>}
+  const initials = record.student.name
+    .split(/[\s,]+/).filter(Boolean).slice(0, 2).map(s => s[0]?.toUpperCase()).join("");
+  const age = studentAge(record.student);
+  const lastVisit = visits[0]?.visitDate ?? null;
+
+  const profile = (
+    <div>
+      <div className="px-5 py-5 flex items-center gap-3 border-b border-gray-100">
+        <div className="w-11 h-11 rounded-full flex items-center justify-center text-sm font-semibold shrink-0"
+          style={{ background: "#fef2f2", color: MAROON }}>
+          {initials || "—"}
+        </div>
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-gray-900 leading-snug break-words">{record.student.name}</p>
+          <p className="text-xs text-gray-500 mt-0.5">{record.student.studentNumber}</p>
         </div>
       </div>
-      {([
-        ["Age",     studentAge(record.student) ? `${studentAge(record.student)} yrs` : null],
-        ["Gender",  record.student.gender],
-        ["Address", record.student.address],
-        ["Email",   record.student.email],
-      ] as [string, string | null | undefined][]).map(([label, value]) =>
-        value ? (
-          <div key={label} className="px-4 sm:px-5 py-2.5">
-            <p style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: MUTED, marginBottom: 2 }}>{label}</p>
-            <p style={{ fontSize: 13, fontWeight: 500, color: SLATE, lineHeight: 1.5 }}>{value}</p>
-          </div>
-        ) : null
-      )}
+      <InfoRow label="Course"  value={record.student.course} />
+      <InfoRow label="Age"     value={age ? `${age} years old` : null} />
+      <InfoRow label="Gender"  value={record.student.gender} />
+      <InfoRow label="Address" value={record.student.address} />
+      <InfoRow label="Email"   value={record.student.email} />
     </div>
   );
 
   return (
-    <div className="flex flex-col h-full" style={{ fontFamily: FONT, background: "#f8fafc" }}>
-      <div style={{ background: "#fff", borderBottom: `1px solid ${RULE}` }}
-        className="flex items-center gap-3 px-4 sm:px-6 py-3 shrink-0">
-        <button onClick={onBack} className="flex items-center gap-1.5 text-sm font-semibold transition-colors shrink-0" style={{ color: MAROON }}>
-          <ArrowLeft size={14} /> <span className="hidden sm:inline">Back</span>
+    <div className="flex flex-col h-full bg-gray-50" style={{ fontFamily: FONT }}>
+
+      {/* Top bar */}
+      <div className="bg-white border-b border-gray-200 flex items-center gap-3 px-4 sm:px-6 h-14 shrink-0">
+        <button onClick={onBack}
+          className="flex items-center gap-1.5 text-sm font-semibold px-2.5 h-8 rounded-lg hover:bg-gray-100 transition-colors shrink-0"
+          style={{ color: MAROON }}>
+          <ArrowLeft size={15} /> <span className="hidden sm:inline">Back</span>
         </button>
-        <span style={{ width: 1, height: 16, background: RULE }} className="hidden sm:block" />
-        <p className="text-sm font-bold flex-1 truncate min-w-0" style={{ color: SLATE }}>{record.student.name}</p>
+        <span className="w-px h-5 bg-gray-200 hidden sm:block" />
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-gray-900 truncate">{record.student.name}</p>
+          <p className="text-xs text-gray-500 hidden sm:block">Patient record</p>
+        </div>
         <button onClick={() => setShowStudentInfo(v => !v)}
-          className="sm:hidden text-[10px] font-bold px-2.5 py-1 rounded-full border border-gray-200 text-gray-500 shrink-0">
-          {showStudentInfo ? "Hide Info" : "Info"}
+          className="sm:hidden text-xs font-semibold px-3 h-8 rounded-lg border border-gray-200 text-gray-600 shrink-0">
+          {showStudentInfo ? "Hide profile" : "Profile"}
         </button>
-        <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full shrink-0" style={{ background: "#fef2f2", color: MAROON }}>
+        <span className="text-xs font-semibold px-2.5 py-1 rounded-full shrink-0" style={{ background: "#fef2f2", color: MAROON }}>
           {loading ? "…" : `${visits.length} visit${visits.length !== 1 ? "s" : ""}`}
         </span>
       </div>
 
+      {/* Mobile profile (collapsible) */}
       {showStudentInfo && (
-        <div className="sm:hidden bg-white border-b border-gray-200">
-          <div className="px-4 py-2 bg-gray-50 border-b border-gray-100">
-            <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.14em", textTransform: "uppercase", color: MAROON }}>Student Information</p>
-          </div>
-          {studentInfoBlock}
-        </div>
+        <div className="sm:hidden bg-white border-b border-gray-200 max-h-[50vh] overflow-y-auto">{profile}</div>
       )}
 
-      <div className="flex-1 overflow-hidden flex min-h-0">
-        <div className="hidden sm:flex w-64 shrink-0 border-r border-gray-200 flex-col overflow-y-auto bg-white">
-          <div className="px-5 py-3 border-b border-gray-100 bg-gray-50">
-            <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.14em", textTransform: "uppercase", color: MAROON }}>Student Information</p>
-          </div>
-          {studentInfoBlock}
-        </div>
+      <div className="flex-1 min-h-0 flex">
 
-        <div className="flex-1 overflow-y-auto flex flex-col min-w-0">
-          <div className="px-4 sm:px-5 py-3 border-b border-gray-200 sticky top-0 z-10 flex items-center justify-between bg-gray-50">
-            <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.14em", textTransform: "uppercase", color: MAROON }}>Visit History</p>
-            {!loading && visits.length > 0 && (
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">
-                {visits.length} visit{visits.length !== 1 ? "s" : ""}
-              </span>
+        {/* Profile column (desktop) */}
+        <aside className="hidden sm:flex w-72 shrink-0 border-r border-gray-200 bg-white flex-col overflow-y-auto">
+          {profile}
+          <div className="mt-auto border-t border-gray-100 px-5 py-4 grid grid-cols-2 gap-3">
+            <div>
+              <p className="text-xs text-gray-500 mb-0.5">Total visits</p>
+              <p className="text-lg font-semibold text-gray-900 tabular-nums">{loading ? "…" : visits.length}</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 mb-0.5">Last visit</p>
+              <p className="text-sm font-semibold text-gray-900 leading-snug">{loading ? "…" : fmtDate(lastVisit)}</p>
+            </div>
+          </div>
+        </aside>
+
+        {/* Visit history */}
+        <main className="flex-1 min-w-0 overflow-y-auto">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 py-5 sm:py-6">
+            <div className="flex items-baseline justify-between mb-4">
+              <h2 className="text-base font-semibold text-gray-900">Visit history</h2>
+              {!loading && visits.length > 0 && <span className="text-xs text-gray-500">Newest first</span>}
+            </div>
+
+            {loading ? (
+              <div className="flex items-center justify-center py-20 gap-2 text-gray-400">
+                <RefreshCw size={15} className="animate-spin" /><span className="text-sm">Loading visits…</span>
+              </div>
+            ) : visits.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 gap-2 text-gray-400 bg-white border border-gray-200 rounded-xl">
+                <FileText className="w-7 h-7" />
+                <p className="text-sm">No visits recorded for this patient.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {visits.map((v, idx) => {
+                  const medicinesStr = v.medicineUsages && v.medicineUsages.length > 0
+                    ? formatMedicineUsages(v.medicineUsages) : v.medicine;
+                  const badge = ACTION_BADGE[v.action] ?? { dot: "#9ca3af" };
+                  const hasVitals = v.temperature != null || v.bloodPressure || v.pulseRate != null || v.weight != null;
+
+                  return (
+                    <article key={v.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+                      {/* Card header */}
+                      <div className="flex items-center justify-between gap-3 px-4 sm:px-5 py-3 border-b border-gray-100 bg-gray-50/60">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <p className="text-sm font-semibold text-gray-900">{fmtDate(v.visitDate)}</p>
+                          <span className="text-xs text-gray-500">{fmtTime(v.visitDate)}</span>
+                          {idx === 0 && (
+                            <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-green-50 text-green-700 border border-green-100">Latest</span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="text-xs font-medium px-2.5 py-1 rounded-full inline-flex items-center gap-1.5 border border-gray-200 bg-white text-gray-700">
+                            <span className="w-2 h-2 rounded-full shrink-0" style={{ background: badge.dot }} />
+                            <span className="hidden sm:inline">{actionLabel(v.action)}</span>
+                            <span className="sm:hidden">{actionLabel(v.action).split(" ")[0]}</span>
+                          </span>
+                          {canDelete(v) && (
+                            <RowActionsMenu onMedCert={() => setMedCertTarget(v)} onEdit={() => setEditTarget(v)} onDelete={() => setDeleteTarget(v)} />
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Card body */}
+                      <div className="px-4 sm:px-5 py-4 space-y-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div>
+                            <p className="text-xs text-gray-500 mb-1">Chief complaint</p>
+                            <p className="text-sm font-medium text-gray-900 leading-relaxed">{v.complaint}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500 mb-1">Diagnosis</p>
+                            <p className="text-sm leading-relaxed" style={{ color: v.diagnosis ? "#111827" : "#9ca3af" }}>
+                              {v.diagnosis || "Not recorded"}
+                            </p>
+                          </div>
+                        </div>
+
+                        {hasVitals && (
+                          <div>
+                            <p className="text-xs text-gray-500 mb-1.5">Vital signs</p>
+                            <div className="flex flex-wrap gap-2">
+                              {v.temperature != null && <VitalChip label="Temp" value={`${v.temperature} °C`} />}
+                              {v.bloodPressure       && <VitalChip label="BP" value={v.bloodPressure} />}
+                              {v.pulseRate != null   && <VitalChip label="Pulse" value={`${v.pulseRate} bpm`} />}
+                              {v.weight != null      && <VitalChip label="Weight" value={`${v.weight} kg`} />}
+                            </div>
+                          </div>
+                        )}
+
+                        {medicinesStr && (
+                          <div>
+                            <p className="text-xs text-gray-500 mb-1">Medicine given</p>
+                            <div className="flex items-start gap-2">
+                              <Pill size={14} className="text-gray-400 mt-0.5 shrink-0" />
+                              <p className="text-sm text-gray-900 leading-relaxed">{medicinesStr}</p>
+                            </div>
+                          </div>
+                        )}
+
+                        {v.notes && (
+                          <div>
+                            <p className="text-xs text-gray-500 mb-1">Notes</p>
+                            <p className="text-sm text-gray-700 leading-relaxed">{v.notes}</p>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Card footer */}
+                      <div className="flex items-center justify-between gap-3 px-4 sm:px-5 py-3 border-t border-gray-100">
+                        <div className="min-w-0">
+                          <p className="text-xs text-gray-500">Recorded by</p>
+                          <p className="text-sm font-medium text-gray-900 truncate">{v.recordedByUser.name}</p>
+                        </div>
+                        {v.signatureUrl ? (
+                          <div className="text-right shrink-0">
+                            <p className="text-xs text-gray-500 mb-1">Signature</p>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={v.signatureUrl} alt="Signature"
+                              className="h-9 max-w-[110px] object-contain border border-gray-200 rounded-md p-0.5 bg-white" />
+                          </div>
+                        ) : (
+                          <span className="text-xs text-gray-400 flex items-center gap-1 shrink-0">
+                            <PenLine size={12} /> Unsigned
+                          </span>
+                        )}
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
             )}
           </div>
-
-          {loading ? (
-            <div className="flex items-center justify-center py-20 gap-2 text-gray-300">
-              <RefreshCw size={15} className="animate-spin" /><span className="text-xs">Loading…</span>
-            </div>
-          ) : visits.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 gap-2 text-gray-300">
-              <FileText className="w-7 h-7" /><p className="text-xs">No visits recorded.</p>
-            </div>
-          ) : (
-            <div className="p-3 sm:p-4 space-y-3">
-              {visits.map(v => {
-                const medicinesStr = v.medicineUsages && v.medicineUsages.length > 0 ? formatMedicineUsages(v.medicineUsages) : v.medicine;
-                const badge = ACTION_BADGE[v.action] ?? { dot: "#9ca3af" };
-                return (
-                  <div key={v.id} style={{ background: "#fff", border: `1px solid ${RULE}`, borderRadius: 12, padding: "14px 16px" }}>
-                    <div className="flex items-start justify-between gap-2 mb-2.5">
-                      <div>
-                        <p style={{ fontSize: 13, fontWeight: 700, color: SLATE }}>{fmtDate(v.visitDate)}</p>
-                        <p style={{ fontSize: 11, color: MUTED }}>{fmtTime(v.visitDate)}</p>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <span className="text-[10px] font-semibold px-2 py-1 rounded-full inline-flex items-center gap-1.5 border"
-                          style={{ borderColor: RULE, color: "#374151", background: "#f9fafb" }}>
-                          <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: badge.dot }} />
-                          <span className="hidden sm:inline">{actionLabel(v.action)}</span>
-                          <span className="sm:hidden">{actionLabel(v.action).split(" ")[0]}</span>
-                        </span>
-                        {canDelete(v) && (
-                          <RowActionsMenu onMedCert={() => setMedCertTarget(v)} onEdit={() => setEditTarget(v)} onDelete={() => setDeleteTarget(v)} />
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-2.5">
-                      <div>
-                        <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.11em", textTransform: "uppercase", color: MAROON, marginBottom: 3 }}>Chief Complaint</p>
-                        <p style={{ fontSize: 13, color: SLATE, lineHeight: 1.6 }}>{v.complaint}</p>
-                      </div>
-                      {v.diagnosis && (
-                        <div>
-                          <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.11em", textTransform: "uppercase", color: MAROON, marginBottom: 3 }}>Diagnosis</p>
-                          <p style={{ fontSize: 13, color: SLATE, lineHeight: 1.6 }}>{v.diagnosis}</p>
-                        </div>
-                      )}
-                    </div>
-
-                    {(v.temperature != null || v.bloodPressure || v.pulseRate != null || v.weight != null) && (
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-2.5 rounded-lg px-3 py-2.5" style={{ background: "#f8fafc", border: `1px solid ${RULE}` }}>
-                        {v.temperature != null && (
-                          <div><p style={{ fontSize: 9, fontWeight: 700, color: MUTED, textTransform: "uppercase", letterSpacing: "0.08em" }}>Temp</p>
-                            <p style={{ fontSize: 12, fontWeight: 600, color: SLATE }}>{v.temperature}°C</p></div>
-                        )}
-                        {v.bloodPressure && (
-                          <div><p style={{ fontSize: 9, fontWeight: 700, color: MUTED, textTransform: "uppercase", letterSpacing: "0.08em" }}>BP</p>
-                            <p style={{ fontSize: 12, fontWeight: 600, color: SLATE }}>{v.bloodPressure}</p></div>
-                        )}
-                        {v.pulseRate != null && (
-                          <div><p style={{ fontSize: 9, fontWeight: 700, color: MUTED, textTransform: "uppercase", letterSpacing: "0.08em" }}>Pulse</p>
-                            <p style={{ fontSize: 12, fontWeight: 600, color: SLATE }}>{v.pulseRate} bpm</p></div>
-                        )}
-                        {v.weight != null && (
-                          <div><p style={{ fontSize: 9, fontWeight: 700, color: MUTED, textTransform: "uppercase", letterSpacing: "0.08em" }}>Weight</p>
-                            <p style={{ fontSize: 12, fontWeight: 600, color: SLATE }}>{v.weight} kg</p></div>
-                        )}
-                      </div>
-                    )}
-
-                    {medicinesStr && (
-                      <div className="mb-2.5">
-                        <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.11em", textTransform: "uppercase", color: MAROON, marginBottom: 3 }}>Medicine Given</p>
-                        <p style={{ fontSize: 12, color: SLATE }}>{medicinesStr}</p>
-                      </div>
-                    )}
-
-                    <div className="flex items-center justify-between gap-3 pt-2" style={{ borderTop: `1px solid ${RULE}` }}>
-                      <div>
-                        <p style={{ fontSize: 9, fontWeight: 700, color: MUTED, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 3 }}>Recorded by</p>
-                        <p style={{ fontSize: 11, color: SLATE, fontWeight: 600 }}>{v.recordedByUser.name}</p>
-                      </div>
-                      {v.signatureUrl && (
-                        <div className="text-right">
-                          <p style={{ fontSize: 9, fontWeight: 700, color: MUTED, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 3 }}>Signature</p>
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={v.signatureUrl} alt="sig" style={{ height: 32, maxWidth: 80, objectFit: "contain", border: `1px solid ${RULE}`, borderRadius: 6, padding: 2, background: "#fff" }} />
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
+        </main>
       </div>
 
       {editTarget && (

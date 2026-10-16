@@ -91,6 +91,7 @@ model User {
   formsCreated                              Form[]                    @relation("FormAuthor")
   groupMembers                              GroupMember[]
   medicalExamRecords                        MedicalExamRecord[]       @relation("MedExamRecordedBy")
+  medicalCertificates                       MedicalCertificate[]      @relation("MedCertRecordedBy")
   sentMessages                              Message[]
   resetTokens                               PasswordResetToken[]
   patientRecords                            PatientRecord[]           @relation("RecordedBy")
@@ -107,6 +108,7 @@ model User {
   violationNotes                            ViolationNote[]           @relation("ViolationNoteAuthor")
   parentContactsRecorded                    ParentContact[]           @relation("ParentContactRecordedBy")
   lostFoundRecorded                         LostFoundItem[]           @relation("LostFoundRecordedBy")
+  medicineMovements                         MedicineStockMovement[]   @relation("MedicineMovementBy")
 
   @@map("users")
 }
@@ -146,6 +148,7 @@ model Course {
   groupSets            GroupSet[]
   groups               Group[]
   medicalExamRecords   MedicalExamRecord[]
+  medicalCertificates  MedicalCertificate[]
   medicineInventory    MedicineInventory[]
   patientRecords       PatientRecord[]
   quizzes              Quiz[]
@@ -620,7 +623,8 @@ model Student {
   standing           String              @default("GOOD_STANDING") // GOOD_STANDING | ON_PROBATION | SUSPENDED
   clearanceHold      Boolean             @default(false)
   deletedAt          DateTime?
-  medicalExamRecords MedicalExamRecord[]
+  medicalExamRecords  MedicalExamRecord[]
+  medicalCertificates MedicalCertificate[]
   patientRecords     PatientRecord[]
   violations         Violation[]
 
@@ -739,21 +743,109 @@ model MedicalExamRecord {
   @@map("medical_exam_records")
 }
 
-model MedicineInventory {
-  id                String          @id @default(cuid())
-  courseId          String
-  name              String
-  unit              String
-  stockQty          Int             @default(0)
-  lowStockThreshold Int             @default(10)
-  notes             String?
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
-  course            Course          @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  usages            MedicineUsage[]
+model MedicalCertificate {
+  id             String   @id @default(cuid())
+  courseId       String
+  studentId      String
+  purpose        String
+  diagnosis      String
+  recommendation String
+  ptrNumber      String?
+  visitDate      DateTime
+  recordedBy     String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  course         Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  student        Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  recordedByUser User?   @relation("MedCertRecordedBy", fields: [recordedBy], references: [id], onDelete: SetNull)
 
   @@index([courseId])
+  @@index([studentId])
+  @@index([courseId, visitDate])
+  @@map("medical_certificates")
+}
+
+model MedicineInventory {
+  id                 String   @id @default(cuid())
+  courseId           String
+  name               String
+  unit               String // pinakamaliit na unit (tablet, capsule, mL...). Dito naka-store ang stockQty
+  stockQty           Int      @default(0) // total sa pinakamaliit na unit = sum ng batches.qtyRemaining
+  lowStockThreshold  Int      @default(10)
+  notes              String?
+
+  // Detalye ng gamot
+  genericName        String?
+  brandName          String?
+  strength           String? // hal. "500mg"
+  dosageForm         String? // tablet | capsule | syrup | ointment ...
+  category           String? // Pain reliever | Antibiotic | Antihistamine | Antacid ...
+  location           String? // cabinet / shelf
+  supplier           String?
+  isPrescriptionOnly Boolean  @default(false)
+
+  // Packaging / conversion
+  packaging          String   @default("piece") // box | bottle | strip | sachet pack | piece
+  piecesPerPack      Int      @default(1) // hal. 100 tablets per box, 60 mL per bottle
+
+  // Pag-order at gastos
+  parLevel           Int? // target stock (sa pinakamaliit na unit)
+  packCost           Float? // presyo bawat pack
+  defaultDispenseQty Int? // default na dami sa visit form
+
+  archivedAt         DateTime?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  course    Course                  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  usages    MedicineUsage[]
+  batches   MedicineBatch[]
+  movements MedicineStockMovement[]
+
+  @@index([courseId])
+  @@index([courseId, archivedAt])
   @@map("medicine_inventory")
+}
+
+model MedicineBatch {
+  id           String    @id @default(cuid())
+  medicineId   String
+  batchNo      String?
+  expiryDate   DateTime? // null = hindi alam / walang expiry (legacy stock)
+  qtyReceived  Int
+  qtyRemaining Int
+  source       String    @default("PURCHASE") // PURCHASE | DONATION | TRANSFER | OPENING | ADJUSTMENT
+  receivedAt   DateTime  @default(now())
+  createdAt    DateTime  @default(now())
+
+  medicine  MedicineInventory       @relation(fields: [medicineId], references: [id], onDelete: Cascade)
+  movements MedicineStockMovement[]
+
+  @@index([medicineId, expiryDate])
+  @@index([expiryDate])
+  @@map("medicine_batches")
+}
+
+model MedicineStockMovement {
+  id              String   @id @default(cuid())
+  medicineId      String
+  batchId         String?
+  type            String // OPENING | RESTOCK | ADJUST | USAGE | USAGE_REVERSAL | EXPIRED | DAMAGED | COUNT
+  qtyChange       Int // + o − sa pinakamaliit na unit
+  balanceAfter    Int // total stock pagkatapos ng galaw na ito
+  reason          String?
+  patientRecordId String? // walang relation, para hindi mabura ang ledger kapag dinelete ang visit
+  createdById     String?
+  createdAt       DateTime @default(now())
+
+  medicine  MedicineInventory @relation(fields: [medicineId], references: [id], onDelete: Cascade)
+  batch     MedicineBatch?    @relation(fields: [batchId], references: [id], onDelete: SetNull)
+  createdBy User?             @relation("MedicineMovementBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([medicineId, createdAt])
+  @@index([patientRecordId])
+  @@map("medicine_stock_movements")
 }
 
 model MedicineUsage {

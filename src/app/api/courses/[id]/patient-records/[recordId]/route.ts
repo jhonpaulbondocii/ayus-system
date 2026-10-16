@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireCoursePermission } from "@/lib/course-access";
 import { PatientAction } from "@prisma/client";
+import { dispenseForVisit, reverseVisitUsage, StockError } from "@/lib/medicine-stock";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // GET /api/courses/[id]/patient-records/[recordId]
@@ -164,7 +165,15 @@ export async function DELETE(
       );
     }
 
-    await prisma.patientRecord.delete({ where: { id: recordId } });
+    await prisma.$transaction(async (tx) => {
+      await reverseVisitUsage(tx, {
+        patientRecordId: recordId,
+        courseId,
+        userId: access.userId,
+        reason: "Visit record deleted",
+      });
+      await tx.patientRecord.delete({ where: { id: recordId } });
+    }, { timeout: 15000 });
 
     return NextResponse.json({ success: true });
   } catch (err) {
@@ -221,44 +230,52 @@ export async function PATCH(
     const updated = await prisma.$transaction(async (tx) => {
       // Reconcile medicine stock only if medicineUsages was explicitly sent
       if (Array.isArray(medicineUsages)) {
-        const oldUsages = await tx.medicineUsage.findMany({ where: { patientRecordId: recordId } });
-
-        // Return old quantities back to stock
-        for (const old of oldUsages) {
-          if (old.medicineId) {
-            await tx.medicineInventory.update({
-              where: { id: old.medicineId },
-              data:  { stockQty: { increment: old.quantityUsed } },
-            }).catch(() => { /* medicine may have been deleted from inventory */ });
+        for (const u of medicineUsages) {
+          if (!u.medicineId?.trim() || !Number.isInteger(u.quantityUsed) || u.quantityUsed <= 0) {
+            throw new StockError("Invalid medicine usage", 400);
           }
         }
+
+        // 1. Ibalik ang lumang bawas (sa mismong batch, may linya sa ledger)
+        await reverseVisitUsage(tx, {
+          patientRecordId: recordId,
+          courseId,
+          userId: access.userId,
+          reason: "Visit record edited",
+        });
         await tx.medicineUsage.deleteMany({ where: { patientRecordId: recordId } });
 
-        // Deduct new quantities and re-create usage rows
+        // 2. I-deduct ang bago (FEFO, may stock check)
         if (medicineUsages.length > 0) {
           const meds = await tx.medicineInventory.findMany({
-            where: { id: { in: medicineUsages.map(u => u.medicineId) } },
+            where: { id: { in: medicineUsages.map(u => u.medicineId) }, courseId },
           });
+          if (meds.length !== new Set(medicineUsages.map(u => u.medicineId)).size) {
+            throw new StockError("One or more medicines not found in inventory", 404);
+          }
           const medMap = new Map(meds.map(m => [m.id, m]));
 
           await tx.medicineUsage.createMany({
             data: medicineUsages.map(u => {
-              const med = medMap.get(u.medicineId);
+              const med = medMap.get(u.medicineId)!;
               return {
                 patientRecordId: recordId,
                 medicineId:      u.medicineId,
-                medicineName:    med?.name ?? "Unknown",
+                medicineName:    med.name,
                 quantityUsed:    u.quantityUsed,
-                unit:            med?.unit ?? "",
+                unit:            med.unit,
               };
             }),
           });
 
           for (const u of medicineUsages) {
-            await tx.medicineInventory.update({
-              where: { id: u.medicineId },
-              data:  { stockQty: { decrement: u.quantityUsed } },
-            }).catch(() => {});
+            await dispenseForVisit(tx, {
+              medicineId:      u.medicineId,
+              courseId,
+              qty:             u.quantityUsed,
+              patientRecordId: recordId,
+              userId:          access.userId,
+            });
           }
         }
       }
@@ -290,7 +307,7 @@ export async function PATCH(
           medicineUsages: true,
         },
       });
-    });
+    }, { timeout: 15000 });
 
     const today = new Date();
     let computedAge = updated.student.age;
@@ -311,6 +328,9 @@ export async function PATCH(
       },
     });
   } catch (err) {
+    if (err instanceof StockError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
     console.error("[PATCH /patient-records/[recordId]]", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
