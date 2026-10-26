@@ -52,6 +52,13 @@ export async function GET(req: NextRequest, courseId: string, rest: string[]) {
       where: { id: rest[0], courseId, deletedAt: null },
       include: {
         ...listInclude,
+        // Guardian details are only needed by the detail drawer, not the list.
+        student: {
+          select: {
+            ...listInclude.student.select,
+            guardianName: true, guardianContact: true,
+          },
+        },
         parentContacts: { where: { deletedAt: null }, orderBy: { contactedAt: "desc" } },
         notes: {
           where: { deletedAt: null, ...(isHead ? {} : { confidential: false }) },

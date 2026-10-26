@@ -110,15 +110,19 @@ export default function CourseDisciplinaryLogTab({
   const [showExport, setShowExport] = useState(false);
 
   function printExport() {
+    // Student-entered values go into document.write, so escape them.
+    const esc = (v: unknown) =>
+      String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
+
     const rows_html = displayed.map((r, i) => `
       <tr>
         <td>${i + 1}</td>
-        <td style="font-family:monospace">${r.caseNo}</td>
-        <td>${fmtDate(r.incidentDate)}</td>
-        <td>${r.student.name}<br/><small>${r.student.studentNumber}</small></td>
-        <td>${r.student.course ?? "—"}</td>
-        <td>${r.violationType.name}</td>
-        <td>${SEVERITY_LABEL[r.severity] ?? r.severity}</td>
+        <td style="font-family:monospace">${esc(r.caseNo)}</td>
+        <td>${esc(fmtDate(r.incidentDate))}</td>
+        <td>${esc(r.student.name)}<br/><small>${esc(r.student.studentNumber)}</small></td>
+        <td>${esc(r.student.course ?? "—")}</td>
+        <td>${esc(r.violationType.name)}</td>
+        <td>${esc(SEVERITY_LABEL[r.severity] ?? r.severity)}</td>
       </tr>
     `).join("");
 
@@ -128,7 +132,7 @@ export default function CourseDisciplinaryLogTab({
       violation && `Violation: ${violation}`,
       courseFilter && `Course: ${courseFilter}`,
       severity && `Severity: ${SEVERITY_LABEL[severity] ?? severity}`,
-    ].filter(Boolean).join(" · ");
+    ].filter(Boolean).map(esc).join(" · ");
 
     const html = `<!DOCTYPE html><html><head><title>Disciplinary Log</title>
     <style>

@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireOsaAccess } from "./access";
 
 const METHODS = ["CALL", "SMS", "LETTER", "PERSONAL"];
 const ATTENDANCE = ["YES", "NO", "NO_RESPONSE"];
-const COMPLIANCE = ["PENDING", "COMPLIED", "NOT_COMPLIED"];
 
 const str = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : null);
 
@@ -90,33 +90,34 @@ export async function handleSub(
   return NextResponse.json({ ok: true });
 }
 
+// Typed so that writing a field that is not a ParentContact column fails at
+// compile time instead of as a Prisma error at runtime.
+type ContactFields = Partial<
+  Pick<Prisma.ParentContactUncheckedCreateInput,
+    "method" | "attendance" | "contactPerson" | "relationship" | "contactedBy" | "contactedAt">
+>;
+
 function contactData(
   body: Record<string, unknown>
-): { data: Record<string, unknown> } | { error: string } {
-  const data: Record<string, unknown> = {};
+): { data: ContactFields } | { error: string } {
+  const data: ContactFields = {};
   if ("method" in body) {
     if (!METHODS.includes(body.method as string)) return { error: "Invalid method" };
-    data.method = body.method;
+    data.method = body.method as string;
   }
   if ("attendance" in body) {
     if (!ATTENDANCE.includes(body.attendance as string)) return { error: "Invalid attendance" };
-    data.attendance = body.attendance;
+    data.attendance = body.attendance as string;
   }
-  if ("complianceStatus" in body) {
-    if (!COMPLIANCE.includes(body.complianceStatus as string)) return { error: "Invalid compliance status" };
-    data.complianceStatus = body.complianceStatus;
-    data.compliedAt = body.complianceStatus === "COMPLIED" ? new Date() : null;
-  }
+  // remarks, complianceStatus, compliedAt and complianceDeadline are not
+  // columns on ParentContact, so they are not written (Prisma would reject them).
   if ("contactPerson" in body) data.contactPerson = str(body.contactPerson);
   if ("relationship" in body) data.relationship = str(body.relationship);
   if ("contactedBy" in body) data.contactedBy = str(body.contactedBy);
-  if ("remarks" in body) data.remarks = str(body.remarks);
-  for (const k of ["contactedAt", "complianceDeadline"]) {
-    if (!(k in body)) continue;
-    const d = date(body[k]);
-    if (d === undefined) return { error: `Invalid date: ${k}` };
-    if (k === "contactedAt" && d === null) continue; // may default na sa DB
-    data[k] = d;
+  if ("contactedAt" in body) {
+    const d = date(body.contactedAt);
+    if (d === undefined) return { error: "Invalid date: contactedAt" };
+    if (d !== null) data.contactedAt = d; // may default na sa DB
   }
   return { data };
 }

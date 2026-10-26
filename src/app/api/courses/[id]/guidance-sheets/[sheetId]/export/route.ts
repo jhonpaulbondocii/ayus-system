@@ -70,10 +70,8 @@ export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string; sheetId: string }> }
 ) {
-  console.log("EXPORT GET CALLED");
   try {
     const { id: courseId, sheetId } = await params;
-    console.log("EXPORT params:", { courseId, sheetId });
 
     const access = await requireCoursePermission(courseId, "view_course");
     if (!access.ok) return NextResponse.json({ error: access.error }, { status: access.status });

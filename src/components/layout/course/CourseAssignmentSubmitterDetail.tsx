@@ -193,8 +193,17 @@ function parseSubmittedEntries(
   return null;
 }
 
+// Last path segment without query/hash, URL-decoded ("My%20Essay.pdf?_a=1" -> "My Essay.pdf").
+function fileNameFromUrl(url: string): string {
+  const last = url.split(/[?#]/)[0].split("/").pop() ?? "";
+  try {
+    return decodeURIComponent(last);
+  } catch {
+    return last;
+  }
+}
+
 function resolveFileUrl(url: string): string {
-  console.log("[resolveFileUrl] input:", url);
   if (!url) return "";
   if (url.startsWith("http://") || url.startsWith("https://")) return url;
   if (url.startsWith("/")) return url;
@@ -417,7 +426,7 @@ function SubmittedView({
                 {entry.fileUrl && (
                   <button
                     type="button"
-                    onClick={() => onPreview(resolveFileUrl(entry.fileUrl ?? ""), entry.fileName || "File")}
+                    onClick={() => onPreview(resolveFileUrl(entry.fileUrl ?? ""), entry.fileName || fileNameFromUrl(entry.fileUrl ?? "") || "File")}
                     className="flex items-center gap-1 h-8 px-3 text-[11px] font-bold border rounded-lg hover:bg-gray-50 shrink-0 touch-manipulation"
                     style={{ color: MAROON, borderColor: "#f0c0c0", background: "white", cursor: "pointer" }}
                   >
@@ -438,7 +447,7 @@ function SubmittedView({
             </span>
             <button
               type="button"
-              onClick={() => onPreview(resolveFileUrl(sub.fileUrl!), "File")}
+              onClick={() => onPreview(resolveFileUrl(sub.fileUrl!), fileNameFromUrl(sub.fileUrl!) || "File")}
               className="flex items-center gap-1 h-8 px-3 text-[11px] font-bold border rounded-lg hover:bg-gray-50 shrink-0 touch-manipulation"
               style={{ color: MAROON, borderColor: "#f0c0c0", background: "white", cursor: "pointer" }}
             >
