@@ -37,7 +37,10 @@ function formatFileTypes(values: string[] | undefined): string {
 }
 function isoToDate(iso: string | null | undefined): string {
   if (!iso) return "";
-  try { return new Date(iso).toISOString().split("T")[0]; } catch { return ""; }
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 }
 function isoToTime(iso: string | null | undefined): string {
   if (!iso) return "";
@@ -48,6 +51,16 @@ function isoToTime(iso: string | null | undefined): string {
     const mm = m < 10 ? "0" + m : String(m);
     return `${hh}:${mm} ${h < 12 ? "AM" : "PM"}`;
   } catch { return ""; }
+}
+function toIso(date: string, time: string, fallbackTime: string): string | null {
+  if (!date) return null;
+  const m = /^(\d{1,2}):(\d{2})\s*(AM|PM)$/i.exec(time || fallbackTime);
+  if (!m) return null;
+  let h = parseInt(m[1], 10) % 12;
+  if (m[3].toUpperCase() === "PM") h += 12;
+  const [y, mo, d] = date.split("-").map(Number);
+  const local = new Date(y, mo - 1, d, h, parseInt(m[2], 10));
+  return Number.isNaN(local.getTime()) ? null : local.toISOString();
 }
 
 /* ── Interfaces ── */

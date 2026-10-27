@@ -48,6 +48,17 @@ function isoToTime(iso: string | null | undefined): string {
   } catch { return ""; }
 }
 
+function toIso(date: string, time: string, fallbackTime: string): string | null {
+  if (!date) return null;
+  const [year, month, day] = date.split("-").map(Number);
+  const [clock, period] = (time || fallbackTime).split(" ");
+  const [hour, minute] = clock.split(":").map(Number);
+  const hours = (hour % 12) + (period === "PM" ? 12 : 0);
+  const value = new Date(year, month - 1, day, hours, minute);
+  if (Number.isNaN(value.getTime())) return null;
+  return value.toISOString();
+}
+
 function normalizeFileTypes(values: string[] | undefined): string[] {
   if (!Array.isArray(values)) return [];
   const allowed = new Set(ALLOWED_FILE_TYPES.map(t => t.value));
@@ -663,9 +674,9 @@ export default function CourseAssignmentForm({
         title: name.trim(), description, points: parseFloat(points) || 0, submissionType,
         assignmentGroup: group, displayGradeAs, status: publish ? "PUBLISHED" : "UNPUBLISHED",
         assignees: row?.assignees ?? [],
-        dueDate: row?.dueDate || null, dueTime: row?.dueTime || null,
-        availableFrom: row?.availableFrom || null, availableFromTime: row?.availableFromTime || null,
-        availableUntil: row?.until || null, untilTime: row?.untilTime || null,
+        dueDate: toIso(row?.dueDate ?? "", row?.dueTime ?? "", "11:59 PM"), dueTime: null,
+availableFrom: toIso(row?.availableFrom ?? "", row?.availableFromTime ?? "", "12:00 AM"), availableFromTime: null,
+availableUntil: toIso(row?.until ?? "", row?.untilTime ?? "", "11:59 PM"), untilTime: null,
         submissionEntries: submissionEntries.map(e => ({
           id: e.id, label: e.label, required: e.required, type: e.type,
           allowedFileTypes: (e.type === "File Upload" || e.type === "Media Recording") ? normalizeFileTypes(e.allowedFileTypes) : [],
