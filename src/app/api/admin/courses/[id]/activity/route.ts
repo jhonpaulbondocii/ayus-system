@@ -6,7 +6,7 @@ import { requireHeadOrAdmin } from "@/lib/require-head-or-admin";
 
 type ActivityItem = {
   id: string;
-  type: "submission" | "announcement" | "enrollment" | "grade" | "general" | "form";
+  type: "submission" | "announcement" | "enrollment" | "grade" | "general" | "form" | "assignment";
   text: string;
   user?: string;
   time: string;
@@ -17,6 +17,7 @@ type ActivityItemWithTs = ActivityItem & { _ts: Date };
 const formatTime = (date: Date): string => {
   const diff = Date.now() - date.getTime();
   const mins = Math.floor(diff / 60_000);
+  if (mins < 1) return "Just now";
   if (mins < 60) return `${mins} minute${mins !== 1 ? "s" : ""} ago`;
   const hrs = Math.floor(mins / 60);
   if (hrs < 24) return `${hrs} hour${hrs !== 1 ? "s" : ""} ago`;
@@ -140,7 +141,7 @@ export async function GET(
     const withTs: ActivityItemWithTs[] = [
     ...recentAssignments.map((a) => ({
       id: `asgn-${a.id}`,
-      type: "submission" as const,
+      type: "assignment" as const,
       text: `created assignment: "${a.title}"`,
       user: (a.createdById ? creatorNameMap.get(a.createdById) : undefined) ?? undefined,
       time: formatTime(a.createdAt),
@@ -158,7 +159,7 @@ export async function GET(
 
     ...recentFormSubmissions.map((fs) => ({
       id: `fsub-${fs.id}`,
-      type: "general" as const,
+      type: "form" as const,
       text: `submitted form: "${fs.form.title}"`,
       user: fs.user.name ?? undefined,
       time: formatTime(fs.createdAt),
@@ -177,7 +178,7 @@ export async function GET(
     ...recentAnnouncements.map((a) => ({
       id: `ann-${a.id}`,
       type: "announcement" as const,
-      text: `New announcement: "${a.title}"`,
+      text: `posted announcement: "${a.title}"`,
       user: a.author ?? undefined,
       time: formatTime(a.createdAt),
       _ts: a.createdAt,

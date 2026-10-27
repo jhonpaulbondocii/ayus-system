@@ -22,7 +22,7 @@ export const ALL_TABS = [
   "Grades","Users","Collaborations","Form","Repositories","Patient Records",
   "Medical Exam Record","Medicine Inventory","Medical Cases Summary","Information Sheets","Log Sheet",
   "Exit Interviews","Student Directory","Disciplinary Log","Violation Types","Lost & Found","Library Cards","Library Log",
-  "Book Catalog","Inventory","Borrowing",
+  "Book Catalog","Inventory","Borrowing","Facility Reservation",
 ] as const;
 
 export const HIDDEN_FOR_HEAD: string[] = ["Collaborations"];

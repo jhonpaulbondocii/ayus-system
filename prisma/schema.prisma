@@ -161,6 +161,7 @@ model Course {
   violationTypes       ViolationType[]
   violations           Violation[]
   lostFoundItems       LostFoundItem[]
+  libraryFacilityReservations LibraryFacilityReservation[]
 
   @@map("courses")
 }
@@ -1203,6 +1204,75 @@ model LibraryBorrowRecord {
   @@map("library_borrow_records")
 }
 
+model LibraryFacilityReservation {
+  id       String @id @default(cuid())
+  courseId String
+
+  requestorType     String // "STUDENT" | "EMPLOYEE" | "COMMUNITY"
+  name              String
+  sex               String?
+  email             String?
+  contactNo         String?
+  collegeDept       String?
+  courseYearSection String?
+
+  activityType String
+  startAt      DateTime
+  endAt        DateTime
+
+  participants     Json @default("[]") // [{ name, sex: "M" | "F" }]
+  participantCount Int  @default(0)
+
+  letterReceived Boolean   @default(false)
+  consentGivenAt DateTime?
+
+  status                String    @default("PENDING") // PENDING | APPROVED | DISAPPROVED | COMPLETED | CANCELLED | NO_SHOW
+  facilityType          String? // AUDIO_VISUAL | DISCUSSION | OTHER
+  facilityNo            String?
+  facilityOther         String?
+  disapprovalReason     String?
+  librarianName         String?
+  librarianSignatureUrl String?
+  actionAt              DateTime?
+  processedBy           String?
+  completedAt           DateTime?
+  csmSubmitted          Boolean   @default(false)
+
+  letterName   String?
+  requestToken String? @unique
+  submittedVia String  @default("STAFF") // STAFF | ONLINE
+  arrivedAt    DateTime?
+  requestorSignatureUrl String?
+  requestorSignedAt     DateTime?
+  releasedAt            DateTime?
+  csmToken       String?   @unique
+  csmSubmittedAt DateTime?
+  csm            LibraryFacilityCsm?
+  letter       LibraryFacilityLetter?
+
+  dateFiled   DateTime @default(now())
+  submittedAt DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([courseId])
+  @@index([courseId, status])
+  @@index([courseId, startAt, endAt])
+  @@map("library_facility_reservations")
+}
+model LibraryFacilityLetter {
+  id            String   @id @default(cuid())
+  reservationId String   @unique
+  mime          String
+  data          Bytes
+  createdAt     DateTime @default(now())
+
+  reservation LibraryFacilityReservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+
+  @@map("library_facility_letters")
+}
+
 model ViolationType {
   id               String    @id @default(cuid())
   courseId         String
@@ -1232,6 +1302,17 @@ model ViolationType {
   @@index([courseId])
   @@index([courseId, severity])
   @@map("violation_types")
+}
+model LibraryFacilityCsm {
+  id            String   @id @default(cuid())
+  reservationId String   @unique
+  answers       Json
+  comment       String?
+  createdAt     DateTime @default(now())
+
+  reservation LibraryFacilityReservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+
+  @@map("library_facility_csm")
 }
 
 model Violation {
@@ -1347,6 +1428,20 @@ model LostFoundItem {
   @@index([courseId, status])
   @@index([courseId, dateFound])
   @@map("lost_found_items")
+}
+model LibraryFacilityInvite {
+  id             String    @id @default(cuid())
+  courseId       String
+  token          String    @unique
+  requestorType  String?
+  letterReceived Boolean   @default(false)
+  expiresAt      DateTime
+  usedAt         DateTime?
+  createdBy      String?
+  createdAt      DateTime  @default(now())
+
+  @@index([courseId])
+  @@map("library_facility_invites")
 }
 
 enum Role {

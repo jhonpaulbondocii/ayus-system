@@ -2,18 +2,33 @@
 
 // src/components/layout/course/CourseGuidanceTab.tsx
 
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import type { ReactNode } from "react";
 import {
-  Search, RefreshCw, ChevronDown, ChevronLeft, ChevronRight,
-  Trash2, Check, ArrowLeft, Filter, X, Plus,
-  GraduationCap, Download, AlertTriangle, Users, Eye, ExternalLink,
+  Search, RefreshCw, ChevronLeft, ChevronRight, Trash2, Check, ArrowLeft,
+  SlidersHorizontal, X, Download, GraduationCap, AlertTriangle, Eye,
+  ExternalLink, MoreVertical, Copy, Inbox, CheckCircle2, AlertCircle,
+  QrCode, Clock, Archive,
 } from "lucide-react";
+import { FONT } from "./osaShared";
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   CONSTANTS
-───────────────────────────────────────────────────────────────────────────── */
-const MAROON    = "#7b1113";
-const FONT      = "'Inter', 'SF Pro Display', system-ui, -apple-system, sans-serif";
+const C = {
+  brand:      "#7b1113",
+  brandDark:  "#5e0d0f",
+  brandTint:  "#fdf2f2",
+  brandRing:  "rgba(123,17,19,0.12)",
+  ink:        "#111827",
+  body:       "#374151",
+  muted:      "#6b7280",
+  faint:      "#9ca3af",
+  line:       "#e5e7eb",
+  lineSoft:   "#f3f4f6",
+  surface:    "#ffffff",
+  canvas:     "#ffffff",
+  danger:     "#b91c1c",
+} as const;
+
+const MAROON    = C.brand;
 const PAGE_SIZE = 15;
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -105,200 +120,194 @@ interface Props {
 ───────────────────────────────────────────────────────────────────────────── */
 function fmtDate(d: string | null | undefined) {
   if (!d) return "—";
-  return new Date(d).toLocaleDateString("en-US", {
-    month: "short", day: "numeric", year: "numeric",
-  });
+  return new Date(d).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" });
 }
 
-const SLATE = "#0f172a";
-const MUTED = "#64748b";
-const RULE  = "#e2e8f0";
+function useDebounced<T>(value: T, delay = 300) {
+  const [v, setV] = useState(value);
+  useEffect(() => {
+    const t = setTimeout(() => setV(value), delay);
+    return () => clearTimeout(t);
+  }, [value, delay]);
+  return v;
+}
+
+const SLATE = C.ink;
+const MUTED = C.muted;
+const RULE  = C.line;
 
 function Field({ label, value }: { label: string; value?: string | number | null }) {
   if (!value && value !== 0) return null;
   return (
-    <div className="py-2.5" style={{ borderBottom: `1px solid ${RULE}` }}>
-      <p style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: MUTED, marginBottom: 2 }}>{label}</p>
-      <p style={{ fontSize: 13, fontWeight: 500, color: SLATE, lineHeight: 1.5 }}>{String(value)}</p>
+    <div className="min-w-0 py-2.5" style={{ borderBottom: `1px solid ${C.lineSoft}` }}>
+      <p className="text-[11px] font-medium mb-0.5" style={{ color: C.muted }}>{label}</p>
+      <p className="text-[13px] font-medium break-words" style={{ color: C.ink, lineHeight: 1.5 }}>{String(value)}</p>
     </div>
   );
 }
+const InfoRow = Field;
 
 function SectionHeader({ title }: { title: string }) {
   return (
-    <div className="px-4 sm:px-5 py-3 border-b border-gray-100" style={{ background: "#fafafa" }}>
-      <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.14em", textTransform: "uppercase", color: MAROON }}>{title}</p>
+    <div className="px-4 sm:px-5 py-3 border-b" style={{ borderColor: C.lineSoft, background: "#fff" }}>
+      <h2 className="text-sm font-bold" style={{ color: C.ink }}>{title}</h2>
     </div>
   );
 }
 
 function RightSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div style={{ background: "#fff", border: `1px solid ${RULE}`, borderRadius: 10, overflow: "hidden", marginBottom: 12 }}>
-      <div className="px-4 py-2.5" style={{ background: "#fafafa", borderBottom: `1px solid ${RULE}` }}>
-        <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.14em", textTransform: "uppercase", color: MAROON }}>{title}</p>
-      </div>
-      <div className="px-4 py-3">{children}</div>
-    </div>
+    <section className="bg-white rounded-xl border overflow-hidden mb-4" style={{ borderColor: C.line }}>
+      <header className="px-4 sm:px-5 py-3 border-b" style={{ borderColor: C.lineSoft }}>
+        <h2 className="text-sm font-bold" style={{ color: C.ink }}>{title}</h2>
+      </header>
+      <div className="px-4 sm:px-5 py-2">{children}</div>
+    </section>
   );
 }
 
-function InfoRow({ label, value }: { label: string; value?: string | number | null }) {
-  if (!value && value !== 0) return null;
-  return (
-    <div className="py-2.5" style={{ borderBottom: `1px solid ${RULE}` }}>
-      <p style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: MUTED, marginBottom: 2 }}>{label}</p>
-      <p style={{ fontSize: 13, fontWeight: 500, color: SLATE, lineHeight: 1.5 }}>{String(value)}</p>
-    </div>
-  );
-}
+type Tab = "ALL" | "SUBMITTED" | "REVIEWED" | "ARCHIVED";
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   STATUS BADGE
-───────────────────────────────────────────────────────────────────────────── */
+const STATUS_META: Record<string, { label: string; color: string; bg: string; icon: ReactNode }> = {
+  SUBMITTED: { label: "Submitted", color: "#1e40af", bg: "#dbeafe", icon: <Clock size={11} /> },
+  REVIEWED:  { label: "Reviewed",  color: "#065f46", bg: "#d1fae5", icon: <Check size={11} /> },
+  ARCHIVED:  { label: "Archived",  color: "#374151", bg: "#f3f4f6", icon: <Archive size={11} /> },
+};
+const STATUS_TABS: Tab[] = ["ALL", "SUBMITTED", "REVIEWED", "ARCHIVED"];
+
 function StatusBadge({ status }: { status: string }) {
-  const map: Record<string, { bg: string; text: string; label: string }> = {
-    SUBMITTED: { bg: "#dbeafe", text: "#1e40af", label: "Submitted" },
-    REVIEWED:  { bg: "#dcfce7", text: "#15803d", label: "Reviewed"  },
-    ARCHIVED:  { bg: "#f3f4f6", text: "#6b7280", label: "Archived"  },
-  };
-  const s = map[status] ?? map.SUBMITTED;
+  const m = STATUS_META[status] ?? STATUS_META.SUBMITTED;
   return (
-    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold"
-      style={{ background: s.bg, color: s.text }}>
-      {s.label}
+    <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full shrink-0 whitespace-nowrap"
+      style={{ color: m.color, background: m.bg }}>
+      {m.icon} {m.label}
     </span>
   );
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   ROW ACTIONS MENU
-───────────────────────────────────────────────────────────────────────────── */
-function RowActionsMenu({
-  onView, onAllowResubmit, onDelete,
-}: {
-  onView?:          () => void;
-  onAllowResubmit?: () => void;
-  onDelete?:        () => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
-
+function EmptyState({ title, hint, action }: { title: string; hint?: string; action?: ReactNode }) {
   return (
-    <div className="relative" ref={ref}>
-      <button
-        onClick={e => { e.stopPropagation(); setOpen(v => !v); }}
-        className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-          <circle cx="12" cy="5" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="12" cy="19" r="2" />
-        </svg>
-      </button>
-      {open && (
-        <div
-          onClick={e => e.stopPropagation()}
-          className="absolute right-0 top-full mt-1 w-44 bg-white border border-gray-200 rounded-xl shadow-lg z-30 overflow-hidden py-1">
-          {onView && (
-            <button onClick={() => { setOpen(false); onView(); }}
-              className="w-full text-left px-3 py-2.5 text-xs font-semibold hover:bg-gray-50 transition-colors min-h-10"
-              style={{ color: MAROON }}>
-              View Full Sheet
-            </button>
-          )}
-          {onAllowResubmit && (
-            <button onClick={() => { setOpen(false); onAllowResubmit(); }}
-              className="w-full text-left px-3 py-2.5 text-xs font-semibold text-gray-600 hover:bg-gray-50 transition-colors min-h-10">
-              Allow Resubmission
-            </button>
-          )}
-          {onDelete && (
-            <button onClick={() => { setOpen(false); onDelete(); }}
-              className="w-full text-left px-3 py-2.5 text-xs font-semibold text-red-500 hover:bg-red-50 transition-colors min-h-10">
-              Delete
-            </button>
-          )}
-        </div>
-      )}
+    <div className="flex flex-col items-center justify-center gap-2 py-16 px-6 text-center">
+      <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-1" style={{ background: C.brandTint }}>
+        <Inbox className="w-6 h-6" style={{ color: C.brand }} />
+      </div>
+      <p className="text-sm font-semibold" style={{ color: C.ink }}>{title}</p>
+      {hint && <p className="text-xs max-w-xs" style={{ color: C.muted }}>{hint}</p>}
+      {action}
     </div>
   );
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   DELETE CONFIRM MODAL
-───────────────────────────────────────────────────────────────────────────── */
+type ToastState = { msg: string; tone: "success" | "error" } | null;
+
+function Toast({ toast }: { toast: ToastState }) {
+  if (!toast) return null;
+  const isErr = toast.tone === "error";
+  return (
+    <div role="status"
+      className="fixed left-1/2 -translate-x-1/2 z-[70] flex items-center gap-2 px-4 py-2.5 rounded-xl shadow-lg text-xs font-semibold text-white"
+      style={{ background: isErr ? C.danger : C.ink, bottom: "calc(24px + env(safe-area-inset-bottom))", fontFamily: FONT }}>
+      {isErr ? <AlertCircle size={14} /> : <CheckCircle2 size={14} />}
+      {toast.msg}
+    </div>
+  );
+}
+
+function SheetModal({
+  onClose, tone = "brand", icon, title, subtitle, children, footer, maxWidth = "max-w-md",
+}: {
+  onClose: () => void; tone?: "brand" | "danger"; icon?: ReactNode; title: string;
+  subtitle?: string; children: ReactNode; footer?: ReactNode; maxWidth?: string;
+}) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+  const accent = tone === "danger" ? C.danger : C.brand;
+  return (
+    <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/40"
+      style={{ backdropFilter: "blur(3px)", fontFamily: FONT }} onClick={onClose}>
+      <div role="dialog" aria-modal="true" aria-label={title}
+        className={`bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full ${maxWidth} sm:mx-4 overflow-hidden flex flex-col max-h-[92vh]`}
+        onClick={e => e.stopPropagation()}>
+        <div className="flex justify-center pt-2.5 pb-1 sm:hidden shrink-0"><div className="w-9 h-1 rounded-full bg-gray-300" /></div>
+        <div className="flex items-center justify-between gap-3 px-5 py-3.5 shrink-0" style={{ background: accent, color: "#fff" }}>
+          <div className="flex items-center gap-3 min-w-0">
+            {icon && <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-white/20">{icon}</div>}
+            <div className="min-w-0">
+              <p className="truncate" style={{ fontSize: 14, fontWeight: 800 }}>{title}</p>
+              {subtitle && <p className="text-xs truncate text-white/70">{subtitle}</p>}
+            </div>
+          </div>
+          <button onClick={onClose} aria-label="Close"
+            className="w-8 h-8 flex items-center justify-center rounded-lg text-white/70 hover:text-white hover:bg-white/10 shrink-0">
+            <X size={16} />
+          </button>
+        </div>
+        <div className="overflow-y-auto">{children}</div>
+        {footer && (
+          <div className="border-t shrink-0 bg-gray-50" style={{ borderColor: C.line, paddingBottom: "env(safe-area-inset-bottom)" }}>
+            {footer}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ConfirmModal({
+  title, message, confirmLabel, busy, error, onConfirm, onClose,
+}: {
+  title: string; message: ReactNode; confirmLabel: string; busy?: boolean;
+  error?: string; onConfirm: () => void; onClose: () => void;
+}) {
+  return (
+    <SheetModal onClose={onClose} tone="danger" icon={<Trash2 size={16} />} title={title} maxWidth="max-w-sm"
+      footer={
+        <div className="px-5 py-4 flex gap-2">
+          <button onClick={onClose} disabled={busy}
+            className="flex-1 h-10 rounded-xl text-xs font-semibold border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-50">
+            Cancel
+          </button>
+          <button onClick={onConfirm} disabled={busy}
+            className="flex-1 h-10 rounded-xl text-xs font-bold text-white disabled:opacity-60" style={{ background: C.danger }}>
+            {busy ? "Please wait…" : confirmLabel}
+          </button>
+        </div>
+      }>
+      <div className="px-5 py-5 text-sm leading-relaxed" style={{ color: C.body }}>
+        {message}
+        {error && <div className="mt-3 text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{error}</div>}
+      </div>
+    </SheetModal>
+  );
+}
+
 function DeleteModal({
   sheet, courseId, onClose, onDeleted,
-}: {
-  sheet: GuidanceSheet; courseId: string; onClose: () => void; onDeleted: () => void;
-}) {
+}: { sheet: GuidanceSheet; courseId: string; onClose: () => void; onDeleted: () => void }) {
   const [deleting, setDeleting] = useState(false);
   const [error,    setError]    = useState("");
 
   const handleDelete = async () => {
     setDeleting(true); setError("");
     try {
-      const res = await fetch(
-        `/api/courses/${courseId}/guidance-sheets/${sheet.id}`,
-        { method: "DELETE" }
-      );
+      const res = await fetch(`/api/courses/${courseId}/guidance-sheets/${sheet.id}`, { method: "DELETE" });
       if (!res.ok) {
-        const d = await res.json();
-        setError(d.error ?? "Failed to delete.");
-        setDeleting(false);
-        return;
+        const d = await res.json().catch(() => ({}));
+        setError(d.error ?? "Failed to delete."); setDeleting(false); return;
       }
       onDeleted();
-    } catch {
-      setError("Network error. Please try again.");
-      setDeleting(false);
-    }
+    } catch { setError("Network error. Please try again."); setDeleting(false); }
   };
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/30"
-      style={{ backdropFilter: "blur(4px)", fontFamily: FONT }}
-      onClick={onClose}>
-      <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl border border-gray-100 w-full sm:w-80 overflow-hidden"
-        onClick={e => e.stopPropagation()}>
-        <div className="sm:hidden flex justify-center pt-3 pb-1">
-          <div className="w-10 h-1 rounded-full bg-gray-200" />
-        </div>
-        <div className="px-5 py-5">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4 bg-red-50">
-            <Trash2 className="w-5 h-5 text-red-400" />
-          </div>
-          <p className="text-sm font-bold text-gray-900 mb-1">Delete this submission?</p>
-          <p className="text-xs text-gray-500 mb-1 font-medium">{sheet.name}</p>
-          <p className="text-xs text-gray-400 mb-5 leading-relaxed">
-            Student No. {sheet.studentNo}<br />
-            This action is permanent and cannot be undone.
-          </p>
-          {error && (
-            <div className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mb-3">{error}</div>
-          )}
-          <div className="flex gap-2">
-            <button onClick={onClose} disabled={deleting}
-              className="flex-1 py-2.5 border border-gray-200 rounded-xl text-xs font-semibold text-gray-500 hover:bg-gray-50 transition-all disabled:opacity-50 min-h-11 sm:min-h-0">
-              Cancel
-            </button>
-            <button onClick={handleDelete} disabled={deleting}
-              className="flex-1 py-2.5 rounded-xl text-xs font-bold text-white transition-all disabled:opacity-50 flex items-center justify-center gap-1.5 min-h-11 sm:min-h-0"
-              style={{ background: "#ef4444" }}>
-              {deleting
-                ? <><RefreshCw size={12} className="animate-spin" /> Deleting...</>
-                : "Delete"}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+    <ConfirmModal
+      title="Delete this submission?" confirmLabel="Delete" busy={deleting} error={error}
+      message={<><strong>{sheet.name}</strong> — Student No. {sheet.studentNo}<br />This can’t be undone.</>}
+      onConfirm={handleDelete} onClose={() => { if (!deleting) onClose(); }}
+    />
   );
 }
 
@@ -388,92 +397,57 @@ function SheetDetailView({
   const educ = (local.educBackground ?? {}) as EducBackground;
   const siblings: Sibling[] = Array.isArray(local.siblings) ? local.siblings : [];
 
+  const ghostBtn =
+    "flex items-center gap-1.5 text-xs font-semibold px-3 h-8 rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-50";
+
+  const actionButtons = (
+    <>
+      <button onClick={openPreview} className={ghostBtn}><Eye size={13} /> Preview PDF</button>
+      {isHead && local.status !== "REVIEWED" && (
+        <button onClick={() => patch({ status: "REVIEWED" })} disabled={patching}
+          className="flex items-center gap-1.5 text-xs font-bold px-3.5 h-8 rounded-lg text-white disabled:opacity-50"
+          style={{ background: C.brand }}>
+          <Check size={13} /> Mark reviewed
+        </button>
+      )}
+      {isHead && !local.allowResubmit && (
+        <button onClick={() => patch({ allowResubmit: true })} disabled={patching} className={ghostBtn}>
+          Allow resubmit
+        </button>
+      )}
+      {local.allowResubmit && (
+        <span className="text-[11px] font-semibold text-amber-600 flex items-center gap-1">
+          <AlertTriangle size={11} /> Resubmission allowed
+        </span>
+      )}
+      {isHead && (
+        <button onClick={() => setShowDelete(true)} aria-label="Delete submission"
+          className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors">
+          <Trash2 size={14} />
+        </button>
+      )}
+    </>
+  );
+
   return (
-    <div className="flex flex-col h-full" style={{ fontFamily: FONT, background: "#f8fafc" }}>
+    <div className="flex flex-col h-full" style={{ fontFamily: FONT, background: C.canvas }}>
 
       {/* ── Top bar ── */}
-      <div style={{ background: "#fff", borderBottom: `1px solid ${RULE}` }}
-        className="relative px-3 sm:px-6 py-3 shrink-0">
-        {/* Row 1: back + name */}
-        <div className="flex items-center gap-2 mb-2 sm:mb-0">
-          <button onClick={onBack}
-            className="flex items-center gap-1.5 text-sm font-semibold transition-colors shrink-0"
-            style={{ color: MAROON }}>
-            <ArrowLeft size={14} /> Back
+      <div className="shrink-0 bg-white border-b px-4 sm:px-6 py-3" style={{ borderColor: C.line }}>
+        <div className="flex items-center gap-3">
+          <button onClick={onBack} className="flex items-center gap-1.5 text-sm font-semibold shrink-0" style={{ color: C.brand }}>
+            <ArrowLeft size={15} /> Back
           </button>
-          <span style={{ width: 1, height: 16, background: RULE }} className="shrink-0" />
-          <p className="text-sm font-bold truncate flex-1" style={{ color: SLATE }}>{local.name}</p>
+          <span className="w-px h-4 shrink-0" style={{ background: C.line }} />
+          <p className="text-sm font-bold flex-1 truncate min-w-0" style={{ color: C.ink }}>{local.name}</p>
+          <StatusBadge status={local.status} />
+          <div className="hidden sm:flex items-center gap-2">{actionButtons}</div>
         </div>
-
-        {/* Row 2: action buttons (only head) */}
-        {isHead && (
-          <div className="flex items-center gap-1.5 flex-wrap mt-2 sm:mt-0 sm:hidden">
-            <button onClick={openPreview}
-              className="flex items-center gap-1 text-xs font-bold px-2.5 py-1.5 rounded-lg border transition-all min-h-8"
-              style={{ borderColor: RULE, color: SLATE }}>
-              <Eye size={11} /> Preview
-            </button>
-            {local.status !== "REVIEWED" && (
-              <button onClick={() => patch({ status: "REVIEWED" })} disabled={patching}
-                className="flex items-center gap-1 text-xs font-bold px-2.5 py-1.5 rounded-lg border transition-all disabled:opacity-50 min-h-8"
-                style={{ borderColor: MAROON, color: MAROON }}>
-                <Check size={11} /> Reviewed
-              </button>
-            )}
-            {!local.allowResubmit && (
-              <button onClick={() => patch({ allowResubmit: true })} disabled={patching}
-                className="flex items-center gap-1 text-xs font-bold px-2.5 py-1.5 rounded-lg border border-gray-300 text-gray-600 transition-all disabled:opacity-50 min-h-8">
-                Resubmit
-              </button>
-            )}
-            {local.allowResubmit && (
-              <span className="text-[10px] font-bold text-amber-600 flex items-center gap-1">
-                <AlertTriangle size={10} /> Resubmission allowed
-              </span>
-            )}
-            <button onClick={() => setShowDelete(true)}
-              className="flex items-center gap-1 text-xs font-semibold transition-colors text-red-400 hover:text-red-600 min-h-8 px-1">
-              <Trash2 size={13} />
-            </button>
-          </div>
-        )}
-
-        {/* Desktop action buttons */}
-        <div className="hidden sm:flex items-center gap-2 flex-wrap absolute top-3 right-6">
-                      <button onClick={openPreview}
-            className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg border transition-all"
-            style={{ borderColor: RULE, color: SLATE }}>
-            <Eye size={12} /> Preview PDF
-          </button>
-            {isHead && local.status !== "REVIEWED" && (
-              <button onClick={() => patch({ status: "REVIEWED" })} disabled={patching}
-                className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg border transition-all disabled:opacity-50"
-                style={{ borderColor: MAROON, color: MAROON }}>
-                <Check size={12} /> Mark Reviewed
-              </button>
-            )}
-            {!local.allowResubmit && (
-              <button onClick={() => patch({ allowResubmit: true })} disabled={patching}
-                className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg border border-gray-300 text-gray-600 hover:border-gray-400 transition-all disabled:opacity-50">
-                Allow Resubmit
-              </button>
-            )}
-            {local.allowResubmit && (
-              <span className="text-[10px] font-bold text-amber-600 flex items-center gap-1">
-                <AlertTriangle size={11} /> Resubmission allowed
-              </span>
-            )}
-            {isHead && (
-              <button onClick={() => setShowDelete(true)}
-                className="flex items-center gap-1 text-xs font-semibold transition-colors text-red-400 hover:text-red-600">
-                <Trash2 size={13} />
-              </button>
-            )}
-          </div>
+        <div className="flex sm:hidden items-center gap-1.5 flex-wrap mt-2.5">{actionButtons}</div>
       </div>
 
       {/* ── Body ── */}
-      <div className="flex-1 overflow-y-auto" style={{ background: "#f1f5f9" }}>
+      <div className="flex-1 overflow-y-auto" style={{ background: C.canvas }}>
         <div className="flex flex-col lg:grid lg:grid-cols-3 gap-0 min-h-full">
 
           {/* ── LEFT COLUMN ── */}
@@ -523,10 +497,8 @@ function SheetDetailView({
 
           {/* ── RIGHT COLUMN ── */}
           <div className="lg:col-span-2 overflow-y-auto">
-            <div className="px-4 sm:px-5 py-3 border-b border-gray-200 lg:sticky top-0 z-10" style={{ background: "#fafafa" }}>
-              <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.14em", textTransform: "uppercase", color: MAROON }}>
-                Full Information Sheet
-              </p>
+            <div className="px-4 sm:px-5 pt-4 pb-1">
+              <h2 className="text-base font-bold" style={{ color: C.ink }}>Full information sheet</h2>
             </div>
             <div className="p-4 sm:p-5">
 
@@ -791,9 +763,6 @@ function SheetDetailView({
   );
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   QR / LINK MODAL
-───────────────────────────────────────────────────────────────────────────── */
 function ShareLinkModal({ courseId, onClose }: { courseId: string; onClose: () => void }) {
   const url = `${typeof window !== "undefined" ? window.location.origin : ""}/forms/guidance/${courseId}`;
   const [copied,    setCopied]    = useState(false);
@@ -822,284 +791,337 @@ function ShareLinkModal({ courseId, onClose }: { courseId: string; onClose: () =
   const downloadQR = () => {
     if (!qrDataUrl) return;
     const a = document.createElement("a");
-    a.href = qrDataUrl;
-    a.download = `information-sheet-qr-${courseId}.png`;
-    a.click();
+    a.href = qrDataUrl; a.download = `information-sheet-qr-${courseId}.png`; a.click();
   };
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/30"
-      style={{ backdropFilter: "blur(4px)", fontFamily: FONT }} onClick={onClose}>
-      <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl border border-gray-100 w-full sm:w-96 overflow-hidden"
-        onClick={e => e.stopPropagation()}>
-
-        <div className="sm:hidden flex justify-center pt-3 pb-1">
-          <div className="w-10 h-1 rounded-full bg-gray-200" />
-        </div>
-
-        {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100" style={{ background: MAROON }}>
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
-              <GraduationCap size={15} className="text-white" />
-            </div>
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-white/60">Guidance</p>
-              <p className="text-sm font-black text-white">Student Form Link</p>
-            </div>
-          </div>
-          <button onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-colors min-h-8">
-            <X size={15} />
+    <SheetModal onClose={onClose} icon={<QrCode size={16} />} title="Form link" subtitle="Individual information sheet"
+      footer={<button onClick={onClose} className="w-full h-11 sm:h-10 text-xs font-semibold text-gray-600 hover:bg-gray-100">Close</button>}>
+      <div className="px-5 py-5 space-y-5">
+        <p className="text-xs leading-relaxed" style={{ color: C.muted }}>
+          Share this link or QR code with enrollees so they can fill out their Individual Information Sheet.
+        </p>
+        <div className="flex items-center gap-2 rounded-xl border px-3 py-2.5 bg-gray-50" style={{ borderColor: C.line }}>
+          <p className="text-xs font-mono flex-1 break-all" style={{ color: C.body }}>{url}</p>
+          <button onClick={copy}
+            className="shrink-0 flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-lg transition-all"
+            style={copied ? { background: "#dcfce7", color: "#15803d" } : { background: C.brandTint, color: C.brand }}>
+            {copied ? <><Check size={11} /> Copied</> : <><Copy size={11} /> Copy</>}
           </button>
         </div>
-
-        <div className="px-5 py-5 space-y-4">
-          <p className="text-xs text-gray-500 leading-relaxed">
-            Share this link or QR code with enrollees so they can fill out their Individual Information Sheet.
-          </p>
-
-          {/* URL row */}
-          <div className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 flex items-center gap-3">
-            <p className="text-xs text-gray-700 font-mono flex-1 break-all">{url}</p>
-            <button onClick={copy}
-              className="shrink-0 flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-lg transition-all min-h-8"
-              style={copied ? { background: "#dcfce7", color: "#15803d" } : { background: "#fef2f2", color: MAROON }}>
-              {copied ? <><Check size={11} /> Copied!</> : "Copy"}
-            </button>
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-44 h-44 sm:w-48 sm:h-48 rounded-xl border flex items-center justify-center bg-white overflow-hidden" style={{ borderColor: C.line }}>
+            {qrLoading ? (
+              <div className="w-8 h-8 rounded-full border-2 border-gray-200 animate-spin" style={{ borderTopColor: C.brand }} />
+            ) : qrDataUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={qrDataUrl} alt="QR code" className="w-full h-full object-contain" />
+            ) : (
+              <p className="text-[11px] text-gray-400 text-center px-4">Couldn’t generate the QR code. Check your connection and reopen this window.</p>
+            )}
           </div>
-
-          {/* QR Code */}
-          <div className="flex flex-col items-center gap-3 py-2">
-            <p className="text-[10px] font-black uppercase tracking-widest self-start" style={{ color: MAROON }}>QR Code</p>
-            <div className="w-44 h-44 rounded-xl border-2 border-gray-100 flex items-center justify-center bg-white shadow-sm overflow-hidden">
-              {qrLoading
-                ? <div className="w-8 h-8 rounded-full border-2 border-gray-200 animate-spin" style={{ borderTopColor: MAROON }} />
-                : qrDataUrl
-                  // eslint-disable-next-line @next/next/no-img-element
-                  ? <img src={qrDataUrl} alt="QR Code" className="w-full h-full object-contain" />
-                  : <p className="text-[10px] text-gray-400 text-center px-4">Failed to generate QR code</p>
-              }
-            </div>
-            <button onClick={downloadQR} disabled={!qrDataUrl || qrLoading}
-              className="flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-lg border transition-all disabled:opacity-40 min-h-9"
-              style={{ borderColor: MAROON, color: MAROON }}>
-              <Download size={12} /> Download QR Code
-            </button>
-          </div>
-        </div>
-
-        <div className="px-5 py-4 border-t border-gray-100 bg-gray-50">
-          <button onClick={onClose}
-            className="w-full h-11 sm:h-10 border border-gray-200 rounded-xl text-xs font-semibold text-gray-600 hover:bg-gray-100 transition-all">
-            Close
+          <button onClick={downloadQR} disabled={!qrDataUrl || qrLoading}
+            className="flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-lg border transition-all disabled:opacity-40"
+            style={{ borderColor: C.brand, color: C.brand }}>
+            <Download size={12} /> Download QR code
           </button>
         </div>
       </div>
-    </div>
+    </SheetModal>
   );
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   MAIN TAB
-───────────────────────────────────────────────────────────────────────────── */
-export default function CourseGuidanceTab({
-  courseId, isHead,
-}: Props) {
+export default function CourseGuidanceTab({ courseId, isHead }: Props) {
   const [sheets,        setSheets]        = useState<GuidanceSheet[]>([]);
   const [loading,       setLoading]       = useState(true);
   const [error,         setError]         = useState("");
   const [search,        setSearch]        = useState("");
-  const [statusFilter,  setStatusFilter]  = useState("");
+  const [statusTab,     setStatusTab]     = useState<Tab>("ALL");
   const [programFilter, setProgramFilter] = useState("");
   const [showFilters,   setShowFilters]   = useState(false);
   const [showShare,     setShowShare]     = useState(false);
   const [detailSheet,   setDetailSheet]   = useState<GuidanceSheet | null>(null);
-  const [deleteTarget,  setDeleteTarget]  = useState<GuidanceSheet | null>(null);
   const [page,          setPage]          = useState(1);
+  const [toast,         setToast]         = useState<ToastState>(null);
+  const [selected,      setSelected]      = useState<Set<string>>(new Set());
+  const [rowMenu,       setRowMenu]       = useState<{ id: string; x: number; y: number } | null>(null);
+  const [deleteTarget,  setDeleteTarget]  = useState<string[] | null>(null);
+  const [deleting,      setDeleting]      = useState(false);
 
+  const debouncedSearch = useDebounced(search, 300);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const notify = useCallback((msg: string, tone: "success" | "error" = "success") => {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    setToast({ msg, tone });
+    toastTimer.current = setTimeout(() => setToast(null), 3000);
+  }, []);
+  useEffect(() => () => { if (toastTimer.current) clearTimeout(toastTimer.current); }, []);
+
+  /* Server: search lang. Status at program ay local para tama ang tab counts. */
   const fetchSheets = useCallback(async () => {
     setLoading(true); setError("");
     try {
       const params = new URLSearchParams();
-      if (search)        params.set("search",  search);
-      if (statusFilter)  params.set("status",  statusFilter);
-      if (programFilter) params.set("course",  programFilter);
+      if (debouncedSearch) params.set("search", debouncedSearch);
       const res  = await fetch(`/api/courses/${courseId}/guidance-sheets?${params}`);
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Failed");
+      if (!res.ok) throw new Error(data.error ?? "Failed to load submissions.");
       setSheets(data.sheets ?? []);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load submissions.");
-    } finally {
-      setLoading(false);
-    }
-  }, [courseId, search, statusFilter, programFilter]);
+    } finally { setLoading(false); }
+  }, [courseId, debouncedSearch]);
 
   useEffect(() => { fetchSheets(); }, [fetchSheets]);
-  useEffect(() => { setPage(1); }, [search, statusFilter, programFilter]);
+  useEffect(() => { setPage(1); setSelected(new Set()); }, [debouncedSearch, statusTab, programFilter]);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setRowMenu(null); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
-  const programOptions = [...new Set(sheets.map(s => s.courseProgram).filter(Boolean))] as string[];
-  const hasActiveFilter = !!programFilter;
+  const baseFiltered = useMemo(
+    () => sheets.filter(s => !programFilter || s.courseProgram === programFilter),
+    [sheets, programFilter],
+  );
 
-  const totalPages = Math.max(1, Math.ceil(sheets.length / PAGE_SIZE));
-  const paginated  = sheets.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const counts = useMemo(() => {
+    const c: Record<Tab, number> = { ALL: baseFiltered.length, SUBMITTED: 0, REVIEWED: 0, ARCHIVED: 0 };
+    baseFiltered.forEach(s => { if (s.status in c) c[s.status as Tab] += 1; });
+    return c;
+  }, [baseFiltered]);
+
+  const filtered   = useMemo(() => statusTab === "ALL" ? baseFiltered : baseFiltered.filter(s => s.status === statusTab), [baseFiltered, statusTab]);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paginated  = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  useEffect(() => { if (page > totalPages) setPage(totalPages); }, [page, totalPages]);
+
+  const programOptions = useMemo(
+    () => [...new Set(sheets.map(s => s.courseProgram).filter((c): c is string => !!c))].sort(),
+    [sheets],
+  );
+
+  const activeFilterCount = programFilter ? 1 : 0;
+  const hasAnyFilter      = !!(search || statusTab !== "ALL" || activeFilterCount);
+  const resetAll          = () => { setProgramFilter(""); setStatusTab("ALL"); setSearch(""); };
+
+  const pageNumbers = Array.from({ length: Math.min(totalPages, 5) }, (_, i) =>
+    totalPages <= 5 || page <= 3 ? i + 1 : page >= totalPages - 2 ? totalPages - 4 + i : page - 2 + i,
+  );
+
+  const pageAllSelected  = paginated.length > 0 && paginated.every(s => selected.has(s.id));
+  const pageSomeSelected = paginated.some(s => selected.has(s.id));
+
+  const toggleOne = (id: string) =>
+    setSelected(prev => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+  const togglePage = () =>
+    setSelected(prev => {
+      const n = new Set(prev);
+      if (pageAllSelected) paginated.forEach(s => n.delete(s.id)); else paginated.forEach(s => n.add(s.id));
+      return n;
+    });
+  const selectAllFiltered = () => setSelected(new Set(filtered.map(s => s.id)));
+
+  const openRowMenu = (e: React.MouseEvent<HTMLButtonElement>, id: string) => {
+    e.stopPropagation();
+    const r = e.currentTarget.getBoundingClientRect();
+    const flip = r.bottom + 140 > window.innerHeight;
+    setRowMenu({ id, x: r.right, y: flip ? r.top - 136 : r.bottom + 4 });
+  };
 
   const allowResubmit = async (sheet: GuidanceSheet) => {
     try {
       const res = await fetch(`/api/courses/${courseId}/guidance-sheets/${sheet.id}`, {
-        method:  "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ allowResubmit: true }),
+        method: "PATCH", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ allowResubmit: true }),
       });
-      if (!res.ok) return;
+      if (!res.ok) { notify("Couldn’t update the submission.", "error"); return; }
       const d = await res.json();
       setSheets(prev => prev.map(s => s.id === sheet.id ? d.sheet : s));
-    } catch { /* ignore */ }
+      notify("Resubmission allowed");
+    } catch { notify("Couldn’t update the submission.", "error"); }
   };
 
+  const deleteIds = async (ids: string[]) => {
+    setDeleting(true);
+    const results = await Promise.allSettled(
+      ids.map(id =>
+        fetch(`/api/courses/${courseId}/guidance-sheets/${id}`, { method: "DELETE" }).then(res => {
+          if (!res.ok) throw new Error("Delete failed");
+          return id;
+        }),
+      ),
+    );
+    const ok = results.filter((r): r is PromiseFulfilledResult<string> => r.status === "fulfilled").map(r => r.value);
+    const failed = ids.length - ok.length;
+    if (ok.length) setSheets(prev => prev.filter(s => !ok.includes(s.id)));
+    setSelected(prev => { const n = new Set(prev); ok.forEach(id => n.delete(id)); return n; });
+    setDeleting(false); setDeleteTarget(null);
+    if (failed === 0) notify(ok.length === 1 ? "Submission deleted" : `${ok.length} submissions deleted`);
+    else notify(`${failed} couldn’t be deleted. Please try again.`, "error");
+  };
+
+  const exportCSV = () => {
+    const csv = [
+      ["Student No.", "Name", "Course", "Year/Section", "Sex", "Age", "Email", "Mobile", "Status", "Submitted At"].join(","),
+      ...filtered.map(s => [
+        s.studentNo, s.name, s.courseProgram ?? "", s.yearSection ?? "",
+        s.sex ?? "", s.age ?? "", s.email ?? "", s.mobileNo ?? "",
+        s.status, fmtDate(s.submittedAt),
+      ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")),
+    ].join("\n");
+    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+    const a = document.createElement("a");
+    a.href = url; a.download = "guidance_submissions.csv"; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const emptyState = sheets.length === 0 && !hasAnyFilter ? (
+    <EmptyState
+      title="No submissions yet"
+      hint="Share the form link so enrollees can fill out their information sheet."
+      action={
+        <button onClick={() => setShowShare(true)}
+          className="mt-2 flex items-center gap-1.5 text-xs font-bold px-4 h-9 rounded-lg text-white" style={{ background: C.brand }}>
+          <QrCode size={13} /> Share form link
+        </button>
+      }
+    />
+  ) : (
+    <EmptyState
+      title="No matching submissions"
+      hint="Try a different search or clear the filters."
+      action={<button onClick={resetAll} className="mt-2 text-xs font-bold hover:underline" style={{ color: C.brand }}>Clear all filters</button>}
+    />
+  );
+
+  /* ── Detail ── */
   if (detailSheet) {
     return (
-      <SheetDetailView
-        sheet={detailSheet}
-        courseId={courseId}
-        isHead={isHead}
-        onBack={() => setDetailSheet(null)}
-        onUpdated={updated => setSheets(prev => prev.map(s => s.id === updated.id ? updated : s))}
-        onDeleted={id => {
-          setSheets(prev => prev.filter(s => s.id !== id));
-          setDetailSheet(null);
-        }}
-      />
+      <>
+        <SheetDetailView
+          sheet={detailSheet} courseId={courseId} isHead={isHead}
+          onBack={() => setDetailSheet(null)}
+          onUpdated={u => setSheets(prev => prev.map(s => s.id === u.id ? u : s))}
+          onDeleted={id => { setSheets(prev => prev.filter(s => s.id !== id)); setDetailSheet(null); }}
+        />
+        <Toast toast={toast} />
+      </>
     );
   }
 
+  /* ── List ── */
   return (
-    <div className="h-full flex flex-col overflow-hidden" style={{ fontFamily: FONT, background: "#f8f8f7" }}>
+    <div className="h-full flex flex-col overflow-hidden" style={{ fontFamily: FONT, background: C.canvas }}>
 
-      {/* ── Header ── */}
-      <div className="bg-white border-b border-gray-200 px-4 sm:px-8 py-3 sm:py-5 flex items-center justify-between shrink-0 gap-3">
+      {/* Header */}
+      <div className="bg-white border-b px-4 sm:px-8 py-3.5 sm:py-5 flex items-center justify-between shrink-0 gap-3" style={{ borderColor: C.line }}>
         <div className="min-w-0">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.15em] mb-0.5 truncate" style={{ color: MAROON }}>
-            Guidance
-          </p>
-          <h1 className="text-base sm:text-xl font-bold text-gray-900 leading-none">Information Sheets</h1>
+          <h1 className="text-lg sm:text-xl font-bold leading-tight" style={{ color: C.ink }}>Information sheets</h1>
+          <p className="text-xs mt-0.5 hidden sm:block" style={{ color: C.faint }}>Review individual information sheets submitted by students.</p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <button onClick={fetchSheets}
-            className="flex items-center justify-center gap-1.5 text-xs font-semibold text-gray-500 border border-gray-200 hover:border-gray-400 hover:text-gray-700 w-8 sm:w-auto sm:px-3 h-8 rounded-lg transition-all">
+          <button onClick={fetchSheets} aria-label="Refresh"
+            className="flex items-center justify-center gap-1.5 text-xs font-semibold text-gray-500 border border-gray-200 hover:border-gray-400 hover:text-gray-700 w-9 h-9 sm:w-auto sm:px-3 rounded-lg transition-colors">
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
             <span className="hidden sm:inline">Refresh</span>
           </button>
           <button onClick={() => setShowShare(true)}
-            className="flex items-center gap-1.5 text-xs font-bold px-3 sm:px-4 h-8 sm:h-9 rounded-lg text-white transition-all"
-            style={{ background: MAROON }}>
-            <Plus className="w-3.5 h-3.5 shrink-0" />
-            <span className="hidden sm:inline">Share Form Link</span>
-            <span className="sm:hidden">Share</span>
+            className="flex items-center gap-1.5 text-xs font-bold px-3.5 h-9 rounded-lg text-white transition-opacity hover:opacity-90"
+            style={{ background: C.brand }}>
+            <QrCode className="w-3.5 h-3.5" />
+            <span>Share<span className="hidden sm:inline"> form link</span></span>
           </button>
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-3 sm:px-8 py-3 sm:py-6 flex flex-col gap-3 sm:gap-5">
+      <div className="flex-1 overflow-y-auto px-4 sm:px-8 py-4 sm:py-6 flex flex-col gap-4 sm:gap-5 min-h-0">
+        <div className="flex-1 bg-white border rounded-xl overflow-hidden flex flex-col shadow-sm min-h-[420px]" style={{ borderColor: C.line }}>
 
-        {/* ── Stat cards ── */}
-        <div className="grid grid-cols-3 gap-2 sm:gap-4">
-          {[
-            { label: "Total", value: sheets.length, full: "Total Submissions" },
-            { label: "Reviewed", value: sheets.filter(s => s.status === "REVIEWED").length },
-            { label: "Pending", value: sheets.filter(s => s.status === "SUBMITTED").length, full: "Pending Review" },
-          ].map(s => (
-            <div key={s.label} className="bg-white border border-gray-200 rounded-xl px-3 sm:px-5 py-3 sm:py-4 flex items-center gap-2 sm:gap-4">
-              <div className="rounded-lg p-1.5 sm:p-2.5 shrink-0 hidden sm:flex" style={{ background: "#f3f4f6", color: MAROON }}>
-                <Users className="w-4 h-4" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-xl sm:text-2xl font-black tabular-nums leading-none text-gray-900">{s.value}</p>
-                <p className="text-[10px] sm:text-sm font-semibold mt-0.5 text-gray-500 truncate">
-                  <span className="sm:hidden">{s.label}</span>
-                  <span className="hidden sm:inline">{s.full ?? s.label}</span>
-                </p>
-              </div>
+          {/* Status tabs */}
+          <div className="border-b overflow-x-auto" style={{ borderColor: C.line }}>
+            <div role="tablist" className="flex px-2 sm:px-3 min-w-max">
+              {STATUS_TABS.map(t => {
+                const active = statusTab === t;
+                return (
+                  <button key={t} role="tab" aria-selected={active} onClick={() => setStatusTab(t)}
+                    className="relative flex items-center gap-1.5 px-3 py-3 text-xs font-semibold whitespace-nowrap transition-colors"
+                    style={{ color: active ? C.brand : C.muted }}>
+                    {t === "ALL" ? "All" : STATUS_META[t].label}
+                    <span className="text-[11px] tabular-nums px-1.5 rounded-full"
+                      style={{ background: active ? C.brandTint : C.lineSoft, color: active ? C.brand : C.muted }}>
+                      {counts[t]}
+                    </span>
+                    {active && <span className="absolute left-2 right-2 -bottom-px h-0.5 rounded-full" style={{ background: C.brand }} />}
+                  </button>
+                );
+              })}
             </div>
-          ))}
-        </div>
-
-        {/* ── Table card ── */}
-        <div className="flex-1 bg-white border border-gray-200 rounded-xl overflow-hidden flex flex-col shadow-sm min-h-0">
+          </div>
 
           {/* Toolbar */}
-          <div className="px-3 sm:px-5 py-2.5 border-b border-gray-100 flex items-center gap-2 bg-white flex-wrap">
-            {/* Search */}
-            <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-2.5 py-1.5 flex-1 min-w-0 bg-gray-50 focus-within:bg-white focus-within:border-gray-400 transition-all">
+          <div className="px-3 sm:px-5 py-2.5 sm:py-3 border-b flex items-center gap-2" style={{ borderColor: C.lineSoft }}>
+            <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-3 h-9 flex-1 bg-gray-50 focus-within:bg-white focus-within:border-gray-400 transition-colors min-w-0">
               <Search className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-              <input
-                value={search} onChange={e => setSearch(e.target.value)}
-                placeholder="Search name or student no…"
-                className="flex-1 text-xs text-gray-700 placeholder:text-gray-400 outline-none bg-transparent min-w-0"
-              />
+              <input value={search} onChange={e => setSearch(e.target.value)}
+                placeholder="Search name or student no." aria-label="Search submissions"
+                className="flex-1 text-xs text-gray-700 placeholder:text-gray-400 outline-none bg-transparent min-w-0" />
               {search && (
-                <button onClick={() => setSearch("")} className="text-gray-300 hover:text-gray-500 shrink-0 min-w-4">
-                  <X className="w-3 h-3" />
+                <button onClick={() => setSearch("")} aria-label="Clear search" className="text-gray-300 hover:text-gray-500 shrink-0">
+                  <X className="w-3.5 h-3.5" />
                 </button>
               )}
             </div>
-
-            {/* Filter button */}
-            <button onClick={() => setShowFilters(f => !f)}
-              style={(showFilters || hasActiveFilter) ? { background: MAROON, color: "#fff", borderColor: MAROON } : {}}
-              className={`flex items-center gap-1 h-8 px-2.5 rounded-lg border text-[11px] font-bold transition-all shrink-0
-                ${!(showFilters || hasActiveFilter) ? "border-gray-200 text-gray-500 hover:border-gray-400 hover:text-gray-700" : ""}`}>
-              <Filter className="w-3 h-3" />
+            <button onClick={() => setShowFilters(f => !f)} aria-expanded={showFilters}
+              style={(showFilters || activeFilterCount) ? { background: C.brand, color: "#fff", borderColor: C.brand } : {}}
+              className={`flex items-center gap-1.5 px-3 h-9 rounded-lg border text-xs font-semibold transition-colors shrink-0 ${!(showFilters || activeFilterCount) ? "border-gray-200 text-gray-600 hover:border-gray-400" : ""}`}>
+              <SlidersHorizontal className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Filters</span>
-              {hasActiveFilter && <span className="w-1.5 h-1.5 rounded-full bg-white/70 shrink-0" />}
+              {activeFilterCount > 0 && (
+                <span className="min-w-4 h-4 px-1 rounded-full bg-white/90 text-[10px] font-bold flex items-center justify-center" style={{ color: C.brand }}>
+                  {activeFilterCount}
+                </span>
+              )}
             </button>
-
-            {/* Export CSV */}
-            <button
-              onClick={() => {
-                const csv = [
-                  ["Student No.", "Name", "Course", "Year/Section", "Sex", "Age", "Email", "Mobile", "Status", "Submitted At"].join(","),
-                  ...sheets.map(s => [
-                    s.studentNo, s.name, s.courseProgram ?? "", s.yearSection ?? "",
-                    s.sex ?? "", s.age ?? "", s.email ?? "", s.mobileNo ?? "",
-                    s.status, fmtDate(s.submittedAt),
-                  ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(","))
-                ].join("\n");
-                const blob = new Blob([csv], { type: "text/csv" });
-                const url  = URL.createObjectURL(blob);
-                const a    = document.createElement("a");
-                a.href = url; a.download = "guidance_submissions.csv"; a.click();
-                URL.revokeObjectURL(url);
-              }}
-              disabled={sheets.length === 0}
-              className="flex items-center gap-1 h-8 px-2.5 rounded-lg border border-gray-200 text-[11px] font-bold text-gray-600 hover:border-gray-400 hover:text-gray-800 transition-all disabled:opacity-40 shrink-0 ml-auto">
-              <Download className="w-3 h-3" />
+            <button onClick={exportCSV} disabled={filtered.length === 0}
+              className="flex items-center gap-1.5 px-3 h-9 rounded-lg border border-gray-200 text-xs font-semibold text-gray-600 hover:border-gray-400 transition-colors disabled:opacity-40 shrink-0">
+              <Download className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Export CSV</span>
             </button>
           </div>
 
+          {/* Bulk action bar */}
+          {isHead && selected.size > 0 && (
+            <div className="px-3 sm:px-5 py-2.5 border-b flex items-center gap-3 flex-wrap" style={{ background: C.brandTint, borderColor: C.line }}>
+              <span className="text-xs font-bold" style={{ color: C.brand }}>{selected.size} selected</span>
+              {selected.size < filtered.length && (
+                <button onClick={selectAllFiltered} className="text-xs font-semibold hover:underline" style={{ color: C.brand }}>
+                  Select all {filtered.length}
+                </button>
+              )}
+              <button onClick={() => setSelected(new Set())} className="text-xs font-semibold text-gray-500 hover:text-gray-700">Clear</button>
+              <button onClick={() => setDeleteTarget(Array.from(selected))}
+                className="ml-auto flex items-center gap-1.5 text-xs font-bold px-3 h-8 rounded-lg text-white" style={{ background: C.danger }}>
+                <Trash2 size={13} /> Delete selected
+              </button>
+            </div>
+          )}
+
           {/* Filter panel */}
           {showFilters && (
-            <div className="px-3 sm:px-5 py-3 border-b border-gray-100 bg-gray-50 space-y-2">
-              {programOptions.length > 0 && (
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wide shrink-0">Program</span>
-                  <div className="relative">
-                    <select value={programFilter} onChange={e => setProgramFilter(e.target.value)}
-                      className="text-xs border border-gray-200 rounded-lg pl-3 pr-7 py-1.5 bg-white text-gray-700 outline-none appearance-none max-w-52">
-                      <option value="">All Programs</option>
-                      {programOptions.map(p => <option key={p} value={p}>{p}</option>)}
-                    </select>
-                    <ChevronDown size={11} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-                  </div>
-                </div>
-              )}
-              {hasActiveFilter && (
-                <button onClick={() => { setStatusFilter(""); setProgramFilter(""); }}
-                  className="flex items-center gap-1 text-[11px] font-bold hover:underline"
-                  style={{ color: MAROON }}>
-                  <X size={11} /> Clear filters
+            <div className="px-3 sm:px-5 py-4 border-b bg-gray-50 space-y-4" style={{ borderColor: C.lineSoft }}>
+              <div className="max-w-xs">
+                <label className="block text-xs font-semibold text-gray-500 mb-1">Course / program</label>
+                <select value={programFilter} onChange={e => setProgramFilter(e.target.value)}
+                  className="w-full text-xs border border-gray-200 rounded-lg px-3 py-2 bg-white text-gray-700 outline-none focus:border-[#7b1113] focus:ring-2 focus:ring-[#7b1113]/10">
+                  <option value="">All programs</option>
+                  {programOptions.map(p => <option key={p} value={p}>{p}</option>)}
+                </select>
+              </div>
+              {activeFilterCount > 0 && (
+                <button onClick={() => setProgramFilter("")} className="flex items-center gap-1 text-xs font-bold hover:underline" style={{ color: C.brand }}>
+                  <X size={12} /> Clear filters
                 </button>
               )}
             </div>
@@ -1107,179 +1129,149 @@ export default function CourseGuidanceTab({
 
           {/* Content */}
           {loading ? (
-            <div className="animate-pulse divide-y divide-gray-100">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="flex items-center gap-3 px-3 sm:px-5 py-3.5">
-                  <div className="h-3 w-14 bg-gray-100 rounded shrink-0" />
-                  <div className="h-3 w-24 bg-gray-100 rounded shrink-0" />
+            <div className="animate-pulse divide-y divide-gray-100" aria-busy="true">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-4 px-5 py-4">
+                  <div className="h-3 w-32 bg-gray-100 rounded" />
+                  <div className="h-3 w-20 bg-gray-100 rounded hidden sm:block" />
                   <div className="h-3 flex-1 bg-gray-100 rounded" />
+                  <div className="h-5 w-16 bg-gray-100 rounded-full" />
                 </div>
               ))}
             </div>
           ) : error ? (
-            <div className="flex-1 flex items-center justify-center text-xs font-medium text-red-500 py-16 px-4 text-center">{error}</div>
+            <div className="flex-1 flex flex-col items-center justify-center gap-3 py-16 px-6 text-center">
+              <AlertCircle className="w-6 h-6 text-red-400" />
+              <p className="text-sm font-semibold text-red-600">{error}</p>
+              <button onClick={fetchSheets} className="text-xs font-bold px-4 h-8 rounded-lg border border-red-200 text-red-600 hover:bg-red-50">
+                Try again
+              </button>
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="flex-1">{emptyState}</div>
           ) : (
             <div className="flex-1 overflow-y-auto">
 
-              {/* ── Desktop Table ── */}
-              <div className="hidden sm:block overflow-x-auto">
-                <table className="w-full border-collapse">
-                  <thead>
-                    <tr style={{ background: "#fafafa" }}>
-                      {["No.", "Student No.", "Name", "Course / Program", "Year & Section", "Sex", "Submitted", ""].map((h, i) => (
-                        <th key={i} className="text-left px-3 py-2.5 whitespace-nowrap" style={{ border: "1px solid #e5e7eb" }}>
-                          <span className="text-xs font-bold uppercase tracking-wide text-gray-500">{h}</span>
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {sheets.length === 0 && (
-                      <tr>
-                        <td colSpan={8} className="px-3 py-16">
-                          <div className="flex flex-col items-center justify-center gap-3">
-                            <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: "#fef2f2" }}>
-                              <GraduationCap className="w-6 h-6" style={{ color: MAROON }} />
-                            </div>
-                            <p className="text-sm text-gray-400 font-medium">
-                              {hasActiveFilter || search ? "No submissions match your filters." : "No submissions yet."}
-                            </p>
-                            <button onClick={() => setShowShare(true)}
-                              className="text-xs font-bold hover:underline" style={{ color: MAROON }}>
-                              Share the form link with students →
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
+              {/* Desktop table */}
+              <table className="w-full border-collapse hidden sm:table">
+                <thead className="sticky top-0 z-10">
+                  <tr style={{ background: "#fafafa" }}>
+                    {isHead && (
+                      <th scope="col" className="px-4 py-2.5 w-10 border-b" style={{ borderColor: C.line }}>
+                        <input type="checkbox" aria-label="Select all on this page"
+                          checked={pageAllSelected}
+                          ref={el => { if (el) el.indeterminate = !pageAllSelected && pageSomeSelected; }}
+                          onChange={togglePage} className="w-4 h-4 cursor-pointer" style={{ accentColor: C.brand }} />
+                      </th>
                     )}
-                    {paginated.map((s, i) => (
-                      <tr key={s.id}
-                        className="hover:bg-gray-50/70 transition-colors cursor-pointer"
-                        onClick={() => setDetailSheet(s)}>
-                        <td className="px-3 py-3 text-xs text-gray-500 tabular-nums text-center" style={{ border: "1px solid #e5e7eb" }}>
-                          {(page - 1) * PAGE_SIZE + i + 1}
-                        </td>
-                        <td className="px-3 py-3 text-xs font-mono text-gray-700 whitespace-nowrap" style={{ border: "1px solid #e5e7eb" }}>
-                          {s.studentNo}
-                        </td>
-                        <td className="px-3 py-3 text-xs font-semibold text-gray-800 whitespace-nowrap" style={{ border: "1px solid #e5e7eb" }}>
-                          {s.name}
-                        </td>
-                        <td className="px-3 py-3 text-xs text-gray-600" style={{ border: "1px solid #e5e7eb" }}>
-                          {s.courseProgram ?? "—"}
-                        </td>
-                        <td className="px-3 py-3 text-xs text-gray-600" style={{ border: "1px solid #e5e7eb" }}>
-                          {s.yearSection ?? "—"}
-                        </td>
-                        <td className="px-3 py-3 text-xs text-gray-600 text-center" style={{ border: "1px solid #e5e7eb" }}>
-                          {s.sex ?? "—"}
-                        </td>
-                        <td className="px-3 py-3 text-xs text-gray-500 whitespace-nowrap" style={{ border: "1px solid #e5e7eb" }}>
-                          {fmtDate(s.submittedAt)}
-                        </td>
-                        <td className="px-2 py-3 w-10" onClick={e => e.stopPropagation()}>
-                          {isHead && (
-                            <RowActionsMenu
-                              onView={() => setDetailSheet(s)}
-                              onAllowResubmit={s.allowResubmit ? undefined : () => allowResubmit(s)}
-                              onDelete={() => setDeleteTarget(s)}
-                            />
-                          )}
-                        </td>
-                      </tr>
+                    {["No.", "Student", "Student no.", "Course", "Year & section", "Submitted", "Status", ""].map((h, i) => (
+                      <th key={i} scope="col" className="text-left px-4 py-2.5 whitespace-nowrap border-b"
+                        style={{ fontSize: 11, fontWeight: 800, color: C.body, borderColor: C.line }}>
+                        {h}
+                      </th>
                     ))}
-                  </tbody>
-                </table>
-              </div>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginated.map((s, i) => (
+                    <tr key={s.id} onClick={() => setDetailSheet(s)} tabIndex={0}
+                      onKeyDown={e => { if (e.key === "Enter") setDetailSheet(s); }}
+                      className="group cursor-pointer hover:bg-gray-50 focus:bg-gray-50 outline-none transition-colors"
+                      style={selected.has(s.id) ? { background: C.brandTint } : undefined}>
+                      {isHead && (
+                        <td className="px-4 py-3.5 border-b" style={{ borderColor: C.lineSoft }} onClick={e => e.stopPropagation()}>
+                          <input type="checkbox" aria-label={`Select ${s.name}`}
+                            checked={selected.has(s.id)} onChange={() => toggleOne(s.id)}
+                            className="w-4 h-4 cursor-pointer" style={{ accentColor: C.brand }} />
+                        </td>
+                      )}
+                      <td className="px-4 py-3.5 text-xs tabular-nums border-b" style={{ color: C.faint, borderColor: C.lineSoft }}>
+                        {(page - 1) * PAGE_SIZE + i + 1}
+                      </td>
+                      <td className="px-4 py-3.5 border-b min-w-[180px]" style={{ borderColor: C.lineSoft }}>
+                        <p className="text-[13px] font-semibold" style={{ color: C.ink }}>{s.name}</p>
+                        {s.email && <p className="text-[11px] truncate max-w-[220px]" style={{ color: C.muted }}>{s.email}</p>}
+                      </td>
+                      <td className="px-4 py-3.5 text-xs font-mono border-b whitespace-nowrap" style={{ color: C.body, borderColor: C.lineSoft }}>{s.studentNo}</td>
+                      <td className="px-4 py-3.5 text-xs border-b max-w-[200px]" style={{ color: C.body, borderColor: C.lineSoft }}>
+                        <span className="line-clamp-1">{s.courseProgram ?? "—"}</span>
+                      </td>
+                      <td className="px-4 py-3.5 text-xs border-b whitespace-nowrap" style={{ color: C.body, borderColor: C.lineSoft }}>{s.yearSection ?? "—"}</td>
+                      <td className="px-4 py-3.5 text-xs border-b whitespace-nowrap" style={{ color: C.body, borderColor: C.lineSoft }}>{fmtDate(s.submittedAt)}</td>
+                      <td className="px-4 py-3.5 border-b" style={{ borderColor: C.lineSoft }}><StatusBadge status={s.status} /></td>
+                      <td className="px-3 py-3.5 w-12 border-b" style={{ borderColor: C.lineSoft }}>
+                        {isHead ? (
+                          <button onClick={e => openRowMenu(e, s.id)} aria-label={`Actions for ${s.name}`} aria-haspopup="menu"
+                            className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors">
+                            <MoreVertical size={16} />
+                          </button>
+                        ) : (
+                          <ChevronRight size={16} className="text-gray-300 group-hover:text-gray-600 transition-colors" />
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
 
-              {/* ── Mobile List ── */}
-              <div className="sm:hidden">
-                {sheets.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-14 gap-3 px-4">
-                    <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: "#fef2f2" }}>
-                      <GraduationCap className="w-6 h-6" style={{ color: MAROON }} />
-                    </div>
-                    <p className="text-sm text-gray-400 font-medium text-center">
-                      {hasActiveFilter || search ? "No submissions match your filters." : "No submissions yet."}
-                    </p>
-                    <button onClick={() => setShowShare(true)}
-                      className="text-xs font-bold hover:underline" style={{ color: MAROON }}>
-                      Share the form link →
-                    </button>
-                  </div>
-                ) : (
-                  <div className="divide-y divide-gray-100">
-                    {paginated.map((s, i) => (
-                      <div key={s.id}
-                        className="flex items-center gap-3 px-3 py-3 hover:bg-gray-50 active:bg-gray-100 transition-colors cursor-pointer"
-                        onClick={() => setDetailSheet(s)}>
-                        {/* Row number */}
-                        <span className="text-[10px] text-gray-300 tabular-nums w-5 shrink-0 text-right">
-                          {(page - 1) * PAGE_SIZE + i + 1}
-                        </span>
-
-                        {/* Avatar placeholder */}
-                        <div className="w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-[11px] font-bold text-white uppercase"
-                          style={{ background: MAROON }}>
-                          {s.name.charAt(0)}
-                        </div>
-
-                        {/* Info */}
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-gray-800 truncate leading-tight">{s.name}</p>
-                          <p className="text-[10px] text-gray-400 font-mono mt-0.5">{s.studentNo}</p>
-                          {(s.courseProgram || s.yearSection) && (
-                            <p className="text-[10px] text-gray-500 mt-0.5 truncate">
-                              {[s.courseProgram, s.yearSection].filter(Boolean).join(" · ")}
-                            </p>
-                          )}
-                        </div>
-
-                        {/* Right side */}
-                        <div className="flex flex-col items-end gap-1 shrink-0">
-                          <p className="text-[10px] text-gray-400">{fmtDate(s.submittedAt)}</p>
-                          {isHead && (
-                            <div onClick={e => e.stopPropagation()}>
-                              <RowActionsMenu
-                                onView={() => setDetailSheet(s)}
-                                onAllowResubmit={s.allowResubmit ? undefined : () => allowResubmit(s)}
-                                onDelete={() => setDeleteTarget(s)}
-                              />
-                            </div>
-                          )}
-                        </div>
+              {/* Mobile list */}
+              <div className="sm:hidden divide-y divide-gray-100">
+                {paginated.map(s => (
+                  <div key={s.id} className="flex items-center gap-3 px-4 py-3.5"
+                    style={selected.has(s.id) ? { background: C.brandTint } : undefined}>
+                    {isHead && (
+                      <input type="checkbox" aria-label={`Select ${s.name}`}
+                        checked={selected.has(s.id)} onChange={() => toggleOne(s.id)}
+                        className="w-4 h-4 shrink-0" style={{ accentColor: C.brand }} />
+                    )}
+                    <button onClick={() => setDetailSheet(s)} className="flex-1 min-w-0 text-left active:opacity-70">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-sm font-bold truncate" style={{ color: C.ink }}>{s.name}</p>
+                        <StatusBadge status={s.status} />
                       </div>
-                    ))}
+                      <p className="text-xs truncate mt-0.5" style={{ color: C.muted }}>
+                        {[s.studentNo, s.courseProgram, s.yearSection].filter(Boolean).join(" · ")}
+                      </p>
+                      <p className="text-[11px] mt-1" style={{ color: C.faint }}>{fmtDate(s.submittedAt)}</p>
+                    </button>
+                    {isHead ? (
+                      <button onClick={e => openRowMenu(e, s.id)} aria-label={`Actions for ${s.name}`}
+                        className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 active:bg-gray-100 shrink-0">
+                        <MoreVertical size={16} />
+                      </button>
+                    ) : (
+                      <ChevronRight size={16} className="text-gray-300 shrink-0" />
+                    )}
                   </div>
-                )}
+                ))}
               </div>
             </div>
           )}
 
           {/* Pagination */}
-          {!loading && sheets.length > PAGE_SIZE && (
-            <div className="flex items-center justify-between px-3 sm:px-5 py-2.5 border-t border-gray-100 bg-white shrink-0 flex-wrap gap-2">
-              <span className="text-[11px] text-gray-400 font-medium tabular-nums">
-                {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, sheets.length)} of {sheets.length}
+          {!loading && !error && filtered.length > PAGE_SIZE && (
+            <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-t bg-white shrink-0 gap-2" style={{ borderColor: C.line }}>
+              <span className="text-xs tabular-nums truncate" style={{ color: C.muted }}>
+                Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length}
               </span>
-              <div className="flex items-center gap-1">
-                <button type="button" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
-                  className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-400 hover:border-gray-400 hover:text-gray-700 disabled:opacity-25 transition-all">
-                  <ChevronLeft className="w-3 h-3" />
+              <div className="flex items-center gap-1 shrink-0">
+                <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} aria-label="Previous page"
+                  className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:border-gray-400 disabled:opacity-30">
+                  <ChevronLeft className="w-3.5 h-3.5" />
                 </button>
-                {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                  const n = totalPages <= 5 ? i + 1 : page <= 3 ? i + 1 : page >= totalPages - 2 ? totalPages - 4 + i : page - 2 + i;
-                  return (
-                    <button key={n} type="button" onClick={() => setPage(n)}
-                      style={page === n ? { background: MAROON, color: "#fff", borderColor: MAROON } : {}}
-                      className={`w-8 h-8 flex items-center justify-center rounded-lg text-[11px] font-semibold transition-all border ${page !== n ? "border-gray-200 text-gray-500 hover:border-gray-400" : ""}`}>
+                <div className="hidden sm:flex items-center gap-1">
+                  {pageNumbers.map(n => (
+                    <button key={n} onClick={() => setPage(n)} aria-current={page === n ? "page" : undefined}
+                      style={page === n ? { background: C.brand, color: "#fff", borderColor: C.brand } : {}}
+                      className={`w-8 h-8 flex items-center justify-center rounded-lg text-xs font-semibold border transition-colors ${page !== n ? "border-gray-200 text-gray-600 hover:border-gray-400" : ""}`}>
                       {n}
                     </button>
-                  );
-                })}
-                <button type="button" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
-                  className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-400 hover:border-gray-400 hover:text-gray-700 disabled:opacity-25 transition-all">
-                  <ChevronRight className="w-3 h-3" />
+                  ))}
+                </div>
+                <span className="sm:hidden text-xs font-semibold px-2 tabular-nums" style={{ color: C.muted }}>{page} / {totalPages}</span>
+                <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} aria-label="Next page"
+                  className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:border-gray-400 disabled:opacity-30">
+                  <ChevronRight className="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>
@@ -1287,20 +1279,59 @@ export default function CourseGuidanceTab({
         </div>
       </div>
 
-      {/* ── Modals ── */}
+      {showShare && <ShareLinkModal courseId={courseId} onClose={() => setShowShare(false)} />}
+
+      {/* Row actions menu */}
+      {rowMenu && (() => {
+        const s = sheets.find(x => x.id === rowMenu.id);
+        return (
+          <div className="fixed inset-0 z-40" onClick={() => setRowMenu(null)}>
+            <div role="menu" className="absolute w-48 bg-white rounded-xl border shadow-lg py-1 overflow-hidden"
+              style={{ top: rowMenu.y, left: Math.max(8, rowMenu.x - 192), borderColor: C.line, fontFamily: FONT }}
+              onClick={e => e.stopPropagation()}>
+              <button role="menuitem"
+                onClick={() => { setRowMenu(null); if (s) setDetailSheet(s); }}
+                className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-xs font-semibold text-left hover:bg-gray-50"
+                style={{ color: C.ink }}>
+                <ExternalLink size={14} /> View full sheet
+              </button>
+              {s && !s.allowResubmit && (
+                <button role="menuitem"
+                  onClick={() => { setRowMenu(null); allowResubmit(s); }}
+                  className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-xs font-semibold text-left hover:bg-gray-50"
+                  style={{ color: C.ink }}>
+                  <RefreshCw size={14} /> Allow resubmission
+                </button>
+              )}
+              <button role="menuitem"
+                onClick={() => { setDeleteTarget([rowMenu.id]); setRowMenu(null); }}
+                className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-xs font-semibold text-left hover:bg-red-50"
+                style={{ color: C.danger }}>
+                <Trash2 size={14} /> Delete
+              </button>
+            </div>
+          </div>
+        );
+      })()}
+
       {deleteTarget && (
-        <DeleteModal
-          sheet={deleteTarget}
-          courseId={courseId}
-          onClose={() => setDeleteTarget(null)}
-          onDeleted={() => {
-            setSheets(prev => prev.filter(s => s.id !== deleteTarget.id));
-            setDeleteTarget(null);
-          }}
+        <ConfirmModal
+          title={deleteTarget.length === 1 ? "Delete this submission?" : `Delete ${deleteTarget.length} submissions?`}
+          confirmLabel={deleteTarget.length === 1 ? "Delete" : `Delete ${deleteTarget.length}`}
+          busy={deleting}
+          message={
+            deleteTarget.length === 1 ? (
+              <><strong>{sheets.find(s => s.id === deleteTarget[0])?.name ?? "This submission"}</strong> will be permanently removed.<br />This can’t be undone.</>
+            ) : (
+              <>{deleteTarget.length} selected submissions will be permanently removed.<br />This can’t be undone.</>
+            )
+          }
+          onConfirm={() => deleteIds(deleteTarget)}
+          onClose={() => { if (!deleting) setDeleteTarget(null); }}
         />
       )}
 
-      {showShare && <ShareLinkModal courseId={courseId} onClose={() => setShowShare(false)} />}
+      <Toast toast={toast} />
     </div>
   );
 }

@@ -2,18 +2,42 @@
 
 // src/components/layout/course/CourseLibraryTab.tsx
 import { useSession } from "next-auth/react";
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import type { ReactNode } from "react";
 import {
-  Search, RefreshCw, ChevronLeft, ChevronRight,
-  Trash2, Check, ArrowLeft, Filter, X,
-  BookOpen, Download, Users, Clock,
-  ExternalLink, FileText, QrCode, FileDown, AlertCircle,
-  MoreVertical,
+  Search, RefreshCw, ChevronLeft, ChevronRight, Trash2, Check, ArrowLeft,
+  SlidersHorizontal, X, Download, Users, Clock, ExternalLink,
+  FileText, QrCode, FileDown, AlertCircle, MoreVertical, Copy, Inbox,
+  CheckCircle2, XCircle, Ban,
 } from "lucide-react";
+import { FONT } from "./osaShared";
 
-const MAROON    = "#7b1113";
-const FONT      = "'Inter', 'SF Pro Display', system-ui, -apple-system, sans-serif";
+/* ════════════════════════════════════════════════════════════════════════════
+   1. DESIGN TOKENS
+   ════════════════════════════════════════════════════════════════════════════ */
+
+
+const C = {
+  brand:      "#7b1113",
+  brandDark:  "#5e0d0f",
+  brandTint:  "#fdf2f2",
+  brandRing:  "rgba(123,17,19,0.12)",
+  ink:        "#111827",
+  body:       "#374151",
+  muted:      "#6b7280",
+  faint:      "#9ca3af",
+  line:       "#e5e7eb",
+  lineSoft:   "#f3f4f6",
+  surface:    "#ffffff",
+  canvas:     "#ffffff",
+  danger:     "#b91c1c",
+} as const;
+
 const PAGE_SIZE = 15;
+
+/* ════════════════════════════════════════════════════════════════════════════
+   2. TYPES & STATIC META
+   ════════════════════════════════════════════════════════════════════════════ */
 
 type Status = "PENDING" | "PROCESSING" | "READY" | "RELEASED" | "REJECTED";
 type RequestType = "STUDENT_NEW" | "STUDENT_LOST" | "EMPLOYEE";
@@ -55,7 +79,7 @@ interface Props {
   isHead: boolean;
 }
 
-const STATUS_META: Record<Status, { label: string; color: string; bg: string; icon: React.ReactNode }> = {
+const STATUS_META: Record<Status, { label: string; color: string; bg: string; icon: ReactNode }> = {
   PENDING:    { label: "Pending",    color: "#92400e", bg: "#fef3c7", icon: <Clock size={11} /> },
   PROCESSING: { label: "Processing", color: "#1e40af", bg: "#dbeafe", icon: <RefreshCw size={11} /> },
   READY:      { label: "Ready",      color: "#065f46", bg: "#d1fae5", icon: <Check size={11} /> },
@@ -63,17 +87,65 @@ const STATUS_META: Record<Status, { label: string; color: string; bg: string; ic
   REJECTED:   { label: "Rejected",   color: "#991b1b", bg: "#fee2e2", icon: <X size={11} /> },
 };
 
+const STATUS_ORDER: Status[] = ["PENDING", "PROCESSING", "READY", "RELEASED"];
+const STATUS_TABS: Array<Status | "ALL"> = ["ALL", "PENDING", "PROCESSING", "READY", "RELEASED", "REJECTED"];
+
 const TYPE_LABELS: Record<RequestType, string> = {
-  STUDENT_NEW:  "Student Card (New)",
-  STUDENT_LOST: "Student Card (Lost)",
-  EMPLOYEE:     "Employee Card",
+  STUDENT_NEW:  "Student card (new)",
+  STUDENT_LOST: "Student card (lost)",
+  EMPLOYEE:     "Employee card",
 };
+
+/* ════════════════════════════════════════════════════════════════════════════
+   3. HELPERS
+   ════════════════════════════════════════════════════════════════════════════ */
+
+function fmtDate(iso: string | null | undefined, withTime = true) {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleDateString("en-PH", {
+    month: "short", day: "numeric", year: "numeric",
+    ...(withTime ? { hour: "2-digit", minute: "2-digit" } : {}),
+  });
+}
+
+/** Local-timezone YYYY-MM-DD (toISOString() would shift the day for PH users). */
+function toLocalISODate(d: Date) {
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${d.getFullYear()}-${mm}-${dd}`;
+}
+
+const isImageUrl = (url?: string | null) =>
+  !!url && (/\.(png|jpe?g|webp|gif|avif)(\?.*)?$/i.test(url) || url.startsWith("data:image"));
+
+const idNoOf = (r: LibraryCardRequest) => r.studentNo ?? r.employeeNo ?? "—";
+
+async function downloadBlob(res: Response, filename: string) {
+  const blob = await res.blob();
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement("a");
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function useDebounced<T>(value: T, delay = 300) {
+  const [v, setV] = useState(value);
+  useEffect(() => {
+    const t = setTimeout(() => setV(value), delay);
+    return () => clearTimeout(t);
+  }, [value, delay]);
+  return v;
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   4. SMALL UI PRIMITIVES
+   ════════════════════════════════════════════════════════════════════════════ */
 
 function StatusBadge({ status }: { status: Status }) {
   const m = STATUS_META[status];
   return (
     <span
-      className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full shrink-0"
+      className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full shrink-0 whitespace-nowrap"
       style={{ color: m.color, background: m.bg }}
     >
       {m.icon} {m.label}
@@ -81,13 +153,145 @@ function StatusBadge({ status }: { status: Status }) {
   );
 }
 
-function fmtDate(iso: string | null | undefined) {
-  if (!iso) return "—";
-  return new Date(iso).toLocaleDateString("en-PH", {
-    month: "short", day: "numeric", year: "numeric",
-    hour: "2-digit", minute: "2-digit",
-  });
+function EmptyState({ title, hint, action }: { title: string; hint?: string; action?: ReactNode }) {
+  return (
+    <div className="flex flex-col items-center justify-center gap-2 py-16 px-6 text-center">
+      <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-1" style={{ background: C.brandTint }}>
+        <Inbox className="w-6 h-6" style={{ color: C.brand }} />
+      </div>
+      <p className="text-sm font-semibold" style={{ color: C.ink }}>{title}</p>
+      {hint && <p className="text-xs max-w-xs" style={{ color: C.muted }}>{hint}</p>}
+      {action}
+    </div>
+  );
 }
+
+type ToastState = { msg: string; tone: "success" | "error" } | null;
+
+function Toast({ toast }: { toast: ToastState }) {
+  if (!toast) return null;
+  const isErr = toast.tone === "error";
+  return (
+    <div
+      role="status"
+      className="fixed left-1/2 -translate-x-1/2 z-[70] flex items-center gap-2 px-4 py-2.5 rounded-xl shadow-lg text-xs font-semibold text-white"
+      style={{
+        background: isErr ? C.danger : C.ink,
+        bottom: "calc(24px + env(safe-area-inset-bottom))",
+        fontFamily: FONT,
+      }}
+    >
+      {isErr ? <AlertCircle size={14} /> : <CheckCircle2 size={14} />}
+      {toast.msg}
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   5. MODAL SHELL (bottom-sheet on mobile, centered on desktop)
+   ════════════════════════════════════════════════════════════════════════════ */
+
+function SheetModal({
+  onClose, tone = "brand", icon, title, subtitle, children, footer, maxWidth = "max-w-md",
+}: {
+  onClose: () => void;
+  tone?: "brand" | "danger";
+  icon?: ReactNode;
+  title: string;
+  subtitle?: string;
+  children: ReactNode;
+  footer?: ReactNode;
+  maxWidth?: string;
+}) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  const accent = tone === "danger" ? C.danger : C.brand;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40"
+      style={{ backdropFilter: "blur(3px)", fontFamily: FONT }}
+      onClick={onClose}
+    >
+      <div
+        role="dialog" aria-modal="true" aria-label={title}
+        className={`bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full ${maxWidth} sm:mx-4 overflow-hidden flex flex-col max-h-[92vh]`}
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="flex justify-center pt-2.5 pb-1 sm:hidden shrink-0">
+          <div className="w-9 h-1 rounded-full bg-gray-300" />
+        </div>
+        <div className="flex items-center justify-between gap-3 px-5 py-3.5 shrink-0" style={{ background: accent, color: "#fff" }}>
+          <div className="flex items-center gap-3 min-w-0">
+            {icon && (
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-white/20">
+                {icon}
+              </div>
+            )}
+            <div className="min-w-0">
+              <p className="truncate" style={{ fontSize: 14, fontWeight: 800 }}>{title}</p>
+              {subtitle && <p className="text-xs truncate text-white/70">{subtitle}</p>}
+            </div>
+          </div>
+          <button onClick={onClose} aria-label="Close"
+            className="w-8 h-8 flex items-center justify-center rounded-lg text-white/70 hover:text-white hover:bg-white/10 shrink-0">
+            <X size={16} />
+          </button>
+        </div>
+        <div className="overflow-y-auto">{children}</div>
+        {footer && (
+          <div
+            className="border-t shrink-0 bg-gray-50"
+            style={{ borderColor: C.line, paddingBottom: "env(safe-area-inset-bottom)" }}
+          >
+            {footer}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ConfirmModal({
+  title, message, confirmLabel, tone = "danger", busy, onConfirm, onClose,
+}: {
+  title: string; message: ReactNode; confirmLabel: string; tone?: "brand" | "danger";
+  busy?: boolean; onConfirm: () => void; onClose: () => void;
+}) {
+  const bg = tone === "danger" ? C.danger : C.brand;
+  return (
+    <SheetModal
+      onClose={onClose}
+      tone={tone}
+      icon={tone === "danger" ? <Trash2 size={16} /> : <AlertCircle size={16} />}
+      title={title}
+      maxWidth="max-w-sm"
+      footer={
+        <div className="px-5 py-4 flex gap-2">
+          <button onClick={onClose}
+            className="flex-1 h-10 rounded-xl text-xs font-semibold border border-gray-200 bg-white text-gray-600 hover:bg-gray-50">
+            Cancel
+          </button>
+          <button onClick={onConfirm} disabled={busy}
+            className="flex-1 h-10 rounded-xl text-xs font-bold text-white disabled:opacity-60"
+            style={{ background: bg }}>
+            {busy ? "Please wait…" : confirmLabel}
+          </button>
+        </div>
+      }
+    >
+      <div className="px-5 py-5 text-sm leading-relaxed" style={{ color: C.body }}>{message}</div>
+    </SheetModal>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   6. SIGNATURE PAD
+   ════════════════════════════════════════════════════════════════════════════ */
 
 function SignaturePad({ onSave, onCancel }: { onSave: (dataUrl: string) => void; onCancel: () => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -96,21 +300,23 @@ function SignaturePad({ onSave, onCancel }: { onSave: (dataUrl: string) => void;
 
   const getPos = (e: React.MouseEvent | React.TouchEvent, c: HTMLCanvasElement) => {
     const r = c.getBoundingClientRect();
-    if ("touches" in e) return { x: e.touches[0].clientX - r.left, y: e.touches[0].clientY - r.top };
-    return { x: (e as React.MouseEvent).clientX - r.left, y: (e as React.MouseEvent).clientY - r.top };
+    // Scale from CSS pixels to canvas pixels so strokes land under the cursor
+    const sx = c.width / r.width;
+    const sy = c.height / r.height;
+    const pt = "touches" in e ? e.touches[0] : (e as React.MouseEvent);
+    return { x: (pt.clientX - r.left) * sx, y: (pt.clientY - r.top) * sy };
   };
+
   const start = (e: React.MouseEvent | React.TouchEvent) => {
-    e.preventDefault();
-    const c = canvasRef.current; if (!c) return;
-    const ctx = c.getContext("2d"); if (!ctx) return;
+    const c = canvasRef.current; const ctx = c?.getContext("2d");
+    if (!c || !ctx) return;
     drawing.current = true;
     const p = getPos(e, c); ctx.beginPath(); ctx.moveTo(p.x, p.y);
   };
   const move = (e: React.MouseEvent | React.TouchEvent) => {
-    e.preventDefault();
     if (!drawing.current) return;
-    const c = canvasRef.current; if (!c) return;
-    const ctx = c.getContext("2d"); if (!ctx) return;
+    const c = canvasRef.current; const ctx = c?.getContext("2d");
+    if (!c || !ctx) return;
     const p = getPos(e, c);
     ctx.lineWidth = 2; ctx.lineCap = "round"; ctx.strokeStyle = "#111";
     ctx.lineTo(p.x, p.y); ctx.stroke(); setHasDrawn(true);
@@ -131,7 +337,7 @@ function SignaturePad({ onSave, onCancel }: { onSave: (dataUrl: string) => void;
         onMouseDown={start} onMouseMove={move} onMouseUp={end} onMouseLeave={end}
         onTouchStart={start} onTouchMove={move} onTouchEnd={end}
       />
-      <div className="flex gap-2 flex-wrap">
+      <div className="flex gap-2 flex-wrap items-center">
         <button type="button" onClick={clear}
           className="flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50">
           <X size={11} /> Clear
@@ -140,11 +346,11 @@ function SignaturePad({ onSave, onCancel }: { onSave: (dataUrl: string) => void;
           onClick={() => { const c = canvasRef.current; if (c) onSave(c.toDataURL("image/png")); }}
           disabled={!hasDrawn}
           className="flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-lg text-white disabled:opacity-40"
-          style={{ background: MAROON }}>
-          <Check size={11} /> Save Signature
+          style={{ background: C.brand }}>
+          <Check size={11} /> Save signature
         </button>
         <button type="button" onClick={onCancel}
-          className="sm:ml-auto text-xs font-semibold text-gray-400 hover:text-gray-600 px-2">
+          className="ml-auto text-xs font-semibold text-gray-400 hover:text-gray-600 px-2">
           Cancel
         </button>
       </div>
@@ -152,52 +358,9 @@ function SignaturePad({ onSave, onCancel }: { onSave: (dataUrl: string) => void;
   );
 }
 
-// ── Generic bottom-sheet shell (mobile) / centered modal (desktop) ────────────
-function SheetModal({
-  onClose, headerColor = MAROON, icon, eyebrow, title, children, footer, maxWidth = "max-w-sm",
-}: {
-  onClose: () => void;
-  headerColor?: string;
-  icon?: React.ReactNode;
-  eyebrow: string;
-  title: string;
-  children: React.ReactNode;
-  footer?: React.ReactNode;
-  maxWidth?: string;
-}) {
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/30"
-      style={{ backdropFilter: "blur(4px)", fontFamily: FONT }}
-      onClick={onClose}
-    >
-      <div
-        className={`bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl border border-gray-100 w-full ${maxWidth} sm:mx-4 overflow-hidden flex flex-col max-h-[92vh]`}
-        onClick={e => e.stopPropagation()}
-      >
-        <div className="flex justify-center pt-2.5 pb-1 sm:hidden shrink-0">
-          <div className="w-9 h-1 rounded-full bg-gray-300" />
-        </div>
-        <div className="flex items-center justify-between px-5 py-3.5 sm:py-4 border-b border-gray-100 shrink-0" style={{ background: headerColor }}>
-          <div className="flex items-center gap-2.5 min-w-0">
-            {icon && (
-              <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center shrink-0">{icon}</div>
-            )}
-            <div className="min-w-0">
-              <p className="text-[10px] font-black uppercase tracking-widest text-white/60 truncate">{eyebrow}</p>
-              <p className="text-sm font-black text-white truncate">{title}</p>
-            </div>
-          </div>
-          <button onClick={onClose} className="w-7 h-7 flex items-center justify-center rounded-lg text-white/60 hover:text-white hover:bg-white/10 shrink-0">
-            <X size={15} />
-          </button>
-        </div>
-        <div className="overflow-y-auto">{children}</div>
-        {footer && <div className="border-t border-gray-100 bg-gray-50 shrink-0">{footer}</div>}
-      </div>
-    </div>
-  );
-}
+/* ════════════════════════════════════════════════════════════════════════════
+   7. MODALS: share link / export card / lightbox
+   ════════════════════════════════════════════════════════════════════════════ */
 
 function ShareLinkModal({ courseId, onClose }: { courseId: string; onClose: () => void }) {
   const url = `${typeof window !== "undefined" ? window.location.origin : ""}/forms/library/${courseId}`;
@@ -227,47 +390,50 @@ function ShareLinkModal({ courseId, onClose }: { courseId: string; onClose: () =
   const downloadQR = () => {
     if (!qrDataUrl) return;
     const a = document.createElement("a");
-    a.href = qrDataUrl;
-    a.download = `library-card-request-qr-${courseId}.png`;
-    a.click();
+    a.href = qrDataUrl; a.download = `library-card-request-qr-${courseId}.png`; a.click();
   };
 
   return (
     <SheetModal
       onClose={onClose}
-      icon={<BookOpen size={15} className="text-white" />}
-      eyebrow="Library"
-      title="Request Form Link"
+      icon={<QrCode size={16} />}
+      title="Request form link"
+      subtitle="Library card requests"
       footer={
         <button onClick={onClose} className="w-full h-11 sm:h-10 text-xs font-semibold text-gray-600 hover:bg-gray-100">
           Close
         </button>
       }
     >
-      <div className="px-5 py-5 space-y-4">
-        <p className="text-xs text-gray-500 leading-relaxed">Share this link or QR code so students and employees can submit a library card request online.</p>
-        <div className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 flex items-center gap-3">
-          <p className="text-xs text-gray-700 font-mono flex-1 break-all">{url}</p>
+      <div className="px-5 py-5 space-y-5">
+        <p className="text-xs leading-relaxed" style={{ color: C.muted }}>
+          Share this link or QR code so students and employees can submit a library card request online.
+        </p>
+
+        <div className="flex items-center gap-2 rounded-xl border px-3 py-2.5 bg-gray-50" style={{ borderColor: C.line }}>
+          <p className="text-xs font-mono flex-1 break-all" style={{ color: C.body }}>{url}</p>
           <button onClick={copy}
             className="shrink-0 flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-lg transition-all"
-            style={copied ? { background: "#dcfce7", color: "#15803d" } : { background: "#fef2f2", color: MAROON }}>
-            {copied ? <><Check size={11} /> Copied!</> : "Copy"}
+            style={copied ? { background: "#dcfce7", color: "#15803d" } : { background: C.brandTint, color: C.brand }}>
+            {copied ? <><Check size={11} /> Copied</> : <><Copy size={11} /> Copy</>}
           </button>
         </div>
-        <div className="flex flex-col items-center gap-3 py-2">
-          <p className="text-[10px] font-black uppercase tracking-widest self-start" style={{ color: MAROON }}>QR Code</p>
-          <div className="w-44 h-44 sm:w-48 sm:h-48 rounded-xl border-2 border-gray-100 flex items-center justify-center bg-white shadow-sm overflow-hidden">
-            {qrLoading
-              ? <div className="w-8 h-8 rounded-full border-2 border-gray-200 animate-spin" style={{ borderTopColor: MAROON }} />
-              : qrDataUrl
-                // eslint-disable-next-line @next/next/no-img-element
-                ? <img src={qrDataUrl} alt="QR Code" className="w-full h-full object-contain" />
-                : <p className="text-[10px] text-gray-400 text-center px-4">Failed to generate QR code</p>}
+
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-44 h-44 sm:w-48 sm:h-48 rounded-xl border flex items-center justify-center bg-white overflow-hidden" style={{ borderColor: C.line }}>
+            {qrLoading ? (
+              <div className="w-8 h-8 rounded-full border-2 border-gray-200 animate-spin" style={{ borderTopColor: C.brand }} />
+            ) : qrDataUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={qrDataUrl} alt="QR code for the request form" className="w-full h-full object-contain" />
+            ) : (
+              <p className="text-[11px] text-gray-400 text-center px-4">Couldn’t generate the QR code. Check your connection and reopen this window.</p>
+            )}
           </div>
           <button onClick={downloadQR} disabled={!qrDataUrl || qrLoading}
             className="flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-lg border transition-all disabled:opacity-40"
-            style={{ borderColor: MAROON, color: MAROON }}>
-            <Download size={12} /> Download QR Code
+            style={{ borderColor: C.brand, color: C.brand }}>
+            <Download size={12} /> Download QR code
           </button>
         </div>
       </div>
@@ -275,7 +441,9 @@ function ShareLinkModal({ courseId, onClose }: { courseId: string; onClose: () =
   );
 }
 
-function ExportCardModal({ request, courseId, onClose }: { request: LibraryCardRequest; courseId: string; onClose: () => void }) {
+function ExportCardModal({
+  request, courseId, onClose,
+}: { request: LibraryCardRequest; courseId: string; onClose: () => void }) {
   const { data: session } = useSession();
   const [campus,        setCampus]        = useState("");
   const [cardNo,        setCardNo]        = useState("");
@@ -287,7 +455,7 @@ function ExportCardModal({ request, courseId, onClose }: { request: LibraryCardR
   const [error,         setError]         = useState("");
 
   useEffect(() => {
-    const fetchNextCardNo = async () => {
+    (async () => {
       setCardNoLoading(true);
       try {
         const res  = await fetch(`/api/courses/${courseId}/library-cards/next-card-no`);
@@ -295,8 +463,7 @@ function ExportCardModal({ request, courseId, onClose }: { request: LibraryCardR
         if (res.ok && data.cardNo) setCardNo(data.cardNo);
       } catch { /* leave blank, librarian can type manually */ }
       finally { setCardNoLoading(false); }
-    };
-    fetchNextCardNo();
+    })();
   }, [courseId]);
 
   useEffect(() => {
@@ -310,108 +477,152 @@ function ExportCardModal({ request, courseId, onClose }: { request: LibraryCardR
   }, []);
 
   const handleDownload = async () => {
-    if (!campus.trim()) { setError("Campus is required."); return; }
-    if (!cardNo.trim())  { setError("Card No. is required."); return; }
+    if (!campus.trim()) { setError("Enter the campus."); return; }
+    if (!cardNo.trim()) { setError("Enter the card number."); return; }
     setError(""); setDownloading(true);
     try {
-      const q   = new URLSearchParams({ campus: campus.trim(), cardNo: cardNo.trim() });
+      const q = new URLSearchParams({ campus: campus.trim(), cardNo: cardNo.trim() });
       if (librarian.trim()) q.set("librarian",    librarian.trim());
       if (librarianSig)     q.set("librarianSig", librarianSig);
       const res = await fetch(`/api/courses/${courseId}/library-cards/${request.id}/export-card?${q}`);
       if (!res.ok) { setError("Export failed. Please try again."); return; }
-      const blob = await res.blob();
-      const url  = URL.createObjectURL(blob);
-      const a    = document.createElement("a");
-      a.href = url; a.download = `library_card_${request.name.replace(/\s+/g, "_")}.pdf`; a.click();
-      URL.revokeObjectURL(url);
+      await downloadBlob(res, `library_card_${request.name.replace(/\s+/g, "_")}.pdf`);
       onClose();
     } catch { setError("Export failed. Please try again."); }
     finally  { setDownloading(false); }
   };
 
-  const inputCls = "w-full border border-gray-200 rounded-lg px-3 py-2.5 sm:py-2 text-sm outline-none focus:border-[#7b1113] focus:ring-2 focus:ring-[#7b1113]/10 transition-all bg-white";
+  const inputCls =
+    "w-full border border-gray-200 rounded-lg px-3 py-2.5 sm:py-2 text-sm outline-none focus:border-[#7b1113] focus:ring-2 focus:ring-[#7b1113]/10 transition-all bg-white";
+  const labelCls = "block text-xs font-semibold text-gray-600 mb-1";
 
   return (
     <SheetModal
       onClose={onClose}
-      icon={<FileDown size={15} className="text-white" />}
-      eyebrow="Library Card"
-      title="Export / Print Card"
-      maxWidth="max-w-sm"
+      icon={<FileDown size={16} />}
+      title="Export library card"
+      subtitle={request.name}
       footer={
         <div className="px-5 py-4 flex gap-2">
-          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl text-xs font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50">Cancel</button>
+          <button onClick={onClose}
+            className="flex-1 h-10 rounded-xl text-xs font-semibold border border-gray-200 bg-white text-gray-600 hover:bg-gray-50">
+            Cancel
+          </button>
           <button onClick={handleDownload} disabled={downloading}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold text-white disabled:opacity-60 transition-all"
-            style={{ background: MAROON }}>
-            {downloading ? <><RefreshCw size={13} className="animate-spin" /> Generating...</> : <><FileDown size={13} /> Download PDF</>}
+            className="flex-1 flex items-center justify-center gap-1.5 h-10 rounded-xl text-xs font-bold text-white disabled:opacity-60"
+            style={{ background: C.brand }}>
+            {downloading ? <><RefreshCw size={13} className="animate-spin" /> Generating…</> : <><FileDown size={13} /> Download PDF</>}
           </button>
         </div>
       }
     >
       <div className="px-5 py-5 space-y-4">
-        <div className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 space-y-1">
-          <p className="text-xs font-bold text-gray-800">{request.name}</p>
-          {request.studentNo     && <p className="text-[11px] text-gray-500">Student No.: {request.studentNo}</p>}
-          {request.courseProgram && <p className="text-[11px] text-gray-500">{request.courseProgram} {request.yearSection}</p>}
+        <div className="rounded-xl border px-4 py-3 bg-gray-50 space-y-0.5" style={{ borderColor: C.line }}>
+          <p className="text-xs font-bold" style={{ color: C.ink }}>{request.name}</p>
+          {request.studentNo && <p className="text-[11px]" style={{ color: C.muted }}>Student no. {request.studentNo}</p>}
+          {request.courseProgram && <p className="text-[11px]" style={{ color: C.muted }}>{request.courseProgram} {request.yearSection}</p>}
         </div>
+
         <div>
-          <label className="block text-xs font-semibold text-gray-600 mb-1">Campus <span className="text-red-500">*</span></label>
-          <input value={campus} onChange={e => { setCampus(e.target.value); setError(""); }} placeholder="e.g. Main, San Fernando, Apalit" className={inputCls} />
+          <label className={labelCls}>Campus <span className="text-red-500">*</span></label>
+          <input value={campus} onChange={e => { setCampus(e.target.value); setError(""); }}
+            placeholder="e.g. Main, San Fernando, Apalit" className={inputCls} />
         </div>
+
         <div>
-          <label className="block text-xs font-semibold text-gray-600 mb-1">Card No. <span className="text-red-500">*</span></label>
+          <label className={labelCls}>Card no. <span className="text-red-500">*</span></label>
           <div className="relative">
             <input value={cardNo} onChange={e => { setCardNo(e.target.value); setError(""); }}
               placeholder={cardNoLoading ? "Generating…" : "e.g. 2024-00001"}
               disabled={cardNoLoading}
               className={inputCls + (cardNoLoading ? " opacity-50" : "")} />
             {cardNoLoading && (
-              <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                <RefreshCw size={13} className="animate-spin text-gray-400" />
-              </div>
+              <RefreshCw size={13} className="animate-spin text-gray-400 absolute right-3 top-1/2 -translate-y-1/2" />
             )}
           </div>
-          <p className="text-[10px] text-gray-400 mt-1">Auto-generated based on total cards issued. You may edit if needed.</p>
+          <p className="text-[11px] mt-1" style={{ color: C.faint }}>Generated from the total cards issued. You can edit it.</p>
         </div>
+
         <div>
-          <label className="block text-xs font-semibold text-gray-600 mb-1">Librarian Name</label>
+          <label className={labelCls}>Librarian name</label>
           <input value={librarian} onChange={e => setLibrarian(e.target.value)} placeholder="Full name of librarian" className={inputCls} />
         </div>
+
         <div>
-          <label className="block text-xs font-semibold text-gray-600 mb-1">Librarian Signature</label>
+          <label className={labelCls}>Librarian signature</label>
           {librarianSig ? (
             <div className="flex items-center gap-3">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={librarianSig} alt="Librarian sig" className="h-12 border border-gray-200 rounded-lg bg-white p-1" />
+              <img src={librarianSig} alt="Librarian signature" className="h-12 border border-gray-200 rounded-lg bg-white p-1" />
               <button onClick={() => { setLibrarianSig(""); setShowSigPad(true); }}
                 className="text-xs text-red-500 hover:text-red-700 flex items-center gap-1">
                 <X size={11} /> Redo
               </button>
             </div>
           ) : showSigPad ? (
-            <SignaturePad
-              onSave={d => { setLibrarianSig(d); setShowSigPad(false); }}
-              onCancel={() => setShowSigPad(false)}
-            />
+            <SignaturePad onSave={d => { setLibrarianSig(d); setShowSigPad(false); }} onCancel={() => setShowSigPad(false)} />
           ) : (
             <button type="button" onClick={() => setShowSigPad(true)}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-dashed border-gray-300 text-xs font-semibold text-gray-500 hover:border-gray-400 w-full justify-center">
-              Draw Signature
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border-2 border-dashed border-gray-300 text-xs font-semibold text-gray-500 hover:border-gray-400">
+              Draw signature
             </button>
           )}
         </div>
-        {error && <div className="flex items-center gap-2 text-xs text-red-500 font-semibold"><AlertCircle size={13} /> {error}</div>}
+
+        {error && (
+          <div className="flex items-center gap-2 text-xs text-red-500 font-semibold" role="alert">
+            <AlertCircle size={13} /> {error}
+          </div>
+        )}
       </div>
     </SheetModal>
   );
 }
 
-// ── Mobile action sheet: lists secondary actions (Reject / Export / Affidavit / Delete) ──
+function Lightbox({ src, label, onClose }: { src: string; label: string; onClose: () => void }) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-[60] bg-black/80 flex flex-col items-center justify-center p-4"
+      style={{ fontFamily: FONT }}
+      onClick={onClose}
+    >
+      <div className="w-full max-w-3xl flex items-center justify-between mb-3" onClick={e => e.stopPropagation()}>
+        <p className="text-sm font-semibold text-white">{label}</p>
+        <div className="flex items-center gap-2">
+          <a href={src} target="_blank" rel="noreferrer"
+            className="flex items-center gap-1.5 text-xs font-semibold text-white/80 hover:text-white px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20">
+            <ExternalLink size={12} /> Open original
+          </a>
+          <button onClick={onClose} aria-label="Close preview"
+            className="w-8 h-8 flex items-center justify-center rounded-lg text-white/80 hover:text-white bg-white/10 hover:bg-white/20">
+            <X size={16} />
+          </button>
+        </div>
+      </div>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={src} alt={label}
+        className="max-h-[80vh] max-w-full rounded-lg shadow-2xl object-contain bg-white"
+        onClick={e => e.stopPropagation()}
+      />
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   8. MOBILE ACTION SHEET
+   ════════════════════════════════════════════════════════════════════════════ */
+
 interface SheetAction {
   key: string;
   label: string;
-  icon: React.ReactNode;
+  icon: ReactNode;
   onClick: () => void;
   danger?: boolean;
   disabled?: boolean;
@@ -420,32 +631,28 @@ interface SheetAction {
 function ActionSheet({ actions, onClose }: { actions: SheetAction[]; onClose: () => void }) {
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/30 sm:hidden"
-      style={{ backdropFilter: "blur(4px)", fontFamily: FONT }}
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:hidden"
+      style={{ backdropFilter: "blur(3px)", fontFamily: FONT }}
       onClick={onClose}
     >
       <div className="bg-white rounded-t-2xl shadow-2xl w-full overflow-hidden" onClick={e => e.stopPropagation()}>
-        <div className="flex justify-center pt-2.5 pb-1">
-          <div className="w-9 h-1 rounded-full bg-gray-300" />
-        </div>
-        <div className="px-5 pb-2 pt-1">
-          <p className="text-[11px] font-black uppercase tracking-widest text-gray-400">More Actions</p>
-        </div>
+        <div className="flex justify-center pt-2.5 pb-1"><div className="w-9 h-1 rounded-full bg-gray-300" /></div>
+        <p className="px-5 pt-1 pb-2 text-xs font-semibold" style={{ color: C.muted }}>More actions</p>
         <div className="pb-2">
           {actions.map(a => (
             <button
               key={a.key}
               onClick={() => { if (!a.disabled) { a.onClick(); onClose(); } }}
               disabled={a.disabled}
-              className="w-full flex items-center gap-3 px-5 py-3.5 text-sm font-semibold text-left disabled:opacity-40"
-              style={{ color: a.danger ? "#dc2626" : "#1f2937" }}
+              className="w-full flex items-center gap-3 px-5 py-3.5 text-sm font-semibold text-left disabled:opacity-40 active:bg-gray-50"
+              style={{ color: a.danger ? C.danger : C.ink }}
             >
               <span className="w-5 flex items-center justify-center">{a.icon}</span>
               {a.label}
             </button>
           ))}
         </div>
-        <div className="border-t border-gray-100 px-5 py-3.5" style={{ paddingBottom: "calc(14px + env(safe-area-inset-bottom))" }}>
+        <div className="border-t px-5 py-3.5" style={{ borderColor: C.line, paddingBottom: "calc(14px + env(safe-area-inset-bottom))" }}>
           <button onClick={onClose} className="w-full text-center text-sm font-bold text-gray-500">Cancel</button>
         </div>
       </div>
@@ -453,20 +660,142 @@ function ActionSheet({ actions, onClose }: { actions: SheetAction[]; onClose: ()
   );
 }
 
+/* ════════════════════════════════════════════════════════════════════════════
+   9. DETAIL VIEW
+   ════════════════════════════════════════════════════════════════════════════ */
+
+function InfoField({ label, value }: { label: string; value?: string | null }) {
+  if (!value) return null;
+  return (
+    <div className="min-w-0">
+      <dt className="text-[11px] font-medium mb-0.5" style={{ color: C.muted }}>{label}</dt>
+      <dd className="text-[13px] font-medium break-words" style={{ color: C.ink, lineHeight: 1.5 }}>{value}</dd>
+    </div>
+  );
+}
+
+function Panel({ title, children, className = "" }: { title: string; children: ReactNode; className?: string }) {
+  return (
+    <section className={`bg-white rounded-xl border overflow-hidden ${className}`} style={{ borderColor: C.line }}>
+      <header className="px-4 sm:px-5 py-3 border-b" style={{ borderColor: C.lineSoft }}>
+        <h2 className="text-sm font-bold" style={{ color: C.ink }}>{title}</h2>
+      </header>
+      {children}
+    </section>
+  );
+}
+
+function StatusStepper({ status }: { status: Status }) {
+  if (status === "REJECTED") {
+    return (
+      <div className="flex items-start gap-2.5 px-4 sm:px-5 py-4">
+        <XCircle size={18} className="shrink-0 mt-0.5" style={{ color: "#991b1b" }} />
+        <div>
+          <p className="text-sm font-semibold" style={{ color: "#991b1b" }}>Request rejected</p>
+          <p className="text-xs mt-0.5" style={{ color: C.muted }}>No further action is needed on this request.</p>
+        </div>
+      </div>
+    );
+  }
+  const current = STATUS_ORDER.indexOf(status);
+  return (
+    <ol className="px-4 sm:px-5 py-4">
+      {STATUS_ORDER.map((s, i) => {
+        const done   = i < current;
+        const active = i === current;
+        const last   = i === STATUS_ORDER.length - 1;
+        return (
+          <li key={s} className="flex gap-3">
+            <div className="flex flex-col items-center">
+              <span
+                className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 border-2"
+                style={{
+                  background: done || active ? C.brand : "#fff",
+                  borderColor: done || active ? C.brand : C.line,
+                  boxShadow: active ? `0 0 0 4px ${C.brandRing}` : undefined,
+                }}
+              >
+                {done && <Check size={11} className="text-white" strokeWidth={3} />}
+              </span>
+              {!last && <span className="w-0.5 flex-1 my-1 rounded" style={{ background: done ? C.brand : C.line, minHeight: 18 }} />}
+            </div>
+            <p
+              className={`text-[13px] pb-3 ${active ? "font-bold" : "font-medium"}`}
+              style={{ color: active ? C.ink : done ? C.body : C.faint, lineHeight: "20px" }}
+            >
+              {STATUS_META[s].label}
+            </p>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
+function AttachmentTile({
+  label, url, onPreview, missingTone,
+}: { label: string; url?: string | null; onPreview?: () => void; missingTone?: "warn" }) {
+  const base = "relative flex flex-col items-center justify-center gap-1.5 w-24 h-28 rounded-xl border overflow-hidden shrink-0 text-center";
+
+  if (!url) {
+    const warn = missingTone === "warn";
+    return (
+      <div className={`${base} border-dashed`}
+        style={{ borderColor: warn ? "#fecaca" : C.line, background: warn ? "#fef2f2" : "#fafafa", color: warn ? "#f87171" : C.faint }}>
+        {label === "Photo" ? <Users size={18} /> : <FileText size={18} />}
+        <span className="text-[11px] font-medium px-1">No {label.toLowerCase()}</span>
+      </div>
+    );
+  }
+
+  const image = isImageUrl(url);
+  const inner = (
+    <>
+      {image ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={url} alt={label} className="absolute inset-0 w-full h-full object-cover" />
+      ) : (
+        <FileText size={20} style={{ color: C.muted }} />
+      )}
+      <span
+        className={`${image ? "absolute bottom-0 inset-x-0 bg-black/55 text-white py-1" : ""} text-[11px] font-semibold px-1`}
+        style={image ? undefined : { color: C.body }}
+      >
+        {label}
+      </span>
+    </>
+  );
+
+  return image && onPreview ? (
+    <button type="button" onClick={onPreview} className={`${base} bg-gray-100 hover:shadow-md transition-shadow`} style={{ borderColor: C.line }}>
+      {inner}
+    </button>
+  ) : (
+    <a href={url} target="_blank" rel="noreferrer" className={`${base} bg-gray-50 hover:bg-gray-100 transition-colors`} style={{ borderColor: C.line }}>
+      {inner}
+    </a>
+  );
+}
+
 function RequestDetailView({
-  request, courseId, isHead, onBack, onUpdated, onDeleted,
+  request, courseId, isHead, onBack, onUpdated, onDeleted, notify,
 }: {
   request: LibraryCardRequest; courseId: string; isHead: boolean;
-  onBack: () => void; onUpdated: (r: LibraryCardRequest) => void; onDeleted: (id: string) => void;
+  onBack: () => void;
+  onUpdated: (r: LibraryCardRequest) => void;
+  onDeleted: (id: string) => void;
+  notify: (msg: string, tone?: "success" | "error") => void;
 }) {
   const { data: session } = useSession();
-  const [currentUserName,  setCurrentUserName]  = useState<string | null>(session?.user?.name ?? null);
-  const [local,            setLocal]           = useState(request);
-  const [showDelete,       setShowDelete]      = useState(false);
-  const [patching,         setPatching]        = useState(false);
-  const [showExportModal,  setShowExportModal] = useState(false);
-  const [affidavitDl,      setAffidavitDl]     = useState(false);
-  const [showMoreSheet,    setShowMoreSheet]   = useState(false);
+  const [currentUserName, setCurrentUserName] = useState<string | null>(session?.user?.name ?? null);
+  const [local,           setLocal]           = useState(request);
+  const [patching,        setPatching]        = useState(false);
+  const [deleting,        setDeleting]        = useState(false);
+  const [affidavitDl,     setAffidavitDl]     = useState(false);
+  const [showExport,      setShowExport]      = useState(false);
+  const [showMore,        setShowMore]        = useState(false);
+  const [confirm,         setConfirm]         = useState<"reject" | "delete" | null>(null);
+  const [preview,         setPreview]         = useState<{ src: string; label: string } | null>(null);
 
   useEffect(() => {
     fetch("/api/profile")
@@ -475,279 +804,252 @@ function RequestDetailView({
       .catch(() => {});
   }, []);
 
-  const SLATE = "#0f172a";
-  const MUTED = "#64748b";
-  const RULE  = "#e2e8f0";
-
-  const handleDownloadAffidavit = async () => {
-    setAffidavitDl(true);
-    try {
-      const res = await fetch(`/api/courses/${courseId}/library-cards/${local.id}/affidavit`);
-      if (!res.ok) { alert("Failed to generate affidavit."); return; }
-      const blob = await res.blob();
-      const url  = URL.createObjectURL(blob);
-      const a    = document.createElement("a");
-      a.href = url; a.download = `affidavit_${local.name.replace(/\s+/g, "_")}.pdf`; a.click();
-      URL.revokeObjectURL(url);
-    } catch { alert("Failed to generate affidavit."); }
-    finally  { setAffidavitDl(false); }
-  };
-
-  const patch = async (data: Record<string, unknown>) => {
+  const patch = async (data: Record<string, unknown>, successMsg?: string) => {
     setPatching(true);
     try {
       const res = await fetch(`/api/courses/${courseId}/library-cards/${local.id}`, {
         method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data),
       });
-      if (!res.ok) return;
+      if (!res.ok) { notify("Couldn’t update the request. Please try again.", "error"); return false; }
       const d = await res.json();
-      const updated = d.request ?? { ...local, ...data };
+      const updated: LibraryCardRequest = d.request ?? { ...local, ...data };
       setLocal(updated); onUpdated(updated);
+      if (successMsg) notify(successMsg);
+      return true;
+    } catch {
+      notify("Couldn’t update the request. Check your connection.", "error");
+      return false;
     } finally { setPatching(false); }
   };
 
   const handleReject = async () => {
-    if (!confirm("Reject this request?")) return;
-    await patch({ status: "REJECTED" });
+    await patch({ status: "REJECTED" }, "Request rejected");
+    setConfirm(null);
   };
 
   const handleDelete = async () => {
-    const res = await fetch(`/api/courses/${courseId}/library-cards/${local.id}`, { method: "DELETE" });
-    if (res.ok) { onDeleted(local.id); onBack(); }
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/courses/${courseId}/library-cards/${local.id}`, { method: "DELETE" });
+      if (res.ok) { onDeleted(local.id); onBack(); return; }
+      notify("Couldn’t delete the request.", "error");
+    } catch { notify("Couldn’t delete the request.", "error"); }
+    finally { setDeleting(false); setConfirm(null); }
   };
 
-  const InfoRow = ({ label, value }: { label: string; value?: string | null }) =>
-    value ? (
-      <div className="py-2.5" style={{ borderBottom: `1px solid ${RULE}` }}>
-        <p style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: MUTED, marginBottom: 2 }}>{label}</p>
-        <p style={{ fontSize: 13, fontWeight: 500, color: SLATE, lineHeight: 1.5 }}>{value}</p>
-      </div>
-    ) : null;
+  const handleDownloadAffidavit = async () => {
+    setAffidavitDl(true);
+    try {
+      const res = await fetch(`/api/courses/${courseId}/library-cards/${local.id}/affidavit`);
+      if (!res.ok) { notify("Couldn’t generate the affidavit.", "error"); return; }
+      await downloadBlob(res, `affidavit_${local.name.replace(/\s+/g, "_")}.pdf`);
+    } catch { notify("Couldn’t generate the affidavit.", "error"); }
+    finally { setAffidavitDl(false); }
+  };
 
-  // ── Derive available actions once, shared between desktop inline bar & mobile sheet ──
+  /* Actions derived once, shared by desktop bar and mobile sheet */
   const progressAction =
-    local.status === "PENDING"    ? { label: "Approve",          color: MAROON,     icon: <Check size={12} />,    onClick: () => patch({ status: "PROCESSING" }) } :
-    local.status === "PROCESSING" ? { label: "Mark as Ready",    color: "#065f46",  icon: <Check size={12} />,    onClick: () => patch({ status: "READY" }) } :
-    local.status === "READY"      ? { label: "Mark as Released", color: "#1d4ed8",  icon: <Download size={12} />, onClick: () => patch({ status: "RELEASED", releasedAt: new Date().toISOString(), _releasedBy: currentUserName }) } :
+    local.status === "PENDING"    ? { label: "Approve",          color: C.brand,   icon: <Check size={13} />,    onClick: () => patch({ status: "PROCESSING" }, "Request approved") } :
+    local.status === "PROCESSING" ? { label: "Mark as ready",    color: "#065f46", icon: <Check size={13} />,    onClick: () => patch({ status: "READY" }, "Marked as ready") } :
+    local.status === "READY"      ? { label: "Mark as released", color: "#1d4ed8", icon: <Download size={13} />, onClick: () => patch({ status: "RELEASED", releasedAt: new Date().toISOString(), _releasedBy: currentUserName }, "Marked as released") } :
     null;
 
-  const canReject   = local.status !== "RELEASED" && local.status !== "REJECTED";
-  const canExport   = local.applicantType === "STUDENT";
+  const canReject    = local.status !== "RELEASED" && local.status !== "REJECTED";
+  const canExport    = local.applicantType === "STUDENT";
   const canAffidavit = local.requestType === "STUDENT_LOST";
 
   const secondaryActions: SheetAction[] = [
-    ...(canReject ? [{ key: "reject", label: "Reject Request", icon: <X size={15} />, onClick: handleReject, danger: true, disabled: patching }] : []),
-    ...(canExport ? [{ key: "export", label: "Export Card", icon: <FileDown size={15} />, onClick: () => setShowExportModal(true) }] : []),
-    ...(canAffidavit ? [{ key: "affidavit", label: affidavitDl ? "Generating…" : "Download Affidavit", icon: <FileText size={15} />, onClick: handleDownloadAffidavit, disabled: affidavitDl }] : []),
-    { key: "delete", label: "Delete Request", icon: <Trash2 size={15} />, onClick: () => setShowDelete(true), danger: true },
+    ...(canReject    ? [{ key: "reject",    label: "Reject request",    icon: <Ban size={15} />,      onClick: () => setConfirm("reject"), danger: true, disabled: patching }] : []),
+    ...(canExport    ? [{ key: "export",    label: "Export card",       icon: <FileDown size={15} />, onClick: () => setShowExport(true) }] : []),
+    ...(canAffidavit ? [{ key: "affidavit", label: affidavitDl ? "Generating…" : "Download affidavit", icon: <FileText size={15} />, onClick: handleDownloadAffidavit, disabled: affidavitDl }] : []),
+    { key: "delete", label: "Delete request", icon: <Trash2 size={15} />, onClick: () => setConfirm("delete"), danger: true },
   ];
 
-  return (
-    <div className="flex flex-col h-full" style={{ fontFamily: FONT, background: "#f8fafc" }}>
+  const ghostBtn =
+    "flex items-center gap-1.5 text-xs font-semibold px-3 h-8 rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-50";
 
-      {/* ── Top bar (compact on mobile, full actions inline on desktop) ── */}
-      <div style={{ background: "#fff", borderBottom: `1px solid ${RULE}` }}
-        className="flex items-center gap-3 px-4 sm:px-6 py-3 shrink-0">
-        <button onClick={onBack} className="flex items-center gap-1.5 text-sm font-semibold transition-colors shrink-0" style={{ color: MAROON }}>
-          <ArrowLeft size={14} /> Back
+  return (
+    <div className="flex flex-col h-full" style={{ fontFamily: FONT, background: C.canvas }}>
+
+      {/* Top bar */}
+      <div className="flex items-center gap-3 px-4 sm:px-6 py-3 shrink-0 bg-white border-b" style={{ borderColor: C.line }}>
+        <button onClick={onBack} className="flex items-center gap-1.5 text-sm font-semibold shrink-0" style={{ color: C.brand }}>
+          <ArrowLeft size={15} /> Back
         </button>
-        <span style={{ width: 1, height: 16, background: RULE }} className="shrink-0" />
-        <p className="text-sm font-bold flex-1 truncate min-w-0" style={{ color: SLATE }}>{local.name}</p>
+        <span className="w-px h-4 shrink-0" style={{ background: C.line }} />
+        <p className="text-sm font-bold flex-1 truncate min-w-0" style={{ color: C.ink }}>{local.name}</p>
         <StatusBadge status={local.status} />
 
-        {/* Desktop: full inline action set */}
         {isHead && (
-          <div className="hidden sm:flex items-center gap-2 flex-wrap">
+          <div className="hidden sm:flex items-center gap-2">
+            {canExport && (
+              <button onClick={() => setShowExport(true)} className={ghostBtn}>
+                <FileDown size={13} /> Export card
+              </button>
+            )}
+            {canAffidavit && (
+              <button onClick={handleDownloadAffidavit} disabled={affidavitDl} className={ghostBtn}>
+                {affidavitDl ? <><RefreshCw size={13} className="animate-spin" /> Generating…</> : <><FileText size={13} /> Affidavit</>}
+              </button>
+            )}
+            {canReject && (
+              <button onClick={() => setConfirm("reject")} disabled={patching}
+                className="flex items-center gap-1.5 text-xs font-semibold px-3 h-8 rounded-lg border border-red-200 bg-white text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50">
+                <Ban size={13} /> Reject
+              </button>
+            )}
             {progressAction && (
               <button onClick={progressAction.onClick} disabled={patching}
-                className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg text-white transition-all disabled:opacity-50"
+                className="flex items-center gap-1.5 text-xs font-bold px-3.5 h-8 rounded-lg text-white transition-opacity disabled:opacity-50"
                 style={{ background: progressAction.color }}>
                 {progressAction.icon} {progressAction.label}
               </button>
             )}
-            {canReject && (
-              <button onClick={handleReject} disabled={patching}
-                className="flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 transition-all disabled:opacity-50">
-                <X size={12} /> Reject
-              </button>
-            )}
-            {canExport && (
-              <button onClick={() => setShowExportModal(true)}
-                className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-all">
-                <FileDown size={13} /> Export Card
-              </button>
-            )}
-            {canAffidavit && (
-              <button onClick={handleDownloadAffidavit} disabled={affidavitDl}
-                className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-all disabled:opacity-50">
-                {affidavitDl ? <><RefreshCw size={13} className="animate-spin" /> Generating...</> : <><FileText size={13} /> Affidavit</>}
-              </button>
-            )}
-            <button onClick={() => setShowDelete(true)}
-              className="flex items-center gap-1 text-xs font-semibold text-red-300 hover:text-red-500 px-1 transition-colors">
-              <Trash2 size={13} />
+            <button onClick={() => setConfirm("delete")} aria-label="Delete request"
+              className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors">
+              <Trash2 size={14} />
             </button>
           </div>
         )}
 
-        {/* Mobile: kebab opens the action sheet */}
         {isHead && (
-          <button
-            onClick={() => setShowMoreSheet(true)}
-            className="sm:hidden w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 shrink-0"
-            aria-label="More actions"
-          >
+          <button onClick={() => setShowMore(true)} aria-label="More actions"
+            className="sm:hidden w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 shrink-0">
             <MoreVertical size={17} />
           </button>
         )}
       </div>
 
-      {/* ── Body ── */}
-      <div className="flex-1 overflow-y-auto" style={{ background: "#f1f5f9" }}>
-        <div className="grid grid-cols-1 gap-0 h-full">
+      {/* Body */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="w-full px-4 sm:px-6 py-4 sm:py-5 grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_380px] xl:grid-cols-[minmax(0,1fr)_420px] gap-4 items-start">
 
-          {/* Applicant Info */}
-          <div className="flex flex-col" style={{ background: "#fff" }}>
-            <div className="px-4 sm:px-5 py-3 border-b border-gray-100" style={{ background: "#fafafa" }}>
-              <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.14em", textTransform: "uppercase", color: MAROON }}>Applicant Information</p>
+          {/* Left: applicant */}
+          <Panel title="Applicant information">
+            <div className="px-4 sm:px-5 py-4 border-b" style={{ borderColor: C.lineSoft }}>
+              <p className="text-base font-bold" style={{ color: C.ink }}>{local.name}</p>
+              <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                <span className="text-xs" style={{ color: C.muted }}>{TYPE_LABELS[local.requestType]}</span>
+                {local.cardType && (
+                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md"
+                    style={{ background: C.brandTint, color: C.brand }}>
+                    {local.cardType}
+                  </span>
+                )}
+              </div>
             </div>
-            <div className="px-4 sm:px-5 py-4" style={{ borderBottom: `1px solid ${RULE}` }}>
-              <p style={{ fontSize: 14, fontWeight: 700, color: SLATE, lineHeight: 1.3 }}>{local.name}</p>
-              <p style={{ fontSize: 11, color: MUTED, marginTop: 2 }}>{TYPE_LABELS[local.requestType]}</p>
-              <span className="inline-flex items-center mt-2 text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wide"
-                style={{ background: "#fef2f2", color: MAROON, border: `1px solid #e5d0d0` }}>
-                {local.cardType ?? "—"}
-              </span>
-            </div>
-            <div className="flex-1 overflow-y-auto px-4 sm:px-5 py-2">
-              <InfoRow label="Sex"          value={local.sex} />
-              <InfoRow label="Contact No."  value={local.contactNo} />
-              <InfoRow label="Email"        value={local.email} />
-              <InfoRow label="Address"      value={local.address} />
+            <dl className="px-4 sm:px-5 py-4 grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-3 gap-x-6 gap-y-4">
+              <InfoField label="Sex"        value={local.sex} />
+              <InfoField label="Contact no." value={local.contactNo} />
+              <InfoField label="Email"      value={local.email} />
+              <InfoField label="Address"    value={local.address} />
               {local.applicantType === "STUDENT" ? (
                 <>
-                  <InfoRow label="Student No."      value={local.studentNo} />
-                  <InfoRow label="Course / Program" value={local.courseProgram} />
-                  <InfoRow label="Year & Section"   value={local.yearSection} />
-                  <InfoRow label="Reason"           value={local.reason} />
+                  <InfoField label="Student no."       value={local.studentNo} />
+                  <InfoField label="Course / program"  value={local.courseProgram} />
+                  <InfoField label="Year & section"    value={local.yearSection} />
+                  <InfoField label="Reason"            value={local.reason} />
                 </>
               ) : (
                 <>
-                  <InfoRow label="Employee No."  value={local.employeeNo} />
-                  <InfoRow label="Employee Type" value={local.employeeType} />
-                  <InfoRow label="College/Dept"  value={local.collegeDept} />
-                  <InfoRow label="Position"      value={local.position} />
+                  <InfoField label="Employee no."    value={local.employeeNo} />
+                  <InfoField label="Employee type"   value={local.employeeType} />
+                  <InfoField label="College / dept." value={local.collegeDept} />
+                  <InfoField label="Position"        value={local.position} />
                 </>
               )}
-              <InfoRow label="Submitted" value={fmtDate(local.submittedAt)} />
-            </div>
+              <InfoField label="Submitted" value={fmtDate(local.submittedAt)} />
+            </dl>
+          </Panel>
 
-            {/* Attachments */}
-            <div style={{ borderTop: `1px solid ${RULE}` }}>
-              <div className="px-4 sm:px-5 py-3 border-b border-gray-100" style={{ background: "#fafafa" }}>
-                <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.14em", textTransform: "uppercase", color: MAROON }}>Attachments</p>
-              </div>
+          {/* Right: progress, attachments, release */}
+          <div className="flex flex-col gap-4 sm:gap-5">
+            <Panel title="Progress">
+              <StatusStepper status={local.status} />
+            </Panel>
+
+            <Panel title="Attachments">
               <div className="px-4 sm:px-5 py-4 flex gap-3 flex-wrap">
-                {local.photoUrl ? (
-                  <a href={local.photoUrl} target="_blank" rel="noreferrer"
-                    className="group relative w-16 h-20 rounded-lg border border-gray-200 overflow-hidden bg-gray-100 shrink-0">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={local.photoUrl} alt="Photo" className="w-full h-full object-cover" />
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <ExternalLink size={12} className="text-white" />
-                    </div>
-                    <span className="absolute bottom-0 left-0 right-0 text-[9px] font-bold text-center bg-black/50 text-white py-0.5">Photo</span>
-                  </a>
-                ) : (
-                  <div className="flex flex-col items-center justify-center gap-1 w-16 h-20 rounded-lg border-2 border-dashed border-gray-200 text-gray-300">
-                    <Users size={16} /><span className="text-[9px]">No photo</span>
-                  </div>
+                <AttachmentTile
+                  label="Photo" url={local.photoUrl}
+                  onPreview={() => local.photoUrl && setPreview({ src: local.photoUrl, label: `${local.name} — Photo` })}
+                />
+                {local.requestType === "STUDENT_LOST" && (
+                  <AttachmentTile
+                    label="Affidavit" url={local.affidavitUrl}
+                    onPreview={() => local.affidavitUrl && setPreview({ src: local.affidavitUrl, label: `${local.name} — Affidavit` })}
+                  />
                 )}
-                {local.affidavitUrl && (
-                  <a href={local.affidavitUrl} target="_blank" rel="noreferrer"
-                    className="flex flex-col items-center justify-center gap-1.5 w-16 h-20 rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 hover:border-gray-400 hover:bg-gray-100 transition-all text-gray-500">
-                    <FileText size={16} /><span className="text-[9px] font-bold text-center leading-tight px-1">Affidavit</span>
-                  </a>
-                )}
-                {local.corIdUrl ? (
-                  <a href={local.corIdUrl} target="_blank" rel="noreferrer"
-                    className="flex flex-col items-center justify-center gap-1.5 w-16 h-20 rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 hover:border-gray-400 hover:bg-gray-100 transition-all text-gray-500">
-                    <FileText size={16} /><span className="text-[9px] font-bold text-center leading-tight px-1">COR / ID</span>
-                  </a>
-                ) : (
-                  <div className="flex flex-col items-center justify-center gap-1.5 w-16 h-20 rounded-lg border-2 border-dashed border-red-200 bg-red-50 text-red-300">
-                    <FileText size={16} /><span className="text-[9px] font-bold text-center leading-tight px-1 text-red-400">No COR/ID</span>
-                  </div>
-                )}
+                <AttachmentTile
+                  label="COR / ID" url={local.corIdUrl} missingTone="warn"
+                  onPreview={() => local.corIdUrl && setPreview({ src: local.corIdUrl, label: `${local.name} — COR / ID` })}
+                />
               </div>
-            </div>
+            </Panel>
 
             {local.status === "RELEASED" && (
-              <div className="px-4 sm:px-5 py-4" style={{ borderTop: `1px solid ${RULE}`, background: "#f8fafc" }}>
-                <p style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: MUTED, marginBottom: 8 }}>Released</p>
-                <p style={{ fontSize: 10, color: MUTED }}>{fmtDate(local.releasedAt)}</p>
-              </div>
+              <Panel title="Release details">
+                <dl className="px-4 sm:px-5 py-4 grid grid-cols-1 gap-4">
+                  <InfoField label="Released on" value={fmtDate(local.releasedAt)} />
+                  <InfoField label="Released by" value={local.releasedBy} />
+                </dl>
+              </Panel>
             )}
-
-            {/* spacer so content isn't hidden behind the mobile sticky action bar */}
-            {isHead && progressAction && <div className="h-16 sm:hidden" />}
           </div>
         </div>
+
+        {/* Spacer so content clears the mobile sticky bar */}
+        {isHead && progressAction && <div className="h-20 sm:hidden" />}
       </div>
 
-      {/* ── Mobile sticky primary action bar ── */}
+      {/* Mobile sticky primary action */}
       {isHead && progressAction && (
         <div
-          className="sm:hidden shrink-0 border-t border-gray-100 bg-white px-4 py-3 flex items-center gap-2"
-          style={{ paddingBottom: "calc(12px + env(safe-area-inset-bottom))" }}
+          className="sm:hidden shrink-0 border-t bg-white px-4 pt-3"
+          style={{ borderColor: C.line, paddingBottom: "calc(12px + env(safe-area-inset-bottom))" }}
         >
           <button onClick={progressAction.onClick} disabled={patching}
-            className="flex-1 flex items-center justify-center gap-1.5 h-11 rounded-xl text-sm font-bold text-white disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-1.5 h-11 rounded-xl text-sm font-bold text-white disabled:opacity-50"
             style={{ background: progressAction.color }}>
             {progressAction.icon} {progressAction.label}
           </button>
         </div>
       )}
 
-      {showMoreSheet && (
-        <ActionSheet actions={secondaryActions} onClose={() => setShowMoreSheet(false)} />
+      {showMore   && <ActionSheet actions={secondaryActions} onClose={() => setShowMore(false)} />}
+      {showExport && <ExportCardModal request={local} courseId={courseId} onClose={() => setShowExport(false)} />}
+      {preview    && <Lightbox src={preview.src} label={preview.label} onClose={() => setPreview(null)} />}
+
+      {confirm === "reject" && (
+        <ConfirmModal
+          title="Reject this request?" confirmLabel="Reject request" busy={patching}
+          message={<>The request from <strong>{local.name}</strong> will be marked as rejected.</>}
+          onConfirm={handleReject} onClose={() => setConfirm(null)}
+        />
       )}
-
-      {showExportModal && <ExportCardModal request={local} courseId={courseId} onClose={() => setShowExportModal(false)} />}
-
-      {showDelete && (
-        <SheetModal
-          onClose={() => setShowDelete(false)}
-          headerColor="#dc2626"
-          icon={<Trash2 size={15} className="text-white" />}
-          eyebrow="Library Card"
-          title="Delete Request"
-          maxWidth="max-w-xs"
-          footer={
-            <div className="px-5 py-4 flex gap-2">
-              <button onClick={() => setShowDelete(false)} className="flex-1 py-2.5 rounded-xl text-xs font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50">Cancel</button>
-              <button onClick={handleDelete} className="flex-1 py-2.5 rounded-xl text-xs font-bold text-white bg-red-500 hover:bg-red-600">Delete</button>
-            </div>
-          }
-        >
-          <div className="px-5 py-5">
-            <p className="text-sm font-bold mb-1" style={{ color: SLATE }}>Delete this request?</p>
-            <p className="text-xs" style={{ color: MUTED }}>
-              {local.name} — {TYPE_LABELS[local.requestType]}<br />This cannot be undone.
-            </p>
-          </div>
-        </SheetModal>
+      {confirm === "delete" && (
+        <ConfirmModal
+          title="Delete this request?" confirmLabel="Delete" busy={deleting}
+          message={<><strong>{local.name}</strong> — {TYPE_LABELS[local.requestType]}.<br />This can’t be undone.</>}
+          onConfirm={handleDelete} onClose={() => setConfirm(null)}
+        />
       )}
     </div>
   );
 }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   10. LIST VIEW (default export)
+   ════════════════════════════════════════════════════════════════════════════ */
+
+
 
 export default function CourseLibraryTab({ courseId, isHead }: Props) {
   const [requests,     setRequests]     = useState<LibraryCardRequest[]>([]);
   const [loading,      setLoading]      = useState(true);
   const [error,        setError]        = useState("");
   const [search,       setSearch]       = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
+  const [statusTab,    setStatusTab]    = useState<Status | "ALL">("ALL");
   const [typeFilter,   setTypeFilter]   = useState("");
   const [courseFilter, setCourseFilter] = useState("");
   const [dateFrom,     setDateFrom]     = useState("");
@@ -756,331 +1058,524 @@ export default function CourseLibraryTab({ courseId, isHead }: Props) {
   const [showShare,    setShowShare]    = useState(false);
   const [detail,       setDetail]       = useState<LibraryCardRequest | null>(null);
   const [page,         setPage]         = useState(1);
+  const [toast,        setToast]        = useState<ToastState>(null);
+  const [selected,     setSelected]     = useState<Set<string>>(new Set());
+  const [rowMenu,      setRowMenu]      = useState<{ id: string; x: number; y: number } | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<string[] | null>(null);
+  const [deleting,     setDeleting]     = useState(false);
 
+  const debouncedSearch = useDebounced(search, 300);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const notify = useCallback((msg: string, tone: "success" | "error" = "success") => {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    setToast({ msg, tone });
+    toastTimer.current = setTimeout(() => setToast(null), 3000);
+  }, []);
+  useEffect(() => () => { if (toastTimer.current) clearTimeout(toastTimer.current); }, []);
+
+  /* Server handles search + type. Status, course and dates are filtered locally
+     so the tab counts stay accurate. */
   const fetchRequests = useCallback(async () => {
     setLoading(true); setError("");
     try {
       const q = new URLSearchParams();
-      if (search)       q.set("search", search);
-      if (statusFilter) q.set("status", statusFilter);
-      if (typeFilter)   q.set("type",   typeFilter);
-      if (dateFrom)     q.set("dateFrom", dateFrom);
-      if (dateTo)       q.set("dateTo",   dateTo);
+      if (debouncedSearch) q.set("search", debouncedSearch);
+      if (typeFilter)      q.set("type",   typeFilter);
       const res  = await fetch(`/api/courses/${courseId}/library-cards?${q}`);
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Failed");
+      if (!res.ok) throw new Error(data.error ?? "Failed to load requests.");
       setRequests(data.requests ?? []);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load.");
+      setError(e instanceof Error ? e.message : "Failed to load requests.");
     } finally { setLoading(false); }
-  }, [courseId, search, statusFilter, typeFilter]);
+  }, [courseId, debouncedSearch, typeFilter]);
 
   useEffect(() => { fetchRequests(); }, [fetchRequests]);
-  useEffect(() => { setPage(1); }, [search, statusFilter, typeFilter, courseFilter, dateFrom, dateTo]);
+  useEffect(() => { setPage(1); setSelected(new Set()); }, [debouncedSearch, statusTab, typeFilter, courseFilter, dateFrom, dateTo]);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setRowMenu(null); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
-  const filteredRequests = requests.filter(r => {
-    if (courseFilter && r.courseProgram !== courseFilter) return false;
-    if (dateFrom && r.submittedAt < dateFrom) return false;
-    if (dateTo   && r.submittedAt > dateTo + "T23:59:59") return false;
-    return true;
-  });
-  const hasActiveFilter = !!(statusFilter || typeFilter || courseFilter || dateFrom || dateTo);
-  const totalPages = Math.max(1, Math.ceil(filteredRequests.length / PAGE_SIZE));
-  const paginated  = filteredRequests.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  /* Rows matching every filter except the status tab (used for tab counts) */
+  const baseFiltered = useMemo(() => {
+    const from = dateFrom ? new Date(`${dateFrom}T00:00:00`).getTime() : null;
+    const to   = dateTo   ? new Date(`${dateTo}T23:59:59.999`).getTime() : null;
+    return requests.filter(r => {
+      if (courseFilter && r.courseProgram !== courseFilter) return false;
+      const t = new Date(r.submittedAt).getTime();
+      if (from !== null && t < from) return false;
+      if (to   !== null && t > to)   return false;
+      return true;
+    });
+  }, [requests, courseFilter, dateFrom, dateTo]);
 
-  const selectCls = "w-full text-xs border border-gray-200 rounded-lg px-3 py-2 bg-white text-gray-700 outline-none focus:border-[#7b1113]";
-  const filterLabelCls = "block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1";
+  const counts = useMemo(() => {
+    const c: Record<Status | "ALL", number> = { ALL: baseFiltered.length, PENDING: 0, PROCESSING: 0, READY: 0, RELEASED: 0, REJECTED: 0 };
+    baseFiltered.forEach(r => { c[r.status] += 1; });
+    return c;
+  }, [baseFiltered]);
 
+  const filtered   = useMemo(() => statusTab === "ALL" ? baseFiltered : baseFiltered.filter(r => r.status === statusTab), [baseFiltered, statusTab]);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paginated  = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  useEffect(() => { if (page > totalPages) setPage(totalPages); }, [page, totalPages]);
+
+  const courseOptions = useMemo(
+    () => [...new Set(requests.map(r => r.courseProgram).filter((c): c is string => !!c))].sort(),
+    [requests],
+  );
+
+  const activeFilterCount = [typeFilter, courseFilter, dateFrom || dateTo].filter(Boolean).length;
+  const hasAnyFilter      = !!(search || statusTab !== "ALL" || activeFilterCount);
+
+  const clearFilters = () => { setTypeFilter(""); setCourseFilter(""); setDateFrom(""); setDateTo(""); };
+  const resetAll     = () => { clearFilters(); setStatusTab("ALL"); setSearch(""); };
+
+  const datePresets = [
+    { label: "Today",      fn: () => { const d = toLocalISODate(new Date()); setDateFrom(d); setDateTo(d); } },
+    { label: "This week",  fn: () => {
+        const now = new Date(); const mon = new Date(now);
+        mon.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+        setDateFrom(toLocalISODate(mon)); setDateTo(toLocalISODate(now));
+    } },
+    { label: "This month", fn: () => {
+        const now = new Date();
+        setDateFrom(toLocalISODate(new Date(now.getFullYear(), now.getMonth(), 1))); setDateTo(toLocalISODate(now));
+    } },
+  ];
+
+  const selectCls =
+    "w-full text-xs border border-gray-200 rounded-lg px-3 py-2 bg-white text-gray-700 outline-none focus:border-[#7b1113] focus:ring-2 focus:ring-[#7b1113]/10";
+  const filterLabelCls = "block text-xs font-semibold text-gray-500 mb-1";
+
+  const pageNumbers = Array.from({ length: Math.min(totalPages, 5) }, (_, i) =>
+    totalPages <= 5 || page <= 3 ? i + 1 : page >= totalPages - 2 ? totalPages - 4 + i : page - 2 + i,
+  );
+
+  const pageAllSelected  = paginated.length > 0 && paginated.every(r => selected.has(r.id));
+  const pageSomeSelected = paginated.some(r => selected.has(r.id));
+
+  const toggleOne = (id: string) =>
+    setSelected(prev => {
+      const n = new Set(prev);
+      if (n.has(id)) n.delete(id); else n.add(id);
+      return n;
+    });
+
+  const togglePage = () =>
+    setSelected(prev => {
+      const n = new Set(prev);
+      if (pageAllSelected) paginated.forEach(r => n.delete(r.id));
+      else paginated.forEach(r => n.add(r.id));
+      return n;
+    });
+
+  const selectAllFiltered = () => setSelected(new Set(filtered.map(r => r.id)));
+
+  const openRowMenu = (e: React.MouseEvent<HTMLButtonElement>, id: string) => {
+    e.stopPropagation();
+    const r = e.currentTarget.getBoundingClientRect();
+    const flip = r.bottom + 96 > window.innerHeight;
+    setRowMenu({ id, x: r.right, y: flip ? r.top - 92 : r.bottom + 4 });
+  };
+
+  const deleteIds = async (ids: string[]) => {
+    setDeleting(true);
+    const results = await Promise.allSettled(
+      ids.map(id =>
+        fetch(`/api/courses/${courseId}/library-cards/${id}`, { method: "DELETE" }).then(res => {
+          if (!res.ok) throw new Error("Delete failed");
+          return id;
+        }),
+      ),
+    );
+    const ok = results
+      .filter((r): r is PromiseFulfilledResult<string> => r.status === "fulfilled")
+      .map(r => r.value);
+    const failed = ids.length - ok.length;
+
+    if (ok.length) setRequests(prev => prev.filter(r => !ok.includes(r.id)));
+    setSelected(prev => { const n = new Set(prev); ok.forEach(id => n.delete(id)); return n; });
+    setDeleting(false);
+    setDeleteTarget(null);
+
+    if (failed === 0) notify(ok.length === 1 ? "Request deleted" : `${ok.length} requests deleted`);
+    else notify(`${failed} couldn’t be deleted. Please try again.`, "error");
+  };
+
+  const emptyState = requests.length === 0 && !hasAnyFilter ? (
+    <EmptyState
+      title="No requests yet"
+      hint="Share the form link so students and employees can request a library card."
+      action={
+        <button onClick={() => setShowShare(true)}
+          className="mt-2 flex items-center gap-1.5 text-xs font-bold px-4 h-9 rounded-lg text-white" style={{ background: C.brand }}>
+          <QrCode size={13} /> Share form link
+        </button>
+      }
+    />
+  ) : (
+    <EmptyState
+      title="No matching requests"
+      hint="Try a different search or clear the filters."
+      action={
+        <button onClick={resetAll} className="mt-2 text-xs font-bold hover:underline" style={{ color: C.brand }}>
+          Clear all filters
+        </button>
+      }
+    />
+  );
+
+  /* ── Detail ── */
   if (detail) {
     return (
-      <RequestDetailView
-        request={detail} courseId={courseId} isHead={isHead}
-        onBack={() => setDetail(null)}
-        onUpdated={u => { setRequests(prev => prev.map(r => r.id === u.id ? u : r)); setDetail(u); }}
-        onDeleted={id => { setRequests(prev => prev.filter(r => r.id !== id)); setDetail(null); }}
-      />
+      <>
+        <RequestDetailView
+          request={detail} courseId={courseId} isHead={isHead} notify={notify}
+          onBack={() => setDetail(null)}
+          onUpdated={u => { setRequests(prev => prev.map(r => r.id === u.id ? u : r)); setDetail(u); }}
+          onDeleted={id => { setRequests(prev => prev.filter(r => r.id !== id)); setDetail(null); }}
+        />
+        <Toast toast={toast} />
+      </>
     );
   }
 
+  /* ── List ── */
   return (
-    <div className="h-full bg-[#f8f8f7] flex flex-col overflow-hidden" style={{ fontFamily: FONT }}>
+    <div className="h-full flex flex-col overflow-hidden" style={{ fontFamily: FONT, background: C.canvas }}>
 
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-4 sm:px-8 py-3.5 sm:py-5 flex items-center justify-between shrink-0 gap-3">
+      <div className="bg-white border-b px-4 sm:px-8 py-3.5 sm:py-5 flex items-center justify-between shrink-0 gap-3" style={{ borderColor: C.line }}>
         <div className="min-w-0">
-          <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.15em] mb-0.5" style={{ color: MAROON }}>Library</p>
-          <h1 className="text-base sm:text-xl font-bold text-gray-900 leading-none">Library Cards</h1>
+          <h1 className="text-lg sm:text-xl font-bold leading-tight" style={{ color: C.ink }}>Library cards</h1>
+          <p className="text-xs mt-0.5 hidden sm:block" style={{ color: C.faint }}>Review and process card requests from students and employees.</p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <button onClick={fetchRequests}
-            className="flex items-center justify-center gap-1.5 text-xs font-semibold text-gray-500 border border-gray-200 hover:border-gray-400 hover:text-gray-700 w-8 h-8 sm:w-auto sm:h-auto sm:px-3 sm:py-1.5 rounded-lg transition-all">
+          <button onClick={fetchRequests} aria-label="Refresh"
+            className="flex items-center justify-center gap-1.5 text-xs font-semibold text-gray-500 border border-gray-200 hover:border-gray-400 hover:text-gray-700 w-9 h-9 sm:w-auto sm:px-3 rounded-lg transition-colors">
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
             <span className="hidden sm:inline">Refresh</span>
           </button>
           <button onClick={() => setShowShare(true)}
-            className="flex items-center gap-1.5 text-xs font-bold px-3 sm:px-4 h-8 sm:h-auto sm:py-1.5 rounded-lg text-white transition-all"
-            style={{ background: MAROON }}>
+            className="flex items-center gap-1.5 text-xs font-bold px-3.5 h-9 rounded-lg text-white transition-opacity hover:opacity-90"
+            style={{ background: C.brand }}>
             <QrCode className="w-3.5 h-3.5" />
-            <span>Share</span>
-            <span className="hidden sm:inline">&nbsp;Form Link</span>
+            <span>Share<span className="hidden sm:inline"> form link</span></span>
           </button>
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 sm:px-8 py-4 sm:py-6 flex flex-col gap-4 sm:gap-5">
+      <div className="flex-1 overflow-y-auto px-4 sm:px-8 py-4 sm:py-6 flex flex-col gap-4 sm:gap-5 min-h-0">
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
-          {[
-            { label: "Total",    value: requests.length },
-            { label: "Pending",  value: requests.filter(r => r.status === "PENDING").length },
-            { label: "Ready",    value: requests.filter(r => r.status === "READY").length },
-            { label: "Released", value: requests.filter(r => r.status === "RELEASED").length },
-          ].map(s => (
-            <div key={s.label} className="bg-white border border-gray-200 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 flex items-center gap-2.5 sm:gap-3">
-              <div className="rounded-lg p-1.5 sm:p-2 shrink-0" style={{ background: "#f3f4f6" }}>
-                <BookOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4" style={{ color: MAROON }} />
-              </div>
-              <div className="min-w-0">
-                <p className="text-lg sm:text-xl font-black tabular-nums text-gray-900 leading-tight">{s.value}</p>
-                <p className="text-[11px] sm:text-xs font-semibold text-gray-500 truncate">{s.label}</p>
-              </div>
+
+        {/* Table card */}
+        <div className="flex-1 bg-white border rounded-xl overflow-hidden flex flex-col shadow-sm min-h-[420px]" style={{ borderColor: C.line }}>
+
+          {/* Status tabs */}
+          <div className="border-b overflow-x-auto" style={{ borderColor: C.line }}>
+            <div role="tablist" className="flex px-2 sm:px-3 min-w-max">
+              {STATUS_TABS.map(t => {
+                const active = statusTab === t;
+                return (
+                  <button
+                    key={t} role="tab" aria-selected={active} onClick={() => setStatusTab(t)}
+                    className="relative flex items-center gap-1.5 px-3 py-3 text-xs font-semibold whitespace-nowrap transition-colors"
+                    style={{ color: active ? C.brand : C.muted }}
+                  >
+                    {t === "ALL" ? "All" : STATUS_META[t].label}
+                    <span className="text-[11px] tabular-nums px-1.5 rounded-full"
+                      style={{ background: active ? C.brandTint : C.lineSoft, color: active ? C.brand : C.muted }}>
+                      {counts[t]}
+                    </span>
+                    {active && <span className="absolute left-2 right-2 -bottom-px h-0.5 rounded-full" style={{ background: C.brand }} />}
+                  </button>
+                );
+              })}
             </div>
-          ))}
-        </div>
-
-        {/* Table / list */}
-        <div className="flex-1 bg-white border border-gray-200 rounded-xl overflow-hidden flex flex-col shadow-sm min-h-0">
+          </div>
 
           {/* Toolbar */}
-          <div className="px-3 sm:px-5 py-2.5 sm:py-3 border-b border-gray-100 flex items-center gap-2">
-            <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-3 py-1.5 flex-1 bg-gray-50 focus-within:bg-white focus-within:border-gray-400 transition-all min-w-0">
+          <div className="px-3 sm:px-5 py-2.5 sm:py-3 border-b flex items-center gap-2" style={{ borderColor: C.lineSoft }}>
+            <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-3 h-9 flex-1 bg-gray-50 focus-within:bg-white focus-within:border-gray-400 transition-colors min-w-0">
               <Search className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-              <input value={search} onChange={e => setSearch(e.target.value)}
-                placeholder="Search name, student no., email…"
-                className="flex-1 text-xs text-gray-700 placeholder:text-gray-400 outline-none bg-transparent min-w-0" />
-              {search && <button onClick={() => setSearch("")} className="text-gray-300 hover:text-gray-500 shrink-0"><X className="w-3 h-3" /></button>}
+              <input
+                value={search} onChange={e => setSearch(e.target.value)}
+                placeholder="Search name, student no., email"
+                aria-label="Search requests"
+                className="flex-1 text-xs text-gray-700 placeholder:text-gray-400 outline-none bg-transparent min-w-0"
+              />
+              {search && (
+                <button onClick={() => setSearch("")} aria-label="Clear search" className="text-gray-300 hover:text-gray-500 shrink-0">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
-            <button onClick={() => setShowFilters(f => !f)}
-              style={(showFilters || hasActiveFilter) ? { background: MAROON, color: "#fff", borderColor: MAROON } : {}}
-              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg border text-[11px] font-bold transition-all shrink-0 ${!(showFilters || hasActiveFilter) ? "border-gray-200 text-gray-500 hover:border-gray-400" : ""}`}>
-              <Filter className="w-3 h-3" />
+            <button
+              onClick={() => setShowFilters(f => !f)} aria-expanded={showFilters}
+              style={(showFilters || activeFilterCount) ? { background: C.brand, color: "#fff", borderColor: C.brand } : {}}
+              className={`flex items-center gap-1.5 px-3 h-9 rounded-lg border text-xs font-semibold transition-colors shrink-0 ${!(showFilters || activeFilterCount) ? "border-gray-200 text-gray-600 hover:border-gray-400" : ""}`}
+            >
+              <SlidersHorizontal className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Filters</span>
-              {hasActiveFilter && <span className="w-1.5 h-1.5 rounded-full bg-white/70" />}
+              {activeFilterCount > 0 && (
+                <span className="min-w-4 h-4 px-1 rounded-full bg-white/90 text-[10px] font-bold flex items-center justify-center" style={{ color: C.brand }}>
+                  {activeFilterCount}
+                </span>
+              )}
             </button>
           </div>
 
+          {/* Bulk action bar */}
+          {isHead && selected.size > 0 && (
+            <div className="px-3 sm:px-5 py-2.5 border-b flex items-center gap-3 flex-wrap" style={{ background: C.brandTint, borderColor: C.line }}>
+              <span className="text-xs font-bold" style={{ color: C.brand }}>{selected.size} selected</span>
+              {selected.size < filtered.length && (
+                <button onClick={selectAllFiltered} className="text-xs font-semibold hover:underline" style={{ color: C.brand }}>
+                  Select all {filtered.length}
+                </button>
+              )}
+              <button onClick={() => setSelected(new Set())} className="text-xs font-semibold text-gray-500 hover:text-gray-700">
+                Clear
+              </button>
+              <button onClick={() => setDeleteTarget(Array.from(selected))}
+                className="ml-auto flex items-center gap-1.5 text-xs font-bold px-3 h-8 rounded-lg text-white"
+                style={{ background: C.danger }}>
+                <Trash2 size={13} /> Delete selected
+              </button>
+            </div>
+          )}
+
+          {/* Filter panel */}
           {showFilters && (
-            <div className="px-3 sm:px-5 py-4 border-b border-gray-100 bg-gray-50 space-y-3.5">
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
+            <div className="px-3 sm:px-5 py-4 border-b bg-gray-50 space-y-4" style={{ borderColor: C.lineSoft }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className={filterLabelCls}>Type</label>
+                  <label className={filterLabelCls}>Request type</label>
                   <select value={typeFilter} onChange={e => setTypeFilter(e.target.value)} className={selectCls}>
-                    <option value="">All Types</option>
-                    <option value="STUDENT_NEW">Student (New)</option>
-                    <option value="STUDENT_LOST">Student (Lost)</option>
-                    <option value="EMPLOYEE">Employee</option>
-                  </select>
-                </div>
-                <div>
-                  <label className={filterLabelCls}>Status</label>
-                  <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className={selectCls}>
-                    <option value="">All Statuses</option>
-                    {(Object.keys(STATUS_META) as Status[]).map(s => (
-                      <option key={s} value={s}>{STATUS_META[s].label}</option>
+                    <option value="">All types</option>
+                    {(Object.keys(TYPE_LABELS) as RequestType[]).map(t => (
+                      <option key={t} value={t}>{TYPE_LABELS[t]}</option>
                     ))}
                   </select>
                 </div>
-                <div className="col-span-2 sm:col-span-2">
+                <div>
                   <label className={filterLabelCls}>Course</label>
                   <select value={courseFilter} onChange={e => setCourseFilter(e.target.value)} className={selectCls}>
-                    <option value="">All Courses</option>
-                    {[...new Set(requests.map(r => r.courseProgram).filter(Boolean))].map(c => (
-                      <option key={c} value={c!}>{c}</option>
-                    ))}
+                    <option value="">All courses</option>
+                    {courseOptions.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>
               </div>
 
               <div>
-                <label className={filterLabelCls}>Date Range</label>
+                <label className={filterLabelCls}>Date submitted</label>
                 <div className="flex items-center gap-2">
-                  <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)}
-                    className="flex-1 min-w-0 text-xs border border-gray-200 rounded-lg px-2.5 py-2 bg-white text-gray-700 outline-none" />
+                  <input type="date" value={dateFrom} max={dateTo || undefined} onChange={e => setDateFrom(e.target.value)}
+                    aria-label="From date"
+                    className="flex-1 min-w-0 text-xs border border-gray-200 rounded-lg px-2.5 py-2 bg-white text-gray-700 outline-none focus:border-[#7b1113]" />
                   <span className="text-xs text-gray-400 shrink-0">to</span>
-                  <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)}
-                    className="flex-1 min-w-0 text-xs border border-gray-200 rounded-lg px-2.5 py-2 bg-white text-gray-700 outline-none" />
+                  <input type="date" value={dateTo} min={dateFrom || undefined} onChange={e => setDateTo(e.target.value)}
+                    aria-label="To date"
+                    className="flex-1 min-w-0 text-xs border border-gray-200 rounded-lg px-2.5 py-2 bg-white text-gray-700 outline-none focus:border-[#7b1113]" />
                 </div>
                 <div className="flex items-center gap-1.5 flex-wrap mt-2">
-                  {[
-                    { label: "Today",      fn: () => { const d = new Date().toISOString().split("T")[0]; setDateFrom(d); setDateTo(d); } },
-                    { label: "This Week",  fn: () => { const now = new Date(); const mon = new Date(now); mon.setDate(now.getDate() - now.getDay() + 1); setDateFrom(mon.toISOString().split("T")[0]); setDateTo(new Date().toISOString().split("T")[0]); } },
-                    { label: "This Month", fn: () => { const now = new Date(); setDateFrom(`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-01`); setDateTo(new Date().toISOString().split("T")[0]); } },
-                  ].map(p => (
+                  {datePresets.map(p => (
                     <button key={p.label} onClick={p.fn}
-                      className="text-[10px] font-bold px-2 py-1 rounded-lg border border-gray-200 text-gray-500 hover:border-gray-400 hover:text-gray-700 transition-all">
+                      className="text-[11px] font-semibold px-2.5 py-1 rounded-full border border-gray-200 bg-white text-gray-600 hover:border-gray-400 transition-colors">
                       {p.label}
                     </button>
                   ))}
                 </div>
               </div>
 
-              {hasActiveFilter && (
-                <button onClick={() => { setStatusFilter(""); setTypeFilter(""); setCourseFilter(""); setDateFrom(""); setDateTo(""); }}
-                  className="flex items-center gap-1 text-[11px] font-bold hover:underline" style={{ color: MAROON }}>
-                  <X size={11} /> Clear all filters
+              {activeFilterCount > 0 && (
+                <button onClick={clearFilters} className="flex items-center gap-1 text-xs font-bold hover:underline" style={{ color: C.brand }}>
+                  <X size={12} /> Clear filters
                 </button>
               )}
             </div>
           )}
 
+          {/* Content */}
           {loading ? (
-            <div className="animate-pulse divide-y divide-gray-100">
+            <div className="animate-pulse divide-y divide-gray-100" aria-busy="true">
               {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="flex items-center gap-4 px-5 py-3.5">
-                  <div className="h-3 w-28 bg-gray-100 rounded" />
+                <div key={i} className="flex items-center gap-4 px-5 py-4">
+                  <div className="h-3 w-32 bg-gray-100 rounded" />
                   <div className="h-3 w-20 bg-gray-100 rounded hidden sm:block" />
                   <div className="h-3 flex-1 bg-gray-100 rounded" />
+                  <div className="h-5 w-16 bg-gray-100 rounded-full" />
                 </div>
               ))}
             </div>
           ) : error ? (
-            <div className="flex-1 flex items-center justify-center text-xs font-medium text-red-500 py-20">{error}</div>
+            <div className="flex-1 flex flex-col items-center justify-center gap-3 py-16 px-6 text-center">
+              <AlertCircle className="w-6 h-6 text-red-400" />
+              <p className="text-sm font-semibold text-red-600">{error}</p>
+              <button onClick={fetchRequests}
+                className="text-xs font-bold px-4 h-8 rounded-lg border border-red-200 text-red-600 hover:bg-red-50">
+                Try again
+              </button>
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="flex-1">{emptyState}</div>
           ) : (
             <div className="flex-1 overflow-y-auto">
-              {/* Desktop table */}
+
+                            {/* Desktop table */}
               <table className="w-full border-collapse hidden sm:table">
-                <thead>
+                <thead className="sticky top-0 z-10">
                   <tr style={{ background: "#fafafa" }}>
-                    {["No.", "Name", "Student No.", "Course", "Type", "Date Submitted", "Status", ""].map((h, i) => (
-                      <th key={i} className="text-left px-3 py-3 whitespace-nowrap" style={{ border: "1px solid #d1d5db" }}>
-                        <span className="flex items-center gap-1 text-xs font-bold uppercase tracking-wide text-gray-700">
-                          {h}
-                        </span>
+                    {isHead && (
+                      <th scope="col" className="px-4 py-2.5 w-10 border-b" style={{ borderColor: C.line }}>
+                        <input
+                          type="checkbox" aria-label="Select all on this page"
+                          checked={pageAllSelected}
+                          ref={el => { if (el) el.indeterminate = !pageAllSelected && pageSomeSelected; }}
+                          onChange={togglePage}
+                          className="w-4 h-4 cursor-pointer" style={{ accentColor: C.brand }}
+                        />
+                      </th>
+                    )}
+                    {["No.", "Applicant", "ID no.", "Course", "Type", "Submitted", "Status", ""].map((h, i) => (
+                      <th key={i} scope="col"
+                        className="text-left px-4 py-2.5 whitespace-nowrap border-b"
+                        style={{ fontSize: 11, fontWeight: 800, color: C.body, borderColor: C.line }}>
+                        {h}
                       </th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {requests.length === 0 && (
-                    <tr>
-                      <td colSpan={8} className="px-3 py-16">
-                        <div className="flex flex-col items-center justify-center gap-3">
-                          <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: "#fef2f2" }}>
-                            <BookOpen className="w-6 h-6" style={{ color: MAROON }} />
-                          </div>
-                          <p className="text-sm text-gray-400 font-medium">No requests yet.</p>
-                          <button onClick={() => setShowShare(true)} className="text-xs font-bold hover:underline" style={{ color: MAROON }}>
-                            Share the form link →
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                  {requests.length > 0 && filteredRequests.length === 0 && (
-                    <tr>
-                      <td colSpan={8} className="px-3 py-16">
-                        <div className="flex flex-col items-center justify-center gap-3">
-                          <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: "#fef2f2" }}>
-                            <BookOpen className="w-6 h-6" style={{ color: MAROON }} />
-                          </div>
-                          <p className="text-sm text-gray-400 font-medium">No requests found.</p>
-                        </div>
-                      </td>
-                    </tr>
-                  )}
                   {paginated.map((r, i) => (
-                    <tr key={r.id} className="hover:bg-gray-50/70 cursor-pointer transition-colors" onClick={() => setDetail(r)}>
-                      <td className="px-3 py-3 text-xs text-gray-800 tabular-nums text-center" style={{ border: "1px solid #d1d5db" }}>
+                    <tr
+                      key={r.id} onClick={() => setDetail(r)} tabIndex={0}
+                      onKeyDown={e => { if (e.key === "Enter") setDetail(r); }}
+                      className="group cursor-pointer hover:bg-gray-50 focus:bg-gray-50 outline-none transition-colors"
+                      style={selected.has(r.id) ? { background: C.brandTint } : undefined}
+                    >
+                      {isHead && (
+                        <td className="px-4 py-3.5 border-b" style={{ borderColor: C.lineSoft }} onClick={e => e.stopPropagation()}>
+                          <input
+                            type="checkbox" aria-label={`Select ${r.name}`}
+                            checked={selected.has(r.id)} onChange={() => toggleOne(r.id)}
+                            className="w-4 h-4 cursor-pointer" style={{ accentColor: C.brand }}
+                          />
+                        </td>
+                      )}
+                      <td className="px-4 py-3.5 text-xs tabular-nums border-b" style={{ color: C.faint, borderColor: C.lineSoft }}>
                         {(page - 1) * PAGE_SIZE + i + 1}
                       </td>
-                      <td className="px-3 py-3 text-xs font-semibold text-gray-800 whitespace-nowrap" style={{ border: "1px solid #d1d5db" }}>{r.name}</td>
-                      <td className="px-3 py-3 text-xs text-gray-800 font-mono" style={{ border: "1px solid #d1d5db" }}>{r.studentNo ?? r.employeeNo ?? "—"}</td>
-                      <td className="px-3 py-3 text-xs text-gray-800 max-w-[200px]" style={{ border: "1px solid #d1d5db" }}>
+                      <td className="px-4 py-3.5 border-b min-w-[180px]" style={{ borderColor: C.lineSoft }}>
+                        <p className="text-[13px] font-semibold" style={{ color: C.ink }}>{r.name}</p>
+                        {r.email && <p className="text-[11px] truncate max-w-[220px]" style={{ color: C.muted }}>{r.email}</p>}
+                      </td>
+                      <td className="px-4 py-3.5 text-xs font-mono border-b whitespace-nowrap" style={{ color: C.body, borderColor: C.lineSoft }}>
+                        {idNoOf(r)}
+                      </td>
+                      <td className="px-4 py-3.5 text-xs border-b max-w-[200px]" style={{ color: C.body, borderColor: C.lineSoft }}>
                         <span className="line-clamp-1">{r.courseProgram ?? "—"}</span>
                       </td>
-                      <td className="px-3 py-3 text-xs text-gray-800" style={{ border: "1px solid #d1d5db" }}>
+                      <td className="px-4 py-3.5 text-xs border-b whitespace-nowrap" style={{ color: C.body, borderColor: C.lineSoft }}>
                         {TYPE_LABELS[r.requestType]}
                       </td>
-                      <td className="px-3 py-3 text-xs text-gray-800 whitespace-nowrap" style={{ border: "1px solid #d1d5db" }}>{fmtDate(r.submittedAt)}</td>
-                      <td className="px-3 py-3 text-xs text-gray-800" style={{ border: "1px solid #d1d5db" }}>
-                        {STATUS_META[r.status].label}
+                      <td className="px-4 py-3.5 text-xs border-b whitespace-nowrap" style={{ color: C.body, borderColor: C.lineSoft }}>
+                        {fmtDate(r.submittedAt)}
                       </td>
-                      <td className="px-2 py-3 w-10 text-xs text-gray-400 hover:text-gray-700" onClick={e => e.stopPropagation()}>
-                        <button onClick={() => setDetail(r)}>View</button>
+                      <td className="px-4 py-3.5 border-b" style={{ borderColor: C.lineSoft }}>
+                        <StatusBadge status={r.status} />
+                      </td>
+                      <td className="px-3 py-3.5 w-12 border-b" style={{ borderColor: C.lineSoft }}>
+                        {isHead ? (
+                          <button
+                            onClick={e => openRowMenu(e, r.id)}
+                            aria-label={`Actions for ${r.name}`} aria-haspopup="menu"
+                            className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+                          >
+                            <MoreVertical size={16} />
+                          </button>
+                        ) : (
+                          <ChevronRight size={16} className="text-gray-300 group-hover:text-gray-600 transition-colors" />
+                        )}
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
 
-              {/* Mobile card list */}
+              {/* Mobile list */}
               <div className="sm:hidden divide-y divide-gray-100">
-                {requests.length === 0 && (
-                  <div className="flex flex-col items-center justify-center py-14 gap-3 px-4">
-                    <BookOpen className="w-8 h-8" style={{ color: MAROON }} />
-                    <p className="text-sm text-gray-400 font-medium text-center">No requests yet.</p>
-                    <button onClick={() => setShowShare(true)} className="text-xs font-bold hover:underline" style={{ color: MAROON }}>Share link →</button>
-                  </div>
-                )}
-                {requests.length > 0 && filteredRequests.length === 0 && (
-                  <div className="flex flex-col items-center justify-center py-14 gap-3 px-4">
-                    <BookOpen className="w-8 h-8" style={{ color: MAROON }} />
-                    <p className="text-sm text-gray-400 font-medium text-center">No requests found.</p>
-                  </div>
-                )}
                 {paginated.map(r => (
-                  <button
+                  <div
                     key={r.id}
-                    onClick={() => setDetail(r)}
-                    className="w-full text-left px-4 py-3.5 flex items-center gap-3 active:bg-gray-50 transition-colors"
+                    className="flex items-center gap-3 px-4 py-3.5"
+                    style={selected.has(r.id) ? { background: C.brandTint } : undefined}
                   >
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-gray-900 truncate">{r.name}</p>
-                      <p className="text-[11px] text-gray-500 truncate mt-0.5">
-                        {TYPE_LABELS[r.requestType]} · {r.studentNo ?? r.employeeNo ?? "—"}
-                      </p>
-                      <div className="flex items-center gap-2 mt-1.5">
+                    {isHead && (
+                      <input
+                        type="checkbox" aria-label={`Select ${r.name}`}
+                        checked={selected.has(r.id)} onChange={() => toggleOne(r.id)}
+                        className="w-4 h-4 shrink-0" style={{ accentColor: C.brand }}
+                      />
+                    )}
+                    <button onClick={() => setDetail(r)} className="flex-1 min-w-0 text-left active:opacity-70">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-sm font-bold truncate" style={{ color: C.ink }}>{r.name}</p>
                         <StatusBadge status={r.status} />
-                        <span className="text-[10px] text-gray-400 truncate">{fmtDate(r.submittedAt)}</span>
                       </div>
-                    </div>
-                    <ChevronRight size={16} className="text-gray-300 shrink-0" />
-                  </button>
+                      <p className="text-xs truncate mt-0.5" style={{ color: C.muted }}>
+                        {TYPE_LABELS[r.requestType]} · {idNoOf(r)}
+                      </p>
+                      <p className="text-[11px] mt-1" style={{ color: C.faint }}>{fmtDate(r.submittedAt)}</p>
+                    </button>
+                    {isHead ? (
+                      <button
+                        onClick={e => openRowMenu(e, r.id)}
+                        aria-label={`Actions for ${r.name}`}
+                        className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 active:bg-gray-100 shrink-0"
+                      >
+                        <MoreVertical size={16} />
+                      </button>
+                    ) : (
+                      <ChevronRight size={16} className="text-gray-300 shrink-0" />
+                    )}
+                  </div>
                 ))}
               </div>
             </div>
           )}
 
-          {!loading && filteredRequests.length > PAGE_SIZE && (
-            <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-t border-gray-100 bg-white shrink-0 gap-2">
-              <span className="text-[11px] text-gray-400 font-medium tabular-nums truncate">
-                {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filteredRequests.length)} of {filteredRequests.length}
+          {/* Pagination */}
+          {!loading && !error && filtered.length > PAGE_SIZE && (
+            <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-t bg-white shrink-0 gap-2" style={{ borderColor: C.line }}>
+              <span className="text-xs tabular-nums truncate" style={{ color: C.muted }}>
+                Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length}
               </span>
               <div className="flex items-center gap-1 shrink-0">
-                <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
-                  className="w-7 h-7 flex items-center justify-center rounded-lg border border-gray-200 text-gray-400 hover:border-gray-400 disabled:opacity-25">
-                  <ChevronLeft className="w-3 h-3" />
+                <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} aria-label="Previous page"
+                  className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:border-gray-400 disabled:opacity-30">
+                  <ChevronLeft className="w-3.5 h-3.5" />
                 </button>
-                {/* Numbered pages: desktop only, keeps mobile bar compact */}
                 <div className="hidden sm:flex items-center gap-1">
-                  {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                    const n = totalPages <= 5 ? i + 1 : page <= 3 ? i + 1 : page >= totalPages - 2 ? totalPages - 4 + i : page - 2 + i;
-                    return (
-                      <button key={n} onClick={() => setPage(n)}
-                        style={page === n ? { background: MAROON, color: "#fff", borderColor: MAROON } : {}}
-                        className={`w-7 h-7 flex items-center justify-center rounded-lg text-[11px] font-semibold border transition-all ${page !== n ? "border-gray-200 text-gray-500 hover:border-gray-400" : ""}`}>
-                        {n}
-                      </button>
-                    );
-                  })}
+                  {pageNumbers.map(n => (
+                    <button key={n} onClick={() => setPage(n)} aria-current={page === n ? "page" : undefined}
+                      style={page === n ? { background: C.brand, color: "#fff", borderColor: C.brand } : {}}
+                      className={`w-8 h-8 flex items-center justify-center rounded-lg text-xs font-semibold border transition-colors ${page !== n ? "border-gray-200 text-gray-600 hover:border-gray-400" : ""}`}>
+                      {n}
+                    </button>
+                  ))}
                 </div>
-                <span className="sm:hidden text-[11px] font-semibold text-gray-500 px-1 tabular-nums">
+                <span className="sm:hidden text-xs font-semibold px-2 tabular-nums" style={{ color: C.muted }}>
                   {page} / {totalPages}
                 </span>
-                <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
-                  className="w-7 h-7 flex items-center justify-center rounded-lg border border-gray-200 text-gray-400 hover:border-gray-400 disabled:opacity-25">
-                  <ChevronRight className="w-3 h-3" />
+                <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} aria-label="Next page"
+                  className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:border-gray-400 disabled:opacity-30">
+                  <ChevronRight className="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>
@@ -1089,6 +1584,63 @@ export default function CourseLibraryTab({ courseId, isHead }: Props) {
       </div>
 
       {showShare && <ShareLinkModal courseId={courseId} onClose={() => setShowShare(false)} />}
+
+      {rowMenu && (
+        <div className="fixed inset-0 z-40" onClick={() => setRowMenu(null)}>
+          <div
+            role="menu"
+            className="absolute w-44 bg-white rounded-xl border shadow-lg py-1 overflow-hidden"
+            style={{ top: rowMenu.y, left: Math.max(8, rowMenu.x - 176), borderColor: C.line, fontFamily: FONT }}
+            onClick={e => e.stopPropagation()}
+          >
+            <button
+              role="menuitem"
+              onClick={() => {
+                const r = requests.find(x => x.id === rowMenu.id);
+                setRowMenu(null);
+                if (r) setDetail(r);
+              }}
+              className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-xs font-semibold text-left hover:bg-gray-50"
+              style={{ color: C.ink }}
+            >
+              <ExternalLink size={14} /> View details
+            </button>
+            <button
+              role="menuitem"
+              onClick={() => { setDeleteTarget([rowMenu.id]); setRowMenu(null); }}
+              className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-xs font-semibold text-left hover:bg-red-50"
+              style={{ color: C.danger }}
+            >
+              <Trash2 size={14} /> Delete
+            </button>
+          </div>
+        </div>
+      )}
+
+      {deleteTarget && (
+        <ConfirmModal
+          title={deleteTarget.length === 1 ? "Delete this request?" : `Delete ${deleteTarget.length} requests?`}
+          confirmLabel={deleteTarget.length === 1 ? "Delete" : `Delete ${deleteTarget.length}`}
+          busy={deleting}
+          message={
+            deleteTarget.length === 1 ? (
+              <>
+                <strong>{requests.find(r => r.id === deleteTarget[0])?.name ?? "This request"}</strong> will be permanently removed.<br />
+                This can’t be undone.
+              </>
+            ) : (
+              <>
+                {deleteTarget.length} selected requests will be permanently removed.<br />
+                This can’t be undone.
+              </>
+            )
+          }
+          onConfirm={() => deleteIds(deleteTarget)}
+          onClose={() => { if (!deleting) setDeleteTarget(null); }}
+        />
+      )}
+
+      <Toast toast={toast} />
     </div>
   );
 }

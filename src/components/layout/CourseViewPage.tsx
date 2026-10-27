@@ -35,6 +35,7 @@ import CourseLibraryTab from "./course/CourseLibraryTab";
 import CourseLibraryLogTab from "./course/CourseLibraryLogTab";
 import CourseBookCatalogTab from "./course/CourseBookCatalogTab";
 import CourseBorrowingTab from "./course/CourseBorrowingTab";
+import CourseFacilityReservationTab from "./course/CourseFacilityReservationTab";
 import CourseStudentDirectoryTab from "./course/CourseStudentDirectoryTab";
 import CourseDisciplinaryLogTab from "./course/CourseDisciplinaryLogTab";
 import CourseViolationTypesTab from "./course/CourseViolationTypesTab";
@@ -459,13 +460,13 @@ function CourseViewInner({ courseId }: { courseId: string }) {
       ? ["Home", "Announcements", "Assignments", "Repositories", "Grades", "Users", "Form",
           ...(isClinic   ? ["Patient Records", "Medical Exam Record", "Medicine Inventory", "Medical Cases Summary"] : []),
           ...(isGuidance ? ["Information Sheets", "Log Sheet", "Exit Interviews"] : []),
-          ...(isLibrary  ? ["Library Cards", "Library Log", "Book Catalog", "Borrowing"] : []),
-          ...(isOSA      ? ["Student Directory", "Disciplinary Log", "Violation Types"] : []),
+          ...(isLibrary  ? ["Library Cards", "Library Log", "Book Catalog", "Borrowing", "Facility Reservation"] : []),
+          ...(isOSA      ? ["Student Directory", "Disciplinary Log", "Violation Types", "Lost & Found"] : []),
         ]
       : ["Home", "Announcements", "Assignments", "Grades", "Users", "Form",
           ...(isClinic   ? ["Patient Records", "Medical Exam Record", "Medicine Inventory", "Medical Cases Summary"] : []),
           ...(isGuidance ? ["Information Sheets", "Log Sheet", "Exit Interviews"] : []),
-          ...(isLibrary  ? ["Library Cards", "Library Log", "Book Catalog", "Borrowing"] : []),
+          ...(isLibrary  ? ["Library Cards", "Library Log", "Book Catalog", "Borrowing", "Facility Reservation"] : []),
           ...(isOSA ? ["Student Directory", "Disciplinary Log", "Violation Types", "Lost & Found"] : []),
         ]
   ) as Tab[];
@@ -768,6 +769,11 @@ currentUserId={currentUserId}
       {activeTab === "Borrowing" && isLibrary && dataLoaded && (
         <div className="flex-1 overflow-hidden flex flex-col">
           <CourseBorrowingTab courseId={courseId} isHead={isHead || isStaff} />
+        </div>
+      )}
+      {activeTab === "Facility Reservation" && isLibrary && dataLoaded && (
+        <div className="flex-1 overflow-hidden flex flex-col">
+          <CourseFacilityReservationTab courseId={courseId} isHead={isHead || isStaff} />
         </div>
       )}
             {activeTab === "Student Directory" && isOSA && dataLoaded && (

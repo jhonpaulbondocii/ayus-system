@@ -73,7 +73,6 @@ export default function ProfilePage() {
 
   const [name,          setName]          = useState("");
   const [pronouns,      setPronouns]      = useState("");
-  const [bio,           setBio]           = useState("");
   const [contactNumber, setContactNumber] = useState("");
 
   const [librarySig,     setLibrarySig]     = useState<string | null>(null);
@@ -94,7 +93,6 @@ export default function ProfilePage() {
           setUser(d.user);
           setName(d.user?.name                 ?? "");
           setPronouns(d.user?.pronouns          ?? "");
-          setBio(d.user?.bio                    ?? "");
           setContactNumber(d.user?.contactNumber ?? "");
           setLibrarySig(d.user?.librarySignature ?? null);
           setLoading(false);
@@ -109,7 +107,7 @@ export default function ProfilePage() {
       const res  = await fetch("/api/profile", {
         method:  "PATCH",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ name, pronouns, bio, contactNumber }),
+        body:    JSON.stringify({ name, pronouns, contactNumber }),
       });
       const data = await res.json();
       startTransition(() => {
@@ -319,27 +317,11 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            {/* Bio */}
-            <div style={{ marginBottom: editing ? 16 : 0 }}>
-              <p style={{ fontSize: 10, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4, color: MAROON }}>
-                Biography
-              </p>
-              {editing
-                ? <textarea value={bio} onChange={e => setBio(e.target.value)}
-                    placeholder="Write something about yourself..."
-                    className={`${INPUT_CLS} resize-none`}
-                    style={{ height: isBottomNav ? 96 : 80 }}
-                    onFocus={INPUT_FOCUS} onBlur={INPUT_BLUR}/>
-                : <p style={{ fontSize: 12, color: "#9ca3af", fontStyle: "italic" }}>
-                    {bio || "No biography added yet."}
-                  </p>
-              }
-            </div>
 
             {/* Library Signature */}
             <div style={{ marginTop: 16, marginBottom: 16 }}>
               <p style={{ fontSize: 10, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6, color: MAROON }}>
-                Librarian Signature
+                Signature
               </p>
               {librarySig && !showSigPad ? (
                 <div style={{ display: "flex", alignItems: "center", gap: 12 }}>

@@ -4,34 +4,62 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import Link from "next/link";
 import { Eye, EyeOff, Mail, ArrowLeft, CheckCircle2, RefreshCw, ShieldCheck, KeyRound } from "lucide-react";
 
 type Step = "identify" | "otp" | "reset" | "done";
 
 /* ─────────────────────────────────────────────
-   PAGE SHELL — mobile full-screen, desktop card
+   PAGE SHELL — mobile stacked, desktop split screen
 ───────────────────────────────────────────── */
 function PageShell({ children }: { children: React.ReactNode }) {
   return (
     <>
       <style>{CSS}</style>
       <div className="fp">
-        <div className="fp-wrap">
 
-          {/* hero strip */}
-          <div className="fp-hero" aria-hidden="true">
-            <div className="fp-hero-texture" />
-            <div className="fp-hero-wave" />
+        {/* ── Left (desktop) / Top (mobile): system info ── */}
+        <header className="fp-hero">
+          <Image
+            src="/psu-logo.png"
+            alt=""
+            aria-hidden="true"
+            width={560}
+            height={560}
+            className="fp-watermark"
+          />
+
+          <div className="fp-hero-top">
+            <Image
+              src="/psu-logo.png"
+              alt="PSU Logo"
+              width={88}
+              height={88}
+              priority
+              className="fp-logo"
+              style={{ objectFit: "contain" }}
+            />
           </div>
 
-          {/* form sheet */}
-          <main className="fp-sheet" role="main">
-            {children}
-          </main>
+          <div className="fp-hero-inner">
+            <p className="fp-brand">AYUS</p>
+            <div className="fp-rule" aria-hidden="true" />
+            <p className="fp-brand-full">
+              Toward a Campus Governance Platform for Integrated Operations,
+              Compliance, and Records Management in a State University
+            </p>
+          </div>
+        </header>
 
-          <div className="fp-foot" aria-hidden="true" />
-        </div>
+        {/* ── Right (desktop) / Bottom (mobile): content ── */}
+        <main className="fp-sheet">
+          <div className="fp-box">
+            {children}
+          </div>
+          <p className="fp-foot-note">© {new Date().getFullYear()} AYUS</p>
+        </main>
+
       </div>
     </>
   );
@@ -249,7 +277,8 @@ export default function ForgotPasswordPage() {
       <div className="fp-icon-wrap">
         <div className="fp-icon fp-icon--red"><Mail size={22} strokeWidth={1.5} /></div>
       </div>
-      <h1 className="fp-title">Forgot Password?</h1>
+      <h1 className="fp-title">Forgot password?</h1>
+      <div className="fp-title-bar" aria-hidden="true" />
       <p className="fp-sub">Enter your registered email and we&apos;ll send you a 6-digit reset code.</p>
 
       <StepIndicator active={0} />
@@ -257,7 +286,7 @@ export default function ForgotPasswordPage() {
 
       <div className="fp-field">
         <label className="fp-label" htmlFor="fp-email">
-          Email Address <span className="fp-label-req">*</span>
+          Email address <span className="fp-label-req">*</span>
         </label>
         <div className="fp-input-wrap">
           <Mail className="fp-input-icon" size={16} />
@@ -279,12 +308,11 @@ export default function ForgotPasswordPage() {
       </div>
 
       <button className="fp-btn" onClick={() => void handleSend()} disabled={loading}>
-        {loading ? <><span className="fp-spin" />Sending…</> : <>Send Reset Code <span className="fp-arrow">→</span></>}
+        {loading ? <><span className="fp-spin" />Sending…</> : <>Send reset code</>}
       </button>
 
-      <div className="fp-divider" />
       <Link href="/login" className="fp-back">
-        <ArrowLeft size={14} /> Back to Login
+        <ArrowLeft size={14} /> Back to login
       </Link>
     </PageShell>
   );
@@ -295,7 +323,8 @@ export default function ForgotPasswordPage() {
       <div className="fp-icon-wrap">
         <div className="fp-icon fp-icon--amber"><KeyRound size={22} strokeWidth={1.5} /></div>
       </div>
-      <h1 className="fp-title">Enter Reset Code</h1>
+      <h1 className="fp-title">Enter reset code</h1>
+      <div className="fp-title-bar" aria-hidden="true" />
       <p className="fp-sub">
         A 6-digit code was sent to{" "}
         <strong className="fp-sub-em">{identifier}</strong>
@@ -324,7 +353,7 @@ export default function ForgotPasswordPage() {
       </div>
 
       <button className="fp-btn" onClick={() => void handleVerify()} disabled={loading || otp.join("").length < 6}>
-        {loading ? <><span className="fp-spin" />Verifying…</> : <>Verify Code <span className="fp-arrow">→</span></>}
+        {loading ? <><span className="fp-spin" />Verifying…</> : <>Verify code</>}
       </button>
 
       <p className="fp-resend-row">
@@ -341,7 +370,6 @@ export default function ForgotPasswordPage() {
         </button>
       </p>
 
-      <div className="fp-divider" />
       <button className="fp-back" onClick={() => { setStep("identify"); setOtp(["","","","","",""]); setError(""); }}>
         <ArrowLeft size={14} /> Change email
       </button>
@@ -354,7 +382,8 @@ export default function ForgotPasswordPage() {
       <div className="fp-icon-wrap">
         <div className="fp-icon fp-icon--green"><ShieldCheck size={22} strokeWidth={1.5} /></div>
       </div>
-      <h1 className="fp-title">Set New Password</h1>
+      <h1 className="fp-title">Set new password</h1>
+      <div className="fp-title-bar" aria-hidden="true" />
       <p className="fp-sub">Choose a strong password to protect your account.</p>
 
       <StepIndicator active={2} />
@@ -362,7 +391,7 @@ export default function ForgotPasswordPage() {
 
       <div className="fp-field">
         <label className="fp-label" htmlFor="fp-pass">
-          New Password <span className="fp-label-req">*</span>
+          New password <span className="fp-label-req">*</span>
         </label>
         <div className="fp-input-wrap">
           <input
@@ -387,7 +416,7 @@ export default function ForgotPasswordPage() {
 
       <div className="fp-field">
         <label className="fp-label" htmlFor="fp-confirm">
-          Confirm Password <span className="fp-label-req">*</span>
+          Confirm password <span className="fp-label-req">*</span>
         </label>
         <div className="fp-input-wrap">
           <input
@@ -414,7 +443,7 @@ export default function ForgotPasswordPage() {
       </div>
 
       <button className="fp-btn" onClick={() => void handleReset()} disabled={loading}>
-        {loading ? <><span className="fp-spin" />Saving…</> : <>Reset Password <span className="fp-arrow">→</span></>}
+        {loading ? <><span className="fp-spin" />Saving…</> : <>Reset password</>}
       </button>
     </PageShell>
   );
@@ -426,12 +455,12 @@ export default function ForgotPasswordPage() {
         <div className="fp-done-ring">
           <CheckCircle2 size={36} strokeWidth={1.5} color="#16a34a" />
         </div>
-        <h2 className="fp-done-title">Password Reset!</h2>
+        <h2 className="fp-done-title">Password reset</h2>
         <p className="fp-done-sub">
           Your password has been updated. You can now sign in with your new credentials.
         </p>
         <Link href="/login" className="fp-btn" style={{ textDecoration: "none" }}>
-          Go to Login <span className="fp-arrow">→</span>
+          Go to login
         </Link>
         <p className="fp-done-note">Redirecting automatically in a few seconds…</p>
       </div>
@@ -443,43 +472,37 @@ export default function ForgotPasswordPage() {
    STYLES
 ═══════════════════════════════════════════════════════════════ */
 const CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
     --maroon:      #7b1d2e;
     --maroon-deep: #5c1421;
+    --maroon-dark: #451019;
     --gold:        #c9993a;
     --surface:     #ffffff;
-    --bg:          #f4f3ef;
-    --ink:         #111111;
-    --ink-2:       #555555;
-    --ink-3:       #999999;
-    --line:        #e5e4df;
-    --line-mid:    #ccccc4;
+    --bg:          #faf9f7;
+    --ink:         #14110f;
+    --ink-2:       #57534e;
+    --ink-3:       #8f8a84;
+    --line:        #e7e5e0;
+    --line-mid:    #cfccc5;
     --error-bg:    #fff1f2;
     --error-text:  #8b1a28;
     --green:       #16a34a;
     --amber:       #d97706;
-    --font:        'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font:        'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
     --ease-out:    cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   html, body { height: 100%; background: var(--bg); }
 
-  @keyframes fp-fade-down {
-    from { opacity: 0; transform: translateY(-14px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
   @keyframes fp-fade-up {
-    from { opacity: 0; transform: translateY(20px); }
+    from { opacity: 0; transform: translateY(16px); }
     to   { opacity: 1; transform: translateY(0); }
   }
-  @keyframes fp-fade-in {
-    from { opacity: 0; }
-    to   { opacity: 1; }
-  }
+  @keyframes fp-fade-in { from { opacity: 0; } to { opacity: 1; } }
   @keyframes fp-shake {
     0%,100% { transform: translateX(0); }
     20%     { transform: translateX(-6px); }
@@ -489,81 +512,116 @@ const CSS = `
   }
   @keyframes fp-spin { to { transform: rotate(360deg); } }
 
-  /* ── root ── */
+  /* ── root: stacked on mobile, split on desktop ── */
   .fp {
     font-family: var(--font);
     min-height: 100dvh;
     display: flex;
     flex-direction: column;
-    align-items: stretch;
     background: var(--bg);
     -webkit-font-smoothing: antialiased;
   }
 
-  .fp-wrap {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-  }
-
-  /* ── hero strip ── */
+  /* ── LEFT / TOP: brand panel ── */
   .fp-hero {
-    background: var(--maroon);
-    height: 140px;
     position: relative;
     overflow: hidden;
     flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 14px;
+    background:
+      radial-gradient(120% 90% at 0% 0%, var(--maroon) 0%, var(--maroon-deep) 60%, var(--maroon-dark) 100%);
+    color: #fff;
+    padding: 32px 24px 76px;
   }
 
-  .fp-hero-texture {
+  .fp-hero::before {
+    content: '';
     position: absolute;
     inset: 0;
     background-image: repeating-linear-gradient(
       -45deg,
-      transparent,
-      transparent 28px,
-      rgba(255,255,255,0.022) 28px,
-      rgba(255,255,255,0.022) 29px
+      transparent, transparent 28px,
+      rgba(255,255,255,0.025) 28px, rgba(255,255,255,0.025) 29px
     );
     pointer-events: none;
   }
 
-  .fp-hero-wave {
+  .fp-hero::after {
+    content: '';
     position: absolute;
-    bottom: -56px;
+    bottom: -1px;
     left: -5%;
     width: 110%;
-    height: 80px;
+    height: 56px;
     background: var(--bg);
     border-radius: 50% 50% 0 0 / 100% 100% 0 0;
   }
 
-  /* ── sheet ── */
-  .fp-sheet {
-    flex: 1;
-    background: var(--bg);
-    padding: 40px 24px 44px;
+  .fp-watermark { display: none; }
+
+  .fp-hero-top,
+  .fp-hero-inner {
+    position: relative;
+    z-index: 1;
     display: flex;
     flex-direction: column;
-    animation: fp-fade-up 0.55s 0.05s var(--ease-out) both;
+    align-items: center;
   }
 
-  /* ── foot bar ── */
-  .fp-foot {
-    flex-shrink: 0;
+  .fp-logo {
+    width: 72px;
+    height: 72px;
+    filter: drop-shadow(0 4px 14px rgba(0,0,0,0.35));
+  }
+
+  .fp-hero-inner { gap: 12px; }
+
+  .fp-brand {
+    font-size: 44px;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: 0.04em;
+  }
+
+  .fp-rule {
+    width: 48px;
     height: 3px;
-    background: linear-gradient(90deg, var(--maroon), var(--gold));
+    border-radius: 2px;
+    background: var(--gold);
+  }
+
+  /* full system name is hidden on mobile to keep the form close to the top */
+  .fp-brand-full { display: none; }
+
+  /* ── RIGHT / BOTTOM: content ── */
+  .fp-sheet {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    background: var(--bg);
+    padding: 8px 24px 40px;
+    animation: fp-fade-up 0.6s 0.05s var(--ease-out) both;
+  }
+
+  .fp-box { width: 100%; max-width: 400px; margin: 0 auto; }
+
+  .fp-foot-note {
+    margin-top: auto;
+    padding-top: 32px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--ink-3);
   }
 
   /* ── icon ── */
-  .fp-icon-wrap {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 16px;
-    animation: fp-fade-down 0.5s var(--ease-out) both;
-  }
+  .fp-icon-wrap { display: flex; margin-bottom: 16px; }
   .fp-icon {
-    width: 56px; height: 56px;
+    width: 52px; height: 52px;
     border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
   }
@@ -573,45 +631,38 @@ const CSS = `
 
   /* ── headings ── */
   .fp-title {
-    font-size: 22px;
+    font-size: 28px;
     font-weight: 700;
     color: var(--ink);
-    text-align: center;
-    letter-spacing: -0.025em;
-    line-height: 1.2;
-    margin-bottom: 6px;
-    animation: fp-fade-down 0.5s 0.05s var(--ease-out) both;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+  }
+  .fp-title-bar {
+    width: 56px; height: 3px;
+    background: var(--maroon);
+    border-radius: 2px;
+    margin: 12px 0 10px;
   }
   .fp-sub {
-    font-size: 13px;
-    font-weight: 400;
+    font-size: 14px;
     color: var(--ink-2);
-    text-align: center;
     line-height: 1.55;
     margin-bottom: 24px;
-    animation: fp-fade-down 0.5s 0.08s var(--ease-out) both;
+    overflow-wrap: anywhere;
   }
   .fp-sub-em { color: var(--ink); font-weight: 600; }
 
   /* ── step indicator ── */
-  .fp-steps {
-    display: flex;
-    align-items: center;
-    margin-bottom: 24px;
-  }
-  .fp-steps-item {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex: 1;
-  }
+  .fp-steps { display: flex; align-items: center; margin-bottom: 24px; }
+  .fp-steps-item { display: flex; align-items: center; gap: 6px; flex: 1; }
+  .fp-steps-item:last-child { flex: 0 0 auto; }
   .fp-steps-bubble {
     width: 22px; height: 22px;
     border-radius: 50%;
     border: 1.5px solid var(--line-mid);
     background: var(--bg);
     color: var(--ink-3);
-    font-size: 10px;
+    font-size: 11px;
     font-weight: 700;
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
@@ -620,7 +671,7 @@ const CSS = `
   .fp-steps-item.is-done .fp-steps-bubble   { border-color: var(--maroon); background: var(--maroon); color: #fff; }
   .fp-steps-item.is-active .fp-steps-bubble { border-color: var(--maroon); background: #fef1f2; color: var(--maroon); }
   .fp-steps-label {
-    font-size: 10px;
+    font-size: 12px;
     font-weight: 600;
     color: var(--ink-3);
     white-space: nowrap;
@@ -630,8 +681,9 @@ const CSS = `
   .fp-steps-item.is-active .fp-steps-label { color: var(--maroon); }
   .fp-steps-line {
     height: 1px; flex: 1;
-    background: var(--line);
+    background: var(--line-mid);
     border-radius: 1px;
+    margin: 0 4px;
     transition: background .3s;
   }
   .fp-steps-line.is-filled { background: var(--maroon); }
@@ -647,6 +699,7 @@ const CSS = `
     padding: 12px 14px;
     margin-bottom: 20px;
     font-size: 13.5px;
+    font-weight: 500;
     color: var(--error-text);
     line-height: 1.5;
     animation: fp-shake 0.4s var(--ease-out), fp-fade-in 0.25s ease;
@@ -656,11 +709,9 @@ const CSS = `
   .fp-field { margin-bottom: 20px; }
   .fp-label {
     display: block;
-    font-size: 11.5px;
+    font-size: 13.5px;
     font-weight: 600;
-    color: var(--ink-2);
-    letter-spacing: 0.07em;
-    text-transform: uppercase;
+    color: var(--ink);
     margin-bottom: 8px;
   }
   .fp-label-req { color: var(--maroon); }
@@ -676,7 +727,6 @@ const CSS = `
     padding: 0 16px;
     font-family: var(--font);
     font-size: 15px;
-    font-weight: 400;
     color: var(--ink);
     outline: none;
     -webkit-appearance: none;
@@ -686,7 +736,7 @@ const CSS = `
   .fp-input::placeholder { color: var(--ink-3); }
   .fp-input:focus {
     border-color: var(--maroon);
-    box-shadow: 0 0 0 3px rgba(123,29,46,0.10);
+    box-shadow: 0 0 0 3px rgba(123,29,46,0.12);
   }
   .fp-input.is-error { border-color: #f87171 !important; box-shadow: none !important; }
   .fp-input--left  { padding-left: 42px; }
@@ -704,14 +754,16 @@ const CSS = `
     right: 0; top: 0;
     width: 52px; height: 52px;
     background: none; border: none;
+    border-radius: 0 12px 12px 0;
     cursor: pointer; color: var(--ink-3);
     display: flex; align-items: center; justify-content: center;
     transition: color .15s;
     -webkit-tap-highlight-color: transparent;
   }
   .fp-eye:hover { color: var(--ink-2); }
+  .fp-eye:focus-visible { outline: 2px solid var(--maroon); outline-offset: -2px; }
 
-  .fp-hint { font-size: 12px; color: var(--ink-3); margin-top: 6px; line-height: 1.4; }
+  .fp-hint { font-size: 12.5px; color: var(--ink-3); margin-top: 6px; line-height: 1.4; }
   .fp-hint--err { color: #ef4444; }
 
   /* ── password strength ── */
@@ -722,17 +774,19 @@ const CSS = `
     background: var(--line);
     transition: background .3s;
   }
-  .fp-strength-label { font-size: 11px; font-weight: 600; min-width: 60px; text-align: right; }
+  .fp-strength-label { font-size: 12px; font-weight: 600; min-width: 72px; text-align: right; }
 
   /* ── OTP ── */
   .fp-otp-wrap {
     display: flex;
-    justify-content: center;
     gap: 8px;
     margin-bottom: 24px;
   }
   .fp-otp-box {
-    width: 46px; height: 54px;
+    flex: 1;
+    min-width: 0;
+    max-width: 56px;
+    height: 56px;
     text-align: center;
     font-size: 22px;
     font-weight: 700;
@@ -748,12 +802,9 @@ const CSS = `
   }
   .fp-otp-box:focus {
     border-color: var(--maroon);
-    box-shadow: 0 0 0 3px rgba(123,29,46,0.10);
+    box-shadow: 0 0 0 3px rgba(123,29,46,0.12);
   }
-  .fp-otp-box.is-filled { border-color: var(--line-mid); }
   .fp-otp-box.is-error  { border-color: #f87171 !important; box-shadow: none !important; }
-  .fp-otp-box::-webkit-outer-spin-button,
-  .fp-otp-box::-webkit-inner-spin-button { -webkit-appearance: none; }
 
   /* ── button ── */
   .fp-btn {
@@ -770,7 +821,6 @@ const CSS = `
     font-family: var(--font);
     font-size: 15px;
     font-weight: 600;
-    letter-spacing: 0.01em;
     cursor: pointer;
     text-decoration: none;
     -webkit-tap-highlight-color: transparent;
@@ -778,12 +828,11 @@ const CSS = `
   }
   .fp-btn:hover:not(:disabled) {
     background: var(--maroon-deep);
-    box-shadow: 0 4px 16px rgba(123,29,46,0.28);
+    box-shadow: 0 6px 18px rgba(123,29,46,0.30);
   }
   .fp-btn:active:not(:disabled) { transform: scale(0.985); }
-  .fp-btn:disabled { opacity: .5; cursor: not-allowed; }
-
-  .fp-arrow { opacity: 0.8; }
+  .fp-btn:focus-visible { outline: 3px solid rgba(123,29,46,0.35); outline-offset: 2px; }
+  .fp-btn:disabled { opacity: .55; cursor: not-allowed; }
 
   .fp-spin {
     width: 16px; height: 16px;
@@ -797,13 +846,13 @@ const CSS = `
   /* ── resend ── */
   .fp-resend-row {
     text-align: center;
-    font-size: 13px;
+    font-size: 13.5px;
     color: var(--ink-2);
     margin-top: 16px;
   }
   .fp-resend-btn {
     background: none; border: none; cursor: pointer;
-    color: var(--maroon); font-size: 13px; font-weight: 500;
+    color: var(--maroon); font-size: 13.5px; font-weight: 600;
     font-family: var(--font);
     display: inline-flex; align-items: center; gap: 4px;
     text-decoration: underline; text-underline-offset: 2px;
@@ -814,9 +863,6 @@ const CSS = `
   .fp-resend-btn.is-disabled { opacity: .45; cursor: not-allowed; text-decoration: none; }
   .fp-resend-icon { animation: fp-spin .8s linear infinite; }
 
-  /* ── divider ── */
-  .fp-divider { height: 1px; background: var(--line); margin: 24px 0 16px; }
-
   /* ── back link ── */
   .fp-back {
     display: flex;
@@ -824,24 +870,24 @@ const CSS = `
     justify-content: center;
     gap: 6px;
     font-family: var(--font);
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--ink-3);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink-2);
     text-decoration: none;
     background: none; border: none; cursor: pointer;
-    width: 100%; padding: 4px 0;
+    width: 100%;
+    margin-top: 22px;
+    padding: 8px 0;
     -webkit-tap-highlight-color: transparent;
     transition: color .15s;
-    letter-spacing: 0.01em;
   }
-  .fp-back:hover { color: var(--maroon); }
+  .fp-back:hover { color: var(--maroon); text-decoration: underline; }
 
   /* ── done ── */
   .fp-done {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    text-align: center;
+    align-items: flex-start;
     animation: fp-fade-up 0.5s var(--ease-out) both;
   }
   .fp-done-ring {
@@ -853,53 +899,82 @@ const CSS = `
     margin-bottom: 20px;
   }
   .fp-done-title {
-    font-size: 24px;
+    font-size: 28px;
     font-weight: 700;
     color: var(--ink);
-    letter-spacing: -0.025em;
+    letter-spacing: -0.02em;
     margin-bottom: 10px;
   }
   .fp-done-sub {
-    font-size: 13.5px;
+    font-size: 14px;
     color: var(--ink-2);
     line-height: 1.6;
     margin-bottom: 28px;
-    max-width: 280px;
   }
   .fp-done-note {
-    font-size: 12px;
+    font-size: 12.5px;
     color: var(--ink-3);
     margin-top: 14px;
+    align-self: center;
   }
 
-  /* ── desktop ── */
-  @media (min-width: 560px) {
+  /* ── desktop: true split screen ── */
+  @media (min-width: 900px) {
     .fp {
-      align-items: center;
+      flex-direction: row;
+      align-items: stretch;
+    }
+
+    .fp-hero {
+      flex: 1 1 52%;
+      align-items: flex-start;
+      justify-content: space-between;
+      text-align: left;
+      gap: 0;
+      padding: 56px 64px;
+    }
+    .fp-hero::after { display: none; }
+
+    .fp-watermark {
+      display: block;
+      position: absolute;
+      right: -140px;
+      bottom: -140px;
+      width: 560px;
+      height: 560px;
+      opacity: 0.07;
+      pointer-events: none;
+      filter: grayscale(1) brightness(2);
+    }
+
+    .fp-hero-top,
+    .fp-hero-inner { align-items: flex-start; }
+
+    .fp-logo { width: 96px; height: 96px; }
+
+    .fp-hero-inner { gap: 22px; max-width: 520px; }
+    .fp-brand { font-size: 104px; letter-spacing: 0.02em; }
+    .fp-rule { width: 72px; height: 4px; }
+    .fp-brand-full {
+      display: block;
+      max-width: 480px;
+      font-size: 18px;
+      line-height: 1.6;
+      color: rgba(255,255,255,0.85);
+    }
+
+    .fp-sheet {
+      flex: 1 1 48%;
       justify-content: center;
-      padding: 40px 16px;
-      background: #e9e8e3;
+      padding: 48px 64px;
+      background: var(--surface);
     }
-    .fp-wrap {
-      width: 100%;
-      max-width: 420px;
-      border-radius: 20px;
-      overflow: hidden;
-      box-shadow:
-        0 1px 2px rgba(0,0,0,.06),
-        0 8px 24px rgba(0,0,0,.09),
-        0 24px 56px rgba(0,0,0,.08);
-      animation: fp-fade-up 0.5s var(--ease-out) both;
-    }
-    .fp-hero  { height: 120px; }
-    .fp-sheet { padding: 40px 40px 40px; }
-    .fp-foot  { display: none; }
+    .fp-title, .fp-done-title { font-size: 34px; }
+    .fp-foot-note { margin-top: 0; padding-top: 40px; }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .fp-icon-wrap, .fp-title, .fp-sub,
-    .fp-sheet, .fp-wrap, .fp-done,
-    .fp-error { animation: none; }
+    .fp-sheet, .fp-done, .fp-error { animation: none; }
     .fp-spin, .fp-resend-icon { animation: none; }
   }
 `;

@@ -4,17 +4,35 @@
 // PUBLIC — no auth required
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import type { ReactNode, RefObject } from "react";
 import { useParams } from "next/navigation";
 import {
-  ChevronRight, ChevronLeft, Check, AlertCircle,
-  RefreshCw, BookOpen, X, Upload, FileText,
+  ChevronRight, ChevronLeft, Check, AlertCircle, RefreshCw,
+  BookOpen, X, Upload, FileText, Pencil,
 } from "lucide-react";
+import ReactCrop, { centerCrop, makeAspectCrop, type Crop } from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
+import { FONT } from "@/components/layout/course/osaShared";
 
-const MAROON = "#7b1113";
-const FONT   = "'Inter', system-ui, sans-serif";
+/* ════════════════════════════════════════════════════════════════════════════
+   1. DESIGN TOKENS (same palette as the admin Library Cards tab)
+   ════════════════════════════════════════════════════════════════════════════ */
 
-const inputCls = "w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-[#7b1113] focus:ring-2 focus:ring-[#7b1113]/10 transition-all bg-white placeholder:text-gray-400";
+const C = {
+  brand:     "#7b1113",
+  brandTint: "#fdf2f2",
+  brandRing: "rgba(123,17,19,0.12)",
+  ink:       "#111827",
+  body:      "#374151",
+  muted:     "#6b7280",
+  faint:     "#9ca3af",
+  line:      "#e5e7eb",
+  lineSoft:  "#f3f4f6",
+  danger:    "#b91c1c",
+} as const;
+
+const inputCls =
+  "w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#7b1113] focus:ring-2 focus:ring-[#7b1113]/10 transition-all bg-white placeholder:text-gray-400";
 const labelCls = "block text-xs font-semibold text-gray-600 mb-1";
 
 const COURSES_BY_DEPARTMENT: Record<string, string[]> = {
@@ -41,95 +59,137 @@ const COURSES_BY_DEPARTMENT: Record<string, string[]> = {
   ],
 };
 
-type AppType = "STUDENT_NEW" | "STUDENT_LOST" | "EMPLOYEE" | "";
+type AppType = "STUDENT_NEW" | "STUDENT_LOST" | "";
 
-function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
+const STEPS = ["Request type", "Personal info", "School info", "Documents", "Consent & signature", "Review & submit"];
+
+const APP_TYPES: Array<{ value: Exclude<AppType, "">; title: string; desc: string }> = [
+  { value: "STUDENT_NEW",  title: "New card",  desc: "For currently enrolled students applying for a new library card." },
+  { value: "STUDENT_LOST", title: "Lost card", desc: "Replacement for a lost card. Requires a notarized Affidavit of Lost." },
+];
+
+/* ════════════════════════════════════════════════════════════════════════════
+   2. LAYOUT PRIMITIVES
+   ════════════════════════════════════════════════════════════════════════════ */
+
+function Card({
+  title, description, action, children,
+}: { title: string; description?: string; action?: ReactNode; children: ReactNode }) {
+  return (
+    <section className="bg-white rounded-xl border overflow-hidden" style={{ borderColor: C.line }}>
+      <header className="px-5 py-3.5 border-b flex items-start justify-between gap-3" style={{ borderColor: C.lineSoft }}>
+        <div className="min-w-0">
+          <h2 className="text-sm font-bold" style={{ color: C.ink }}>{title}</h2>
+          {description && <p className="text-xs mt-0.5" style={{ color: C.faint }}>{description}</p>}
+        </div>
+        {action}
+      </header>
+      <div className="px-5 py-5">{children}</div>
+    </section>
+  );
+}
+
+function Field({ label, required, hint, children }: { label: string; required?: boolean; hint?: string; children: ReactNode }) {
   return (
     <div>
       <label className={labelCls}>
         {label}{required && <span className="text-red-500 ml-0.5">*</span>}
       </label>
       {children}
+      {hint && <p className="text-[11px] mt-1" style={{ color: C.faint }}>{hint}</p>}
     </div>
   );
 }
 
-function SectionTitle({ children }: { children: React.ReactNode }) {
+function Modal({
+  title, onClose, children, footer,
+}: { title: string; onClose: () => void; children: ReactNode; footer?: ReactNode }) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
   return (
-    <div className="flex items-center gap-3 mb-4">
-      <div className="flex-1 h-px bg-gray-200" />
-      <p className="text-xs font-black uppercase tracking-widest text-gray-500 shrink-0">{children}</p>
-      <div className="flex-1 h-px bg-gray-200" />
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40"
+      style={{ backdropFilter: "blur(3px)", fontFamily: FONT }}>
+      <div role="dialog" aria-modal="true" aria-label={title}
+        className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full max-w-sm sm:mx-4 overflow-hidden flex flex-col max-h-[92vh]">
+        <div className="flex items-center justify-between px-5 py-3.5 shrink-0" style={{ background: C.brand, color: "#fff" }}>
+          <p style={{ fontSize: 14, fontWeight: 800 }}>{title}</p>
+          <button onClick={onClose} aria-label="Close"
+            className="w-8 h-8 flex items-center justify-center rounded-lg text-white/70 hover:text-white hover:bg-white/10">
+            <X size={16} />
+          </button>
+        </div>
+        <div className="overflow-y-auto">{children}</div>
+        {footer && (
+          <div className="border-t bg-gray-50 shrink-0" style={{ borderColor: C.line, paddingBottom: "env(safe-area-inset-bottom)" }}>
+            {footer}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
 
-/* ── Upload Field ── */
+/* ════════════════════════════════════════════════════════════════════════════
+   3. UPLOAD FIELDS
+   ════════════════════════════════════════════════════════════════════════════ */
+
+function UploadStatus({ text }: { text: string }) {
+  if (!text) return null;
+  const failed = /fail/i.test(text);
+  return (
+    <p className="text-xs mt-1.5 font-medium" style={{ color: failed ? C.danger : C.muted }}>{text}</p>
+  );
+}
+
 function UploadField({
-  label, required, hint, accept, url, uploading, inputRef,
-  onFileChange, onRemove,
-  preview = false,
+  label, required, hint, accept, url, uploading, inputRef, onFileChange, onRemove,
 }: {
   label: string; required?: boolean; hint?: string; accept: string;
   url: string; uploading: string;
-  inputRef: React.RefObject<HTMLInputElement | null>;
+  inputRef: RefObject<HTMLInputElement | null>;
   onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onRemove: () => void;
-  preview?: boolean;
 }) {
   return (
     <div>
       <label className={labelCls}>{label}{required && <span className="text-red-500 ml-0.5">*</span>}</label>
-      {hint && <p className="text-[11px] text-gray-400 mb-2">{hint}</p>}
+      {hint && <p className="text-[11px] mb-2" style={{ color: C.faint }}>{hint}</p>}
       {url ? (
-        <div className="flex items-center gap-3">
-          {preview && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={url} alt={label} className="w-16 h-20 object-cover rounded-lg border border-gray-200" />
-          )}
-          {!preview && (
-            <div className="flex items-center gap-2 flex-1 p-3 rounded-lg border border-green-200 bg-green-50">
-              <Check size={14} className="text-green-500 shrink-0" />
-              <span className="text-xs font-semibold text-green-700 flex-1 truncate">{label} uploaded</span>
-            </div>
-          )}
-          <button onClick={onRemove} className="text-xs text-red-500 hover:text-red-700 flex items-center gap-1 shrink-0">
+        <div className="flex items-center gap-3 rounded-lg border px-3 py-2.5" style={{ borderColor: "#bbf7d0", background: "#f0fdf4" }}>
+          <Check size={14} className="text-green-600 shrink-0" />
+          <span className="text-xs font-semibold text-green-700 flex-1 truncate">{label} uploaded</span>
+          <button type="button" onClick={onRemove} className="text-xs font-semibold text-red-500 hover:text-red-700 flex items-center gap-1 shrink-0">
             <X size={11} /> Remove
           </button>
         </div>
       ) : (
-        <div>
+        <>
           <input ref={inputRef} type="file" accept={accept} onChange={onFileChange} className="hidden" />
-          <button
-            type="button"
-            onClick={() => inputRef.current?.click()}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 border-dashed border-gray-300 text-sm font-semibold text-gray-500 hover:border-gray-400 transition-all w-full justify-center"
-          >
-            <Upload size={15} />
-            {uploading || `Upload ${label}`}
+          <button type="button" onClick={() => inputRef.current?.click()}
+            className="flex items-center gap-2 px-4 py-3 rounded-lg border-2 border-dashed border-gray-300 text-sm font-semibold text-gray-500 hover:border-gray-400 hover:bg-gray-50 transition-all w-full justify-center">
+            <Upload size={15} /> Choose file
           </button>
-        </div>
+          <UploadStatus text={uploading} />
+        </>
       )}
     </div>
   );
 }
 
-/* ── Photo Crop Upload ── */
 function PhotoCropUpload({
-  label, required, hint, url, uploading, onUploaded, onRemove, courseId,
+  label, required, hint, url, onUploaded, onRemove, courseId,
 }: {
-  label: string; required?: boolean; hint?: string;
-  url: string; uploading: string;
-  onUploaded: (u: string) => void;
-  onRemove: () => void;
-  courseId: string;
+  label: string; required?: boolean; hint?: string; url: string;
+  onUploaded: (u: string) => void; onRemove: () => void; courseId: string;
 }) {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { default: ReactCrop, centerCrop, makeAspectCrop } = require("react-image-crop") as typeof import("react-image-crop");
-  type Crop = import("react-image-crop").Crop;
-  const [srcImg,     setSrcImg]     = useState<string | null>(null);
-  const [crop,       setCrop]       = useState<Crop>();
-  const [status,     setStatus]     = useState("");
+  const [srcImg, setSrcImg] = useState<string | null>(null);
+  const [crop,   setCrop]   = useState<Crop>();
+  const [status, setStatus] = useState("");
+  const [saving, setSaving] = useState(false);
   const imgRef       = useRef<HTMLImageElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -139,34 +199,33 @@ function PhotoCropUpload({
     const reader = new FileReader();
     reader.onload = () => setSrcImg(reader.result as string);
     reader.readAsDataURL(file);
+    e.target.value = "";
   };
 
   const onImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
-    const { naturalWidth: width, naturalHeight: height } = e.currentTarget;
-    const c = centerCrop(
-      makeAspectCrop({ unit: "%", width: 80 }, 2 / 3, width, height),
-      width, height,
-    );
-    setCrop(c);
+    const { naturalWidth: w, naturalHeight: h } = e.currentTarget;
+    setCrop(centerCrop(makeAspectCrop({ unit: "%", width: 80 }, 2 / 3, w, h), w, h));
   };
 
-  const handleCropSave = async () => {
+  const closeCrop = () => { setSrcImg(null); setStatus(""); };
+
+  const handleCropSave = () => {
     const img = imgRef.current;
     if (!img || !crop) return;
-    setStatus("Processing...");
-    const canvas = document.createElement("canvas");
-    const pixelCrop = {
-      x:      (crop.unit === "%" ? (crop.x      / 100) * img.naturalWidth  : crop.x),
-      y:      (crop.unit === "%" ? (crop.y      / 100) * img.naturalHeight : crop.y),
-      width:  (crop.unit === "%" ? (crop.width  / 100) * img.naturalWidth  : crop.width),
-      height: (crop.unit === "%" ? (crop.height / 100) * img.naturalHeight : crop.height),
+    setSaving(true); setStatus("Processing…");
+
+    const px = {
+      x:      crop.unit === "%" ? (crop.x      / 100) * img.naturalWidth  : crop.x,
+      y:      crop.unit === "%" ? (crop.y      / 100) * img.naturalHeight : crop.y,
+      width:  crop.unit === "%" ? (crop.width  / 100) * img.naturalWidth  : crop.width,
+      height: crop.unit === "%" ? (crop.height / 100) * img.naturalHeight : crop.height,
     };
-    canvas.width  = 600;
-    canvas.height = 900;
-    const ctx = canvas.getContext("2d")!;
-    ctx.drawImage(img, pixelCrop.x, pixelCrop.y, pixelCrop.width, pixelCrop.height, 0, 0, 600, 900);
-    canvas.toBlob(async (blob) => {
-      if (!blob) { setStatus("Failed. Try again."); return; }
+    const canvas = document.createElement("canvas");
+    canvas.width = 600; canvas.height = 900;
+    canvas.getContext("2d")!.drawImage(img, px.x, px.y, px.width, px.height, 0, 0, 600, 900);
+
+    canvas.toBlob(async blob => {
+      if (!blob) { setStatus("Failed. Try again."); setSaving(false); return; }
       const fd = new FormData();
       fd.append("file", blob, "passport-photo.jpg");
       try {
@@ -174,95 +233,107 @@ function PhotoCropUpload({
         const data = await res.json();
         if (!res.ok) throw new Error(data.error);
         onUploaded(data.fileUrl);
-        setSrcImg(null);
-        setStatus("");
+        closeCrop();
       } catch { setStatus("Upload failed. Try again."); }
+      finally { setSaving(false); }
     }, "image/jpeg", 0.92);
   };
 
   return (
     <div>
       <label className={labelCls}>{label}{required && <span className="text-red-500 ml-0.5">*</span>}</label>
-      {hint && <p className="text-[11px] text-gray-400 mb-2">{hint}</p>}
+      {hint && <p className="text-[11px] mb-2" style={{ color: C.faint }}>{hint}</p>}
+
       {srcImg && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4" style={{ fontFamily: FONT }}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-4 border-b" style={{ background: MAROON }}>
-              <p className="text-sm font-black text-white">Crop Photo</p>
-              <button onClick={() => setSrcImg(null)} className="w-7 h-7 flex items-center justify-center rounded-lg text-white/60 hover:text-white hover:bg-white/10">
-                <X size={15} />
-              </button>
+        <Modal
+          title="Crop photo" onClose={closeCrop}
+          footer={
+            <div className="px-5 py-4">
+              {status && (
+                <p className="text-xs text-center mb-2 font-medium" style={{ color: /fail/i.test(status) ? C.danger : C.muted }}>{status}</p>
+              )}
+              <div className="flex gap-2">
+                <button onClick={closeCrop}
+                  className="flex-1 h-10 rounded-xl border border-gray-200 bg-white text-xs font-semibold text-gray-600 hover:bg-gray-50">
+                  Cancel
+                </button>
+                <button onClick={handleCropSave} disabled={saving}
+                  className="flex-1 flex items-center justify-center gap-1.5 h-10 rounded-xl text-xs font-bold text-white disabled:opacity-60"
+                  style={{ background: C.brand }}>
+                  {saving ? <><RefreshCw size={12} className="animate-spin" /> Saving…</> : <><Check size={12} /> Use this photo</>}
+                </button>
+              </div>
             </div>
-            <div className="px-4 py-3 bg-gray-50 text-center">
-              <p className="text-[11px] text-gray-500">Drag to adjust. The box is locked to <strong>passport size (2×3) ratio</strong>.</p>
-            </div>
-            <div className="flex items-center justify-center bg-gray-900 max-h-[55vh] overflow-auto p-3">
-              <ReactCrop crop={crop} onChange={(_, pct) => setCrop(pct)} aspect={2 / 3} minWidth={30} keepSelection>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img ref={imgRef} src={srcImg} alt="Crop preview" onLoad={onImageLoad} style={{ maxHeight: "50vh", maxWidth: "100%" }} />
-              </ReactCrop>
-            </div>
-            <div className="px-5 py-4 border-t flex gap-2">
-              <button onClick={() => setSrcImg(null)} className="flex-1 py-2 rounded-xl border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50">Cancel</button>
-              <button onClick={handleCropSave} className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-bold text-white" style={{ background: MAROON }}>
-                <Check size={12} /> Use this photo
-              </button>
-            </div>
-            {status && <p className="text-center text-xs text-gray-500 pb-3">{status}</p>}
+          }
+        >
+          <p className="px-5 py-3 text-xs text-center" style={{ color: C.muted }}>
+            Drag to adjust. The box is locked to passport size (2×3).
+          </p>
+          <div className="flex items-center justify-center bg-gray-900 max-h-[50vh] overflow-auto p-3">
+            <ReactCrop crop={crop} onChange={(_, pct) => setCrop(pct)} aspect={2 / 3} minWidth={30} keepSelection>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img ref={imgRef} src={srcImg} alt="Crop preview" onLoad={onImageLoad} style={{ maxHeight: "45vh", maxWidth: "100%" }} />
+            </ReactCrop>
           </div>
-        </div>
+        </Modal>
       )}
+
       {url ? (
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={url} alt="Photo" className="w-16 h-24 object-cover rounded-lg border border-gray-200" />
-          <div className="space-y-1">
-            <p className="text-[11px] font-semibold text-green-600 flex items-center gap-1"><Check size={11} /> Photo cropped & uploaded</p>
-            <button onClick={onRemove} className="text-xs text-red-500 hover:text-red-700 flex items-center gap-1"><X size={11} /> Remove</button>
+          <img src={url} alt="Passport photo" className="w-20 h-28 object-cover rounded-xl border" style={{ borderColor: C.line }} />
+          <div className="space-y-1.5">
+            <p className="text-xs font-semibold text-green-700 flex items-center gap-1"><Check size={12} /> Photo uploaded</p>
+            <button type="button" onClick={onRemove} className="text-xs font-semibold text-red-500 hover:text-red-700 flex items-center gap-1">
+              <X size={11} /> Remove
+            </button>
           </div>
         </div>
       ) : (
-        <div>
+        <>
           <input ref={fileInputRef} type="file" accept="image/*" onChange={onFileChange} className="hidden" />
           <button type="button" onClick={() => fileInputRef.current?.click()}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 border-dashed border-gray-300 text-sm font-semibold text-gray-500 hover:border-gray-400 transition-all w-full justify-center">
-            <Upload size={15} />
-            {uploading || `Upload ${label}`}
+            className="flex items-center gap-2 px-4 py-3 rounded-lg border-2 border-dashed border-gray-300 text-sm font-semibold text-gray-500 hover:border-gray-400 hover:bg-gray-50 transition-all w-full justify-center">
+            <Upload size={15} /> Choose photo
           </button>
-        </div>
+        </>
       )}
     </div>
   );
 }
 
-/* ── Signature Pad ── */
+/* ════════════════════════════════════════════════════════════════════════════
+   4. SIGNATURE PAD
+   ════════════════════════════════════════════════════════════════════════════ */
+
 function SignaturePad({ onSave }: { onSave: (dataUrl: string) => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawing   = useRef(false);
   const [hasDrawn, setHasDrawn] = useState(false);
 
   const getPos = (e: React.MouseEvent | React.TouchEvent, c: HTMLCanvasElement) => {
-    const r = c.getBoundingClientRect();
-    if ("touches" in e) return { x: e.touches[0].clientX - r.left, y: e.touches[0].clientY - r.top };
-    return { x: (e as React.MouseEvent).clientX - r.left, y: (e as React.MouseEvent).clientY - r.top };
+    const r  = c.getBoundingClientRect();
+    const sx = c.width / r.width;
+    const sy = c.height / r.height;
+    const pt = "touches" in e ? e.touches[0] : (e as React.MouseEvent);
+    return { x: (pt.clientX - r.left) * sx, y: (pt.clientY - r.top) * sy };
   };
+
   const start = (e: React.MouseEvent | React.TouchEvent) => {
-    e.preventDefault();
-    const c = canvasRef.current; if (!c) return;
-    const ctx = c.getContext("2d"); if (!ctx) return;
+    const c = canvasRef.current; const ctx = c?.getContext("2d");
+    if (!c || !ctx) return;
     drawing.current = true;
     const p = getPos(e, c); ctx.beginPath(); ctx.moveTo(p.x, p.y);
   };
   const move = (e: React.MouseEvent | React.TouchEvent) => {
-    e.preventDefault();
     if (!drawing.current) return;
-    const c = canvasRef.current; if (!c) return;
-    const ctx = c.getContext("2d"); if (!ctx) return;
+    const c = canvasRef.current; const ctx = c?.getContext("2d");
+    if (!c || !ctx) return;
     const p = getPos(e, c);
-    ctx.lineWidth = 2; ctx.lineCap = "round"; ctx.strokeStyle = "#111";
+    ctx.lineWidth = 2.5; ctx.lineCap = "round"; ctx.strokeStyle = "#111";
     ctx.lineTo(p.x, p.y); ctx.stroke(); setHasDrawn(true);
   };
-  const end = () => { drawing.current = false; };
+  const end   = () => { drawing.current = false; };
   const clear = () => {
     const c = canvasRef.current; if (!c) return;
     c.getContext("2d")?.clearRect(0, 0, c.width, c.height);
@@ -272,34 +343,31 @@ function SignaturePad({ onSave }: { onSave: (dataUrl: string) => void }) {
   return (
     <div>
       <canvas
-        ref={canvasRef} width={500} height={120}
+        ref={canvasRef} width={500} height={140}
         className="w-full border-2 border-dashed border-gray-300 rounded-lg bg-white touch-none cursor-crosshair"
-        style={{ maxHeight: 120 }}
+        style={{ maxHeight: 140 }}
         onMouseDown={start} onMouseMove={move} onMouseUp={end} onMouseLeave={end}
         onTouchStart={start} onTouchMove={move} onTouchEnd={end}
       />
       <div className="flex gap-2 mt-2">
         <button type="button" onClick={clear}
-          className="flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50">
+          className="flex items-center gap-1 text-xs font-semibold px-3 h-8 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50">
           <X size={11} /> Clear
         </button>
-        <button
-          type="button"
+        <button type="button" disabled={!hasDrawn}
           onClick={() => { const c = canvasRef.current; if (c) onSave(c.toDataURL("image/png")); }}
-          disabled={!hasDrawn}
-          className="flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-lg text-white disabled:opacity-40"
-          style={{ background: MAROON }}
-        >
-          <Check size={11} /> Save Signature
+          className="flex items-center gap-1 text-xs font-bold px-3 h-8 rounded-lg text-white disabled:opacity-40"
+          style={{ background: C.brand }}>
+          <Check size={11} /> Save signature
         </button>
       </div>
     </div>
   );
 }
 
-/* ── Step definitions ── */
-const STEPS_STUDENT = ["Application Type", "Personal Info", "School Info", "Documents", "Consent & Signature", "Review & Submit"];
-const STEPS_EMPLOYEE = ["Application Type", "Personal Info", "Employee Info", "Documents", "Consent & Signature", "Review & Submit"];
+/* ════════════════════════════════════════════════════════════════════════════
+   5. PAGE
+   ════════════════════════════════════════════════════════════════════════════ */
 
 export default function LibraryFormPage() {
   const params   = useParams();
@@ -313,32 +381,29 @@ export default function LibraryFormPage() {
   const [submitting,  setSubmitting]  = useState(false);
   const [submitError, setSubmitError] = useState("");
 
-  // Step 0 — Application Type
+  // Step 0 — request type
   const [appType, setAppType] = useState<AppType>("");
 
-  // Step 1 — Personal Info
-  const [name,      setName]      = useState("");
+  // Step 1 — personal
+  const [lastName,   setLastName]   = useState("");
+  const [firstName,  setFirstName]  = useState("");
+  const [middleName, setMiddleName] = useState("");
+  const fullName = [lastName.trim() && `${lastName.trim()},`, firstName.trim(), middleName.trim()]
+    .filter(Boolean)
+    .join(" ");
   const [sex,       setSex]       = useState("");
   const [address,   setAddress]   = useState("");
   const [contactNo, setContactNo] = useState("");
   const [email,     setEmail]     = useState("");
 
-  // Step 2 — Student Info
+  // Step 2 — school
   const [studentNo,     setStudentNo]     = useState("");
   const [courseProgram, setCourseProgram] = useState("");
   const [yearSection,   setYearSection]   = useState("");
   const [reason,        setReason]        = useState("");
 
-  // Step 2 — Employee Info
-  const [employeeNo,   setEmployeeNo]   = useState("");
-  const [collegeDept,  setCollegeDept]  = useState("");
-  const [position,     setPosition]     = useState("");
-  const [employeeType, setEmployeeType] = useState("");
-
-  // Step 3 — Documents
-  const [photoUrl,       setPhotoUrl]       = useState("");
-  const [photoUploading, setPhotoUploading] = useState("");
-  const photoRef = useRef<HTMLInputElement>(null);
+  // Step 3 — documents
+  const [photoUrl, setPhotoUrl] = useState("");
 
   const [corUrl,       setCorUrl]       = useState("");
   const [corUploading, setCorUploading] = useState("");
@@ -348,7 +413,7 @@ export default function LibraryFormPage() {
   const [affidavitUploading, setAffidavitUploading] = useState("");
   const affidavitRef = useRef<HTMLInputElement>(null);
 
-  // Step 4 — Signature
+  // Step 4 — signature
   const [signatureUrl,   setSignatureUrl]   = useState("");
   const [signatureSaved, setSignatureSaved] = useState(false);
   const [sigUploading,   setSigUploading]   = useState("");
@@ -358,10 +423,6 @@ export default function LibraryFormPage() {
   const [dupWarning,  setDupWarning]  = useState("");
   const dupTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const STEPS = appType === "EMPLOYEE" ? STEPS_EMPLOYEE : STEPS_STUDENT;
-  const isStudent  = appType === "STUDENT_NEW" || appType === "STUDENT_LOST";
-  const isEmployee = appType === "EMPLOYEE";
-
   useEffect(() => {
     fetch(`/api/library/${courseId}/info`)
       .then(r => r.json())
@@ -369,20 +430,22 @@ export default function LibraryFormPage() {
         if (d.error) { setOfficeError(d.error); return; }
         setOfficeName(d.name); setOfficeReady(true);
       })
-      .catch(() => setOfficeError("Failed to load form. Please try again."));
+      .catch(() => setOfficeError("Failed to load the form. Please try again."));
   }, [courseId]);
 
-  const checkDup = (no: string, field: "studentNo" | "employeeNo") => {
+  useEffect(() => () => { if (dupTimeout.current) clearTimeout(dupTimeout.current); }, []);
+
+  const checkDup = (no: string) => {
     setDupWarning("");
     if (dupTimeout.current) clearTimeout(dupTimeout.current);
     if (!no.trim()) return;
     dupTimeout.current = setTimeout(async () => {
       setCheckingDup(true);
       try {
-        const res  = await fetch(`/api/library/${courseId}/submit?${field}=${encodeURIComponent(no.trim())}`);
+        const res  = await fetch(`/api/library/${courseId}/submit?studentNo=${encodeURIComponent(no.trim())}`);
         const data = await res.json();
         if (data.exists)
-          setDupWarning(`An active request already exists for this number (Status: ${data.status}). Please contact the Library Office.`);
+          setDupWarning(`An active request already exists for this number (status: ${data.status}). Please contact the Library Office.`);
       } catch { /* ignore */ }
       finally { setCheckingDup(false); }
     }, 700);
@@ -391,8 +454,7 @@ export default function LibraryFormPage() {
   const upload = useCallback(async (file: File | string, isDataUrl = false): Promise<string> => {
     const fd = new FormData();
     if (isDataUrl) {
-      const res  = await fetch(file as string);
-      const blob = await res.blob();
+      const blob = await (await fetch(file as string)).blob();
       fd.append("file", blob, "signature.png");
     } else {
       fd.append("file", file as File);
@@ -404,18 +466,15 @@ export default function LibraryFormPage() {
   }, [courseId]);
 
   const handleFileUpload = async (
-    file: File,
-    setUrl: (u: string) => void,
-    setStatus: (s: string) => void,
-    label: string,
+    file: File, setUrl: (u: string) => void, setStatus: (s: string) => void, label: string,
   ) => {
-    setStatus("Uploading...");
+    setStatus("Uploading…");
     try { setUrl(await upload(file)); setStatus(""); }
     catch { setStatus(`${label} upload failed. Try again.`); }
   };
 
   const handleSignatureSave = async (dataUrl: string) => {
-    setSigUploading("Uploading signature...");
+    setSigUploading("Uploading signature…");
     try {
       setSignatureUrl(await upload(dataUrl, true));
       setSignatureSaved(true);
@@ -424,520 +483,444 @@ export default function LibraryFormPage() {
   };
 
   const validateStep = (): string | null => {
-    if (step === 0 && !appType) return "Please select an application type.";
+    if (step === 0 && !appType) return "Select a request type.";
     if (step === 1) {
-      if (!name.trim()) return "Full name is required.";
+      if (!lastName.trim())  return "Enter your last name.";
+      if (!firstName.trim()) return "Enter your first name.";
     }
     if (step === 2) {
-      if (isStudent) {
-        if (!studentNo.trim())     return "Student number is required.";
-        if (!courseProgram.trim()) return "Course / Program is required.";
-        if (dupWarning)            return "Please resolve the duplicate request first.";
-      }
-      if (isEmployee) {
-        if (!employeeNo.trim()) return "Employee number is required.";
-        if (!employeeType)      return "Employee type is required.";
-        if (dupWarning)         return "Please resolve the duplicate request first.";
-      }
+      if (!studentNo.trim())     return "Enter your student number.";
+      if (!courseProgram.trim()) return "Select your course or program.";
+      if (checkingDup)           return "Checking your student number. Please wait a moment.";
+      if (dupWarning)            return "A request already exists for this student number.";
     }
     if (step === 3) {
-      if (!photoUrl) return `Please upload your ${isEmployee ? "1×1" : "passport size"} photo.`;
-      if (appType === "STUDENT_LOST" && !affidavitUrl) return "Please upload the Affidavit of Lost.";
+      if (!photoUrl) return "Upload your passport size photo.";
+      if (appType === "STUDENT_LOST" && !affidavitUrl) return "Upload your Affidavit of Lost.";
     }
-    if (step === 4) {
-      if (!signatureUrl) return "Please draw and save your signature.";
-    }
+    if (step === 4 && !signatureUrl) return "Draw and save your signature.";
     return null;
   };
 
+  const scrollTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
+
   const handleNext = () => {
     const err = validateStep();
-    if (err) { setSubmitError(err); return; }
+    if (err) { setSubmitError(err); scrollTop(); return; }
     setSubmitError("");
     setStep(s => Math.min(s + 1, STEPS.length - 1));
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    scrollTop();
   };
 
   const handleBack = () => {
     setSubmitError("");
     setStep(s => Math.max(s - 1, 0));
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    scrollTop();
   };
+
+  const goTo = (n: number) => { setSubmitError(""); setStep(n); scrollTop(); };
 
   const handleSubmit = async () => {
     const err = validateStep();
-    if (err) { setSubmitError(err); return; }
+    if (err) { setSubmitError(err); scrollTop(); return; }
     setSubmitting(true); setSubmitError("");
     try {
-      const applicantType = isEmployee ? "EMPLOYEE" : "STUDENT";
-      const cardType      = appType === "STUDENT_NEW" ? "NEW" : appType === "STUDENT_LOST" ? "LOST" : "NEW";
-
       const res = await fetch(`/api/library/${courseId}/submit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          requestType: appType, applicantType, cardType,
-          employeeType: isEmployee ? employeeType : null,
-          name, sex, address, contactNo, email, reason: reason || null,
-          studentNo:     isStudent  ? studentNo     : null,
-          courseProgram: isStudent  ? courseProgram : null,
-          yearSection:   isStudent  ? yearSection   : null,
-          employeeNo:    isEmployee ? employeeNo    : null,
-          collegeDept:   isEmployee ? collegeDept   : null,
-          position:      isEmployee ? position      : null,
-          photoUrl:      photoUrl      || null,
-          corIdUrl:      corUrl        || null,
-          affidavitUrl:  affidavitUrl  || null,
-          signatureUrl:  signatureUrl  || null,
+          requestType: appType, applicantType: "STUDENT",
+          cardType: appType === "STUDENT_LOST" ? "LOST" : "NEW",
+          employeeType: null,
+          name: fullName, sex, address, contactNo, email, reason: reason || null,
+          studentNo, courseProgram, yearSection,
+          employeeNo: null, collegeDept: null, position: null,
+          photoUrl:     photoUrl     || null,
+          corIdUrl:     corUrl       || null,
+          affidavitUrl: affidavitUrl || null,
+          signatureUrl: signatureUrl || null,
         }),
       });
       const data = await res.json();
-      if (!res.ok) { setSubmitError(data.error ?? "Submission failed."); return; }
+      if (!res.ok) { setSubmitError(data.error ?? "Submission failed."); scrollTop(); return; }
       setSubmitted(true);
     } catch {
-      setSubmitError("Network error. Please check your connection and try again.");
+      setSubmitError("Network error. Check your connection and try again.");
+      scrollTop();
     } finally { setSubmitting(false); }
   };
 
-  /* ── Loading / Error / Success ── */
+  /* ── Loading / error / success ── */
   if (!officeReady && !officeError)
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ fontFamily: FONT }}>
+      <div className="min-h-screen flex items-center justify-center bg-white" style={{ fontFamily: FONT }}>
         <RefreshCw className="w-5 h-5 animate-spin text-gray-400" />
       </div>
     );
 
   if (officeError)
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-3 px-4" style={{ fontFamily: FONT }}>
-        <AlertCircle className="w-10 h-10 text-red-400" />
-        <p className="text-sm text-gray-600 text-center">{officeError}</p>
+      <div className="min-h-screen flex flex-col items-center justify-center gap-3 px-4 bg-white text-center" style={{ fontFamily: FONT }}>
+        <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: C.brandTint }}>
+          <AlertCircle className="w-6 h-6" style={{ color: C.brand }} />
+        </div>
+        <p className="text-sm font-semibold" style={{ color: C.ink }}>This form isn’t available</p>
+        <p className="text-xs max-w-xs" style={{ color: C.muted }}>{officeError}</p>
       </div>
     );
 
   if (submitted)
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4 px-4" style={{ fontFamily: FONT }}>
-        <div className="w-16 h-16 rounded-full flex items-center justify-center" style={{ background: "#f0fdf4" }}>
-          <Check className="w-8 h-8 text-green-500" />
-        </div>
-        <div className="text-center">
-          <h1 className="text-lg font-bold text-gray-900 mb-1">Request Submitted!</h1>
-          <p className="text-sm text-gray-500 max-w-sm">
-            Your Library Card request has been received by <strong>{officeName}</strong>.
-            Please wait for processing and visit the library to claim your card.
-          </p>
-        </div>
-        <div className="mt-2 bg-gray-50 border border-gray-200 rounded-xl px-5 py-4 text-xs text-gray-500 text-center space-y-1">
-          <p>Name: <span className="font-semibold text-gray-800">{name}</span></p>
-          {studentNo  && <p>Student No.: <span className="font-semibold text-gray-800">{studentNo}</span></p>}
-          {employeeNo && <p>Employee No.: <span className="font-semibold text-gray-800">{employeeNo}</span></p>}
-          <p className="mt-2 text-[11px] text-gray-400">You may now close this page.</p>
+      <div className="min-h-screen flex items-center justify-center px-4 bg-gray-50" style={{ fontFamily: FONT }}>
+        <div className="bg-white rounded-xl border w-full max-w-md overflow-hidden" style={{ borderColor: C.line }}>
+          <div className="px-6 pt-8 pb-6 text-center">
+            <div className="w-14 h-14 rounded-full mx-auto mb-4 flex items-center justify-center" style={{ background: "#dcfce7" }}>
+              <Check className="w-7 h-7 text-green-600" />
+            </div>
+            <h1 className="text-lg font-bold" style={{ color: C.ink }}>Request submitted</h1>
+            <p className="text-sm mt-1.5" style={{ color: C.muted }}>
+              <strong style={{ color: C.body }}>{officeName}</strong> received your library card request.
+              Wait for processing, then visit the library to claim your card.
+            </p>
+          </div>
+          <dl className="px-6 py-4 border-t text-xs space-y-2" style={{ borderColor: C.lineSoft, background: "#fafafa" }}>
+            <div className="flex justify-between gap-4"><dt style={{ color: C.muted }}>Name</dt><dd className="font-semibold text-right" style={{ color: C.ink }}>{fullName}</dd></div>
+            {studentNo && (
+              <div className="flex justify-between gap-4"><dt style={{ color: C.muted }}>Student no.</dt><dd className="font-semibold" style={{ color: C.ink }}>{studentNo}</dd></div>
+            )}
+          </dl>
+          <p className="px-6 py-3 text-[11px] text-center border-t" style={{ color: C.faint, borderColor: C.lineSoft }}>You can close this page now.</p>
         </div>
       </div>
     );
 
-  const activeSteps = appType ? STEPS : STEPS_STUDENT;
+  const reviewRows: Array<[string, string]> = [
+    ["Request type",     appType === "STUDENT_NEW" ? "Student card (new)" : "Student card (lost)"],
+    ["Name",             fullName],
+    ["Sex",              sex],
+    ["Contact no.",      contactNo],
+    ["Email",            email],
+    ["Address",          address],
+    ["Student no.",      studentNo],
+    ["Course / program", courseProgram],
+    ["Year & section",   yearSection],
+    ["Reason for loss",  reason],
+  ];
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-32" style={{ fontFamily: FONT }}>
+    <div className="min-h-screen bg-gray-50" style={{ fontFamily: FONT }}>
 
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-white border-b border-gray-200 shadow-sm">
-        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: MAROON }}>
-            <BookOpen size={16} className="text-white" />
+      <header className="sticky top-0 z-10 bg-white border-b" style={{ borderColor: C.line }}>
+        <div className="max-w-3xl mx-auto px-4 py-3 flex items-center gap-3">
+          <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: C.brand }}>
+            <BookOpen size={17} className="text-white" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Pampanga State University</p>
-            <p className="text-sm font-bold text-gray-900 truncate">{officeName || "Library"} — Card Request Form</p>
+            <p className="text-sm font-bold truncate" style={{ color: C.ink }}>Library card request</p>
+            <p className="text-xs truncate" style={{ color: C.faint }}>Pampanga State University · {officeName || "Library"}</p>
           </div>
         </div>
 
-        {/* Step indicator */}
-        <div className="max-w-2xl mx-auto px-4 pb-3">
-          <div className="flex items-center gap-1">
-            {activeSteps.map((s, i) => (
-              <div key={i} className="flex items-center gap-1 flex-1">
-                <div
-                  className={`flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold shrink-0 transition-all ${
-                    i <= step ? "text-white" : "text-gray-400 border border-gray-300"
-                  }`}
-                  style={i <= step ? { background: MAROON } : {}}
-                >
-                  {i < step ? <Check size={10} /> : i + 1}
-                </div>
-                <span className={`text-[10px] font-semibold hidden sm:block truncate ${i === step ? "text-gray-800" : "text-gray-400"}`}>
-                  {s}
-                </span>
-                {i < activeSteps.length - 1 && <div className="flex-1 h-px bg-gray-200 mx-1" />}
-              </div>
+        {/* Progress */}
+        <div className="max-w-3xl mx-auto px-4 pb-3">
+          <div className="flex gap-1.5" role="progressbar" aria-valuemin={1} aria-valuemax={STEPS.length} aria-valuenow={step + 1}>
+            {STEPS.map((s, i) => (
+              <span key={s} className="h-1.5 flex-1 rounded-full transition-colors"
+                style={{ background: i <= step ? C.brand : C.line }} />
             ))}
           </div>
+          <div className="flex items-center justify-between mt-2">
+            <p className="text-xs font-bold" style={{ color: C.ink }}>{STEPS[step]}</p>
+            <p className="text-xs tabular-nums" style={{ color: C.faint }}>Step {step + 1} of {STEPS.length}</p>
+          </div>
         </div>
-      </div>
+      </header>
 
-      <div className="max-w-2xl mx-auto px-4 py-6 space-y-4">
+      <main className="max-w-3xl mx-auto px-4 py-5 pb-32 space-y-4">
 
         {submitError && (
-          <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-xs text-red-600">
+          <div role="alert" className="flex items-start gap-2 rounded-xl border px-4 py-3 text-xs font-medium"
+            style={{ background: "#fef2f2", borderColor: "#fecaca", color: C.danger }}>
             <AlertCircle size={14} className="shrink-0 mt-0.5" /> {submitError}
           </div>
         )}
 
-        {/* ── STEP 0: Application Type ── */}
+        {/* STEP 0 — Request type */}
         {step === 0 && (
-          <div className="bg-white rounded-xl border border-gray-200 p-5">
-            <SectionTitle>What type of request is this?</SectionTitle>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {([
-                ["STUDENT_NEW",  "Student — New Card",  "For currently enrolled students applying for a new library card."],
-                ["STUDENT_LOST", "Student — Lost Card", "Replacement for a lost card. Requires Affidavit of Lost."],
-                ["EMPLOYEE",     "Employee Card",       "For faculty and non-teaching staff."],
-              ] as [AppType, string, string][]).map(([val, title, desc]) => (
-                <button
-                  key={val}
-                  type="button"
-                  onClick={() => { setAppType(val); setSubmitError(""); setDupWarning(""); }}
-                  className="rounded-xl border-2 p-4 text-left transition-all"
-                  style={appType === val
-                    ? { borderColor: MAROON, background: "#fef2f2" }
-                    : { borderColor: "#e5e7eb", background: "#fafafa" }}
-                >
-                  <p className="text-sm font-bold mb-1" style={{ color: appType === val ? MAROON : "#111827" }}>{title}</p>
-                  <p className="text-[11px] text-gray-500 leading-snug">{desc}</p>
-                </button>
-              ))}
+          <Card title="What are you requesting?" description="Choose the option that applies to you.">
+            <div role="radiogroup" className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {APP_TYPES.map(t => {
+                const active = appType === t.value;
+                return (
+                  <button
+                    key={t.value} type="button" role="radio" aria-checked={active}
+                    onClick={() => { setAppType(t.value); setSubmitError(""); setDupWarning(""); }}
+                    className="rounded-xl border p-4 text-left transition-all flex items-start gap-3"
+                    style={active
+                      ? { borderColor: C.brand, background: C.brandTint, boxShadow: `0 0 0 3px ${C.brandRing}` }
+                      : { borderColor: C.line, background: "#fff" }}
+                  >
+                    <span className="w-4 h-4 rounded-full border-2 mt-0.5 shrink-0 flex items-center justify-center"
+                      style={{ borderColor: active ? C.brand : "#d1d5db" }}>
+                      {active && <span className="w-2 h-2 rounded-full" style={{ background: C.brand }} />}
+                    </span>
+                    <span>
+                      <span className="block text-sm font-bold" style={{ color: active ? C.brand : C.ink }}>{t.title}</span>
+                      <span className="block text-xs mt-1 leading-snug" style={{ color: C.muted }}>{t.desc}</span>
+                    </span>
+                  </button>
+                );
+              })}
             </div>
-          </div>
+          </Card>
         )}
 
-        {/* ── STEP 1: Personal Info ── */}
+        {/* STEP 1 — Personal info */}
         {step === 1 && (
-          <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-4">
-            <SectionTitle>Personal Information</SectionTitle>
-            <div className="sm:col-span-2">
-              <Field label="Complete Name" required>
-                <input value={name} onChange={e => setName(e.target.value)} placeholder="Last, First Middle" className={inputCls} />
-              </Field>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <Card title="Personal information">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <Field label="Last name" required>
+                  <input value={lastName} onChange={e => setLastName(e.target.value)} placeholder="Dela Cruz" className={inputCls} autoComplete="family-name" />
+                </Field>
+                <Field label="First name" required>
+                  <input value={firstName} onChange={e => setFirstName(e.target.value)} placeholder="Juan" className={inputCls} autoComplete="given-name" />
+                </Field>
+                <Field label="Middle name">
+                  <input value={middleName} onChange={e => setMiddleName(e.target.value)} placeholder="Santos" className={inputCls} autoComplete="additional-name" />
+                </Field>
+              </div>
               <Field label="Sex">
                 <select value={sex} onChange={e => setSex(e.target.value)} className={inputCls}>
-                  <option value="">— Select —</option>
+                  <option value="">Select</option>
                   <option>Male</option>
                   <option>Female</option>
                 </select>
               </Field>
-              <Field label="Contact No.">
-                <input value={contactNo} onChange={e => setContactNo(e.target.value)} placeholder="09XXXXXXXXX" className={inputCls} />
-              </Field>
-              <Field label="Email Address">
-                <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="email@psu.edu.ph" className={inputCls} />
+              <Field label="Contact no.">
+                <input value={contactNo} onChange={e => setContactNo(e.target.value)} placeholder="09XXXXXXXXX" inputMode="tel" className={inputCls} autoComplete="tel" />
               </Field>
               <div className="sm:col-span-2">
-                <Field label="Complete Address">
-                  <input value={address} onChange={e => setAddress(e.target.value)} placeholder="Street, Barangay, City, Province" className={inputCls} />
+                <Field label="Email address">
+                  <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="email@psu.edu.ph" className={inputCls} autoComplete="email" />
+                </Field>
+              </div>
+              <div className="sm:col-span-2">
+                <Field label="Complete address">
+                  <input value={address} onChange={e => setAddress(e.target.value)} placeholder="Street, Barangay, City, Province" className={inputCls} autoComplete="street-address" />
                 </Field>
               </div>
             </div>
-          </div>
+          </Card>
         )}
 
-        {/* ── STEP 2: Student Info ── */}
-        {step === 2 && isStudent && (
-          <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-4">
-            <SectionTitle>Student Information</SectionTitle>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Field label="Student No." required>
+        {/* STEP 2 — School info */}
+        {step === 2 && (
+          <Card title="School information">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Field label="Student no." required>
                 <div className="relative">
                   <input
                     value={studentNo}
-                    onChange={e => { setStudentNo(e.target.value); checkDup(e.target.value, "studentNo"); }}
-                    placeholder="e.g. 2024-0001"
-                    className={inputCls}
+                    onChange={e => { setStudentNo(e.target.value); checkDup(e.target.value); }}
+                    placeholder="e.g. 2024-0001" className={inputCls}
                   />
                   {checkingDup && <RefreshCw size={12} className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-gray-400" />}
                 </div>
-                {dupWarning && <p className="text-[11px] text-amber-600 mt-1 leading-snug">{dupWarning}</p>}
+                {dupWarning && <p className="text-[11px] mt-1 leading-snug" style={{ color: "#b45309" }}>{dupWarning}</p>}
               </Field>
-              <Field label="Course / Program" required>
-                <select value={courseProgram} onChange={e => setCourseProgram(e.target.value)} className={inputCls}>
-                  <option value="">— Select —</option>
-                  {Object.values(COURSES_BY_DEPARTMENT).flat().map(c => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
-                </select>
-              </Field>
-              <Field label="Year & Section">
+              <Field label="Year & section">
                 <input value={yearSection} onChange={e => setYearSection(e.target.value)} placeholder="e.g. 2-A" className={inputCls} />
               </Field>
-            </div>
-            {appType === "STUDENT_LOST" && (
-              <Field label="Reason for Loss">
-                <input value={reason} onChange={e => setReason(e.target.value)} placeholder="Briefly describe how you lost your card" className={inputCls} />
-              </Field>
-            )}
-          </div>
-        )}
-
-        {/* ── STEP 2: Employee Info ── */}
-        {step === 2 && isEmployee && (
-          <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-4">
-            <SectionTitle>Employee Information</SectionTitle>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Field label="Employee No." required>
-                <div className="relative">
-                  <input
-                    value={employeeNo}
-                    onChange={e => { setEmployeeNo(e.target.value); checkDup(e.target.value, "employeeNo"); }}
-                    placeholder="Employee number"
-                    className={inputCls}
-                  />
-                  {checkingDup && <RefreshCw size={12} className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-gray-400" />}
+              <div className="sm:col-span-2">
+                <Field label="Course / program" required>
+                  <select value={courseProgram} onChange={e => setCourseProgram(e.target.value)} className={inputCls}>
+                    <option value="">Select</option>
+                    {Object.entries(COURSES_BY_DEPARTMENT).map(([dept, courses]) => (
+                      <optgroup key={dept} label={dept}>
+                        {courses.map(c => <option key={c} value={c}>{c}</option>)}
+                      </optgroup>
+                    ))}
+                  </select>
+                </Field>
+              </div>
+              {appType === "STUDENT_LOST" && (
+                <div className="sm:col-span-2">
+                  <Field label="Reason for loss">
+                    <input value={reason} onChange={e => setReason(e.target.value)} placeholder="Briefly describe how you lost your card" className={inputCls} />
+                  </Field>
                 </div>
-                {dupWarning && <p className="text-[11px] text-amber-600 mt-1 leading-snug">{dupWarning}</p>}
-              </Field>
-              <Field label="Employee Type" required>
-                <select value={employeeType} onChange={e => setEmployeeType(e.target.value)} className={inputCls}>
-                  <option value="">— Select —</option>
-                  <option>Academic Personnel</option>
-                  <option>Academic-Related Personnel</option>
-                  <option>Non-Academic Personnel</option>
-                </select>
-              </Field>
-              <Field label="College / Department">
-                <input value={collegeDept} onChange={e => setCollegeDept(e.target.value)} placeholder="e.g. College of Engineering" className={inputCls} />
-              </Field>
-              <Field label="Position">
-                <input value={position} onChange={e => setPosition(e.target.value)} placeholder="e.g. Instructor I" className={inputCls} />
-              </Field>
-            </div>
-          </div>
-        )}
-
-        {/* ── STEP 3: Documents ── */}
-        {step === 3 && (
-          <div className="space-y-4">
-            {/* Photo */}
-            <div className="bg-white rounded-xl border border-gray-200 p-5">
-              <SectionTitle>{isEmployee ? "1×1 ID Photo" : "Passport Size Photo"}</SectionTitle>
-              {isEmployee ? (
-                <UploadField
-                  label="1×1 Photo"
-                  required
-                  hint="Upload a recent 1×1 ID photo (white background preferred)."
-                  accept="image/*"
-                  url={photoUrl}
-                  uploading={photoUploading}
-                  inputRef={photoRef}
-                  onFileChange={e => { const f = e.target.files?.[0]; if (f) handleFileUpload(f, setPhotoUrl, setPhotoUploading, "Photo"); }}
-                  onRemove={() => { setPhotoUrl(""); if (photoRef.current) photoRef.current.value = ""; }}
-                  preview
-                />
-              ) : (
-                <PhotoCropUpload
-                  label="Passport Size Photo"
-                  required
-                  hint="Upload your photo — you'll crop it to passport size (2×3) before submitting."
-                  url={photoUrl}
-                  uploading={photoUploading}
-                  onUploaded={setPhotoUrl}
-                  onRemove={() => setPhotoUrl("")}
-                  courseId={courseId}
-                />
               )}
             </div>
+          </Card>
+        )}
 
-            {/* COR / ID — Student only */}
-            {isStudent && (
-              <div className="bg-white rounded-xl border border-gray-200 p-5">
-                <SectionTitle>COR / Validated ID</SectionTitle>
-                <UploadField
-                  label="COR or Validated ID"
-                  hint="Upload your Certificate of Registration (COR) or your school-validated ID."
-                  accept="image/*,.pdf"
-                  url={corUrl}
-                  uploading={corUploading}
-                  inputRef={corRef}
-                  onFileChange={e => { const f = e.target.files?.[0]; if (f) handleFileUpload(f, setCorUrl, setCorUploading, "COR/ID"); }}
-                  onRemove={() => { setCorUrl(""); if (corRef.current) corRef.current.value = ""; }}
-                />
-              </div>
-            )}
+        {/* STEP 3 — Documents */}
+        {step === 3 && (
+          <>
+            <Card title="Passport size photo" description="You’ll crop it to a 2×3 ratio before it’s uploaded.">
+              <PhotoCropUpload
+                label="Photo" required url={photoUrl}
+                onUploaded={setPhotoUrl} onRemove={() => setPhotoUrl("")} courseId={courseId}
+              />
+            </Card>
 
-            {/* Affidavit — Lost card only */}
+            <Card title="COR or validated ID" description="Certificate of Registration or your school-validated ID.">
+              <UploadField
+                label="COR or validated ID"
+                accept="image/*,.pdf" url={corUrl} uploading={corUploading} inputRef={corRef}
+                onFileChange={e => { const f = e.target.files?.[0]; if (f) handleFileUpload(f, setCorUrl, setCorUploading, "COR/ID"); }}
+                onRemove={() => { setCorUrl(""); if (corRef.current) corRef.current.value = ""; }}
+              />
+            </Card>
+
             {appType === "STUDENT_LOST" && (
-              <div className="bg-white rounded-xl border border-gray-200 p-5">
-                <SectionTitle>Affidavit of Lost</SectionTitle>
-                <div className="flex items-center justify-between mb-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
-                  <div>
-                    <p className="text-xs font-bold text-amber-800">Need the template?</p>
-                    <p className="text-[11px] text-amber-700 mt-0.5">Download, print, fill out, and have it notarized before uploading.</p>
+              <Card title="Affidavit of lost" description="Required for replacement of a lost card.">
+                <div className="flex items-center justify-between gap-3 mb-4 rounded-xl border px-4 py-3" style={{ borderColor: C.line, background: "#fafafa" }}>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold" style={{ color: C.ink }}>Need the template?</p>
+                    <p className="text-[11px] mt-0.5" style={{ color: C.muted }}>Download, print, fill out, and get it notarized before uploading.</p>
                   </div>
-                  <a
-                    href="/template/affidavit-of-lost.docx"
-                    download
-                    className="shrink-0 flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-lg text-white ml-3"
-                    style={{ background: MAROON }}
-                  >
+                  <a href="/template/affidavit-of-lost.docx" download
+                    className="shrink-0 flex items-center gap-1.5 text-xs font-bold px-3 h-8 rounded-lg text-white"
+                    style={{ background: C.brand }}>
                     <FileText size={12} /> Download
                   </a>
                 </div>
                 <UploadField
-                  label="Affidavit of Lost"
-                  required
-                  hint="Upload a scanned copy or clear photo of your signed and notarized Affidavit of Lost."
-                  accept="image/*,.pdf"
-                  url={affidavitUrl}
-                  uploading={affidavitUploading}
-                  inputRef={affidavitRef}
+                  label="Affidavit of lost" required
+                  hint="Upload a scan or clear photo of the signed and notarized affidavit."
+                  accept="image/*,.pdf" url={affidavitUrl} uploading={affidavitUploading} inputRef={affidavitRef}
                   onFileChange={e => { const f = e.target.files?.[0]; if (f) handleFileUpload(f, setAffidavitUrl, setAffidavitUploading, "Affidavit"); }}
                   onRemove={() => { setAffidavitUrl(""); if (affidavitRef.current) affidavitRef.current.value = ""; }}
                 />
-              </div>
+              </Card>
             )}
-          </div>
+          </>
         )}
 
-        {/* ── STEP 4: Consent & Signature ── */}
+        {/* STEP 4 — Consent & signature */}
         {step === 4 && (
-          <div className="space-y-4">
-            <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-4">
-              <SectionTitle>Data Privacy Consent</SectionTitle>
-              <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-xs text-amber-800 leading-relaxed">
-                By signing below, I give my consent to <strong>Pampanga State University</strong> to collect and
-                process my personal information in accordance with <strong>Republic Act No. 10173</strong> (Data
-                Privacy Act of 2012) for the purpose of issuing a Library Card.
-              </div>
-              <div>
-                <p className={labelCls}>Signature over Printed Name <span className="text-red-500">*</span></p>
-                <p className="text-[11px] text-gray-400 mb-2">Draw your signature in the box below, then click &ldquo;Save Signature&rdquo;.</p>
-                {signatureSaved ? (
-                  <div className="flex items-center gap-3">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={signatureUrl} alt="Signature" className="h-16 border border-gray-200 rounded-lg bg-white p-1" />
-                    <button
-                      onClick={() => { setSignatureSaved(false); setSignatureUrl(""); }}
-                      className="text-xs font-semibold text-red-500 hover:text-red-700 flex items-center gap-1"
-                    >
-                      <X size={12} /> Redo
-                    </button>
-                  </div>
-                ) : (
-                  <div>
-                    <SignaturePad onSave={handleSignatureSave} />
-                    {sigUploading && <p className="text-xs text-gray-500 mt-1">{sigUploading}</p>}
-                  </div>
-                )}
-              </div>
+          <Card title="Data privacy consent">
+            <div className="rounded-xl border px-4 py-3 text-xs leading-relaxed mb-5" style={{ background: C.brandTint, borderColor: "#f1d5d5", color: C.body }}>
+              By signing below, I consent to <strong>Pampanga State University</strong> collecting and processing my personal
+              information under <strong>Republic Act No. 10173</strong> (Data Privacy Act of 2012) for the purpose of issuing a library card.
             </div>
-          </div>
+            <div>
+              <p className={labelCls}>Signature over printed name <span className="text-red-500">*</span></p>
+              <p className="text-[11px] mb-2" style={{ color: C.faint }}>Draw your signature in the box, then select “Save signature”.</p>
+              {signatureSaved ? (
+                <div className="flex items-center gap-3">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={signatureUrl} alt="Your signature" className="h-16 border rounded-lg bg-white p-1" style={{ borderColor: C.line }} />
+                  <button type="button" onClick={() => { setSignatureSaved(false); setSignatureUrl(""); }}
+                    className="text-xs font-semibold text-red-500 hover:text-red-700 flex items-center gap-1">
+                    <X size={12} /> Redo
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <SignaturePad onSave={handleSignatureSave} />
+                  <UploadStatus text={sigUploading} />
+                </>
+              )}
+            </div>
+          </Card>
         )}
 
-        {/* ── STEP 5: Review & Submit ── */}
+        {/* STEP 5 — Review & submit */}
         {step === 5 && (
-          <div className="space-y-4">
-            <div className="bg-white rounded-xl border border-gray-200 p-5">
-              <SectionTitle>Review Your Request</SectionTitle>
-              <div className="space-y-1.5">
-                {[
-                  ["Application Type", appType === "STUDENT_NEW" ? "Student — New Card" : appType === "STUDENT_LOST" ? "Student — Lost Card" : "Employee Card"],
-                  ["Name",             name],
-                  ["Sex",              sex],
-                  ["Contact No.",      contactNo],
-                  ["Email",            email],
-                  ["Address",          address],
-                  ...(isStudent ? [
-                    ["Student No.",      studentNo],
-                    ["Course / Program", courseProgram],
-                    ["Year & Section",   yearSection],
-                  ] : [
-                    ["Employee No.",   employeeNo],
-                    ["Employee Type",  employeeType],
-                    ["College / Dept", collegeDept],
-                    ["Position",       position],
-                  ]),
-                ].map(([label, val]) => val ? (
-                  <div key={label} className="flex gap-3 py-1.5 border-b border-gray-50 last:border-0">
-                    <span className="text-xs text-gray-400 font-medium w-40 shrink-0">{label}</span>
-                    <span className="text-xs text-gray-800 font-semibold">{val}</span>
+          <>
+            <Card
+              title="Your details"
+              description="Check everything before you submit."
+              action={
+                <button type="button" onClick={() => goTo(1)}
+                  className="flex items-center gap-1 text-xs font-semibold hover:underline shrink-0" style={{ color: C.brand }}>
+                  <Pencil size={11} /> Edit
+                </button>
+              }
+            >
+              <dl className="divide-y" style={{ borderColor: C.lineSoft }}>
+                {reviewRows.filter(([, v]) => v).map(([label, val]) => (
+                  <div key={label} className="flex gap-4 py-2.5 first:pt-0 last:pb-0" style={{ borderColor: C.lineSoft }}>
+                    <dt className="text-xs w-36 shrink-0" style={{ color: C.muted }}>{label}</dt>
+                    <dd className="text-xs font-semibold break-words min-w-0" style={{ color: C.ink }}>{val}</dd>
                   </div>
-                ) : null)}
-              </div>
-            </div>
+                ))}
+              </dl>
+            </Card>
 
-            {/* Uploaded docs preview */}
-            <div className="bg-white rounded-xl border border-gray-200 p-5">
-              <SectionTitle>Uploaded Documents</SectionTitle>
+            <Card
+              title="Documents"
+              action={
+                <button type="button" onClick={() => goTo(3)}
+                  className="flex items-center gap-1 text-xs font-semibold hover:underline shrink-0" style={{ color: C.brand }}>
+                  <Pencil size={11} /> Edit
+                </button>
+              }
+            >
               <div className="flex flex-wrap gap-3">
                 {photoUrl && (
                   <div className="flex flex-col items-center gap-1">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={photoUrl} alt="Photo" className="w-16 h-20 object-cover rounded-lg border border-gray-200" />
-                    <span className="text-[10px] text-gray-400 font-medium">Photo</span>
+                    <img src={photoUrl} alt="Photo" className="w-16 h-20 object-cover rounded-lg border" style={{ borderColor: C.line }} />
+                    <span className="text-[11px]" style={{ color: C.muted }}>Photo</span>
                   </div>
                 )}
                 {corUrl && (
-                  <div className="flex flex-col items-center justify-center gap-1 w-16 h-20 rounded-lg border border-gray-200 bg-gray-50">
-                    <FileText size={20} className="text-gray-400" />
-                    <span className="text-[10px] text-gray-400 font-medium text-center">COR/ID</span>
+                  <div className="flex flex-col items-center justify-center gap-1 w-16 h-20 rounded-lg border bg-gray-50" style={{ borderColor: C.line }}>
+                    <FileText size={18} style={{ color: C.faint }} />
+                    <span className="text-[11px]" style={{ color: C.muted }}>COR / ID</span>
                   </div>
                 )}
                 {affidavitUrl && (
-                  <div className="flex flex-col items-center justify-center gap-1 w-16 h-20 rounded-lg border border-gray-200 bg-gray-50">
-                    <FileText size={20} className="text-gray-400" />
-                    <span className="text-[10px] text-gray-400 font-medium text-center leading-tight">Affidavit</span>
+                  <div className="flex flex-col items-center justify-center gap-1 w-16 h-20 rounded-lg border bg-gray-50" style={{ borderColor: C.line }}>
+                    <FileText size={18} style={{ color: C.faint }} />
+                    <span className="text-[11px]" style={{ color: C.muted }}>Affidavit</span>
                   </div>
                 )}
                 {signatureUrl && (
                   <div className="flex flex-col items-center gap-1">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={signatureUrl} alt="Signature" className="h-20 border border-gray-200 rounded-lg bg-white p-1 object-contain" style={{ width: 80 }} />
-                    <span className="text-[10px] text-gray-400 font-medium">Signature</span>
+                    <img src={signatureUrl} alt="Signature" className="h-20 border rounded-lg bg-white p-1 object-contain" style={{ width: 88, borderColor: C.line }} />
+                    <span className="text-[11px]" style={{ color: C.muted }}>Signature</span>
                   </div>
                 )}
               </div>
-            </div>
+            </Card>
 
-            <p className="text-xs text-gray-400 text-center px-4">
-              By submitting, you confirm that all information provided is accurate and complete.
+            <p className="text-xs text-center px-4" style={{ color: C.faint }}>
+              By submitting, you confirm that the information you provided is accurate and complete.
             </p>
-          </div>
+          </>
         )}
-      </div>
+      </main>
 
-      {/* Fixed bottom nav */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3 flex gap-3 max-w-2xl mx-auto">
-        {step > 0 && (
-          <button
-            onClick={handleBack}
-            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-all"
-          >
-            <ChevronLeft size={15} /> Back
-          </button>
-        )}
-        {step < activeSteps.length - 1 ? (
-          <button
-            onClick={handleNext}
-            disabled={step === 0 && !appType}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-bold text-white transition-all disabled:opacity-40"
-            style={{ background: MAROON }}
-          >
-            Next <ChevronRight size={15} />
-          </button>
-        ) : (
-          <button
-            onClick={handleSubmit}
-            disabled={submitting}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-bold text-white transition-all disabled:opacity-60"
-            style={{ background: MAROON }}
-          >
-            {submitting
-              ? <><RefreshCw size={14} className="animate-spin" /> Submitting...</>
-              : <><Check size={14} /> Submit Request</>}
-          </button>
-        )}
+      {/* Bottom nav */}
+      <div className="fixed bottom-0 inset-x-0 bg-white border-t z-10" style={{ borderColor: C.line, paddingBottom: "env(safe-area-inset-bottom)" }}>
+        <div className="max-w-3xl mx-auto px-4 py-3 flex gap-3">
+          {step > 0 && (
+            <button onClick={handleBack}
+              className="flex items-center gap-1.5 px-4 h-11 rounded-xl border border-gray-200 bg-white text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors">
+              <ChevronLeft size={15} /> Back
+            </button>
+          )}
+          {step < STEPS.length - 1 ? (
+            <button onClick={handleNext} disabled={step === 0 && !appType}
+              className="flex-1 flex items-center justify-center gap-1.5 h-11 rounded-xl text-sm font-bold text-white transition-opacity disabled:opacity-40"
+              style={{ background: C.brand }}>
+              Next <ChevronRight size={15} />
+            </button>
+          ) : (
+            <button onClick={handleSubmit} disabled={submitting}
+              className="flex-1 flex items-center justify-center gap-1.5 h-11 rounded-xl text-sm font-bold text-white transition-opacity disabled:opacity-60"
+              style={{ background: C.brand }}>
+              {submitting ? <><RefreshCw size={14} className="animate-spin" /> Submitting…</> : <><Check size={14} /> Submit request</>}
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

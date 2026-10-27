@@ -236,6 +236,7 @@ export type Tab =
   | "Book Catalog"
   | "Inventory"
   | "Borrowing"
+  | "Facility Reservation"
   | "Settings";
 
 export type TabKey = "details" | "submission" | "settings" | "assign";

@@ -1,123 +1,280 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
-import {
-  Plus, Search, Filter, BookOpen, Edit2, Trash2,
-  X, Check, ChevronDown, Download, RefreshCw, BookMarked,
-  ChevronRight,
-} from "lucide-react";
+// src/components/layout/course/CourseBookCatalogTab.tsx
 
-const MAROON = "#7b1113";
-const SLATE  = "#0f172a";
-const MUTED  = "#64748b";
-const RULE   = "#e2e8f0";
-const FONT   = "'Inter', 'SF Pro Display', system-ui, -apple-system, sans-serif";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import type { ReactNode } from "react";
+import {
+  Plus, Search, SlidersHorizontal, BookOpen, Pencil, Trash2, X, Check,
+  Download, RefreshCw, BookMarked, ChevronRight, ChevronLeft, MoreVertical,
+  AlertCircle, CheckCircle2,
+} from "lucide-react";
+import { FONT } from "./osaShared";
+
+/* ════════════════════════════════════════════════════════════════════════════
+   1. DESIGN TOKENS
+   ════════════════════════════════════════════════════════════════════════════ */
+
+const C = {
+  brand:     "#7b1113",
+  brandTint: "#fdf2f2",
+  brandRing: "rgba(123,17,19,0.12)",
+  ink:       "#111827",
+  body:      "#374151",
+  muted:     "#6b7280",
+  faint:     "#9ca3af",
+  line:      "#e5e7eb",
+  lineSoft:  "#f3f4f6",
+  canvas:    "#ffffff",
+  danger:    "#b91c1c",
+  ok:        "#15803d",
+} as const;
+
+const PAGE_SIZE = 20;
 
 const CATEGORIES = ["Filipiniana", "Circulation", "Reserved", "General References"] as const;
 type Category = typeof CATEGORIES[number];
 
-const CAT_COLORS: Record<Category, { bg: string; text: string; border: string }> = {
-  "Filipiniana":        { bg: "#f3f4f6", text: "#374151", border: "#e5e7eb" },
-  "Circulation":        { bg: "#f3f4f6", text: "#374151", border: "#e5e7eb" },
-  "Reserved":           { bg: "#f3f4f6", text: "#374151", border: "#e5e7eb" },
-  "General References": { bg: "#f3f4f6", text: "#374151", border: "#e5e7eb" },
-};
+const catShort = (c: string) => (c === "General References" ? "Gen. Ref." : c);
+
+/* ════════════════════════════════════════════════════════════════════════════
+   2. TYPES & HELPERS
+   ════════════════════════════════════════════════════════════════════════════ */
 
 interface LibraryBook {
-  id:             string;
-  accessionNo:    string;
-  callNumber:     string | null;
-  isbn:           string | null;
-  title:          string;
-  author:         string | null;
-  publisher:      string | null;
-  copyrightYear:  string | null;
-  edition:        string | null;
-  pages:          number | null;
-  volume:         string | null;
-  category:       string;
-  location:       string | null;
-  totalCopies:    number;
-  availableCopies:number;
-  coverUrl:       string | null;
-  createdAt:      string;
-  _count:         { borrowRecords: number };
+  id:              string;
+  accessionNo:     string;
+  callNumber:      string | null;
+  isbn:            string | null;
+  title:           string;
+  author:          string | null;
+  publisher:       string | null;
+  copyrightYear:   string | null;
+  edition:         string | null;
+  pages:           number | null;
+  volume:          string | null;
+  category:        string;
+  location:        string | null;
+  totalCopies:     number;
+  availableCopies: number;
+  coverUrl:        string | null;
+  createdAt:       string;
+  _count:          { borrowRecords: number };
 }
 
-interface Stat {
-  category:    string;
-  _count:      { id: number };
-  _sum:        { totalCopies: number | null; availableCopies: number | null };
+type AvailFilter = "" | "AVAILABLE" | "OUT_OF_STOCK";
+
+const authorsOf = (a: string | null) => (a ? a.split("|").map(s => s.trim()).filter(Boolean) : []);
+
+const YEAR_PRESETS = [
+  { label: "Pre-2000", from: "1900", to: "1999" },
+  { label: "2000s",    from: "2000", to: "2009" },
+  { label: "2010s",    from: "2010", to: "2019" },
+  { label: "2020s",    from: "2020", to: String(new Date().getFullYear()) },
+];
+
+function matchesYear(b: LibraryBook, from: string, to: string) {
+  const y = parseInt(b.copyrightYear ?? "");
+  if (from && !(y >= parseInt(from))) return false;
+  if (to   && !(y <= parseInt(to)))   return false;
+  return true;
 }
 
-const inputCls = "w-full border rounded-lg px-3 py-2 text-sm outline-none transition-all bg-white"
-  + " focus:ring-2 focus:ring-[#7b1113]/10 focus:border-[#7b1113] placeholder:text-gray-400";
+function matchesAvail(b: LibraryBook, a: AvailFilter) {
+  if (a === "AVAILABLE"    && b.availableCopies === 0) return false;
+  if (a === "OUT_OF_STOCK" && b.availableCopies  > 0)  return false;
+  return true;
+}
 
-function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
+function useDebounced<T>(value: T, delay = 300) {
+  const [v, setV] = useState(value);
+  useEffect(() => {
+    const t = setTimeout(() => setV(value), delay);
+    return () => clearTimeout(t);
+  }, [value, delay]);
+  return v;
+}
+
+const inputCls =
+  "w-full border border-gray-200 rounded-lg px-3 py-2.5 sm:py-2 text-sm outline-none focus:border-[#7b1113] focus:ring-2 focus:ring-[#7b1113]/10 transition-all bg-white placeholder:text-gray-400";
+const labelCls = "block text-xs font-semibold text-gray-600 mb-1";
+
+/* ════════════════════════════════════════════════════════════════════════════
+   3. UI PRIMITIVES
+   ════════════════════════════════════════════════════════════════════════════ */
+
+type ToastState = { msg: string; tone: "success" | "error" } | null;
+
+function Toast({ toast }: { toast: ToastState }) {
+  if (!toast) return null;
+  const isErr = toast.tone === "error";
   return (
-    <div>
-      <label style={{ fontSize: 11, fontWeight: 600, color: MUTED, display: "block", marginBottom: 4 }}>
-        {label}{required && <span className="text-red-500 ml-0.5">*</span>}
-      </label>
-      {children}
+    <div role="status"
+      className="fixed left-1/2 -translate-x-1/2 z-[70] flex items-center gap-2 px-4 py-2.5 rounded-xl shadow-lg text-xs font-semibold text-white"
+      style={{ background: isErr ? C.danger : C.ink, bottom: "calc(24px + env(safe-area-inset-bottom))", fontFamily: FONT }}>
+      {isErr ? <AlertCircle size={14} /> : <CheckCircle2 size={14} />}
+      {toast.msg}
     </div>
   );
 }
 
-function AuthorInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const [input, setInput] = useState("");
-  const tags = value ? value.split("|").map(s => s.trim()).filter(Boolean) : [];
+function SheetModal({
+  onClose, tone = "brand", icon, title, subtitle, children, footer, maxWidth = "max-w-md",
+}: {
+  onClose: () => void; tone?: "brand" | "danger"; icon?: ReactNode; title: string; subtitle?: string;
+  children: ReactNode; footer?: ReactNode; maxWidth?: string;
+}) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
 
-  const addTag = () => {
-    const trimmed = input.trim().replace(/,+$/, "").trim();
-    if (!trimmed) return;
-    const next = [...tags, trimmed];
-    onChange(next.join(" | "));
-    setInput("");
-  };
-
-  const removeTag = (i: number) => {
-    const next = tags.filter((_, idx) => idx !== i);
-    onChange(next.join(" | "));
-  };
+  const accent = tone === "danger" ? C.danger : C.brand;
 
   return (
-    <div className="w-full border rounded-lg px-2 py-1.5 bg-white focus-within:ring-2 focus-within:ring-[#7b1113]/10 focus-within:border-[#7b1113] transition-all flex flex-wrap gap-1.5 min-h-[38px]"
-      style={{ borderColor: RULE }}>
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40"
+      style={{ backdropFilter: "blur(3px)", fontFamily: FONT }} onClick={onClose}>
+      <div role="dialog" aria-modal="true" aria-label={title}
+        className={`bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full ${maxWidth} sm:mx-4 overflow-hidden flex flex-col max-h-[92vh]`}
+        onClick={e => e.stopPropagation()}>
+        <div className="flex justify-center pt-2.5 pb-1 sm:hidden shrink-0">
+          <div className="w-9 h-1 rounded-full bg-gray-300" />
+        </div>
+        <div className="flex items-center justify-between gap-3 px-5 py-3.5 shrink-0" style={{ background: accent, color: "#fff" }}>
+          <div className="flex items-center gap-3 min-w-0">
+            {icon && <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-white/20">{icon}</div>}
+            <div className="min-w-0">
+              <p className="truncate" style={{ fontSize: 14, fontWeight: 800 }}>{title}</p>
+              {subtitle && <p className="text-xs truncate text-white/70">{subtitle}</p>}
+            </div>
+          </div>
+          <button onClick={onClose} aria-label="Close"
+            className="w-8 h-8 flex items-center justify-center rounded-lg text-white/70 hover:text-white hover:bg-white/10 shrink-0">
+            <X size={16} />
+          </button>
+        </div>
+        <div className="overflow-y-auto">{children}</div>
+        {footer && (
+          <div className="border-t shrink-0 bg-gray-50" style={{ borderColor: C.line, paddingBottom: "env(safe-area-inset-bottom)" }}>
+            {footer}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ConfirmModal({
+  title, message, confirmLabel, busy, onConfirm, onClose,
+}: { title: string; message: ReactNode; confirmLabel: string; busy?: boolean; onConfirm: () => void; onClose: () => void }) {
+  return (
+    <SheetModal onClose={onClose} tone="danger" icon={<Trash2 size={16} />} title={title} maxWidth="max-w-sm"
+      footer={
+        <div className="px-5 py-4 flex gap-2">
+          <button onClick={onClose}
+            className="flex-1 h-10 rounded-xl text-xs font-semibold border border-gray-200 bg-white text-gray-600 hover:bg-gray-50">Cancel</button>
+          <button onClick={onConfirm} disabled={busy}
+            className="flex-1 h-10 rounded-xl text-xs font-bold text-white disabled:opacity-60" style={{ background: C.danger }}>
+            {busy ? "Please wait…" : confirmLabel}
+          </button>
+        </div>
+      }>
+      <div className="px-5 py-5 text-sm leading-relaxed" style={{ color: C.body }}>{message}</div>
+    </SheetModal>
+  );
+}
+
+function CategoryBadge({ category }: { category: string }) {
+  return (
+    <span className="inline-flex items-center text-[11px] font-semibold px-2 py-0.5 rounded-full shrink-0 whitespace-nowrap"
+      style={{ background: C.lineSoft, color: C.body }}>
+      {catShort(category)}
+    </span>
+  );
+}
+
+function Availability({ book, compact }: { book: LibraryBook; compact?: boolean }) {
+  const out = book.availableCopies === 0;
+  return (
+    <span className="text-xs font-semibold tabular-nums whitespace-nowrap" style={{ color: out ? C.danger : C.ok }}>
+      {compact ? `${book.availableCopies}/${book.totalCopies}` : `${book.availableCopies} of ${book.totalCopies} available`}
+    </span>
+  );
+}
+
+function PillGroup<T extends string>({
+  options, value, onChange,
+}: { options: Array<[T, string]>; value: T; onChange: (v: T) => void }) {
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {options.map(([val, label]) => {
+        const active = value === val;
+        return (
+          <button key={val} type="button" onClick={() => onChange(val)} aria-pressed={active}
+            className="px-3 h-8 rounded-full border text-[11px] font-semibold transition-colors"
+            style={active ? { background: C.brand, color: "#fff", borderColor: C.brand } : { background: "#fff", color: C.body, borderColor: C.line }}>
+            {label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   4. AUTHOR TAG INPUT
+   ════════════════════════════════════════════════════════════════════════════ */
+
+function AuthorInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [input, setInput] = useState("");
+  const tags = authorsOf(value);
+
+  const addTag = () => {
+    const t = input.trim().replace(/,+$/, "").trim();
+    if (!t) return;
+    onChange([...tags, t].join(" | "));
+    setInput("");
+  };
+  const removeTag = (i: number) => onChange(tags.filter((_, idx) => idx !== i).join(" | "));
+
+  return (
+    <div className="w-full border border-gray-200 rounded-lg px-2 py-1.5 bg-white focus-within:ring-2 focus-within:ring-[#7b1113]/10 focus-within:border-[#7b1113] transition-all flex flex-wrap gap-1.5 min-h-[40px]">
       {tags.map((t, i) => (
         <span key={i} className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full"
-          style={{ background: "#fef2f2", color: MAROON, border: "1px solid #e5d0d0" }}>
+          style={{ background: C.brandTint, color: C.brand }}>
           {t}
-          <button type="button" onClick={() => removeTag(i)} className="hover:opacity-70 leading-none">
-            <X size={10} />
-          </button>
+          <button type="button" onClick={() => removeTag(i)} aria-label={`Remove ${t}`} className="hover:opacity-70 leading-none"><X size={10} /></button>
         </span>
       ))}
-      <input
-        value={input}
-        onChange={e => setInput(e.target.value)}
+      <input value={input} onChange={e => setInput(e.target.value)}
         onKeyDown={e => {
           if (e.key === "Enter" || e.key === ",") { e.preventDefault(); addTag(); }
           if (e.key === "Backspace" && !input && tags.length) removeTag(tags.length - 1);
         }}
         onBlur={addTag}
-        placeholder={tags.length === 0 ? "Type name, press Enter or comma to add" : "Add another..."}
-        className="flex-1 min-w-[120px] text-sm outline-none bg-transparent placeholder:text-gray-400"
-        style={{ fontSize: 13 }}
-      />
+        placeholder={tags.length === 0 ? "Type a name, press Enter to add" : "Add another"}
+        className="flex-1 min-w-[120px] text-sm outline-none bg-transparent placeholder:text-gray-400" />
     </div>
   );
 }
 
-/* ── Add / Edit Modal ── */
+/* ════════════════════════════════════════════════════════════════════════════
+   5. ADD / EDIT MODAL
+   ════════════════════════════════════════════════════════════════════════════ */
+
+function Field({ label, required, children }: { label: string; required?: boolean; children: ReactNode }) {
+  return (
+    <div>
+      <label className={labelCls}>{label}{required && <span className="text-red-500 ml-0.5">*</span>}</label>
+      {children}
+    </div>
+  );
+}
+
 function BookModal({
   courseId, book, onClose, onSaved,
-}: {
-  courseId: string;
-  book:     LibraryBook | null;
-  onClose:  () => void;
-  onSaved:  (b: LibraryBook) => void;
-}) {
+}: { courseId: string; book: LibraryBook | null; onClose: () => void; onSaved: (b: LibraryBook) => void }) {
   const isEdit = !!book;
   const [saving, setSaving] = useState(false);
   const [error,  setError]  = useState("");
@@ -136,1095 +293,714 @@ function BookModal({
   const [totalCopies,   setTotalCopies]   = useState(book?.totalCopies?.toString() ?? "1");
 
   const handleSave = async () => {
+    if (!accessionNo.trim()) { setError("Enter the accession number."); return; }
+    if (!title.trim())       { setError("Enter the book title."); return; }
     setError(""); setSaving(true);
     try {
-      const url    = isEdit
-        ? `/api/courses/${courseId}/library-books/${book!.id}`
-        : `/api/courses/${courseId}/library-books`;
-      const method = isEdit ? "PATCH" : "POST";
-      const res    = await fetch(url, {
-        method, headers: { "Content-Type": "application/json" },
+      const url = isEdit ? `/api/courses/${courseId}/library-books/${book!.id}` : `/api/courses/${courseId}/library-books`;
+      const res = await fetch(url, {
+        method: isEdit ? "PATCH" : "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          accessionNo, callNumber, isbn, title, author,
-          publisher, copyrightYear, edition,
-          pages:      pages || null,
-          volume, category,
-          totalCopies: parseInt(totalCopies) || 1,
+          accessionNo, callNumber, isbn, title, author, publisher, copyrightYear, edition,
+          pages: pages || null, volume, category, totalCopies: parseInt(totalCopies) || 1,
         }),
       });
       const data = await res.json();
-      if (!res.ok) { setError(data.error ?? "Failed to save."); return; }
+      if (!res.ok) { setError(data.error ?? "Couldn’t save the book."); return; }
       onSaved(data.book);
-    } catch { setError("Network error."); }
-    finally  { setSaving(false); }
+    } catch { setError("Network error. Please try again."); }
+    finally { setSaving(false); }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40"
-      style={{ backdropFilter: "blur(4px)", fontFamily: FONT }}
-      onClick={onClose}>
-
-      {/* drag handle strip on mobile */}
-      <div className="sm:hidden w-full flex justify-center pt-3 absolute bottom-[min(90vh,560px)] pointer-events-none">
-        <div className="w-10 h-1 rounded-full bg-white/40" />
-      </div>
-
-      <div className="bg-white w-full sm:max-w-2xl sm:mx-4 rounded-t-2xl sm:rounded-2xl shadow-2xl flex flex-col"
-        style={{ border: `1px solid ${RULE}`, maxHeight: "calc(92vh - 60px)", marginBottom: 60 }}
-        onClick={e => e.stopPropagation()}>
-
-        {/* mobile pill */}
-        <div className="sm:hidden flex justify-center pt-3 pb-0">
-          <div className="w-10 h-1 rounded-full bg-gray-200" />
-        </div>
-
-        {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b sticky top-0 bg-white z-10"
-          style={{ borderColor: RULE }}>
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
-              style={{ background: "#fef2f2" }}>
-              <BookOpen size={15} style={{ color: MAROON }} />
-            </div>
-            <p className="text-sm font-bold" style={{ color: SLATE }}>
-              {isEdit ? "Edit Book" : "Add New Book"}
-            </p>
-          </div>
+    <SheetModal onClose={onClose} icon={<BookOpen size={16} />} title={isEdit ? "Edit book" : "Add new book"}
+      subtitle={isEdit ? book!.accessionNo : "Book catalog"} maxWidth="max-w-2xl"
+      footer={
+        <div className="px-5 py-4 flex gap-2">
           <button onClick={onClose}
-            className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-gray-100">
-            <X size={15} style={{ color: MUTED }} />
-          </button>
-        </div>
-
-        {/* Body */}
-        <div className="px-5 py-5 space-y-4 overflow-y-auto flex-1">
-          {error && (
-            <div className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
-              {error}
-            </div>
-          )}
-
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Accession No." required>
-              <input value={accessionNo} onChange={e => setAccessionNo(e.target.value)}
-                placeholder="e.g. 001234" className={inputCls}
-                style={{ borderColor: RULE }} />
-            </Field>
-            <Field label="Call Number">
-              <input value={callNumber} onChange={e => setCallNumber(e.target.value)}
-                placeholder="e.g. 808.3 M32" className={inputCls}
-                style={{ borderColor: RULE }} />
-            </Field>
-          </div>
-
-          <Field label="Title" required>
-            <input value={title} onChange={e => setTitle(e.target.value)}
-              placeholder="Book title" className={inputCls}
-              style={{ borderColor: RULE }} />
-          </Field>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Field label="Author (press Enter or comma to add)">
-              <AuthorInput value={author} onChange={setAuthor} />
-            </Field>
-            <Field label="Publisher">
-              <input value={publisher} onChange={e => setPublisher(e.target.value)}
-                placeholder="Publisher" className={inputCls}
-                style={{ borderColor: RULE }} />
-            </Field>
-          </div>
-
-          <div className="grid grid-cols-3 gap-3">
-            <Field label="Year">
-              <input value={copyrightYear} onChange={e => setCopyrightYear(e.target.value)}
-                placeholder="2023" className={inputCls}
-                style={{ borderColor: RULE }} />
-            </Field>
-            <Field label="Edition">
-              <input value={edition} onChange={e => setEdition(e.target.value)}
-                placeholder="3rd" className={inputCls}
-                style={{ borderColor: RULE }} />
-            </Field>
-            <Field label="Volume">
-              <input value={volume} onChange={e => setVolume(e.target.value)}
-                placeholder="Vol. 1" className={inputCls}
-                style={{ borderColor: RULE }} />
-            </Field>
-          </div>
-
-          <div className="grid grid-cols-3 gap-3">
-            <Field label="Category" required>
-              <div className="relative">
-                <select value={category} onChange={e => setCategory(e.target.value as Category)}
-                  className={inputCls} style={{ borderColor: RULE, appearance: "none" }}>
-                  {CATEGORIES.map(c => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
-                </select>
-                <ChevronDown size={12} className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"
-                  style={{ color: MUTED }} />
-              </div>
-            </Field>
-            <Field label="Copies">
-              <input type="number" min="1" value={totalCopies}
-                onChange={e => setTotalCopies(e.target.value)}
-                className={inputCls} style={{ borderColor: RULE }} />
-            </Field>
-            <Field label="ISBN">
-              <input value={isbn} onChange={e => setIsbn(e.target.value)}
-                placeholder="ISBN" className={inputCls}
-                style={{ borderColor: RULE }} />
-            </Field>
-          </div>
-
-          <Field label="Pages">
-            <input type="number" min="1" value={pages}
-              onChange={e => setPages(e.target.value)}
-              placeholder="No. of pages" className={inputCls}
-              style={{ borderColor: RULE }} />
-          </Field>
-        </div>
-
-        {/* Footer */}
-        <div className="flex gap-2 px-5 py-4 border-t shrink-0 bg-white" style={{ borderColor: RULE }}>
-          <button onClick={onClose}
-            className="flex-1 py-2.5 rounded-xl text-xs font-semibold"
-            style={{ border: `1px solid ${RULE}`, color: MUTED }}>
-            Cancel
-          </button>
+            className="flex-1 h-10 rounded-xl text-xs font-semibold border border-gray-200 bg-white text-gray-600 hover:bg-gray-50">Cancel</button>
           <button onClick={handleSave} disabled={saving}
-            className="flex-1 py-2.5 rounded-xl text-xs font-bold text-white disabled:opacity-50"
-            style={{ background: MAROON }}>
-            {saving ? "Saving..." : isEdit ? "Save Changes" : "Add Book"}
+            className="flex-1 h-10 rounded-xl text-xs font-bold text-white disabled:opacity-60" style={{ background: C.brand }}>
+            {saving ? "Saving…" : isEdit ? "Save changes" : "Add book"}
           </button>
         </div>
+      }>
+      <div className="px-5 py-5 space-y-4">
+        {error && (
+          <div role="alert" className="flex items-center gap-2 text-xs font-semibold rounded-lg border px-3 py-2"
+            style={{ color: C.danger, background: "#fef2f2", borderColor: "#fecaca" }}>
+            <AlertCircle size={13} /> {error}
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <Field label="Accession no." required>
+            <input value={accessionNo} onChange={e => setAccessionNo(e.target.value)} placeholder="e.g. 001234" className={inputCls} />
+          </Field>
+          <Field label="Call number">
+            <input value={callNumber} onChange={e => setCallNumber(e.target.value)} placeholder="e.g. 808.3 M32" className={inputCls} />
+          </Field>
+        </div>
+
+        <Field label="Title" required>
+          <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Book title" className={inputCls} />
+        </Field>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <Field label="Author(s)"><AuthorInput value={author} onChange={setAuthor} /></Field>
+          <Field label="Publisher">
+            <input value={publisher} onChange={e => setPublisher(e.target.value)} placeholder="Publisher" className={inputCls} />
+          </Field>
+        </div>
+
+        <div className="grid grid-cols-3 gap-3">
+          <Field label="Year"><input value={copyrightYear} onChange={e => setCopyrightYear(e.target.value)} placeholder="2023" className={inputCls} /></Field>
+          <Field label="Edition"><input value={edition} onChange={e => setEdition(e.target.value)} placeholder="3rd" className={inputCls} /></Field>
+          <Field label="Volume"><input value={volume} onChange={e => setVolume(e.target.value)} placeholder="Vol. 1" className={inputCls} /></Field>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <Field label="Category" required>
+            <select value={category} onChange={e => setCategory(e.target.value as Category)} className={inputCls}>
+              {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </Field>
+          <Field label="Copies">
+            <input type="number" min="1" value={totalCopies} onChange={e => setTotalCopies(e.target.value)} className={inputCls} />
+          </Field>
+          <Field label="Pages">
+            <input type="number" min="1" value={pages} onChange={e => setPages(e.target.value)} placeholder="No. of pages" className={inputCls} />
+          </Field>
+        </div>
+
+        <Field label="ISBN">
+          <input value={isbn} onChange={e => setIsbn(e.target.value)} placeholder="ISBN" className={inputCls} />
+        </Field>
       </div>
-    </div>
+    </SheetModal>
   );
 }
 
-/* ── Book Detail Modal ── */
-function BookDetailModal({
-  book, courseId, onClose, onEdit, onDelete, isHead,
-}: {
-  book: LibraryBook;
-  courseId: string;
-  onClose: () => void;
-  onEdit: () => void;
-  onDelete: () => void;
-  isHead: boolean;
-}) {
-  const [barcodeUrl, setBarcodeUrl] = useState<string | null>(null);
-  const [generating, setGenerating] = useState(false);
+/* ════════════════════════════════════════════════════════════════════════════
+   6. BOOK DETAIL MODAL
+   ════════════════════════════════════════════════════════════════════════════ */
 
-  useEffect(() => {
-    const url = `https://bwipjs-api.metafloor.com/?bcid=code128&text=${encodeURIComponent(book.accessionNo)}&scale=5&height=12&includetext=false&backgroundcolor=ffffff`;
-    setBarcodeUrl(url);
-  }, [book.accessionNo]);
+function BookDetailModal({
+  book, courseId, isHead, onClose, onEdit, onDelete,
+}: { book: LibraryBook; courseId: string; isHead: boolean; onClose: () => void; onEdit: () => void; onDelete: () => void }) {
+  const [generating, setGenerating] = useState(false);
+  const [printError, setPrintError] = useState("");
+
+  const barcodeUrl = useMemo(
+    () => `https://bwipjs-api.metafloor.com/?bcid=code128&text=${encodeURIComponent(book.accessionNo)}&scale=5&height=12&includetext=false&backgroundcolor=ffffff`,
+    [book.accessionNo],
+  );
 
   const handlePrintSingle = async () => {
-    setGenerating(true);
+    setGenerating(true); setPrintError("");
     try {
       const q = new URLSearchParams({ accessionNos: book.accessionNo });
       const res = await fetch(`/api/courses/${courseId}/library-books/print-barcodes?${q}`);
-      if (!res.ok) return;
+      if (!res.ok) { setPrintError("Couldn’t generate the barcode."); return; }
       const blob = await res.blob();
-      const url  = URL.createObjectURL(blob);
-      window.open(url);
-    } catch { /* ignore */ }
-    finally  { setGenerating(false); }
+      window.open(URL.createObjectURL(blob));
+    } catch { setPrintError("Couldn’t generate the barcode."); }
+    finally { setGenerating(false); }
   };
 
-  const col = CAT_COLORS[book.category as Category] ?? { bg: "#f3f4f6", text: "#374151", border: "#e5e7eb" };
-
-  const rows: [string, string][] = [
-    ["Accession No.", book.accessionNo],
-    ["Call No.", book.callNumber ?? "—"],
-    ["ISBN", book.isbn ?? "—"],
-    ["Publisher", book.publisher ?? "—"],
-    ["Year", book.copyrightYear ?? "—"],
+  const rows: Array<[string, string]> = [
+    ["Call no.",   book.callNumber ?? "—"],
+    ["ISBN",       book.isbn ?? "—"],
+    ["Publisher",  book.publisher ?? "—"],
+    ["Year",       book.copyrightYear ?? "—"],
     ...(book.edition ? [["Edition", book.edition] as [string, string]] : []),
     ...(book.volume  ? [["Volume",  book.volume]  as [string, string]] : []),
     ...(book.pages   ? [["Pages",   String(book.pages)] as [string, string]] : []),
+    ["Times borrowed", String(book._count?.borrowRecords ?? 0)],
   ];
+  const authors = authorsOf(book.author);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40"
-      style={{ backdropFilter: "blur(4px)", fontFamily: FONT }} onClick={onClose}>
-      <div className="bg-white w-full sm:max-w-sm sm:mx-4 rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden max-h-[92vh] flex flex-col"
-        style={{ border: `1px solid ${RULE}` }} onClick={e => e.stopPropagation()}>
-
-        {/* mobile pill */}
-        <div className="sm:hidden flex justify-center pt-3 shrink-0">
-          <div className="w-10 h-1 rounded-full bg-gray-200" />
-        </div>
-
-        {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 shrink-0" style={{ background: MAROON }}>
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
-              <BookOpen size={15} className="text-white" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-white/60">Book Details</p>
-              <p className="text-sm font-bold text-white truncate">{book.title}</p>
-            </div>
-          </div>
-          <button onClick={onClose}
-            className="w-7 h-7 flex items-center justify-center rounded-lg text-white/60 hover:text-white hover:bg-white/10 shrink-0">
-            <X size={15} />
-          </button>
-        </div>
-
-        {/* Body */}
-        <div className="overflow-y-auto flex-1">
-          <div className="px-5 py-4 space-y-4">
-
-            {/* Authors */}
-            {book.author && (
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: MUTED }}>Author(s)</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {book.author.split("|").map(a => a.trim()).filter(Boolean).map((a, i) => (
-                    <span key={i} className="text-xs font-semibold px-2 py-0.5 rounded-full"
-                      style={{ background: "#fef2f2", color: MAROON, border: "1px solid #e5d0d0" }}>
-                      {a}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Category + Copies row */}
-            <div className="flex items-center justify-between gap-3">
-              <span className="text-[10px] font-bold px-2.5 py-1 rounded-full"
-                style={{ background: col.bg, color: col.text, border: `1px solid ${col.border}` }}>
-                {book.category}
-              </span>
-              <span className="text-xs font-semibold"
-                style={{ color: book.availableCopies === 0 ? "#ef4444" : "#16a34a" }}>
-                {book.availableCopies}/{book.totalCopies} available
-              </span>
-            </div>
-
-            {/* Details grid */}
-            <div className="rounded-xl border divide-y" style={{ borderColor: RULE }}>
-              {rows.map(([label, value]) => (
-                <div key={label} className="flex items-center justify-between px-3 py-2.5 gap-3">
-                  <span className="text-[11px] font-semibold shrink-0" style={{ color: MUTED }}>{label}</span>
-                  <span className="text-xs text-gray-700 text-right font-medium truncate max-w-[60%]"
-                    style={label === "Accession No." ? { fontFamily: "monospace", color: MAROON, fontWeight: 700 } : {}}>
-                    {value}
-                  </span>
-                </div>
-              ))}
-            </div>
-
-            {/* Barcode */}
-            <div className="rounded-xl border p-4 flex flex-col items-center gap-2" style={{ borderColor: RULE, background: "#fafafa" }}>
-              <p className="text-[10px] font-bold uppercase tracking-widest self-start" style={{ color: MUTED }}>Barcode</p>
-              {barcodeUrl
-                // eslint-disable-next-line @next/next/no-img-element
-                ? <img src={barcodeUrl} alt="barcode" className="w-full max-h-24 object-contain" />
-                : <div className="w-full h-14 bg-gray-100 rounded animate-pulse" />}
-              <p className="text-xs font-bold font-mono text-gray-700">{book.accessionNo}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="shrink-0 border-t" style={{ borderColor: RULE, background: "#f9fafb" }}>
+    <SheetModal onClose={onClose} icon={<BookOpen size={16} />} title={book.title} subtitle={book.accessionNo}
+      footer={
+        <div className="px-5 py-3 space-y-2">
+          {printError && <p className="text-xs font-semibold" style={{ color: C.danger }}>{printError}</p>}
           {isHead && (
-            <div className="flex gap-2 px-5 pt-3">
+            <div className="flex gap-2">
               <button onClick={() => { onClose(); onEdit(); }}
-                className="flex-1 h-9 border rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 text-gray-600 hover:bg-gray-100"
-                style={{ borderColor: RULE }}>
-                <Edit2 size={12} /> Edit
+                className="flex-1 h-9 border border-gray-200 bg-white rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 text-gray-600 hover:bg-gray-50">
+                <Pencil size={12} /> Edit
               </button>
               <button onClick={() => { onClose(); onDelete(); }}
-                className="flex-1 h-9 border border-red-200 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 text-red-500 hover:bg-red-50">
+                className="flex-1 h-9 border border-red-200 bg-white rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 text-red-600 hover:bg-red-50">
                 <Trash2 size={12} /> Delete
               </button>
             </div>
           )}
-          <div className="flex gap-2 px-5 py-3">
+          <div className="flex gap-2">
             <button onClick={onClose}
-              className="flex-1 h-10 border rounded-xl text-xs font-semibold text-gray-600 hover:bg-gray-100"
-              style={{ borderColor: RULE }}>
-              Close
-            </button>
+              className="flex-1 h-10 border border-gray-200 bg-white rounded-xl text-xs font-semibold text-gray-600 hover:bg-gray-50">Close</button>
             <button onClick={handlePrintSingle} disabled={generating}
-              className="flex-1 h-10 rounded-xl text-xs font-bold text-white disabled:opacity-50 flex items-center justify-center gap-1.5"
-              style={{ background: MAROON }}>
-              {generating
-                ? <><RefreshCw size={13} className="animate-spin" /> Generating...</>
-                : <><BookMarked size={13} /> Print Barcode</>}
+              className="flex-1 h-10 rounded-xl text-xs font-bold text-white disabled:opacity-60 flex items-center justify-center gap-1.5"
+              style={{ background: C.brand }}>
+              {generating ? <><RefreshCw size={13} className="animate-spin" /> Generating…</> : <><BookMarked size={13} /> Print barcode</>}
             </button>
           </div>
         </div>
+      }>
+      <div className="px-5 py-5 space-y-4">
+        {authors.length > 0 && (
+          <div>
+            <p className="text-xs font-semibold mb-1.5" style={{ color: C.muted }}>Author(s)</p>
+            <div className="flex flex-wrap gap-1.5">
+              {authors.map((a, i) => (
+                <span key={i} className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: C.brandTint, color: C.brand }}>{a}</span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="flex items-center justify-between gap-3">
+          <CategoryBadge category={book.category} />
+          <Availability book={book} />
+        </div>
+
+        <dl className="rounded-xl border divide-y" style={{ borderColor: C.line }}>
+          {rows.map(([label, value]) => (
+            <div key={label} className="flex items-center justify-between px-3.5 py-2.5 gap-3" style={{ borderColor: C.lineSoft }}>
+              <dt className="text-xs shrink-0" style={{ color: C.muted }}>{label}</dt>
+              <dd className="text-xs font-semibold text-right truncate max-w-[60%]" style={{ color: C.ink }}>{value}</dd>
+            </div>
+          ))}
+        </dl>
+
+        <div className="rounded-xl border p-4 flex flex-col items-center gap-2 bg-gray-50" style={{ borderColor: C.line }}>
+          <p className="text-xs font-semibold self-start" style={{ color: C.muted }}>Barcode</p>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={barcodeUrl} alt={`Barcode for ${book.accessionNo}`} className="w-full max-h-24 object-contain" />
+          <p className="text-xs font-bold font-mono" style={{ color: C.body }}>{book.accessionNo}</p>
+        </div>
       </div>
-    </div>
+    </SheetModal>
   );
 }
 
-/* ── Print Barcodes Modal ── */
-function PrintBarcodesModal({
-  courseId, books, catFilter, selectMode, selectedIds,
-  onClose,
-}: {
-  courseId: string;
-  books: LibraryBook[];
-  catFilter: string;
-  selectMode: boolean;
-  selectedIds: Set<string>;
-  onClose: () => void;
-}) {
-  const [generating,    setGenerating]    = useState(false);
-  const [pdfUrl,        setPdfUrl]        = useState<string | null>(null);
-  const [error,         setError]         = useState("");
-  const [printCatFilter, setPrintCatFilter] = useState(catFilter);
+/* ════════════════════════════════════════════════════════════════════════════
+   7. PRINT BARCODES MODAL
+   ════════════════════════════════════════════════════════════════════════════ */
 
-  const isFromSelection = selectMode && selectedIds.size > 0;
-  const previewCount = isFromSelection
-    ? selectedIds.size
-    : books.filter(b => !printCatFilter || b.category === printCatFilter).length;
+function PrintBarcodesModal({
+  courseId, books, catFilter, selectedIds, onClose,
+}: { courseId: string; books: LibraryBook[]; catFilter: string; selectedIds: Set<string>; onClose: () => void }) {
+  const [generating, setGenerating] = useState(false);
+  const [pdfUrl,     setPdfUrl]     = useState<string | null>(null);
+  const [error,      setError]      = useState("");
+  const [cat,        setCat]        = useState(catFilter);
+
+  const fromSelection = selectedIds.size > 0;
+  const count = fromSelection ? selectedIds.size : books.filter(b => !cat || b.category === cat).length;
+  const pages = Math.ceil(count / 24);
 
   const generate = async () => {
     setGenerating(true); setError(""); setPdfUrl(null);
     try {
       const q = new URLSearchParams();
-      if (isFromSelection) {
-        q.set("accessionNos", [...selectedIds].map(id => books.find(b => b.id === id)?.accessionNo ?? "").filter(Boolean).join(","));
-      } else if (printCatFilter) {
-        q.set("category", printCatFilter);
-      }
+      if (fromSelection) {
+        q.set("accessionNos", books.filter(b => selectedIds.has(b.id)).map(b => b.accessionNo).join(","));
+      } else if (cat) q.set("category", cat);
       const res = await fetch(`/api/courses/${courseId}/library-books/print-barcodes?${q}`);
-      if (!res.ok) { setError("Failed to generate PDF."); return; }
-      const blob = await res.blob();
-      setPdfUrl(URL.createObjectURL(blob));
-    } catch { setError("Network error."); }
-    finally   { setGenerating(false); }
+      if (!res.ok) { setError("Couldn’t generate the PDF. Please try again."); return; }
+      setPdfUrl(URL.createObjectURL(await res.blob()));
+    } catch { setError("Network error. Please try again."); }
+    finally { setGenerating(false); }
   };
 
-  const handleClose = () => { onClose(); if (pdfUrl) URL.revokeObjectURL(pdfUrl); };
+  const handleClose = () => { if (pdfUrl) URL.revokeObjectURL(pdfUrl); onClose(); };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40"
-      style={{ backdropFilter: "blur(4px)", fontFamily: FONT }}
-      onClick={handleClose}>
-      <div className="bg-white w-full sm:w-[520px] sm:mx-4 rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden max-h-[92vh] flex flex-col"
-        style={{ border: `1px solid ${RULE}` }}
-        onClick={e => e.stopPropagation()}>
-
-        <div className="sm:hidden flex justify-center pt-3 shrink-0">
-          <div className="w-10 h-1 rounded-full bg-gray-200" />
-        </div>
-
-        {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 shrink-0" style={{ background: MAROON }}>
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
-              <BookMarked size={15} className="text-white" />
-            </div>
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-white/60">Library</p>
-              <p className="text-sm font-bold text-white">Print Barcode Labels</p>
-            </div>
-          </div>
+    <SheetModal onClose={handleClose} icon={<BookMarked size={16} />} title="Print barcode labels" subtitle="Library" maxWidth="max-w-lg"
+      footer={
+        <div className="px-5 py-4 flex gap-2">
           <button onClick={handleClose}
-            className="w-7 h-7 flex items-center justify-center rounded-lg text-white/60 hover:text-white hover:bg-white/10">
-            <X size={15} />
-          </button>
-        </div>
-
-        {/* Body */}
-        <div className="overflow-y-auto flex-1 px-5 py-5 space-y-4">
-          {/* Category filter */}
-          <div>
-            <p className="text-[11px] font-bold uppercase tracking-widest mb-2" style={{ color: MUTED }}>Category</p>
-            <div className="grid grid-cols-3 sm:flex gap-1">
-              {([["", "All"], ...CATEGORIES.map(c => [c, c === "General References" ? "Gen. Ref." : c])] as [string, string][]).map(([val, label]) => (
-                <button key={val} onClick={() => { setPrintCatFilter(val); setPdfUrl(null); }}
-                  className="flex-1 px-2 py-2 text-[11px] font-bold rounded-lg transition-all truncate"
-                  style={printCatFilter === val
-                    ? { background: MAROON, color: "#fff" }
-                    : { color: MUTED, background: "#f1f5f9", border: "1px solid #e2e8f0" }}>
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Info */}
-          <div className="rounded-xl border px-4 py-3 space-y-1" style={{ background: "#f8fafc", borderColor: RULE }}>
-            <p className="text-xs text-gray-500 flex items-center gap-1.5 flex-wrap">
-              <span className="font-black text-gray-800 text-sm">{previewCount}</span>
-              book{previewCount !== 1 ? "s" : ""} · {Math.ceil(previewCount / 24)} page{Math.ceil(previewCount / 24) !== 1 ? "s" : ""}
-              <span style={{ color: MUTED }}>· 3×8 per page</span>
-            </p>
-            <p className="text-[10px]" style={{ color: MUTED }}>Each label includes barcode + accession no. + title.</p>
-          </div>
-
-          {error && <p className="text-xs text-red-500 font-semibold">{error}</p>}
-
-          {pdfUrl && (
-            <div className="rounded-xl border overflow-hidden" style={{ borderColor: RULE }}>
-              <iframe src={pdfUrl} className="w-full" style={{ height: 280 }} title="Barcode Preview" />
-            </div>
-          )}
-        </div>
-
-        {/* Footer */}
-        <div className="flex gap-2 px-5 py-4 border-t shrink-0" style={{ borderColor: RULE, background: "#f9fafb" }}>
-          <button onClick={handleClose}
-            className="flex-1 h-10 border rounded-xl text-xs font-semibold text-gray-600 hover:bg-gray-100"
-            style={{ borderColor: RULE }}>
-            Close
-          </button>
+            className="flex-1 h-10 border border-gray-200 bg-white rounded-xl text-xs font-semibold text-gray-600 hover:bg-gray-50">Close</button>
           {pdfUrl ? (
             <a href={pdfUrl} download="barcodes.pdf"
-              className="flex-1 h-10 rounded-xl text-xs font-black text-white flex items-center justify-center gap-1.5"
-              style={{ background: MAROON }}>
+              className="flex-1 h-10 rounded-xl text-xs font-bold text-white flex items-center justify-center gap-1.5" style={{ background: C.brand }}>
               <Download size={13} /> Download PDF
             </a>
           ) : (
-            <button onClick={generate} disabled={generating || previewCount === 0}
-              className="flex-1 h-10 rounded-xl text-xs font-black text-white disabled:opacity-50 flex items-center justify-center gap-1.5"
-              style={{ background: MAROON }}>
-              {generating
-                ? <><RefreshCw size={13} className="animate-spin" /> Generating...</>
-                : <><BookMarked size={13} /> Generate PDF</>}
+            <button onClick={generate} disabled={generating || count === 0}
+              className="flex-1 h-10 rounded-xl text-xs font-bold text-white disabled:opacity-60 flex items-center justify-center gap-1.5"
+              style={{ background: C.brand }}>
+              {generating ? <><RefreshCw size={13} className="animate-spin" /> Generating…</> : <><BookMarked size={13} /> Generate PDF</>}
             </button>
           )}
         </div>
-      </div>
-    </div>
-  );
-}
-
-/* ── Export Modal ── */
-function ExportModal({
-  books, catFilter, availFilter, yearFrom, yearTo, search, onClose,
-}: {
-  books: LibraryBook[];
-  catFilter: string;
-  availFilter: string;
-  yearFrom: string;
-  yearTo: string;
-  search: string;
-  onClose: () => void;
-}) {
-  const [exporting,      setExporting]    = useState(false);
-  const [expCatFilter,   setExpCatFilter] = useState(catFilter);
-  const [expAvailFilter, setExpAvailFilter] = useState(availFilter);
-  const [expYearFrom,    setExpYearFrom]  = useState(yearFrom);
-  const [expYearTo,      setExpYearTo]    = useState(yearTo);
-
-  const exportPreview = books.filter(b => {
-    if (expAvailFilter === "AVAILABLE"    && b.availableCopies === 0) return false;
-    if (expAvailFilter === "OUT_OF_STOCK" && b.availableCopies  > 0)  return false;
-    if (expYearFrom && parseInt(b.copyrightYear ?? "0")    < parseInt(expYearFrom)) return false;
-    if (expYearTo   && parseInt(b.copyrightYear ?? "9999") > parseInt(expYearTo))   return false;
-    if (expCatFilter && b.category !== expCatFilter) return false;
-    return true;
-  });
-
-  const doExport = () => {
-    setExporting(true);
-    setTimeout(() => {
-      const header = ["Accession No.","Call Number","Title","Author","Publisher","Copyright Year","Edition","Volume","Category","Total Copies","Available","ISBN"];
-      const rows   = exportPreview.map(b => [
-        b.accessionNo, b.callNumber ?? "", b.title, b.author ?? "",
-        b.publisher ?? "", b.copyrightYear ?? "", b.edition ?? "",
-        b.volume ?? "", b.category, b.totalCopies, b.availableCopies, b.isbn ?? "",
-      ]);
-      const csv  = [header, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
-      const blob = new Blob([csv], { type: "text/csv" });
-      const url  = URL.createObjectURL(blob);
-      const a    = document.createElement("a"); a.href = url;
-      a.download = `book-catalog-${new Date().toISOString().slice(0,10)}.csv`; a.click();
-      URL.revokeObjectURL(url);
-      setExporting(false);
-      onClose();
-    }, 300);
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40"
-      style={{ backdropFilter: "blur(4px)", fontFamily: FONT }}
-      onClick={onClose}>
-      <div className="bg-white w-full sm:w-[460px] sm:mx-4 rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden max-h-[92vh] flex flex-col"
-        style={{ border: `1px solid ${RULE}` }}
-        onClick={e => e.stopPropagation()}>
-
-        <div className="sm:hidden flex justify-center pt-3 shrink-0">
-          <div className="w-10 h-1 rounded-full bg-gray-200" />
-        </div>
-
-        {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 shrink-0" style={{ background: MAROON }}>
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
-              <Download size={15} className="text-white" />
-            </div>
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-white/60">Library</p>
-              <p className="text-sm font-bold text-white">Export Book Catalog</p>
-            </div>
-          </div>
-          <button onClick={onClose}
-            className="w-7 h-7 flex items-center justify-center rounded-lg text-white/60 hover:text-white hover:bg-white/10">
-            <X size={15} />
-          </button>
-        </div>
-
-        {/* Body */}
-        <div className="overflow-y-auto flex-1 px-5 py-5 space-y-4">
-          {/* Category */}
+      }>
+      <div className="px-5 py-5 space-y-4">
+        {!fromSelection && (
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-widest mb-2" style={{ color: MUTED }}>Category</p>
-            <div className="grid grid-cols-3 sm:flex gap-1">
-              {([["", "All"], ...CATEGORIES.map(c => [c, c === "General References" ? "Gen. Ref." : c])] as [string, string][]).map(([val, label]) => (
-                <button key={val} onClick={() => setExpCatFilter(val)}
-                  className="flex-1 px-2 py-2 text-[11px] font-bold rounded-lg transition-all truncate"
-                  style={expCatFilter === val
-                    ? { background: MAROON, color: "#fff" }
-                    : { color: MUTED, background: "#f1f5f9", border: "1px solid #e2e8f0" }}>
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Availability */}
-          <div>
-            <p className="text-[11px] font-bold uppercase tracking-widest mb-2" style={{ color: MUTED }}>Availability</p>
-            <div className="flex rounded-lg border overflow-hidden" style={{ borderColor: RULE }}>
-              {([["", "All"], ["AVAILABLE", "Available"], ["OUT_OF_STOCK", "Out of Stock"]] as const).map(([val, label]) => (
-                <button key={val} onClick={() => setExpAvailFilter(val)}
-                  className="flex-1 px-2 py-2 text-[11px] font-bold transition-all"
-                  style={expAvailFilter === val
-                    ? { background: MAROON, color: "#fff" }
-                    : { color: MUTED, background: "#fff" }}>
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Year */}
-          <div>
-            <p className="text-[11px] font-bold uppercase tracking-widest mb-2" style={{ color: MUTED }}>Copyright Year</p>
-            <div className="flex items-center gap-2">
-              <input type="number" value={expYearFrom} onChange={e => setExpYearFrom(e.target.value)}
-                placeholder="From" min="1900" max="2099"
-                className="flex-1 text-xs border rounded-lg px-3 py-2 bg-white outline-none"
-                style={{ borderColor: RULE }} />
-              <span className="text-xs shrink-0" style={{ color: MUTED }}>to</span>
-              <input type="number" value={expYearTo} onChange={e => setExpYearTo(e.target.value)}
-                placeholder="To" min="1900" max="2099"
-                className="flex-1 text-xs border rounded-lg px-3 py-2 bg-white outline-none"
-                style={{ borderColor: RULE }} />
-            </div>
-            <div className="flex items-center gap-1.5 mt-2 flex-wrap">
-              {[
-                { label: "Pre-2000", fn: () => { setExpYearFrom("1900"); setExpYearTo("1999"); } },
-                { label: "2000s",    fn: () => { setExpYearFrom("2000"); setExpYearTo("2009"); } },
-                { label: "2010s",    fn: () => { setExpYearFrom("2010"); setExpYearTo("2019"); } },
-                { label: "2020s",    fn: () => { setExpYearFrom("2020"); setExpYearTo(new Date().getFullYear().toString()); } },
-              ].map(p => (
-                <button key={p.label} onClick={p.fn}
-                  className="text-[11px] font-bold px-2.5 py-1 rounded-lg border transition-all"
-                  style={{ borderColor: RULE, color: MUTED }}>
-                  {p.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Preview count */}
-          <div className="rounded-xl border px-4 py-3" style={{ background: "#f8fafc", borderColor: RULE }}>
-            <p className="text-xs text-gray-500 flex items-center gap-1.5 flex-wrap">
-              <span className="font-black text-gray-800 text-sm">{exportPreview.length}</span>
-              book{exportPreview.length !== 1 ? "s" : ""} will be exported
-              {exportPreview.length < books.length && (
-                <span style={{ color: MUTED }}>· filtered from {books.length} total</span>
-              )}
-            </p>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="flex gap-2 px-5 py-4 border-t shrink-0" style={{ borderColor: RULE, background: "#f9fafb" }}>
-          <button onClick={onClose}
-            className="flex-1 h-10 border rounded-xl text-xs font-semibold text-gray-600 hover:bg-gray-100"
-            style={{ borderColor: RULE }}>
-            Cancel
-          </button>
-          <button onClick={doExport} disabled={exporting || exportPreview.length === 0}
-            className="flex-1 h-10 rounded-xl text-xs font-black text-white disabled:opacity-50 flex items-center justify-center gap-1.5"
-            style={{ background: MAROON }}>
-            {exporting
-              ? <><RefreshCw size={13} className="animate-spin" /> Exporting...</>
-              : <><Download size={13} /> Export {exportPreview.length} Book{exportPreview.length !== 1 ? "s" : ""}</>}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ── Mobile Book Row (compact list item) ── */
-function MobileBookRow({
-  book, selectMode, selected, onSelect, onOpen,
-}: {
-  book: LibraryBook;
-  selectMode: boolean;
-  selected: boolean;
-  onSelect: () => void;
-  onOpen: () => void;
-}) {
-  const col = CAT_COLORS[book.category as Category] ?? { bg: "#f3f4f6", text: "#374151", border: "#e5e7eb" };
-  return (
-    <button
-      type="button"
-      className="w-full text-left flex items-center gap-3 px-4 py-3 border-b transition-colors hover:bg-gray-50 active:bg-gray-100"
-      style={{
-        borderColor: "#f1f5f9",
-        background: selected ? "#fef2f2" : undefined,
-      }}
-      onClick={selectMode ? onSelect : onOpen}
-    >
-      {selectMode && (
-        <div className="shrink-0">
-          <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${selected ? "border-[#7b1113] bg-[#7b1113]" : "border-gray-300"}`}>
-            {selected && <Check size={12} className="text-white" />}
-          </div>
-        </div>
-      )}
-
-      {/* Icon */}
-      <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-        style={{ background: "#fef2f2" }}>
-        <BookOpen size={15} style={{ color: MAROON }} />
-      </div>
-
-      {/* Content */}
-      <div className="flex-1 min-w-0">
-        <p className="text-[13px] font-semibold text-gray-900 truncate leading-tight">{book.title}</p>
-        <p className="text-[11px] font-mono font-bold mt-0.5" style={{ color: MAROON }}>{book.accessionNo}</p>
-        <div className="flex items-center gap-2 mt-1 flex-wrap">
-          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md"
-            style={{ background: col.bg, color: col.text, border: `1px solid ${col.border}` }}>
-            {book.category === "General References" ? "Gen. Ref." : book.category}
-          </span>
-          <span className="text-[11px] font-semibold"
-            style={{ color: book.availableCopies === 0 ? "#ef4444" : "#16a34a" }}>
-            {book.availableCopies}/{book.totalCopies}
-          </span>
-        </div>
-      </div>
-
-      {!selectMode && <ChevronRight size={14} style={{ color: "#d1d5db" }} className="shrink-0" />}
-    </button>
-  );
-}
-
-/* ── Main Component ── */
-export default function CourseBookCatalogTab({
-  courseId, isHead,
-}: {
-  courseId: string;
-  isHead:   boolean;
-}) {
-  const [books,      setBooks]      = useState<LibraryBook[]>([]);
-  const [stats,      setStats]      = useState<Stat[]>([]);
-  const [loading,    setLoading]    = useState(true);
-  const [search,     setSearch]     = useState("");
-  const [catFilter,  setCatFilter]  = useState("");
-  const [showAdd,    setShowAdd]    = useState(false);
-  const [editBook,   setEditBook]   = useState<LibraryBook | null>(null);
-  const [deleteTarget,   setDeleteTarget]   = useState<LibraryBook | null>(null);
-  const [deleting,       setDeleting]       = useState(false);
-  const [showExportModal,  setShowExportModal]  = useState(false);
-  const [showBarcodeModal, setShowBarcodeModal] = useState(false);
-  const [selectMode,       setSelectMode]       = useState(false);
-  const [selectedIds,      setSelectedIds]      = useState<Set<string>>(new Set());
-  const [bulkDeleting,     setBulkDeleting]     = useState(false);
-  const [bookDetail,       setBookDetail]       = useState<LibraryBook | null>(null);
-  const [showFilters,      setShowFilters]      = useState(false);
-  const [availFilter,      setAvailFilter]      = useState<"" | "AVAILABLE" | "OUT_OF_STOCK">("");
-  const [yearFrom,         setYearFrom]         = useState("");
-  const [yearTo,           setYearTo]           = useState("");
-
-  const searchTimeout = useRef<NodeJS.Timeout | null>(null);
-  const [searchInput, setSearchInput] = useState("");
-
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams();
-      if (search)    params.set("search",   search);
-      if (catFilter) params.set("category", catFilter);
-      const res  = await fetch(`/api/courses/${courseId}/library-books?${params}`);
-      const data = await res.json();
-      setBooks(data.books ?? []);
-      setStats(data.stats ?? []);
-    } catch { /* ignore */ }
-    finally  { setLoading(false); }
-  }, [courseId, search, catFilter]);
-
-  useEffect(() => { load(); }, [load]);
-
-  const handleSearchInput = (val: string) => {
-    setSearchInput(val);
-    if (searchTimeout.current) clearTimeout(searchTimeout.current);
-    searchTimeout.current = setTimeout(() => setSearch(val), 400);
-  };
-
-  const handleDelete = async (target?: LibraryBook) => {
-    const book = target ?? deleteTarget;
-    if (!book) return;
-    setDeleting(true);
-    try {
-      await fetch(`/api/courses/${courseId}/library-books/${book.id}`, { method: "DELETE" });
-      setBooks(prev => prev.filter(b => b.id !== book.id));
-      setDeleteTarget(null);
-    } catch { /* ignore */ }
-    finally  { setDeleting(false); }
-  };
-
-  const filteredBooks = books.filter(b => {
-    if (availFilter === "AVAILABLE"    && b.availableCopies === 0) return false;
-    if (availFilter === "OUT_OF_STOCK" && b.availableCopies  > 0)  return false;
-    if (yearFrom && parseInt(b.copyrightYear ?? "0") < parseInt(yearFrom)) return false;
-    if (yearTo   && parseInt(b.copyrightYear ?? "9999") > parseInt(yearTo))  return false;
-    return true;
-  });
-
-  const hasActiveFilter = !!(availFilter || catFilter || yearFrom || yearTo);
-
-  const toggleSelect = (id: string) => {
-    setSelectedIds(prev => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
-  };
-
-  const toggleSelectAll = () => {
-    if (selectedIds.size === filteredBooks.length) setSelectedIds(new Set());
-    else setSelectedIds(new Set(filteredBooks.map(b => b.id)));
-  };
-
-  const exitSelectMode = () => { setSelectMode(false); setSelectedIds(new Set()); };
-
-  const handleBulkDelete = async () => {
-    if (!confirm(`Delete ${selectedIds.size} book(s)? This cannot be undone.`)) return;
-    setBulkDeleting(true);
-    try {
-      await Promise.all([...selectedIds].map(id =>
-        fetch(`/api/courses/${courseId}/library-books/${id}`, { method: "DELETE" })
-      ));
-      setBooks(prev => prev.filter(b => !selectedIds.has(b.id)));
-      exitSelectMode();
-    } catch { /* ignore */ }
-    finally  { setBulkDeleting(false); }
-  };
-
-  // Stats
-  const totalBooks    = stats.reduce((s, x) => s + (x._sum.totalCopies ?? 0), 0);
-  const totalTitles   = books.length;
-  const totalBorrowed = books.reduce((s, b) => s + (b._count?.borrowRecords ?? 0), 0);
-
-  const STAT_ITEMS = [
-    { label: "Titles", value: totalTitles },
-    { label: "Copies", value: totalBooks },
-    { label: "Borrowed", value: totalBorrowed },
-    { label: "Categories", value: CATEGORIES.length },
-  ];
-
-  return (
-    <div className="h-full flex flex-col overflow-hidden" style={{ fontFamily: FONT, background: "#f8f8f7" }}>
-
-      {/* ── Top bar ── */}
-      <div className="bg-white border-b border-gray-200 px-4 sm:px-8 py-3 sm:py-4 flex items-center justify-between shrink-0 gap-3">
-        <div className="min-w-0">
-          <p className="text-[10px] font-bold uppercase tracking-[0.15em] mb-0.5" style={{ color: MAROON }}>Library</p>
-          <h1 className="text-base sm:text-lg font-bold text-gray-900 leading-none">Book Catalog</h1>
-        </div>
-        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-          <button onClick={() => setShowExportModal(true)}
-            className="h-8 px-2.5 sm:px-3 flex items-center gap-1.5 text-xs font-semibold text-gray-500 border border-gray-200 hover:border-gray-400 hover:text-gray-700 rounded-lg transition-all">
-            <Download className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Export</span>
-          </button>
-          <button onClick={() => setShowBarcodeModal(true)}
-            className="h-8 px-2.5 sm:px-3 flex items-center gap-1.5 text-xs font-semibold text-gray-500 border border-gray-200 hover:border-gray-400 hover:text-gray-700 rounded-lg transition-all">
-            <BookMarked className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Barcodes</span>
-          </button>
-          {isHead && (
-            <button onClick={() => setShowAdd(true)}
-              className="h-8 px-3 sm:px-4 flex items-center gap-1.5 text-xs font-bold text-white rounded-lg transition-all"
-              style={{ background: MAROON }}>
-              <Plus className="w-3.5 h-3.5" />
-              <span>Add</span>
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* ── Scrollable body ── */}
-      <div className="flex-1 overflow-y-auto">
-
-        {/* Stats strip */}
-        <div className="bg-white border-b border-gray-200 px-4 sm:px-8 py-3">
-          <div className="grid grid-cols-4 gap-2 sm:gap-4">
-            {STAT_ITEMS.map(s => (
-              <div key={s.label} className="flex flex-col items-center sm:items-start sm:flex-row sm:gap-3">
-                <p className="text-lg sm:text-xl font-black tabular-nums text-gray-900 leading-none">{s.value}</p>
-                <p className="text-[10px] sm:text-xs font-semibold text-gray-400 mt-0.5 sm:mt-auto sm:mb-0.5 leading-tight text-center sm:text-left">{s.label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* ── Toolbar ── */}
-        <div className="bg-white border-b border-gray-200 px-4 sm:px-8 py-2.5 flex items-center gap-2">
-          {!selectMode ? (
-            <>
-              {/* Search */}
-              <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-3 py-1.5 flex-1 bg-gray-50 focus-within:bg-white focus-within:border-gray-400 transition-all">
-                <Search className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                <input value={searchInput} onChange={e => handleSearchInput(e.target.value)}
-                  placeholder="Search title, author, accession…"
-                  className="flex-1 text-xs text-gray-700 placeholder:text-gray-400 outline-none bg-transparent min-w-0" />
-                {searchInput && (
-                  <button onClick={() => handleSearchInput("")} className="text-gray-300 hover:text-gray-500">
-                    <X className="w-3 h-3" />
-                  </button>
-                )}
-              </div>
-
-              {/* Filter */}
-              <button onClick={() => setShowFilters(f => !f)}
-                className="h-8 px-3 rounded-lg border text-[11px] font-bold flex items-center gap-1.5 shrink-0 transition-all"
-                style={(showFilters || hasActiveFilter)
-                  ? { background: MAROON, color: "#fff", borderColor: MAROON }
-                  : { borderColor: "#e2e8f0", color: MUTED }}>
-                <Filter className="w-3 h-3" />
-                <span className="hidden sm:inline">Filters</span>
-                {hasActiveFilter && <span className="w-1.5 h-1.5 rounded-full bg-white/70" />}
-              </button>
-
-              {/* Select */}
-              {isHead && (
-                <button onClick={() => setSelectMode(true)}
-                  className="h-8 px-3 rounded-lg border text-[11px] font-bold border-gray-200 text-gray-500 hover:border-gray-400 transition-all shrink-0">
-                  <Check size={13} />
-                </button>
-              )}
-            </>
-          ) : (
-            <>
-              <input type="checkbox"
-                checked={selectedIds.size === filteredBooks.length && filteredBooks.length > 0}
-                onChange={toggleSelectAll}
-                className="w-4 h-4 accent-[#7b1113] cursor-pointer shrink-0" />
-              <span className="text-xs text-gray-500 font-medium flex-1">
-                {selectedIds.size > 0 ? `${selectedIds.size} selected` : "Select all"}
-              </span>
-              {selectedIds.size > 0 && (
-                <button onClick={handleBulkDelete} disabled={bulkDeleting}
-                  className="h-8 px-3 rounded-lg text-xs font-bold text-white bg-red-500 flex items-center gap-1.5 disabled:opacity-50 shrink-0">
-                  <Trash2 size={12} /> {bulkDeleting ? "..." : `Delete (${selectedIds.size})`}
-                </button>
-              )}
-              <button onClick={exitSelectMode}
-                className="h-8 px-3 rounded-lg border border-gray-200 text-xs font-semibold text-gray-500 flex items-center gap-1 shrink-0">
-                <X size={12} /> Cancel
-              </button>
-            </>
-          )}
-        </div>
-
-        {/* ── Filters panel ── */}
-        {showFilters && (
-          <div className="bg-white border-b border-gray-200 px-4 sm:px-8 py-3 space-y-3">
-            {/* Availability */}
-            <div className="flex items-center gap-3 flex-wrap">
-              <span className="text-[11px] font-bold text-gray-500 w-20 shrink-0">Availability</span>
-              <div className="flex rounded-lg border border-gray-200 overflow-hidden">
-                {([["", "All"], ["AVAILABLE", "Available"], ["OUT_OF_STOCK", "Out"]] as const).map(([val, label]) => (
-                  <button key={val} onClick={() => setAvailFilter(val)}
-                    className="px-3 py-1.5 text-[11px] font-bold transition-all"
-                    style={availFilter === val ? { background: MAROON, color: "#fff" } : { color: MUTED, background: "#fff" }}>
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Category */}
-            <div className="flex items-start gap-3 flex-wrap">
-              <span className="text-[11px] font-bold text-gray-500 w-20 shrink-0 mt-1.5">Category</span>
-              <div className="flex flex-wrap gap-1">
-                {([["", "All"], ...CATEGORIES.map(c => [c, c === "General References" ? "Gen. Ref." : c])] as [string, string][]).map(([val, label]) => (
-                  <button key={val} onClick={() => setCatFilter(val)}
-                    className="px-2.5 py-1.5 text-[11px] font-bold rounded-lg border transition-all"
-                    style={catFilter === val
-                      ? { background: MAROON, color: "#fff", borderColor: MAROON }
-                      : { color: MUTED, background: "#f1f5f9", borderColor: "#e2e8f0" }}>
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Year */}
-            <div className="flex items-center gap-3 flex-wrap">
-              <span className="text-[11px] font-bold text-gray-500 w-20 shrink-0">Year</span>
-              <div className="flex items-center gap-2">
-                <input type="number" value={yearFrom} onChange={e => setYearFrom(e.target.value)}
-                  placeholder="From" min="1900" max="2099"
-                  className="w-20 text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white outline-none focus:border-[#7b1113]" />
-                <span className="text-xs text-gray-400">–</span>
-                <input type="number" value={yearTo} onChange={e => setYearTo(e.target.value)}
-                  placeholder="To" min="1900" max="2099"
-                  className="w-20 text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white outline-none focus:border-[#7b1113]" />
-              </div>
-              <div className="flex items-center gap-1 flex-wrap">
-                {[
-                  { label: "Pre-2000", fn: () => { setYearFrom("1900"); setYearTo("1999"); } },
-                  { label: "2000s",    fn: () => { setYearFrom("2000"); setYearTo("2009"); } },
-                  { label: "2010s",    fn: () => { setYearFrom("2010"); setYearTo("2019"); } },
-                  { label: "2020s",    fn: () => { setYearFrom("2020"); setYearTo(new Date().getFullYear().toString()); } },
-                ].map(p => (
-                  <button key={p.label} onClick={p.fn}
-                    className="text-[10px] font-bold px-2 py-1 rounded-lg border border-gray-200 text-gray-500 hover:border-gray-400 transition-all">
-                    {p.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {hasActiveFilter && (
-              <button onClick={() => { setAvailFilter(""); setCatFilter(""); setYearFrom(""); setYearTo(""); }}
-                className="flex items-center gap-1 text-[11px] font-bold hover:underline" style={{ color: MAROON }}>
-                <X size={11} /> Clear all filters
-              </button>
-            )}
+            <label className={labelCls}>Category</label>
+            <PillGroup<string>
+              options={[["", "All"], ...CATEGORIES.map(c => [c, catShort(c)] as [string, string])]}
+              value={cat} onChange={v => { setCat(v); setPdfUrl(null); }} />
           </div>
         )}
 
-        {/* ── Content ── */}
-        {loading ? (
-          <div className="bg-white">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="flex items-center gap-3 px-4 py-3 border-b border-gray-100 animate-pulse">
-                <div className="w-9 h-9 rounded-xl bg-gray-100 shrink-0" />
-                <div className="flex-1 space-y-2">
-                  <div className="h-3 bg-gray-100 rounded w-3/4" />
-                  <div className="h-2.5 bg-gray-100 rounded w-1/3" />
-                </div>
-              </div>
+        <div className="rounded-xl border px-4 py-3 bg-gray-50 text-xs space-y-1" style={{ borderColor: C.line, color: C.muted }}>
+          <p>
+            <strong className="text-sm" style={{ color: C.ink }}>{count}</strong>{" "}
+            {fromSelection ? "selected " : ""}book{count !== 1 ? "s" : ""} · {pages} page{pages !== 1 ? "s" : ""} · 3×8 labels per page
+          </p>
+          <p style={{ color: C.faint }}>Each label has a barcode, accession number, and title.</p>
+        </div>
+
+        {error && <p role="alert" className="text-xs font-semibold" style={{ color: C.danger }}>{error}</p>}
+
+        {pdfUrl && (
+          <div className="rounded-xl border overflow-hidden" style={{ borderColor: C.line }}>
+            <iframe src={pdfUrl} className="w-full" style={{ height: 280 }} title="Barcode preview" />
+          </div>
+        )}
+      </div>
+    </SheetModal>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   8. EXPORT (CSV) MODAL
+   ════════════════════════════════════════════════════════════════════════════ */
+
+function ExportModal({
+  books, catFilter, availFilter, yearFrom, yearTo, onClose,
+}: { books: LibraryBook[]; catFilter: string; availFilter: AvailFilter; yearFrom: string; yearTo: string; onClose: () => void }) {
+  const [exporting, setExporting] = useState(false);
+  const [cat,   setCat]   = useState(catFilter);
+  const [avail, setAvail] = useState<AvailFilter>(availFilter);
+  const [from,  setFrom]  = useState(yearFrom);
+  const [to,    setTo]    = useState(yearTo);
+
+  const preview = books.filter(b => matchesAvail(b, avail) && matchesYear(b, from, to) && (!cat || b.category === cat));
+
+  const doExport = () => {
+    setExporting(true);
+    const header = ["Accession No.", "Call Number", "Title", "Author", "Publisher", "Copyright Year", "Edition", "Volume", "Category", "Total Copies", "Available", "ISBN"];
+    const rows = preview.map(b => [
+      b.accessionNo, b.callNumber ?? "", b.title, authorsOf(b.author).join("; "),
+      b.publisher ?? "", b.copyrightYear ?? "", b.edition ?? "", b.volume ?? "",
+      b.category, b.totalCopies, b.availableCopies, b.isbn ?? "",
+    ]);
+    const csv = [header, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement("a");
+    a.href = url; a.download = `book-catalog-${new Date().toISOString().slice(0, 10)}.csv`; a.click();
+    URL.revokeObjectURL(url);
+    setExporting(false);
+    onClose();
+  };
+
+  const numCls = "flex-1 min-w-0 text-xs border border-gray-200 rounded-lg px-3 py-2 bg-white text-gray-700 outline-none focus:border-[#7b1113] focus:ring-2 focus:ring-[#7b1113]/10";
+
+  return (
+    <SheetModal onClose={onClose} icon={<Download size={16} />} title="Export book catalog" subtitle="CSV" maxWidth="max-w-md"
+      footer={
+        <div className="px-5 py-4 flex gap-2">
+          <button onClick={onClose}
+            className="flex-1 h-10 border border-gray-200 bg-white rounded-xl text-xs font-semibold text-gray-600 hover:bg-gray-50">Cancel</button>
+          <button onClick={doExport} disabled={exporting || preview.length === 0}
+            className="flex-1 h-10 rounded-xl text-xs font-bold text-white disabled:opacity-60 flex items-center justify-center gap-1.5"
+            style={{ background: C.brand }}>
+            <Download size={13} /> Export {preview.length} book{preview.length !== 1 ? "s" : ""}
+          </button>
+        </div>
+      }>
+      <div className="px-5 py-5 space-y-4">
+        <div>
+          <label className={labelCls}>Category</label>
+          <PillGroup<string> options={[["", "All"], ...CATEGORIES.map(c => [c, catShort(c)] as [string, string])]} value={cat} onChange={setCat} />
+        </div>
+        <div>
+          <label className={labelCls}>Availability</label>
+          <PillGroup<AvailFilter> options={[["", "All"], ["AVAILABLE", "Available"], ["OUT_OF_STOCK", "Out of stock"]]} value={avail} onChange={setAvail} />
+        </div>
+        <div>
+          <label className={labelCls}>Copyright year</label>
+          <div className="flex items-center gap-2">
+            <input type="number" value={from} onChange={e => setFrom(e.target.value)} placeholder="From" min="1900" max="2099" aria-label="From year" className={numCls} />
+            <span className="text-xs text-gray-400 shrink-0">to</span>
+            <input type="number" value={to} onChange={e => setTo(e.target.value)} placeholder="To" min="1900" max="2099" aria-label="To year" className={numCls} />
+          </div>
+          <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+            {YEAR_PRESETS.map(p => (
+              <button key={p.label} onClick={() => { setFrom(p.from); setTo(p.to); }}
+                className="text-[11px] font-semibold px-2.5 py-1 rounded-full border border-gray-200 bg-white text-gray-600 hover:border-gray-400 transition-colors">
+                {p.label}
+              </button>
             ))}
           </div>
-        ) : filteredBooks.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 gap-3">
-            <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: "#fef2f2" }}>
-              <BookOpen className="w-6 h-6" style={{ color: MAROON }} />
-            </div>
-            <p className="text-sm text-gray-400 font-medium text-center px-6">
-              {search || catFilter || hasActiveFilter ? "No books match your filters." : "No books yet. Add your first book!"}
-            </p>
-          </div>
-        ) : (
-          <>
-            {/* Mobile list */}
-            <div className="bg-white sm:hidden">
-              {filteredBooks.map(book => (
-                <MobileBookRow
-                  key={book.id}
-                  book={book}
-                  selectMode={selectMode}
-                  selected={selectedIds.has(book.id)}
-                  onSelect={() => toggleSelect(book.id)}
-                  onOpen={() => setBookDetail(book)}
-                />
-              ))}
-              <div className="h-4" /> {/* bottom breathing room */}
-            </div>
+        </div>
+        <div className="rounded-xl border px-4 py-3 bg-gray-50 text-xs" style={{ borderColor: C.line, color: C.muted }}>
+          <strong className="text-sm" style={{ color: C.ink }}>{preview.length}</strong> book{preview.length !== 1 ? "s" : ""} will be exported
+          {preview.length < books.length && <> · filtered from {books.length} total</>}.
+        </div>
+      </div>
+    </SheetModal>
+  );
+}
 
-            {/* Desktop table */}
-            <div className="hidden sm:block bg-white">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr style={{ background: "#fafafa", borderBottom: "1px solid #d1d5db" }}>
-                    {selectMode && <th className="px-3 py-3 w-8 border-r border-gray-200" />}
-                    {["Accession No.", "Call No.", "Title", "Author", "Category", "Copies", "Available", ""].map((h, i) => (
-                      <th key={i} className="text-left px-3 sm:px-5 py-3 whitespace-nowrap border-r border-gray-200 last:border-0">
-                        <span className="text-[11px] font-bold uppercase tracking-wide text-gray-600">{h}</span>
+/* ════════════════════════════════════════════════════════════════════════════
+   9. MAIN TAB
+   ════════════════════════════════════════════════════════════════════════════ */
+
+export default function CourseBookCatalogTab({ courseId, isHead }: { courseId: string; isHead: boolean }) {
+  const [books,        setBooks]        = useState<LibraryBook[]>([]);
+  const [loading,      setLoading]      = useState(true);
+  const [error,        setError]        = useState("");
+  const [search,       setSearch]       = useState("");
+  const [catTab,       setCatTab]       = useState("");
+  const [availFilter,  setAvailFilter]  = useState<AvailFilter>("");
+  const [yearFrom,     setYearFrom]     = useState("");
+  const [yearTo,       setYearTo]       = useState("");
+  const [showFilters,  setShowFilters]  = useState(false);
+  const [page,         setPage]         = useState(1);
+
+  const [showAdd,      setShowAdd]      = useState(false);
+  const [editBook,     setEditBook]     = useState<LibraryBook | null>(null);
+  const [bookDetail,   setBookDetail]   = useState<LibraryBook | null>(null);
+  const [showExport,   setShowExport]   = useState(false);
+  const [showBarcodes, setShowBarcodes] = useState(false);
+
+  const [selected,     setSelected]     = useState<Set<string>>(new Set());
+  const [rowMenu,      setRowMenu]      = useState<{ id: string; x: number; y: number } | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<string[] | null>(null);
+  const [deleting,     setDeleting]     = useState(false);
+  const [toast,        setToast]        = useState<ToastState>(null);
+
+  const debouncedSearch = useDebounced(search, 350);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const notify = useCallback((msg: string, tone: "success" | "error" = "success") => {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    setToast({ msg, tone });
+    toastTimer.current = setTimeout(() => setToast(null), 3000);
+  }, []);
+  useEffect(() => () => { if (toastTimer.current) clearTimeout(toastTimer.current); }, []);
+
+  /* Server handles search. Category, availability and year are filtered locally
+     so the category tab counts stay accurate. */
+  const load = useCallback(async () => {
+    setLoading(true); setError("");
+    try {
+      const q = new URLSearchParams();
+      if (debouncedSearch) q.set("search", debouncedSearch);
+      const res  = await fetch(`/api/courses/${courseId}/library-books?${q}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Failed to load books.");
+      setBooks(data.books ?? []);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to load books.");
+    } finally { setLoading(false); }
+  }, [courseId, debouncedSearch]);
+
+  useEffect(() => { load(); }, [load]);
+  useEffect(() => { setPage(1); setSelected(new Set()); }, [debouncedSearch, catTab, availFilter, yearFrom, yearTo]);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setRowMenu(null); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  /* Rows matching every filter except the category tab (used for tab counts) */
+  const baseFiltered = useMemo(
+    () => books.filter(b => matchesAvail(b, availFilter) && matchesYear(b, yearFrom, yearTo)),
+    [books, availFilter, yearFrom, yearTo],
+  );
+  const counts = useMemo(() => {
+    const c: Record<string, number> = { "": baseFiltered.length };
+    CATEGORIES.forEach(k => { c[k] = 0; });
+    baseFiltered.forEach(b => { c[b.category] = (c[b.category] ?? 0) + 1; });
+    return c;
+  }, [baseFiltered]);
+
+  const filtered   = useMemo(() => (catTab ? baseFiltered.filter(b => b.category === catTab) : baseFiltered), [baseFiltered, catTab]);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paginated  = useMemo(() => filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE), [filtered, page]);
+  useEffect(() => { if (page > totalPages) setPage(totalPages); }, [page, totalPages]);
+
+  const activeFilterCount = [availFilter, yearFrom || yearTo].filter(Boolean).length;
+  const hasAnyFilter = !!(search || catTab || activeFilterCount);
+  const clearFilters = () => { setAvailFilter(""); setYearFrom(""); setYearTo(""); };
+  const resetAll = () => { clearFilters(); setCatTab(""); setSearch(""); };
+
+  const pageNumbers = Array.from({ length: Math.min(totalPages, 5) }, (_, i) =>
+    totalPages <= 5 || page <= 3 ? i + 1 : page >= totalPages - 2 ? totalPages - 4 + i : page - 2 + i,
+  );
+
+  /* Selection */
+  const pageAllSelected  = paginated.length > 0 && paginated.every(b => selected.has(b.id));
+  const pageSomeSelected = paginated.some(b => selected.has(b.id));
+  const toggleOne = (id: string) =>
+    setSelected(prev => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+  const togglePage = () =>
+    setSelected(prev => {
+      const n = new Set(prev);
+      if (pageAllSelected) paginated.forEach(b => n.delete(b.id)); else paginated.forEach(b => n.add(b.id));
+      return n;
+    });
+
+  const openRowMenu = (e: React.MouseEvent<HTMLButtonElement>, id: string) => {
+    e.stopPropagation();
+    const r = e.currentTarget.getBoundingClientRect();
+    const flip = r.bottom + 140 > window.innerHeight;
+    setRowMenu({ id, x: r.right, y: flip ? r.top - 136 : r.bottom + 4 });
+  };
+
+  /* Delete (single + bulk) */
+  const deleteIds = async (ids: string[]) => {
+    setDeleting(true);
+    const results = await Promise.allSettled(
+      ids.map(id =>
+        fetch(`/api/courses/${courseId}/library-books/${id}`, { method: "DELETE" }).then(res => {
+          if (!res.ok) throw new Error("Delete failed");
+          return id;
+        }),
+      ),
+    );
+    const ok = results.filter((r): r is PromiseFulfilledResult<string> => r.status === "fulfilled").map(r => r.value);
+    const failed = ids.length - ok.length;
+
+    if (ok.length) setBooks(prev => prev.filter(b => !ok.includes(b.id)));
+    setSelected(prev => { const n = new Set(prev); ok.forEach(id => n.delete(id)); return n; });
+    setDeleting(false); setDeleteTarget(null);
+
+    if (failed === 0) notify(ok.length === 1 ? "Book deleted" : `${ok.length} books deleted`);
+    else notify(`${failed} couldn’t be deleted. They may have borrow records.`, "error");
+  };
+
+  const selectCls = "text-xs border border-gray-200 rounded-lg px-2.5 py-2 bg-white text-gray-700 outline-none focus:border-[#7b1113] focus:ring-2 focus:ring-[#7b1113]/10";
+  const filterLabelCls = "block text-xs font-semibold text-gray-500 mb-1.5";
+  const menuBook = rowMenu ? books.find(b => b.id === rowMenu.id) : null;
+
+  return (
+    <div className="h-full flex flex-col overflow-hidden" style={{ fontFamily: FONT, background: C.canvas }}>
+
+      {/* Header */}
+      <div className="bg-white border-b px-4 sm:px-8 py-3.5 sm:py-5 flex items-center justify-between shrink-0 gap-3" style={{ borderColor: C.line }}>
+        <div className="min-w-0">
+          <h1 className="text-lg sm:text-xl font-bold leading-tight" style={{ color: C.ink }}>Book catalog</h1>
+          <p className="text-xs mt-0.5 hidden sm:block" style={{ color: C.faint }}>
+            {loading ? "Loading…" : `${books.length} title${books.length !== 1 ? "s" : ""} · ${books.reduce((s, b) => s + b.totalCopies, 0)} copies`}
+          </p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <button onClick={() => setShowExport(true)} aria-label="Export"
+            className="flex items-center justify-center gap-1.5 text-xs font-semibold text-gray-500 border border-gray-200 hover:border-gray-400 hover:text-gray-700 w-9 h-9 sm:w-auto sm:px-3 rounded-lg transition-colors">
+            <Download className="w-3.5 h-3.5" /><span className="hidden sm:inline">Export</span>
+          </button>
+          <button onClick={() => { setSelected(new Set()); setShowBarcodes(true); }} aria-label="Barcodes"
+            className="flex items-center justify-center gap-1.5 text-xs font-semibold text-gray-500 border border-gray-200 hover:border-gray-400 hover:text-gray-700 w-9 h-9 sm:w-auto sm:px-3 rounded-lg transition-colors">
+            <BookMarked className="w-3.5 h-3.5" /><span className="hidden sm:inline">Barcodes</span>
+          </button>
+          {isHead && (
+            <button onClick={() => setShowAdd(true)}
+              className="flex items-center gap-1.5 text-xs font-bold px-3.5 h-9 rounded-lg text-white transition-opacity hover:opacity-90" style={{ background: C.brand }}>
+              <Plus className="w-3.5 h-3.5" /> Add book
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-4 sm:px-8 py-4 sm:py-6 flex flex-col min-h-0">
+        <div className="flex-1 bg-white border rounded-xl overflow-hidden flex flex-col shadow-sm min-h-[420px]" style={{ borderColor: C.line }}>
+
+          {/* Category tabs */}
+          <div className="border-b overflow-x-auto" style={{ borderColor: C.line }}>
+            <div role="tablist" className="flex px-2 sm:px-3 min-w-max">
+              {([["", "All"], ...CATEGORIES.map(c => [c, c] as [string, string])] as Array<[string, string]>).map(([val, label]) => {
+                const active = catTab === val;
+                return (
+                  <button key={val || "all"} role="tab" aria-selected={active} onClick={() => setCatTab(val)}
+                    className="relative flex items-center gap-1.5 px-3 py-3 text-xs font-semibold whitespace-nowrap transition-colors"
+                    style={{ color: active ? C.brand : C.muted }}>
+                    {label}
+                    <span className="text-[11px] tabular-nums px-1.5 rounded-full"
+                      style={{ background: active ? C.brandTint : C.lineSoft, color: active ? C.brand : C.muted }}>
+                      {counts[val] ?? 0}
+                    </span>
+                    {active && <span className="absolute left-2 right-2 -bottom-px h-0.5 rounded-full" style={{ background: C.brand }} />}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Toolbar */}
+          <div className="px-3 sm:px-5 py-2.5 sm:py-3 border-b flex items-center gap-2" style={{ borderColor: C.lineSoft }}>
+            <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-3 h-9 flex-1 bg-gray-50 focus-within:bg-white focus-within:border-gray-400 transition-colors min-w-0">
+              <Search className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search title, author, accession no."
+                aria-label="Search books"
+                className="flex-1 text-xs text-gray-700 placeholder:text-gray-400 outline-none bg-transparent min-w-0" />
+              {search && (
+                <button onClick={() => setSearch("")} aria-label="Clear search" className="text-gray-300 hover:text-gray-500 shrink-0"><X className="w-3.5 h-3.5" /></button>
+              )}
+            </div>
+            <button onClick={() => setShowFilters(f => !f)} aria-expanded={showFilters}
+              style={(showFilters || activeFilterCount) ? { background: C.brand, color: "#fff", borderColor: C.brand } : {}}
+              className={`flex items-center gap-1.5 px-3 h-9 rounded-lg border text-xs font-semibold transition-colors shrink-0 ${!(showFilters || activeFilterCount) ? "border-gray-200 text-gray-600 hover:border-gray-400" : ""}`}>
+              <SlidersHorizontal className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Filters</span>
+              {activeFilterCount > 0 && (
+                <span className="min-w-4 h-4 px-1 rounded-full bg-white/90 text-[10px] font-bold flex items-center justify-center" style={{ color: C.brand }}>{activeFilterCount}</span>
+              )}
+            </button>
+          </div>
+
+          {/* Bulk action bar */}
+          {isHead && selected.size > 0 && (
+            <div className="px-3 sm:px-5 py-2.5 border-b flex items-center gap-3 flex-wrap" style={{ background: C.brandTint, borderColor: C.line }}>
+              <span className="text-xs font-bold" style={{ color: C.brand }}>{selected.size} selected</span>
+              {selected.size < filtered.length && (
+                <button onClick={() => setSelected(new Set(filtered.map(b => b.id)))} className="text-xs font-semibold hover:underline" style={{ color: C.brand }}>
+                  Select all {filtered.length}
+                </button>
+              )}
+              <button onClick={() => setSelected(new Set())} className="text-xs font-semibold text-gray-500 hover:text-gray-700">Clear</button>
+              <div className="ml-auto flex items-center gap-2">
+                <button onClick={() => setShowBarcodes(true)}
+                  className="flex items-center gap-1.5 text-xs font-semibold px-3 h-8 rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50">
+                  <BookMarked size={13} /> Print labels
+                </button>
+                <button onClick={() => setDeleteTarget(Array.from(selected))}
+                  className="flex items-center gap-1.5 text-xs font-bold px-3 h-8 rounded-lg text-white" style={{ background: C.danger }}>
+                  <Trash2 size={13} /> Delete
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Filter panel */}
+          {showFilters && (
+            <div className="px-3 sm:px-5 py-4 border-b bg-gray-50 space-y-4" style={{ borderColor: C.lineSoft }}>
+              <div>
+                <label className={filterLabelCls}>Availability</label>
+                <PillGroup<AvailFilter> options={[["", "All"], ["AVAILABLE", "Available"], ["OUT_OF_STOCK", "Out of stock"]]} value={availFilter} onChange={setAvailFilter} />
+              </div>
+              <div>
+                <label className={filterLabelCls}>Copyright year</label>
+                <div className="flex items-center gap-2">
+                  <input type="number" value={yearFrom} onChange={e => setYearFrom(e.target.value)} placeholder="From" min="1900" max="2099" aria-label="From year" className={`${selectCls} w-24`} />
+                  <span className="text-xs text-gray-400">to</span>
+                  <input type="number" value={yearTo} onChange={e => setYearTo(e.target.value)} placeholder="To" min="1900" max="2099" aria-label="To year" className={`${selectCls} w-24`} />
+                </div>
+                <div className="flex items-center gap-1.5 flex-wrap mt-2">
+                  {YEAR_PRESETS.map(p => (
+                    <button key={p.label} onClick={() => { setYearFrom(p.from); setYearTo(p.to); }}
+                      className="text-[11px] font-semibold px-2.5 py-1 rounded-full border border-gray-200 bg-white text-gray-600 hover:border-gray-400 transition-colors">
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {activeFilterCount > 0 && (
+                <button onClick={clearFilters} className="flex items-center gap-1 text-xs font-bold hover:underline" style={{ color: C.brand }}>
+                  <X size={12} /> Clear filters
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Content */}
+          {loading ? (
+            <div className="animate-pulse divide-y divide-gray-100" aria-busy="true">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-4 px-5 py-4">
+                  <div className="h-3 w-20 bg-gray-100 rounded" />
+                  <div className="h-3 flex-1 bg-gray-100 rounded" />
+                  <div className="h-3 w-24 bg-gray-100 rounded hidden sm:block" />
+                  <div className="h-5 w-16 bg-gray-100 rounded-full" />
+                </div>
+              ))}
+            </div>
+          ) : error ? (
+            <div className="flex-1 flex flex-col items-center justify-center gap-3 py-16 px-6 text-center">
+              <AlertCircle className="w-6 h-6 text-red-400" />
+              <p className="text-sm font-semibold text-red-600">{error}</p>
+              <button onClick={load} className="text-xs font-bold px-4 h-8 rounded-lg border border-red-200 text-red-600 hover:bg-red-50">Try again</button>
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="flex-1 flex flex-col items-center justify-center gap-2 py-16 px-6 text-center">
+              <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-1" style={{ background: C.brandTint }}>
+                <BookOpen className="w-6 h-6" style={{ color: C.brand }} />
+              </div>
+              <p className="text-sm font-semibold" style={{ color: C.ink }}>{hasAnyFilter ? "No matching books" : "No books yet"}</p>
+              <p className="text-xs max-w-xs" style={{ color: C.muted }}>
+                {hasAnyFilter ? "Try a different search or clear the filters." : isHead ? "Add your first book to start the catalog." : "Books added by the library will appear here."}
+              </p>
+              {hasAnyFilter ? (
+                <button onClick={resetAll} className="mt-2 text-xs font-bold hover:underline" style={{ color: C.brand }}>Clear all filters</button>
+              ) : isHead && (
+                <button onClick={() => setShowAdd(true)}
+                  className="mt-2 flex items-center gap-1.5 text-xs font-bold px-4 h-9 rounded-lg text-white" style={{ background: C.brand }}>
+                  <Plus size={13} /> Add book
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="flex-1 overflow-y-auto">
+
+              {/* Desktop table */}
+              <table className="w-full border-collapse hidden sm:table">
+                <thead className="sticky top-0 z-10">
+                  <tr style={{ background: "#fafafa" }}>
+                    {isHead && (
+                      <th scope="col" className="px-4 py-2.5 w-10 border-b" style={{ borderColor: C.line }}>
+                        <input type="checkbox" aria-label="Select all on this page" checked={pageAllSelected}
+                          ref={el => { if (el) el.indeterminate = !pageAllSelected && pageSomeSelected; }}
+                          onChange={togglePage} className="w-4 h-4 cursor-pointer" style={{ accentColor: C.brand }} />
                       </th>
+                    )}
+                    {["Accession no.", "Call no.", "Title", "Author", "Category", "Copies", "Available", ""].map((h, i) => (
+                      <th key={i} scope="col" className="text-left px-4 py-2.5 whitespace-nowrap border-b"
+                        style={{ fontSize: 11, fontWeight: 800, color: C.body, borderColor: C.line }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredBooks.map(book => {
-                    const col = CAT_COLORS[book.category as Category] ?? { bg: "#f3f4f6", text: "#374151", border: "#e5e7eb" };
+                  {paginated.map(book => {
+                    const authors = authorsOf(book.author);
                     return (
-                      <tr key={book.id}
-                        className="hover:bg-gray-50/70 transition-colors cursor-pointer"
-                        style={{ borderBottom: "1px solid #e5e7eb", background: selectedIds.has(book.id) ? "#fef2f2" : undefined }}
-                        onClick={() => selectMode ? toggleSelect(book.id) : setBookDetail(book)}>
-                        {selectMode && (
-                          <td className="px-3 py-3 w-8 border-r border-gray-200"
-                            onClick={e => { e.stopPropagation(); toggleSelect(book.id); }}>
-                            <input type="checkbox" checked={selectedIds.has(book.id)} onChange={() => toggleSelect(book.id)}
-                              className="w-3.5 h-3.5 accent-[#7b1113] cursor-pointer" />
+                      <tr key={book.id} tabIndex={0} onClick={() => setBookDetail(book)}
+                        onKeyDown={e => { if (e.key === "Enter") setBookDetail(book); }}
+                        className="group cursor-pointer hover:bg-gray-50 focus:bg-gray-50 outline-none transition-colors"
+                        style={selected.has(book.id) ? { background: C.brandTint } : undefined}>
+                        {isHead && (
+                          <td className="px-4 py-3.5 border-b" style={{ borderColor: C.lineSoft }} onClick={e => e.stopPropagation()}>
+                            <input type="checkbox" aria-label={`Select ${book.title}`} checked={selected.has(book.id)}
+                              onChange={() => toggleOne(book.id)} className="w-4 h-4 cursor-pointer" style={{ accentColor: C.brand }} />
                           </td>
                         )}
-                        <td className="px-3 sm:px-5 py-3 text-xs font-mono font-bold" style={{ color: MAROON }}>
-                          {book.accessionNo}
+                        <td className="px-4 py-3.5 text-xs font-mono font-bold border-b whitespace-nowrap" style={{ color: C.brand, borderColor: C.lineSoft }}>{book.accessionNo}</td>
+                        <td className="px-4 py-3.5 text-xs border-b whitespace-nowrap" style={{ color: C.muted, borderColor: C.lineSoft }}>{book.callNumber ?? "—"}</td>
+                        <td className="px-4 py-3.5 border-b max-w-[260px]" style={{ borderColor: C.lineSoft }}>
+                          <p className="text-[13px] font-semibold truncate" style={{ color: C.ink }}>{book.title}</p>
+                          {book.copyrightYear && <p className="text-[11px]" style={{ color: C.faint }}>{book.copyrightYear}</p>}
                         </td>
-                        <td className="px-3 sm:px-5 py-3 text-xs" style={{ color: MUTED }}>
-                          {book.callNumber ?? "—"}
+                        <td className="px-4 py-3.5 text-xs border-b max-w-[180px]" style={{ color: C.body, borderColor: C.lineSoft }}>
+                          {authors.length ? <span className="line-clamp-2">{authors.join(", ")}</span> : <span style={{ color: C.faint }}>—</span>}
                         </td>
-                        <td className="px-3 sm:px-5 py-3 max-w-[220px]">
-                          <p className="text-xs font-semibold truncate text-gray-800">{book.title}</p>
-                          {book.copyrightYear && <p className="text-[10px] text-gray-400">{book.copyrightYear}</p>}
-                        </td>
-                        <td className="px-3 sm:px-5 py-3 max-w-[160px]">
-                          {book.author
-                            ? book.author.split("|").map(a => a.trim()).filter(Boolean).map((a, idx) => (
-                                <span key={idx} className="block text-xs truncate text-gray-500">{a}</span>
-                              ))
-                            : <span className="text-xs text-gray-400">—</span>}
-                        </td>
-                        <td className="px-3 sm:px-5 py-3">
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                            style={{ background: col.bg, color: col.text, border: `1px solid ${col.border}` }}>
-                            {book.category}
-                          </span>
-                        </td>
-                        <td className="px-3 sm:px-5 py-3 text-center text-xs font-bold text-gray-800">
-                          {book.totalCopies}
-                        </td>
-                        <td className="px-3 sm:px-5 py-3 text-center text-xs font-bold"
-                          style={{ color: book.availableCopies === 0 ? "#ef4444" : "#16a34a" }}>
-                          {book.availableCopies}
-                        </td>
-                        <td className="px-3 sm:px-5 py-3" onClick={e => e.stopPropagation()}>
-                          {isHead && !selectMode && (
-                            <div className="flex items-center gap-1 justify-end">
-                              <button onClick={() => setEditBook(book)} className="p-1.5 rounded-lg hover:bg-gray-100">
-                                <Edit2 size={12} style={{ color: MUTED }} />
-                              </button>
-                              <button onClick={() => setDeleteTarget(book)} className="p-1.5 rounded-lg hover:bg-red-50">
-                                <Trash2 size={12} className="text-red-400" />
-                              </button>
-                            </div>
+                        <td className="px-4 py-3.5 border-b" style={{ borderColor: C.lineSoft }}><CategoryBadge category={book.category} /></td>
+                        <td className="px-4 py-3.5 text-xs font-semibold tabular-nums border-b" style={{ color: C.body, borderColor: C.lineSoft }}>{book.totalCopies}</td>
+                        <td className="px-4 py-3.5 border-b" style={{ borderColor: C.lineSoft }}><Availability book={book} compact /></td>
+                        <td className="px-3 py-3.5 w-12 border-b" style={{ borderColor: C.lineSoft }}>
+                          {isHead ? (
+                            <button onClick={e => openRowMenu(e, book.id)} aria-label={`Actions for ${book.title}`} aria-haspopup="menu"
+                              className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors">
+                              <MoreVertical size={16} />
+                            </button>
+                          ) : (
+                            <ChevronRight size={16} className="text-gray-300 group-hover:text-gray-600 transition-colors" />
                           )}
                         </td>
                       </tr>
@@ -1232,88 +1008,131 @@ export default function CourseBookCatalogTab({
                   })}
                 </tbody>
               </table>
+
+              {/* Mobile list */}
+              <div className="sm:hidden divide-y divide-gray-100">
+                {paginated.map(book => (
+                  <div key={book.id} className="flex items-center gap-3 px-4 py-3.5"
+                    style={selected.has(book.id) ? { background: C.brandTint } : undefined}>
+                    {isHead && (
+                      <input type="checkbox" aria-label={`Select ${book.title}`} checked={selected.has(book.id)}
+                        onChange={() => toggleOne(book.id)} className="w-4 h-4 shrink-0" style={{ accentColor: C.brand }} />
+                    )}
+                    <button onClick={() => setBookDetail(book)} className="flex-1 min-w-0 text-left active:opacity-70">
+                      <p className="text-sm font-bold truncate" style={{ color: C.ink }}>{book.title}</p>
+                      <p className="text-[11px] font-mono font-bold mt-0.5" style={{ color: C.brand }}>{book.accessionNo}</p>
+                      <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                        <CategoryBadge category={book.category} />
+                        <Availability book={book} compact />
+                      </div>
+                    </button>
+                    {isHead ? (
+                      <button onClick={e => openRowMenu(e, book.id)} aria-label={`Actions for ${book.title}`}
+                        className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 active:bg-gray-100 shrink-0">
+                        <MoreVertical size={16} />
+                      </button>
+                    ) : (
+                      <ChevronRight size={16} className="text-gray-300 shrink-0" />
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
-          </>
-        )}
+          )}
+
+          {/* Pagination */}
+          {!loading && !error && filtered.length > PAGE_SIZE && (
+            <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-t bg-white shrink-0 gap-2" style={{ borderColor: C.line }}>
+              <span className="text-xs tabular-nums truncate" style={{ color: C.muted }}>
+                Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length}
+              </span>
+              <div className="flex items-center gap-1 shrink-0">
+                <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} aria-label="Previous page"
+                  className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:border-gray-400 disabled:opacity-30">
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                </button>
+                <div className="hidden sm:flex items-center gap-1">
+                  {pageNumbers.map(n => (
+                    <button key={n} onClick={() => setPage(n)} aria-current={page === n ? "page" : undefined}
+                      style={page === n ? { background: C.brand, color: "#fff", borderColor: C.brand } : {}}
+                      className={`w-8 h-8 flex items-center justify-center rounded-lg text-xs font-semibold border transition-colors ${page !== n ? "border-gray-200 text-gray-600 hover:border-gray-400" : ""}`}>
+                      {n}
+                    </button>
+                  ))}
+                </div>
+                <span className="sm:hidden text-xs font-semibold px-2 tabular-nums" style={{ color: C.muted }}>{page} / {totalPages}</span>
+                <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} aria-label="Next page"
+                  className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:border-gray-400 disabled:opacity-30">
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* ── Bottom action bar (mobile only, when in select mode with items) ── */}
-      {selectMode && selectedIds.size > 0 && (
-        <div className="sm:hidden shrink-0 border-t border-gray-200 bg-white px-4 py-3 flex items-center gap-2">
-          <span className="flex-1 text-xs font-semibold text-gray-700">{selectedIds.size} selected</span>
-          <button onClick={handleBulkDelete} disabled={bulkDeleting}
-            className="h-9 px-4 rounded-lg text-xs font-bold text-white bg-red-500 flex items-center gap-1.5 disabled:opacity-50">
-            <Trash2 size={12} /> {bulkDeleting ? "Deleting..." : "Delete"}
-          </button>
-        </div>
-      )}
-
-      {/* ── Modals ── */}
-      {showExportModal && (
-        <ExportModal
-          books={books} catFilter={catFilter} availFilter={availFilter}
-          yearFrom={yearFrom} yearTo={yearTo} search={search}
-          onClose={() => setShowExportModal(false)}
-        />
-      )}
-
-      {showBarcodeModal && (
-        <PrintBarcodesModal
-          courseId={courseId} books={books} catFilter={catFilter}
-          selectMode={selectMode} selectedIds={selectedIds}
-          onClose={() => setShowBarcodeModal(false)}
-        />
-      )}
-
-      {bookDetail && (
-        <BookDetailModal
-          book={bookDetail}
-          courseId={courseId}
-          isHead={isHead}
-          onClose={() => setBookDetail(null)}
-          onEdit={() => setEditBook(bookDetail)}
-          onDelete={() => setDeleteTarget(bookDetail)}
-        />
-      )}
-
-      {showAdd && (
-        <BookModal courseId={courseId} book={null}
-          onClose={() => setShowAdd(false)}
-          onSaved={b => { setBooks(prev => [b, ...prev]); setShowAdd(false); }} />
-      )}
-
-      {editBook && (
-        <BookModal courseId={courseId} book={editBook}
-          onClose={() => setEditBook(null)}
-          onSaved={b => { setBooks(prev => prev.map(x => x.id === b.id ? b : x)); setEditBook(null); }} />
-      )}
-
-      {deleteTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-          style={{ backdropFilter: "blur(4px)", fontFamily: FONT }}
-          onClick={() => setDeleteTarget(null)}>
-          <div className="bg-white rounded-2xl shadow-2xl w-[320px] mx-4 p-6"
-            style={{ border: `1px solid ${RULE}` }}
+      {/* Row action menu */}
+      {rowMenu && menuBook && (
+        <div className="fixed inset-0 z-40" onClick={() => setRowMenu(null)}>
+          <div role="menu" className="absolute w-44 bg-white rounded-xl border shadow-lg py-1 overflow-hidden"
+            style={{ top: rowMenu.y, left: Math.max(8, rowMenu.x - 176), borderColor: C.line, fontFamily: FONT }}
             onClick={e => e.stopPropagation()}>
-            <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center mb-4">
-              <Trash2 size={18} className="text-red-400" />
-            </div>
-            <p className="text-sm font-bold mb-1" style={{ color: SLATE }}>Delete this book?</p>
-            <p className="text-xs mb-5" style={{ color: MUTED }}>
-              <span className="font-semibold">{deleteTarget.title}</span> will be permanently removed.
-            </p>
-            <div className="flex gap-2">
-              <button onClick={() => setDeleteTarget(null)}
-                className="flex-1 py-2.5 rounded-xl text-xs font-semibold"
-                style={{ border: `1px solid ${RULE}`, color: MUTED }}>Cancel</button>
-              <button onClick={() => handleDelete()} disabled={deleting}
-                className="flex-1 py-2.5 rounded-xl text-xs font-bold text-white bg-red-500 disabled:opacity-50">
-                {deleting ? "Deleting..." : "Delete"}
-              </button>
-            </div>
+            <button role="menuitem" onClick={() => { setRowMenu(null); setBookDetail(menuBook); }}
+              className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-xs font-semibold text-left hover:bg-gray-50" style={{ color: C.ink }}>
+              <BookOpen size={14} /> View details
+            </button>
+            <button role="menuitem" onClick={() => { setRowMenu(null); setEditBook(menuBook); }}
+              className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-xs font-semibold text-left hover:bg-gray-50" style={{ color: C.ink }}>
+              <Pencil size={14} /> Edit
+            </button>
+            <button role="menuitem" onClick={() => { setRowMenu(null); setDeleteTarget([menuBook.id]); }}
+              className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-xs font-semibold text-left hover:bg-red-50" style={{ color: C.danger }}>
+              <Trash2 size={14} /> Delete
+            </button>
           </div>
         </div>
       )}
+
+      {/* Modals */}
+      {showExport && (
+        <ExportModal books={books} catFilter={catTab} availFilter={availFilter} yearFrom={yearFrom} yearTo={yearTo}
+          onClose={() => setShowExport(false)} />
+      )}
+      {showBarcodes && (
+        <PrintBarcodesModal courseId={courseId} books={books} catFilter={catTab} selectedIds={selected}
+          onClose={() => setShowBarcodes(false)} />
+      )}
+      {bookDetail && (
+        <BookDetailModal book={bookDetail} courseId={courseId} isHead={isHead}
+          onClose={() => setBookDetail(null)}
+          onEdit={() => setEditBook(bookDetail)}
+          onDelete={() => setDeleteTarget([bookDetail.id])} />
+      )}
+      {showAdd && (
+        <BookModal courseId={courseId} book={null} onClose={() => setShowAdd(false)}
+          onSaved={b => { setBooks(prev => [b, ...prev]); setShowAdd(false); notify("Book added"); }} />
+      )}
+      {editBook && (
+        <BookModal courseId={courseId} book={editBook} onClose={() => setEditBook(null)}
+          onSaved={b => { setBooks(prev => prev.map(x => (x.id === b.id ? b : x))); setEditBook(null); notify("Book updated"); }} />
+      )}
+      {deleteTarget && (
+        <ConfirmModal
+          title={deleteTarget.length === 1 ? "Delete this book?" : `Delete ${deleteTarget.length} books?`}
+          confirmLabel={deleteTarget.length === 1 ? "Delete" : `Delete ${deleteTarget.length}`}
+          busy={deleting}
+          message={
+            deleteTarget.length === 1 ? (
+              <><strong>{books.find(b => b.id === deleteTarget[0])?.title ?? "This book"}</strong> will be permanently removed.<br />This can’t be undone.</>
+            ) : (
+              <>{deleteTarget.length} selected books will be permanently removed.<br />This can’t be undone.</>
+            )
+          }
+          onConfirm={() => deleteIds(deleteTarget)}
+          onClose={() => { if (!deleting) setDeleteTarget(null); }} />
+      )}
+
+      <Toast toast={toast} />
     </div>
   );
 }
