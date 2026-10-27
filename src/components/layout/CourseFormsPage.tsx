@@ -44,6 +44,11 @@ interface Props {
   courseId: string;
   currentUserId?: string | null;
   currentUserName?: string | null;
+  isHead?: boolean;
+  isStaff?: boolean;
+  isFaculty?: boolean;
+  canDelete?: boolean;
+  canManageForms?: boolean;
 }
 
 const typeColors: Record<string, string> = {

@@ -539,12 +539,12 @@ export default function CourseSettingsPage({
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  // keep image in sync after router.refresh()
+    // keep image in sync after router.refresh()
   useEffect(() => {
     setOfficeImageUrl(initialImage);
   }, [initialImage]);
 
-  const [details, setDetails] = useState<OfficeDetails>({
+  const [details, setDetails]= useState<OfficeDetails>({
     name: initialName,
     code: initialCode,
   });

@@ -73,7 +73,7 @@ export async function DELETE(
 
     await prisma.course.update({
       where: { id },
-      data:  { image: null },
+      data:  { image: "" },
     });
 
     revalidatePath("/admin/dashboard");
