@@ -940,11 +940,6 @@ export default function AdminAssignmentForm({
               className="h-8 border border-gray-300 rounded-sm px-3 text-xs w-full sm:w-80 bg-white outline-none focus:border-[#7b1113]">
               {GRADE_OPTIONS.map(o => <option key={o}>{o}</option>)}
             </select>
-            <div />
-            <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
-              <input type="checkbox" checked={doNotCount} onChange={e => setDoNotCount(e.target.checked)} style={{ accentColor: MAROON }} />
-              Do not count this assignment towards the final grade
-            </label>
             <label className="text-xs text-gray-700 sm:text-right pt-2">Group Assignment</label>
             <div className="border border-gray-200 rounded-sm p-3 w-full sm:w-80 space-y-2">
               <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">

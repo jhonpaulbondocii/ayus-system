@@ -54,3 +54,34 @@ export async function POST(
     return NextResponse.json({ error: "Upload failed" }, { status: 500 });
   }
 }
+
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+
+    if (!id)
+      return NextResponse.json({ error: "Course ID is required" }, { status: 400 });
+
+    try {
+      await cloudinary.uploader.destroy(`course-images/course_${id}`);
+    } catch (e) {
+      console.error("Cloudinary destroy error:", e);
+    }
+
+    await prisma.course.update({
+      where: { id },
+      data:  { image: null },
+    });
+
+    revalidatePath("/admin/dashboard");
+    revalidatePath(`/admin/courses/${id}`);
+
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error("Remove image error:", err);
+    return NextResponse.json({ error: "Failed to remove image" }, { status: 500 });
+  }
+}

@@ -71,3 +71,7 @@ export function hasCoursePermission(
   const roles = parseRoles(role);
   return roles.some(r => COURSE_ROLE_PERMISSIONS[r].includes(permission));
 }
+/** True kung may "Head" sa comma-separated course role (hal. "Head", "Staff,Head") */
+export function hasHeadRole(raw: unknown): boolean {
+  return parseRoles(raw).includes("Head");
+}

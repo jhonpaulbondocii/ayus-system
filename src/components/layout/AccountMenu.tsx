@@ -54,6 +54,8 @@ function Avatar({ name, image, size = 40 }: {
 export default function AccountMenu() {
   const { data: session } = useSession();
   const [open, setOpen]   = useState(false);
+  const [confirmLogout, setConfirmLogout] = useState(false);
+  const [loggingOut, setLoggingOut]       = useState(false);
   const panelRef          = useRef<HTMLDivElement>(null);
   const navLayout         = useNavLayout();
 
@@ -67,11 +69,17 @@ export default function AccountMenu() {
   useEffect(() => {
     if (isBottomNav) return;
     const h = (e: MouseEvent) => {
+      if (confirmLogout) return;
       if (panelRef.current && !panelRef.current.contains(e.target as Node)) setOpen(false);
     };
     if (open) document.addEventListener("mousedown", h);
     return () => document.removeEventListener("mousedown", h);
-  }, [open, isBottomNav]);
+  }, [open, isBottomNav, confirmLogout]);
+
+  const handleLogout = async () => {
+    setLoggingOut(true);
+    await signOut({ callbackUrl: "/login" });
+  };
 
   const menuLinks = [
     { label: "Profile", href: "/profile" },
@@ -208,7 +216,7 @@ export default function AccountMenu() {
                 </p>
               )}
               <button
-                onClick={() => signOut({ callbackUrl: "/login" })}
+                onClick={() => setConfirmLogout(true)}
                 style={{
                   marginTop: 12, padding: isBottomNav ? "8px 16px" : "6px 14px",
                   fontSize: isBottomNav ? 12 : 11, fontWeight: 700,
@@ -255,6 +263,113 @@ export default function AccountMenu() {
             {isBottomNav && (
               <div style={{ height: 20, flexShrink: 0 }} />
             )}
+          </div>
+        </>
+      )}
+
+      {/* ── Logout confirmation dialog ── */}
+      {confirmLogout && (
+        <>
+          <div
+            onClick={() => !loggingOut && setConfirmLogout(false)}
+            style={{
+              position: "fixed", inset: 0, zIndex: 300,
+              background: "rgba(0,0,0,0.45)",
+              backdropFilter: "blur(2px)",
+              display: "flex",
+              alignItems: isBottomNav ? "flex-end" : "center",
+              justifyContent: "center",
+              padding: isBottomNav ? 0 : 16,
+            }}
+          >
+            <div
+              role="alertdialog"
+              aria-modal="true"
+              aria-labelledby="logout-title"
+              aria-describedby="logout-desc"
+              onClick={e => e.stopPropagation()}
+              style={{
+                fontFamily: FONT,
+                background: "#fff",
+                width: "100%",
+                maxWidth: isBottomNav ? "100%" : 360,
+                borderRadius: isBottomNav ? "20px 20px 0 0" : 16,
+                overflow: "hidden",
+                boxShadow: "0 20px 60px rgba(123,17,19,0.25)",
+                paddingBottom: isBottomNav ? 20 : 0,
+              }}
+            >
+              {/* Maroon top accent */}
+              <div style={{ height: 4, background: MAROON }} />
+
+              <div style={{ padding: "24px 24px 8px", textAlign: "center" }}>
+                {/* Icon */}
+                <div style={{
+                  width: 52, height: 52, borderRadius: "50%",
+                  background: "#fef2f2", color: MAROON,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  margin: "0 auto 14px",
+                }}>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                    <polyline points="16 17 21 12 16 7"/>
+                    <line x1="21" y1="12" x2="9" y2="12"/>
+                  </svg>
+                </div>
+
+                <h2 id="logout-title" style={{
+                  fontSize: 17, fontWeight: 800, color: "#111827", margin: 0,
+                }}>
+                  Log out?
+                </h2>
+                <p id="logout-desc" style={{
+                  fontSize: 13, color: "#6b7280", margin: "8px 0 0", lineHeight: 1.5,
+                }}>
+                  Are you sure you want to log out of <b style={{ color: "#374151" }}>{email || name}</b>?
+                </p>
+              </div>
+
+              {/* Buttons */}
+              <div style={{
+                display: "flex",
+                flexDirection: isBottomNav ? "column-reverse" : "row",
+                gap: 10,
+                padding: "20px 24px 24px",
+              }}>
+                <button
+                  onClick={() => setConfirmLogout(false)}
+                  disabled={loggingOut}
+                  style={{
+                    flex: 1, padding: "11px 16px", fontSize: 13, fontWeight: 700,
+                    border: "1px solid #e5e7eb", borderRadius: 10,
+                    background: "#fff", color: "#4b5563",
+                    cursor: loggingOut ? "not-allowed" : "pointer",
+                    fontFamily: FONT, transition: "all .15s",
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background = "#f9fafb"; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = "#fff"; }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleLogout}
+                  disabled={loggingOut}
+                  style={{
+                    flex: 1, padding: "11px 16px", fontSize: 13, fontWeight: 700,
+                    border: "none", borderRadius: 10,
+                    background: MAROON, color: "#fff",
+                    cursor: loggingOut ? "not-allowed" : "pointer",
+                    opacity: loggingOut ? 0.7 : 1,
+                    fontFamily: FONT, transition: "all .15s",
+                  }}
+                  onMouseEnter={e => { if (!loggingOut) e.currentTarget.style.background = "#5e0d0f"; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = MAROON; }}
+                >
+                  {loggingOut ? "Logging out..." : "Yes, log out"}
+                </button>
+              </div>
+            </div>
           </div>
         </>
       )}

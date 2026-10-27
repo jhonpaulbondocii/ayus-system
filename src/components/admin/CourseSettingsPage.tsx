@@ -523,11 +523,11 @@ function SectionIcon({ children }: { children: React.ReactNode }) {
 
 // ── Main Export ────────────────────────────────────────────────────────────────
 export default function CourseSettingsPage({
-courseId,
-initialName,
-initialCode,
-initialStatus,
-initialImage,
+  courseId,
+  initialName,
+  initialCode,
+  initialStatus,
+  initialImage,
 }: PageProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<Tab>("Office Details");
@@ -536,6 +536,13 @@ initialImage,
   const [saveError, setSaveError] = useState<string | null>(null);
   const [officeImageUrl, setOfficeImageUrl] = useState(initialImage);
   const [showImageModal, setShowImageModal] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  // keep image in sync after router.refresh()
+  useEffect(() => {
+    setOfficeImageUrl(initialImage);
+  }, [initialImage]);
 
   const [details, setDetails] = useState<OfficeDetails>({
     name: initialName,
@@ -573,6 +580,43 @@ initialImage,
     }
   };
 
+  const handleDeleteOffice = async () => {
+    if (!window.confirm("Delete this office permanently? This cannot be undone.")) return;
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      const res = await fetch(`/api/admin/courses/${courseId}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setDeleteError(data?.error ?? `Error ${res.status}`);
+        return;
+      }
+      router.push("/admin/dashboard"); // ← palitan kung iba ang list page mo
+      router.refresh();
+    } catch {
+      setDeleteError("Network error. Please try again.");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleRemoveImage = async () => {
+    if (!window.confirm("Remove the office image?")) return;
+    setSaveError(null);
+    try {
+      const res = await fetch(`/api/courses/${courseId}/image`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setSaveError(data?.error ?? `Error ${res.status}`);
+        return;
+      }
+      setOfficeImageUrl("");
+      router.refresh();
+    } catch {
+      setSaveError("Network error. Please try again.");
+    }
+  };
+
   return (
     <>
       <style>{GLOBAL_CSS}</style>
@@ -606,7 +650,10 @@ initialImage,
                   saveError={saveError}
                   officeImageUrl={officeImageUrl}
                   onChooseImage={() => setShowImageModal(true)}
-                  courseId={courseId}
+                  onRemoveImage={handleRemoveImage}
+                  onDelete={handleDeleteOffice}
+                  deleting={deleting}
+                  deleteError={deleteError}
                 />
               )}
             </div>
@@ -633,7 +680,7 @@ initialImage,
 // ── Office Details Tab ─────────────────────────────────────────────────────────
 function OfficeDetailsTab({
   details, update, onSave, saving, saveSuccess, saveError,
-  officeImageUrl, onChooseImage, courseId,
+  officeImageUrl, onChooseImage, onRemoveImage, onDelete, deleting, deleteError,
 }: {
   details: OfficeDetails;
   update: (k: keyof OfficeDetails, v: string) => void;
@@ -643,7 +690,10 @@ function OfficeDetailsTab({
   saveError: string | null;
   officeImageUrl: string;
   onChooseImage: () => void;
-  courseId: string;
+  onRemoveImage: () => void;
+  onDelete: () => void;
+  deleting: boolean;
+  deleteError: string | null;
 }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -679,6 +729,7 @@ function OfficeDetailsTab({
                     alt="Office"
                     width={200}
                     height={150}
+                    unoptimized
                     style={{ width: "100%", height: "100%", objectFit: "cover" }}
                   />
                 ) : (
@@ -693,6 +744,16 @@ function OfficeDetailsTab({
                 <button type="button" onClick={onChooseImage} className="osp-image-change-btn">
                   {officeImageUrl ? "Change image" : "Upload image"}
                 </button>
+                {officeImageUrl && (
+                  <button
+                    type="button"
+                    onClick={onRemoveImage}
+                    className="osp-image-change-btn"
+                    style={{ color: "#dc2626", borderColor: "#fecaca" }}
+                  >
+                    Remove
+                  </button>
+                )}
                 <span className="osp-image-hint">PNG, JPG, WebP · Max 5 MB</span>
               </div>
             </div>
@@ -772,7 +833,7 @@ function OfficeDetailsTab({
 
       </div>
 
-      {/* ── Delete Office row — no "Danger Zone" label ── */}
+      {/* ── Delete Office row ── */}
       <div className="osp-delete-row">
         <div className="osp-delete-info">
           <p style={{ fontSize: 13, fontWeight: 600, color: "#374151", marginBottom: 2 }}>
@@ -785,9 +846,14 @@ function OfficeDetailsTab({
         <button
           type="button"
           className="osp-delete-btn"
+          onClick={onDelete}
+          disabled={deleting}
         >
-          Delete Office
+          {deleting ? "Deleting…" : "Delete Office"}
         </button>
+        {deleteError && (
+          <span className="osp-error-msg" style={{ width: "100%" }}>{deleteError}</span>
+        )}
       </div>
 
     </div>
@@ -835,7 +901,7 @@ function ChooseImageModal({
     try {
       const form = new FormData();
       form.append("file", file);
-      const res = await fetch(`/api/admin/courses/${courseId}/image`, { method: "POST", body: form });
+      const res = await fetch(`/api/courses/${courseId}/image`, { method: "POST", body: form });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.url) throw new Error(data.error || "Upload failed");
       onUploaded(data.url);
@@ -912,6 +978,7 @@ function ChooseImageModal({
                     alt="Preview"
                     width={300}
                     height={200}
+                    unoptimized
                     style={{ maxHeight: 160, width: "auto", maxWidth: "100%", borderRadius: 10, border: "1px solid #f0e4e4", objectFit: "contain" }}
                   />
                   <p style={{ fontSize: 12, fontWeight: 600, color: "#374151", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "100%", padding: "0 12px" }}>

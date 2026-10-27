@@ -21,8 +21,8 @@ for (let h = 0; h < 24; h++) {
 }
 
 const GRADE_OPTIONS = ["Points", "Percentage", "Complete/Incomplete", "Letter Grade", "GPA Scale", "Pass/Fail", "Not Graded"];
-const SUBMISSION_TYPES = ["Online", "On Paper", "External Tool", "No Submission"];
-const SUBMISSION_ENTRY_TYPES = ["File Upload", "Text Entry", "Website URL", "Media Recording", "Student Annotation"];
+const SUBMISSION_TYPES = ["Online", "On Paper"];
+const SUBMISSION_ENTRY_TYPES = ["File Upload", "Text Entry", "Website URL", "Media Recording"];
 
 const ALLOWED_FILE_TYPES = [
   { value: "pdf", label: "PDF" }, { value: "docx", label: "DOCX" }, { value: "doc", label: "DOC" },
@@ -552,7 +552,11 @@ export default function CourseAssignmentForm({
   const [newGroupName, setNewGroupName] = useState("");
 
   // Submission
-  const [submissionType, setSubmissionType] = useState(existingAssignment?.submissionType ?? "Online");
+  const [submissionType, setSubmissionType] = useState(
+    existingAssignment?.submissionType && SUBMISSION_TYPES.includes(existingAssignment.submissionType)
+      ? existingAssignment.submissionType
+      : "Online"
+  );
   const [submissionEntries, setSubmissionEntries] = useState<SubmissionEntryItem[]>(() => {
     const existing = existingAssignment?.submissionEntries;
     if (existing && Array.isArray(existing) && existing.length > 0) return existing;
@@ -570,11 +574,15 @@ export default function CourseAssignmentForm({
   const [sections, setSections] = useState<Section[]>(propSections);
   const [staff, setStaff] = useState<Staff[]>(propStaff);
   const [assignRows, setAssignRows] = useState<AssignRow[]>([{
-    id: 1, assignees: ["Everyone"],
+    id: 1,
+    assignees: (() => {
+      const existing = (existingAssignment as { assignees?: string[] } | null | undefined)?.assignees;
+      return Array.isArray(existing) && existing.length > 0 ? existing : ["Everyone"];
+    })(),
     dueDate: isoToDate(existingAssignment?.dueDate ?? null),
     dueTime: isoToTime(existingAssignment?.dueDate ?? null) || "11:59 PM",
     availableFrom: isoToDate(existingAssignment?.availableFrom ?? null),
-    availableFromTime: isoToTime(existingAssignment?.availableFrom ?? null) || "12:00 AM",
+    availableFromTime: isoToTime(existingAssignment?.availableFrom ?? null),
     until: isoToDate(existingAssignment?.availableUntil ?? null),
     untilTime: isoToTime(existingAssignment?.availableUntil ?? null) || "11:59 PM",
   }]);
@@ -636,8 +644,7 @@ export default function CourseAssignmentForm({
   const handleDateChange = (id: number, dateField: "dueDate" | "availableFrom" | "until", timeField: "dueTime" | "availableFromTime" | "untilTime", value: string) => {
     setAssignRows(p => p.map(r => {
       if (r.id !== id) return r;
-      const autoTime = dateField === "availableFrom" && value && !r[timeField] ? "12:00 AM" : r[timeField];
-      return { ...r, [dateField]: value, [timeField]: value ? autoTime : "" };
+      return { ...r, [dateField]: value, [timeField]: value ? r[timeField] : "" };
     }));
   };
   const getDateErrors = (row: AssignRow) => {
@@ -673,7 +680,9 @@ export default function CourseAssignmentForm({
       const payload = {
         title: name.trim(), description, points: parseFloat(points) || 0, submissionType,
         assignmentGroup: group, displayGradeAs, status: publish ? "PUBLISHED" : "UNPUBLISHED",
-        assignees: row?.assignees ?? [],
+        assignees: assignRows.some(r => r.assignees.includes("Everyone"))
+          ? ["Everyone"]
+          : Array.from(new Set(assignRows.flatMap(r => r.assignees))),
         dueDate: toIso(row?.dueDate ?? "", row?.dueTime ?? "", "11:59 PM"), dueTime: null,
 availableFrom: toIso(row?.availableFrom ?? "", row?.availableFromTime ?? "", "12:00 AM"), availableFromTime: null,
 availableUntil: toIso(row?.until ?? "", row?.untilTime ?? "", "11:59 PM"), untilTime: null,
@@ -821,11 +830,6 @@ availableUntil: toIso(row?.until ?? "", row?.untilTime ?? "", "11:59 PM"), until
               className="h-8 border border-gray-300 rounded-sm px-3 text-xs w-full sm:w-80 bg-white outline-none focus:border-[#7b1113]">
               {GRADE_OPTIONS.map(o => <option key={o}>{o}</option>)}
             </select>
-            <div />
-            <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
-              <input type="checkbox" checked={doNotCount} onChange={e => setDoNotCount(e.target.checked)} style={{ accentColor: MAROON }} />
-              Do not count this assignment towards the final grade
-            </label>
             <label className="text-xs text-gray-700 sm:text-right pt-2">Group Assignment</label>
             <div className="border border-gray-200 rounded-sm p-3 w-full sm:w-80 space-y-2">
               <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
@@ -855,7 +859,7 @@ availableUntil: toIso(row?.until ?? "", row?.untilTime ?? "", "11:59 PM"), until
                       style={{ borderColor: MAROON }}>
                       {row.assignees.length > 0 ? row.assignees.map(a => (
                         <span key={a} className="px-2 py-0.5 rounded text-xs flex items-center gap-1 text-white font-medium" style={{ background: MAROON }}>
-                          {a}
+                          {staff.find(s => String(s.id) === a)?.name ?? a}
                           <button type="button" onMouseDown={e => { e.stopPropagation(); if (a === "Everyone") return; toggleAssignee(row.id, a); }} className="hover:opacity-70 font-bold ml-0.5">×</button>
                         </span>
                       )) : <span className="text-gray-400">Start typing to search...</span>}
@@ -890,10 +894,10 @@ availableUntil: toIso(row?.until ?? "", row?.untilTime ?? "", "11:59 PM"), until
                           <>
                             <div className="px-3 pt-2 pb-1 text-[10px] font-bold text-gray-500 uppercase tracking-widest border-t border-gray-100 bg-gray-50">Staff</div>
                             {staff.filter(s => s.name.toLowerCase().includes(dropdownSearch.toLowerCase())).map(s => (
-                              <button key={s.id} type="button" onMouseDown={e => { e.preventDefault(); e.stopPropagation(); toggleAssignee(row.id, s.name); }}
+                              <button key={s.id} type="button" onMouseDown={e => { e.preventDefault(); e.stopPropagation(); toggleAssignee(row.id, String(s.id)); }}
                                 className="w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-gray-50"
-                                style={{ color: row.assignees.includes(s.name) ? MAROON : "#374151", fontWeight: row.assignees.includes(s.name) ? 600 : 400 }}>
-                                {s.name}{row.assignees.includes(s.name) && <span style={{ color: MAROON }}>✓</span>}
+                                style={{ color: row.assignees.includes(String(s.id)) ? MAROON : "#374151", fontWeight: row.assignees.includes(String(s.id)) ? 600 : 400 }}>
+                                {s.name}{row.assignees.includes(String(s.id)) && <span style={{ color: MAROON }}>✓</span>}
                               </button>
                             ))}
                           </>

@@ -172,7 +172,10 @@ export async function GET(
 
   const userId = access.userId;
   const isAdmin = access.systemRole === "ADMIN";
-  const isHead = access.courseRole === "Head";
+  const isHead = (access.courseRole ?? "")
+    .split(",")
+    .map((r) => r.trim().toLowerCase())
+    .includes("head");
   const canManage = isAdmin || isHead;
 
   const assignment = await prisma.assignment.findFirst({
@@ -247,6 +250,9 @@ export async function GET(
   const assignmentRole: "manager" | "submitter" =
     isAdmin || isCreator ? "manager" : "submitter";
 
+  const requiredToSubmit =
+    !isCreator && (isHead ? explicitlyAssignedToYou : assignedToYou);
+
   const creator = assignment.createdById
     ? await prisma.user.findUnique({
         where: { id: assignment.createdById },
@@ -299,10 +305,10 @@ export async function GET(
       submissions: submission ? [submission] : [],
 
       isCreator,
-      isAssignedToYou: assignedToYou && !isCreator,
+      isAssignedToYou: requiredToSubmit,
 
       _assignmentRole: assignmentRole,
-      _isAssignedToYou: assignedToYou && !isCreator,
+      _isAssignedToYou: requiredToSubmit,
       _isExplicitlyAssignedToYou: explicitlyAssignedToYou,
 
       _publisherId: assignment.createdById ?? null,

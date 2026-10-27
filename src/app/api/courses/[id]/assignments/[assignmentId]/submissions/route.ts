@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireCoursePermission } from "@/lib/course-access";
+import { hasHeadRole } from "@/lib/course-permissions";
 
 export async function GET(
   _req: NextRequest,
@@ -22,7 +23,7 @@ export async function GET(
 
     const userId = access.userId;
     const isAdmin = access.systemRole === "ADMIN";
-    const isHead = access.courseRole === "Head";
+    const isHead = hasHeadRole(access.courseRole);
     const canViewAll = isAdmin || isHead;
 
     // Verify assignment belongs to this course

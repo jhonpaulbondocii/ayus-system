@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireCoursePermission } from "@/lib/course-access";
+import { hasHeadRole } from "@/lib/course-permissions";
 import { AssignmentStatus } from "@prisma/client";
 
 export async function PATCH(
@@ -30,7 +31,7 @@ export async function PATCH(
     }
 
     const isAdmin = access.systemRole === "ADMIN";
-    const isHead = access.courseRole === "Head";
+    const isHead = hasHeadRole(access.courseRole);
 
     if (!isAdmin && !isHead) {
       return NextResponse.json(

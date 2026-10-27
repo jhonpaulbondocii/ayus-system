@@ -175,7 +175,11 @@ export async function GET(
   const allAssignments = await prisma.assignment.findMany({
     where: {
       courseId,
-      ...(isAdmin || isHead ? {} : { status: CourseStatus.PUBLISHED }),
+      ...(isAdmin
+        ? {}
+        : isHead
+          ? { OR: [{ createdById: userId }, { status: CourseStatus.PUBLISHED }] }
+          : { status: CourseStatus.PUBLISHED }),
     },
     select: {
       id: true,
@@ -274,8 +278,10 @@ export async function GET(
       if (roleType === "admin") return true;
 
       if (roleType === "headOnly") {
-        // Head Only: sees assignments they created + assignments FROM ADMIN assigned to them
-        return isCreator || (creatorIsAdmin && assignedToYou);
+        // Head Only: sees own assignments + published assignments assigned to them
+        // (including "Everyone"), from Admin or from another Head.
+        // Unpublished ones from others are already excluded by the query above.
+        return isCreator || assignedToYou;
       }
 
       if (roleType === "both") {
@@ -323,6 +329,9 @@ export async function GET(
       const assignmentRole: "manager" | "submitter" =
         isAdmin || isCreator ? "manager" : "submitter";
 
+      const isHeadViewer = roleType === "headOnly" || roleType === "both";
+      const requiredToSubmit = !isCreator && (isHeadViewer ? explicitlyAssignedToYou : assignedToYou);
+
       const creator = createdById ? creatorMap.get(createdById) : null;
       const publisherCourseRole = createdById
         ? (creatorCourseRoleMap.get(createdById) ?? null)
@@ -335,9 +344,9 @@ export async function GET(
         onlineEntryOptions: submissionEntries ? [] : onlineEntryOptions,
         ...(submissionEntries ? { submissionEntries } : {}),
         isCreator,
-        isAssignedToYou: assignedToYou && !isCreator,
+        isAssignedToYou: requiredToSubmit,
         _assignmentRole: assignmentRole,
-        _isAssignedToYou: assignedToYou && !isCreator,
+        _isAssignedToYou: requiredToSubmit,
         _isExplicitlyAssignedToYou: explicitlyAssignedToYou,
         _publisherId: createdById ?? null,
         _publisherName: creator?.name ?? null,

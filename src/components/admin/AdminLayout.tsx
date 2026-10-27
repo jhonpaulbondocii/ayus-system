@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
+import { createPortal } from "react-dom";
 import {
   LayoutDashboard, Users, FolderKanban,
   Inbox, Clock, CalendarDays, LogOut, BookOpen,
@@ -24,6 +25,126 @@ const PRESET_COLORS = [
   "#1565c0","#4527a0","#6a0dad","#7b1113",
   "#37474f","#546e7a","#78909c","#5d4037",
 ];
+
+/* ── Logout Confirmation Dialog ──────────────────────────────────────────────── */
+function LogoutConfirmDialog({
+  isBottomNav,
+  loggingOut,
+  onCancel,
+  onConfirm,
+}: {
+  isBottomNav: boolean;
+  loggingOut:  boolean;
+  onCancel:    () => void;
+  onConfirm:   () => void;
+}) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !loggingOut) onCancel();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [loggingOut, onCancel]);
+
+  return createPortal(
+    <div
+      onClick={() => !loggingOut && onCancel()}
+      style={{
+        position: "fixed", inset: 0, zIndex: 1000,
+        background: "rgba(0,0,0,0.45)",
+        backdropFilter: "blur(2px)",
+        display: "flex",
+        alignItems: isBottomNav ? "flex-end" : "center",
+        justifyContent: "center",
+        padding: isBottomNav ? 0 : 16,
+      }}
+    >
+      <div
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="admin-logout-title"
+        aria-describedby="admin-logout-desc"
+        onClick={e => e.stopPropagation()}
+        style={{
+          fontFamily: FONT,
+          background: "#fff",
+          width: "100%",
+          maxWidth: isBottomNav ? "100%" : 360,
+          borderRadius: isBottomNav ? "20px 20px 0 0" : 16,
+          overflow: "hidden",
+          boxShadow: "0 20px 60px rgba(123,17,19,0.25)",
+          paddingBottom: isBottomNav ? "env(safe-area-inset-bottom, 20px)" : 0,
+        }}
+      >
+        {/* Maroon top accent */}
+        <div style={{ height: 4, background: MAROON }} />
+
+        <div style={{ padding: "24px 24px 8px", textAlign: "center" }}>
+          <div style={{
+            width: 52, height: 52, borderRadius: "50%",
+            background: "#fef2f2", color: MAROON,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            margin: "0 auto 14px",
+          }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+          </div>
+
+          <h2 id="admin-logout-title" style={{ fontSize: 17, fontWeight: 800, color: "#111827", margin: 0 }}>
+            Log out?
+          </h2>
+          <p id="admin-logout-desc" style={{ fontSize: 13, color: "#6b7280", margin: "8px 0 0", lineHeight: 1.5 }}>
+            Are you sure you want to log out of the admin panel?
+          </p>
+        </div>
+
+        <div style={{
+          display: "flex",
+          flexDirection: isBottomNav ? "column-reverse" : "row",
+          gap: 10,
+          padding: "20px 24px 24px",
+        }}>
+          <button
+            onClick={onCancel}
+            disabled={loggingOut}
+            style={{
+              flex: 1, padding: "11px 16px", fontSize: 13, fontWeight: 700,
+              border: "1px solid #e5e7eb", borderRadius: 10,
+              background: "#fff", color: "#4b5563",
+              cursor: loggingOut ? "not-allowed" : "pointer",
+              fontFamily: FONT, transition: "all .15s",
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = "#f9fafb"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "#fff"; }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={loggingOut}
+            style={{
+              flex: 1, padding: "11px 16px", fontSize: 13, fontWeight: 700,
+              border: "none", borderRadius: 10,
+              background: MAROON, color: "#fff",
+              cursor: loggingOut ? "not-allowed" : "pointer",
+              opacity: loggingOut ? 0.7 : 1,
+              fontFamily: FONT, transition: "all .15s",
+            }}
+            onMouseEnter={e => { if (!loggingOut) e.currentTarget.style.background = "#5e0d0f"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = MAROON; }}
+          >
+            {loggingOut ? "Logging out..." : "Yes, log out"}
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
 
 /* ── Create Course Modal ─────────────────────────────────────────────────────── */
 function CreateCourseModal({
@@ -157,6 +278,14 @@ function AdminSidebar({
 
   const { isOpen: historyIsOpen, open: openHistory, closePanel: closeHistoryPanel } = useHistory();
 
+  const [confirmLogout, setConfirmLogout] = useState(false);
+  const [loggingOut, setLoggingOut]       = useState(false);
+
+  const handleLogout = async () => {
+    setLoggingOut(true);
+    await signOut({ callbackUrl: "/admin/login" });
+  };
+
   const pageIsActive = (href: string) => {
     if (coursesActive)   return false;
     if (groupsPanelOpen) return false;
@@ -259,16 +388,21 @@ function AdminSidebar({
       {/* 9. Logout */}
       <div className="mt-auto mb-2 w-full">
         <button suppressHydrationWarning
-  onClick={() => {
-    if (window.confirm("Are you sure you want to logout?")) {
-      signOut({ callbackUrl: "/admin/login" });
-    }
-  }}
+  onClick={() => setConfirmLogout(true)}
   className={`flex flex-col items-center justify-center w-full py-2.5 px-1 transition-colors ${INACTIVE_CLS}`}>
           <LogOut size={18} />
           <span className="text-[10px] mt-1">Logout</span>
         </button>
       </div>
+
+      {confirmLogout && (
+        <LogoutConfirmDialog
+          isBottomNav={false}
+          loggingOut={loggingOut}
+          onCancel={() => setConfirmLogout(false)}
+          onConfirm={handleLogout}
+        />
+      )}
 
     </div>
   );
@@ -299,6 +433,14 @@ function MobileBottomNav({
   } = useAdminCourses();
 
   const { isOpen: historyIsOpen, open: openHistory, closePanel: closeHistoryPanel } = useHistory();
+
+  const [confirmLogout, setConfirmLogout] = useState(false);
+  const [loggingOut, setLoggingOut]       = useState(false);
+
+  const handleLogout = async () => {
+    setLoggingOut(true);
+    await signOut({ callbackUrl: "/admin/login" });
+  };
 
   const pageIsActive = (href: string) => {
     if (coursesActive || groupsPanelOpen) return false;
@@ -484,11 +626,7 @@ function MobileBottomNav({
 
           {/* 9. Logout */}
           <button
-            onClick={() => {
-              if (window.confirm("Are you sure you want to logout?")) {
-                signOut({ callbackUrl: "/admin/login" });
-              }
-            }}
+            onClick={() => setConfirmLogout(true)}
             style={NAV_ITEM_STYLE(false)}>
             <LogOut size={20} color={iconColor(false)} />
             <span style={LABEL_STYLE(false)}>Logout</span>
@@ -515,6 +653,15 @@ function MobileBottomNav({
           />
         ))}
       </div>
+
+      {confirmLogout && (
+        <LogoutConfirmDialog
+          isBottomNav={true}
+          loggingOut={loggingOut}
+          onCancel={() => setConfirmLogout(false)}
+          onConfirm={handleLogout}
+        />
+      )}
 
     </div>
   );

@@ -28,7 +28,9 @@ type AssignView = "list" | "detail" | "submitter-detail" | "create" | "edit" | "
 function getBool(v: unknown): boolean { return v === true; }
 
 function resolveRole(a: AssignmentWithRole, currentUserId?: string | null): "manager" | "submitter" {
-  const assignedToYou = getBool(a._isAssignedToYou) || getBool(a._isExplicitlyAssignedToYou) || getBool(a.isAssignedToYou);
+  const assigneeIds = (a as { assignees?: unknown }).assignees;
+  const inAssignees = !!currentUserId && Array.isArray(assigneeIds) && assigneeIds.includes(currentUserId);
+  const assignedToYou = getBool(a._isAssignedToYou) || getBool(a._isExplicitlyAssignedToYou) || getBool(a.isAssignedToYou) || inAssignees;
   const isCreator = getBool(a.isCreator) || (!!currentUserId && !!a._publisherId && a._publisherId === currentUserId);
   if (assignedToYou && !isCreator) return "submitter";
   if (isCreator) return "manager";

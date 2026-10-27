@@ -54,7 +54,8 @@ interface GroupSet {
   groupStructure: string; createGroupsNow: number; limitGroupMembers: number;
   autoAssignLeader: boolean; leaderType: string; groups: GroupItem[];
 }
-interface Chip { id: string; email: string; role: string; status: "idle"|"valid"|"invalid"; errorMsg?: string; }
+interface Chip { id: string; email: string; role: string; status: "idle"|"valid"|"invalid"; errorMsg?: string; name?: string; image?: string | null; }
+interface UserSuggestion { id: string; name: string; email: string; image: string | null; }
 interface CourseOption { id: string; name: string; code: string; }
 
 interface Props {
@@ -192,6 +193,26 @@ const CSS = `
 /* ── Admin row badge ── */
 .cpt-admin-badge { font-size:10px; font-weight:800; padding:2px 7px; border-radius:20px; background:#374151; color:#fff; letter-spacing:.05em; display:inline-flex; align-items:center; gap:3px; }
 
+/* ── Add People: sub-tabs, suggestions, browse ── */
+.cpt-subtabs { display:flex; border-bottom:1px solid #f0e4e4; padding:0 18px; flex-shrink:0; overflow-x:auto; scrollbar-width:none; }
+.cpt-subtabs::-webkit-scrollbar { display:none; }
+.cpt-subtab { font-family:'Plus Jakarta Sans','Helvetica Neue',Arial,sans-serif; font-size:12px; font-weight:600; color:#6b7780; background:none; border:none; border-bottom:2px solid transparent; padding:10px 14px; cursor:pointer; margin-bottom:-1px; transition:color .15s; white-space:nowrap; }
+.cpt-subtab:hover { color:#7b1113; }
+.cpt-subtab.active { color:#7b1113; border-bottom-color:#7b1113; }
+.cpt-sugg { border:1px solid #f0e4e4; border-radius:12px; box-shadow:0 4px 16px rgba(123,17,19,.07); margin-top:4px; max-height:200px; overflow-y:auto; background:#fff; }
+.cpt-sugg-item { display:flex; align-items:center; gap:10px; width:100%; padding:9px 14px; background:none; border:none; cursor:pointer; text-align:left; transition:background .1s; }
+.cpt-sugg-item:hover { background:#fdf8f8; }
+.cpt-browse-table { width:100%; border-collapse:collapse; }
+.cpt-browse-thead { position:sticky; top:0; background:#fdf8f8; z-index:10; }
+.cpt-browse-thead tr { border-bottom:1px solid #f0e4e4; }
+.cpt-browse-th { text-align:left; padding:10px 12px; font-size:11px; font-weight:700; color:#6b7780; text-transform:uppercase; letter-spacing:.06em; }
+.cpt-browse-tr { cursor:pointer; border-bottom:1px solid #f9fafb; transition:background .1s; }
+.cpt-browse-tr.even { background:#fff; }
+.cpt-browse-tr.odd { background:#fdf8f8; }
+.cpt-browse-tr.sel { background:#fef2f2; }
+.cpt-browse-tr:hover { background:#fdf8f8; }
+.cpt-banner { display:flex; align-items:center; justify-content:space-between; background:#fef2f2; border:1px solid #f0c0c0; border-radius:10px; padding:9px 12px; margin-top:10px; flex-wrap:wrap; gap:8px; }
+
 /* ── Spinner animation ── */
 @keyframes cpt-spin { to { transform: rotate(360deg); } }
 .cpt-spin { animation: cpt-spin 1s linear infinite; }
@@ -322,6 +343,94 @@ export default function CoursePeopleTab({
   const [adding,     setAdding]     = useState(false);
   const [addError,   setAddError]   = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const [addModalTab,   setAddModalTab]   = useState<"search"|"browse">("search");
+  const [suggestions,   setSuggestions]   = useState<UserSuggestion[]>([]);
+  const [showSugg,      setShowSugg]      = useState(false);
+  const [suggLoading,   setSuggLoading]   = useState(false);
+  const [allUsers,      setAllUsers]      = useState<UserSuggestion[]>([]);
+  const [browseSearch,  setBrowseSearch]  = useState("");
+  const [browseLoading, setBrowseLoading] = useState(false);
+  const [selectedIds,   setSelectedIds]   = useState<Set<string>>(new Set());
+  const [bulkAdding,    setBulkAdding]    = useState(false);
+  const [bulkError,     setBulkError]     = useState("");
+
+  const loadSuggestions = async (q: string) => {
+    setSuggLoading(true); setShowSugg(true);
+    try {
+      const res = await fetch(`/api/courses/${courseId}/people/candidates?search=${encodeURIComponent(q)}`);
+      const d = await res.json();
+      const chipped = new Set(chips.map(c => c.email.toLowerCase()));
+      setSuggestions((d.users ?? []).filter((u: UserSuggestion) => !chipped.has(u.email.toLowerCase())).slice(0, 8));
+    } catch { setSuggestions([]); } finally { setSuggLoading(false); }
+  };
+
+  useEffect(() => {
+    if (!addModal || addModalTab !== "search") return;
+    const t = setTimeout(() => {
+      if (inputVal.trim().length >= 1) void loadSuggestions(inputVal.trim());
+      else { setSuggestions([]); setShowSugg(false); }
+    }, 200);
+    return () => clearTimeout(t);
+  }, [inputVal, addModal, addModalTab]); // eslint-disable-line
+
+  const loadBrowseUsers = async () => {
+    setBrowseLoading(true);
+    try {
+      const res = await fetch(`/api/courses/${courseId}/people/candidates`);
+      const d = await res.json();
+      setAllUsers(d.users ?? []);
+    } catch { setAllUsers([]); } finally { setBrowseLoading(false); }
+  };
+
+  useEffect(() => {
+    if (addModal && addModalTab === "browse") void loadBrowseUsers();
+  }, [addModal, addModalTab]); // eslint-disable-line
+
+  const addChipFromSugg = (u: UserSuggestion) => {
+    setChips(p => p.some(c => c.email.toLowerCase() === u.email.toLowerCase())
+      ? p
+      : [...p, { id: crypto.randomUUID(), email: u.email, name: u.name, image: u.image, role: serializeRoles(inputRoles), status: "idle" }]);
+    setInputVal(""); setSuggestions([]); setShowSugg(false);
+    inputRef.current?.focus();
+  };
+
+  const handleBulkAdd = async () => {
+    if (selectedIds.size === 0) return;
+    setBulkAdding(true); setBulkError("");
+    const failed: string[] = [];
+    for (const u of allUsers.filter(u => selectedIds.has(u.id))) {
+      try {
+        const res = await fetch(`/api/courses/${courseId}/people`, {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: u.email, role: serializeRoles(inputRoles) }),
+        });
+        if (!res.ok) failed.push(u.name);
+      } catch { failed.push(u.name); }
+    }
+    fetchPeople();
+    setBulkAdding(false);
+    if (failed.length > 0) { setBulkError(`Failed: ${failed.join(", ")}`); void loadBrowseUsers(); setSelectedIds(new Set()); }
+    else closeAddModal();
+  };
+
+  const browseFiltered = allUsers.filter(u => {
+    const q = browseSearch.toLowerCase();
+    return u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q);
+  });
+  const allBrowseSel = browseFiltered.length > 0 && browseFiltered.every(u => selectedIds.has(u.id));
+  const someBrowseSel = browseFiltered.some(u => selectedIds.has(u.id));
+  const toggleAllBrowse = () => setSelectedIds(p => {
+    const s = new Set(p);
+    if (allBrowseSel) browseFiltered.forEach(u => s.delete(u.id));
+    else browseFiltered.forEach(u => s.add(u.id));
+    return s;
+  });
+  const toggleBrowseUser = (id: string) => setSelectedIds(p => {
+    const s = new Set(p);
+    if (s.has(id)) s.delete(id); else s.add(id);
+    return s;
+  });
 
   /* ── Group set state ── */
   const [groupSetModal,      setGroupSetModal]      = useState(false);
@@ -466,7 +575,7 @@ export default function CoursePeopleTab({
     const notFound: string[] = []; const alreadyEnrolled: string[] = [];
     for (const chip of currentChips) {
       try {
-        const res = await fetch(`/api/courses/${courseId}/people`, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ email: chip.email.trim(), role: chip.role }) });
+        const res = await fetch(`/api/courses/${courseId}/people`, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ email: chip.email.trim(), role: serializeRoles(inputRoles) })});
         if (res.ok) { setChips(p=>p.map(c=>c.id===chip.id?{...c,status:"valid"}:c)); }
         else { const body = await res.json().catch(()=>({})); if (res.status===409) { alreadyEnrolled.push(chip.email); setChips(p=>p.map(c=>c.id===chip.id?{...c,status:"invalid",errorMsg:"Already enrolled"}:c)); } else { notFound.push(chip.email); setChips(p=>p.map(c=>c.id===chip.id?{...c,status:"invalid",errorMsg:body?.message??"Not found"}:c)); } }
       } catch { notFound.push(chip.email); setChips(p=>p.map(c=>c.id===chip.id?{...c,status:"invalid",errorMsg:"Request failed"}:c)); }
@@ -477,7 +586,11 @@ export default function CoursePeopleTab({
     if (alreadyEnrolled.length > 0) errParts.push(`Already enrolled: ${alreadyEnrolled.join(", ")}`);
     if (errParts.length > 0) setAddError(errParts.join(" · ")); else closeAddModal();
   };
-  const closeAddModal = () => { setAddModal(false); setChips([]); setInputVal(""); setInputRoles(["Staff"]); setAddError(""); };
+  const closeAddModal = () => {
+    setAddModal(false); setChips([]); setInputVal(""); setInputRoles(["Staff"]); setAddError("");
+    setAddModalTab("search"); setSuggestions([]); setShowSugg(false);
+    setSelectedIds(new Set()); setBrowseSearch(""); setBulkError("");
+  };
 
   const removeUser = async (userId: string) => {
     if (userId === currentUserId) return;
@@ -960,62 +1073,177 @@ export default function CoursePeopleTab({
           </div>
         )}
 
-        {/* ── Add People ── */}
+                {/* ── Add People ── */}
         {addModal&&canManagePeople&&(
           <div className="cpt-overlay" onClick={e=>{if(e.target===e.currentTarget)closeAddModal();}}>
-            <div className="cpt-modal" style={{maxWidth:520}}>
+            <div className="cpt-modal" style={{maxWidth:620,maxHeight:"88vh"}}>
               <div className="cpt-modal-header">
                 <h2 className="cpt-modal-title">Add People</h2>
                 <button className="cpt-btn-icon" onClick={closeAddModal}><X size={18}/></button>
               </div>
-              <div className="cpt-modal-body" style={{display:"flex",flexDirection:"column",gap:16}}>
-                <div style={{display:"flex",gap:10,background:"#fef2f2",border:"1px solid #f0c0c0",borderRadius:8,padding:"10px 14px"}}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7b1113" strokeWidth={2.2} style={{flexShrink:0,marginTop:1}}><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01" strokeLinecap="round"/></svg>
-                  <p style={{fontSize:12,color:"#7b1113",margin:0,lineHeight:1.5}}>Enter the <strong>email address</strong> of each person. They must already have an account in the system.</p>
-                </div>
-                <div>
-                  <label style={{display:"block",fontSize:13,fontWeight:700,color:"#2d3b45",marginBottom:6}}>Email Addresses <span style={{color:"#c0392b"}}>*</span></label>
-                  <div className="cpt-chip-box" onClick={()=>inputRef.current?.focus()}>
-                    {chips.map(chip=>{
-                      const isInvalid=chip.status==="invalid"; const isValid=chip.status==="valid";
-                      return(
-                        <span key={chip.id} title={chip.errorMsg} style={{display:"inline-flex",alignItems:"center",gap:5,padding:"3px 6px 3px 8px",borderRadius:6,fontSize:12,background:isValid?"#f0fdf4":isInvalid?"#fef2f2":"#f3f4f6",border:`1px solid ${isValid?"#86efac":isInvalid?"#f0c0c0":"#e5e7eb"}`,color:isValid?"#15803d":isInvalid?"#7b1113":"#374151"}}>
-                          {chip.email}
-                          {isValid&&<Check size={11} color="#16a34a"/>}
-                          <button type="button" onMouseDown={e=>{e.preventDefault();removeChip(chip.id);}} style={{background:"none",border:"none",cursor:"pointer",padding:0,display:"flex",color:"inherit",opacity:0.6,marginLeft:1}}><X size={11}/></button>
-                        </span>
-                      );
-                    })}
-                    <input ref={inputRef} className="cpt-chip-input" type="email" value={inputVal} onChange={e=>setInputVal(e.target.value)} onKeyDown={handleKD} onPaste={handlePaste} placeholder={chips.length===0?"e.g. juan@example.com":""} autoComplete="off"/>
-                  </div>
-                  <p style={{fontSize:11,color:"#9ca3af",marginTop:5}}>Press <kbd style={{fontSize:10,background:"#f3f4f6",border:"1px solid #e5e7eb",borderRadius:4,padding:"1px 4px"}}>Enter</kbd> after each email</p>
-                </div>
-                <div>
-                  <label style={{display:"block",fontSize:13,fontWeight:700,color:"#2d3b45",marginBottom:8}}>Role <span style={{color:"#c0392b"}}>*</span></label>
-                  <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
-                    {ALL_ROLES.map(r=>{
-                      const checked = inputRoles.includes(r);
-                      const disabled = r === "Head" && !isAdmin;
-                      return(
-                        <label key={r} className={`cpt-role-check-item${checked?" selected":""}`}
-                          style={{padding:"8px 14px",flexDirection:"row",alignItems:"center",gap:8,cursor:disabled?"not-allowed":"pointer",opacity:disabled?0.4:1,flex:"1 1 auto"}}>
-                          <input type="checkbox" checked={checked} disabled={disabled}
-                            onChange={()=>!disabled&&setInputRoles(prev=>prev.includes(r)?prev.filter(x=>x!==r):[...prev,r])}
-                            style={{accentColor:"#7b1113",width:14,height:14,cursor:disabled?"not-allowed":"pointer",flexShrink:0}}/>
-                          <span style={{fontWeight:700,fontSize:12,color:checked?ROLE_BADGE[r].color:"#2d3b45"}}>{r}</span>
-                        </label>
-                      );
-                    })}
-                  </div>
-                  {inputRoles.length===0&&<p style={{fontSize:12,color:"#c0392b",marginTop:6,fontWeight:600}}>At least one role required.</p>}
-                </div>
-                {addError&&<div style={{display:"flex",gap:8,background:"#fef2f2",border:"1px solid #f0c0c0",borderRadius:8,padding:"9px 12px"}}><p style={{fontSize:12,color:"#7b1113",margin:0,fontWeight:600}}>{addError}</p></div>}
+
+              <div className="cpt-subtabs">
+                {[{key:"search",label:"Search by Email"},{key:"browse",label:"Browse & Select Users"}].map(t=>(
+                  <button key={t.key} className={`cpt-subtab${addModalTab===t.key?" active":""}`} onClick={()=>setAddModalTab(t.key as "search"|"browse")}>{t.label}</button>
+                ))}
               </div>
+
+              {/* ── Role picker (shared by both tabs) ── */}
+              {(() => {
+                const rolePicker = (
+                  <div>
+                    <label style={{display:"block",fontSize:13,fontWeight:700,color:"#2d3b45",marginBottom:8}}>Role <span style={{color:"#c0392b"}}>*</span></label>
+                    <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                      {ALL_ROLES.map(r=>{
+                        const checked = inputRoles.includes(r);
+                        const disabled = r === "Head" && !isAdmin;
+                        return(
+                          <label key={r} className={`cpt-role-check-item${checked?" selected":""}`}
+                            style={{padding:"8px 14px",flexDirection:"row",alignItems:"center",gap:8,cursor:disabled?"not-allowed":"pointer",opacity:disabled?0.4:1,flex:"1 1 auto"}}>
+                            <input type="checkbox" checked={checked} disabled={disabled}
+                              onChange={()=>!disabled&&setInputRoles(prev=>prev.includes(r)?prev.filter(x=>x!==r):[...prev,r])}
+                              style={{accentColor:"#7b1113",width:14,height:14,cursor:disabled?"not-allowed":"pointer",flexShrink:0}}/>
+                            <span style={{fontWeight:700,fontSize:12,color:checked?ROLE_BADGE[r].color:"#2d3b45"}}>{r}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                    {inputRoles.length===0&&<p style={{fontSize:12,color:"#c0392b",marginTop:6,fontWeight:600}}>At least one role required.</p>}
+                  </div>
+                );
+
+                return (
+                  <>
+                    {addModalTab==="search"&&(
+                      <div className="cpt-modal-body" style={{display:"flex",flexDirection:"column",gap:16,minHeight:0}}>
+                        <div>
+                          <label style={{display:"block",fontSize:13,fontWeight:700,color:"#2d3b45",marginBottom:6}}>Email Addresses <span style={{color:"#c0392b"}}>*</span></label>
+                          <div className="cpt-chip-box" onClick={()=>inputRef.current?.focus()}>
+                            {chips.map(chip=>{
+                              const isInvalid=chip.status==="invalid"; const isValid=chip.status==="valid";
+                              return(
+                                <span key={chip.id} title={chip.errorMsg} style={{display:"inline-flex",alignItems:"center",gap:5,padding:"3px 6px 3px 8px",borderRadius:6,fontSize:12,background:isValid?"#f0fdf4":isInvalid?"#fef2f2":"#f3f4f6",border:`1px solid ${isValid?"#86efac":isInvalid?"#f0c0c0":"#e5e7eb"}`,color:isValid?"#15803d":isInvalid?"#7b1113":"#374151"}}>
+                                  {chip.name ?? chip.email}
+                                  {isValid&&<Check size={11} color="#16a34a"/>}
+                                  {isInvalid&&<X size={11} color="#7b1113"/>}
+                                  <button type="button" onMouseDown={e=>{e.preventDefault();removeChip(chip.id);}} style={{background:"none",border:"none",cursor:"pointer",padding:0,display:"flex",color:"inherit",opacity:0.6,marginLeft:1}}><X size={11}/></button>
+                                </span>
+                              );
+                            })}
+                            <input ref={inputRef} className="cpt-chip-input" type="text" value={inputVal}
+                              onChange={e=>setInputVal(e.target.value)} onKeyDown={handleKD} onPaste={handlePaste}
+                              onBlur={()=>setTimeout(()=>setShowSugg(false),150)}
+                              placeholder={chips.length===0?"Search by name or email…":""} autoComplete="off"/>
+                          </div>
+
+                          {showSugg&&(suggestions.length>0||suggLoading)&&(
+                            <div className="cpt-sugg">
+                              {suggLoading&&!suggestions.length&&(
+                                <div style={{display:"flex",alignItems:"center",gap:8,padding:"10px 14px",fontSize:13,color:"#9ca3af"}}><Loader2 size={14} className="cpt-spin"/>Searching…</div>
+                              )}
+                              {suggestions.map(u=>(
+                                <button key={u.id} type="button" className="cpt-sugg-item" onMouseDown={e=>{e.preventDefault();addChipFromSugg(u);}}>
+                                  <Avatar name={u.name} image={u.image} size={30}/>
+                                  <div style={{minWidth:0}}>
+                                    <p style={{fontSize:13,fontWeight:700,color:"#2d3b45",margin:0}}>{u.name}</p>
+                                    <p style={{fontSize:12,color:"#9ca3af",margin:0}}>{u.email}</p>
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+
+                          <p style={{fontSize:11,color:"#9ca3af",marginTop:5}}>Press Enter or , to add · Paste multiple emails at once</p>
+                        </div>
+
+                        {rolePicker}
+
+                        <div>
+                          <label style={{display:"block",fontSize:13,fontWeight:700,color:"#2d3b45",marginBottom:6}}>Office</label>
+                          <div style={{position:"relative"}}>
+                            <select className="cpt-select" style={{width:"100%",boxSizing:"border-box"}} disabled><option>{course.name}</option></select>
+                            <DropArrow/>
+                          </div>
+                        </div>
+
+                        {addError&&<div style={{display:"flex",gap:8,background:"#fef2f2",border:"1px solid #f0c0c0",borderRadius:8,padding:"9px 12px"}}><p style={{fontSize:12,color:"#7b1113",margin:0,fontWeight:600}}>{addError}</p></div>}
+                      </div>
+                    )}
+
+                    {addModalTab==="browse"&&(
+                      <div style={{display:"flex",flexDirection:"column",flex:1,overflow:"hidden",minHeight:0}}>
+                        <div style={{padding:"16px 20px 12px",flexShrink:0,display:"flex",flexDirection:"column",gap:12}}>
+                          <div style={{position:"relative"}}>
+                            <svg style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",color:"#9ca3af",pointerEvents:"none"}} width="13" height="13" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35" strokeLinecap="round"/></svg>
+                            <input className="cpt-input" value={browseSearch} onChange={e=>setBrowseSearch(e.target.value)} placeholder="Search users…" style={{paddingLeft:30,width:"100%",boxSizing:"border-box"}}/>
+                          </div>
+                          {rolePicker}
+                          {selectedIds.size>0&&(
+                            <div className="cpt-banner" style={{marginTop:0}}>
+                              <span style={{fontSize:13,color:"#7b1113",fontWeight:600}}>{selectedIds.size} user{selectedIds.size!==1?"s":""} selected</span>
+                              <button type="button" onClick={()=>setSelectedIds(new Set())} style={{fontSize:12,color:"#7b1113",background:"none",border:"none",cursor:"pointer",textDecoration:"underline",fontWeight:600}}>Clear</button>
+                            </div>
+                          )}
+                        </div>
+
+                        <div style={{flex:1,overflowY:"auto",borderTop:"1px solid #f0e4e4",minHeight:120}}>
+                          {browseLoading?(
+                            <div style={{display:"flex",alignItems:"center",justifyContent:"center",padding:"40px 0",gap:8,color:"#9ca3af",fontSize:13}}><Loader2 size={18} className="cpt-spin"/>Loading users…</div>
+                          ):browseFiltered.length===0?(
+                            <p style={{fontSize:13,color:"#9ca3af",textAlign:"center",padding:"40px 0"}}>No users found.</p>
+                          ):(
+                            <table className="cpt-browse-table">
+                              <thead className="cpt-browse-thead">
+                                <tr>
+                                  <th style={{width:40,padding:"10px 14px"}}>
+                                    <input type="checkbox" checked={allBrowseSel} ref={el=>{if(el) el.indeterminate=someBrowseSel&&!allBrowseSel;}} onChange={toggleAllBrowse} style={{width:14,height:14,accentColor:"#7b1113",cursor:"pointer"}}/>
+                                  </th>
+                                  <th className="cpt-browse-th">Name</th>
+                                  <th className="cpt-browse-th cpt-col-faculty">Email</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {browseFiltered.map((u,i)=>{
+                                  const sel = selectedIds.has(u.id);
+                                  return(
+                                    <tr key={u.id} className={`cpt-browse-tr ${sel?"sel":i%2===0?"even":"odd"}`} onClick={()=>toggleBrowseUser(u.id)}>
+                                      <td style={{padding:"10px 14px"}}>
+                                        <div style={{width:18,height:18,borderRadius:"50%",border:`2px solid ${sel?"#7b1113":"#e5e7eb"}`,background:sel?"#7b1113":"#fff",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                                          {sel&&<Check size={11} color="#fff"/>}
+                                        </div>
+                                      </td>
+                                      <td style={{padding:"10px 12px"}}>
+                                        <div style={{display:"flex",alignItems:"center",gap:10}}>
+                                          <Avatar name={u.name} image={u.image} size={30}/>
+                                          <span style={{fontSize:13,color:"#2d3b45",fontWeight:600}}>{u.name}</span>
+                                        </div>
+                                      </td>
+                                      <td className="cpt-col-faculty" style={{padding:"10px 12px",fontSize:13,color:"#6b7780"}}>{u.email}</td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          )}
+                        </div>
+                        {bulkError&&<p style={{fontSize:12,color:"#7b1113",padding:"6px 20px",fontWeight:600,margin:0}}>{bulkError}</p>}
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
+
               <div className="cpt-modal-footer">
-                <button className="cpt-btn-secondary" onClick={closeAddModal} disabled={adding}>Cancel</button>
-                <button className="cpt-btn-primary" onClick={()=>void handleAddPeople()} disabled={adding||(chips.length===0&&!inputVal.trim())}>
-                  {adding&&<Loader2 size={13} className="cpt-spin"/>}{adding?"Adding…":`Add ${validChipCount>0?validChipCount:""} to Course`}
-                </button>
+                <button className="cpt-btn-secondary" onClick={closeAddModal} disabled={adding||bulkAdding}>Cancel</button>
+                {addModalTab==="search"?(
+                  <button className="cpt-btn-primary" onClick={()=>void handleAddPeople()} disabled={adding||inputRoles.length===0||(chips.length===0&&!inputVal.trim())}>
+                    {adding&&<Loader2 size={13} className="cpt-spin"/>}{adding?"Adding…":`Add ${validChipCount>0?validChipCount:""} to Course`}
+                  </button>
+                ):(
+                  <button className="cpt-btn-primary" onClick={()=>void handleBulkAdd()} disabled={bulkAdding||selectedIds.size===0||inputRoles.length===0}>
+                    {bulkAdding&&<Loader2 size={13} className="cpt-spin"/>}{bulkAdding?"Adding…":`Add ${selectedIds.size>0?selectedIds.size:""} to Course`}
+                  </button>
+                )}
               </div>
             </div>
           </div>

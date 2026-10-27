@@ -320,7 +320,9 @@ function CourseViewInner({ courseId }: { courseId: string }) {
   const [sections, setSections] = useState<Section[]>([]);
   const [staff, setStaff] = useState<Staff[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<Tab>("Home");
+  const [activeTab, setActiveTab] = useState<Tab>(
+    () => (searchParams.get("tab") as Tab | null) ?? "Home"
+  );
 
   const [drillLabel, setDrillLabel] = useState<string | null>(null);
   const [drillBack, setDrillBack] = useState<(() => void) | null>(null);
@@ -349,14 +351,17 @@ function CourseViewInner({ courseId }: { courseId: string }) {
     setActiveTab(tab);
     setDrillLabel(null);
     setDrillBack(null);
+
+    const params = new URLSearchParams(searchParams.toString());
+    if (tab === "Home") params.delete("tab");
+    else params.set("tab", tab);
+    const qs = params.toString();
+    router.replace(qs ? `?${qs}` : `?`, { scroll: false });
   };
 
   useEffect(() => {
-    const tabParam = searchParams.get("tab") as Tab | null;
-    const validTabs: Tab[] = [...ALL_TABS];
-    if (tabParam && validTabs.includes(tabParam)) {
-      startTransition(() => setActiveTab(tabParam));
-    }
+    const tabParam = (searchParams.get("tab") as Tab | null) ?? "Home";
+    startTransition(() => setActiveTab(tabParam));
   }, [searchParams]);
 
   useEffect(() => {
@@ -429,6 +434,31 @@ function CourseViewInner({ courseId }: { courseId: string }) {
     });
     return () => { isMounted = false; };
   }, [courseId]); // eslint-disable-line
+
+  // ── Auto-refresh assignments (polling + kapag bumalik sa tab) ─────────────
+  useEffect(() => {
+    if (loading) return;
+
+    const refresh = () => {
+      if (document.visibilityState !== "visible") return;
+      fetch(`/api/courses/${courseId}/assignments`, { cache: "no-store" })
+        .then((r) => r.json())
+        .then((d) => {
+          if (Array.isArray(d.assignments)) setAssignments(d.assignments);
+        })
+        .catch(() => {});
+    };
+
+    const interval = setInterval(refresh, 10000); // bawat 10 segundo
+    document.addEventListener("visibilitychange", refresh);
+    window.addEventListener("focus", refresh);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", refresh);
+      window.removeEventListener("focus", refresh);
+    };
+  }, [courseId, loading]);
 
   const sessionLoaded = sessionStatus !== "loading";
   const dataLoaded = !loading && sessionLoaded;
