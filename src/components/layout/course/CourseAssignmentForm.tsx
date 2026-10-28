@@ -588,7 +588,7 @@ export default function CourseAssignmentForm({
   }]);
   const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
   const [dropdownSearch, setDropdownSearch] = useState("");
-  const [notifyUsers, setNotifyUsers] = useState(false);
+  const [notifyUsers] = useState(false);
 
   // Save state
   const [published, setPublished] = useState(existingAssignment?.status === "PUBLISHED");
@@ -596,6 +596,35 @@ export default function CourseAssignmentForm({
   const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => setMounted(true), []);
+
+  // Edit mode: kunin ang saved entries kung wala sa listahan
+  useEffect(() => {
+    if (!isEdit || !existingAssignment?.id) return;
+    if (existingAssignment.submissionEntries && existingAssignment.submissionEntries.length > 0) return;
+    fetch(`/api/courses/${courseId}/assignments/${existingAssignment.id}`)
+      .then(r => r.json())
+      .then((d: { assignment?: { submissionEntries?: unknown } }) => {
+        let raw: unknown = d.assignment?.submissionEntries;
+        if (typeof raw === "string") { try { raw = JSON.parse(raw); } catch { raw = []; } }
+        if (!Array.isArray(raw) || raw.length === 0) return;
+        setSubmissionEntries(
+          raw
+            .filter((o): o is Record<string, unknown> => !!o && typeof o === "object")
+            .map((o, i) => ({
+              id: typeof o.id === "number" ? o.id : Date.now() + i,
+              label: typeof o.label === "string" ? o.label : "",
+              required: o.required === true,
+              type: typeof o.type === "string" && SUBMISSION_ENTRY_TYPES.includes(o.type) ? o.type : "File Upload",
+              allowedFileTypes: Array.isArray(o.allowedFileTypes) ? (o.allowedFileTypes as string[]) : [],
+              maxFiles: typeof o.maxFiles === "number" ? o.maxFiles : 1,
+              maxFileSizeValue: typeof o.maxFileSizeValue === "number" ? o.maxFileSizeValue : 1,
+              maxFileSizeUnit: o.maxFileSizeUnit === "KB" ? "KB" : "MB",
+            } as SubmissionEntryItem))
+        );
+      })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [courseId, existingAssignment?.id]);
 
   // Load groups, sections, staff
   useEffect(() => {
@@ -940,11 +969,6 @@ availableUntil: toIso(row?.until ?? "", row?.untilTime ?? "", "11:59 PM"), until
                 + Assign To
               </button>
             </div>
-            <div />
-            <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer mt-1">
-              <input type="checkbox" checked={notifyUsers} onChange={e => setNotifyUsers(e.target.checked)} style={{ accentColor: MAROON }} />
-              Notify users that this content has changed
-            </label>
           </div>
         )}
       </div>

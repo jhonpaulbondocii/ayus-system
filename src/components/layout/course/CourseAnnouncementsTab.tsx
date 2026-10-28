@@ -981,8 +981,12 @@ export default function CourseAnnouncementsTab({
           bodyText: bodyText.trim(),
           bodyHtml,
           assignTo: assignTo.length ? assignTo : ["Everyone"],
-          availableFrom: availableFromDate ? `${availableFromDate}T${availableFromTime || "00:00"}` : null,
-          availableUntil: untilDate ? `${untilDate}T${untilTime || "00:00"}` : null,
+          availableFrom: availableFromDate
+            ? new Date(`${availableFromDate}T${availableFromTime || "00:00"}`).toISOString()
+            : null,
+          availableUntil: untilDate
+            ? new Date(`${untilDate}T${untilTime || "00:00"}`).toISOString()
+            : null,
           attachments: attachments.map((f) => ({ name: f.name, url: f.url, size: f.size, mimeType: f.type })),
         }),
       });
@@ -1019,11 +1023,12 @@ return announcements.filter((a) => {
     filter === "All" ||
     (filter === "Unread" && !a.read) ||
     (filter === "Recent" && latest !== null && a.createdAt !== null && latest - Date.parse(a.createdAt) <= sevenDaysMs);
-  const matchAvailableFrom = !a.availableFrom || new Date(a.availableFrom) <= now;
-  const matchUntil = !a.availableUntil || new Date(a.availableUntil) >= now;
+  const isOwn = a.authorId === currentUserId;
+  const matchAvailableFrom = isOwn || !a.availableFrom || new Date(a.availableFrom) <= now;
+  const matchUntil = isOwn || !a.availableUntil || new Date(a.availableUntil) >= now;
   return matchSearch && matchFilter && matchAvailableFrom && matchUntil;
 });
-  }, [announcements, search, filter]);
+  }, [announcements, search, filter, currentUserId]);
 
   const viewingAnnouncement = announcements.find((a) => a.id === viewingId) ?? null;
 

@@ -2,7 +2,7 @@
 
 // src/components/layout/course/CourseAssignmentSubmitterDetail.tsx
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   CheckCircle,
   Circle,
@@ -36,7 +36,7 @@ type AssignmentWithRole = Assignment & {
 };
 
 interface SubmissionEntryExtended {
-  id: number;
+  id: number | string;
   label: string;
   required: boolean;
   type: string;
@@ -82,6 +82,12 @@ const ALLOWED_FILE_TYPES = [
   { value: "jpg", label: "JPG" },
   { value: "png", label: "PNG" },
   { value: "zip", label: "ZIP" },
+  { value: "jpeg", label: "JPEG" },
+  { value: "mp4", label: "MP4" },
+  { value: "webm", label: "WEBM" },
+  { value: "mp3", label: "MP3" },
+  { value: "wav", label: "WAV" },
+  { value: "m4a", label: "M4A" },
 ];
 
 const OPT_LABELS: Record<string, string> = {
@@ -134,45 +140,67 @@ function validateFileTypes(
   return { valid: errors.length === 0, errors };
 }
 
-function getAssignmentFileUploadEntries(
-  assignment: AssignmentWithRole
-): SubmissionEntryExtended[] {
-  const directEntries = (
-    (assignment as AssignmentWithSubmissionEntries).submissionEntries ?? []
-  )
-    .filter((e) => e.type === "File Upload")
-    .map((e) => ({
-      ...e,
-      allowedFileTypes: normalizeFileTypeList(e.allowedFileTypes),
-      maxFiles:
-        typeof e.maxFiles === "number" && e.maxFiles > 0 ? e.maxFiles : 1,
-    }));
-  if (directEntries.length > 0) return directEntries;
-  return [
-    {
-      id: 1,
-      label: "File Upload",
-      required: true,
-      type: "File Upload",
-      allowedFileTypes: [],
+const MEDIA_FILE_TYPES = ["mp4", "webm", "mp3", "wav", "m4a"];
+
+function toEntryType(raw: unknown): string {
+  return OPT_LABELS[normalizeOpt(String(raw ?? ""))] ?? "File Upload";
+}
+
+function safeHref(url: string): string {
+  return /^https?:\/\//i.test(url.trim()) ? url.trim() : "#";
+}
+
+// Lahat ng entry types: File Upload, Text Entry, Website URL, Media Recording
+function getAssignmentEntries(assignment: AssignmentWithRole): SubmissionEntryExtended[] {
+  let raw: unknown = (assignment as AssignmentWithSubmissionEntries).submissionEntries;
+  if (typeof raw === "string") {
+    try { raw = JSON.parse(raw); } catch { raw = []; }
+  }
+  if (Array.isArray(raw) && raw.length > 0) {
+    return raw
+      .filter((o): o is Record<string, unknown> => !!o && typeof o === "object")
+      .map((e, i) => {
+        const type = toEntryType(e.type);
+        const isMedia = type === "Media Recording";
+        const isFileLike = isMedia || type === "File Upload";
+        let types = normalizeFileTypeList(e.allowedFileTypes);
+        if (isMedia && types.length === 0) types = MEDIA_FILE_TYPES;
+        return {
+          id: typeof e.id === "number" || typeof e.id === "string" ? e.id : i + 1,
+          label: typeof e.label === "string" ? e.label : "",
+          required: e.required === true,
+          type,
+          allowedFileTypes: isFileLike ? types : [],
+          maxFiles: Math.max(
+            typeof e.maxFiles === "number" && e.maxFiles > 0 ? e.maxFiles : 1,
+            isMedia ? types.length : 1
+          ),
+          maxFileSizeValue: typeof e.maxFileSizeValue === "number" ? e.maxFileSizeValue : 1,
+          maxFileSizeUnit: typeof e.maxFileSizeUnit === "string" ? e.maxFileSizeUnit : "MB",
+        };
+      });
+  }
+  const opts = assignment.onlineEntryOptions ?? [];
+  if (opts.length > 0) {
+    return [...new Set(opts.map(toEntryType))].map((type, i) => ({
+      id: i + 1, label: "", required: false, type,
+      allowedFileTypes: type === "Media Recording" ? MEDIA_FILE_TYPES : [],
       maxFiles: 1,
-    },
-  ];
+    }));
+  }
+  return [{ id: 1, label: "File Upload", required: true, type: "File Upload", allowedFileTypes: [], maxFiles: 1 }];
 }
 
 function buildSubmittingLabel(assignment: AssignmentWithRole): string {
-  const fileEntries = getAssignmentFileUploadEntries(assignment);
-  if (assignment.submissionType === "Online" && fileEntries.length > 0) {
-    const labels = fileEntries.map((entry) => {
+  if (assignment.submissionType === "Online") {
+    const labels = getAssignmentEntries(assignment).map((entry) => {
       const types = normalizeFileTypeList(entry.allowedFileTypes);
-      return types.length > 0
+      return entry.type === "File Upload" && types.length > 0
         ? `File Upload (${formatAllowedFileTypes(types)})`
-        : "File Upload";
+        : entry.type;
     });
     return [...new Set(labels)].join(", ");
   }
-  const opts = (assignment.onlineEntryOptions ?? []).map(normalizeOpt);
-  if (opts.length > 0) return opts.map((o) => OPT_LABELS[o] ?? o).join(", ");
   return assignment.submissionType ?? "File Upload";
 }
 
@@ -389,53 +417,66 @@ function SubmittedView({
   const hasAttemptsLeft =
     isUnlimited || (attemptsLeft != null && attemptsLeft > 0);
 
+  const viewButton = (url: string, name: string) => (
+    <button
+      type="button"
+      onClick={() => onPreview(resolveFileUrl(url), name)}
+      className="flex items-center gap-1 h-8 px-3 text-[11px] font-bold border rounded-lg hover:bg-gray-50 shrink-0 touch-manipulation"
+      style={{ color: MAROON, borderColor: "#f0c0c0", background: "white", cursor: "pointer" }}
+    >
+      <ExternalLink size={11} />
+      <span>View</span>
+    </button>
+  );
+
   return (
     <div className="space-y-3">
       {submittedEntries ? (
         <div className="rounded-xl border border-gray-200 overflow-hidden">
-          <div
-            className="px-3 py-2 border-b border-gray-100"
-            style={{ background: "#f9fafb" }}
-          >
+          <div className="px-3 py-2 border-b border-gray-100" style={{ background: "#f9fafb" }}>
             <p className="text-[10px] font-black uppercase tracking-widest text-gray-500">
-              Your Submitted Files
+              Your Submission
             </p>
           </div>
           <div className="divide-y divide-gray-100">
-            {submittedEntries.map((entry, i) => (
-              <div
-                key={entry.entryId}
-                className="flex items-center gap-2.5 px-3 py-3"
-              >
-                <div
-                  className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-                  style={{ background: "#fef2f2" }}
-                >
-                  <FileText size={14} style={{ color: MAROON }} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">
+            {submittedEntries.map((entry, i) => {
+              const fname = entry.fileUrl
+                ? entry.fileName || fileNameFromUrl(entry.fileUrl) || "File"
+                : "";
+              return (
+                <div key={`${entry.entryId}-${i}`} className="px-3 py-3">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1.5">
                     {entry.label || `Submission ${i + 1}`}
                   </p>
-                  <p className="text-xs font-semibold text-gray-800 truncate">
-                    {entry.fileName ||
-                      entry.fileUrl?.split("/").pop() ||
-                      "File"}
-                  </p>
+                  {entry.fileUrl ? (
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "#fef2f2" }}>
+                        <FileText size={14} style={{ color: MAROON }} />
+                      </div>
+                      <p className="flex-1 min-w-0 text-xs font-semibold text-gray-800 truncate">{fname}</p>
+                      {viewButton(entry.fileUrl, fname)}
+                    </div>
+                  ) : entry.textEntry ? (
+                    <div
+                      style={{ fontSize: 13, lineHeight: 1.7, color: "#374151", wordBreak: "break-word" }}
+                      dangerouslySetInnerHTML={{ __html: entry.textEntry }}
+                    />
+                  ) : entry.websiteUrl ? (
+                    <a
+                      href={safeHref(entry.websiteUrl)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs font-semibold hover:underline break-all"
+                      style={{ color: MAROON }}
+                    >
+                      {entry.websiteUrl}
+                    </a>
+                  ) : (
+                    <p className="text-xs text-gray-400 italic">No content submitted for this entry.</p>
+                  )}
                 </div>
-                {entry.fileUrl && (
-                  <button
-                    type="button"
-                    onClick={() => onPreview(resolveFileUrl(entry.fileUrl ?? ""), entry.fileName || fileNameFromUrl(entry.fileUrl ?? "") || "File")}
-                    className="flex items-center gap-1 h-8 px-3 text-[11px] font-bold border rounded-lg hover:bg-gray-50 shrink-0 touch-manipulation"
-                    style={{ color: MAROON, borderColor: "#f0c0c0", background: "white", cursor: "pointer" }}
-                  >
-                    <ExternalLink size={11} />
-                    <span>View</span>
-                  </button>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       ) : (
@@ -443,17 +484,9 @@ function SubmittedView({
           <div className="flex items-center gap-2.5 px-3 py-3 rounded-xl border border-gray-200 bg-white">
             <FileText size={13} style={{ color: MAROON }} />
             <span className="text-xs font-semibold text-gray-700 flex-1 truncate">
-              {sub.fileUrl.split("/").pop()}
+              {fileNameFromUrl(sub.fileUrl)}
             </span>
-            <button
-              type="button"
-              onClick={() => onPreview(resolveFileUrl(sub.fileUrl!), fileNameFromUrl(sub.fileUrl!) || "File")}
-              className="flex items-center gap-1 h-8 px-3 text-[11px] font-bold border rounded-lg hover:bg-gray-50 shrink-0 touch-manipulation"
-              style={{ color: MAROON, borderColor: "#f0c0c0", background: "white", cursor: "pointer" }}
-            >
-              <ExternalLink size={11} />
-              <span>View</span>
-            </button>
+            {viewButton(sub.fileUrl, fileNameFromUrl(sub.fileUrl) || "File")}
           </div>
         )
       )}
@@ -690,6 +723,85 @@ function FileEntryUpload({
   );
 }
 
+function textToHtml(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\n/g, "<br>");
+}
+
+function EntryBadge({ required }: { required: boolean }) {
+  return (
+    <span
+      className="rounded-full px-2 py-0.5 text-[10px] font-black uppercase"
+      style={required ? { background: MAROON, color: "#fff" } : { background: "#e5e7eb", color: "#6b7280" }}
+    >
+      {required ? "Required" : "Optional"}
+    </span>
+  );
+}
+
+function TextEntryInput({
+  entry, index, total, value, onChange,
+}: {
+  entry: SubmissionEntryExtended; index: number; total: number;
+  value: string; onChange: (v: string) => void;
+}) {
+  const words = value.split(/\s+/).filter(Boolean).length;
+  return (
+    <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+      <div className="flex items-center gap-2 px-3 py-2.5" style={{ background: "#fffafa", borderBottom: "1px solid #f3e1e1" }}>
+        <p className="text-xs font-black text-gray-900 flex-1 min-w-0 truncate">
+          {total > 1 ? `${index + 1}. ` : ""}{entry.label?.trim() || "Text Entry"}
+        </p>
+        <EntryBadge required={entry.required} />
+      </div>
+      <div className="p-3">
+        <textarea
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          rows={7}
+          placeholder="Type your response here..."
+          className="w-full p-3 text-gray-700 border border-gray-200 rounded-lg focus:outline-none focus:border-[#7b1113] resize-y bg-white"
+          style={{ fontSize: 16 }}
+        />
+        <p className="text-[11px] text-gray-400 mt-1.5 text-right">
+          {words} word{words !== 1 ? "s" : ""}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function UrlEntryInput({
+  entry, index, total, value, onChange,
+}: {
+  entry: SubmissionEntryExtended; index: number; total: number;
+  value: string; onChange: (v: string) => void;
+}) {
+  return (
+    <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+      <div className="flex items-center gap-2 px-3 py-2.5" style={{ background: "#fffafa", borderBottom: "1px solid #f3e1e1" }}>
+        <p className="text-xs font-black text-gray-900 flex-1 min-w-0 truncate">
+          {total > 1 ? `${index + 1}. ` : ""}{entry.label?.trim() || "Website URL"}
+        </p>
+        <EntryBadge required={entry.required} />
+      </div>
+      <div className="p-3">
+        <input
+          type="url"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="https://"
+          className="w-full h-10 px-3 text-gray-700 border border-gray-200 rounded-lg focus:outline-none focus:border-[#7b1113] bg-white"
+          style={{ fontSize: 16 }}
+        />
+      </div>
+    </div>
+  );
+}
+
 function SubmitterFileUploadSection({
   assignment,
   courseId,
@@ -701,21 +813,16 @@ function SubmitterFileUploadSection({
   onCancel: () => void;
   onSubmitted: () => void;
 }) {
-  const fileEntries = getAssignmentFileUploadEntries(assignment);
-  const [selectedFilesByEntry, setSelectedFilesByEntry] = useState<
-    Record<string, File[]>
-  >({});
-  const [fileErrorsByEntry, setFileErrorsByEntry] = useState<
-    Record<string, string[]>
-  >({});
+  const entries = getAssignmentEntries(assignment);
+  const [selectedFilesByEntry, setSelectedFilesByEntry] = useState<Record<string, File[]>>({});
+  const [fileErrorsByEntry, setFileErrorsByEntry] = useState<Record<string, string[]>>({});
+  const [textByEntry, setTextByEntry] = useState<Record<string, string>>({});
+  const [urlByEntry, setUrlByEntry] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
-  const handleFilesForEntry = (
-    entry: SubmissionEntryExtended,
-    files: File[]
-  ) => {
+  const handleFilesForEntry = (entry: SubmissionEntryExtended, files: File[]) => {
     const entryKey = String(entry.id);
     const allowedTypes = normalizeFileTypeList(entry.allowedFileTypes);
     const maxFiles = entry.maxFiles ?? 1;
@@ -723,9 +830,7 @@ function SubmitterFileUploadSection({
     if (files.length > maxFiles) {
       setFileErrorsByEntry((prev) => ({
         ...prev,
-        [entryKey]: [
-          `Max ${maxFiles} file${maxFiles !== 1 ? "s" : ""} allowed.`,
-        ],
+        [entryKey]: [`Max ${maxFiles} file${maxFiles !== 1 ? "s" : ""} allowed.`],
       }));
       setSelectedFilesByEntry((prev) => ({ ...prev, [entryKey]: [] }));
       const ref = inputRefs.current[entryKey];
@@ -742,9 +847,7 @@ function SubmitterFileUploadSection({
     }
     const maxSzValue = entry.maxFileSizeValue ?? 1;
     const maxSzUnit = entry.maxFileSizeUnit ?? "MB";
-    const maxSzBytes = maxSzUnit === "KB"
-      ? maxSzValue * 1024
-      : maxSzValue * 1024 * 1024;
+    const maxSzBytes = maxSzUnit === "KB" ? maxSzValue * 1024 : maxSzValue * 1024 * 1024;
     const sizeErrors: string[] = [];
     for (const file of files) {
       if (file.size > maxSzBytes) {
@@ -770,63 +873,75 @@ function SubmitterFileUploadSection({
 
   const handleSubmit = async () => {
     setSubmitError(null);
-    for (const entry of fileEntries) {
-      const entryKey = String(entry.id);
-      const files = selectedFilesByEntry[entryKey] ?? [];
-      if (entry.required && files.length === 0) {
-        setSubmitError(
-          `Please upload a file for: "${entry.label?.trim() || "File Upload"}"`
-        );
-        return;
+
+    // 1) Validate lahat ng entry types
+    let hasContent = false;
+    for (const entry of entries) {
+      const key = String(entry.id);
+      const label = entry.label?.trim() || entry.type;
+      if (entry.type === "Text Entry") {
+        const v = (textByEntry[key] ?? "").trim();
+        if (entry.required && !v) { setSubmitError(`Please fill in: "${label}"`); return; }
+        if (v) hasContent = true;
+      } else if (entry.type === "Website URL") {
+        const v = (urlByEntry[key] ?? "").trim();
+        if (entry.required && !v) { setSubmitError(`Please enter a link for: "${label}"`); return; }
+        if (v && !/^https?:\/\/\S+\.\S+/i.test(v)) {
+          setSubmitError(`"${label}" must be a valid link starting with http:// or https://`);
+          return;
+        }
+        if (v) hasContent = true;
+      } else {
+        const files = selectedFilesByEntry[key] ?? [];
+        if (entry.required && files.length === 0) {
+          setSubmitError(`Please upload a file for: "${label}"`);
+          return;
+        }
+        if (files.length > 0) hasContent = true;
       }
     }
+    if (!hasContent) { setSubmitError("Please add something to submit."); return; }
+
     setSubmitting(true);
     try {
-      const uploadedEntries: {
-        entryId: string;
-        label: string;
-        type: string;
-        fileUrl?: string;
-        fileName?: string;
-        required: boolean;
-      }[] = [];
+      type OutEntry = {
+        entryId: string; label: string; type: string; required: boolean;
+        fileUrl?: string; fileName?: string; textEntry?: string; websiteUrl?: string;
+      };
+      const out: OutEntry[] = [];
 
-      for (const entry of fileEntries) {
-        const entryKey = String(entry.id);
-        const files = selectedFilesByEntry[entryKey] ?? [];
-        if (files.length === 0) {
-          uploadedEntries.push({
-            entryId: entryKey,
-            label: entry.label?.trim() || "File Upload",
-            type: entry.type,
-            required: entry.required,
-          });
+      // 2) I-upload ang files at buuin ang payload
+      for (const entry of entries) {
+        const key = String(entry.id);
+        const label = entry.label?.trim() || entry.type;
+        const base: OutEntry = { entryId: key, label, type: entry.type, required: entry.required };
+
+        if (entry.type === "Text Entry") {
+          const v = (textByEntry[key] ?? "").trim();
+          out.push(v ? { ...base, textEntry: textToHtml(v) } : base);
           continue;
         }
+        if (entry.type === "Website URL") {
+          const v = (urlByEntry[key] ?? "").trim();
+          out.push(v ? { ...base, websiteUrl: v } : base);
+          continue;
+        }
+
+        const files = selectedFilesByEntry[key] ?? [];
+        if (files.length === 0) { out.push(base); continue; }
         for (const file of files) {
           const formData = new FormData();
           formData.append("file", file);
-          const uploadRes = await fetch(`/api/upload`, {
-            method: "POST",
-            body: formData,
-          });
+          const uploadRes = await fetch(`/api/upload`, { method: "POST", body: formData });
           if (!uploadRes.ok) {
             const d = await uploadRes.json().catch(() => ({}));
-            throw new Error(
-              (d as { error?: string })?.error ?? "File upload failed."
-            );
+            throw new Error((d as { error?: string })?.error ?? "File upload failed.");
           }
-          const uploadData = (await uploadRes.json()) as {
-            url?: string;
-            fileUrl?: string;
-          };
-          uploadedEntries.push({
-            entryId: entryKey,
-            label: entry.label?.trim() || "File Upload",
-            type: entry.type,
+          const uploadData = (await uploadRes.json()) as { url?: string; fileUrl?: string };
+          out.push({
+            ...base,
             fileUrl: uploadData.url ?? uploadData.fileUrl ?? "",
             fileName: file.name,
-            required: entry.required,
           });
         }
       }
@@ -836,21 +951,17 @@ function SubmitterFileUploadSection({
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ entries: uploadedEntries }),
+          body: JSON.stringify({ entries: out }),
         }
       );
       if (res.ok) {
         onSubmitted();
       } else {
         const data = await res.json().catch(() => ({}));
-        setSubmitError(
-          (data as { error?: string })?.error ?? `Server error: ${res.status}`
-        );
+        setSubmitError((data as { error?: string })?.error ?? `Server error: ${res.status}`);
       }
     } catch (err) {
-      setSubmitError(
-        err instanceof Error ? err.message : "Network error. Please try again."
-      );
+      setSubmitError(err instanceof Error ? err.message : "Network error. Please try again.");
     } finally {
       setSubmitting(false);
     }
@@ -858,16 +969,43 @@ function SubmitterFileUploadSection({
 
   return (
     <div className="flex flex-col gap-3">
-      {/* Scrollable file entries area */}
       <div className="space-y-3">
-        {fileEntries.map((entry, index) => {
+        {entries.map((entry, index) => {
           const entryKey = String(entry.id);
+          if (entry.type === "Text Entry") {
+            return (
+              <TextEntryInput
+                key={entryKey}
+                entry={entry}
+                index={index}
+                total={entries.length}
+                value={textByEntry[entryKey] ?? ""}
+                onChange={(v) => setTextByEntry((p) => ({ ...p, [entryKey]: v }))}
+              />
+            );
+          }
+          if (entry.type === "Website URL") {
+            return (
+              <UrlEntryInput
+                key={entryKey}
+                entry={entry}
+                index={index}
+                total={entries.length}
+                value={urlByEntry[entryKey] ?? ""}
+                onChange={(v) => setUrlByEntry((p) => ({ ...p, [entryKey]: v }))}
+              />
+            );
+          }
+          const fileEntry =
+            entry.type === "Media Recording" && !entry.label?.trim()
+              ? { ...entry, label: "Media Recording" }
+              : entry;
           return (
             <FileEntryUpload
               key={entryKey}
-              entry={entry}
+              entry={fileEntry}
               index={index}
-              totalEntries={fileEntries.length}
+              totalEntries={entries.length}
               selectedFiles={selectedFilesByEntry[entryKey] ?? []}
               fileErrors={fileErrorsByEntry[entryKey] ?? []}
               onFiles={(files) => handleFilesForEntry(entry, files)}
@@ -890,7 +1028,6 @@ function SubmitterFileUploadSection({
         </div>
       )}
 
-      {/* Action buttons — sticky on mobile, inline row on sm+ */}
       <div
         className="
           sticky bottom-0 left-0 right-0
@@ -900,9 +1037,7 @@ function SubmitterFileUploadSection({
           sm:static sm:border-none sm:bg-transparent sm:px-0 sm:py-0 sm:pt-1
           z-10
         "
-        style={{
-          paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom, 0px))",
-        }}
+        style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom, 0px))" }}
       >
         <button
           type="button"
@@ -933,27 +1068,18 @@ function SubmissionRequirementsBox({
   assignment: AssignmentWithRole;
   onStart: () => void;
 }) {
-  const entries = getAssignmentFileUploadEntries(assignment);
+  const entries = getAssignmentEntries(assignment);
   return (
-    <div
-      className="rounded-xl border overflow-hidden"
-      style={{ borderColor: "#f0dada" }}
-    >
-      <div
-        className="px-3 py-2.5"
-        style={{ background: "#fffafa", borderBottom: "1px solid #f0dada" }}
-      >
-        <p
-          className="text-[11px] font-black uppercase tracking-widest"
-          style={{ color: MAROON }}
-        >
+    <div className="rounded-xl border overflow-hidden" style={{ borderColor: "#f0dada" }}>
+      <div className="px-3 py-2.5" style={{ background: "#fffafa", borderBottom: "1px solid #f0dada" }}>
+        <p className="text-[11px] font-black uppercase tracking-widest" style={{ color: MAROON }}>
           Submission Requirements
         </p>
       </div>
       <div className="px-3 py-2.5 space-y-2">
         {entries.map((entry, index) => {
           const types = normalizeFileTypeList(entry.allowedFileTypes);
-          const hasRestrictions = types.length > 0;
+          const isFileLike = entry.type === "File Upload" || entry.type === "Media Recording";
           return (
             <div
               key={String(entry.id)}
@@ -965,56 +1091,40 @@ function SubmissionRequirementsBox({
                   {entries.length > 1 ? `Submission ${index + 1}` : "Submission"}
                 </span>
                 <span className="text-[11px] text-gray-400">—</span>
-                <span
-                  className="text-xs font-semibold truncate"
-                  style={
-                    hasRestrictions ? { color: MAROON } : { color: "#6b7280" }
-                  }
-                >
-                  {entry.label?.trim() ||
-                    (hasRestrictions
-                      ? `${formatAllowedFileTypes(types)} File Upload`
-                      : "File Upload")}
+                <span className="text-xs font-semibold truncate" style={{ color: MAROON }}>
+                  {entry.label?.trim() || entry.type}
                 </span>
               </div>
-              <div className="flex items-center gap-1.5 shrink-0">
-                {hasRestrictions && (
+              <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
+                <span
+                  className="rounded-full px-2 py-0.5 text-[10px] font-bold"
+                  style={{ background: "#f3f4f6", color: "#374151", border: "1px solid #e5e7eb" }}
+                >
+                  {entry.type}
+                </span>
+                {isFileLike && types.length > 0 && (
                   <span
                     className="rounded-full px-2 py-0.5 text-[10px] font-black uppercase"
-                    style={{
-                      background: "#fef2f2",
-                      color: MAROON,
-                      border: "1px solid #f0c0c0",
-                    }}
+                    style={{ background: "#fef2f2", color: MAROON, border: "1px solid #f0c0c0" }}
                   >
                     {formatAllowedFileTypes(types)}
                   </span>
                 )}
-                <span
-                  className="rounded-full px-2 py-0.5 text-[10px] font-black uppercase"
-                  style={
-                    entry.required
-                      ? { background: MAROON, color: "#fff" }
-                      : { background: "#e5e7eb", color: "#6b7280" }
-                  }
-                >
-                  {entry.required ? "Required" : "Optional"}
-                </span>
-                <span
-                  className="rounded-full px-2 py-0.5 text-[10px] font-bold"
-                  style={{ background: "#eff6ff", color: "#1d4ed8", border: "1px solid #bfdbfe" }}
-                >
-                  Max {entry.maxFileSizeValue ?? 1}{entry.maxFileSizeUnit ?? "MB"}
-                </span>
+                <EntryBadge required={entry.required} />
+                {isFileLike && (
+                  <span
+                    className="rounded-full px-2 py-0.5 text-[10px] font-bold"
+                    style={{ background: "#eff6ff", color: "#1d4ed8", border: "1px solid #bfdbfe" }}
+                  >
+                    Max {entry.maxFileSizeValue ?? 1}{entry.maxFileSizeUnit ?? "MB"}
+                  </span>
+                )}
               </div>
             </div>
           );
         })}
       </div>
-      <div
-        className="px-3 py-3 border-t"
-        style={{ borderColor: "#f0dada" }}
-      >
+      <div className="px-3 py-3 border-t" style={{ borderColor: "#f0dada" }}>
         <button
           onClick={onStart}
           className="w-full h-12 sm:h-10 text-sm sm:text-xs font-bold text-white rounded-xl hover:opacity-90 active:opacity-80 transition-opacity touch-manipulation"
@@ -1030,12 +1140,34 @@ function SubmissionRequirementsBox({
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function CourseAssignmentSubmitterDetail({
-  assignment,
+  assignment: assignmentProp,
   courseId,
   currentUserId,
   currentUserName,
   onBack,
 }: CourseAssignmentSubmitterDetailProps) {
+  const [assignment, setAssignment] =
+    useState<AssignmentWithSubmissionEntries>(assignmentProp);
+
+  // Kung kulang ang entries sa listahan, kunin sa single-assignment API
+  useEffect(() => {
+    let alive = true;
+    fetch(`/api/courses/${courseId}/assignments/${assignmentProp.id}`)
+      .then((r) => r.json())
+      .then((d: { assignment?: { submissionEntries?: unknown; onlineEntryOptions?: string[] } }) => {
+        const a = d.assignment;
+        if (!alive || !a) return;
+        setAssignment((prev) => ({
+          ...prev,
+          submissionEntries:
+            (a.submissionEntries as SubmissionEntryExtended[] | undefined) ?? prev.submissionEntries,
+          onlineEntryOptions: a.onlineEntryOptions ?? prev.onlineEntryOptions,
+        }));
+      })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, [courseId, assignmentProp.id]);
+
   const now = new Date();
   const isNotYetAvailable = !!(
     assignment.availableFrom && now < new Date(assignment.availableFrom)

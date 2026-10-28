@@ -1049,11 +1049,6 @@ export default function AdminAssignmentForm({
                 + Assign To
               </button>
             </div>
-            <div />
-            <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer mt-1">
-              <input type="checkbox" checked={notifyUsers} onChange={e => setNotifyUsers(e.target.checked)} style={{ accentColor: MAROON }} />
-              Notify users that this content has changed
-            </label>
           </div>
         )}
       </div>

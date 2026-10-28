@@ -2,34 +2,55 @@
 
 // src/components/layout/course/CoursePatientRecordsTab.tsx
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import type { ReactNode } from "react";
 import {
   Search, Plus, X, RefreshCw, ChevronDown, ChevronLeft, ChevronRight,
-  Trash2, Check, ArrowLeft, FileText, ArrowUpDown,
-  Download, Filter, Stethoscope, Pill, AlertTriangle, PenLine,
+  Trash2, Check, ArrowLeft, FileText, Download, SlidersHorizontal,
+  Stethoscope, Pill, AlertTriangle, PenLine, MoreVertical, Inbox, ExternalLink,
 } from "lucide-react";
+import { FONT } from "./osaShared";
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   CONSTANTS
-───────────────────────────────────────────────────────────────────────────── */
-const MAROON    = "#7b1113";
-const FONT      = "'Inter', 'SF Pro Display', system-ui, -apple-system, sans-serif";
+/* ════════════════════════════════════════════════════════════════════════════
+   1. DESIGN TOKENS (same as CourseLibraryTab)
+   ════════════════════════════════════════════════════════════════════════════ */
+
+const C = {
+  brand:      "#7b1113",
+  brandDark:  "#5e0d0f",
+  brandTint:  "#fdf2f2",
+  brandRing:  "rgba(123,17,19,0.12)",
+  ink:        "#111827",
+  body:       "#374151",
+  muted:      "#6b7280",
+  faint:      "#9ca3af",
+  line:       "#e5e7eb",
+  lineSoft:   "#f3f4f6",
+  surface:    "#ffffff",
+  canvas:     "#ffffff",
+  danger:     "#b91c1c",
+} as const;
+
 const PAGE_SIZE = 15;
 
+/* ════════════════════════════════════════════════════════════════════════════
+   2. CONSTANTS & TYPES
+   ════════════════════════════════════════════════════════════════════════════ */
+
 const ACTION_OPTIONS = [
-  { value: "GIVEN_MEDICINE",    label: "Given Medicine Only"   },
-  { value: "SENT_HOME",         label: "Sent Home"             },
-  { value: "FOR_OBSERVATION",   label: "For Observation"       },
-  { value: "REFERRED_HOSPITAL", label: "Referred to Hospital"  },
-  { value: "REFERRED_GUIDANCE", label: "Referred to Guidance"  },
+  { value: "GIVEN_MEDICINE",    label: "Given Medicine Only"  },
+  { value: "SENT_HOME",         label: "Sent Home"            },
+  { value: "FOR_OBSERVATION",   label: "For Observation"      },
+  { value: "REFERRED_HOSPITAL", label: "Referred to Hospital" },
+  { value: "REFERRED_GUIDANCE", label: "Referred to Guidance" },
 ];
 
-const ACTION_BADGE: Record<string, { dot: string }> = {
-  GIVEN_MEDICINE:    { dot: "#15803d" },
-  SENT_HOME:         { dot: "#1d4ed8" },
-  FOR_OBSERVATION:   { dot: "#a16207" },
-  REFERRED_HOSPITAL: { dot: "#b91c1c" },
-  REFERRED_GUIDANCE: { dot: "#7c3aed" },
+const ACTION_META: Record<string, { color: string; bg: string }> = {
+  GIVEN_MEDICINE:    { color: "#065f46", bg: "#d1fae5" },
+  SENT_HOME:         { color: "#1e40af", bg: "#dbeafe" },
+  FOR_OBSERVATION:   { color: "#92400e", bg: "#fef3c7" },
+  REFERRED_HOSPITAL: { color: "#991b1b", bg: "#fee2e2" },
+  REFERRED_GUIDANCE: { color: "#5b21b6", bg: "#ede9fe" },
 };
 
 const TIME_OPTIONS: string[] = [];
@@ -42,9 +63,6 @@ for (let h = 0; h < 24; h++) {
   }
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   TYPES
-───────────────────────────────────────────────────────────────────────────── */
 interface StudentInfo {
   id:            string;
   studentNumber: string;
@@ -110,9 +128,10 @@ interface Props {
   currentUserId: string | null;
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   HELPERS
-───────────────────────────────────────────────────────────────────────────── */
+/* ════════════════════════════════════════════════════════════════════════════
+   3. HELPERS
+   ════════════════════════════════════════════════════════════════════════════ */
+
 function fmtDate(d: string | null | undefined) {
   if (!d) return "—";
   return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
@@ -126,7 +145,10 @@ function actionLabel(action: string) {
 }
 function todayISO() {
   const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+function toLocalISODate(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 function currentTime() {
   const d = new Date();
@@ -158,47 +180,188 @@ function studentAge(student: { age: number | null; birthDate?: string | null }):
   return student.age ?? calcAge(student.birthDate);
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   INPUT STYLES
-───────────────────────────────────────────────────────────────────────────── */
-const inputCls = [
-  "w-full h-9 border border-gray-300 rounded-sm px-3 text-sm",
-  "outline-none focus:border-[#7b1113] focus:ring-2 focus:ring-[#7b1113]/10",
-  "transition-all bg-gray-50 focus:bg-white placeholder:text-gray-400",
-].join(" ");
+function getDatePresets(setFrom: (v: string) => void, setTo: (v: string) => void) {
+  return [
+    { label: "Today", fn: () => { const d = todayISO(); setFrom(d); setTo(d); } },
+    { label: "Yesterday", fn: () => { const d = new Date(); d.setDate(d.getDate() - 1); const s = toLocalISODate(d); setFrom(s); setTo(s); } },
+    { label: "This week", fn: () => {
+        const now = new Date(); const mon = new Date(now);
+        mon.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+        setFrom(toLocalISODate(mon)); setTo(toLocalISODate(now));
+    } },
+    { label: "This month", fn: () => {
+        const now = new Date();
+        setFrom(toLocalISODate(new Date(now.getFullYear(), now.getMonth(), 1))); setTo(toLocalISODate(now));
+    } },
+  ];
+}
 
-const textareaCls = [
-  "w-full border border-gray-300 rounded-sm px-3 py-2 text-sm",
-  "outline-none focus:border-[#7b1113] focus:ring-2 focus:ring-[#7b1113]/10",
-  "transition-all bg-gray-50 focus:bg-white placeholder:text-gray-400 resize-none",
-].join(" ");
+/* ════════════════════════════════════════════════════════════════════════════
+   4. SMALL UI PRIMITIVES
+   ════════════════════════════════════════════════════════════════════════════ */
 
-const selectCls = [
-  "w-full h-9 border border-gray-300 rounded-sm px-3 text-sm bg-white",
-  "outline-none focus:border-[#7b1113] focus:ring-2 focus:ring-[#7b1113]/10",
-  "transition-all appearance-none cursor-pointer",
-].join(" ");
+const inputCls =
+  "w-full border border-gray-200 rounded-lg px-3 py-2.5 sm:py-2 text-sm outline-none focus:border-[#7b1113] focus:ring-2 focus:ring-[#7b1113]/10 transition-all bg-white placeholder:text-gray-400";
+const textareaCls = inputCls + " resize-none";
+const selectCls = inputCls + " appearance-none cursor-pointer pr-8";
 
-function FieldLabel({ children, required }: { children: React.ReactNode; required?: boolean }) {
+function FieldLabel({ children, required }: { children: ReactNode; required?: boolean }) {
   return (
-    <label className="block text-[10px] font-black uppercase tracking-widest mb-1.5 text-gray-400">
-      {children}{required && <span className="text-red-400 ml-0.5">*</span>}
+    <label className="block text-xs font-semibold text-gray-600 mb-1">
+      {children}{required && <span className="text-red-500 ml-0.5">*</span>}
     </label>
   );
 }
 
-function SelectWrapper({ children }: { children: React.ReactNode }) {
+function SelectWrapper({ children }: { children: ReactNode }) {
   return (
     <div className="relative">
       {children}
-      <ChevronDown size={13} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+      <ChevronDown size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
     </div>
   );
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   BODY SYSTEM + CONDITION SELECT
-───────────────────────────────────────────────────────────────────────────── */
+function SectionTitle({ children, hint }: { children: ReactNode; hint?: string }) {
+  return (
+    <h3 className="text-sm font-bold mb-3" style={{ color: C.ink }}>
+      {children}
+      {hint && <span className="ml-2 text-xs font-medium" style={{ color: C.faint }}>{hint}</span>}
+    </h3>
+  );
+}
+
+function ActionBadge({ action, short }: { action: string; short?: boolean }) {
+  const m = ACTION_META[action] ?? { color: "#374151", bg: "#f3f4f6" };
+  const label = actionLabel(action);
+  return (
+    <span
+      className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full shrink-0 whitespace-nowrap"
+      style={{ color: m.color, background: m.bg }}
+    >
+      {short ? label.split(" ")[0] : label}
+    </span>
+  );
+}
+
+function EmptyState({ title, hint, action }: { title: string; hint?: string; action?: ReactNode }) {
+  return (
+    <div className="flex flex-col items-center justify-center gap-2 py-16 px-6 text-center">
+      <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-1" style={{ background: C.brandTint }}>
+        <Inbox className="w-6 h-6" style={{ color: C.brand }} />
+      </div>
+      <p className="text-sm font-semibold" style={{ color: C.ink }}>{title}</p>
+      {hint && <p className="text-xs max-w-xs" style={{ color: C.muted }}>{hint}</p>}
+      {action}
+    </div>
+  );
+}
+
+function Panel({ title, right, children, className = "" }: { title: string; right?: ReactNode; children: ReactNode; className?: string }) {
+  return (
+    <section className={`bg-white rounded-xl border overflow-hidden ${className}`} style={{ borderColor: C.line }}>
+      <header className="px-4 sm:px-5 py-3 border-b flex items-center justify-between gap-2" style={{ borderColor: C.lineSoft }}>
+        <h2 className="text-sm font-bold" style={{ color: C.ink }}>{title}</h2>
+        {right}
+      </header>
+      {children}
+    </section>
+  );
+}
+
+function InfoField({ label, value }: { label: string; value?: string | null }) {
+  if (!value) return null;
+  return (
+    <div className="min-w-0">
+      <dt className="text-[11px] font-medium mb-0.5" style={{ color: C.muted }}>{label}</dt>
+      <dd className="text-[13px] font-medium break-words" style={{ color: C.ink, lineHeight: 1.5 }}>{value}</dd>
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   5. MODAL SHELL (bottom-sheet on mobile, centered on desktop)
+   ════════════════════════════════════════════════════════════════════════════ */
+
+function SheetModal({
+  onClose, tone = "brand", icon, title, subtitle, children, footer, toolbar,
+  maxWidth = "max-w-md", tall = false, z = 50, dismissable = true,
+}: {
+  onClose: () => void;
+  tone?: "brand" | "danger";
+  icon?: ReactNode;
+  title: string;
+  subtitle?: string;
+  children: ReactNode;
+  footer?: ReactNode;
+  toolbar?: ReactNode;
+  maxWidth?: string;
+  tall?: boolean;
+  z?: number;
+  dismissable?: boolean;
+}) {
+  useEffect(() => {
+    if (!dismissable) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose, dismissable]);
+
+  const accent = tone === "danger" ? C.danger : C.brand;
+
+  return (
+    <div
+      className="fixed inset-0 flex items-end sm:items-center justify-center bg-black/40"
+      style={{ backdropFilter: "blur(3px)", fontFamily: FONT, zIndex: z }}
+      onClick={dismissable ? onClose : undefined}
+    >
+      <div
+        role="dialog" aria-modal="true" aria-label={title}
+        className={`bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full ${maxWidth} sm:mx-4 overflow-hidden flex flex-col ${tall ? "h-[92vh] sm:h-[88vh]" : "max-h-[92vh]"}`}
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="flex justify-center pt-2.5 pb-1 sm:hidden shrink-0">
+          <div className="w-9 h-1 rounded-full bg-gray-300" />
+        </div>
+        <div className="flex items-center justify-between gap-3 px-5 py-3.5 shrink-0" style={{ background: accent, color: "#fff" }}>
+          <div className="flex items-center gap-3 min-w-0">
+            {icon && (
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-white/20">
+                {icon}
+              </div>
+            )}
+            <div className="min-w-0">
+              <p className="truncate" style={{ fontSize: 14, fontWeight: 800 }}>{title}</p>
+              {subtitle && <p className="text-xs truncate text-white/70">{subtitle}</p>}
+            </div>
+          </div>
+          <button onClick={onClose} aria-label="Close"
+            className="w-8 h-8 flex items-center justify-center rounded-lg text-white/70 hover:text-white hover:bg-white/10 shrink-0">
+            <X size={16} />
+          </button>
+        </div>
+        {toolbar}
+        <div className={tall ? "flex-1 min-h-0 flex overflow-hidden" : "overflow-y-auto"}>{children}</div>
+        {footer && (
+          <div
+            className="border-t shrink-0 bg-gray-50"
+            style={{ borderColor: C.line, paddingBottom: "env(safe-area-inset-bottom)" }}
+          >
+            {footer}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+const btnGhost =
+  "h-10 px-4 rounded-xl text-xs font-semibold border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-50 shrink-0";
+
+/* ════════════════════════════════════════════════════════════════════════════
+   6. BODY SYSTEM + CONDITION SELECT
+   ════════════════════════════════════════════════════════════════════════════ */
+
 interface BodySystemOption {
   id:         string;
   name:       string;
@@ -214,7 +377,7 @@ function BodySystemConditionSelect({
   onChange:     (bodySystemId: string, conditionId: string, conditionName: string) => void;
 }) {
   const [bodySystems, setBodySystems] = useState<BodySystemOption[]>([]);
-  const [loading,      setLoading]     = useState(true);
+  const [loading,     setLoading]     = useState(true);
 
   useEffect(() => {
     fetch(`/api/courses/${courseId}/body-systems`)
@@ -228,17 +391,17 @@ function BodySystemConditionSelect({
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
       <div>
-        <FieldLabel required>Body System</FieldLabel>
+        <FieldLabel required>Body system</FieldLabel>
         <SelectWrapper>
           <select value={bodySystemId} onChange={e => onChange(e.target.value, "", "")}
             className={selectCls} disabled={loading}>
-            <option value="">{loading ? "Loading..." : "Select body system"}</option>
+            <option value="">{loading ? "Loading…" : "Select body system"}</option>
             {bodySystems.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
           </select>
         </SelectWrapper>
       </div>
       <div>
-        <FieldLabel required>Medical Condition</FieldLabel>
+        <FieldLabel required>Medical condition</FieldLabel>
         <SelectWrapper>
           <select
             value={conditionId}
@@ -256,9 +419,10 @@ function BodySystemConditionSelect({
   );
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   MEDICINE PICKER
-───────────────────────────────────────────────────────────────────────────── */
+/* ════════════════════════════════════════════════════════════════════════════
+   7. MEDICINE PICKER
+   ════════════════════════════════════════════════════════════════════════════ */
+
 function MedicinePicker({ courseId, entries, onChange }: {
   courseId: string;
   entries:  MedicineUsageEntry[];
@@ -298,58 +462,60 @@ function MedicinePicker({ courseId, entries, onChange }: {
 
   return (
     <div className="space-y-2">
-      {entries.length > 0 && (
-        <div className="space-y-2">
-          {entries.map(entry => {
-            const isInsufficient = entry.quantityUsed > entry.stockQty;
-            const isLow = entry.stockQty <= 10 && !isInsufficient;
-            return (
-              <div key={entry.medicineId}
-                className={`flex items-center gap-2 p-2.5 rounded-xl border ${isInsufficient ? "border-red-200 bg-red-50/40" : isLow ? "border-amber-200 bg-amber-50/30" : "border-gray-200 bg-gray-50"}`}>
-                <Pill size={13} className="text-gray-400 shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-gray-800 truncate">{entry.medicineName}</p>
-                  <p className="text-[10px] text-gray-400">{entry.stockQty} {entry.unit}(s) in stock</p>
-                </div>
-                <input type="number" min="1" value={entry.quantityUsed}
-                  onChange={e => onChange(entries.map(en => en.medicineId === entry.medicineId ? { ...en, quantityUsed: Math.max(1, parseInt(e.target.value) || 1) } : en))}
-                  className="w-14 h-7 border border-gray-300 rounded-md px-1.5 text-xs text-center outline-none focus:border-[#7b1113] bg-white shrink-0" />
-                <span className="text-[10px] text-gray-400 shrink-0 hidden sm:inline">{entry.unit}</span>
-                {isInsufficient && <AlertTriangle size={13} className="text-red-400 shrink-0" />}
-                <button onClick={() => onChange(entries.filter(en => en.medicineId !== entry.medicineId))}
-                  className="w-6 h-6 flex items-center justify-center rounded-lg text-gray-300 hover:text-red-400 hover:bg-red-50 transition-colors shrink-0">
-                  <X size={12} />
-                </button>
-              </div>
-            );
-          })}
-        </div>
-      )}
+      {entries.map(entry => {
+        const isInsufficient = entry.quantityUsed > entry.stockQty;
+        const isLow = entry.stockQty <= 10 && !isInsufficient;
+        return (
+          <div key={entry.medicineId}
+            className="flex items-center gap-2 p-2.5 rounded-xl border"
+            style={{
+              borderColor: isInsufficient ? "#fecaca" : isLow ? "#fde68a" : C.line,
+              background:  isInsufficient ? "#fef2f2" : isLow ? "#fffbeb" : "#fafafa",
+            }}>
+            <Pill size={14} className="text-gray-400 shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-semibold truncate" style={{ color: C.ink }}>{entry.medicineName}</p>
+              <p className="text-[11px]" style={{ color: C.muted }}>{entry.stockQty} {entry.unit}(s) in stock</p>
+            </div>
+            <input type="number" min="1" value={entry.quantityUsed} aria-label={`Quantity of ${entry.medicineName}`}
+              onChange={e => onChange(entries.map(en => en.medicineId === entry.medicineId ? { ...en, quantityUsed: Math.max(1, parseInt(e.target.value) || 1) } : en))}
+              className="w-14 h-8 border border-gray-200 rounded-lg px-1.5 text-xs text-center outline-none focus:border-[#7b1113] bg-white shrink-0" />
+            <span className="text-[11px] shrink-0 hidden sm:inline" style={{ color: C.muted }}>{entry.unit}</span>
+            {isInsufficient && <AlertTriangle size={13} className="text-red-400 shrink-0" />}
+            <button onClick={() => onChange(entries.filter(en => en.medicineId !== entry.medicineId))}
+              aria-label={`Remove ${entry.medicineName}`}
+              className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors shrink-0">
+              <X size={13} />
+            </button>
+          </div>
+        );
+      })}
 
       {entries.some(e => e.quantityUsed > e.stockQty) && (
-        <div className="flex items-center gap-2 text-[11px] font-semibold text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
-          <AlertTriangle size={12} /> Some medicines exceed available stock.
+        <div className="flex items-center gap-2 text-xs font-semibold rounded-lg px-3 py-2" role="alert"
+          style={{ color: C.danger, background: "#fef2f2", border: "1px solid #fecaca" }}>
+          <AlertTriangle size={13} /> Some medicines exceed available stock.
         </div>
       )}
 
       <div className="relative" ref={pickerRef}>
         <button type="button" onClick={() => setShowPicker(v => !v)}
-          className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg border border-dashed border-gray-300 text-gray-500 hover:border-gray-400 hover:text-gray-700 transition-all w-full justify-center">
-          <Plus size={12} /> Add Medicine from Inventory
+          className="flex items-center justify-center gap-1.5 text-xs font-semibold px-3 h-9 rounded-lg border-2 border-dashed border-gray-300 text-gray-500 hover:border-gray-400 hover:text-gray-700 transition-colors w-full">
+          <Plus size={13} /> Add medicine from inventory
         </button>
         {showPicker && (
-          <div className="absolute bottom-full left-0 right-0 mb-1 bg-white border border-gray-200 rounded-xl shadow-lg z-20 overflow-hidden max-h-52">
-            <div className="px-3 py-2 border-b border-gray-100">
-              <div className="flex items-center gap-2 bg-gray-50 rounded-lg px-2.5 py-1.5">
+          <div className="absolute bottom-full left-0 right-0 mb-1 bg-white border rounded-xl shadow-lg z-20 overflow-hidden" style={{ borderColor: C.line }}>
+            <div className="px-3 py-2 border-b" style={{ borderColor: C.lineSoft }}>
+              <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-2.5 h-8">
                 <Search size={12} className="text-gray-400 shrink-0" />
                 <input autoFocus value={pickerSearch} onChange={e => setPickerSearch(e.target.value)}
-                  placeholder="Search medicines..." className="flex-1 text-xs outline-none bg-transparent text-gray-700 placeholder:text-gray-400" />
+                  placeholder="Search medicines…" className="flex-1 text-xs outline-none bg-transparent text-gray-700 placeholder:text-gray-400" />
               </div>
             </div>
-            <div className="overflow-y-auto max-h-36">
+            <div className="overflow-y-auto max-h-44">
               {loadingInv ? (
                 <div className="flex items-center justify-center py-6 text-xs text-gray-400 gap-1.5">
-                  <RefreshCw size={12} className="animate-spin" /> Loading...
+                  <RefreshCw size={12} className="animate-spin" /> Loading…
                 </div>
               ) : filteredInv.length === 0 ? (
                 <div className="text-center py-6 text-xs text-gray-400">
@@ -362,11 +528,11 @@ function MedicinePicker({ courseId, entries, onChange }: {
                   <button key={med.id} type="button" onClick={() => addMedicine(med)}
                     className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-gray-50 transition-colors text-left">
                     <div className="min-w-0">
-                      <p className="text-xs font-semibold text-gray-800 truncate">{med.name}</p>
-                      <p className="text-[10px] text-gray-400">{med.stockQty} {med.unit}(s)</p>
+                      <p className="text-xs font-semibold truncate" style={{ color: C.ink }}>{med.name}</p>
+                      <p className="text-[11px]" style={{ color: C.muted }}>{med.stockQty} {med.unit}(s)</p>
                     </div>
-                    {isOut && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-red-100 text-red-600 shrink-0 ml-2">Out</span>}
-                    {isLow && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 shrink-0 ml-2">Low</span>}
+                    {isOut && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full shrink-0 ml-2" style={{ background: "#fee2e2", color: "#991b1b" }}>Out</span>}
+                    {isLow && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full shrink-0 ml-2" style={{ background: "#fef3c7", color: "#92400e" }}>Low</span>}
                   </button>
                 );
               })}
@@ -378,56 +544,76 @@ function MedicinePicker({ courseId, entries, onChange }: {
   );
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   ROW ACTIONS MENU
-───────────────────────────────────────────────────────────────────────────── */
-function RowActionsMenu({ onMedCert, onEdit, onDelete }: {
-  onMedCert?: () => void; onEdit?: () => void; onDelete?: () => void;
+/* ════════════════════════════════════════════════════════════════════════════
+   8. ROW ACTIONS MENU (fixed-position, never clipped by tables)
+   ════════════════════════════════════════════════════════════════════════════ */
+
+function RowActionsMenu({ onMedCert, onEdit, onDelete, label = "Row actions" }: {
+  onMedCert?: () => void; onEdit?: () => void; onDelete?: () => void; label?: string;
 }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
-    const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
-    document.addEventListener("mousedown", h);
-    return () => document.removeEventListener("mousedown", h);
-  }, []);
+    if (!pos) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setPos(null); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [pos]);
 
   if (!onMedCert && !onEdit && !onDelete) return null;
 
+  const open = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    const r = e.currentTarget.getBoundingClientRect();
+    const count = [onMedCert, onEdit, onDelete].filter(Boolean).length;
+    const h = count * 40 + 8;
+    const flip = r.bottom + h > window.innerHeight;
+    setPos({ x: r.right, y: flip ? r.top - h - 4 : r.bottom + 4 });
+  };
+
+  const item = "w-full flex items-center gap-2.5 px-3.5 py-2.5 text-xs font-semibold text-left hover:bg-gray-50";
+
   return (
-    <div className="relative" ref={ref}>
-      <button onClick={e => { e.stopPropagation(); setOpen(v => !v); }}
-        className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-          <circle cx="12" cy="5" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="12" cy="19" r="2" />
-        </svg>
+    <>
+      <button onClick={open} aria-label={label} aria-haspopup="menu"
+        className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors">
+        <MoreVertical size={16} />
       </button>
-      {open && (
-        <div onClick={e => e.stopPropagation()}
-          className="absolute right-0 top-full mt-1 w-44 bg-white border border-gray-200 rounded-xl shadow-lg z-30 overflow-hidden py-1">
-          {onMedCert && (
-            <button onClick={() => { setOpen(false); onMedCert(); }}
-              className="w-full text-left px-3 py-2.5 text-xs font-semibold hover:bg-gray-50 transition-colors min-h-10"
-              style={{ color: MAROON }}>Generate Med Cert</button>
-          )}
-          {onEdit && (
-            <button onClick={() => { setOpen(false); onEdit(); }}
-              className="w-full text-left px-3 py-2.5 text-xs font-semibold text-gray-600 hover:bg-gray-50 transition-colors min-h-10">Edit</button>
-          )}
-          {onDelete && (
-            <button onClick={() => { setOpen(false); onDelete(); }}
-              className="w-full text-left px-3 py-2.5 text-xs font-semibold text-red-500 hover:bg-red-50 transition-colors min-h-10">Delete</button>
-          )}
+      {pos && (
+        <div className="fixed inset-0 z-40" onClick={e => { e.stopPropagation(); setPos(null); }}>
+          <div
+            role="menu"
+            className="absolute w-48 bg-white rounded-xl border shadow-lg py-1 overflow-hidden"
+            style={{ top: pos.y, left: Math.max(8, pos.x - 192), borderColor: C.line, fontFamily: FONT }}
+            onClick={e => e.stopPropagation()}
+          >
+            {onMedCert && (
+              <button role="menuitem" onClick={() => { setPos(null); onMedCert(); }} className={item} style={{ color: C.brand }}>
+                <FileText size={14} /> Generate med cert
+              </button>
+            )}
+            {onEdit && (
+              <button role="menuitem" onClick={() => { setPos(null); onEdit(); }} className={item} style={{ color: C.ink }}>
+                <PenLine size={14} /> Edit
+              </button>
+            )}
+            {onDelete && (
+              <button role="menuitem" onClick={() => { setPos(null); onDelete(); }}
+                className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-xs font-semibold text-left hover:bg-red-50" style={{ color: C.danger }}>
+                <Trash2 size={14} /> Delete
+              </button>
+            )}
+          </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   DELETE CONFIRM MODAL
-───────────────────────────────────────────────────────────────────────────── */
+/* ════════════════════════════════════════════════════════════════════════════
+   9. DELETE CONFIRM MODAL
+   ════════════════════════════════════════════════════════════════════════════ */
+
 function DeleteModal({ record, courseId, onClose, onDeleted }: {
   record: PatientRecord; courseId: string; onClose: () => void; onDeleted: () => void;
 }) {
@@ -444,37 +630,41 @@ function DeleteModal({ record, courseId, onClose, onDeleted }: {
   };
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/30"
-      style={{ backdropFilter: "blur(4px)", fontFamily: FONT }} onClick={onClose}>
-      <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl border border-gray-100 w-full sm:w-80 overflow-hidden"
-        onClick={e => e.stopPropagation()}>
-        <div className="sm:hidden flex justify-center pt-3 pb-1"><div className="w-10 h-1 rounded-full bg-gray-200" /></div>
-        <div className="px-5 py-5">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4 bg-red-50"><Trash2 className="w-5 h-5 text-red-400" /></div>
-          <p className="text-sm font-bold text-gray-900 mb-1">Delete this record?</p>
-          <p className="text-xs text-gray-500 mb-1 font-medium">{record.student.name}</p>
-          <p className="text-xs text-gray-400 mb-5 leading-relaxed">
-            {fmtDate(record.visitDate)} · {actionLabel(record.action)}<br />This action cannot be undone.
-          </p>
-          {error && <div className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mb-3">{error}</div>}
-          <div className="flex gap-2">
-            <button onClick={onClose} disabled={deleting}
-              className="flex-1 py-2.5 border border-gray-200 rounded-xl text-xs font-semibold text-gray-500 hover:bg-gray-50 disabled:opacity-50">Cancel</button>
-            <button onClick={handleDelete} disabled={deleting}
-              className="flex-1 py-2.5 rounded-xl text-xs font-bold text-white disabled:opacity-50 flex items-center justify-center gap-1.5"
-              style={{ background: "#ef4444" }}>
-              {deleting ? <><RefreshCw size={12} className="animate-spin" /> Deleting…</> : "Delete"}
-            </button>
-          </div>
+    <SheetModal
+      onClose={() => { if (!deleting) onClose(); }}
+      tone="danger" z={80}
+      icon={<Trash2 size={16} />}
+      title="Delete this record?"
+      maxWidth="max-w-sm"
+      footer={
+        <div className="px-5 py-4 flex gap-2">
+          <button onClick={onClose} disabled={deleting} className={`flex-1 ${btnGhost}`}>Cancel</button>
+          <button onClick={handleDelete} disabled={deleting}
+            className="flex-1 h-10 rounded-xl text-xs font-bold text-white disabled:opacity-60 flex items-center justify-center gap-1.5"
+            style={{ background: C.danger }}>
+            {deleting ? <><RefreshCw size={12} className="animate-spin" /> Deleting…</> : "Delete"}
+          </button>
         </div>
+      }
+    >
+      <div className="px-5 py-5 text-sm leading-relaxed" style={{ color: C.body }}>
+        <strong>{record.student.name}</strong><br />
+        {fmtDate(record.visitDate)} · {actionLabel(record.action)}<br />
+        This can’t be undone.
+        {error && (
+          <div className="mt-3 text-xs rounded-lg px-3 py-2" role="alert" style={{ color: C.danger, background: "#fef2f2", border: "1px solid #fecaca" }}>
+            {error}
+          </div>
+        )}
       </div>
-    </div>
+    </SheetModal>
   );
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   VISIT SIDEBAR (desktop-only preview panel inside Add/Edit modals)
-───────────────────────────────────────────────────────────────────────────── */
+/* ════════════════════════════════════════════════════════════════════════════
+   10. VISIT SIDEBAR (desktop preview inside Add/Edit modals)
+   ════════════════════════════════════════════════════════════════════════════ */
+
 function VisitSidebar({ isWalkIn, walkInName, student, visitDate, visitTime, complaint,
   temperature, bloodPressure, pulseRate, weight, action, medicineUsages }: {
   isWalkIn: boolean; walkInName: string; student: StudentInfo | null;
@@ -484,71 +674,177 @@ function VisitSidebar({ isWalkIn, walkInName, student, visitDate, visitTime, com
 }) {
   const patientName = isWalkIn ? (walkInName || "—") : (student?.name ?? "—");
   const hasVitals = !!(temperature || bloodPressure || pulseRate || weight);
-  const badge = ACTION_BADGE[action] ?? { dot: "#9ca3af" };
+  const label = "text-[11px] font-semibold mb-1.5";
 
   return (
-    <aside className="hidden sm:flex w-60 shrink-0 border-r border-gray-100 bg-gray-50/70 flex-col px-5 py-6 gap-5 overflow-y-auto">
+    <aside className="hidden sm:flex w-60 shrink-0 border-r flex-col px-5 py-5 gap-5 overflow-y-auto bg-gray-50" style={{ borderColor: C.line }}>
       <div>
-        <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Patient</p>
-        <p className="text-sm font-bold text-gray-900 leading-snug">{patientName}</p>
+        <p className={label} style={{ color: C.muted }}>Patient</p>
+        <p className="text-sm font-bold leading-snug" style={{ color: C.ink }}>{patientName}</p>
         {!isWalkIn && student && (
-          <p className="text-[11px] text-gray-400 mt-0.5">{student.studentNumber} · {courseAbbrev(student.course) ?? "—"}</p>
+          <p className="text-xs mt-0.5" style={{ color: C.muted }}>{student.studentNumber} · {courseAbbrev(student.course) ?? "—"}</p>
         )}
-        {isWalkIn && <p className="text-[11px] text-amber-600 font-semibold mt-0.5">Walk-in / Emergency</p>}
+        {isWalkIn && <p className="text-xs font-semibold mt-0.5" style={{ color: "#92400e" }}>Walk-in / emergency</p>}
       </div>
       <div>
-        <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Visit</p>
-        <p className="text-xs font-semibold text-gray-700">{fmtDate(visitDate)}</p>
-        <p className="text-[11px] text-gray-400">{visitTime}</p>
-        {complaint && <p className="text-xs text-gray-700 mt-2 leading-snug">{complaint}</p>}
+        <p className={label} style={{ color: C.muted }}>Visit</p>
+        <p className="text-xs font-semibold" style={{ color: C.body }}>{fmtDate(visitDate)}</p>
+        <p className="text-xs" style={{ color: C.muted }}>{visitTime}</p>
+        {complaint && <p className="text-xs mt-2 leading-snug" style={{ color: C.body }}>{complaint}</p>}
       </div>
       {hasVitals && (
         <div>
-          <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Vitals</p>
-          <div className="space-y-1.5">
-            {temperature && <div className="flex items-center justify-between text-xs"><span className="text-gray-400">Temp</span><span className="font-semibold text-gray-700">{temperature}°C</span></div>}
-            {bloodPressure && <div className="flex items-center justify-between text-xs"><span className="text-gray-400">BP</span><span className="font-semibold text-gray-700">{bloodPressure}</span></div>}
-            {pulseRate && <div className="flex items-center justify-between text-xs"><span className="text-gray-400">Pulse</span><span className="font-semibold text-gray-700">{pulseRate} bpm</span></div>}
-            {weight && <div className="flex items-center justify-between text-xs"><span className="text-gray-400">Weight</span><span className="font-semibold text-gray-700">{weight} kg</span></div>}
-          </div>
+          <p className={label} style={{ color: C.muted }}>Vitals</p>
+          <dl className="space-y-1.5">
+            {temperature   && <div className="flex justify-between text-xs"><dt style={{ color: C.muted }}>Temp</dt><dd className="font-semibold" style={{ color: C.body }}>{temperature}°C</dd></div>}
+            {bloodPressure && <div className="flex justify-between text-xs"><dt style={{ color: C.muted }}>BP</dt><dd className="font-semibold" style={{ color: C.body }}>{bloodPressure}</dd></div>}
+            {pulseRate     && <div className="flex justify-between text-xs"><dt style={{ color: C.muted }}>Pulse</dt><dd className="font-semibold" style={{ color: C.body }}>{pulseRate} bpm</dd></div>}
+            {weight        && <div className="flex justify-between text-xs"><dt style={{ color: C.muted }}>Weight</dt><dd className="font-semibold" style={{ color: C.body }}>{weight} kg</dd></div>}
+          </dl>
         </div>
       )}
       {medicineUsages.length > 0 && (
         <div>
-          <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Medicine</p>
+          <p className={label} style={{ color: C.muted }}>Medicine</p>
           <div className="space-y-1">
             {medicineUsages.map(m => (
-              <p key={m.medicineId} className="text-xs text-gray-700 leading-snug">{m.medicineName} × {m.quantityUsed} {m.unit}</p>
+              <p key={m.medicineId} className="text-xs leading-snug" style={{ color: C.body }}>{m.medicineName} × {m.quantityUsed} {m.unit}</p>
             ))}
           </div>
         </div>
       )}
       <div className="mt-auto">
-        <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Action</p>
-        <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full inline-flex items-center gap-1.5 border border-gray-200 bg-white text-gray-700">
-          <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: badge.dot }} />
-          {actionLabel(action)}
-        </span>
+        <p className={label} style={{ color: C.muted }}>Action</p>
+        <ActionBadge action={action} />
       </div>
     </aside>
   );
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   ADD VISIT MODAL
-   FIX: footer buttons always visible on mobile via safe flex column layout
-───────────────────────────────────────────────────────────────────────────── */
+/* ════════════════════════════════════════════════════════════════════════════
+   11. MEDICAL CERTIFICATE MODAL
+   ════════════════════════════════════════════════════════════════════════════ */
+
+function MedCertModal({ courseId, record, onClose }: {
+  courseId: string; record: PatientRecord; onClose: () => void;
+}) {
+  const [recommendation, setRecommendation] = useState(
+    record.action === "SENT_HOME"         ? "to be sent home and rest for the day" :
+    record.action === "FOR_OBSERVATION"   ? "to remain under observation" :
+    record.action === "REFERRED_HOSPITAL" ? "to be referred to a hospital for further evaluation" :
+    record.action === "REFERRED_GUIDANCE" ? "to see the Guidance Office for counseling" : ""
+  );
+  const [generating, setGenerating] = useState(false);
+  const [error,      setError]      = useState("");
+
+  const handleGenerate = async () => {
+    if (!recommendation.trim()) { setError("Recommendation is required."); return; }
+    setGenerating(true); setError("");
+    try {
+      const res = await fetch(`/api/courses/${courseId}/patient-records/medical-certificate`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ recordId: record.id, recommendation: recommendation.trim() }),
+      });
+      if (!res.ok) { const d = await res.json(); setError(d.error ?? "Failed to generate."); return; }
+      const blob = await res.blob();
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement("a");
+      a.href = url; a.download = `medical_certificate_${record.student.name.replace(/\s+/g, "_")}.docx`; a.click();
+      URL.revokeObjectURL(url); onClose();
+    } catch { setError("Network error. Please try again."); }
+    finally { setGenerating(false); }
+  };
+
+  return (
+    <SheetModal
+      onClose={onClose} z={90} maxWidth="max-w-lg"
+      icon={<FileText size={16} />}
+      title="Generate medical certificate"
+      subtitle={record.student.name}
+      footer={
+        <div className="px-5 py-4 flex gap-2">
+          <button onClick={onClose} disabled={generating} className={`flex-1 ${btnGhost}`}>Cancel</button>
+          <button onClick={handleGenerate} disabled={generating || !recommendation.trim()}
+            className="flex-1 h-10 rounded-xl text-xs font-bold text-white disabled:opacity-60 flex items-center justify-center gap-1.5"
+            style={{ background: C.brand }}>
+            {generating ? <><RefreshCw size={13} className="animate-spin" /> Generating…</> : <><Download size={13} /> Generate &amp; download</>}
+          </button>
+        </div>
+      }
+    >
+      <div className="px-5 py-5 space-y-4">
+        {error && <div className="text-xs rounded-lg px-3 py-2" role="alert" style={{ color: C.danger, background: "#fef2f2", border: "1px solid #fecaca" }}>{error}</div>}
+
+        <div className="rounded-xl border px-4 py-3 bg-gray-50 grid grid-cols-2 gap-x-4 gap-y-3" style={{ borderColor: C.line }}>
+          {[
+            ["Name",      record.student.name],
+            ["Age / sex", `${studentAge(record.student) ?? "—"} / ${record.student.gender ?? "—"}`],
+            ["Course",    record.student.course ?? "—"],
+            ["Date",      fmtDate(record.visitDate)],
+            ["Diagnosis", record.diagnosis ?? record.complaint ?? "—"],
+          ].map(([label, val]) => (
+            <div key={label} className={label === "Diagnosis" ? "col-span-2" : ""}>
+              <p className="text-[11px] font-medium mb-0.5" style={{ color: C.muted }}>{label}</p>
+              <p className="text-[13px] font-semibold leading-snug" style={{ color: C.ink }}>{val}</p>
+            </div>
+          ))}
+        </div>
+
+        <div>
+          <FieldLabel required>Recommendation</FieldLabel>
+          <textarea value={recommendation} onChange={e => setRecommendation(e.target.value)} rows={3}
+            placeholder="e.g. 3 days rest starting June 15, 2026" className={textareaCls} />
+          <div className="flex flex-wrap gap-1.5 mt-2">
+            {["1 day rest", "2 days rest", "3 days rest", "to be sent home", "to be referred to a hospital for further evaluation"].map(p => (
+              <button key={p} type="button" onClick={() => setRecommendation(p)}
+                className="text-[11px] font-semibold px-2.5 py-1 rounded-full border border-gray-200 bg-white text-gray-600 hover:border-gray-400 transition-colors">
+                {p}
+              </button>
+            ))}
+          </div>
+        </div>
+        <p className="text-[11px] leading-relaxed" style={{ color: C.faint }}>
+          Generated as .docx for printing and signing by the University Physician.
+        </p>
+      </div>
+    </SheetModal>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   12. ADD VISIT MODAL
+   ════════════════════════════════════════════════════════════════════════════ */
+
+function RadioActionList({ name, value, onChange }: { name: string; value: string; onChange: (v: string) => void }) {
+  return (
+    <div className="space-y-1.5" role="radiogroup">
+      {ACTION_OPTIONS.map(opt => {
+        const isSelected = value === opt.value;
+        return (
+          <label key={opt.value}
+            className="flex items-center gap-3 px-3.5 py-2.5 rounded-lg border bg-white cursor-pointer transition-colors min-h-10"
+            style={{ borderColor: isSelected ? C.brand : C.line, background: isSelected ? C.brandTint : "#fff" }}>
+            <input type="radio" name={name} value={opt.value} checked={isSelected}
+              onChange={() => onChange(opt.value)} style={{ accentColor: C.brand }} className="shrink-0" />
+            <span className="text-sm font-medium" style={{ color: isSelected ? C.brand : C.body }}>{opt.label}</span>
+          </label>
+        );
+      })}
+    </div>
+  );
+}
+
 function AddVisitModal({ courseId, onClose, onSaved, courseOptions }: {
   courseId: string; onClose: () => void; onSaved: (record: PatientRecord) => void; courseOptions: string[];
 }) {
   type TabKey = "patient" | "visit" | "clinical";
   const TABS: { key: TabKey; label: string }[] = [
     { key: "patient",  label: "Patient" },
-    { key: "visit",    label: "Visit Info" },
-    { key: "clinical", label: "Clinical & Action" },
+    { key: "visit",    label: "Visit info" },
+    { key: "clinical", label: "Clinical & action" },
   ];
-  const [activeTab,    setActiveTab]    = useState<TabKey>("patient");
-  const [showSuccess,  setShowSuccess]  = useState(false);
+  const [activeTab,   setActiveTab]   = useState<TabKey>("patient");
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const [isWalkIn,         setIsWalkIn]         = useState(false);
   const [walkInFirstName,  setWalkInFirstName]  = useState("");
@@ -582,12 +878,12 @@ function AddVisitModal({ courseId, onClose, onSaved, courseOptions }: {
   const [referralHPI,        setReferralHPI]        = useState("");
   const [referralReason,     setReferralReason]     = useState("");
 
-  const [saving,       setSaving]       = useState(false);
-  const [error,        setError]        = useState("");
-  const [savedRecord,  setSavedRecord]  = useState<PatientRecord | null>(null);
+  const [saving,      setSaving]      = useState(false);
+  const [error,       setError]       = useState("");
+  const [savedRecord, setSavedRecord] = useState<PatientRecord | null>(null);
   const [showMedCertFromSuccess, setShowMedCertFromSuccess] = useState(false);
 
-  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const lookupStudent = useCallback(async (num: string) => {
     const trimmed = num.trim();
@@ -700,519 +996,278 @@ function AddVisitModal({ courseId, onClose, onSaved, courseOptions }: {
   const nextTab    = currentIdx < TABS.length - 1 ? TABS[currentIdx + 1].key : null;
   const isLastTab  = activeTab === "clinical";
 
-  return (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/30"
-      style={{ backdropFilter: "blur(4px)", fontFamily: FONT, paddingBottom: "env(safe-area-inset-bottom)" }}
-      onClick={showSuccess ? undefined : onClose}>
-      {/*
-        KEY FIX: On mobile we use flex-col with explicit height.
-        The footer (action buttons) is always rendered OUTSIDE the scrollable area,
-        pinned at the bottom as a shrink-0 element so it can NEVER be pushed off-screen.
-      */}
-      <div
-        className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-5xl overflow-hidden flex flex-col border border-gray-100"
-        style={{
-          height: "calc(100dvh - 0px)",
-          maxHeight: "calc(94dvh - env(safe-area-inset-bottom))",
-          marginBottom: "60px",
-        }}
-        onClick={e => e.stopPropagation()}>
-
-        {/* Drag handle (mobile only) */}
-        <div className="sm:hidden flex justify-center pt-3 pb-1 shrink-0">
-          <div className="w-10 h-1 rounded-full bg-gray-200" />
-        </div>
-
-        {/* Header */}
-        <div className="flex items-center justify-between px-4 sm:px-5 py-3.5 sm:py-4 border-b border-gray-100 shrink-0" style={{ background: MAROON }}>
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
-              <Stethoscope size={15} className="text-white" />
-            </div>
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-white/60">Clinic</p>
-              <p className="text-sm font-black text-white">New Patient Visit</p>
-            </div>
-          </div>
-          <button onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-colors shrink-0">
-            <X size={15} />
+  const tabBar = !showSuccess ? (
+    <div role="tablist" className="flex border-b overflow-x-auto shrink-0 px-2 sm:px-3" style={{ borderColor: C.line }}>
+      {TABS.map(t => {
+        const active = activeTab === t.key;
+        return (
+          <button key={t.key} role="tab" aria-selected={active} onClick={() => setActiveTab(t.key)}
+            className="relative flex items-center gap-1.5 px-3 py-3 text-xs font-semibold whitespace-nowrap transition-colors"
+            style={{ color: active ? C.brand : C.muted }}>
+            <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: tabStatus[t.key] ? "#22c55e" : "#d1d5db" }} />
+            {t.label}
+            {active && <span className="absolute left-2 right-2 -bottom-px h-0.5 rounded-full" style={{ background: C.brand }} />}
           </button>
-        </div>
+        );
+      })}
+    </div>
+  ) : null;
 
-        {/* Tab bar */}
-        {!showSuccess && (
-          <div className="flex items-center gap-0 px-3 sm:px-5 border-b border-gray-200 bg-gray-50 shrink-0 overflow-x-auto">
-            {TABS.map(t => (
-              <button key={t.key} onClick={() => setActiveTab(t.key)}
-                className="flex items-center gap-1.5 px-3 sm:px-4 py-2.5 text-xs font-bold border-b-2 transition-colors shrink-0 whitespace-nowrap"
-                style={activeTab === t.key
-                  ? { borderColor: MAROON, color: MAROON }
-                  : { borderColor: "transparent", color: "#9ca3af" }}>
-                <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: tabStatus[t.key] ? "#22c55e" : "#d1d5db" }} />
-                {t.label}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* Body: sidebar + scrollable content — flex-1 so it fills remaining space */}
-        <div className="flex-1 overflow-hidden flex min-h-0">
-          {!showSuccess && (
-            <VisitSidebar isWalkIn={isWalkIn} walkInName={walkInFullName} student={student}
-              visitDate={visitDate} visitTime={visitTime} complaint={complaint}
-              temperature={temperature} bloodPressure={bloodPressure} pulseRate={pulseRate} weight={weight}
-              action={action} medicineUsages={medicineUsages} />
-          )}
-
-          <div className="flex-1 overflow-y-auto px-4 sm:px-8 py-5 sm:py-6 space-y-5 min-w-0">
-            {error && (
-              <div className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-lg px-4 py-2.5">{error}</div>
-            )}
-
-            {/* SUCCESS */}
-            {showSuccess && savedRecord ? (
-              <section className="flex flex-col items-center text-center py-8 space-y-4">
-                <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: "#f0fdf4" }}>
-                  <Check className="w-7 h-7 text-green-500" />
-                </div>
-                <div>
-                  <p className="text-sm font-black text-gray-900">Visit saved for {savedRecord.student.name}</p>
-                  <p className="text-xs text-gray-400 mt-1">
-                    {action === "REFERRED_HOSPITAL" ? "Referral document downloaded automatically." : "You can generate a medical certificate now if needed."}
-                  </p>
-                </div>
-                <div className="flex flex-col sm:flex-row gap-2 w-full max-w-sm">
-                  <button onClick={() => setShowMedCertFromSuccess(true)}
-                    className="flex-1 h-10 rounded-xl text-xs font-bold text-white flex items-center justify-center gap-1.5"
-                    style={{ background: MAROON }}>
-                    <FileText size={13} /> Generate Med Cert
-                  </button>
-                  <button onClick={onClose}
-                    className="flex-1 h-10 rounded-xl text-xs font-bold border border-gray-200 text-gray-600 hover:bg-gray-50 transition-all">
-                    Done
-                  </button>
-                </div>
-              </section>
-            ) : (
-              <>
-                {/* PATIENT TAB */}
-                {activeTab === "patient" && (
-                  <section className="space-y-4">
-                    <div className="grid grid-cols-2 gap-2">
-                      <button type="button" onClick={() => setIsWalkIn(false)}
-                        className="py-2.5 rounded-lg border text-xs font-bold transition-all"
-                        style={!isWalkIn ? { borderColor: MAROON, background: "#fef2f2", color: MAROON } : { borderColor: "#e5e7eb", color: "#6b7280" }}>
-                        Registered Student
-                      </button>
-                      <button type="button" onClick={() => setIsWalkIn(true)}
-                        className="py-2.5 rounded-lg border text-xs font-bold transition-all flex items-center justify-center gap-1"
-                        style={isWalkIn ? { borderColor: "#b91c1c", background: "#fef2f2", color: "#b91c1c" } : { borderColor: "#e5e7eb", color: "#6b7280" }}>
-                        <AlertTriangle size={11} /> Walk-in
-                      </button>
-                    </div>
-
-                    {isWalkIn ? (
-                      <div className="space-y-3">
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                          <div>
-                            <FieldLabel required>Last Name</FieldLabel>
-                            <input value={walkInLastName} onChange={e => setWalkInLastName(e.target.value)} placeholder="Last name" className={inputCls} />
-                          </div>
-                          <div>
-                            <FieldLabel required>First Name</FieldLabel>
-                            <input value={walkInFirstName} onChange={e => setWalkInFirstName(e.target.value)} placeholder="First name" className={inputCls} />
-                          </div>
-                          <div>
-                            <FieldLabel>Middle Name</FieldLabel>
-                            <input value={walkInMiddleName} onChange={e => setWalkInMiddleName(e.target.value)} placeholder="Middle name" className={inputCls} />
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-3">
-                          <div>
-                            <FieldLabel>Age</FieldLabel>
-                            <input type="number" min="1" max="120" value={walkInAge} onChange={e => setWalkInAge(e.target.value)} placeholder="21" className={inputCls} />
-                          </div>
-                          <div>
-                            <FieldLabel>Gender</FieldLabel>
-                            <SelectWrapper>
-                              <select value={walkInGender} onChange={e => setWalkInGender(e.target.value)} className={selectCls}>
-                                <option value="">Select</option>
-                                <option value="Male">Male</option>
-                                <option value="Female">Female</option>
-                              </select>
-                            </SelectWrapper>
-                          </div>
-                        </div>
-                        <div>
-                          <FieldLabel>Course</FieldLabel>
-                          <SelectWrapper>
-                            <select value={walkInCourse} onChange={e => setWalkInCourse(e.target.value)} className={selectCls}>
-                              <option value="">Select course</option>
-                              {courseOptions.map(c => <option key={c} value={c}>{c}</option>)}
-                            </select>
-                          </SelectWrapper>
-                        </div>
-                        <div>
-                          <FieldLabel>Address</FieldLabel>
-                          <input value={walkInAddress} onChange={e => setWalkInAddress(e.target.value)} placeholder="Complete address" className={inputCls} />
-                        </div>
-                        <p className="text-[11px] text-gray-400 flex items-start gap-1.5">
-                          <AlertTriangle size={12} className="mt-0.5 shrink-0 text-amber-500" />
-                          A temporary record will be created. Link the official student number later.
-                        </p>
-                      </div>
-                    ) : (
-                      <div>
-                        <div className="relative mb-2">
-                          <input value={studentNum} onChange={e => handleStudentNumChange(e.target.value)}
-                            placeholder="Enter student number…" className={inputCls} />
-                          {lookupLoading && <RefreshCw size={13} className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-gray-400" />}
-                        </div>
-                        {lookupError && <p className="text-xs text-red-500 mt-1">{lookupError}</p>}
-                        {student && (
-                          <div className="mt-2 border border-gray-200 rounded-lg overflow-hidden">
-                            <div className="flex items-center justify-between gap-2 px-3 py-2" style={{ background: "#fef2f2" }}>
-                              <span className="flex items-center gap-2">
-                                <Check size={12} style={{ color: MAROON }} />
-                                <span className="text-xs font-semibold" style={{ color: MAROON }}>Student Found</span>
-                              </span>
-                              {!student.email && (
-                                <span className="text-[10px] font-semibold text-amber-600 flex items-center gap-1">
-                                  <AlertTriangle size={10} /> No email
-                                </span>
-                              )}
-                            </div>
-                            <div className="px-3 py-3 grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2 bg-white">
-                              {[
-                                ["Name",    student.name],
-                                ["Stud. No.", student.studentNumber],
-                                ["Course",  student.course ?? "—"],
-                                ["Age",     studentAge(student) ? `${studentAge(student)} yrs` : "—"],
-                                ["Gender",  student.gender ?? "—"],
-                                ["Address", student.address ?? "—"],
-                              ].map(([label, val]) => (
-                                <div key={label}>
-                                  <p className="text-[10px] text-gray-400 mb-0.5">{label}</p>
-                                  <p className="text-xs font-medium text-gray-800 leading-snug">{val}</p>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </section>
-                )}
-
-                {/* VISIT TAB */}
-                {activeTab === "visit" && (
-                  <div className="space-y-5">
-                    <section>
-                      <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-3">Visit Info</p>
-                      <div className="grid grid-cols-2 gap-3 mb-3">
-                        <div>
-                          <FieldLabel required>Date</FieldLabel>
-                          <input type="date" value={visitDate} onChange={e => setVisitDate(e.target.value)} className={inputCls} />
-                        </div>
-                        <div>
-                          <FieldLabel required>Time</FieldLabel>
-                          <SelectWrapper>
-                            <select value={visitTime} onChange={e => setVisitTime(e.target.value)} className={selectCls}>
-                              {TIME_OPTIONS.map(t => <option key={t} value={t}>{t}</option>)}
-                            </select>
-                          </SelectWrapper>
-                        </div>
-                      </div>
-                      <FieldLabel required>Chief Complaint</FieldLabel>
-                      <BodySystemConditionSelect courseId={courseId} bodySystemId={bodySystemId} conditionId={medicalConditionId}
-                        onChange={(bsId, condId, condName) => { setBodySystemId(bsId); setMedicalConditionId(condId); setComplaint(condName); }} />
-                    </section>
-
-                    <section>
-                      <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-3">
-                        Vital Signs <span className="normal-case font-normal text-gray-300 ml-1">optional</span>
-                      </p>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <FieldLabel>Temperature (°C)</FieldLabel>
-                          <input type="number" step="0.1" min="30" max="45" value={temperature} onChange={e => setTemperature(e.target.value)} placeholder="36.8" className={inputCls} />
-                        </div>
-                        <div>
-                          <FieldLabel>Blood Pressure</FieldLabel>
-                          <input value={bloodPressure} onChange={e => setBloodPressure(e.target.value)} placeholder="120/80"
-                            className={inputCls} style={!bpValid ? { borderColor: "#ef4444" } : undefined} />
-                          {!bpValid && <p className="text-[10px] text-red-500 mt-1">Format: 120/80</p>}
-                        </div>
-                        <div>
-                          <FieldLabel>Pulse Rate (bpm)</FieldLabel>
-                          <input type="number" min="30" max="220" value={pulseRate} onChange={e => setPulseRate(e.target.value)} placeholder="78" className={inputCls} />
-                        </div>
-                        <div>
-                          <FieldLabel>Weight (kg)</FieldLabel>
-                          <input type="number" step="0.1" min="1" max="300" value={weight} onChange={e => setWeight(e.target.value)} placeholder="55" className={inputCls} />
-                        </div>
-                      </div>
-                    </section>
-                  </div>
-                )}
-
-                {/* CLINICAL TAB */}
-                {activeTab === "clinical" && (
-                  <div className="space-y-5">
-                    <section>
-                      <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-3">
-                        Clinical <span className="normal-case font-normal text-gray-300 ml-1">optional</span>
-                      </p>
-                      <div>
-                        <FieldLabel>Diagnosis</FieldLabel>
-                        <textarea value={diagnosis} onChange={e => setDiagnosis(e.target.value)} rows={2} placeholder="Clinical diagnosis…" className={textareaCls} />
-                      </div>
-                      <div className="mt-3">
-                        <div className="flex items-center justify-between mb-1.5">
-                          <FieldLabel>Medicines Given</FieldLabel>
-                          {medicineUsages.length > 0 && (
-                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "#fef2f2", color: MAROON }}>
-                              {medicineUsages.length} selected
-                            </span>
-                          )}
-                        </div>
-                        <MedicinePicker courseId={courseId} entries={medicineUsages} onChange={setMedicineUsages} />
-                      </div>
-                    </section>
-
-                    <section>
-                      <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-3">Action Taken</p>
-                      <div className="space-y-1.5">
-                        {ACTION_OPTIONS.map(opt => {
-                          const isSelected = action === opt.value;
-                          return (
-                            <label key={opt.value}
-                              className="flex items-center gap-3 px-3.5 py-2.5 rounded-lg border bg-white cursor-pointer transition-all min-h-10"
-                              style={{ borderColor: isSelected ? MAROON : "#e5e7eb", borderWidth: isSelected ? "1.5px" : "1px" }}>
-                              <input type="radio" name="action" value={opt.value} checked={isSelected}
-                                onChange={() => setAction(opt.value)} style={{ accentColor: MAROON }} className="shrink-0" />
-                              <span className="text-sm font-medium" style={{ color: isSelected ? MAROON : "#374151" }}>{opt.label}</span>
-                            </label>
-                          );
-                        })}
-                      </div>
-                    </section>
-
-                    {action === "REFERRED_HOSPITAL" && (
-                      <section>
-                        <p className="text-[11px] font-bold uppercase tracking-widest text-red-400 mb-3">Referral Details</p>
-                        <div className="space-y-3 border border-red-100 rounded-lg bg-red-50/30 p-4">
-                          <div>
-                            <FieldLabel required>Refer To</FieldLabel>
-                            <input value={referralTo} onChange={e => setReferralTo(e.target.value)} placeholder="e.g. Jose B. Lingad Memorial Hospital" className={inputCls} />
-                          </div>
-                          <div>
-                            <FieldLabel>History of Present Illness</FieldLabel>
-                            <textarea value={referralHPI} onChange={e => setReferralHPI(e.target.value)} rows={3} placeholder="Detailed history…" className={textareaCls} />
-                          </div>
-                          <div>
-                            <FieldLabel required>Reason for Referral</FieldLabel>
-                            <textarea value={referralReason} onChange={e => setReferralReason(e.target.value)} rows={2} placeholder="Reason…" className={textareaCls} />
-                          </div>
-                        </div>
-                      </section>
-                    )}
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-        </div>
-
-        {/*
-          FOOTER — shrink-0 ensures it always stays visible and is NEVER
-          scrolled off-screen on mobile. Buttons are larger (h-11) on mobile
-          for better tap targets.
-        */}
-        {!showSuccess && (
-          <div className="shrink-0 border-t border-gray-100 bg-gray-50 px-3 sm:px-5 py-3 sm:py-4">
-            {/* Mobile layout: two rows when on last tab */}
-            <div className="flex flex-wrap gap-2">
-              {/* Cancel always visible */}
-              <button
-                onClick={onClose}
-                disabled={saving}
-                className="h-11 sm:h-10 px-4 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-100 transition-all disabled:opacity-50 shrink-0"
-              >
-                Cancel
-              </button>
-
-              {/* Back button */}
-              {prevTab && (
-                <button
-                  onClick={() => setActiveTab(prevTab)}
-                  disabled={saving}
-                  className="h-11 sm:h-10 px-4 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-100 transition-all disabled:opacity-50 shrink-0"
-                >
-                  ← Back
-                </button>
-              )}
-
-              {/* Spacer pushes next/save buttons to the right */}
-              <div className="flex-1" />
-
-              {/* Next button */}
-              {nextTab && (
-                <button
-                  onClick={() => setActiveTab(nextTab)}
-                  className="h-11 sm:h-10 px-5 rounded-xl text-sm font-black text-white transition-all shrink-0"
-                  style={{ background: MAROON }}
-                >
-                  Next →
-                </button>
-              )}
-
-              {/* Save & New + Save on last tab */}
-              {isLastTab && (
-                <>
-                  <button
-                    onClick={() => handleSave(false)}
-                    disabled={saving || !canSave}
-                    className="h-11 sm:h-10 px-3 sm:px-4 rounded-xl text-xs sm:text-sm font-bold border transition-all disabled:opacity-40 flex items-center gap-1.5 shrink-0"
-                    style={{ borderColor: MAROON, color: MAROON, background: "#fff" }}
-                  >
-                    {saving ? <RefreshCw size={13} className="animate-spin" /> : <Plus size={13} />}
-                    {/* Show full label on sm+, abbreviated on mobile */}
-                    <span className="hidden sm:inline">Save &amp; New</span>
-                    <span className="sm:hidden">+New</span>
-                  </button>
-                  <button
-                    onClick={() => handleSave(true)}
-                    disabled={saving || !canSave}
-                    className="h-11 sm:h-10 px-4 sm:px-5 rounded-xl text-sm font-black text-white transition-all disabled:opacity-40 flex items-center gap-1.5 shrink-0"
-                    style={{ background: MAROON }}
-                  >
-                    {saving
-                      ? <><RefreshCw size={13} className="animate-spin" /> Saving…</>
-                      : <><Check size={13} /> Save</>
-                    }
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {showMedCertFromSuccess && savedRecord && (
-        <MedCertModal courseId={courseId} record={savedRecord} onClose={() => { setShowMedCertFromSuccess(false); onClose(); }} />
+  const footer = !showSuccess ? (
+    <div className="px-4 sm:px-5 py-3 flex flex-wrap gap-2 items-center">
+      <button onClick={onClose} disabled={saving} className={btnGhost}>Cancel</button>
+      {prevTab && <button onClick={() => setActiveTab(prevTab)} disabled={saving} className={btnGhost}>Back</button>}
+      <div className="flex-1" />
+      {nextTab && (
+        <button onClick={() => setActiveTab(nextTab)}
+          className="h-10 px-5 rounded-xl text-xs font-bold text-white shrink-0" style={{ background: C.brand }}>
+          Next
+        </button>
+      )}
+      {isLastTab && (
+        <>
+          <button onClick={() => handleSave(false)} disabled={saving || !canSave}
+            className="h-10 px-4 rounded-xl text-xs font-bold border bg-white disabled:opacity-40 flex items-center gap-1.5 shrink-0"
+            style={{ borderColor: C.brand, color: C.brand }}>
+            {saving ? <RefreshCw size={13} className="animate-spin" /> : <Plus size={13} />}
+            <span className="hidden sm:inline">Save &amp; new</span>
+            <span className="sm:hidden">New</span>
+          </button>
+          <button onClick={() => handleSave(true)} disabled={saving || !canSave}
+            className="h-10 px-5 rounded-xl text-xs font-bold text-white disabled:opacity-40 flex items-center gap-1.5 shrink-0"
+            style={{ background: C.brand }}>
+            {saving ? <><RefreshCw size={13} className="animate-spin" /> Saving…</> : <><Check size={13} /> Save</>}
+          </button>
+        </>
       )}
     </div>
-  );
-}
-
-/* ─────────────────────────────────────────────────────────────────────────────
-   MEDICAL CERTIFICATE MODAL
-───────────────────────────────────────────────────────────────────────────── */
-function MedCertModal({ courseId, record, onClose }: {
-  courseId: string; record: PatientRecord; onClose: () => void;
-}) {
-  const [recommendation, setRecommendation] = useState(
-    record.action === "SENT_HOME"         ? "to be sent home and rest for the day" :
-    record.action === "FOR_OBSERVATION"   ? "to remain under observation" :
-    record.action === "REFERRED_HOSPITAL" ? "to be referred to a hospital for further evaluation" :
-    record.action === "REFERRED_GUIDANCE" ? "to see the Guidance Office for counseling" : ""
-  );
-  const [generating, setGenerating] = useState(false);
-  const [error,      setError]      = useState("");
-
-  const handleGenerate = async () => {
-    if (!recommendation.trim()) { setError("Recommendation is required."); return; }
-    setGenerating(true); setError("");
-    try {
-      const res = await fetch(`/api/courses/${courseId}/patient-records/medical-certificate`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ recordId: record.id, recommendation: recommendation.trim() }),
-      });
-      if (!res.ok) { const d = await res.json(); setError(d.error ?? "Failed to generate."); return; }
-      const blob = await res.blob();
-      const url  = URL.createObjectURL(blob);
-      const a    = document.createElement("a");
-      a.href = url; a.download = `medical_certificate_${record.student.name.replace(/\s+/g, "_")}.docx`; a.click();
-      URL.revokeObjectURL(url); onClose();
-    } catch { setError("Network error. Please try again."); }
-    finally { setGenerating(false); }
-  };
+  ) : undefined;
 
   return (
-    <div className="fixed inset-0 z-[300] flex items-end sm:items-center justify-center bg-black/30"
-      style={{ backdropFilter: "blur(4px)", fontFamily: FONT }} onClick={onClose}>
-      <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl border border-gray-100 w-full sm:w-[480px] overflow-hidden"
-        onClick={e => e.stopPropagation()}>
-        <div className="sm:hidden flex justify-center pt-3 pb-1"><div className="w-10 h-1 rounded-full bg-gray-200" /></div>
-        <div className="flex items-center justify-between px-4 sm:px-5 py-3.5 sm:py-4 border-b border-gray-100" style={{ background: MAROON }}>
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
-              <FileText size={15} className="text-white" />
+    <>
+      <SheetModal
+        onClose={onClose} tall maxWidth="max-w-5xl" dismissable={!showSuccess}
+        icon={<Stethoscope size={16} />}
+        title="New patient visit" subtitle="Clinic"
+        toolbar={tabBar} footer={footer}
+      >
+        {!showSuccess && (
+          <VisitSidebar isWalkIn={isWalkIn} walkInName={walkInFullName} student={student}
+            visitDate={visitDate} visitTime={visitTime} complaint={complaint}
+            temperature={temperature} bloodPressure={bloodPressure} pulseRate={pulseRate} weight={weight}
+            action={action} medicineUsages={medicineUsages} />
+        )}
+
+        <div className="flex-1 overflow-y-auto px-4 sm:px-7 py-5 space-y-5 min-w-0">
+          {error && (
+            <div className="flex items-start gap-2 text-xs rounded-lg px-3 py-2.5" role="alert"
+              style={{ color: C.danger, background: "#fef2f2", border: "1px solid #fecaca" }}>
+              <AlertTriangle size={13} className="shrink-0 mt-0.5" /> {error}
             </div>
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-white/60">Clinic</p>
-              <p className="text-sm font-black text-white">Generate Medical Certificate</p>
-            </div>
-          </div>
-          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-colors">
-            <X size={15} />
-          </button>
-        </div>
-        <div className="px-4 sm:px-5 py-4 sm:py-5 space-y-4">
-          {error && <div className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">{error}</div>}
-          <div className="rounded-lg border border-gray-200 overflow-hidden">
-            <div className="px-3 py-2 border-b border-gray-100" style={{ background: "#fef2f2" }}>
-              <p className="text-[10px] font-black uppercase tracking-widest" style={{ color: MAROON }}>Patient</p>
-            </div>
-            <div className="px-3 py-3 grid grid-cols-2 gap-x-4 gap-y-2 bg-white">
-              {[
-                ["Name",      record.student.name],
-                ["Age / Sex", `${studentAge(record.student) ?? "—"} / ${record.student.gender ?? "—"}`],
-                ["Course",    record.student.course ?? "—"],
-                ["Date",      fmtDate(record.visitDate)],
-                ["Diagnosis", record.diagnosis ?? record.complaint ?? "—"],
-              ].map(([label, val]) => (
-                <div key={label} className={label === "Diagnosis" ? "col-span-2" : ""}>
-                  <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-0.5">{label}</p>
-                  <p className="text-xs font-semibold text-gray-800 leading-snug">{val}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div>
-            <FieldLabel required>Recommendation</FieldLabel>
-            <textarea value={recommendation} onChange={e => setRecommendation(e.target.value)} rows={3}
-              placeholder="e.g. 3 days rest starting June 15, 2026" className={textareaCls} />
-            <div className="flex flex-wrap gap-1.5 mt-2">
-              {["1 day rest", "2 days rest", "3 days rest", "to be sent home", "to be referred to a hospital for further evaluation"].map(p => (
-                <button key={p} type="button" onClick={() => setRecommendation(p)}
-                  className="text-[10px] font-semibold px-2.5 py-1 rounded-full border border-gray-200 text-gray-500 hover:border-gray-400 hover:text-gray-700 transition-all">
-                  {p}
+          )}
+
+          {showSuccess && savedRecord ? (
+            <section className="flex flex-col items-center text-center py-10 gap-4">
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: "#d1fae5" }}>
+                <Check className="w-7 h-7" style={{ color: "#065f46" }} />
+              </div>
+              <div>
+                <p className="text-sm font-bold" style={{ color: C.ink }}>Visit saved for {savedRecord.student.name}</p>
+                <p className="text-xs mt-1" style={{ color: C.muted }}>
+                  {action === "REFERRED_HOSPITAL"
+                    ? "Referral document downloaded automatically."
+                    : "You can generate a medical certificate now if needed."}
+                </p>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-2 w-full max-w-sm">
+                <button onClick={() => setShowMedCertFromSuccess(true)}
+                  className="flex-1 h-10 rounded-xl text-xs font-bold text-white flex items-center justify-center gap-1.5"
+                  style={{ background: C.brand }}>
+                  <FileText size={13} /> Generate med cert
                 </button>
-              ))}
-            </div>
-          </div>
-          <p className="text-[10px] text-gray-400 leading-relaxed">Generated as .docx for printing and signing by the University Physician.</p>
+                <button onClick={onClose} className={`flex-1 ${btnGhost}`}>Done</button>
+              </div>
+            </section>
+          ) : (
+            <>
+              {/* PATIENT */}
+              {activeTab === "patient" && (
+                <section className="space-y-4">
+                  <div className="grid grid-cols-2 gap-2">
+                    <button type="button" onClick={() => setIsWalkIn(false)}
+                      className="h-10 rounded-lg border text-xs font-semibold transition-colors"
+                      style={!isWalkIn ? { borderColor: C.brand, background: C.brandTint, color: C.brand } : { borderColor: C.line, color: C.muted, background: "#fff" }}>
+                      Registered student
+                    </button>
+                    <button type="button" onClick={() => setIsWalkIn(true)}
+                      className="h-10 rounded-lg border text-xs font-semibold transition-colors flex items-center justify-center gap-1.5"
+                      style={isWalkIn ? { borderColor: C.brand, background: C.brandTint, color: C.brand } : { borderColor: C.line, color: C.muted, background: "#fff" }}>
+                      <AlertTriangle size={12} /> Walk-in
+                    </button>
+                  </div>
+
+                  {isWalkIn ? (
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div><FieldLabel required>Last name</FieldLabel><input value={walkInLastName} onChange={e => setWalkInLastName(e.target.value)} placeholder="Last name" className={inputCls} /></div>
+                        <div><FieldLabel required>First name</FieldLabel><input value={walkInFirstName} onChange={e => setWalkInFirstName(e.target.value)} placeholder="First name" className={inputCls} /></div>
+                        <div><FieldLabel>Middle name</FieldLabel><input value={walkInMiddleName} onChange={e => setWalkInMiddleName(e.target.value)} placeholder="Middle name" className={inputCls} /></div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div><FieldLabel>Age</FieldLabel><input type="number" min="1" max="120" value={walkInAge} onChange={e => setWalkInAge(e.target.value)} placeholder="21" className={inputCls} /></div>
+                        <div>
+                          <FieldLabel>Gender</FieldLabel>
+                          <SelectWrapper>
+                            <select value={walkInGender} onChange={e => setWalkInGender(e.target.value)} className={selectCls}>
+                              <option value="">Select</option>
+                              <option value="Male">Male</option>
+                              <option value="Female">Female</option>
+                            </select>
+                          </SelectWrapper>
+                        </div>
+                      </div>
+                      <div>
+                        <FieldLabel>Course</FieldLabel>
+                        <SelectWrapper>
+                          <select value={walkInCourse} onChange={e => setWalkInCourse(e.target.value)} className={selectCls}>
+                            <option value="">Select course</option>
+                            {courseOptions.map(c => <option key={c} value={c}>{c}</option>)}
+                          </select>
+                        </SelectWrapper>
+                      </div>
+                      <div><FieldLabel>Address</FieldLabel><input value={walkInAddress} onChange={e => setWalkInAddress(e.target.value)} placeholder="Complete address" className={inputCls} /></div>
+                      <p className="text-xs flex items-start gap-1.5" style={{ color: C.muted }}>
+                        <AlertTriangle size={13} className="mt-0.5 shrink-0" style={{ color: "#d97706" }} />
+                        A temporary record will be created. Link the official student number later.
+                      </p>
+                    </div>
+                  ) : (
+                    <div>
+                      <FieldLabel required>Student number</FieldLabel>
+                      <div className="relative">
+                        <input value={studentNum} onChange={e => handleStudentNumChange(e.target.value)}
+                          placeholder="Enter student number" className={inputCls} />
+                        {lookupLoading && <RefreshCw size={13} className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-gray-400" />}
+                      </div>
+                      {lookupError && <p className="text-xs mt-1.5" style={{ color: C.danger }}>{lookupError}</p>}
+                      {student && (
+                        <div className="mt-3 border rounded-xl overflow-hidden" style={{ borderColor: C.line }}>
+                          <div className="flex items-center justify-between gap-2 px-4 py-2.5" style={{ background: C.brandTint }}>
+                            <span className="flex items-center gap-2 text-xs font-semibold" style={{ color: C.brand }}>
+                              <Check size={13} /> Student found
+                            </span>
+                            {!student.email && (
+                              <span className="text-[11px] font-semibold flex items-center gap-1" style={{ color: "#92400e" }}>
+                                <AlertTriangle size={11} /> No email
+                              </span>
+                            )}
+                          </div>
+                          <dl className="px-4 py-4 grid grid-cols-2 sm:grid-cols-3 gap-x-5 gap-y-3 bg-white">
+                            <InfoField label="Name"        value={student.name} />
+                            <InfoField label="Student no." value={student.studentNumber} />
+                            <InfoField label="Course"      value={student.course ?? "—"} />
+                            <InfoField label="Age"         value={studentAge(student) ? `${studentAge(student)} yrs` : "—"} />
+                            <InfoField label="Gender"      value={student.gender ?? "—"} />
+                            <InfoField label="Address"     value={student.address ?? "—"} />
+                          </dl>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </section>
+              )}
+
+              {/* VISIT */}
+              {activeTab === "visit" && (
+                <div className="space-y-6">
+                  <section>
+                    <SectionTitle>Visit info</SectionTitle>
+                    <div className="grid grid-cols-2 gap-3 mb-4">
+                      <div><FieldLabel required>Date</FieldLabel><input type="date" value={visitDate} onChange={e => setVisitDate(e.target.value)} className={inputCls} /></div>
+                      <div>
+                        <FieldLabel required>Time</FieldLabel>
+                        <SelectWrapper>
+                          <select value={visitTime} onChange={e => setVisitTime(e.target.value)} className={selectCls}>
+                            {TIME_OPTIONS.map(t => <option key={t} value={t}>{t}</option>)}
+                          </select>
+                        </SelectWrapper>
+                      </div>
+                    </div>
+                    <BodySystemConditionSelect courseId={courseId} bodySystemId={bodySystemId} conditionId={medicalConditionId}
+                      onChange={(bsId, condId, condName) => { setBodySystemId(bsId); setMedicalConditionId(condId); setComplaint(condName); }} />
+                  </section>
+
+                  <section>
+                    <SectionTitle hint="Optional">Vital signs</SectionTitle>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div><FieldLabel>Temperature (°C)</FieldLabel><input type="number" step="0.1" min="30" max="45" value={temperature} onChange={e => setTemperature(e.target.value)} placeholder="36.8" className={inputCls} /></div>
+                      <div>
+                        <FieldLabel>Blood pressure</FieldLabel>
+                        <input value={bloodPressure} onChange={e => setBloodPressure(e.target.value)} placeholder="120/80"
+                          className={inputCls} style={!bpValid ? { borderColor: "#ef4444" } : undefined} />
+                        {!bpValid && <p className="text-[11px] mt-1" style={{ color: C.danger }}>Format: 120/80</p>}
+                      </div>
+                      <div><FieldLabel>Pulse rate (bpm)</FieldLabel><input type="number" min="30" max="220" value={pulseRate} onChange={e => setPulseRate(e.target.value)} placeholder="78" className={inputCls} /></div>
+                      <div><FieldLabel>Weight (kg)</FieldLabel><input type="number" step="0.1" min="1" max="300" value={weight} onChange={e => setWeight(e.target.value)} placeholder="55" className={inputCls} /></div>
+                    </div>
+                  </section>
+                </div>
+              )}
+
+              {/* CLINICAL */}
+              {activeTab === "clinical" && (
+                <div className="space-y-6">
+                  <section>
+                    <SectionTitle hint="Optional">Clinical</SectionTitle>
+                    <FieldLabel>Diagnosis</FieldLabel>
+                    <textarea value={diagnosis} onChange={e => setDiagnosis(e.target.value)} rows={2} placeholder="Clinical diagnosis" className={textareaCls} />
+                    <div className="mt-4">
+                      <div className="flex items-center justify-between mb-1">
+                        <FieldLabel>Medicines given</FieldLabel>
+                        {medicineUsages.length > 0 && (
+                          <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ background: C.brandTint, color: C.brand }}>
+                            {medicineUsages.length} selected
+                          </span>
+                        )}
+                      </div>
+                      <MedicinePicker courseId={courseId} entries={medicineUsages} onChange={setMedicineUsages} />
+                    </div>
+                  </section>
+
+                  <section>
+                    <SectionTitle>Action taken</SectionTitle>
+                    <RadioActionList name="action" value={action} onChange={setAction} />
+                  </section>
+
+                  {action === "REFERRED_HOSPITAL" && (
+                    <section>
+                      <SectionTitle>Referral details</SectionTitle>
+                      <div className="space-y-3 border rounded-xl p-4" style={{ borderColor: "#fecaca", background: "#fef2f2" }}>
+                        <div><FieldLabel required>Refer to</FieldLabel><input value={referralTo} onChange={e => setReferralTo(e.target.value)} placeholder="e.g. Jose B. Lingad Memorial Hospital" className={inputCls} /></div>
+                        <div><FieldLabel>History of present illness</FieldLabel><textarea value={referralHPI} onChange={e => setReferralHPI(e.target.value)} rows={3} placeholder="Detailed history" className={textareaCls} /></div>
+                        <div><FieldLabel required>Reason for referral</FieldLabel><textarea value={referralReason} onChange={e => setReferralReason(e.target.value)} rows={2} placeholder="Reason" className={textareaCls} /></div>
+                      </div>
+                    </section>
+                  )}
+                </div>
+              )}
+            </>
+          )}
         </div>
-        <div className="flex gap-2 px-4 sm:px-5 py-3.5 sm:py-4 border-t border-gray-100 bg-gray-50">
-          <button onClick={onClose} disabled={generating}
-            className="flex-1 h-11 sm:h-10 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-100 transition-all disabled:opacity-50">Cancel</button>
-          <button onClick={handleGenerate} disabled={generating || !recommendation.trim()}
-            className="flex-1 h-11 sm:h-10 rounded-xl text-sm font-black text-white transition-all disabled:opacity-60 flex items-center justify-center gap-1.5"
-            style={{ background: MAROON }}>
-            {generating ? <><RefreshCw size={13} className="animate-spin" /> Generating…</> : <><FileText size={13} /> Generate &amp; Download</>}
-          </button>
-        </div>
-      </div>
-    </div>
+      </SheetModal>
+
+      {showMedCertFromSuccess && savedRecord && (
+        <MedCertModal courseId={courseId} record={savedRecord}
+          onClose={() => { setShowMedCertFromSuccess(false); onClose(); }} />
+      )}
+    </>
   );
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   EDIT VISIT MODAL — same footer fix applied
-───────────────────────────────────────────────────────────────────────────── */
+/* ════════════════════════════════════════════════════════════════════════════
+   13. EDIT VISIT MODAL
+   ════════════════════════════════════════════════════════════════════════════ */
+
 function EditVisitModal({ courseId, record, onClose, onSaved }: {
   courseId: string; record: PatientRecord; onClose: () => void; onSaved: (updated: PatientRecord) => void;
 }) {
@@ -1263,114 +1318,91 @@ function EditVisitModal({ courseId, record, onClose, onSaved }: {
   };
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/30"
-      style={{ backdropFilter: "blur(4px)", fontFamily: FONT }} onClick={onClose}>
-      <div
-        className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-5xl overflow-hidden flex flex-col border border-gray-100"
-        style={{ height: "calc(100dvh - 0px)", maxHeight: "calc(94dvh - env(safe-area-inset-bottom))", marginBottom: "60px" }}
-        onClick={e => e.stopPropagation()}>
-        <div className="sm:hidden flex justify-center pt-3 pb-1 shrink-0"><div className="w-10 h-1 rounded-full bg-gray-200" /></div>
-        <div className="flex items-center justify-between px-4 sm:px-5 py-3.5 sm:py-4 border-b border-gray-100 shrink-0" style={{ background: MAROON }}>
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center shrink-0"><Stethoscope size={15} className="text-white" /></div>
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-white/60">Clinic</p>
-              <p className="text-sm font-black text-white">Edit Visit Record</p>
-            </div>
-          </div>
-          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-colors shrink-0"><X size={15} /></button>
-        </div>
-
-        <div className="flex-1 overflow-hidden flex min-h-0">
-          <VisitSidebar isWalkIn={false} walkInName="" student={record.student}
-            visitDate={visitDate} visitTime={visitTime} complaint={complaint}
-            temperature={temperature} bloodPressure={bloodPressure} pulseRate={pulseRate} weight={weight}
-            action={action} medicineUsages={medicineUsages} />
-
-          <div className="flex-1 overflow-y-auto px-4 sm:px-8 py-5 sm:py-6 space-y-5 min-w-0">
-            {error && <div className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-lg px-4 py-2.5">{error}</div>}
-
-            <section>
-              <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-3">Visit Info</p>
-              <div className="grid grid-cols-2 gap-3 mb-3">
-                <div>
-                  <FieldLabel required>Date</FieldLabel>
-                  <input type="date" value={visitDate} onChange={e => setVisitDate(e.target.value)} className={inputCls} />
-                </div>
-                <div>
-                  <FieldLabel required>Time</FieldLabel>
-                  <SelectWrapper><select value={visitTime} onChange={e => setVisitTime(e.target.value)} className={selectCls}>{TIME_OPTIONS.map(t => <option key={t} value={t}>{t}</option>)}</select></SelectWrapper>
-                </div>
-              </div>
-              <FieldLabel required>Chief Complaint</FieldLabel>
-              <BodySystemConditionSelect courseId={courseId} bodySystemId={bodySystemId} conditionId={medicalConditionId}
-                onChange={(bsId, condId, condName) => { setBodySystemId(bsId); setMedicalConditionId(condId); setComplaint(condName); }} />
-            </section>
-
-            <section>
-              <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-3">
-                Vital Signs <span className="normal-case font-normal text-gray-300 ml-1">optional</span>
-              </p>
-              <div className="grid grid-cols-2 gap-3">
-                <div><FieldLabel>Temperature (°C)</FieldLabel><input type="number" step="0.1" min="30" max="45" value={temperature} onChange={e => setTemperature(e.target.value)} placeholder="36.8" className={inputCls} /></div>
-                <div><FieldLabel>Blood Pressure</FieldLabel><input value={bloodPressure} onChange={e => setBloodPressure(e.target.value)} placeholder="120/80" className={inputCls} /></div>
-                <div><FieldLabel>Pulse Rate (bpm)</FieldLabel><input type="number" min="30" max="220" value={pulseRate} onChange={e => setPulseRate(e.target.value)} placeholder="78" className={inputCls} /></div>
-                <div><FieldLabel>Weight (kg)</FieldLabel><input type="number" step="0.1" min="1" max="300" value={weight} onChange={e => setWeight(e.target.value)} placeholder="55" className={inputCls} /></div>
-              </div>
-            </section>
-
-            <section>
-              <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-3">Clinical <span className="normal-case font-normal text-gray-300 ml-1">optional</span></p>
-              <FieldLabel>Diagnosis</FieldLabel>
-              <textarea value={diagnosis} onChange={e => setDiagnosis(e.target.value)} rows={2} placeholder="Clinical diagnosis…" className={textareaCls} />
-              <div className="mt-3">
-                <FieldLabel>Medicines Given</FieldLabel>
-                <p className="text-[10px] text-gray-400 mb-1.5">Adjusting quantities will automatically correct inventory stock.</p>
-                <MedicinePicker courseId={courseId} entries={medicineUsages} onChange={setMedicineUsages} />
-              </div>
-            </section>
-
-            <section>
-              <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-3">Action Taken</p>
-              <div className="space-y-1.5">
-                {ACTION_OPTIONS.map(opt => {
-                  const isSelected = action === opt.value;
-                  return (
-                    <label key={opt.value} className="flex items-center gap-3 px-3.5 py-2.5 rounded-lg border bg-white cursor-pointer transition-all min-h-10"
-                      style={{ borderColor: isSelected ? MAROON : "#e5e7eb", borderWidth: isSelected ? "1.5px" : "1px" }}>
-                      <input type="radio" name="edit-action" value={opt.value} checked={isSelected} onChange={() => setAction(opt.value)} style={{ accentColor: MAROON }} className="shrink-0" />
-                      <span className="text-sm font-medium" style={{ color: isSelected ? MAROON : "#374151" }}>{opt.label}</span>
-                    </label>
-                  );
-                })}
-              </div>
-            </section>
-
-            <section>
-              <FieldLabel>Notes / Remarks</FieldLabel>
-              <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2} placeholder="Additional notes…" className={textareaCls} />
-            </section>
-          </div>
-        </div>
-
-        {/* Footer — always pinned, never scrolled away */}
-        <div className="shrink-0 flex gap-2 px-4 sm:px-5 py-3 sm:py-4 border-t border-gray-100 bg-gray-50">
-          <button onClick={onClose} disabled={saving}
-            className="flex-1 h-11 sm:h-10 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-100 transition-all disabled:opacity-50">Cancel</button>
+    <SheetModal
+      onClose={onClose} tall maxWidth="max-w-5xl" z={70}
+      icon={<Stethoscope size={16} />}
+      title="Edit visit record" subtitle={record.student.name}
+      footer={
+        <div className="px-4 sm:px-5 py-3 flex gap-2">
+          <button onClick={onClose} disabled={saving} className={`flex-1 sm:flex-none sm:w-32 ${btnGhost}`}>Cancel</button>
+          <div className="hidden sm:block flex-1" />
           <button onClick={handleSave} disabled={saving}
-            className="flex-1 h-11 sm:h-10 rounded-xl text-sm font-black text-white transition-all disabled:opacity-60 flex items-center justify-center gap-1.5"
-            style={{ background: MAROON }}>
-            {saving ? <><RefreshCw size={13} className="animate-spin" /> Saving…</> : <><Check size={13} /> Save Changes</>}
+            className="flex-1 sm:flex-none sm:w-44 h-10 rounded-xl text-xs font-bold text-white disabled:opacity-60 flex items-center justify-center gap-1.5"
+            style={{ background: C.brand }}>
+            {saving ? <><RefreshCw size={13} className="animate-spin" /> Saving…</> : <><Check size={13} /> Save changes</>}
           </button>
         </div>
+      }
+    >
+      <VisitSidebar isWalkIn={false} walkInName="" student={record.student}
+        visitDate={visitDate} visitTime={visitTime} complaint={complaint}
+        temperature={temperature} bloodPressure={bloodPressure} pulseRate={pulseRate} weight={weight}
+        action={action} medicineUsages={medicineUsages} />
+
+      <div className="flex-1 overflow-y-auto px-4 sm:px-7 py-5 space-y-6 min-w-0">
+        {error && (
+          <div className="flex items-start gap-2 text-xs rounded-lg px-3 py-2.5" role="alert"
+            style={{ color: C.danger, background: "#fef2f2", border: "1px solid #fecaca" }}>
+            <AlertTriangle size={13} className="shrink-0 mt-0.5" /> {error}
+          </div>
+        )}
+
+        <section>
+          <SectionTitle>Visit info</SectionTitle>
+          <div className="grid grid-cols-2 gap-3 mb-4">
+            <div><FieldLabel required>Date</FieldLabel><input type="date" value={visitDate} onChange={e => setVisitDate(e.target.value)} className={inputCls} /></div>
+            <div>
+              <FieldLabel required>Time</FieldLabel>
+              <SelectWrapper>
+                <select value={visitTime} onChange={e => setVisitTime(e.target.value)} className={selectCls}>
+                  {TIME_OPTIONS.map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </SelectWrapper>
+            </div>
+          </div>
+          <BodySystemConditionSelect courseId={courseId} bodySystemId={bodySystemId} conditionId={medicalConditionId}
+            onChange={(bsId, condId, condName) => { setBodySystemId(bsId); setMedicalConditionId(condId); setComplaint(condName); }} />
+        </section>
+
+        <section>
+          <SectionTitle hint="Optional">Vital signs</SectionTitle>
+          <div className="grid grid-cols-2 gap-3">
+            <div><FieldLabel>Temperature (°C)</FieldLabel><input type="number" step="0.1" min="30" max="45" value={temperature} onChange={e => setTemperature(e.target.value)} placeholder="36.8" className={inputCls} /></div>
+            <div><FieldLabel>Blood pressure</FieldLabel><input value={bloodPressure} onChange={e => setBloodPressure(e.target.value)} placeholder="120/80" className={inputCls} /></div>
+            <div><FieldLabel>Pulse rate (bpm)</FieldLabel><input type="number" min="30" max="220" value={pulseRate} onChange={e => setPulseRate(e.target.value)} placeholder="78" className={inputCls} /></div>
+            <div><FieldLabel>Weight (kg)</FieldLabel><input type="number" step="0.1" min="1" max="300" value={weight} onChange={e => setWeight(e.target.value)} placeholder="55" className={inputCls} /></div>
+          </div>
+        </section>
+
+        <section>
+          <SectionTitle hint="Optional">Clinical</SectionTitle>
+          <FieldLabel>Diagnosis</FieldLabel>
+          <textarea value={diagnosis} onChange={e => setDiagnosis(e.target.value)} rows={2} placeholder="Clinical diagnosis" className={textareaCls} />
+          <div className="mt-4">
+            <FieldLabel>Medicines given</FieldLabel>
+            <p className="text-[11px] mb-2" style={{ color: C.faint }}>Adjusting quantities will automatically correct inventory stock.</p>
+            <MedicinePicker courseId={courseId} entries={medicineUsages} onChange={setMedicineUsages} />
+          </div>
+        </section>
+
+        <section>
+          <SectionTitle>Action taken</SectionTitle>
+          <RadioActionList name="edit-action" value={action} onChange={setAction} />
+        </section>
+
+        <section>
+          <FieldLabel>Notes / remarks</FieldLabel>
+          <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2} placeholder="Additional notes" className={textareaCls} />
+        </section>
       </div>
-    </div>
+    </SheetModal>
   );
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   RECORD DETAIL VIEW
-───────────────────────────────────────────────────────────────────────────── */
+/* ════════════════════════════════════════════════════════════════════════════
+   14. RECORD DETAIL VIEW
+   ════════════════════════════════════════════════════════════════════════════ */
+
 function RecordDetailView({ courseId, record, isAdmin, isHead, currentUserId, onBack, onDeleted }: {
   courseId: string; record: PatientRecord; isAdmin: boolean; isHead: boolean;
   currentUserId: string | null; onBack: () => void; onDeleted: (id: string) => void;
@@ -1380,11 +1412,7 @@ function RecordDetailView({ courseId, record, isAdmin, isHead, currentUserId, on
   const [deleteTarget,  setDeleteTarget]  = useState<PatientRecord | null>(null);
   const [editTarget,    setEditTarget]    = useState<PatientRecord | null>(null);
   const [medCertTarget, setMedCertTarget] = useState<PatientRecord | null>(null);
-  const [showStudentInfo, setShowStudentInfo] = useState(false);
-
-  const SLATE = "#0f172a";
-  const MUTED = "#64748b";
-  const RULE  = "#e2e8f0";
+  const [showInfoMobile, setShowInfoMobile] = useState(false);
 
   useEffect(() => {
     fetch(`/api/courses/${courseId}/patient-records/${record.id}`)
@@ -1399,168 +1427,117 @@ function RecordDetailView({ courseId, record, isAdmin, isHead, currentUserId, on
     return r.recordedByUser.id === currentUserId;
   };
 
-  const studentInfoBlock = (
-    <div className="divide-y divide-gray-100">
-      <div className="px-4 sm:px-5 py-4 flex items-start gap-3" style={{ borderBottom: `1px solid ${RULE}` }}>
-        <div>
-          <p style={{ fontSize: 14, fontWeight: 700, color: SLATE, lineHeight: 1.3 }}>{record.student.name}</p>
-          <p style={{ fontSize: 11, color: MUTED, marginTop: 2 }}>{record.student.studentNumber}</p>
-          {record.student.course && <p style={{ fontSize: 11, color: MUTED, marginTop: 2 }}>{record.student.course}</p>}
-        </div>
+  const s = record.student;
+  const studentFields = (
+    <>
+      <div className="px-4 sm:px-5 py-4 border-b" style={{ borderColor: C.lineSoft }}>
+        <p className="text-base font-bold" style={{ color: C.ink }}>{s.name}</p>
+        <p className="text-xs mt-0.5" style={{ color: C.muted }}>{s.studentNumber}</p>
+        {s.course && (
+          <span className="inline-block mt-1.5 text-[11px] font-semibold px-2 py-0.5 rounded-md" style={{ background: C.brandTint, color: C.brand }}>
+            {s.course}
+          </span>
+        )}
       </div>
-      {([
-        ["Age",     studentAge(record.student) ? `${studentAge(record.student)} yrs` : null],
-        ["Gender",  record.student.gender],
-        ["Address", record.student.address],
-        ["Email",   record.student.email],
-      ] as [string, string | null | undefined][]).map(([label, value]) =>
-        value ? (
-          <div key={label} className="px-4 sm:px-5 py-2.5">
-            <p style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: MUTED, marginBottom: 2 }}>{label}</p>
-            <p style={{ fontSize: 13, fontWeight: 500, color: SLATE, lineHeight: 1.5 }}>{value}</p>
-          </div>
-        ) : null
-      )}
-    </div>
+      <dl className="px-4 sm:px-5 py-4 grid grid-cols-1 gap-4">
+        <InfoField label="Age"     value={studentAge(s) ? `${studentAge(s)} yrs` : null} />
+        <InfoField label="Gender"  value={s.gender} />
+        <InfoField label="Address" value={s.address} />
+        <InfoField label="Email"   value={s.email} />
+      </dl>
+    </>
   );
 
   return (
-    <div className="flex flex-col h-full" style={{ fontFamily: FONT, background: "#f8fafc" }}>
-      <div style={{ background: "#fff", borderBottom: `1px solid ${RULE}` }}
-        className="flex items-center gap-3 px-4 sm:px-6 py-3 shrink-0">
-        <button onClick={onBack} className="flex items-center gap-1.5 text-sm font-semibold transition-colors shrink-0" style={{ color: MAROON }}>
-          <ArrowLeft size={14} /> <span className="hidden sm:inline">Back</span>
+    <div className="flex flex-col h-full" style={{ fontFamily: FONT, background: C.canvas }}>
+      {/* Top bar */}
+      <div className="flex items-center gap-3 px-4 sm:px-6 py-3 shrink-0 bg-white border-b" style={{ borderColor: C.line }}>
+        <button onClick={onBack} className="flex items-center gap-1.5 text-sm font-semibold shrink-0" style={{ color: C.brand }}>
+          <ArrowLeft size={15} /> Back
         </button>
-        <span style={{ width: 1, height: 16, background: RULE }} className="hidden sm:block" />
-        <p className="text-sm font-bold flex-1 truncate min-w-0" style={{ color: SLATE }}>{record.student.name}</p>
-        <button onClick={() => setShowStudentInfo(v => !v)}
-          className="sm:hidden text-[10px] font-bold px-2.5 py-1 rounded-full border border-gray-200 text-gray-500 shrink-0">
-          {showStudentInfo ? "Hide Info" : "Info"}
+        <span className="w-px h-4 shrink-0" style={{ background: C.line }} />
+        <p className="text-sm font-bold flex-1 truncate min-w-0" style={{ color: C.ink }}>{s.name}</p>
+        <button onClick={() => setShowInfoMobile(v => !v)} aria-expanded={showInfoMobile}
+          className="lg:hidden text-xs font-semibold px-3 h-8 rounded-lg border border-gray-200 text-gray-600 shrink-0">
+          {showInfoMobile ? "Hide info" : "Info"}
         </button>
-        <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full shrink-0" style={{ background: "#fef2f2", color: MAROON }}>
+        <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full shrink-0 tabular-nums" style={{ background: C.brandTint, color: C.brand }}>
           {loading ? "…" : `${visits.length} visit${visits.length !== 1 ? "s" : ""}`}
         </span>
       </div>
 
-      {showStudentInfo && (
-        <div className="sm:hidden bg-white border-b border-gray-200">
-          <div className="px-4 py-2 bg-gray-50 border-b border-gray-100">
-            <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.14em", textTransform: "uppercase", color: MAROON }}>Student Information</p>
-          </div>
-          {studentInfoBlock}
-        </div>
-      )}
+      {/* Body */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="w-full px-4 sm:px-6 py-4 sm:py-5 grid grid-cols-1 lg:grid-cols-[320px_minmax(0,1fr)] gap-4 items-start">
 
-      <div className="flex-1 overflow-hidden flex min-h-0">
-        <div className="hidden sm:flex w-64 shrink-0 border-r border-gray-200 flex-col overflow-y-auto bg-white">
-          <div className="px-5 py-3 border-b border-gray-100 bg-gray-50">
-            <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.14em", textTransform: "uppercase", color: MAROON }}>Student Information</p>
-          </div>
-          {studentInfoBlock}
-        </div>
-
-        <div className="flex-1 overflow-y-auto flex flex-col min-w-0">
-          <div className="px-4 sm:px-5 py-3 border-b border-gray-200 sticky top-0 z-10 flex items-center justify-between bg-gray-50">
-            <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.14em", textTransform: "uppercase", color: MAROON }}>Visit History</p>
-            {!loading && visits.length > 0 && (
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">
-                {visits.length} visit{visits.length !== 1 ? "s" : ""}
-              </span>
-            )}
+          <div className={`${showInfoMobile ? "block" : "hidden"} lg:block`}>
+            <Panel title="Student information">{studentFields}</Panel>
           </div>
 
-          {loading ? (
-            <div className="flex items-center justify-center py-20 gap-2 text-gray-300">
-              <RefreshCw size={15} className="animate-spin" /><span className="text-xs">Loading…</span>
-            </div>
-          ) : visits.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 gap-2 text-gray-300">
-              <FileText className="w-7 h-7" /><p className="text-xs">No visits recorded.</p>
-            </div>
-          ) : (
-            <div className="p-3 sm:p-4 space-y-3">
-              {visits.map(v => {
-                const medicinesStr = v.medicineUsages && v.medicineUsages.length > 0 ? formatMedicineUsages(v.medicineUsages) : v.medicine;
-                const badge = ACTION_BADGE[v.action] ?? { dot: "#9ca3af" };
-                return (
-                  <div key={v.id} style={{ background: "#fff", border: `1px solid ${RULE}`, borderRadius: 12, padding: "14px 16px" }}>
-                    <div className="flex items-start justify-between gap-2 mb-2.5">
-                      <div>
-                        <p style={{ fontSize: 13, fontWeight: 700, color: SLATE }}>{fmtDate(v.visitDate)}</p>
-                        <p style={{ fontSize: 11, color: MUTED }}>{fmtTime(v.visitDate)}</p>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <span className="text-[10px] font-semibold px-2 py-1 rounded-full inline-flex items-center gap-1.5 border"
-                          style={{ borderColor: RULE, color: "#374151", background: "#f9fafb" }}>
-                          <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: badge.dot }} />
-                          <span className="hidden sm:inline">{actionLabel(v.action)}</span>
-                          <span className="sm:hidden">{actionLabel(v.action).split(" ")[0]}</span>
-                        </span>
-                        {canDelete(v) && (
-                          <RowActionsMenu onMedCert={() => setMedCertTarget(v)} onEdit={() => setEditTarget(v)} onDelete={() => setDeleteTarget(v)} />
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-2.5">
-                      <div>
-                        <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.11em", textTransform: "uppercase", color: MAROON, marginBottom: 3 }}>Chief Complaint</p>
-                        <p style={{ fontSize: 13, color: SLATE, lineHeight: 1.6 }}>{v.complaint}</p>
-                      </div>
-                      {v.diagnosis && (
+          <Panel title="Visit history">
+            {loading ? (
+              <div className="flex items-center justify-center py-20 gap-2 text-gray-300">
+                <RefreshCw size={15} className="animate-spin" /><span className="text-xs">Loading…</span>
+              </div>
+            ) : visits.length === 0 ? (
+              <EmptyState title="No visits recorded" hint="Visits for this patient will show up here." />
+            ) : (
+              <ul className="divide-y" style={{ borderColor: C.lineSoft }}>
+                {visits.map(v => {
+                  const medicinesStr = v.medicineUsages && v.medicineUsages.length > 0 ? formatMedicineUsages(v.medicineUsages) : v.medicine;
+                  const hasVitals = v.temperature != null || v.bloodPressure || v.pulseRate != null || v.weight != null;
+                  return (
+                    <li key={v.id} className="px-4 sm:px-5 py-4" style={{ borderColor: C.lineSoft }}>
+                      <div className="flex items-start justify-between gap-2 mb-3">
                         <div>
-                          <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.11em", textTransform: "uppercase", color: MAROON, marginBottom: 3 }}>Diagnosis</p>
-                          <p style={{ fontSize: 13, color: SLATE, lineHeight: 1.6 }}>{v.diagnosis}</p>
+                          <p className="text-[13px] font-bold" style={{ color: C.ink }}>{fmtDate(v.visitDate)}</p>
+                          <p className="text-xs" style={{ color: C.muted }}>{fmtTime(v.visitDate)}</p>
                         </div>
-                      )}
-                    </div>
-
-                    {(v.temperature != null || v.bloodPressure || v.pulseRate != null || v.weight != null) && (
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-2.5 rounded-lg px-3 py-2.5" style={{ background: "#f8fafc", border: `1px solid ${RULE}` }}>
-                        {v.temperature != null && (
-                          <div><p style={{ fontSize: 9, fontWeight: 700, color: MUTED, textTransform: "uppercase", letterSpacing: "0.08em" }}>Temp</p>
-                            <p style={{ fontSize: 12, fontWeight: 600, color: SLATE }}>{v.temperature}°C</p></div>
-                        )}
-                        {v.bloodPressure && (
-                          <div><p style={{ fontSize: 9, fontWeight: 700, color: MUTED, textTransform: "uppercase", letterSpacing: "0.08em" }}>BP</p>
-                            <p style={{ fontSize: 12, fontWeight: 600, color: SLATE }}>{v.bloodPressure}</p></div>
-                        )}
-                        {v.pulseRate != null && (
-                          <div><p style={{ fontSize: 9, fontWeight: 700, color: MUTED, textTransform: "uppercase", letterSpacing: "0.08em" }}>Pulse</p>
-                            <p style={{ fontSize: 12, fontWeight: 600, color: SLATE }}>{v.pulseRate} bpm</p></div>
-                        )}
-                        {v.weight != null && (
-                          <div><p style={{ fontSize: 9, fontWeight: 700, color: MUTED, textTransform: "uppercase", letterSpacing: "0.08em" }}>Weight</p>
-                            <p style={{ fontSize: 12, fontWeight: 600, color: SLATE }}>{v.weight} kg</p></div>
-                        )}
-                      </div>
-                    )}
-
-                    {medicinesStr && (
-                      <div className="mb-2.5">
-                        <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.11em", textTransform: "uppercase", color: MAROON, marginBottom: 3 }}>Medicine Given</p>
-                        <p style={{ fontSize: 12, color: SLATE }}>{medicinesStr}</p>
-                      </div>
-                    )}
-
-                    <div className="flex items-center justify-between gap-3 pt-2" style={{ borderTop: `1px solid ${RULE}` }}>
-                      <div>
-                        <p style={{ fontSize: 9, fontWeight: 700, color: MUTED, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 3 }}>Recorded by</p>
-                        <p style={{ fontSize: 11, color: SLATE, fontWeight: 600 }}>{v.recordedByUser.name}</p>
-                      </div>
-                      {v.signatureUrl && (
-                        <div className="text-right">
-                          <p style={{ fontSize: 9, fontWeight: 700, color: MUTED, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 3 }}>Signature</p>
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={v.signatureUrl} alt="sig" style={{ height: 32, maxWidth: 80, objectFit: "contain", border: `1px solid ${RULE}`, borderRadius: 6, padding: 2, background: "#fff" }} />
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <ActionBadge action={v.action} />
+                          {canDelete(v) && (
+                            <RowActionsMenu
+                              label="Visit actions"
+                              onMedCert={() => setMedCertTarget(v)}
+                              onEdit={() => setEditTarget(v)}
+                              onDelete={() => setDeleteTarget(v)} />
+                          )}
                         </div>
+                      </div>
+
+                      <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 mb-3">
+                        <InfoField label="Chief complaint" value={v.complaint} />
+                        <InfoField label="Diagnosis"       value={v.diagnosis} />
+                        <InfoField label="Medicine given"  value={medicinesStr} />
+                        <InfoField label="Notes"           value={v.notes} />
+                      </dl>
+
+                      {hasVitals && (
+                        <dl className="grid grid-cols-2 sm:grid-cols-4 gap-3 rounded-lg px-3 py-2.5 bg-gray-50 border mb-3" style={{ borderColor: C.lineSoft }}>
+                          {v.temperature != null && <InfoField label="Temp"   value={`${v.temperature}°C`} />}
+                          {v.bloodPressure       && <InfoField label="BP"     value={v.bloodPressure} />}
+                          {v.pulseRate != null   && <InfoField label="Pulse"  value={`${v.pulseRate} bpm`} />}
+                          {v.weight != null      && <InfoField label="Weight" value={`${v.weight} kg`} />}
+                        </dl>
                       )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+
+                      <div className="flex items-center justify-between gap-3 pt-3 border-t" style={{ borderColor: C.lineSoft }}>
+                        <InfoField label="Recorded by" value={v.recordedByUser.name} />
+                        {v.signatureUrl && (
+                          <div className="text-right">
+                            <p className="text-[11px] font-medium mb-0.5" style={{ color: C.muted }}>Signature</p>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={v.signatureUrl} alt="Signature"
+                              className="h-8 max-w-[90px] object-contain border rounded-md p-0.5 bg-white" style={{ borderColor: C.line }} />
+                          </div>
+                        )}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </Panel>
         </div>
       </div>
 
@@ -1579,9 +1556,132 @@ function RecordDetailView({ courseId, record, isAdmin, isHead, currentUserId, on
   );
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   MAIN TAB
-───────────────────────────────────────────────────────────────────────────── */
+/* ════════════════════════════════════════════════════════════════════════════
+   15. EXPORT MODAL (top-level so its state survives parent re-renders)
+   ════════════════════════════════════════════════════════════════════════════ */
+
+function ExportModal({ courseId, initialFrom, initialTo, initialCourse, courseOptions, onClose }: {
+  courseId: string; initialFrom: string; initialTo: string; initialCourse: string;
+  courseOptions: string[]; onClose: () => void;
+}) {
+  const [exportDateFrom, setExportDateFrom] = useState(initialFrom);
+  const [exportDateTo,   setExportDateTo]   = useState(initialTo);
+  const [exportCourse,   setExportCourse]   = useState(initialCourse);
+  const [exporting,      setExporting]      = useState(false);
+  const [previewCount,   setPreviewCount]   = useState(0);
+  const [previewLoading, setPreviewLoading] = useState(true);
+  const [error,          setError]          = useState("");
+  const previewTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (previewTimeoutRef.current) clearTimeout(previewTimeoutRef.current);
+    previewTimeoutRef.current = setTimeout(async () => {
+      setPreviewLoading(true);
+      try {
+        const params = new URLSearchParams();
+        if (exportDateFrom) params.set("dateFrom", exportDateFrom);
+        if (exportDateTo)   params.set("dateTo",   exportDateTo);
+        const res  = await fetch(`/api/courses/${courseId}/patient-records?${params}`);
+        const data = await res.json();
+        const list: PatientRecord[] = data.records ?? [];
+        setPreviewCount(exportCourse ? list.filter(r => r.student.course === exportCourse).length : list.length);
+      } catch { setPreviewCount(0); }
+      finally { setPreviewLoading(false); }
+    }, 400);
+    return () => { if (previewTimeoutRef.current) clearTimeout(previewTimeoutRef.current); };
+  }, [courseId, exportDateFrom, exportDateTo, exportCourse]);
+
+  const handleExport = async () => {
+    setExporting(true); setError("");
+    try {
+      const params = new URLSearchParams({ format: "pdf" });
+      if (exportDateFrom) params.set("dateFrom", exportDateFrom);
+      if (exportDateTo)   params.set("dateTo",   exportDateTo);
+      if (exportCourse)   params.set("course",   exportCourse);
+      const res = await fetch(`/api/courses/${courseId}/patient-records/export?${params}`);
+      if (!res.ok) { setError("Export failed. Please try again."); return; }
+      const blob = await res.blob();
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement("a");
+      const suffix = exportDateFrom || exportDateTo ? `_${exportDateFrom || "start"}_to_${exportDateTo || "now"}` : "";
+      a.href = url; a.download = `general_log_sheet${suffix}.pdf`; a.click();
+      URL.revokeObjectURL(url); onClose();
+    } catch { setError("Export failed. Please try again."); }
+    finally { setExporting(false); }
+  };
+
+  const presets = getDatePresets(setExportDateFrom, setExportDateTo);
+
+  return (
+    <SheetModal
+      onClose={onClose} z={60}
+      icon={<Download size={16} />}
+      title="Export general log sheet" subtitle="Clinic"
+      footer={
+        <div className="px-5 py-4 flex gap-2">
+          <button onClick={onClose} disabled={exporting} className={`flex-1 ${btnGhost}`}>Cancel</button>
+          <button onClick={handleExport} disabled={exporting || previewLoading || previewCount === 0}
+            className="flex-1 h-10 rounded-xl text-xs font-bold text-white disabled:opacity-60 flex items-center justify-center gap-1.5"
+            style={{ background: C.brand }}>
+            {exporting ? <><RefreshCw size={13} className="animate-spin" /> Exporting…</> : <><Download size={13} /> Export PDF</>}
+          </button>
+        </div>
+      }
+    >
+      <div className="px-5 py-5 space-y-4">
+        <div>
+          <FieldLabel>Department / course</FieldLabel>
+          <SelectWrapper>
+            <select value={exportCourse} onChange={e => setExportCourse(e.target.value)} className={selectCls}>
+              <option value="">All departments / courses</option>
+              {courseOptions.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </SelectWrapper>
+        </div>
+
+        <div>
+          <FieldLabel>Date range</FieldLabel>
+          <div className="flex items-center gap-2">
+            <input type="date" value={exportDateFrom} max={exportDateTo || undefined} onChange={e => setExportDateFrom(e.target.value)} aria-label="From date"
+              className="flex-1 min-w-0 text-xs border border-gray-200 rounded-lg px-2.5 py-2 bg-white text-gray-700 outline-none focus:border-[#7b1113]" />
+            <span className="text-xs text-gray-400 shrink-0">to</span>
+            <input type="date" value={exportDateTo} min={exportDateFrom || undefined} onChange={e => setExportDateTo(e.target.value)} aria-label="To date"
+              className="flex-1 min-w-0 text-xs border border-gray-200 rounded-lg px-2.5 py-2 bg-white text-gray-700 outline-none focus:border-[#7b1113]" />
+          </div>
+          <div className="flex items-center gap-1.5 flex-wrap mt-2">
+            {presets.map(p => (
+              <button key={p.label} onClick={p.fn}
+                className="text-[11px] font-semibold px-2.5 py-1 rounded-full border border-gray-200 bg-white text-gray-600 hover:border-gray-400 transition-colors">
+                {p.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="rounded-xl border px-4 py-3 bg-gray-50" style={{ borderColor: C.line }}>
+          <p className="text-xs flex items-center gap-1.5" style={{ color: C.muted }}>
+            {previewLoading ? (
+              <><RefreshCw size={11} className="animate-spin" /> Checking records…</>
+            ) : (
+              <><span className="font-bold" style={{ color: C.ink }}>{previewCount}</span> record{previewCount !== 1 ? "s" : ""} will be exported</>
+            )}
+          </p>
+        </div>
+
+        {error && (
+          <div className="flex items-center gap-2 text-xs font-semibold" role="alert" style={{ color: C.danger }}>
+            <AlertTriangle size={13} /> {error}
+          </div>
+        )}
+      </div>
+    </SheetModal>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   16. MAIN TAB (default export)
+   ════════════════════════════════════════════════════════════════════════════ */
+
 export default function CoursePatientRecordsTab({ courseId, isAdmin, isHead, currentUserId }: Props) {
   const [records,         setRecords]         = useState<PatientRecord[]>([]);
   const [loading,         setLoading]         = useState(true);
@@ -1642,133 +1742,26 @@ export default function CoursePatientRecordsTab({ courseId, isAdmin, isHead, cur
     ? allCourses
     : [...new Set(records.map(r => r.student.course).filter(Boolean))] as string[];
 
-  const filteredRecords = courseFilter ? records.filter(r => r.student.course === courseFilter) : records;
+  const filteredRecords = useMemo(
+    () => courseFilter ? records.filter(r => r.student.course === courseFilter) : records,
+    [records, courseFilter],
+  );
   const totalPages = Math.max(1, Math.ceil(filteredRecords.length / PAGE_SIZE));
   const paginated  = filteredRecords.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-  const hasActiveFilter = !!courseFilter || dateFrom !== todayISO() || dateTo !== todayISO();
+  const defaultDates = dateFrom === todayISO() && dateTo === todayISO();
+  const activeFilterCount = [courseFilter, !defaultDates ? "d" : ""].filter(Boolean).length;
+  const hasActiveFilter   = activeFilterCount > 0;
+
+  useEffect(() => { if (page > totalPages) setPage(totalPages); }, [page, totalPages]);
 
   const today = new Date();
+  const datePresets = getDatePresets(setDateFrom, setDateTo);
 
-  /* ── Export Modal ── */
-  const ExportModal = () => {
-    const [exportDateFrom, setExportDateFrom] = useState(dateFrom);
-    const [exportDateTo,   setExportDateTo]   = useState(dateTo);
-    const [exportCourse,   setExportCourse]   = useState(courseFilter);
-    const [exporting,      setExporting]      = useState(false);
-    const [previewCount,   setPreviewCount]   = useState(0);
-    const [previewLoading, setPreviewLoading] = useState(true);
-    const previewTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const pageNumbers = Array.from({ length: Math.min(totalPages, 5) }, (_, i) =>
+    totalPages <= 5 || page <= 3 ? i + 1 : page >= totalPages - 2 ? totalPages - 4 + i : page - 2 + i,
+  );
 
-    useEffect(() => {
-      if (previewTimeoutRef.current) clearTimeout(previewTimeoutRef.current);
-      previewTimeoutRef.current = setTimeout(async () => {
-        setPreviewLoading(true);
-        try {
-          const params = new URLSearchParams();
-          if (exportDateFrom) params.set("dateFrom", exportDateFrom);
-          if (exportDateTo)   params.set("dateTo",   exportDateTo);
-          const res  = await fetch(`/api/courses/${courseId}/patient-records?${params}`);
-          const data = await res.json();
-          const list: PatientRecord[] = data.records ?? [];
-          setPreviewCount(exportCourse ? list.filter(r => r.student.course === exportCourse).length : list.length);
-        } catch { setPreviewCount(0); }
-        finally { setPreviewLoading(false); }
-      }, 400);
-      return () => { if (previewTimeoutRef.current) clearTimeout(previewTimeoutRef.current); };
-    }, [exportDateFrom, exportDateTo, exportCourse]);
-
-    const handleExport = async () => {
-      setExporting(true);
-      try {
-        const params = new URLSearchParams({ format: "pdf" });
-        if (exportDateFrom) params.set("dateFrom", exportDateFrom);
-        if (exportDateTo)   params.set("dateTo",   exportDateTo);
-        if (exportCourse)   params.set("course",   exportCourse);
-        const res  = await fetch(`/api/courses/${courseId}/patient-records/export?${params}`);
-        const blob = await res.blob();
-        const url  = URL.createObjectURL(blob);
-        const a    = document.createElement("a");
-        const suffix = exportDateFrom || exportDateTo ? `_${exportDateFrom || "start"}_to_${exportDateTo || "now"}` : "";
-        a.href = url; a.download = `general_log_sheet${suffix}.pdf`; a.click();
-        URL.revokeObjectURL(url); setShowExportModal(false);
-      } catch { alert("Export failed. Please try again."); }
-      finally { setExporting(false); }
-    };
-
-    return (
-      <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/30"
-        style={{ backdropFilter: "blur(4px)", fontFamily: FONT }} onClick={() => setShowExportModal(false)}>
-        <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl border border-gray-100 w-full sm:w-[420px] overflow-hidden"
-          onClick={e => e.stopPropagation()}>
-          <div className="sm:hidden flex justify-center pt-3 pb-1"><div className="w-10 h-1 rounded-full bg-gray-200" /></div>
-          <div className="flex items-center justify-between px-4 sm:px-5 py-3.5 sm:py-4 border-b border-gray-100" style={{ background: MAROON }}>
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center shrink-0"><Download size={15} className="text-white" /></div>
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-white/60">Clinic</p>
-                <p className="text-sm font-black text-white">Export General Log Sheet</p>
-              </div>
-            </div>
-            <button onClick={() => setShowExportModal(false)} className="w-8 h-8 flex items-center justify-center rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-colors"><X size={15} /></button>
-          </div>
-          <div className="px-4 sm:px-5 py-4 sm:py-5 space-y-4">
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Department / Course</p>
-              <div className="relative">
-                <select value={exportCourse} onChange={e => setExportCourse(e.target.value)}
-                  className="w-full text-xs border border-gray-200 rounded-lg pl-3 pr-7 py-2 bg-white text-gray-700 outline-none appearance-none focus:border-[#7b1113]">
-                  <option value="">All Departments / Courses</option>
-                  {courseOptions.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-                <ChevronDown size={11} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-              </div>
-            </div>
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Date Range</p>
-              <div className="flex items-center gap-2">
-                <input type="date" value={exportDateFrom} onChange={e => setExportDateFrom(e.target.value)}
-                  className="flex-1 text-xs border border-gray-200 rounded-lg px-3 py-2 bg-white text-gray-700 outline-none focus:border-[#7b1113]" />
-                <span className="text-xs text-gray-400 shrink-0">to</span>
-                <input type="date" value={exportDateTo} onChange={e => setExportDateTo(e.target.value)}
-                  className="flex-1 text-xs border border-gray-200 rounded-lg px-3 py-2 bg-white text-gray-700 outline-none focus:border-[#7b1113]" />
-              </div>
-              <div className="flex items-center gap-1.5 mt-2 flex-wrap">
-                {[
-                  { label: "Today",      fn: () => { const d = todayISO(); setExportDateFrom(d); setExportDateTo(d); } },
-                  { label: "Yesterday",  fn: () => { const d = new Date(); d.setDate(d.getDate()-1); const s = d.toISOString().split("T")[0]; setExportDateFrom(s); setExportDateTo(s); } },
-                  { label: "This Week",  fn: () => { const now = new Date(); const mon = new Date(now); mon.setDate(now.getDate() - now.getDay() + 1); setExportDateFrom(mon.toISOString().split("T")[0]); setExportDateTo(todayISO()); } },
-                  { label: "This Month", fn: () => { const now = new Date(); setExportDateFrom(`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-01`); setExportDateTo(todayISO()); } },
-                ].map(p => (
-                  <button key={p.label} onClick={p.fn}
-                    className="text-[10px] font-bold px-2 py-1 rounded-lg border border-gray-200 text-gray-500 hover:border-gray-400 hover:text-gray-700 transition-all">
-                    {p.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
-              <p className="text-xs text-gray-500 flex items-center gap-1.5">
-                {previewLoading ? (
-                  <><RefreshCw size={11} className="animate-spin" /> Checking records…</>
-                ) : (
-                  <><span className="font-black text-gray-800">{previewCount}</span> record{previewCount !== 1 ? "s" : ""} will be exported</>
-                )}
-              </p>
-            </div>
-          </div>
-          <div className="flex gap-2 px-4 sm:px-5 py-3.5 sm:py-4 border-t border-gray-100 bg-gray-50">
-            <button onClick={() => setShowExportModal(false)} disabled={exporting}
-              className="flex-1 h-11 sm:h-10 border border-gray-200 rounded-xl text-xs font-semibold text-gray-600 hover:bg-gray-100 disabled:opacity-50">Cancel</button>
-            <button onClick={handleExport} disabled={exporting || previewLoading || previewCount === 0}
-              className="flex-1 h-11 sm:h-10 rounded-xl text-xs font-black text-white disabled:opacity-60 flex items-center justify-center gap-1.5"
-              style={{ background: MAROON }}>
-              {exporting ? <><RefreshCw size={13} className="animate-spin" /> Exporting…</> : <><Download size={13} /> Export PDF</>}
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  };
+  const clearFilters = () => { setCourseFilter(""); setDateFrom(todayISO()); setDateTo(todayISO()); };
 
   if (detailRecord) {
     return (
@@ -1778,113 +1771,145 @@ export default function CoursePatientRecordsTab({ courseId, isAdmin, isHead, cur
     );
   }
 
-  return (
-    <div className="h-full bg-[#f8f8f7] flex flex-col overflow-hidden" style={{ fontFamily: FONT }}>
+  const stats = [
+    { label: "Total records",  value: filteredRecords.length },
+    { label: "Today’s visits", value: filteredRecords.filter(r => new Date(r.visitDate).toDateString() === today.toDateString()).length },
+    {
+      label: hasActiveFilter ? "Filtered" : "This month",
+      value: hasActiveFilter
+        ? filteredRecords.length
+        : records.filter(r => { const d = new Date(r.visitDate); return d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear(); }).length,
+    },
+  ];
 
-      {/* ── Header ── */}
-      <div className="bg-white border-b border-gray-200 px-4 sm:px-8 py-3.5 sm:py-5 flex items-center justify-between shrink-0 gap-2">
+  const emptyState = (
+    <EmptyState
+      title={hasActiveFilter || search ? "No matching records" : "No visits recorded yet today"}
+      hint={hasActiveFilter || search ? "Try a different search or clear the filters." : "Record the first visit to start today’s log."}
+      action={
+        hasActiveFilter || search ? (
+          <button onClick={() => { clearFilters(); setSearch(""); }} className="mt-2 text-xs font-bold hover:underline" style={{ color: C.brand }}>
+            Clear all filters
+          </button>
+        ) : canManage ? (
+          <button onClick={() => setShowAdd(true)}
+            className="mt-2 flex items-center gap-1.5 text-xs font-bold px-4 h-9 rounded-lg text-white" style={{ background: C.brand }}>
+            <Plus size={13} /> Record first visit
+          </button>
+        ) : undefined
+      }
+    />
+  );
+
+  return (
+    <div className="h-full flex flex-col overflow-hidden" style={{ fontFamily: FONT, background: C.canvas }}>
+
+      {/* Header */}
+      <div className="bg-white border-b px-4 sm:px-8 py-3.5 sm:py-5 flex items-center justify-between shrink-0 gap-3" style={{ borderColor: C.line }}>
         <div className="min-w-0">
-          <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.15em] mb-0.5 truncate" style={{ color: MAROON }}>Clinic</p>
-          <h1 className="text-base sm:text-xl font-bold text-gray-900 leading-tight">Patient Records</h1>
+          <h1 className="text-lg sm:text-xl font-bold leading-tight" style={{ color: C.ink }}>Patient records</h1>
+          <p className="text-xs mt-0.5 hidden sm:block" style={{ color: C.faint }}>Log and review clinic visits for students and walk-in patients.</p>
         </div>
-        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-          <button onClick={fetchRecords} title="Refresh"
-            className="w-8 h-8 sm:w-auto sm:h-auto sm:px-3 sm:py-1.5 flex items-center justify-center sm:gap-1.5 text-xs font-semibold text-gray-500 border border-gray-200 hover:border-gray-400 hover:text-gray-700 rounded-lg transition-all">
+        <div className="flex items-center gap-2 shrink-0">
+          <button onClick={fetchRecords} aria-label="Refresh"
+            className="flex items-center justify-center gap-1.5 text-xs font-semibold text-gray-500 border border-gray-200 hover:border-gray-400 hover:text-gray-700 w-9 h-9 sm:w-auto sm:px-3 rounded-lg transition-colors">
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
             <span className="hidden sm:inline">Refresh</span>
           </button>
           {canManage && (
-            <button onClick={() => setShowAdd(true)} title="New Visit"
-              className="w-8 h-8 sm:w-auto sm:h-auto sm:px-4 sm:py-1.5 flex items-center justify-center sm:gap-1.5 text-xs font-bold text-white rounded-lg transition-all"
-              style={{ background: MAROON }}>
+            <button onClick={() => setShowAdd(true)}
+              className="flex items-center gap-1.5 text-xs font-bold px-3.5 h-9 rounded-lg text-white transition-opacity hover:opacity-90"
+              style={{ background: C.brand }}>
               <Plus className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">New Visit</span>
+              <span>New<span className="hidden sm:inline"> visit</span></span>
             </button>
           )}
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-3 sm:px-8 py-3 sm:py-6 flex flex-col gap-3 sm:gap-5">
+      <div className="flex-1 overflow-y-auto px-4 sm:px-8 py-4 sm:py-6 flex flex-col gap-4 sm:gap-5 min-h-0">
 
-        {/* ── Stat cards ── */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-4">
-          {[
-            { label: "Total Records",   value: filteredRecords.length },
-            { label: "Today's Visits",  value: filteredRecords.filter(r => new Date(r.visitDate).toDateString() === today.toDateString()).length },
-            { label: hasActiveFilter ? "Filtered" : "This Month", value: hasActiveFilter ? filteredRecords.length : records.filter(r => { const d = new Date(r.visitDate); return d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear(); }).length },
-          ].map(s => (
-            <div key={s.label} className="bg-white border border-gray-200 rounded-xl px-3 sm:px-5 py-3 sm:py-4 flex items-center gap-3">
-              <div className="rounded-lg p-2 shrink-0" style={{ background: "#fef2f2", color: MAROON }}>
+        {/* Stats */}
+        <div className="grid grid-cols-3 gap-2.5 sm:gap-4">
+          {stats.map(st => (
+            <div key={st.label} className="bg-white border rounded-xl px-3 sm:px-5 py-3 sm:py-4 flex items-center gap-3" style={{ borderColor: C.line }}>
+              <div className="rounded-lg p-2 shrink-0 hidden sm:block" style={{ background: C.brandTint, color: C.brand }}>
                 <Stethoscope className="w-4 h-4" />
               </div>
               <div className="min-w-0">
-                <p className="text-xl sm:text-2xl font-black tabular-nums leading-none text-gray-900">{s.value}</p>
-                <p className="text-[10px] sm:text-xs font-semibold mt-0.5 text-gray-500 truncate">{s.label}</p>
+                <p className="text-xl sm:text-2xl font-bold tabular-nums leading-none" style={{ color: C.ink }}>{st.value}</p>
+                <p className="text-[11px] sm:text-xs font-medium mt-1 truncate" style={{ color: C.muted }}>{st.label}</p>
               </div>
             </div>
           ))}
         </div>
 
-        {/* ── Table card ── */}
-        <div className="flex-1 bg-white border border-gray-200 rounded-xl overflow-hidden flex flex-col shadow-sm min-h-0">
+        {/* Table card */}
+        <div className="flex-1 bg-white border rounded-xl overflow-hidden flex flex-col shadow-sm min-h-[420px]" style={{ borderColor: C.line }}>
 
           {/* Toolbar */}
-          <div className="px-3 sm:px-5 py-2.5 border-b border-gray-100 flex items-center gap-2 bg-white">
-            <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-2.5 py-1.5 flex-1 sm:max-w-64 bg-gray-50 focus-within:bg-white focus-within:border-gray-400 transition-all">
+          <div className="px-3 sm:px-5 py-2.5 sm:py-3 border-b flex items-center gap-2" style={{ borderColor: C.lineSoft }}>
+            <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-3 h-9 flex-1 bg-gray-50 focus-within:bg-white focus-within:border-gray-400 transition-colors min-w-0">
               <Search className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search name or ID…"
-                className="flex-1 text-xs text-gray-700 placeholder:text-gray-400 outline-none bg-transparent min-w-0" />
-              {search && <button onClick={() => setSearch("")} className="text-gray-300 hover:text-gray-500 shrink-0"><X className="w-3 h-3" /></button>}
+              <input
+                value={search} onChange={e => setSearch(e.target.value)}
+                placeholder="Search name or student no."
+                aria-label="Search patient records"
+                className="flex-1 text-xs text-gray-700 placeholder:text-gray-400 outline-none bg-transparent min-w-0"
+              />
+              {search && (
+                <button onClick={() => setSearch("")} aria-label="Clear search" className="text-gray-300 hover:text-gray-500 shrink-0">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
-
-            <button onClick={() => setShowFilters(f => !f)}
-              style={(showFilters || hasActiveFilter) ? { background: MAROON, color: "#fff", borderColor: MAROON } : {}}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-[11px] font-bold transition-all shrink-0 ${!(showFilters || hasActiveFilter) ? "border-gray-200 text-gray-500 hover:border-gray-400 hover:text-gray-700" : ""}`}>
-              <Filter className="w-3 h-3" />
+            <button
+              onClick={() => setShowFilters(f => !f)} aria-expanded={showFilters}
+              style={(showFilters || activeFilterCount) ? { background: C.brand, color: "#fff", borderColor: C.brand } : {}}
+              className={`flex items-center gap-1.5 px-3 h-9 rounded-lg border text-xs font-semibold transition-colors shrink-0 ${!(showFilters || activeFilterCount) ? "border-gray-200 text-gray-600 hover:border-gray-400" : ""}`}
+            >
+              <SlidersHorizontal className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Filters</span>
-              {hasActiveFilter && <span className="w-1.5 h-1.5 rounded-full bg-white/70 shrink-0" />}
+              {activeFilterCount > 0 && (
+                <span className="min-w-4 h-4 px-1 rounded-full bg-white/90 text-[10px] font-bold flex items-center justify-center" style={{ color: C.brand }}>
+                  {activeFilterCount}
+                </span>
+              )}
             </button>
-
-            <button onClick={() => setShowExportModal(true)} disabled={filteredRecords.length === 0} title="Export"
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-gray-200 text-[11px] font-bold text-gray-600 hover:border-gray-400 hover:text-gray-800 transition-all disabled:opacity-40 shrink-0 ml-auto">
-              <Download className="w-3 h-3" />
+            <button onClick={() => setShowExportModal(true)} disabled={filteredRecords.length === 0} aria-label="Export"
+              className="flex items-center gap-1.5 px-3 h-9 rounded-lg border border-gray-200 text-xs font-semibold text-gray-600 hover:border-gray-400 transition-colors disabled:opacity-40 shrink-0">
+              <Download className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Export</span>
             </button>
           </div>
 
           {/* Filter panel */}
           {showFilters && (
-            <div className="px-3 sm:px-5 py-3 border-b border-gray-100 bg-gray-50 space-y-3">
-              <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wide sm:shrink-0">Department / Course</span>
-                <div className="relative flex-1 sm:max-w-xs">
+            <div className="px-3 sm:px-5 py-4 border-b bg-gray-50 space-y-4" style={{ borderColor: C.lineSoft }}>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">Department / course</label>
+                <SelectWrapper>
                   <select value={courseFilter} onChange={e => setCourseFilter(e.target.value)}
-                    className="w-full text-xs border border-gray-200 rounded-lg pl-3 pr-7 py-1.5 bg-white text-gray-700 outline-none appearance-none">
-                    <option value="">All Departments / Courses</option>
+                    className="w-full text-xs border border-gray-200 rounded-lg pl-3 pr-8 py-2 bg-white text-gray-700 outline-none focus:border-[#7b1113] focus:ring-2 focus:ring-[#7b1113]/10 appearance-none">
+                    <option value="">All departments / courses</option>
                     {courseOptions.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
-                  <ChevronDown size={11} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-                </div>
+                </SelectWrapper>
               </div>
 
-              <div className="flex flex-col gap-2">
-                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wide">Date Range</span>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">Date of visit</label>
                 <div className="flex items-center gap-2">
-                  <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)}
-                    className="flex-1 text-xs border border-gray-200 rounded-lg px-3 py-1.5 bg-white text-gray-700 outline-none" />
+                  <input type="date" value={dateFrom} max={dateTo || undefined} onChange={e => setDateFrom(e.target.value)} aria-label="From date"
+                    className="flex-1 min-w-0 text-xs border border-gray-200 rounded-lg px-2.5 py-2 bg-white text-gray-700 outline-none focus:border-[#7b1113]" />
                   <span className="text-xs text-gray-400 shrink-0">to</span>
-                  <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)}
-                    className="flex-1 text-xs border border-gray-200 rounded-lg px-3 py-1.5 bg-white text-gray-700 outline-none" />
+                  <input type="date" value={dateTo} min={dateFrom || undefined} onChange={e => setDateTo(e.target.value)} aria-label="To date"
+                    className="flex-1 min-w-0 text-xs border border-gray-200 rounded-lg px-2.5 py-2 bg-white text-gray-700 outline-none focus:border-[#7b1113]" />
                 </div>
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  {[
-                    { label: "Today",      fn: () => { const d = todayISO(); setDateFrom(d); setDateTo(d); } },
-                    { label: "Yesterday",  fn: () => { const d = new Date(); d.setDate(d.getDate()-1); const s = d.toISOString().split("T")[0]; setDateFrom(s); setDateTo(s); } },
-                    { label: "This Week",  fn: () => { const now = new Date(); const mon = new Date(now); mon.setDate(now.getDate() - now.getDay() + 1); setDateFrom(mon.toISOString().split("T")[0]); setDateTo(todayISO()); } },
-                    { label: "This Month", fn: () => { const now = new Date(); setDateFrom(`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-01`); setDateTo(todayISO()); } },
-                  ].map(p => (
+                <div className="flex items-center gap-1.5 flex-wrap mt-2">
+                  {datePresets.map(p => (
                     <button key={p.label} onClick={p.fn}
-                      className="text-[10px] font-bold px-2 py-1 rounded-lg border border-gray-200 text-gray-500 hover:border-gray-400 hover:text-gray-700 transition-all">
+                      className="text-[11px] font-semibold px-2.5 py-1 rounded-full border border-gray-200 bg-white text-gray-600 hover:border-gray-400 transition-colors">
                       {p.label}
                     </button>
                   ))}
@@ -1892,9 +1917,8 @@ export default function CoursePatientRecordsTab({ courseId, isAdmin, isHead, cur
               </div>
 
               {hasActiveFilter && (
-                <button onClick={() => { setCourseFilter(""); setDateFrom(todayISO()); setDateTo(todayISO()); }}
-                  className="flex items-center gap-1 text-[11px] font-bold hover:underline" style={{ color: MAROON }}>
-                  <X size={11} /> Clear all filters
+                <button onClick={clearFilters} className="flex items-center gap-1 text-xs font-bold hover:underline" style={{ color: C.brand }}>
+                  <X size={12} /> Clear filters
                 </button>
               )}
             </div>
@@ -1902,144 +1926,127 @@ export default function CoursePatientRecordsTab({ courseId, isAdmin, isHead, cur
 
           {/* Content */}
           {loading ? (
-            <div className="animate-pulse divide-y divide-gray-100">
+            <div className="animate-pulse divide-y divide-gray-100" aria-busy="true">
               {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="flex items-center gap-3 px-4 sm:px-5 py-3.5">
-                  <div className="h-3 w-16 bg-gray-100 rounded shrink-0" />
+                <div key={i} className="flex items-center gap-4 px-5 py-4">
                   <div className="h-3 w-24 bg-gray-100 rounded" />
+                  <div className="h-3 w-32 bg-gray-100 rounded hidden sm:block" />
                   <div className="h-3 flex-1 bg-gray-100 rounded" />
-                  <div className="h-3 w-16 bg-gray-100 rounded shrink-0 hidden sm:block" />
+                  <div className="h-5 w-16 bg-gray-100 rounded-full" />
                 </div>
               ))}
             </div>
           ) : error ? (
-            <div className="flex-1 flex items-center justify-center text-xs font-medium text-red-500 py-20">{error}</div>
+            <div className="flex-1 flex flex-col items-center justify-center gap-3 py-16 px-6 text-center">
+              <AlertTriangle className="w-6 h-6 text-red-400" />
+              <p className="text-sm font-semibold text-red-600">{error}</p>
+              <button onClick={fetchRecords}
+                className="text-xs font-bold px-4 h-8 rounded-lg border border-red-200 text-red-600 hover:bg-red-50">
+                Try again
+              </button>
+            </div>
+          ) : filteredRecords.length === 0 ? (
+            <div className="flex-1">{emptyState}</div>
           ) : (
             <div className="flex-1 overflow-y-auto">
 
-              {/* Desktop Table */}
-              <div className="hidden sm:block overflow-x-auto">
-                <table className="w-full border-collapse">
-                  <thead>
-                    <tr style={{ background: "#fafafa" }}>
-                      {["Date / Time", "No.", "Name", "Sex", "Age", "Address", "Course/Yr. & Sec.", "Chief Complaint", "Signature", ""].map((h, i) => (
-                        <th key={i} className="text-left px-3 py-3 whitespace-nowrap" style={{ border: "1px solid #d1d5db" }}>
-                          <span className="flex items-center gap-1 text-xs font-bold uppercase tracking-wide text-gray-700">
-                            {h} {h !== "" && <ArrowUpDown className="w-3 h-3" />}
-                          </span>
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredRecords.length === 0 && (
-                      <tr>
-                        <td colSpan={10} className="px-3 py-16">
-                          <div className="flex flex-col items-center justify-center gap-3">
-                            <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: "#fef2f2" }}>
-                              <Stethoscope className="w-6 h-6" style={{ color: MAROON }} />
-                            </div>
-                            <p className="text-sm text-gray-400 font-medium">
-                              {hasActiveFilter || search ? "No records match your filters." : "No visits recorded yet today."}
-                            </p>
-                            {canManage && (
-                              <button onClick={() => setShowAdd(true)} className="text-xs font-bold hover:underline" style={{ color: MAROON }}>
-                                + Record first visit
-                              </button>
-                            )}
-                          </div>
+              {/* Desktop table */}
+              <table className="w-full border-collapse hidden sm:table">
+                <thead className="sticky top-0 z-10">
+                  <tr style={{ background: "#fafafa" }}>
+                    {["No.", "Date / time", "Patient", "Sex", "Age", "Course / yr. & sec.", "Chief complaint", "Action", "Signature", ""].map((h, i) => (
+                      <th key={i} scope="col"
+                        className="text-left px-4 py-2.5 whitespace-nowrap border-b"
+                        style={{ fontSize: 11, fontWeight: 800, color: C.body, borderColor: C.line }}>
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginated.map((r, i) => {
+                    const canDel = !isAdmin && (isHead || r.recordedByUser.id === currentUserId);
+                    const cell = "px-4 py-3.5 border-b text-xs";
+                    return (
+                      <tr key={r.id} onClick={() => setDetailRecord(r)} tabIndex={0}
+                        onKeyDown={e => { if (e.key === "Enter") setDetailRecord(r); }}
+                        className="group cursor-pointer hover:bg-gray-50 focus:bg-gray-50 outline-none transition-colors">
+                        <td className={`${cell} tabular-nums`} style={{ color: C.faint, borderColor: C.lineSoft }}>
+                          {(page - 1) * PAGE_SIZE + i + 1}
+                        </td>
+                        <td className={`${cell} whitespace-nowrap`} style={{ color: C.body, borderColor: C.lineSoft }}>
+                          <p className="font-medium">{fmtDate(r.visitDate)}</p>
+                          <p style={{ color: C.muted }}>{fmtTime(r.visitDate)}</p>
+                        </td>
+                        <td className="px-4 py-3.5 border-b min-w-[170px]" style={{ borderColor: C.lineSoft }}>
+                          <p className="text-[13px] font-semibold" style={{ color: C.ink }}>{r.student.name}</p>
+                          <p className="text-[11px] font-mono" style={{ color: C.muted }}>{r.student.studentNumber}</p>
+                        </td>
+                        <td className={cell} style={{ color: C.body, borderColor: C.lineSoft }}>{r.student.gender ?? "—"}</td>
+                        <td className={`${cell} tabular-nums`} style={{ color: C.body, borderColor: C.lineSoft }}>{studentAge(r.student) ?? "—"}</td>
+                        <td className={`${cell} max-w-[200px]`} style={{ color: C.body, borderColor: C.lineSoft }}>
+                          <span className="line-clamp-1">{r.student.course ?? "—"}</span>
+                        </td>
+                        <td className={`${cell} max-w-[220px]`} style={{ color: C.body, borderColor: C.lineSoft }}>
+                          <span className="line-clamp-1">{r.complaint}</span>
+                        </td>
+                        <td className="px-4 py-3.5 border-b" style={{ borderColor: C.lineSoft }}>
+                          <ActionBadge action={r.action} short />
+                        </td>
+                        <td className="px-4 py-3.5 border-b min-w-[100px]" style={{ borderColor: C.lineSoft }}>
+                          {r.signatureUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={r.signatureUrl} alt="Signature" className="h-7 max-w-[90px] object-contain" />
+                          ) : (
+                            <span className="text-[11px]" style={{ color: C.faint }}>Unsigned</span>
+                          )}
+                        </td>
+                        <td className="px-3 py-3.5 w-12 border-b" style={{ borderColor: C.lineSoft }} onClick={e => e.stopPropagation()}>
+                          {canDel ? (
+                            <RowActionsMenu label={`Actions for ${r.student.name}`}
+                              onEdit={() => setEditTarget(r)} onDelete={() => setDeleteTarget(r)} />
+                          ) : (
+                            <ChevronRight size={16} className="text-gray-300 group-hover:text-gray-600 transition-colors" />
+                          )}
                         </td>
                       </tr>
-                    )}
-                    {paginated.map((r, i) => {
-                      const canDel = !isAdmin && (isHead || r.recordedByUser.id === currentUserId);
-                      return (
-                        <tr key={r.id} className="hover:bg-gray-50/70 transition-colors cursor-pointer" onClick={() => setDetailRecord(r)}>
-                          <td className="px-3 py-3 whitespace-nowrap text-xs text-gray-800" style={{ border: "1px solid #d1d5db" }}>
-                            <p>{fmtDate(r.visitDate)}</p><p className="text-gray-500">{fmtTime(r.visitDate)}</p>
-                          </td>
-                          <td className="px-3 py-3 text-xs text-gray-800 tabular-nums text-center" style={{ border: "1px solid #d1d5db" }}>
-                            {(page - 1) * PAGE_SIZE + i + 1}
-                          </td>
-                          <td className="px-3 py-3 text-xs text-gray-800 whitespace-nowrap" style={{ border: "1px solid #d1d5db" }}>{r.student.name}</td>
-                          <td className="px-3 py-3 text-xs text-gray-800 text-center" style={{ border: "1px solid #d1d5db" }}>{r.student.gender ?? "—"}</td>
-                          <td className="px-3 py-3 text-xs text-gray-800 tabular-nums text-center" style={{ border: "1px solid #d1d5db" }}>{r.student.age ?? "—"}</td>
-                          <td className="px-3 py-3 text-xs text-gray-800 max-w-[160px]" style={{ border: "1px solid #d1d5db" }}><span className="line-clamp-1">{r.student.address ?? "—"}</span></td>
-                          <td className="px-3 py-3 text-xs text-gray-800" style={{ border: "1px solid #d1d5db" }}>{r.student.course ?? "—"}</td>
-                          <td className="px-3 py-3 text-xs text-gray-800 max-w-[220px]" style={{ border: "1px solid #d1d5db" }}><span className="line-clamp-1">{r.complaint}</span></td>
-                          <td className="px-3 py-3 text-xs text-gray-800" style={{ border: "1px solid #d1d5db", minWidth: "100px" }}>
-                            {r.signatureUrl ? (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img src={r.signatureUrl} alt="signature" className="h-7 max-w-[90px] object-contain" />
-                            ) : ""}
-                          </td>
-                          <td className="px-2 py-3 w-10" style={{ border: "1px solid #d1d5db" }}>
-                            {canDel && <RowActionsMenu onEdit={() => setEditTarget(r)} onDelete={() => setDeleteTarget(r)} />}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+                    );
+                  })}
+                </tbody>
+              </table>
 
-              {/* Mobile Cards */}
-              <div className="sm:hidden px-3 py-3 space-y-2">
-                {filteredRecords.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-14 gap-3">
-                    <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: "#fef2f2" }}>
-                      <Stethoscope className="w-6 h-6" style={{ color: MAROON }} />
-                    </div>
-                    <p className="text-sm text-gray-400 font-medium text-center">
-                      {hasActiveFilter || search ? "No records match your filters." : "No visits recorded yet today."}
-                    </p>
-                    {canManage && (
-                      <button onClick={() => setShowAdd(true)} className="text-xs font-bold hover:underline" style={{ color: MAROON }}>
-                        + Record first visit
-                      </button>
-                    )}
-                  </div>
-                ) : paginated.map(r => {
+              {/* Mobile list */}
+              <div className="sm:hidden divide-y divide-gray-100">
+                {paginated.map(r => {
                   const canDel = !isAdmin && (isHead || r.recordedByUser.id === currentUserId);
-                  const badge  = ACTION_BADGE[r.action] ?? { dot: "#9ca3af" };
                   return (
-                    <div key={r.id}
-                      className="bg-white rounded-xl border border-gray-200 p-3.5 active:bg-gray-50 transition-colors"
-                      onClick={() => setDetailRecord(r)}>
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <div className="min-w-0">
-                          <p className="text-sm font-bold text-gray-900 leading-snug truncate">{r.student.name}</p>
-                          <p className="text-[10px] font-mono font-semibold text-gray-400 mt-0.5">{r.student.studentNumber}</p>
+                    <div key={r.id} className="flex items-center gap-3 px-4 py-3.5">
+                      <button onClick={() => setDetailRecord(r)} className="flex-1 min-w-0 text-left active:opacity-70">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-sm font-bold truncate" style={{ color: C.ink }}>{r.student.name}</p>
+                          <ActionBadge action={r.action} short />
                         </div>
-                        <div className="flex items-center gap-1.5 shrink-0">
-                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full inline-flex items-center gap-1 border border-gray-200 text-gray-600 bg-gray-50 whitespace-nowrap">
-                            <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: badge.dot }} />
-                            {actionLabel(r.action).split(" ")[0]}
+                        <p className="text-xs truncate mt-0.5" style={{ color: C.muted }}>
+                          {r.student.studentNumber}
+                          {r.student.course ? ` · ${courseAbbrev(r.student.course)}` : ""}
+                          {r.student.gender ? ` · ${r.student.gender}` : ""}
+                          {studentAge(r.student) ? ` · ${studentAge(r.student)} yrs` : ""}
+                        </p>
+                        <p className="text-xs mt-1 line-clamp-1" style={{ color: C.body }}>{r.complaint}</p>
+                        <div className="flex items-center justify-between mt-1">
+                          <p className="text-[11px]" style={{ color: C.faint }}>{fmtDate(r.visitDate)} · {fmtTime(r.visitDate)}</p>
+                          <span className="flex items-center gap-1 text-[11px] font-semibold" style={{ color: r.signatureUrl ? "#065f46" : C.faint }}>
+                            {r.signatureUrl ? <Check size={11} /> : <PenLine size={11} />}
+                            {r.signatureUrl ? "Signed" : "Unsigned"}
                           </span>
-                          {canDel && (
-                            <div onClick={e => e.stopPropagation()}>
-                              <RowActionsMenu onEdit={() => setEditTarget(r)} onDelete={() => setDeleteTarget(r)} />
-                            </div>
-                          )}
                         </div>
-                      </div>
-
-                      <div className="flex items-center gap-2 flex-wrap mb-2">
-                        {r.student.course && (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider" style={{ background: "#fef2f2", color: MAROON }}>
-                            {courseAbbrev(r.student.course) ?? r.student.course}
-                          </span>
-                        )}
-                        {r.student.gender && <span className="text-[10px] text-gray-400 font-medium">{r.student.gender}</span>}
-                        {r.student.age && <span className="text-[10px] text-gray-400 font-medium">{r.student.age} yrs</span>}
-                        <span className={`flex items-center gap-0.5 text-[10px] font-bold ml-auto ${r.signatureUrl ? "text-green-500" : "text-gray-300"}`}>
-                          {r.signatureUrl ? <Check size={9} /> : <PenLine size={9} />}
-                          {r.signatureUrl ? "Signed" : "Unsigned"}
-                        </span>
-                      </div>
-
-                      <p className="text-xs text-gray-700 leading-snug line-clamp-1 mb-1">{r.complaint}</p>
-                      <p className="text-[11px] text-gray-400">{fmtDate(r.visitDate)} · {fmtTime(r.visitDate)}</p>
+                      </button>
+                      {canDel ? (
+                        <RowActionsMenu label={`Actions for ${r.student.name}`}
+                          onEdit={() => setEditTarget(r)} onDelete={() => setDeleteTarget(r)} />
+                      ) : (
+                        <ChevronRight size={16} className="text-gray-300 shrink-0" />
+                      )}
                     </div>
                   );
                 })}
@@ -2048,29 +2055,31 @@ export default function CoursePatientRecordsTab({ courseId, isAdmin, isHead, cur
           )}
 
           {/* Pagination */}
-          {!loading && filteredRecords.length > PAGE_SIZE && (
-            <div className="flex items-center justify-between px-3 sm:px-5 py-2.5 sm:py-3 border-t border-gray-100 bg-white shrink-0 flex-wrap gap-2">
-              <span className="text-[11px] text-gray-400 font-medium tabular-nums">
-                {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filteredRecords.length)} of {filteredRecords.length}
+          {!loading && !error && filteredRecords.length > PAGE_SIZE && (
+            <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-t bg-white shrink-0 gap-2" style={{ borderColor: C.line }}>
+              <span className="text-xs tabular-nums truncate" style={{ color: C.muted }}>
+                Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filteredRecords.length)} of {filteredRecords.length}
               </span>
-              <div className="flex items-center gap-1">
-                <button type="button" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
-                  className="w-7 h-7 flex items-center justify-center rounded-lg border border-gray-200 text-gray-400 hover:border-gray-400 hover:text-gray-700 disabled:opacity-25 transition-all">
-                  <ChevronLeft className="w-3 h-3" />
+              <div className="flex items-center gap-1 shrink-0">
+                <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} aria-label="Previous page"
+                  className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:border-gray-400 disabled:opacity-30">
+                  <ChevronLeft className="w-3.5 h-3.5" />
                 </button>
-                {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                  const n = totalPages <= 5 ? i + 1 : page <= 3 ? i + 1 : page >= totalPages - 2 ? totalPages - 4 + i : page - 2 + i;
-                  return (
-                    <button key={n} type="button" onClick={() => setPage(n)}
-                      style={page === n ? { background: MAROON, color: "#fff", borderColor: MAROON } : {}}
-                      className={`w-7 h-7 flex items-center justify-center rounded-lg text-[11px] font-semibold transition-all border ${page !== n ? "border-gray-200 text-gray-500 hover:border-gray-400" : ""}`}>
+                <div className="hidden sm:flex items-center gap-1">
+                  {pageNumbers.map(n => (
+                    <button key={n} onClick={() => setPage(n)} aria-current={page === n ? "page" : undefined}
+                      style={page === n ? { background: C.brand, color: "#fff", borderColor: C.brand } : {}}
+                      className={`w-8 h-8 flex items-center justify-center rounded-lg text-xs font-semibold border transition-colors ${page !== n ? "border-gray-200 text-gray-600 hover:border-gray-400" : ""}`}>
                       {n}
                     </button>
-                  );
-                })}
-                <button type="button" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
-                  className="w-7 h-7 flex items-center justify-center rounded-lg border border-gray-200 text-gray-400 hover:border-gray-400 hover:text-gray-700 disabled:opacity-25 transition-all">
-                  <ChevronRight className="w-3 h-3" />
+                  ))}
+                </div>
+                <span className="sm:hidden text-xs font-semibold px-2 tabular-nums" style={{ color: C.muted }}>
+                  {page} / {totalPages}
+                </span>
+                <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} aria-label="Next page"
+                  className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:border-gray-400 disabled:opacity-30">
+                  <ChevronRight className="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>
@@ -2081,7 +2090,7 @@ export default function CoursePatientRecordsTab({ courseId, isAdmin, isHead, cur
       {/* Modals */}
       {showAdd && (
         <AddVisitModal courseId={courseId} courseOptions={courseOptions} onClose={() => setShowAdd(false)}
-          onSaved={rec => { setRecords(prev => [rec, ...prev]); setShowAdd(false); }} />
+          onSaved={rec => { setRecords(prev => [rec, ...prev]); }} />
       )}
       {deleteTarget && (
         <DeleteModal record={deleteTarget} courseId={courseId} onClose={() => setDeleteTarget(null)}
@@ -2091,7 +2100,10 @@ export default function CoursePatientRecordsTab({ courseId, isAdmin, isHead, cur
         <EditVisitModal courseId={courseId} record={editTarget} onClose={() => setEditTarget(null)}
           onSaved={updated => { setRecords(prev => prev.map(r => r.id === updated.id ? updated : r)); setEditTarget(null); }} />
       )}
-      {showExportModal && <ExportModal />}
+      {showExportModal && (
+        <ExportModal courseId={courseId} initialFrom={dateFrom} initialTo={dateTo} initialCourse={courseFilter}
+          courseOptions={courseOptions} onClose={() => setShowExportModal(false)} />
+      )}
     </div>
   );
 }

@@ -25,7 +25,13 @@ type SubmissionEntry = {
   type?: string;
   allowedFileTypes?: string[];
   maxFiles?: number | null;
+  maxFileSizeValue?: number | null;
+  maxFileSizeUnit?: string | null;
 };
+
+function isFileLikeType(type?: string): boolean {
+  return type === "File Upload" || type === "Media Recording";
+}
 
 function normalizeFileTypes(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
@@ -64,10 +70,9 @@ function parseSubmissionEntries(opts: string[]): SubmissionEntry[] | undefined {
         required: entry.required ?? false,
         type: entry.type ?? "File Upload",
         allowedFileTypes: normalizeFileTypes(entry.allowedFileTypes),
-        maxFiles:
-          entry.type === "File Upload"
-            ? entry.maxFiles ?? 1
-            : null,
+        maxFiles: isFileLikeType(entry.type) ? entry.maxFiles ?? 1 : null,
+        maxFileSizeValue: isFileLikeType(entry.type) ? entry.maxFileSizeValue ?? 1 : null,
+        maxFileSizeUnit: isFileLikeType(entry.type) ? entry.maxFileSizeUnit ?? "MB" : null,
       });
     }
   }
@@ -80,16 +85,17 @@ function normalizeSubmissionEntries(entries?: SubmissionEntry[]): string[] {
 
   return entries.map((entry, index) => {
     const type = entry.type ?? "File Upload";
-    const allowedFileTypes =
-      type === "File Upload" ? normalizeFileTypes(entry.allowedFileTypes) : [];
+    const fileLike = isFileLikeType(type);
 
     return JSON.stringify({
       id: entry.id,
       label: entry.label?.trim() || `Submission ${index + 1}`,
       required: entry.required ?? false,
       type,
-      allowedFileTypes,
-      maxFiles: type === "File Upload" ? entry.maxFiles ?? 1 : null,
+      allowedFileTypes: fileLike ? normalizeFileTypes(entry.allowedFileTypes) : [],
+      maxFiles: fileLike ? entry.maxFiles ?? 1 : null,
+      maxFileSizeValue: fileLike ? entry.maxFileSizeValue ?? 1 : null,
+      maxFileSizeUnit: fileLike ? entry.maxFileSizeUnit ?? "MB" : null,
     });
   });
 }

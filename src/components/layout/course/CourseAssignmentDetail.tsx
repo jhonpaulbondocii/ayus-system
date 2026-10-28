@@ -145,7 +145,89 @@ function getGradeColor(points: number, max: number) {
   return "#dc2626";
 }
 function isImage(url: string) { return /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(url.split("?")[0]); }
-function isPdf(url: string)   { return /\.pdf$/i.test(url.split("?")[0]); }
+function isPdf(url: string) { return /\.pdf$/i.test(url.split("?")[0]); }
+
+function fileNameFromUrl(url: string): string {
+  const last = url.split(/[?#]/)[0].split("/").pop() ?? "";
+  try { return decodeURIComponent(last); } catch { return last; }
+}
+function safeHref(url: string): string {
+  return /^https?:\/\//i.test(url.trim()) ? url.trim() : "#";
+}
+function escHtml(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+function resolveStoredUrl(url: string): string {
+  if (/^https?:\/\//i.test(url) || url.startsWith("/")) return url;
+  return `/uploads/submissions/${url}`;
+}
+
+interface StoredEntry {
+  entryId?: string; label?: string; type?: string;
+  fileUrl?: string | null; fileName?: string | null;
+  textEntry?: string | null; websiteUrl?: string | null; required?: boolean;
+}
+
+// Ang fileUrl ng submission ay JSON string: {"version":2,"entries":[...]}
+function parseEntriesJson(raw: string | null | undefined): StoredEntry[] | null {
+  if (!raw) return null;
+  const t = raw.trim();
+  if (!t.startsWith("{")) return null;
+  try {
+    const p = JSON.parse(t) as { entries?: StoredEntry[] };
+    if (Array.isArray(p.entries)) return p.entries;
+  } catch { /* hindi JSON */ }
+  return null;
+}
+
+// Kunin ang file: subukan muna ang direct URL, tapos ang /api/proxy-file
+async function fetchFileBlob(url: string, name: string): Promise<Blob> {
+  const attempts = [url, `/api/proxy-file?url=${encodeURIComponent(url)}&name=${encodeURIComponent(name)}`];
+  for (const u of attempts) {
+    try {
+      const r = await fetch(u);
+      if (!r.ok) continue;
+      const ct = r.headers.get("content-type") ?? "";
+      if (ct.includes("text/html") && !/\.html?$/i.test(name)) continue;
+      return await r.blob();
+    } catch { /* subukan ang susunod */ }
+  }
+  throw new Error("fetch failed");
+}
+
+// Gawing tamang files / text / link ang JSON na submission
+function normalizeSubmission(s: Submission): Submission {
+  let entries = parseEntriesJson(s.fileUrl);
+  if (!entries && s.allFileUrls) {
+    for (const f of s.allFileUrls) {
+      entries = parseEntriesJson(f.url);
+      if (entries) break;
+    }
+  }
+  if (!entries) return s;
+
+  const files = entries
+    .filter(e => e.fileUrl && e.fileUrl.trim())
+    .map(e => {
+      const url = resolveStoredUrl(e.fileUrl!.trim());
+      return { label: e.fileName?.trim() || fileNameFromUrl(url) || "File", url };
+    });
+  const texts = entries.filter(e => e.textEntry && e.textEntry.trim());
+  const links = entries.filter(e => e.websiteUrl && /^https?:\/\//i.test(e.websiteUrl.trim()));
+  const textHtml =
+    texts.length === 0 ? null
+    : texts.length === 1 ? texts[0].textEntry!
+    : texts.map(e => `<p><strong>${escHtml(e.label || "Text Entry")}</strong></p>${e.textEntry}`).join("<hr/>");
+
+  return {
+    ...s,
+    allFileUrls: files,
+    fileUrl: files[0]?.url ?? null,
+    fileName: files[0]?.label ?? null,
+    textEntry: textHtml ?? s.textEntry ?? null,
+    onlineUrl: links[0]?.websiteUrl?.trim() ?? s.onlineUrl ?? null,
+  };
+}
 function computeStats(submissions: Submission[], dueDate: string | null) {
   const submitted = submissions.filter(s => s.submittedAt != null);
   const missing   = submissions.filter(s => !s.submittedAt);
@@ -329,63 +411,112 @@ function GradeModal({ sub, assignment, onClose, onSave }: {
 function FilePreviewModal({ sub, onClose }: { sub: Submission; onClose: () => void }) {
   const files = useMemo(() => {
     if (sub.allFileUrls && sub.allFileUrls.length > 0) return sub.allFileUrls;
-    if (sub.fileUrl) return [{ label: sub.fileName ?? "File", url: sub.fileUrl }];
+    if (sub.fileUrl) return [{ label: sub.fileName ?? fileNameFromUrl(sub.fileUrl), url: sub.fileUrl }];
     return [] as { label: string; url: string }[];
   }, [sub]);
-  const [selectedUrl, setSelectedUrl] = useState<string | null>(null);
-  const resolved = selectedUrl && files.some(f => f.url === selectedUrl) ? selectedUrl : files[0]?.url ?? null;
-  const selFile  = files.find(f => f.url === resolved) ?? files[0] ?? null;
-  const url      = selFile?.url ?? sub.onlineUrl ?? null;
-  if ((!url && !sub.textEntry) || files.length === 0) return null;
-  const fileName = selFile?.label ?? sub.fileName ?? "File";
-  const isImg    = url ? isImage(url) : false;
+
+  const tabs = useMemo(() => {
+    const list: { key: string; label: string; kind: "file" | "text" | "link"; url: string }[] =
+      files.map(f => ({ key: f.url, label: f.label, kind: "file" as const, url: f.url }));
+    if (sub.textEntry) list.push({ key: "__text", label: "Text Entry", kind: "text", url: "" });
+    if (sub.onlineUrl) list.push({ key: "__link", label: "Website URL", kind: "link", url: sub.onlineUrl });
+    return list;
+  }, [files, sub.textEntry, sub.onlineUrl]);
+
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const active = tabs.find(t => t.key === selectedKey) ?? tabs.find(t => t.key === sub.fileUrl) ?? tabs[0];
+  if (!active) return null;
+
+  const isFile = active.kind === "file";
+  const name   = active.label || "File";
+  const url    = active.url;
+  const pdf    = isFile && (isPdf(url) || isPdf(name));
+  const img    = isFile && (isImage(url) || isImage(name));
+  const proxied = (u: string, n: string) => `/api/proxy-file?url=${encodeURIComponent(u)}&name=${encodeURIComponent(n)}`;
+
+  const handleDownload = async () => {
+    if (!isFile) return;
+    setBusy(true);
+    try {
+      const blob = await fetchFileBlob(url, name);
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = name;
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(a.href);
+    } catch {
+      window.open(url, "_blank", "noopener,noreferrer");
+    }
+    setBusy(false);
+  };
+
+  const openHref = isFile ? (pdf ? proxied(url, name) : url) : safeHref(url);
+
   return (
     <div style={{ position:"fixed",inset:0,zIndex:300,display:"flex",alignItems:"center",justifyContent:"center",background:"rgba(0,0,0,.6)",padding:16 }} onClick={onClose}>
       <div style={{ background:"#fff",borderRadius:16,width:"100%",maxWidth:"95vw",height:"90dvh",display:"flex",flexDirection:"column",overflow:"hidden" }} onClick={e=>e.stopPropagation()}>
         <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 16px",background:MAROON,flexShrink:0 }}>
           <div style={{ display:"flex",alignItems:"center",gap:8,minWidth:0 }}>
             <FileText size={13} style={{ color:"rgba(255,255,255,.7)",flexShrink:0 }}/>
-            <span style={{ fontSize:13,fontWeight:700,color:"#fff",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{fileName}</span>
+            <span style={{ fontSize:13,fontWeight:700,color:"#fff",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{name}</span>
           </div>
           <div style={{ display:"flex",alignItems:"center",gap:12,flexShrink:0 }}>
-            {url && <>
-              <a href={url} target="_blank" rel="noopener noreferrer" style={{ fontSize:11,fontWeight:700,color:"rgba(255,255,255,.7)",display:"flex",alignItems:"center",gap:4 }}><ExternalLink size={11}/> Open</a>
-              <a href={url} download={fileName} style={{ fontSize:11,fontWeight:700,color:"rgba(255,255,255,.7)",display:"flex",alignItems:"center",gap:4 }}><Download size={11}/> Download</a>
-            </>}
+            {active.kind !== "text" && (
+              <a href={openHref} target="_blank" rel="noopener noreferrer" style={{ fontSize:11,fontWeight:700,color:"rgba(255,255,255,.7)",display:"flex",alignItems:"center",gap:4 }}>
+                <ExternalLink size={11}/> Open
+              </a>
+            )}
+            {isFile && (
+              <button type="button" onClick={handleDownload} disabled={busy}
+                style={{ fontSize:11,fontWeight:700,color:"rgba(255,255,255,.7)",display:"flex",alignItems:"center",gap:4,background:"none",border:"none",cursor:"pointer",opacity:busy?.6:1 }}>
+                <Download size={11}/> {busy ? "Downloading…" : "Download"}
+              </button>
+            )}
             <button onClick={onClose} style={{ background:"none",border:"none",cursor:"pointer",color:"rgba(255,255,255,.6)" }}><X size={15}/></button>
           </div>
         </div>
-        {files.length > 1 && (
+
+        {tabs.length > 1 && (
           <div style={{ display:"flex",gap:8,padding:"10px 16px 0",overflowX:"auto",background:"#fff",borderBottom:"1px solid #f3f4f6" }}>
-            {files.map((f, fi) => (
-              <button key={fi} onClick={()=>setSelectedUrl(f.url)}
-                style={{ padding:"6px 10px",borderRadius:8,border:resolved===f.url?`1px solid ${MAROON}`:"1px solid #e5e7eb",background:resolved===f.url?"#fef2f2":"#fff",color:resolved===f.url?MAROON:"#374151",fontSize:11,fontWeight:700,whiteSpace:"nowrap",cursor:"pointer" }}>
-                {f.label}
+            {tabs.map(t => (
+              <button key={t.key} onClick={()=>setSelectedKey(t.key)}
+                style={{ padding:"6px 10px",borderRadius:8,border:active.key===t.key?`1px solid ${MAROON}`:"1px solid #e5e7eb",background:active.key===t.key?"#fef2f2":"#fff",color:active.key===t.key?MAROON:"#374151",fontSize:11,fontWeight:700,whiteSpace:"nowrap",cursor:"pointer" }}>
+                {t.label}
               </button>
             ))}
           </div>
         )}
+
         <div style={{ flex:1,overflow:"hidden",background:"#f3f4f6",minHeight:300 }}>
-          {!url ? (
-            <div style={{ height:"100%",overflowY:"auto",padding:"24px 32px" }}>
-              {sub.textEntry
-                ? <div style={{ fontSize:13,color:"#374151",lineHeight:1.75 }} dangerouslySetInnerHTML={{ __html: sub.textEntry }}/>
-                : <p style={{ fontSize:13,color:"#9ca3af",fontStyle:"italic" }}>No content to preview.</p>}
+          {active.kind === "text" ? (
+            <div style={{ height:"100%",overflowY:"auto",padding:"24px 32px",background:"#fff" }}>
+              <div style={{ fontSize:13,color:"#374151",lineHeight:1.75,wordBreak:"break-word" }} dangerouslySetInnerHTML={{ __html: sub.textEntry ?? "" }}/>
             </div>
-          ) : isImg ? (
+          ) : active.kind === "link" ? (
+            <div style={{ height:"100%",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:14,padding:24,textAlign:"center" }}>
+              <ExternalLink size={40} style={{ color:"#9ca3af" }}/>
+              <p style={{ fontSize:13,color:"#374151",wordBreak:"break-all",margin:0 }}>{url}</p>
+              <a href={safeHref(url)} target="_blank" rel="noopener noreferrer"
+                style={{ display:"flex",alignItems:"center",gap:8,fontSize:13,fontWeight:700,padding:"8px 16px",borderRadius:10,color:"#fff",background:MAROON,textDecoration:"none" }}>
+                <ExternalLink size={13}/> Open link
+              </a>
+            </div>
+          ) : img ? (
             <div style={{ height:"100%",display:"flex",alignItems:"center",justifyContent:"center",padding:24 }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={url} alt={fileName} style={{ maxWidth:"100%",maxHeight:"100%",objectFit:"contain",borderRadius:8 }}/>
+              <img src={url} alt={name} style={{ maxWidth:"100%",maxHeight:"100%",objectFit:"contain",borderRadius:8 }}/>
             </div>
-          ) : isPdf(url) ? (
-            <iframe src={url} title={fileName} style={{ width:"100%",height:"100%",border:"none",display:"block" }}/>
+          ) : pdf ? (
+            <iframe key={url} src={proxied(url, name)} title={name} style={{ width:"100%",height:"100%",border:"none",display:"block" }}/>
           ) : (
             <div style={{ height:"100%",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:16,color:"#9ca3af" }}>
               <FileText size={48}/>
               <p style={{ fontSize:13 }}>Preview not available.</p>
-              <a href={url} download={fileName} style={{ display:"flex",alignItems:"center",gap:8,fontSize:13,fontWeight:700,padding:"8px 16px",borderRadius:10,color:"#fff",background:MAROON,textDecoration:"none" }}>
+              <button type="button" onClick={handleDownload} disabled={busy}
+                style={{ display:"flex",alignItems:"center",gap:8,fontSize:13,fontWeight:700,padding:"8px 16px",borderRadius:10,color:"#fff",background:MAROON,border:"none",cursor:"pointer" }}>
                 <Download size={13}/> Download to view
-              </a>
+              </button>
             </div>
           )}
         </div>
@@ -822,7 +953,7 @@ export default function CourseAssignmentDetail({
         { staff?: RawStaffUser[]; users?: RawStaffUser[]; members?: RawStaffUser[] },
       ];
       if (signal?.aborted) return;
-      setSubmissions(sData.submissions ?? []);
+      setSubmissions((sData.submissions ?? []).map(normalizeSubmission));
       const raw: RawStaffUser[] = uData.staff ?? uData.users ?? uData.members ?? [];
       setEnrolledUsers(raw.map(u => ({ id:u.id, name:u.name??u.userName??u.email??u.id, courseRole:u.courseRole??"Staff" })));
     } catch { /* silent */ }
@@ -876,36 +1007,45 @@ export default function CourseAssignmentDetail({
   };
 
   const handleDownloadAll = async () => {
-    const downloadable = submissions.filter(s => (s.allFileUrls&&s.allFileUrls.length>0) || (s.fileUrl&&s.submittedAt));
+    const downloadable = submissions.filter(s =>
+      s.submittedAt && ((s.allFileUrls && s.allFileUrls.length > 0) || s.fileUrl || s.textEntry || s.onlineUrl)
+    );
     if (!downloadable.length) return;
     setDownloading(true);
     try {
       const JSZip = (await import("jszip")).default;
       const zip   = new JSZip();
+      let added   = 0;
       for (const s of downloadable) {
-        const files = s.allFileUrls&&s.allFileUrls.length>0
+        const folder = (s.userName ?? s.userEmail).replace(/[^a-zA-Z0-9_\- ]/g, "_").trim() || "student";
+        const files = s.allFileUrls && s.allFileUrls.length > 0
           ? s.allFileUrls
-          : s.fileUrl ? [{label:s.fileName??"Submission",url:s.fileUrl}] : [];
-        if (!files.length) continue;
-        const folder   = (s.userName??s.userEmail).replace(/[^a-zA-Z0-9_\- ]/g,"_").trim()||"student";
+          : s.fileUrl ? [{ label: s.fileName ?? fileNameFromUrl(s.fileUrl), url: s.fileUrl }] : [];
         const usedNames = new Set<string>();
         for (const file of files) {
           if (!file?.url) continue;
-          const base = (file.label||file.url.split("/").pop()||"file").replace(/[\\/]+/g,"_").split("?")[0].split("#")[0]||"file";
+          const base = (file.label || fileNameFromUrl(file.url) || "file").replace(/[\\/:*?"<>|]+/g, "_");
+          const dot  = base.lastIndexOf(".");
+          const ext  = dot > 0 ? base.slice(dot) : "";
+          const stem = dot > 0 ? base.slice(0, dot) : base;
           let candidate = base; let idx = 1;
-          while (usedNames.has(candidate)) {
-            const ext  = candidate.includes(".")?candidate.slice(candidate.lastIndexOf(".")):"";
-            const stem = candidate.includes(".")?candidate.slice(0,candidate.lastIndexOf(".")):candidate;
-            candidate  = `${stem} (${idx})${ext}`; idx++;
-          }
+          while (usedNames.has(candidate)) { candidate = `${stem} (${idx})${ext}`; idx++; }
           usedNames.add(candidate);
-          try { const r = await fetch(file.url); zip.file(`${folder}/${candidate}`, await r.blob()); } catch { /* skip */ }
+          try {
+            zip.file(`${folder}/${candidate}`, await fetchFileBlob(file.url, candidate));
+            added++;
+          } catch {
+            zip.file(`${folder}/${candidate}.FAILED.txt`, `Could not download: ${file.url}`);
+          }
         }
+        if (s.textEntry) { zip.file(`${folder}/text-entry.html`, `<meta charset="utf-8">${s.textEntry}`); added++; }
+        if (s.onlineUrl) { zip.file(`${folder}/website-url.txt`, s.onlineUrl); added++; }
       }
-      const blob = await zip.generateAsync({type:"blob"});
+      if (added === 0) { alert("Walang na-download na file. Subukan ulit."); setDownloading(false); return; }
+      const blob = await zip.generateAsync({ type: "blob" });
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
-      a.download = `${(current.title??"assignment").replace(/[^a-zA-Z0-9_\- ]/g,"_")}_submissions.zip`;
+      a.download = `${(current.title ?? "assignment").replace(/[^a-zA-Z0-9_\- ]/g, "_")}_submissions.zip`;
       a.click(); URL.revokeObjectURL(a.href);
     } catch { alert("Failed to download."); }
     setDownloading(false);

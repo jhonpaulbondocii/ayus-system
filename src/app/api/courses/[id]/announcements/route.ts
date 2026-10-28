@@ -17,8 +17,23 @@ export async function GET(_req: NextRequest, { params }: Props) {
     return NextResponse.json({ error: access.error }, { status: access.status });
   }
 
+  const now = new Date();
+
   const announcements = await prisma.announcement.findMany({
-    where: { courseId },
+    where: {
+      courseId,
+      OR: [
+        // ikaw ang gumawa: lagi mong makikita, kahit naka-schedule pa
+        { authorId: access.userId },
+        // iba ang gumawa: kailangang available na at hindi pa expired
+        {
+          AND: [
+            { OR: [{ availableFrom: null }, { availableFrom: { lte: now } }] },
+            { OR: [{ availableUntil: null }, { availableUntil: { gte: now } }] },
+          ],
+        },
+      ],
+    },
     include: {
       attachments: { orderBy: { createdAt: "asc" } },
       reads: { where: { userId: access.userId }, select: { id: true } },
