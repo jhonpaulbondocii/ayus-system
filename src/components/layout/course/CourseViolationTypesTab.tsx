@@ -87,7 +87,7 @@ function SeverityBadge({ severity }: { severity: Severity }) {
 }
 
 function sanctionText(i: VType) {
-  return i.dismissalOnFirst ? "Immediate dropping/exclusion" : i.defaultSanction || "Per Disciplinary Council";
+  return i.dismissalOnFirst ? "Immediate dropping/exclusion" : i.defaultSanction || "None";
 }
 
 function EmptyState({ title, hint, action }: { title: string; hint?: string; action?: ReactNode }) {
@@ -331,7 +331,7 @@ function TypeFormModal({
           <div className="relative">
             <select value={form.defaultSanction} onChange={e => set({ defaultSanction: e.target.value })}
               className={selectCls} disabled={form.dismissalOnFirst}>
-              <option value="">Per Disciplinary Council</option>
+              <option value="">None</option>
               {SANCTIONS.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
             <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
